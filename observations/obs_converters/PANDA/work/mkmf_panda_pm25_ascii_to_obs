@@ -1,0 +1,18 @@
+#!/bin/csh
+#
+# DART software - Copyright © 2004 - 2010 UCAR. This open source software is
+# provided by UCAR, "as is", without charge, subject to all terms of use at
+# http://www.image.ucar.edu/DAReS/DART/DART_download
+#
+# $Id: mkmf_panda_pm25_ascii_to_obs 11449 2017-04-08 14:43:56Z mizzi@ucar.edu $
+
+../../../../build_templates/mkmf -p panda_pm25_ascii_to_obs -t ../../../../build_templates/mkmf.template -c"-Duse_netCDF" \
+-x -a "../../../.." path_names_panda_pm25_ascii_to_obs
+
+exit $status
+
+# <next few lines under version control, do not edit>
+# $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/observations/PANDA/work/mkmf_panda_pm25_ascii_to_obs $
+# $Revision: 11449 $
+# $Date: 2017-04-08 08:43:56 -0600 (Sat, 08 Apr 2017) $
+
