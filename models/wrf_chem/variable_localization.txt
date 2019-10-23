@@ -1,0 +1,97 @@
+# use_varloc table
+
+
+
+#
+# APM/AFAJ/LXL +++
+# Chem/Met interaction mods:
+#  Met obs update only Met state variables
+#  and Chem obs update only Chem state variables.
+#
+GROUP vchem1
+   QTY_O3
+   QTY_CO
+   QTY_NO
+   QTY_AOD
+END GROUP
+
+GROUP vmet1
+   ALLQTYS EXCEPT vchem1
+END GROUP
+
+GROUP vchem2
+   QTY_SO2
+   QTY_O3
+   QTY_CO
+   QTY_NO
+   QTY_NO2
+   QTY_HNO3
+   QTY_HNO4
+   QTY_N2O5
+   QTY_PAN
+   QTY_MEK
+   QTY_ALD
+   QTY_CH3O2
+   QTY_C3H8
+   QTY_C2H6
+   QTY_ACET
+   QTY_HCHO
+   QTY_C2H4
+   QTY_C3H6
+   QTY_TOL
+   QTY_MVK
+   QTY_BIGALK
+   QTY_ISOPR
+   QTY_MACR
+   QTY_GLYALD
+   QTY_C10H16
+   QTY_AOD
+   QTY_BC1
+   QTY_BC2
+   QTY_OC1
+   QTY_OC2
+   QTY_DMS
+   QTY_DST01
+   QTY_DST02
+   QTY_DST03
+   QTY_DST04
+   QTY_DST05
+   QTY_SO4
+   QTY_SSLT01
+   QTY_SSLT02
+   QTY_SSLT03
+   QTY_SSLT04
+   QTY_TAUAER1
+   QTY_TAUAER2
+   QTY_TAUAER3
+   QTY_TAUAER4
+   QTY_PM10
+   QTY_PM25
+   QTY_E_CO
+   QTY_E_NO
+   QTY_EBU_CO
+   QTY_EBU_NO
+   QTY_EBU_OC
+   QTY_EBU_BC
+   QTY_EBU_c2h4
+   QTY_EBU_ch2o
+   QTY_EBU_ch3oh
+END GROUP
+
+
+GROUP vmet2
+  ALLQTYS EXCEPT vchem2
+END GROUP
+
+
+# turn off where you don't want impacts.
+# anything not in these rules gets full impact.
+
+IMPACT
+  vchem1 vmet1    0.0
+  vmet1  vchem1   0.0
+  vchem2 vmet2    0.0
+  vmet2  vchem2   0.0
+END IMPACT
+
+
