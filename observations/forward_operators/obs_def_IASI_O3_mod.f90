@@ -317,13 +317,14 @@ subroutine get_expected_iasi_o3(state_handle, ens_size, location, key, val, ista
    integer,             intent(out) :: istatus(ens_size)
 !
    integer, parameter  :: wrf_nlev=32 ! Yikes, hard coded top model level!
-   integer             :: i, kstr, ilev, istrat
+   integer             :: i, kstr, ilev, istrat(ens_size), imem
    integer             :: apm_dom, apm_mm
    type(location_type) :: loc2
    real(r8)            :: mloc(3), prs_wrf(wrf_nlev)
-   real(r8)            :: obs_val(ens_size), obs_val_fnl(ens_size), o3_min, o3_min_str
+   real(r8)            :: obs_val(ens_size), obs_val_fnl(ens_size), o3_min, o3_min_str, obs_val_temp(ens_size)
    real(r8)            :: o3_min_log, o3_min_str_log, level, missing
    real(r8)            :: o3_wrf_sfc(ens_size), o3_wrf_1(ens_size), o3_wrf_top(ens_size)
+   real(r8)            :: o3_wrf_1_temp(ens_size), o3_wrf_top_temp(ens_size)
    real(r8)            :: prs_wrf_sfc(ens_size), prs_wrf_1(ens_size), prs_wrf_nlev(ens_size)
    real(r8)            :: prs_iasi_sfc
      
@@ -404,20 +405,28 @@ subroutine get_expected_iasi_o3(state_handle, ens_size, location, key, val, ista
 !      stop
 !   endif              
 !
+
 ! WRF ozone at first level
+! KRF Add member loop. Calls interpolate for every member with temp array,
+! then fills final member array. 
+do imem = 1, ens_size
    istatus(:) = 0
-   loc2 = set_location(mloc(1), mloc(2), prs_wrf_1, VERTISPRESSURE)
-   call interpolate(state_handle, ens_size, loc2, QTY_O3, o3_wrf_1, o31_istatus) 
-   call track_status(ens_size, o31_istatus, o3_wrf_1, istatus, return_now)
-   if(return_now) return
+   loc2 = set_location(mloc(1), mloc(2), prs_wrf_1(imem), VERTISPRESSURE)
+   call interpolate(state_handle, ens_size, loc2, QTY_O3, o3_wrf_1_temp, o31_istatus)
+   call track_status(ens_size, o31_istatus, o3_wrf_1_temp, istatus, return_now)
+   o3_wrf_1(imem) = o3_wrf_1_temp(imem)
+   if (any(istatus /= 0)) return
 
 !
 ! WRF ozone at top
    istatus(:) = 0
-   loc2 = set_location(mloc(1), mloc(2), prs_wrf_nlev, VERTISPRESSURE)
-   call interpolate(state_handle, ens_size, loc2, QTY_O3, o3_wrf_top, o3top_istatus) 
-   call track_status(ens_size, o3top_istatus, o3_wrf_top, istatus, return_now)
-   if(return_now) return
+   loc2 = set_location(mloc(1), mloc(2), prs_wrf_nlev(imem), VERTISPRESSURE)
+   call interpolate(state_handle, ens_size, loc2, QTY_O3, o3_wrf_top_temp, o3top_istatus) 
+   call track_status(ens_size, o3top_istatus, o3_wrf_top_temp, istatus, return_now)
+   o3_wrf_top(imem) = o3_wrf_top_temp(imem)
+   if (any(istatus /= 0)) return
+
+end do
 
 !
 ! Apply IASI Averaging kernel A and IASI Prior (I-A)xa
@@ -432,12 +441,28 @@ subroutine get_expected_iasi_o3(state_handle, ens_size, location, key, val, ista
 !
 !
 ! point in model interior      
+! KRF Add  member loop to call interpolate for temp array for each member
+! then fill final obs_val. 
 
-         istatus(:) = 0
-         loc2 = set_location(mloc(1),mloc(2), pressure(key,ilev), VERTISPRESSURE)
-         call interpolate(state_handle, ens_size, loc2, QTY_O3, obs_val, istatus)
-         call track_status(ens_size, o3top_istatus, o3_wrf_top, istatus, return_now)
-         if(return_now) return
+      do imem = 1, ens_size
+        if(pressure(key,ilev).lt.prs_wrf_1(imem) .and. pressure(key,ilev).ge.prs_wrf_nlev(imem)) then
+            istatus(:) = 0
+            loc2 = set_location(mloc(1),mloc(2), pressure(key,ilev), VERTISPRESSURE)
+            call interpolate(state_handle, ens_size, loc2, QTY_O3, obs_val_temp, istatus)
+            call track_status(ens_size, o3top_istatus, obs_val_temp, istatus, return_now)
+
+          if(istatus(imem).ne.0) then
+             write(string1, *),'ilev obs_val_temp,ias_pr ',ilev,obs_val_temp,pressure(key,ilev)/100.
+             call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
+             write(string1, *), 'key, ilev ',key,ilev,pressure(key,ilev),prs_wrf_1
+             call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
+             stop
+          else
+             obs_val(imem) = obs_val_temp(imem)
+          end if
+
+        end if
+      end do
 
 !     if(pressure(key,ilev).lt.prs_wrf_1 .and. pressure(key,ilev).ge.prs_wrf_nlev) then
 !        istatus(:) = 0
@@ -452,11 +477,12 @@ subroutine get_expected_iasi_o3(state_handle, ens_size, location, key, val, ista
 !        endif      
 !     endif
 
-! point at model surface !KRF surface commented out originally
+! KRF model surface block below commented out originally
+! point at model surface 
 !      if(pressure(key,ilev).ge.prs_wrf_sfc) then
 !         obs_val=o3_wrf_sfc
 !      endif
-! point between surface and first level
+! KRFend
 
 ! point between surface and first level
 
@@ -479,29 +505,27 @@ subroutine get_expected_iasi_o3(state_handle, ens_size, location, key, val, ista
      !endif
 !
 ! scale to ppb
-      if (istrat.eq.0) then
-         if ( use_log_o3 ) then
-            obs_val=obs_val + 2.303 * 3.0
-         else
-            obs_val = obs_val * 1.e3
-         endif
-      endif
+! KRF add member loop for istrat. or use where?
+    do imem = 1,ens_size
+       if (istrat(imem).eq.0) then
+          if ( use_log_o3 ) then
+            obs_val(imem)=obs_val(imem) + 2.303 * 3.0
+          else
+            obs_val(imem) = obs_val(imem) * 1.e3
+          endif
+       end if
+    end do
 !
 ! blend upper tropospnere with the prior (WRF O3 biased relative to IASI).
       obs_val_fnl=obs_val
-      where ( prs_bot >= pressure(key,ilev) .and. prs_top <= pressure(key,ilev) )
-     !if(pressure(key,ilev).le.prs_bot .and. pressure(key,ilev).ge.prs_top) then
+      if(pressure(key,ilev).le.prs_bot .and. pressure(key,ilev).ge.prs_top) then
          wt_dw=pressure(key,ilev)-prs_top
          wt_up=prs_bot-pressure(key,ilev)
          obs_val_fnl=(wt_dw*obs_val + wt_up*iasi_prior(key,ilev))/(wt_dw+wt_up)
-     !endif
-     endwhere
-     where (prs_top > pressure(key,ilev) )
-         obs_val_fnl=iasi_prior(key,ilev) 
-     endwhere
-     !if(pressure(key,ilev).lt.prs_top) then 
-     !   obs_val_fnl=iasi_prior(key,ilev)
-     !endif
+      endif
+      if(pressure(key,ilev).lt.prs_top) then 
+         obs_val_fnl=iasi_prior(key,ilev)
+      endif
 !
 ! apply averaging kernel
       if( use_log_o3 ) then
@@ -509,14 +533,15 @@ subroutine get_expected_iasi_o3(state_handle, ens_size, location, key, val, ista
       else
          val = val + avg_kernel(key,ilev) * obs_val_fnl
       endif
-   enddo
+  end do
+ 
 !
    val = val + iasi_prior_trm(key)
 !
    if (trim(IASI_O3_retrieval_type).eq.'RETR') then
       val = log10(val)
    endif
-   if(val.lt.0.) then
+   if(any(val.lt.0.)) then
       icnt=icnt+1
       print *, 'APM: Expected O3 is negative ',mloc(3),val
    endif

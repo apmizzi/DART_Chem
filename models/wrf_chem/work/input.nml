@@ -126,9 +126,10 @@
                               '../../../observations/forward_operators/obs_def_MODIS_AOD_mod.f90',
                               '../../../observations/forward_operators/obs_def_MOPITT_CO_mod.f90',
                               '../../../observations/forward_operators/obs_def_IASI_CO_mod.f90',
-   /
                               '../../../observations/forward_operators/obs_def_IASI_O3_mod.f90'
                               '../../../observations/forward_operators/obs_def_OMI_NO2_mod.f90',
+   /
+
 
 &obs_kind_nml
    assimilate_these_obs_types = 'RADIOSONDE_TEMPERATURE',
@@ -147,10 +148,10 @@
                                 'MODIS_AOD_RETRIEVAL',
                                 'MOPITT_CO_RETRIEVAL',
                                 'IASI_CO_RETRIEVAL',
-   evaluate_these_obs_types   = 'null',
-   /
                                 'OMI_NO2_COLUMN',
                                 'IASI_O3_RETRIEVAL',
+   evaluate_these_obs_types   = 'null',
+   /
 
 # Notes for obs_def_radar_mod_nml:
 # (1) Reflectivity limit can be applied to observations and/or forward operator.
