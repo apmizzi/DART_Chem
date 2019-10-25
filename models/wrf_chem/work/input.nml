@@ -81,13 +81,19 @@
 &assim_tools_nml
    filter_kind                     = 1,
    cutoff                          = 0.1,   
+   distribute_mean                 = .false.,
    sort_obs_inc                    = .false.,
    spread_restoration              = .false.,
    sampling_error_correction       = .false.,
    adaptive_localization_threshold = -1,
+   adaptive_cutoff_floor            = 0.0
    output_localization_diagnostics = .false.,
    localization_diagnostics_file   = 'localization_diagnostics',
    print_every_nth_obs             = 0,
+   adjust_obs_impact               = .true.
+   obs_impact_filename             = 'control_impact_runtime.table'
+   convert_all_obs_verticals_first   = .true.
+   convert_all_state_verticals_first = .false.
    special_localization_obs_types  ='IASI_CO_RETRIEVAL','MOPITT_CO_RETRIEVAL',
    special_localization_cutoffs    = 0.1,0.1,
    /
@@ -608,3 +614,9 @@
   superob_mopitt_co        = .false.
 
 /
+
+&obs_impact_tool_nml
+  input_filename          = '../variable_localization.txt'
+  output_filename         = 'control_impact_runtime.table'
+  debug                   = .false.
+  /
