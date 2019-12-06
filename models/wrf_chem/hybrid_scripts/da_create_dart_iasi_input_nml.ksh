@@ -56,13 +56,14 @@ cat > input.nml << EOF
    logfilename                 = 'dart_log.out',
 /
 &preprocess_nml
-   input_obs_kind_mod_file     = '../../obs_kind/DEFAULT_obs_kind_mod.F90',
-   output_obs_kind_mod_file    = '../../obs_kind/obs_kind_mod.f90',
-   input_obs_def_mod_file      = '../../obs_def/DEFAULT_obs_def_mod.F90',
-   output_obs_def_mod_file     = '../../obs_def/obs_def_mod.f90',
-   input_files                 = '../../obs_def/obs_def_reanalysis_bufr_mod.f90',
-                                 '../../obs_def/obs_def_gps_mod.f90',
-                                 '../../obs_def/obs_def_eval_mod.f90'
+   input_obs_kind_mod_file     = '../../assimilation_code/modules/observations/DEFAULT_obs_kind_mod.F90',
+   output_obs_kind_mod_file    = '../../assimilation_code/modules/observations/obs_kind_mod.f90',
+   input_obs_def_mod_file      = '../../observations/forward_operators/DEFAULT_obs_def_mod.F90',
+   output_obs_def_mod_file     = '../../observations/forward_operators/obs_def_mod.f90',
+   input_files                 = '../../observations/forward_operators/obs_def_reanalysis_bufr_mod.f90',
+                                 '../../observations/forward_operators/obs_def_gps_mod.f90',
+                                 '../../observations/forward_operators/obs_def_eval_mod.f90'
+
 /
 &merge_obs_seq_nml
    num_input_files             = 2,
