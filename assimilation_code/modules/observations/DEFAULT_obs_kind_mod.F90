@@ -378,7 +378,7 @@ integer, parameter, public :: &
     QTY_OC202                       = 208, &
     QTY_PM10                        = 209, &
     QTY_PM25                        = 210, &
-    QTY_NOy                         = 211, &
+    QTY_NOY                         = 211, &
     QTY_PB                          = 212, &
     QTY_NMOC                        = 213, &
     QTY_E_O3                        = 214, &
@@ -405,9 +405,9 @@ integer, parameter, public :: &
     QTY_EBU_NO                      = 232, &
     QTY_EBU_OC                      = 233, &
     QTY_EBU_BC                      = 234, &
-    QTY_EBU_c2h4                    = 235, &
-    QTY_EBU_ch2o                    = 236, &
-    QTY_EBU_ch3oh                   = 237
+    QTY_EBU_C2H4                    = 235, &
+    QTY_EBU_CH2O                    = 236, &
+    QTY_EBU_CH3OH                   = 237
 
 
 integer, parameter, public :: &
@@ -874,7 +874,7 @@ obs_kind_names(207) = obs_kind_type(QTY_OC102,          'QTY_OC102')
 obs_kind_names(208) = obs_kind_type(QTY_OC202,          'QTY_OC202')
 obs_kind_names(209) = obs_kind_type(QTY_PM10,           'QTY_PM10')
 obs_kind_names(210) = obs_kind_type(QTY_PM25,           'QTY_PM25')
-obs_kind_names(211) = obs_kind_type(QTY_NOy,            'QTY_NOy')
+obs_kind_names(211) = obs_kind_type(QTY_NOY,            'QTY_NOY')
 obs_kind_names(212) = obs_kind_type(QTY_PB,             'QTY_PB')
 obs_kind_names(213) = obs_kind_type(QTY_NMOC,           'QTY_NMOC')
 obs_kind_names(214) = obs_kind_type(QTY_E_O3,           'QTY_E_O3')
@@ -900,9 +900,9 @@ obs_kind_names(231) = obs_kind_type(QTY_EBU_CO,         'QTY_EBU_CO')
 obs_kind_names(232) = obs_kind_type(QTY_EBU_NO,         'QTY_EBU_NO')
 obs_kind_names(233) = obs_kind_type(QTY_EBU_OC,         'QTY_EBU_OC')
 obs_kind_names(234) = obs_kind_type(QTY_EBU_BC,         'QTY_EBU_BC')
-obs_kind_names(235) = obs_kind_type(QTY_EBU_c2h4,       'QTY_EBU_c2h4')
-obs_kind_names(236) = obs_kind_type(QTY_EBU_ch2o,       'QTY_EBU_ch2o')
-obs_kind_names(237) = obs_kind_type(QTY_EBU_ch3oh,      'QTY_EBU_ch3oh')
+obs_kind_names(235) = obs_kind_type(QTY_EBU_C2H4,       'QTY_EBU_C2H4')
+obs_kind_names(236) = obs_kind_type(QTY_EBU_CH2O,       'QTY_EBU_CH2O')
+obs_kind_names(237) = obs_kind_type(QTY_EBU_CH3OH,      'QTY_EBU_CH3OH')
 
 obs_kind_names(247) = obs_kind_type(QTY_CO2,            'QTY_CO2')
 obs_kind_names(248) = obs_kind_type(QTY_NH3,            'QTY_NH3')
