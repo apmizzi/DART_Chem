@@ -18,6 +18,7 @@ cat > input.nml_temp << EOF
    emiss_chemi_variables       = ${NL_EMISS_CHEMI_VARIABLES:-"null"}
    emiss_firechemi_variables   = ${NL_EMISS_FIRECHEMI_VARIABLES:-"null"}
    wrf_state_bounds            = ${NL_WRF_STATE_BOUNDS:-"null"}
+   output_state_vector         = ${NL_OUTPUT_STATE_VECTOR:-.false.},
    num_domains                 = ${NL_NUM_DOMAINS:-1},
    calendar_type               = ${NL_CALENDAR_TYPE:-3},
    assimilation_period_seconds = ${NL_ASSIMILATION_PERIOD_SECONDS:-21600},

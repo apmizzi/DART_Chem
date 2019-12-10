@@ -24,6 +24,7 @@ ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_sequence_nml.k
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_sequence_tool_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_perfect_model_obs_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_preprocess_nml.ksh
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_state_vector_io_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_reg_factor_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_replace_wrf_fields_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_restart_file_tool_nml.ksh
@@ -36,4 +37,5 @@ ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_wrf_to_dart_nml.ks
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_MOPITT_CO_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_IASI_CO_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_IASI_O3_nml.ksh
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_quality_control_nml.ksh
 echo on
