@@ -12,9 +12,7 @@ set clobber
 set startdir=`pwd`
 cd $startdir
 
-#foreach project ( AIRNOW IASI_CO IASI_O3 MODIS MOPITT_CO NCEP/prep_bufr NCEP/ascii_to_obs PANDA )
-#foreach project ( AIRNOW IASI_CO MODIS MOPITT_CO NCEP/prep_bufr NCEP/ascii_to_obs PANDA )
-foreach project ( IASI_O3 )
+foreach project ( AIRNOW IASI_CO IASI_O3 MODIS MOPITT_CO NCEP/prep_bufr NCEP/ascii_to_obs PANDA )
 
    echo
    echo "==================================================="

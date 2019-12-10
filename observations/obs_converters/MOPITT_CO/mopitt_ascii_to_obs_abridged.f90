@@ -222,13 +222,6 @@ minute_lst=-9999
 second_lst=-9999 
 fac=1.0
 !
-call find_namelist_in_file("input.nml", "create_mopitt_obs_nml", iunit)
-read(iunit, nml = create_mopitt_obs_nml, iostat = io)
-call check_namelist_read(iunit, io, "create_mopitt_obs_nml")
-
-! Record the namelist values used for the run ...
-call error_handler(E_MSG,'init_create_mopitt_obs','create_mopitt_obs_nml values are',' ',' ',' ')
-write(     *     , nml=create_mopitt_obs_nml)
 
 ! Record the current time, date, etc. to the logfile
 call initialize_utilities('create_obs_sequence')
@@ -240,6 +233,14 @@ call register_module(source,revision,revdate)
 
 ! Initialize the obs_sequence module
 call static_init_obs_sequence()
+
+call find_namelist_in_file("input.nml", "create_mopitt_obs_nml", iunit)
+read(iunit, nml = create_mopitt_obs_nml, iostat = io)
+call check_namelist_read(iunit, io, "create_mopitt_obs_nml")
+
+! Record the namelist values used for the run ...
+call error_handler(E_MSG,'init_create_mopitt_obs','create_mopitt_obs_nml values are',' ',' ',' ')
+write(     *     , nml=create_mopitt_obs_nml)
 
 ! Initialize an obs_sequence structure
 call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)
