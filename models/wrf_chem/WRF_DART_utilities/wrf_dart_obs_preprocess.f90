@@ -197,7 +197,6 @@ namelist /wrf_obs_preproc_nml/file_name_input, file_name_output,      &
 ! ----------------------------------------------------------------------
 
 character(len=129)      :: obs_seq_read_format
-character(len=80)       :: name
 
 integer                 :: io, iunit, fid, var_id, obs_seq_file_id, num_copies, &
                            num_qc, num_obs, max_obs_seq, nx, ny, gday, gsec
@@ -207,7 +206,7 @@ real(r8)                :: real_nx, real_ny
 logical                 :: file_exist, pre_I_format
 
 type(obs_sequence_type) :: seq_all, seq_rawin, seq_sfc, seq_acars, seq_satwnd, &
-                           seq_prof, seq_tc, seq_gpsro, seq_other
+                           seq_prof, seq_tc, seq_gpsro, seq_other, &
 
 ! APM/JB +++
                            seq_modis_aod, seq_mopitt_co, seq_iasi_co, seq_iasi_o3, &
@@ -315,12 +314,6 @@ overwrite_obs_time, anal_time, seq_rawin, seq_sfc, seq_acars, seq_satwnd, &
 seq_tc, seq_gpsro, seq_modis_aod, seq_mopitt_co, seq_iasi_co, seq_iasi_o3, seq_omi_no2, &
 seq_airnow_co, seq_airnow_o3, seq_panda_co, seq_panda_o3, seq_panda_pm25, seq_other)
 ! APM/JB ---
-
-call read_and_parse_input_seq(file_name_input, real_nx, real_ny, obs_boundary, &
-include_sig_data, obs_pressure_top, obs_height_top, sfc_elevation_check, &
-sfc_elevation_tol, overwrite_ncep_sfc_qc, overwrite_ncep_satwnd_qc, &
-overwrite_obs_time, anal_time, seq_rawin, seq_sfc, seq_acars, seq_satwnd, & 
-seq_tc, seq_gpsro, seq_other)
 
 !  add supplimental rawinsonde observations from file
 call add_supplimental_obs(sonde_extra, seq_rawin, max_obs_seq, &
@@ -606,12 +599,12 @@ logical, intent(in)                    :: siglevel, sfcelev, overwrite_time
 real(r8), intent(in)                   :: obs_bdy, ptop, htop, elev_max
 
 integer  :: nloc, okind, dom_id
-logical  :: file_exist, last_obs, pass_checks, first_obs, &
-! APM/JB +++
-            modis_aod_obs_check, mopitt_co_obs_check, iasi_co_obs_check, &
-            iasi_o3_obs_check, omi_no2_obs_check, airnow_co_obs_check, airnow_o3_obs_check, &
-            panda_co_obs_check, panda_o3_obs_check, panda_pm25_obs_check
-! APM/JB ---
+logical  :: file_exist, last_obs, pass_checks, first_obs
+!! APM/JB +++
+!            modis_aod_obs_check, mopitt_co_obs_check, iasi_co_obs_check, &
+!            iasi_o3_obs_check, omi_no2_obs_check, airnow_co_obs_check, airnow_o3_obs_check, &
+!            panda_co_obs_check, panda_o3_obs_check, panda_pm25_obs_check
+!! APM/JB ---
 
 real(r8) :: xyz_loc(3), xloc, yloc
 real(r8) :: real_nx, real_ny
@@ -1351,12 +1344,12 @@ type(obs_sequence_type), intent(inout) :: rawin_seq, sfc_seq, acars_seq, &
 
 character(len=129)    :: qcmeta
 integer               :: fid, var_id, okind, dom_id, i, j
-logical               :: file_exist, last_obs, input_ncep_qc, &
-! APM/JB +++
-                         modis_aod_obs_check, mopitt_co_obs_check, iasi_co_obs_check, &
-                         iasi_o3_obs_check, omi_no2_obs_check, airnow_co_obs_check, airnow_o3_obs_check, &
-                         panda_co_obs_check, panda_o3_obs_check, panda_pm25_obs_check
-! APM/JB ---
+logical               :: file_exist, last_obs, input_ncep_qc
+!! APM/JB +++
+!                         modis_aod_obs_check, mopitt_co_obs_check, iasi_co_obs_check, &
+!                         iasi_o3_obs_check, omi_no2_obs_check, airnow_co_obs_check, airnow_o3_obs_check, &
+!                         panda_co_obs_check, panda_o3_obs_check, panda_pm25_obs_check
+!! APM/JB ---
 real(r8), allocatable :: xland(:,:), qc(:)
 real(r8)              :: xyz_loc(3), xloc, yloc
 
