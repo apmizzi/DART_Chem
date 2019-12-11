@@ -1,6 +1,14 @@
 This file contains instructions for building and running the WRF-Chem/DART 
 release and test case.
 
+=============================================================================
+UPDATE: 11 December 2019
+The WRF-Chem/DART interface has been upgraded to be DART-Manhattan compliant.
+Source code, scripts, supporting files have been modified to meet 
+Manhattan standards.  
+=============================================================================
+
+
 INTRODUCTION:
 
 The WRF-Chem/DART release is a "cleaned-up" version of my working/development
@@ -76,7 +84,7 @@ running on your system.
 "mkmf.template" to your system.
 
 3. Go to "../models/wrf_chem/work" and run "./quickbuild.csh". If this
-step completes successfully, you should have some 30 WRF-Chem/DART
+step completes successfully, you should have some 33 WRF-Chem/DART
 executables in this "work" directory.
 
 4. Go to "../observations/obs_converters" and run "./buildall.csh".  This will build the

@@ -106,10 +106,8 @@ subroutine initialize_module
 
 integer :: iunit, rc
 
-!startKRF is this necessary?
 ! Prevent multiple calls from executing this code more than once.
 if (module_initialized) return
-!endKRF
 
 call register_module(source, revision, revdate)
 module_initialized = .true.
