@@ -6,8 +6,8 @@
 #
 # DART $Id: mkmf_mozbc 13152 2019-05-02 21:31:27Z thoar@ucar.edu $
 
-     ../../../../../../mkmf/mkmf -p mozbc.exe \
- -t  ../../../../../../mkmf/mkmf.template \
+     ../../../../../../build_templates/mkmf -p mozbc.exe \
+ -t  ../../../../../../build_templates/mkmf.template \
  -a "../../../../../../" path_names_mozbc
 
 exit $status

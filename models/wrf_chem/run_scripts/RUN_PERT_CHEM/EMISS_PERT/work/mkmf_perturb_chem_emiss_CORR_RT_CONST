@@ -6,7 +6,7 @@
 #
 # DART $Id: mkmf_perturb_chem_emiss_CORR_RT_CONST 13154 2019-05-02 23:08:09Z thoar@ucar.edu $
 
-../../../../../../mkmf/mkmf -p perturb_chem_emiss_CORR_RT_CONST.exe -t ../../../../../../mkmf/mkmf.template \
+../../../../../../build_templates/mkmf -p perturb_chem_emiss_CORR_RT_CONST.exe -t ../../../../../../build_templates/mkmf.template \
  -a "../../../../../.." path_names_perturb_chem_emiss_CORR_RT_CONST
 
 exit $status

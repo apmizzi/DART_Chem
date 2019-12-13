@@ -6,8 +6,8 @@
 #
 # DART $Id: mkmf_ascii_to_stream 13158 2019-05-03 17:44:46Z thoar@ucar.edu $
 
-     ../../../../../mkmf/mkmf -p ascii_to_stream.exe \
- -t  ../../../../../mkmf/mkmf.template \
+     ../../../../../build_templates/mkmf -p ascii_to_stream.exe \
+ -t  ../../../../../build_templates/mkmf.template \
  -a "../../../../.." path_names_ascii_to_stream
 
 exit $status

@@ -6,8 +6,8 @@
 #
 # DART $Id: mkmf_megan_xform 13157 2019-05-03 17:19:25Z thoar@ucar.edu $
 
-    ../../../../../mkmf/mkmf -p megan_xform.exe \
--t  ../../../../../mkmf/mkmf.template \
+    ../../../../../build_templates/mkmf -p megan_xform.exe \
+-t  ../../../../../build_templates/mkmf.template \
 -a "../../../../.." path_names_megan_xform
 
 exit $status

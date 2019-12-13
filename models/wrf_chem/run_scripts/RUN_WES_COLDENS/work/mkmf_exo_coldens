@@ -6,8 +6,8 @@
 #
 # DART $Id: mkmf_exo_coldens 13158 2019-05-03 17:44:46Z thoar@ucar.edu $
 
-     ../../../../../mkmf/mkmf -p exo_coldens.exe \
- -t  ../../../../../mkmf/mkmf.template \
+     ../../../../../build_templates/mkmf -p exo_coldens.exe \
+ -t  ../../../../../build_templates/mkmf.template \
  -a "../../../../.." path_names_exo_coldens
 
 exit $status

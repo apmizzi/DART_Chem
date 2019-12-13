@@ -6,8 +6,8 @@
 #
 # DART $Id: mkmf_surfdata_xform 13157 2019-05-03 17:19:25Z thoar@ucar.edu $
 
-    ../../../../../mkmf/mkmf -p surfdata_xform.exe \
--t  ../../../../../mkmf/mkmf.template \
+    ../../../../../build_templates/mkmf -p surfdata_xform.exe \
+-t  ../../../../../build_templates/mkmf.template \
 -a "../../../../.." path_names_surfdata_xform
 
 exit $status

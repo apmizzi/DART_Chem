@@ -54,8 +54,8 @@ endif
 # remove temp file and now really call mkmf to generate makefile
 rm -f ${pathFile}.back
 
-    ../../../../../../mkmf/mkmf -p ${EXENAME} \
--t  ../../../../../../mkmf/mkmf.template \
+    ../../../../../../build_templates/mkmf -p ${EXENAME} \
+-t  ../../../../../../build_templates/mkmf.template \
 -a "../../../../../.." ${wrapper_arg} ${pathFile}
 
 exit $status

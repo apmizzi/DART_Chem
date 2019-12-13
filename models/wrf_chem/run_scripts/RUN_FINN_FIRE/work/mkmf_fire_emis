@@ -6,8 +6,8 @@
 #
 # DART $Id: mkmf_fire_emis 13158 2019-05-03 17:44:46Z thoar@ucar.edu $
 
-     ../../../../../mkmf/mkmf -p fire_emis.exe \
- -t  ../../../../../mkmf/mkmf.template \
+     ../../../../../build_templates/mkmf -p fire_emis.exe \
+ -t  ../../../../../build_templates/mkmf.template \
  -a "../../../../.." path_names_fire_emis
 
 exit $status

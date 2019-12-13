@@ -6,7 +6,7 @@
 #
 # DART $Id: mkmf_get_closest_member 13159 2019-05-03 19:05:37Z thoar@ucar.edu $
 
-../../../../../mkmf/mkmf -p get_closest_member.exe -t ../../../../../mkmf/mkmf.template \
+../../../../../build_templates/mkmf -p get_closest_member.exe -t ../../../../../build_templates/mkmf.template \
  -a "../../../../.." path_names_get_closest_member
 
 exit $status
