@@ -5,7 +5,8 @@ release and test case.
 UPDATE: 11 December 2019
 The WRF-Chem/DART interface has been upgraded to be DART-Manhattan compliant.
 Source code, scripts, supporting files have been modified to meet 
-Manhattan standards.  
+Manhattan standards. This README now reflects updated procedures and scripts
+to use for running this tutorial with WRF-Chem/DART Manhattan.  
 =============================================================================
 
 
@@ -113,7 +114,7 @@ and "PARALLEL" job submission options.  It will likely need to be modified to
 accomodate your particular job scheduler/load manager.
 
 7. Go to "../models/wrf_chem/runs_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS" and
-edit the "real_time_PANDA_RETR_RELEASE_TEST_CU.ksh" script for your system.
+edit the "real_time_PANDA_RETR_RELEASE_TEST_NCAR_MANHATTAN.ksh" script for your system.
 The is the test case run script.  You will need to edit: 
  (i) "CODE VERSIONS" variables to match your code version and identifiers; 
  (ii) "ROOT DIRECTORIES" variables to match the root paths on your system.  
