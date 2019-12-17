@@ -310,7 +310,7 @@ subroutine get_expected_omi_no2(state_handle, ens_size, location, key, val, ista
    print *, 'APM: wrf_psf ',wrf_psf
 
 
-! KRF Should omi_psf be an array ens_size?
+! KRF: Use array mask
    where ( wrf_psf < omi_psf )
       omi_psf=wrf_psf
    endwhere

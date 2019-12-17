@@ -486,6 +486,7 @@ end do
 
 ! point between surface and first level
 
+! KRF: Use array masks
       where ( prs_wrf_1 <= pressure(key,ilev) )
          obs_val=o3_wrf_1
       endwhere
@@ -494,6 +495,7 @@ end do
      !endif
 
 !
+! KRF: Use array masks
 ! point above model top
       where ( prs_wrf_nlev > pressure(key,ilev) )
          istrat=1
@@ -505,7 +507,7 @@ end do
      !endif
 !
 ! scale to ppb
-! KRF add member loop for istrat. or use where?
+! KRF add member loop for istrat. 
     do imem = 1,ens_size
        if (istrat(imem).eq.0) then
           if ( use_log_o3 ) then

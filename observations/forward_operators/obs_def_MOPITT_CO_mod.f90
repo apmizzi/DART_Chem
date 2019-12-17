@@ -354,7 +354,7 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
          loc2 = set_location(mloc(1),mloc(2),prs_mopitt, VERTISPRESSURE)
       endif!
 !
-! KRF this doesn't work correctly. Need to mask vals interpolated?
+! KRF: First interpolate, then check obs values by mask and assign value.
       istatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_co, obs_val, obsval_istatus)
       call track_status(ens_size, obsval_istatus, obs_val, istatus, return_now)
@@ -365,6 +365,7 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
          obs_val=co_wrf_1
       endwhere 
 
+! KRF: Original code below
      !if(prs_mopitt .ge. prs_wrf_1) then
      !   istatus=0
      !   obs_val=co_wrf_1
@@ -374,7 +375,8 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
      !   call track_status(ens_size, obsval_istatus, obs_val, istatus, return_now)
      !   if (return_now) return 
      !endif
-!
+
+! KRF: Use array mask to check bounds instead and assign default values.
 ! check for lower bound
       if ( any(obs_val < co_min) ) then
           write(string1, *)'APM: NOTICE resetting minimum MOPITT CO value ',ilev
@@ -384,6 +386,7 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
       where ( obs_val < co_min )
          obs_val = co_min
       endwhere
+! KRF: Orginal code below
      !if (obs_val.lt.co_min) then
      !   write(string1, *)'APM: NOTICE resetting minimum MOPITT CO value ',ilev
      !   call error_handler(E_MSG,'set_obs_def_mopitt_co',string1,source,revision,revdate)
