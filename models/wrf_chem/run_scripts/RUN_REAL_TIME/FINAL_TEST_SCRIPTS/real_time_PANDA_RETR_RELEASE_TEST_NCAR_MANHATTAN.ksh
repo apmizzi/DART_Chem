@@ -5,21 +5,17 @@
 #
 #########################################################################
 #
-module load nco
-module load ncl
-module load python
-module load idl
-module load matlab
-module load numpy/1.13.3  
-module load scipy/0.19.1 
-module load netcdf4-python/1.2.7
-module load matplotlib/2.0.2
-module load pyproj/1.9.5.1
-module load pygrib/2.0.2
-
-#KRF env vars for testing manhattan
-export manhattan=true
-#endKRF
+#module load nco
+#module load ncl
+#module load python
+#module load idl
+#module load matlab
+#module load numpy/1.13.3  
+#module load scipy/0.19.1 
+#module load netcdf4-python/1.2.7
+#module load matplotlib/2.0.2
+#module load pyproj/1.9.5.1
+#module load pygrib/2.0.2
 
 export INITIAL_DATE=2014072418
 export FIRST_FILTER_DATE=2014072500
@@ -150,10 +146,10 @@ export WPS_GEOG_VER=GEOG_DATA
 export WRFDA_VER=WRFDA
 export WRF_VER=WRFV3.9.1_dmpar
 export WRFCHEM_VER=WRFV3_chem
-export DART_VER=chem_manhattan_test
+export DART_VER=dart_wrfchem
 #
 # ROOT DIRECTORIES:
-export SCRATCH_DIR=/glade/scratch/fossell/DART/chem_tutorial/test_manhattan_panda
+export SCRATCH_DIR=/glade/scratch/fossell/wrfchem_tutorial
 export WORK_DIR=/glade/work/fossell/DART
 export INPUT_DATA_DIR=/glade/scratch/fossell/DART/chem_tutorial
 #
