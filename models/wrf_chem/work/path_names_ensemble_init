@@ -10,5 +10,5 @@ assimilation_code/modules/utilities/sort_mod.f90
 assimilation_code/modules/utilities/time_manager_mod.f90
 assimilation_code/modules/utilities/types_mod.f90
 assimilation_code/modules/utilities/utilities_mod.f90
-models/wrf_chem/WRF_DART_utilities/ensemble_init.f90
-models/wrf_chem/WRF_DART_utilities/wrf_data_module.f90
+models/wrf/WRF_DART_utilities/ensemble_init.f90
+models/wrf/WRF_DART_utilities/wrf_data_module.f90

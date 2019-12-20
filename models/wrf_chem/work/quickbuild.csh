@@ -18,13 +18,17 @@
 #  to keep the .o and .mod files in the current directory instead of
 #  removing them at the end.  this usually improves runtime error reports
 #  and these files are required by most debuggers.
+#
+#  to pass any flags to the 'make' program, set DART_MFLAGS in your environment.
+#  e.g. to build faster by running 4 (or your choice) compiles at once:
+#   "setenv DART_MFLAGS '-j 4' " (csh) or "export DART_MFLAGS='-j 4' " (bash)
 #----------------------------------------------------------------------
 
 # this model name:
 set MODEL = "wrf"
 
 # programs which have the option of building with MPI:
-set MPI_TARGETS = "filter perfect_model_obs model_mod_check wakeup_filter closest_member_tool perturb_single_instance"
+set MPI_TARGETS = "filter perfect_model_obs model_mod_check closest_member_tool perturb_single_instance"
 
 # set default (override with -mpi or -nompi):
 #  0 = build without MPI, 1 = build with MPI
@@ -46,11 +50,21 @@ if ( $#argv >= 1 ) then
 endif
 
 set preprocess_done = 0
+set tdebug = 0
 set cdebug = 0
+set mflags = ''
 
+# environment vars this script looks for
 if ( $?CODE_DEBUG ) then
    set cdebug = $CODE_DEBUG
 endif
+if ( $?DART_TEST ) then
+   set tdebug = $DART_TEST
+endif
+if ( $?DART_MFLAGS ) then
+   set mflags = "$DART_MFLAGS"
+endif
+
 
 \rm -f *.o *.mod Makefile .cppdefs
 
@@ -103,8 +117,13 @@ foreach TARGET ( mkmf_preprocess mkmf_* )
    echo "---------------------------------------------------"
    echo "$MODEL build number $n is $PROG"
    \rm -f $PROG
-   csh $TARGET || exit $n
-   make        || exit $n
+   csh $TARGET  || exit $n
+   make $mflags || exit $n
+
+   if ( $tdebug ) then
+      echo 'removing all files between builds'
+      \rm -f *.o *.mod Makefile .cppdefs
+   endif
 
    # preprocess creates module files that are required by
    # the rest of the executables, so it must be run in addition
@@ -150,7 +169,12 @@ foreach PROG ( $MPI_TARGETS )
    echo "$MODEL MPI build number $n is $PROG"
    \rm -f $PROG
    csh $TARGET -mpi || exit $n
-   make             || exit $n
+   make $mflags     || exit $n
+
+   if ( $tdebug ) then
+      echo 'removing all files between builds'
+      \rm -f *.o *.mod Makefile .cppdefs
+   endif
 
 end
 
