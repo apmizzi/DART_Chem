@@ -1,16 +1,24 @@
-! Data Assimilation Research Testbed -- DART
-! Copyright 2004-2007, Data Assimilation Research Section
-! University Corporation for Atmospheric Research
-! Licensed under the GPL -- www.gpl.org/licenses/gpl.html
+
+! Copyright 2019 University Corporation for Atmospheric Research and 
+! Colorado Department of Public Health and Environment.
+!
+! Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
+! this file except in compliance with the License. You may obtain a copy of the 
+! License at      http://www.apache.org/licenses/LICENSE-2.0
+!
+! Unless required by applicable law or agreed to in writing, software distributed
+! under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
+! CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+! specific language governing permissions and limitations under the License.
+!
+! Development of this code utilized the RMACC Summit supercomputer, which is 
+! supported by the National Science Foundation (awards ACI-1532235 and ACI-1532236),
+! the University of Colorado Boulder, and Colorado State University.
+! The Summit supercomputer is a joint effort of the University of Colorado Boulder
+! and Colorado State University.
 
 program create_iasi_obs_sequence
 
-! <next few lines under version control, do not edit>
-! $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/observations/IASI_O3/iasi_ascii_to_obs_partition.f90 $
-! $Id: iasi_ascii_to_obs_partition.f90 13124 2019-04-25 00:53:18Z thoar@ucar.edu $
-! $Revision: 13124 $
-! $Date: 2019-04-24 18:53:18 -0600 (Wed, 24 Apr 2019) $
-!
 !=============================================
 ! IASI O3 retrieval obs
 !=============================================
@@ -85,12 +93,11 @@ program create_iasi_obs_sequence
 
 
   implicit none
-!
+
 ! version controlled file description for error handling, do not edit                          
-  character(len=128), parameter :: &
-   source   = "$URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/observations/IASI_O3/iasi_ascii_to_obs_partition.f90 $", &
-   revision = "$Revision: 13124 $", &
-   revdate  = "$Date: 2019-04-24 18:53:18 -0600 (Wed, 24 Apr 2019) $"
+character(len=*), parameter :: source   = "iasi_ascii_to_obs_partition.f90"
+character(len=*), parameter :: revision = ''
+character(len=*), parameter :: revdate  = ''
 !
 ! add variables AFA
   type(obs_sequence_type) :: seq

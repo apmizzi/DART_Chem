@@ -65,7 +65,7 @@ if ( $?DART_MFLAGS ) then
    set mflags = "$DART_MFLAGS"
 endif
 
-
+set nonomatch
 \rm -f *.o *.mod Makefile .cppdefs
 
 #----------------------------------------------------------------------

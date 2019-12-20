@@ -1,8 +1,21 @@
-! DART software - Copyright 2004 - 2013 UCAR. This open source software is
-! provided by UCAR, "as is", without charge, subject to all terms of use at
-! http://www.image.ucar.edu/DAReS/DART/DART_download
+! Copyright 2019 University Corporation for Atmospheric Research and 
+! Colorado Department of Public Health and Environment.
 !
-! DART $Id: obs_def_IASI_O3_mod.f90 13121 2019-04-24 16:32:43Z mizzi@ucar.edu $
+! Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
+! this file except in compliance with the License. You may obtain a copy of the 
+! License at      http://www.apache.org/licenses/LICENSE-2.0
+!
+! Unless required by applicable law or agreed to in writing, software distributed
+! under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
+! CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+! specific language governing permissions and limitations under the License.
+!
+! Development of this code utilized the RMACC Summit supercomputer, which is 
+! supported by the National Science Foundation (awards ACI-1532235 and ACI-1532236),
+! the University of Colorado Boulder, and Colorado State University.
+! The Summit supercomputer is a joint effort of the University of Colorado Boulder
+! and Colorado State University.
+
 
 ! BEGIN DART PREPROCESS KIND LIST
 ! IASI_O3_RETRIEVAL, QTY_O3
@@ -92,10 +105,9 @@ real(r8)                    :: iasi_altitude_ref(IASI_DIM) =(/ &
                                40000. /) 
 !
 ! version controlled file description for error handling, do not edit
-character(len=*), parameter :: source   = &
-   "$URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/obs_def/obs_def_IASI_O3_mod.f90 $"
-character(len=*), parameter :: revision = "$Revision: 13121 $"
-character(len=*), parameter :: revdate  = "$Date: 2019-04-24 10:32:43 -0600 (Wed, 24 Apr 2019) $"
+character(len=*), parameter :: source   = 'obs_def_IASI_O3_mod.f90'
+character(len=*), parameter :: revision = ''
+character(len=*), parameter :: revdate  = ''
 
 character(len=512) :: string1, string2
 
@@ -452,9 +464,9 @@ end do
             call track_status(ens_size, o3top_istatus, obs_val_temp, istatus, return_now)
 
           if(istatus(imem).ne.0) then
-             write(string1, *),'ilev obs_val_temp,ias_pr ',ilev,obs_val_temp,pressure(key,ilev)/100.
+             write(string1, *)'ilev obs_val_temp,ias_pr ',ilev,obs_val_temp,pressure(key,ilev)/100.
              call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
-             write(string1, *), 'key, ilev ',key,ilev,pressure(key,ilev),prs_wrf_1
+             write(string1, *)'key, ilev ',key,ilev,pressure(key,ilev),prs_wrf_1
              call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
              stop
           else
@@ -469,9 +481,9 @@ end do
 !        loc2 = set_location(mloc(1),mloc(2), pressure(key,ilev), VERTISPRESSURE)
 !        call interpolate(state_handle, ens_size, loc2, QTY_O3, obs_val, istatus) 
 !        if(any(istatus.ne.0)) then
-!           write(string1, *),'ilev obs_val,ias_pr ',ilev,obs_val,pressure(key,ilev)/100.
+!           write(string1, *)'ilev obs_val,ias_pr ',ilev,obs_val,pressure(key,ilev)/100.
 !           call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
-!           write(string1, *), 'key, ilev ',key,ilev,pressure(key,ilev),prs_wrf_1
+!           write(string1, *)'key, ilev ',key,ilev,pressure(key,ilev),prs_wrf_1
 !           call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
 !           stop
 !        endif      
@@ -1586,8 +1598,3 @@ end module obs_def_iasi_O3_mod
 
 ! END DART PREPROCESS MODULE CODE
 
-! <next few lines under version control, do not edit>
-! $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/obs_def/obs_def_IASI_O3_mod.f90 $
-! $Id: obs_def_IASI_O3_mod.f90 13121 2019-04-24 16:32:43Z mizzi@ucar.edu $
-! $Revision: 13121 $
-! $Date: 2019-04-24 10:32:43 -0600 (Wed, 24 Apr 2019) $

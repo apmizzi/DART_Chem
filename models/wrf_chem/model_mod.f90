@@ -1,36 +1,28 @@
-! DART software - Copyright UCAR. This open source software is provided
-! by UCAR, "as is", without charge, subject to all terms of use at
-! http://www.image.ucar.edu/DAReS/DART/DART_download
+! Copyright 2019 University Corporation for Atmospheric Research and 
+! Colorado Department of Public Health and Environment.
 !
-! $Id$
+! Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
+! this file except in compliance with the License. You may obtain a copy of the 
+! License at      http://www.apache.org/licenses/LICENSE-2.0
+!
+! Unless required by applicable law or agreed to in writing, software distributed
+! under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
+! CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+! specific language governing permissions and limitations under the License.
+!
+! Development of this code utilized the RMACC Summit supercomputer, which is 
+! supported by the National Science Foundation (awards ACI-1532235 and ACI-1532236),
+! the University of Colorado Boulder, and Colorado State University.
+! The Summit supercomputer is a joint effort of the University of Colorado Boulder
+! and Colorado State University.
 
-!> @mainpage Remote Memory Access version of DART code.
-!>
-!> Forward operator, vertical conversion
-!>
-!> WRF
-!>
-!> For distributed phb array see distributed_phb_model_mod.f90
-!> \todo To do list
-!> @author dart@ucar.edu
-!>
-!> \subpage test
-!> 
-!> \page test
 
-!> WRF model mod
 module model_mod
 
 
-! Assimilation interface for WRF model
-!> \defgroup wrf model_mod
-!> Model mod
-!> 
-!> Model mod for WRF
-!> @{
 !-----------------------------------------------------------------------
 !
-!     interface for WRF
+!     interface for WRF_CHEM
 !
 !-----------------------------------------------------------------------
 !---------------- m o d u l e   i n f o r m a t i o n ------------------
@@ -213,10 +205,9 @@ public :: wrf_dom, wrf_static_data_for_dart
 
 !-----------------------------------------------------------------------
 ! version controlled file description for error handling, do not edit
-character(len=256), parameter :: source   = &
-   "$URL$"
-character(len=32 ), parameter :: revision = "$Revision$"
-character(len=128), parameter :: revdate  = "$Date$"
+character(len=*), parameter :: source   = 'wrf_chem/model_mod.f90'
+character(len=*), parameter :: revision = ''
+character(len=*), parameter :: revdate  = ''
 
 ! miscellaneous
 integer, parameter :: max_state_variables = 100
@@ -10675,10 +10666,3 @@ end subroutine get_emiss_variable_size_from_file
 
 end module model_mod
 
-!> @}
-
-! <next few lines under version control, do not edit>
-! $URL$
-! $Id$
-! $Revision$
-! $Date$
