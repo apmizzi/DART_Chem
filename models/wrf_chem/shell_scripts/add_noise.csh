@@ -3,8 +3,6 @@
 # DART software - Copyright UCAR. This open source software is provided
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
-#
-# $Id: add_noise.csh 13126 2019-04-25 01:59:32Z thoar@ucar.edu $
 
 # echo calling add_noise
 # ../add_noise.csh $wrfsecs $wrfdays $state_copy $ensemble_member $temp_dir $CENTRALDIR
@@ -151,9 +149,4 @@ EOF
 echo 'add_noise finished'
 
 exit $status
-
-# <next few lines under version control, do not edit>
-# $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/models/wrf_chem/shell_scripts/add_noise.csh $
-# $Revision: 13126 $
-# $Date: 2019-04-24 19:59:32 -0600 (Wed, 24 Apr 2019) $
 

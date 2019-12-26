@@ -1,10 +1,8 @@
 ! DART software - Copyright UCAR. This open source software is provided
 ! by UCAR, "as is", without charge, subject to all terms of use at
 ! http://www.image.ucar.edu/DAReS/DART/DART_download
-!
-! $Id: dart_to_wrf_EINV.f90 13126 2019-04-25 01:59:32Z thoar@ucar.edu $
  
-PROGRAM dart_to_wrf
+PROGRAM dart_to_wrf_EINV
 
 use        types_mod, only : r8, missing_r8, PI, DEG2RAD
 use time_manager_mod, only : time_type, write_time, get_date, julian_day, &
@@ -26,13 +24,12 @@ use                          netcdf
 implicit none
 
 ! version controlled file description for error handling, do not edit
-character(len=256), parameter :: source   = &
-   "$URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/models/wrf_chem/WRF_DART_utilities/dart_to_wrf_EINV.f90 $"
-character(len=32 ), parameter :: revision = "$Revision: 13126 $"
-character(len=128), parameter :: revdate  = "$Date: 2019-04-24 19:59:32 -0600 (Wed, 24 Apr 2019) $"
+character(len=*), parameter :: source   = 'dart_to_wrf_EINV.f90'
+character(len=*), parameter :: revision = ''
+character(len=*), parameter :: revdate  = ''
 
 !-----------------------------------------------------------------------
-! dart_to_wrf namelist parameters with default values.
+! dart_to_wrf_EINV namelist parameters with default values.
 !-----------------------------------------------------------------------
 
 logical            :: model_advance_file = .TRUE.
@@ -81,10 +78,10 @@ integer            :: ndims, idims(5), dimids(5)
 
 if (debug) print*, 'DART to WRF'
 
-call initialize_utilities('dart_to_wrf')
+call initialize_utilities('dart_to_wrf_EINV')
 call register_module(source, revision, revdate)
 
-call error_handler(E_MSG,'dart_to_wrf', &
+call error_handler(E_MSG,'dart_to_wrf_EINV', &
    'Converting a DART state vector to a WRF netcdf file', &
    source, revision, revdate)
 
@@ -191,12 +188,12 @@ WRFDomains2 : do id = 1,num_domains
    if (print_data_ranges) write(*,*) ' '
 
    call nc_check( nf90_open('wrfinput_d' // idom, NF90_WRITE, ncid(id)), &
-                  'dart_to_wrf', 'open wrfinput_d' // idom )
+                  'dart_to_wrf_EINV', 'open wrfinput_d' // idom )
 !
 ! LXL +++
    if ( add_emiss ) then
       call nc_check( nf90_open('wrfchemi_d' // idom, NF90_WRITE, ncid_emiss(id)), &
-                     'dart_to_wrf', 'open wrfchemi_d' // idom )
+                     'dart_to_wrf_EINV', 'open wrfchemi_d' // idom )
    endif
 ! LXL ---
 !  
@@ -229,7 +226,7 @@ WRFDomains2 : do id = 1,num_domains
 
       ! get stagger and variable size
       call nc_check( nf90_inq_varid(ncid_f(id),wrf_state_variables(1,my_index), &
-                     var_id), 'dart_to_wrf', &
+                     var_id), 'dart_to_wrf_EINV', &
                      'inq_var_id ' // wrf_state_variables(1,my_index))
 ! LXL ---
 !
@@ -255,13 +252,13 @@ WRFDomains2 : do id = 1,num_domains
          if ( trim(wrf%clamp_or_fail(my_index)) == 'FAIL' ) then
 
             if (minval(wrf_var_2d) < wrf%lower_bound(my_index) ) then
-               call error_handler(E_ERR,'dart_to_wrf', &
+               call error_handler(E_ERR,'dart_to_wrf_EINV', &
                'Variable '//trim(my_field)// &
                ' failed lower bounds check.', source,revision,revdate)
             endif
 
             if (maxval(wrf_var_2d) > wrf%upper_bound(my_index) ) then
-               call error_handler(E_ERR,'dart_to_wrf', &
+               call error_handler(E_ERR,'dart_to_wrf_EINV', &
                'Variable '//trim(my_field)// &
                ' failed upper bounds check.', source,revision,revdate)
             endif
@@ -295,14 +292,14 @@ WRFDomains2 : do id = 1,num_domains
 ! APM: +++
 ! APM: code to reverse log10(x*1.e-6) transform of CO chemistry field
 !         if (trim(my_field).eq.'co') then
-!!            print *, 'APM: dart_to_wrf 2D CO conversion '
+!!            print *, 'APM: dart_to_wrf_EINV 2D CO conversion '
 !            do jj=1,wrf%var_size(2,ind)
 !               do ii=1,wrf%var_size(1,ind)
 !                  if(wrf_var_2d(ii,jj).gt.-9.0) then
 !                     wrf_var_2d(ii,jj)=(10.**wrf_var_2d(ii,jj))*1.e6
 !                  else
 !                     wrf_var_2d(ii,jj)=1.e-3
-!                     print *, 'APM 2d: dart_to_wrf reset ',ii,jj
+!                     print *, 'APM 2d: dart_to_wrf_EINV reset ',ii,jj
 !                  endif
 !               enddo
 !            enddo
@@ -314,7 +311,7 @@ WRFDomains2 : do id = 1,num_domains
 !
 ! LXL +++
          call nc_check( nf90_put_var(ncid_f(id), var_id, wrf_var_2d), &
-                        'dart_to_wrf','put_var ' // wrf_state_variables(1,my_index) )
+                        'dart_to_wrf_EINV','put_var ' // wrf_state_variables(1,my_index) )
 ! LXL ---
 ! 
 
@@ -341,13 +338,13 @@ WRFDomains2 : do id = 1,num_domains
          if ( trim(wrf%clamp_or_fail(my_index)) == 'FAIL' ) then
 
             if (minval(wrf_var_3d) < wrf%lower_bound(my_index) ) then
-               call error_handler(E_ERR,'dart_to_wrf', &
+               call error_handler(E_ERR,'dart_to_wrf_EINV', &
                'Variable '//trim(my_field)// &
                ' failed lower bounds check.', source,revision,revdate)
             endif
 
             if (maxval(wrf_var_3d) > wrf%upper_bound(my_index) ) then
-               call error_handler(E_ERR,'dart_to_wrf', &
+               call error_handler(E_ERR,'dart_to_wrf_EINV', &
                'Variable '//trim(my_field)// &
                ' failed upper bounds check.', source,revision,revdate)
             endif
@@ -381,7 +378,7 @@ WRFDomains2 : do id = 1,num_domains
 ! APM: +++
 ! APM: code to reverse log10(x*1.e-6) transform of CO chemistry field
 !         if (trim(my_field).eq.'co') then
-!!            print *, 'APM: dart_to_wrf 3D CO conversion '
+!!            print *, 'APM: dart_to_wrf_EINV 3D CO conversion '
 !            do kk=1,wrf%var_size(3,ind)
 !               do jj=1,wrf%var_size(2,ind)
 !                  do ii=1,wrf%var_size(1,ind)
@@ -389,7 +386,7 @@ WRFDomains2 : do id = 1,num_domains
 !                        wrf_var_3d(ii,jj,kk)=(10.**wrf_var_3d(ii,jj,kk))*1.e6
 !                     else
 !                        wrf_var_3d(ii,jj,kk)=1.e-3
-!                        print *, 'APM 3d: dart_to_wrf reset ',ii,jj,kk
+!                        print *, 'APM 3d: dart_to_wrf_EINV reset ',ii,jj,kk
 !                     endif
 !                  enddo
 !               enddo
@@ -399,7 +396,7 @@ WRFDomains2 : do id = 1,num_domains
 !
 ! LXL +++
          call nc_check( nf90_put_var(ncid_f(id), var_id, wrf_var_3d), &
-                        'dart_to_wrf', 'put_var ' // wrf_state_variables(1,my_index) )
+                        'dart_to_wrf_EINV', 'put_var ' // wrf_state_variables(1,my_index) )
 ! LXL ---
 !
 
@@ -418,29 +415,29 @@ WRFDomains2 : do id = 1,num_domains
 
    ! output times too
    call nc_check( nf90_inq_varid(ncid(id), "Times", var_id), &
-                  'dart_to_wrf', 'inq_varid Times' )
+                  'dart_to_wrf_EINV', 'inq_varid Times' )
    call nc_check( nf90_put_var(ncid(id), var_id, timestring), &
-                  'dart_to_wrf', 'put_var Times' )
+                  'dart_to_wrf_EINV', 'put_var Times' )
 
-   call nc_check( nf90_redef(ncid(id)), 'dart_to_wrf', 'redef' )
+   call nc_check( nf90_redef(ncid(id)), 'dart_to_wrf_EINV', 'redef' )
    call nc_check( nf90_put_att(ncid(id), nf90_global, "START_DATE", timestring), &
-                'dart_to_wrf','put_att START_DATE' )
+                'dart_to_wrf_EINV','put_att START_DATE' )
    call nc_check( nf90_put_att(ncid(id), nf90_global, "SIMULATION_START_DATE", timestring), &
-                'dart_to_wrf','put_att SIMULATION_START_DATE' )
+                'dart_to_wrf_EINV','put_att SIMULATION_START_DATE' )
    call nc_check( nf90_put_att(ncid(id), nf90_global, "JULYR", year), &
-                'dart_to_wrf','put_att JULYR' )
+                'dart_to_wrf_EINV','put_att JULYR' )
    call nc_check( nf90_put_att(ncid(id), nf90_global, "JULDAY", ndays), &
-                'dart_to_wrf','put_att JULDY' ) 
-   call nc_check( nf90_enddef(ncid(id)), 'dart_to_wrf', 'enddef' )
+                'dart_to_wrf_EINV','put_att JULDY' ) 
+   call nc_check( nf90_enddef(ncid(id)), 'dart_to_wrf_EINV', 'enddef' )
 
    ! at this point we are done with this domain
-   call nc_check ( nf90_sync(ncid(id)), 'dart_to_wrf','sync wrfinput' )
-   call nc_check ( nf90_close(ncid(id)),'dart_to_wrf','close wrfinput' )
+   call nc_check ( nf90_sync(ncid(id)), 'dart_to_wrf_EINV','sync wrfinput' )
+   call nc_check ( nf90_close(ncid(id)),'dart_to_wrf_EINV','close wrfinput' )
 !
 ! LXL +++
    if ( add_emiss ) then
-      call nc_check ( nf90_sync(ncid_emiss(id)), 'dart_to_wrf','sync wrfchemi' )
-      call nc_check ( nf90_close(ncid_emiss(id)),'dart_to_wrf','close wrfchemi' )
+      call nc_check ( nf90_sync(ncid_emiss(id)), 'dart_to_wrf_EINV','sync wrfchemi' )
+      call nc_check ( nf90_close(ncid_emiss(id)),'dart_to_wrf_EINV','close wrfchemi' )
    endif
 ! LXL ---
 !
@@ -449,15 +446,10 @@ enddo WRFDomains2
 
 deallocate(dart)
 
-write(logfileunit,*)'FINISHED dart_to_wrf.'
+write(logfileunit,*)'FINISHED dart_to_wrf_EINV.'
 write(logfileunit,*)
 
-call finalize_utilities('dart_to_wrf')   ! closes log file.
+call finalize_utilities('dart_to_wrf_EINV')   ! closes log file.
 
-end PROGRAM dart_to_wrf
+end PROGRAM dart_to_wrf_EINV
 
-! <next few lines under version control, do not edit>
-! $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/models/wrf_chem/WRF_DART_utilities/dart_to_wrf_EINV.f90 $
-! $Id: dart_to_wrf_EINV.f90 13126 2019-04-25 01:59:32Z thoar@ucar.edu $
-! $Revision: 13126 $
-! $Date: 2019-04-24 19:59:32 -0600 (Wed, 24 Apr 2019) $

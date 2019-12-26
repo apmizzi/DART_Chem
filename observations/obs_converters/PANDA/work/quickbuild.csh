@@ -4,8 +4,6 @@
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
 #
-# DART $Id: quickbuild.csh 13156 2019-05-03 16:29:03Z thoar@ucar.edu $
-#
 # compile all converter programs
 
 #----------------------------------------------------------------------
@@ -62,9 +60,4 @@ end
 echo "Success: All ${MODEL} programs compiled."  
 
 exit 0
-
-# <next few lines under version control, do not edit>
-# $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/observations/PANDA/work/quickbuild.csh $
-# $Revision: 13156 $
-# $Date: 2019-05-03 10:29:03 -0600 (Fri, 03 May 2019) $
 

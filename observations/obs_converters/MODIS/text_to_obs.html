@@ -3,8 +3,8 @@
 <HTML>
 <HEAD>
 <TITLE>program text_to_obs</TITLE>
-<link rel="stylesheet" type="text/css" href="../../doc/html/doc.css">
-<link href="../../doc/html/dart.ico" rel="shortcut icon" />
+<link rel="stylesheet" type="text/css" href="../../../documentation/html/doc.css" />
+<link href="../../../documentation/images/dart.ico" rel="shortcut icon" />
 </HEAD>
 <BODY>
 <A NAME="TOP"></A>
@@ -14,13 +14,13 @@
 <table border=0 summary="" cellpadding=5>
 <tr>
     <td valign=middle>
-    <img src="../../doc/html/Dartboard9.png" alt="DART project logo" height=70 />
+    <img src="../../../documentation/images/Dartboard7.png" alt="DART project logo" height=70 />
     </td>
     <td>
-       <P>Jump to <a href="../../index.html">DART Documentation Main Index</a><br />
+       <P>Jump to <a href="../../../documentation/index.html">DART Documentation Main Index</a><br />
           <small><small>version information for this file: <br />
           <!-- version tag follows, do not edit -->
-          $Id: text_to_obs.html 7387 2015-01-16 22:44:50Z mizzi $</small></small>
+          $Id$</small></small>
        </P></td>
 </tr>
 </table>
@@ -45,6 +45,7 @@ into a format suitable for DART use.
 </P>
 <P>
 The workflow is usually: 
+</P>
 <ul>
 <li>read in the needed information about each
 observation - location, time, data value, observation type - from 
@@ -57,6 +58,7 @@ routines to put it into a time-sorted series</li>
 <li>finally, call a write subroutine that writes out the entire series to a file in 
 a format that DART can read in</li>
 </ul>
+<P>
 It is not recommended that you try to mimic the ascii file format
 by other means; the format is subject to change and the library routines
 will continue to be supported even if the physical format changes.
@@ -71,7 +73,7 @@ be a better starting place for adapting code.
 <!--==================================================================-->
 
 <A NAME="DataSources"></A>
-<HR>
+<HR />
 <H2>DATA SOURCES</H2>
 
 <P>
@@ -86,7 +88,7 @@ selecting an appropriate error value.
 <!--==================================================================-->
 
 <A NAME="Programs"></A>
-<HR>
+<HR />
 <H2>PROGRAMS</H2>
 <P>
 The <em class=file>text_to_obs.f90</em> file is the source
@@ -131,7 +133,7 @@ likely to need to be made.
 <!--==================================================================-->
 
 <A NAME="Decisions"></A>
-<HR>
+<HR />
 <H2>DECISIONS YOU MIGHT NEED TO MAKE</H2>
 
 <P>
@@ -147,7 +149,7 @@ setting a location, and an observation type.
 <!--==================================================================-->
 
 <A NAME="KnownBugs"></A>
-<HR>
+<HR />
 <H2>KNOWN BUGS</H2>
 <P>
 none
@@ -158,7 +160,7 @@ none
 <!--==================================================================-->
 
 <A NAME="FuturePlans"></A>
-<HR>
+<HR />
 <H2>FUTURE PLANS</H2>
 <P>
 none
@@ -169,22 +171,21 @@ none
 <!--==================================================================-->
 
 <A NAME="Legalese"></A>
-<HR>
+<HR />
 <H2>Terms of Use</H2>
 
 <P>
-DART software - Copyright &copy; 2004 - 2010 UCAR.<br>
-This open source software is provided by UCAR, "as is",<br>
-without charge, subject to all terms of use at<br>
+DART software - Copyright UCAR. This open source software is provided
+by UCAR, "as is", without charge, subject to all terms of use at
 <a href="http://www.image.ucar.edu/DAReS/DART/DART_download">
 http://www.image.ucar.edu/DAReS/DART/DART_download</a>
 </P>
 
 <TABLE border=0 cellpadding=0 width=100% summary="">
 <TR><TD valign=top>Contact:       </TD><TD> nancy collins </TD></TR>
-<TR><TD valign=top>Revision:      </TD><TD> $Revision: 7387 $ </TD></TR>
-<TR><TD valign=top>Source:        </TD><TD> $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/observations/MODIS/text_to_obs.html $ </TD></TR>
-<TR><TD valign=top>Change Date:   </TD><TD> $Date: 2015-01-16 15:44:50 -0700 (Fri, 16 Jan 2015) $ </TD></TR>
+<TR><TD valign=top>Revision:      </TD><TD> $Revision$ </TD></TR>
+<TR><TD valign=top>Source:        </TD><TD> $URL$ </TD></TR>
+<TR><TD valign=top>Change Date:   </TD><TD> $Date$ </TD></TR>
 <TR><TD valign=top>Change&nbsp;history:&nbsp;</TD><TD> try "svn&nbsp;log" or "svn&nbsp;diff" </TD></TR>
 </TABLE>
 

@@ -1,4 +1,3 @@
-
 ! Copyright 2019 University Corporation for Atmospheric Research and 
 ! Colorado Department of Public Health and Environment.
 !
@@ -23,74 +22,64 @@ program create_iasi_obs_sequence
 ! IASI O3 retrieval obs
 !=============================================
 !
-  use    utilities_mod, only : timestamp, 		&
-                               register_module, 		&
-                               open_file, 		&
-                               close_file, 		&
-                               initialize_utilities, 	&
-                               open_file, 		&
-                               close_file, 		&
-                               find_namelist_in_file,  	&
-                               check_namelist_read,    	&
-                               error_handler, 		&
-                               E_ERR,			& 
-                               E_WARN,			& 
-                               E_MSG, 			&
+  use    utilities_mod, only : timestamp, &
+                               register_module, &
+                               open_file, &
+                               close_file, &
+                               initialize_utilities, &
+                               open_file, &
+                               close_file, &
+                               find_namelist_in_file, &
+                               check_namelist_read, &
+                               error_handler, &
+                               E_ERR, & 
+                               E_WARN, & 
+                               E_MSG, &
                                E_DBG
   
-  use obs_sequence_mod, only : obs_sequence_type, 	&
-                               interactive_obs, 		&
-                               write_obs_seq, 		&
-                               interactive_obs_sequence,  &
-                               static_init_obs_sequence,  &
-                               init_obs_sequence,         &
-                               init_obs,                  &
-                               set_obs_values,            &
-                               set_obs_def,               &
-                               set_qc,                    &
-                               set_qc_meta_data,          &
-                               set_copy_meta_data,        &
-                               insert_obs_in_seq,         &
+  use obs_sequence_mod, only : obs_sequence_type, &
+                               interactive_obs, &
+                               write_obs_seq, &
+                               interactive_obs_sequence, &
+                               static_init_obs_sequence, &
+                               init_obs_sequence, &
+                               init_obs, &
+                               set_obs_values, &
+                               set_obs_def, &
+                               set_qc, &
+                               set_qc_meta_data, &
+                               set_copy_meta_data, &
+                               insert_obs_in_seq, &
                                obs_type
                       
-     use obs_def_mod,      only : obs_def_type, get_obs_def_time, read_obs_def,     &
-                             write_obs_def, destroy_obs_def,                   &
-                             interactive_obs_def, copy_obs_def,                &
-                             set_obs_def_time, set_obs_def_type_of_obs,               &
-                             set_obs_def_error_variance, set_obs_def_location, &
-                             set_obs_def_key, get_obs_def_location
+  use obs_def_mod, only : obs_def_type, &
+                          set_obs_def_time, &
+                          set_obs_def_type_of_obs, &
+                          set_obs_def_error_variance, &
+                          set_obs_def_location, &
+                          set_obs_def_key
 
-! use obs_def_mod, only      : set_obs_def_kind,          &
-!                              set_obs_def_location,      &
-!                              set_obs_def_time,          &
-!                              set_obs_def_key,           &
-!                              set_obs_def_error_variance,&
-!                              obs_def_type,              &
-!                              init_obs_def,              &
-!                              get_obs_kind
-  
-  use obs_def_iasi_O3_mod, only :  set_obs_def_iasi_o3
+  use obs_def_iasi_O3_mod, only : set_obs_def_iasi_o3
   
   use  assim_model_mod, only : static_init_assim_model
   
-  use location_mod, only  : location_type, 		&
-                            set_location
+  use location_mod, only : location_type, &
+                           set_location
   
-  use time_manager_mod, only : set_date, 			&
-                               set_calendar_type, 	&
-                               time_type, 		&
+  use time_manager_mod, only : set_date, &
+                               set_calendar_type, &
+                               time_type, &
                                get_time
 
-  use obs_kind_mod, only   : QTY_O3, 		&
-                             IASI_O3_RETRIEVAL,   &
-                             get_type_of_obs_from_menu
+  use obs_kind_mod, only : QTY_O3, &
+                           IASI_O3_RETRIEVAL, &
+                           get_type_of_obs_from_menu
 
-  use random_seq_mod, only : random_seq_type, 	&
-                             init_random_seq, 	&
+  use random_seq_mod, only : random_seq_type, &
+                             init_random_seq, &
                              random_uniform
 
-  use sort_mod, only       : index_sort
-
+  use sort_mod, only : index_sort
 
   implicit none
 
@@ -230,7 +219,7 @@ character(len=*), parameter :: revdate  = ''
 !
 
 ! Record the current time, date, etc. to the logfile
-  call initialize_utilities('create_obs_sequence')
+  call initialize_utilities(source)
   call register_module(source,revision,revdate)
 
 ! Initialize the assim_model module, need this to get model
@@ -1259,6 +1248,8 @@ character(len=*), parameter :: revdate  = ''
 !-----------------------------------------------------------------------------
   call timestamp(string1=source,string2=revision,string3=revdate,pos='end')
 end program create_iasi_obs_sequence
+
+
 !
     subroutine mat_prd(A_mat,B_mat,C_mat,na,ma,nb,mb)
 !
@@ -1454,3 +1445,4 @@ end program create_iasi_obs_sequence
       enddo
       calc_greg_sec=calc_greg_sec+sec
    end function calc_greg_sec
+

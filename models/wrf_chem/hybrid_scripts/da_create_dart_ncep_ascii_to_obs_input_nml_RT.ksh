@@ -3,9 +3,6 @@
 # DART software - Copyright UCAR. This open source software is provided
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
-#
-# $Id: da_create_dart_ncep_ascii_to_obs_input_nml_RT.ksh 13133 2019-04-25 21:47:54Z nancy@ucar.edu $
-#
 
 #########################################################################
 #
@@ -84,9 +81,4 @@ cat > input.nml << EOF
                               '${DART_DIR}/observations/forward_operators/obs_def_altimeter_mod.f90',
                               '${DART_DIR}/observations/forward_operators/obs_def_gps_mod.f90' /
 EOF
-#
-# <next few lines under version control, do not edit>
-# $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/models/wrf_chem/hybrid_scripts/da_create_dart_ncep_ascii_to_obs_input_nml_RT.ksh $
-# $Id: da_create_dart_ncep_ascii_to_obs_input_nml_RT.ksh 13133 2019-04-25 21:47:54Z nancy@ucar.edu $
-# $Revision: 13133 $
-# $Date: 2019-04-25 15:47:54 -0600 (Thu, 25 Apr 2019) $
+

@@ -4,8 +4,6 @@
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
 #
-# DART $Id: advance_model.csh_AVE 13126 2019-04-25 01:59:32Z thoar@ucar.edu $
-#
 # Shell script to run the WRF model from DART input.
 # where the model advance is executed as a separate process.
 #
@@ -671,9 +669,4 @@ end
 ${REMOVE} $control_file
 
 exit 0
-
-# <next few lines under version control, do not edit>
-# $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/models/wrf_chem/shell_scripts/advance_model.csh_AVE $
-# $Revision: 13126 $
-# $Date: 2019-04-24 19:59:32 -0600 (Wed, 24 Apr 2019) $
 

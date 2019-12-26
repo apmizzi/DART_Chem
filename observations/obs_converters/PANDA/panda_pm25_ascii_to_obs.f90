@@ -1,91 +1,90 @@
-! Data Assimilation Research Testbed -- DART
-! Copyright 2004-2007, Data Assimilation Research Section
-! University Corporation for Atmospheric Research
-! Licensed under the GPL -- www.gpl.org/licenses/gpl.html
+! Copyright 2019 University Corporation for Atmospheric Research and 
+! Colorado Department of Public Health and Environment.
 !
-   program create_panda_pm25_obs_sequence
+! Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
+! this file except in compliance with the License. You may obtain a copy of the 
+! License at      http://www.apache.org/licenses/LICENSE-2.0
 !
-! <next few lines under version control, do not edit>
-! $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/observations/PANDA/panda_pm25_ascii_to_obs.f90 $
-! $Id: panda_pm25_ascii_to_obs.f90 11475 2017-04-13 15:44:20Z mizzi@ucar.edu $
-! $Revision: 11475 $
-! $Date: 2017-04-13 09:44:20 -0600 (Thu, 13 Apr 2017) $
+! Unless required by applicable law or agreed to in writing, software distributed
+! under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
+! CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+! specific language governing permissions and limitations under the License.
 !
+! Development of this code utilized the RMACC Summit supercomputer, which is 
+! supported by the National Science Foundation (awards ACI-1532235 and ACI-1532236),
+! the University of Colorado Boulder, and Colorado State University.
+! The Summit supercomputer is a joint effort of the University of Colorado Boulder
+! and Colorado State University.
+
+program create_panda_pm25_obs_sequence
+
 !=============================================
 ! PANDA SURFACE AQ obs
 ! Based from create_obs_sequence.f90
 !=============================================
-!
-      use    utilities_mod, only :    timestamp, 		&
-                                      register_module, 		&
-                                      open_file, 		&
-                                      close_file, 		&
-                                      initialize_utilities, 	&
-                                      open_file, 		&
-                                      close_file, 		&
-                                      find_namelist_in_file,  	&
-                                      check_namelist_read,    	&
-                                      error_handler, 		&
-                                      E_ERR,			& 
-                                      E_WARN,			& 
-                                      E_MSG, 			&
-                                      E_DBG
-!
-      use obs_sequence_mod, only :    obs_sequence_type, 	&
-                                      interactive_obs, 		&
-                                      write_obs_seq, 		&
-                                      interactive_obs_sequence,  &
-                                      static_init_obs_sequence,  &
-                                      init_obs_sequence,         &
-                                      init_obs,                  &
-                                      set_obs_values,            &
-                                      set_obs_def,               &
-                                      set_qc,                    &
-                                      set_qc_meta_data,          &
-                                      set_copy_meta_data,        &
-                                      insert_obs_in_seq,         &
-                                      obs_type
-!                    
-     use obs_def_mod,      only : obs_def_type, get_obs_def_time, read_obs_def,     &
-                             write_obs_def, destroy_obs_def,                   &
-                             interactive_obs_def, copy_obs_def,                &
-                             set_obs_def_time, set_obs_def_type_of_obs,               &
-                             set_obs_def_error_variance, set_obs_def_location, &
-                             set_obs_def_key, get_obs_def_location
 
-!     use obs_def_mod, only :         set_obs_def_kind,          &
-!                                     set_obs_def_location,      &
-!                                     set_obs_def_time,          &
-!                                     set_obs_def_key,           &
-!                                     set_obs_def_error_variance,&
-!                                     obs_def_type,              &
-!                                     init_obs_def,              &
-!                                     get_obs_kind
-!
+      use    utilities_mod, only :    timestamp, &
+                                      register_module, &
+                                      open_file, &
+                                      close_file, &
+                                      initialize_utilities, &
+                                      open_file, &
+                                      close_file, &
+                                      find_namelist_in_file,  &
+                                      check_namelist_read, &
+                                      error_handler, &
+                                      E_ERR, & 
+                                      E_WARN, & 
+                                      E_MSG, &
+                                      E_DBG
+
+      use obs_sequence_mod, only :    obs_sequence_type, &
+                                      interactive_obs, &
+                                      write_obs_seq, &
+                                      interactive_obs_sequence, &
+                                      static_init_obs_sequence, &
+                                      init_obs_sequence, &
+                                      init_obs, &
+                                      set_obs_values, &
+                                      set_obs_def, &
+                                      set_qc, &
+                                      set_qc_meta_data, &
+                                      set_copy_meta_data, &
+                                      insert_obs_in_seq, &
+                                      obs_type
+
+     use obs_def_mod, only : obs_def_type, &
+                             set_obs_def_time, &
+                             set_obs_def_type_of_obs, &
+                             set_obs_def_error_variance, &
+                             set_obs_def_location, &
+                             set_obs_def_key
+
       use assim_model_mod, only :     static_init_assim_model
-      use location_mod, only :        location_type, 		&
+
+      use location_mod, only :        location_type, &
                                       set_location
-      use time_manager_mod, only :    set_date, 			&
-                                      set_calendar_type, 	&
-                                      time_type, 		&
+
+      use time_manager_mod, only :    set_date, &
+                                      set_calendar_type, &
+                                      time_type, &
                                       get_time
-! 
-      use obs_kind_mod, only :        PANDA_PM25, 		&
+
+      use obs_kind_mod, only :        PANDA_PM25, &
                                       get_type_of_obs_from_menu
-!
-      use random_seq_mod, only :      random_seq_type, 	&
-                                      init_random_seq, 	&
+
+      use random_seq_mod, only :      random_seq_type, &
+                                      init_random_seq, &
                                       random_uniform
-!
+
       use sort_mod, only :            index_sort
-!
+
       implicit none
-!
+
 ! version controlled file description for error handling, do not edit                          
-      character(len=128), parameter :: &
-      source   = "$URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/observations/PANDA/panda_pm25_ascii_to_obs.f90 $", &
-      revision = "$Revision: 11475 $", &
-      revdate  = "$Date: 2017-04-13 09:44:20 -0600 (Thu, 13 Apr 2017) $"
+      character(len=*), parameter :: source   = 'panda_pm25_ascii_to_obs.f90'
+      character(len=*), parameter :: revision = ''
+      character(len=*), parameter :: revdate  =''
 !
       type(obs_sequence_type)      :: seq
       type(obs_type)               :: obs
@@ -146,7 +145,7 @@
 !
       save_greg_sec=-9999                                                 
 ! Record the current time, date, etc. to the logfile                                       
-      call initialize_utilities('create_obs_sequence')
+      call initialize_utilities(routine)
       call register_module(source,revision,revdate)
 !
 ! Initialize the obs_sequence module
@@ -381,5 +380,3 @@
       calc_greg_sec=calc_greg_sec+sec
    end function calc_greg_sec
 
-      
-  

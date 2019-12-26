@@ -3,9 +3,6 @@
 # DART software - Copyright UCAR. This open source software is provided
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
-#
-# $Id: run_obs_sequence_tool.ksh 13133 2019-04-25 21:47:54Z nancy@ucar.edu $
-#
 
 #
   set echo
@@ -150,9 +147,4 @@
      export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${P_DATE} ${TIME_INC} 2>/dev/null)  
   done 
 exit
-#
-# <next few lines under version control, do not edit>
-# $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/models/wrf_chem/run_diagnostics/run_obs_sequence_tool.ksh $
-# $Id: run_obs_sequence_tool.ksh 13133 2019-04-25 21:47:54Z nancy@ucar.edu $
-# $Revision: 13133 $
-# $Date: 2019-04-25 15:47:54 -0600 (Thu, 25 Apr 2019) $
+
