@@ -1222,7 +1222,7 @@ real(r8), intent(in)            :: elev_max
 
 integer  :: istatus(1)
 logical  :: rawinsonde_obs_check
-real(r8) :: xyz_loc(3), xmod(1), hsfc(1)
+real(r8) :: xyz_loc(3), hsfc(1)
 
 rawinsonde_obs_check = .true.
 xyz_loc = get_location(obs_loc)
@@ -1353,7 +1353,7 @@ type(obs_sequence_type), intent(inout) :: rawin_seq, sfc_seq, acars_seq, &
 ! APM/JB ---
 
 character(len=129)    :: qcmeta
-integer               :: fid, var_id, okind, dom_id, i, j
+integer               :: fid, okind, dom_id, i, j
 logical               :: file_exist, last_obs, input_ncep_qc
 !! APM/JB +++
 !                         modis_aod_obs_check, mopitt_co_obs_check, iasi_co_obs_check, &
@@ -2594,7 +2594,7 @@ real(r8), intent(in) :: xyz_loc(3), elev_max
 
 integer              :: istatus(1)
 logical              :: surface_obs_check
-real(r8)             :: xmod(1), hsfc(1)
+real(r8)             :: hsfc(1)
 
 surface_obs_check = .true.
 
