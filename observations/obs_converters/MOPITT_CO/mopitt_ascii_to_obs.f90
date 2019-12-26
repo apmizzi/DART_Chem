@@ -16,7 +16,7 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 
-program create_mopitt_obs_sequence
+program mopitt_ascii_to_obs
 
 !=============================================
 ! MOPITT CO retrieval obs
@@ -224,7 +224,7 @@ fac=1.0
 mopitt_co_vloc=0
 
 ! Record the current time, date, etc. to the logfile
-call initialize_utilities(routine)
+call initialize_utilities(source)
 call register_module(source,revision,revdate)
 
 ! Initialize the assim_model module, need this to get model
@@ -1205,7 +1205,7 @@ fac=fac_obs_error
 !-----------------------------------------------------------------------------
  call timestamp(string1=source,string2=revision,string3=revdate,pos='end')
 
-end program create_mopitt_obs_sequence
+end program mopitt_ascii_to_obs
 
 
 

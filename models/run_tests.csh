@@ -86,6 +86,7 @@ set modeldir = `pwd`
 # set the list of models to include here
 
 set DO_THESE_MODELS = ( \
+  wrf_chem \
   9var \
   POP \
   ROMS \

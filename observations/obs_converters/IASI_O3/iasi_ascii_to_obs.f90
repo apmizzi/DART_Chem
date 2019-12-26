@@ -16,7 +16,7 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 
-program create_iasi_obs_sequence
+program iasi_ascii_to_obs
 
 !=============================================
 ! IASI O3 retrieval obs
@@ -248,7 +248,7 @@ program create_iasi_obs_sequence
   call init_obs(obs, num_copies, num_qc)
 
 ! If use_log_o3 is 'true' the make sure retrieval type is RETR
-  if (use_log_o3.eq..TRUE. .and. trim(IASI_O3_retrieval_type).ne.'RETR') then
+  if (use_log_o3 .and. trim(IASI_O3_retrieval_type) .ne. 'RETR') then
      print *, 'APM: if use_log_o3=true then IASI_O3_retrieval_type=RETR'
      stop
   endif 
@@ -981,7 +981,7 @@ program create_iasi_obs_sequence
         endif
 !
 ! Truncate the number of CPSR modes
-        if(use_cpsr_o3_trunc.eq..TRUE. .and. nlvls_fix.gt.cpsr_o3_trunc_lim) then
+        if(use_cpsr_o3_trunc .and. nlvls_fix .gt. cpsr_o3_trunc_lim) then
            print *,'APM change limit ', nlvls_fix,cpsr_o3_trunc_lim
            nlvls_fix=cpsr_o3_trunc_lim
         endif
@@ -1233,7 +1233,7 @@ program create_iasi_obs_sequence
 !-----------------------------------------------------------------------------
   call timestamp(string1=source,string2=revision,string3=revdate,pos='end')
 
-end program create_iasi_obs_sequence
+end program iasi_ascii_to_obs
 
 
 

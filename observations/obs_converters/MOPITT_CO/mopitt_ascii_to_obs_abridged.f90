@@ -16,7 +16,7 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 
-program create_mopitt_obs_sequence
+program mopitt_ascii_to_obs_abridged
 
 !=============================================
 ! MOPITT CO retrieval obs
@@ -1178,7 +1178,7 @@ fac=fac_obs_error
 !-----------------------------------------------------------------------------
  call timestamp(string1=source,string2=revision,string3=revdate,pos='end')
 
-end program create_mopitt_obs_sequence
+end program mopitt_ascii_to_obs_abridged
 
 
 

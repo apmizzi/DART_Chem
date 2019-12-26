@@ -16,7 +16,7 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 
-program create_iasi_obs_sequence
+program iasi_ascii_to_obs_partition
 
 !=============================================
 ! IASI O3 retrieval obs
@@ -1247,7 +1247,7 @@ character(len=*), parameter :: revdate  = ''
 ! Clean up
 !-----------------------------------------------------------------------------
   call timestamp(string1=source,string2=revision,string3=revdate,pos='end')
-end program create_iasi_obs_sequence
+end program iasi_ascii_to_obs_partition
 
 
 !

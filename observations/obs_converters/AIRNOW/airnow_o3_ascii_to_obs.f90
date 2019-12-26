@@ -16,7 +16,7 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 
-program create_airnow_co_obs_sequence
+program airnow_o3_ascii_to_obs
 
 !=============================================
 ! AIRNOW SURFACE AQ obs
@@ -82,7 +82,7 @@ program create_airnow_co_obs_sequence
       implicit none
 !
 ! version controlled file description for error handling, do not edit                          
-      character(len=*), parameter :: source   = 'airnow_co_ascii_to_obs.f90'
+      character(len=*), parameter :: source   = 'airnow_o3_ascii_to_obs.f90'
       character(len=*), parameter :: revision = ''
       character(len=*), parameter :: revdate  = ''
 !
@@ -150,7 +150,7 @@ program create_airnow_co_obs_sequence
 
       save_greg_sec=-9999                                                 
 ! Record the current time, date, etc. to the logfile                                       
-      call initialize_utilities('create_obs_sequence')
+      call initialize_utilities(source)
       call register_module(source,revision,revdate)
 !
 ! Initialize the obs_sequence module
@@ -352,8 +352,11 @@ program create_airnow_co_obs_sequence
 ! Clean up
 !-----------------------------------------------------------------------------
       call timestamp(string1=source,string2=revision,string3=revdate,pos='end')
-   end program create_airnow_co_obs_sequence
-!
+
+   end program airnow_o3_ascii_to_obs
+
+
+
    integer function calc_greg_sec(year,month,day,hour,minute,sec,days_in_month)
       implicit none
       integer                  :: i,j,k,year,month,day,hour,minute,sec

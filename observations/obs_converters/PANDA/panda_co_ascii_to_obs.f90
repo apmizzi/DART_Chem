@@ -16,7 +16,7 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 
-program create_panda_co_obs_sequence
+program panda_co_ascii_to_obs
 
 !=============================================
 ! PANDA SURFACE AQ obs
@@ -355,7 +355,7 @@ program create_panda_co_obs_sequence
 ! Clean up
 !-----------------------------------------------------------------------------
       call timestamp(string1=source,string2=revision,string3=revdate,pos='end')
-   end program create_panda_co_obs_sequence
+   end program panda_co_ascii_to_obs
 !
    integer function calc_greg_sec(year,month,day,hour,minute,sec,days_in_month)
       implicit none
