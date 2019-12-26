@@ -85,7 +85,7 @@ program panda_co_ascii_to_obs
       character(len=*), parameter :: source   = 'panda_co_ascii_to_obs.f90'
       character(len=*), parameter :: revision = ''
       character(len=*), parameter :: revdate  = ''
-!
+
       type(obs_sequence_type)      :: seq
       type(obs_type)               :: obs
       type(obs_type)               :: obs_old
@@ -97,7 +97,7 @@ program panda_co_ascii_to_obs
       integer,parameter            :: num_copies=1
       integer,parameter            :: num_qc=1
       integer,parameter            :: fileid=88
-      integer                      :: icopy,iunit,status,idx,indx,jndx,ierr,nndx
+      integer                      :: icopy,iunit,io,idx,indx,jndx,ierr,nndx
       integer                      :: year0, month0, day0, hour0, min0, sec0
       integer                      :: year1, month1, day1, hour1, min1, sec1
       integer                      :: calendar_type
@@ -109,11 +109,13 @@ program panda_co_ascii_to_obs
       integer                      :: beg_year,beg_mon,beg_day,beg_hour,beg_min,beg_sec 
       integer                      :: end_year,end_mon,end_day,end_hour,end_min,end_sec
       integer                      :: anal_greg_sec,beg_greg_sec,end_greg_sec
-      integer                      :: save_greg_sec,calc_greg_sec
+      integer                      :: save_greg_sec = -9999                                                 
+      integer                      :: calc_greg_sec
       integer                      :: year_temp,month_temp,day_temp,hour_temp,minute_temp, &
                                       data_greg_sec_temp,second_temp
       integer,dimension(indx_max)  :: year,month,day,hour,minute,data_greg_sec
-      real                         :: fac,lat_mn,lat_mx,lon_mn,lon_mx
+      real                         :: fac = 1.e-3
+      real                         :: lat_mn,lat_mx,lon_mn,lon_mx
       real*8                       :: latitude,longitude,level
       real*8                       :: ob_err_var
       real                         :: lat_temp,lon_temp,obs_val_temp
@@ -132,19 +134,15 @@ program panda_co_ascii_to_obs
       character(len=129)           :: file_name='panda_obs_seq'
       character(len=180)           :: file_in_coord,file_in_data
       character(len=20),dimension(indx_max) :: stat
-!
-!============================================================
-!obs sequence extra variables
-!============================================================
-!
-!============================================================
-      fac=1.e-3
+
       namelist /create_panda_obs_nml/year0,month0,day0,hour0,beg_year,beg_mon,beg_day, &
       beg_hour,beg_min,beg_sec,end_year,end_mon,end_day,end_hour,end_min,end_sec, &
       file_in_coord,file_in_data,lat_mn,lat_mx,lon_mn,lon_mx
+
+!============================================================
 !
-      save_greg_sec=-9999                                                 
 ! Record the current time, date, etc. to the logfile                                       
+
       call initialize_utilities(source)
       call register_module(source,revision,revdate)
 !
@@ -153,8 +151,7 @@ program panda_co_ascii_to_obs
 !
 ! Initialize an obs_sequence structure
       call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)
-      calendar_type=3
-      call set_calendar_type(calendar_type)
+      call set_calendar_type('GREGORIAN')
 !
 ! Initialize the obs variable
       call init_obs(obs, num_copies, num_qc)
@@ -168,13 +165,14 @@ program panda_co_ascii_to_obs
          call set_copy_meta_data(seq, icopy, copy_meta_data)
       enddo
       call set_qc_meta_data(seq, 1, qc_meta_data)
-!
+
 ! READ PANDA OBSERVATIONS
-      iunit=20
-      open(unit=iunit,file='create_panda_obs_nml.nl',form='formatted', &
-      status='old',action='read')
-      read(iunit,create_panda_obs_nml)
-      close(iunit)
+
+      ! Read the namelist entry
+      call find_namelist_in_file("create_panda_obs_nml.nl", "create_panda_obs_nml", iunit)
+      read(iunit, nml = create_panda_obs_nml, iostat = io)
+      call check_namelist_read(iunit, io, "create_panda_obs_nml")
+
       min0=0
       sec0=0
 !      print *, 'year            ',year0
