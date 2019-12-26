@@ -25,11 +25,7 @@ program airnow_co_ascii_to_obs
 !
       use    utilities_mod, only :    timestamp, &
                                       register_module, &
-                                      open_file, &
-                                      close_file, &
                                       initialize_utilities, &
-                                      open_file, &
-                                      close_file, &
                                       find_namelist_in_file, &
                                       check_namelist_read, &
                                       error_handler, &
@@ -39,9 +35,7 @@ program airnow_co_ascii_to_obs
                                       E_DBG
 !
       use obs_sequence_mod, only :    obs_sequence_type, &
-                                      interactive_obs, &
                                       write_obs_seq, &
-                                      interactive_obs_sequence, &
                                       static_init_obs_sequence, &
                                       init_obs_sequence, &
                                       init_obs, &
@@ -69,18 +63,18 @@ program airnow_co_ascii_to_obs
                                    set_calendar_type, &
                                    time_type, &
                                    get_time
-! 
+
       use obs_kind_mod, only : AIRNOW_CO, &
                                get_type_of_obs_from_menu
-!
+
       use random_seq_mod, only : random_seq_type, &
                                  init_random_seq, &
                                  random_uniform
-!
+
       use sort_mod, only : index_sort
-!
+
       implicit none
-!
+
 ! version controlled file description for error handling, do not edit                          
       character(len=*), parameter :: source   = 'airnow_co_ascii_to_obs.f90'
       character(len=*), parameter :: revision = ''
@@ -97,7 +91,7 @@ program airnow_co_ascii_to_obs
       integer,parameter            :: num_copies=1
       integer,parameter            :: num_qc=1
       integer,parameter            :: fileid=88
-      integer                      :: icopy,iunit,status,indx,ierr,nndx
+      integer                      :: icopy,iunit,io,indx,ierr,nndx
       integer                      :: year0, month0, day0, hour0, min0, sec0
       integer                      :: year1, month1, day1, hour1, min1, sec1
       integer                      :: calendar_type
@@ -173,13 +167,14 @@ program airnow_co_ascii_to_obs
          call set_copy_meta_data(seq, icopy, copy_meta_data)
       enddo
       call set_qc_meta_data(seq, 1, qc_meta_data)
-!
+
 ! READ AIRNOW OBSERVATIONS
-      iunit=20
-      open(unit=iunit,file='create_airnow_obs_nml.nl',form='formatted', &
-      status='old',action='read')
-      read(iunit,create_airnow_obs_nml)
-      close(iunit)
+
+      ! Read the namelist entry
+      call find_namelist_in_file("create_airnow_obs_nml.nl", "create_airnow_obs_nml", iunit)
+      read(iunit, nml = create_airnow_obs_nml, iostat = io)
+      call check_namelist_read(iunit, io, "create_airnow_obs_nml")
+
       min0=0
       sec0=0
       print *, 'year            ',year0
