@@ -1,5 +1,9 @@
 
-INTRODUCTION:
+Development of this code utilized the RMACC Summit supercomputer, which is 
+supported by the National Science Foundation (awards ACI-1532235 and ACI-1532236),
+the University of Colorado Boulder, and Colorado State University.
+The Summit supercomputer is a joint effort of the University of Colorado Boulder
+and Colorado State University.
 
 This is the WRF-Chem/DART working directory. 
 
@@ -15,3 +19,4 @@ Arthur
 Dr. Arthur P. Mizzi          Phone: 303-692-3141
 CDPHE/APCD/TSP		     Mobile: 303-903-5544 
 Denver, CO 80246	     E-Mail: arthur.mizzi@state.co.us
+
