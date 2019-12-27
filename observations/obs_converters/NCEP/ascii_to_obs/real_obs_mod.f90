@@ -10,7 +10,7 @@ use types_mod,        only : r8, rad2deg, PI
 use time_manager_mod, only : time_type, operator(>), operator(<), operator(>=), &
                              operator(/=), set_date, set_calendar_type, get_time, &
                              set_time, GREGORIAN, increment_time
-use    utilities_mod, only : get_unit, register_module, error_handler, &
+use    utilities_mod, only : open_file, register_module, error_handler, &
                              E_ERR, E_MSG, timestamp, is_longitude_between
 use     location_mod, only : VERTISPRESSURE, VERTISSURFACE
 use obs_sequence_mod, only : init_obs_sequence, init_obs, obs_sequence_type, obs_type, &
@@ -197,8 +197,7 @@ call error_handler(E_MSG,'real_obs_sequence',msgstring1)
 
 write(obsdate, '(i4.4,i2.2,i2.2)') year, month, day
 obsfile   = trim(adjustl(ObsBase))//obsdate//hourt
-obs_unit  = get_unit()
-open(unit = obs_unit, file = obsfile, form='formatted', status='old')
+obs_unit  = open_file(obsfile, form='formatted', action='read')
 write(msgstring1,*) 'input file opened= '//trim(obsfile)
 call error_handler(E_MSG,'real_obs_sequence',msgstring1)
 rewind (obs_unit)
