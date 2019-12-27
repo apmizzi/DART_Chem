@@ -20,7 +20,6 @@ program mopitt_ascii_to_obs_abridged
 
 !=============================================
 ! MOPITT CO retrieval obs
-! Based from create_obs_sequence.f90
 !=============================================
 
 use    utilities_mod, only : timestamp, &
@@ -64,7 +63,8 @@ use obs_def_mopitt_mod, only : set_obs_def_mopitt_co
 
 use  assim_model_mod, only : static_init_assim_model
 
-use location_mod, only : location_type, set_location
+use location_mod, only : location_type, &
+                         set_location
 
 use time_manager_mod, only : set_date, &
                              set_calendar_type, &
@@ -237,6 +237,7 @@ call check_namelist_read(iunit, io, "create_mopitt_obs_nml")
 call error_handler(E_MSG,'init_create_mopitt_obs','create_mopitt_obs_nml values are',' ',' ',' ')
 write(     *     , nml=create_mopitt_obs_nml)
 
+
 ! Initialize an obs_sequence structure
 call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)
 
@@ -244,7 +245,7 @@ call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)
 call init_obs(obs, num_copies, num_qc)
 
 ! If use_log_co is 'true' the make sure retrieval type is RETR
-if (use_log_co.eq..TRUE. .and. trim(MOPITT_CO_retrieval_type).ne.'RETR') then
+if (use_log_co .and. trim(MOPITT_CO_retrieval_type).ne.'RETR') then
    print *, 'APM: if use_log_co=true then MOPITT_CO_retrieval_type=RETR'
    stop
 endif  

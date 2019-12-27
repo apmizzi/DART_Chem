@@ -938,7 +938,7 @@ fac=fac_obs_error
         endif
 !
 ! Truncate the number of CPSR modes
-        if(use_cpsr_co_trunc.eq..TRUE. .and. nlvls_fix.gt.cpsr_co_trunc_lim) then
+        if(use_cpsr_co_trunc .and. nlvls_fix .gt. cpsr_co_trunc_lim) then
            print *, 'APM: change limit ',nlvls_fix, cpsr_co_trunc_lim
            nlvls_fix=cpsr_co_trunc_lim
         endif
