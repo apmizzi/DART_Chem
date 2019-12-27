@@ -124,6 +124,10 @@
 !      continue
 ! END DART PREPROCESS INTERACTIVE_OBS_DEF
 
+!>@todo FIXME should the obs_def_tec_mod.f90 be incorporated here.
+!>            there are stubs for different TEC obs here, and some
+!>            in the obs_def_tec_mod.f90 ... one for all?
+
 ! BEGIN DART PREPROCESS MODULE CODE
 module obs_def_upper_atm_mod
 
@@ -157,10 +161,9 @@ public :: get_expected_upper_atm_density, &
           get_expected_electron_density
 
 ! version controlled file description for error handling, do not edit
-character(len=256), parameter :: source   = &
-   "$URL$"
-character(len=32 ), parameter :: revision = "$Revision$"
-character(len=128), parameter :: revdate  = "$Date$"
+character(len=*), parameter :: source   = 'obs_def_upper_atm_mod.f90'
+character(len=*), parameter :: revision = ''
+character(len=*), parameter :: revdate  = ''
 
 logical, save :: module_initialized = .false.
 
@@ -280,6 +283,7 @@ real(r8) :: loc_vals(3)
 real(r8) :: tec(ens_size)
 type(location_type) :: probe
 logical  :: return_now
+integer  :: i
 
 if ( .not. module_initialized ) call initialize_module
 
@@ -288,11 +292,12 @@ istatus = 0     ! must be 0 to use track_status()
 loc_vals = get_location(location)
 
 nAlts = 0
-LEVELS: do iAlt=1, size(ALT)+1
+LEVELS: do iAlt=1, size(ALT,2)+1
    ! loop over levels.  if we get to one more than the allocated array size,
    ! this model must have more levels than we expected.  increase array sizes,
    ! recompile, and try again.
-   if (iAlt > size(ALT)) then
+
+   if (iAlt > size(ALT,2)) then
       write(string1,'(''more than '',i4,'' levels in the model.'')') MAXLEVELS
       string2='increase MAXLEVELS in obs_def_upper_atm_mod.f90, rerun preprocess and recompile.'
       call error_handler(E_ERR, 'get_expected_gnd_gps_vtec', string1, &
@@ -308,8 +313,10 @@ LEVELS: do iAlt=1, size(ALT)+1
    call track_status(ens_size, this_istatus, obs_val, istatus, return_now)
    if (any(istatus /= 0)) exit LEVELS
 
-   call interpolate(state_handle, ens_size, probe, QTY_GEOPOTENTIAL_HEIGHT, ALT(:, iAlt), this_istatus) 
+   call interpolate(state_handle, ens_size, probe, QTY_GEOMETRIC_HEIGHT, ALT(:, iAlt), this_istatus) 
+
    call track_status(ens_size, this_istatus, obs_val, istatus, return_now)
+ 
    if (any(istatus /= 0)) exit LEVELS
    
    nAlts = nAlts+1
@@ -321,8 +328,16 @@ if (nAlts == 0) then
    return
 endif
 
-! clear the error from the last level and start again?
 istatus(:) = 0
+
+do i=1,ens_size
+   if (any(IDensityS_ie(i,1:nAlts) == MISSING_R8) .or. any(ALT(i,1:nAlts) == MISSING_R8)) then
+      ! mark the ensemble member as having failed
+      istatus(i) = 1
+   end if
+end do
+
+! clear the error from the last level and start again?
 tec=0.0_r8 !start with zero for the summation
 
 do iAlt = 1, nAlts-1 !approximate the integral over the altitude as a sum of trapezoids
@@ -330,9 +345,12 @@ do iAlt = 1, nAlts-1 !approximate the integral over the altitude as a sum of tra
    where (istatus == 0) &
       tec = tec + ( ALT(:, iAlt+1)-ALT(:, iAlt) )  * ( IDensityS_ie(:, iAlt+1)+IDensityS_ie(:, iAlt) ) /2.0_r8
 enddo
-where (istatus == 0) &
-   obs_val = tec * 10.0**(-16) !units of TEC are "10^16" #electron/m^2 instead of just "1" #electron/m^2
 
+where (istatus == 0) 
+   obs_val = tec * 10.0**(-16) !units of TEC are "10^16" #electron/m^2 instead of just "1" #electron/m^2
+elsewhere 
+   obs_val = MISSING_R8
+end where
 
 end subroutine get_expected_gnd_gps_vtec
 
