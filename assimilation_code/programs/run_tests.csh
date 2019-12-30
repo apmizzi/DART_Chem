@@ -150,7 +150,7 @@ foreach PROGRAMDIRECTORY ( $DO_THESE_DIRECTORIES )
     cd ${PARENTDIR}/${PROGRAMDIRECTORY}/work 
     set FAILURE = 0
 
-    ( ./quickbuild.csh ${QUICKBUILD_ARG} > ${LOGDIR}/buildlog.$PROGRAMDIRECTORY.out ) || set FAILURE = 1
+    ( ./quickbuild.csh ${QUICKBUILD_ARG} > ${LOGDIR}/buildlog.${PROGRAMDIRECTORY}.out ) || set FAILURE = 1
     echo
 
     @ counter = $counter + 1
@@ -159,7 +159,7 @@ foreach PROGRAMDIRECTORY ( $DO_THESE_DIRECTORIES )
     echo
     if ( $FAILURE ) then
       echo "=================================================================="
-      echo "ERROR - unsuccessful build of $PROGRAMDIRECTORY at "`date`
+      echo "ERROR - unsuccessful build of ${PROGRAMDIRECTORY} at "`date`
       switch ( $PROGRAMDIRECTORY )
          case system_simulation
             echo "obs_sampling_err.f90 build expected to fail if running in reduced precision"
@@ -177,7 +177,7 @@ foreach PROGRAMDIRECTORY ( $DO_THESE_DIRECTORIES )
       continue
     else
       echo "=================================================================="
-      echo "End of successful build of $PROGRAMDIRECTORY at "`date`
+      echo "End of successful build of ${PROGRAMDIRECTORY} at "`date`
       echo "=================================================================="
       echo
       echo
@@ -187,7 +187,7 @@ foreach PROGRAMDIRECTORY ( $DO_THESE_DIRECTORIES )
 #      echo
 #      echo
 #      echo "=================================================================="
-#      echo "Running tests for $PROGRAMDIRECTORY starting at "`date`
+#      echo "Running tests for ${PROGRAMDIRECTORY} starting at "`date`
 #      echo "=================================================================="
 #      echo
 #      echo
@@ -200,17 +200,17 @@ foreach PROGRAMDIRECTORY ( $DO_THESE_DIRECTORIES )
 #           set FAILURE = 0
 #           set PROG = `echo $TARGET | sed -e 's#mkmf_##'`
 #           echo "++++++++++++++++++"
-#           echo Starting $PROG
+#           echo Starting ${PROG}
 #           if ( -f using_mpi_for_$PROG ) then
-#              ( ${MPICMD} ./$PROG  > ${LOGDIR}/runlog.$PROG.out ) || set FAILURE = 1
+#              ( ${MPICMD} ./${PROG}  > ${LOGDIR}/runlog.${PROGRAMDIRECTORY}.${PROG}.out ) || set FAILURE = 1
 #           else
-#              (           ./$PROG  > ${LOGDIR}/runlog.$PROG.out ) || set FAILURE = 1
+#              (           ./${PROG}  > ${LOGDIR}/runlog.${PROGRAMDIRECTORY}.${PROG}.out ) || set FAILURE = 1
 #           endif
-#           echo Finished $PROG
+#           echo Finished ${PROG}
 #           echo "++++++++++++++++++"
 #           echo
 #
-#           \rm -f $PROG
+#           \rm -f ${PROG}
 #  
 #      end
 #
