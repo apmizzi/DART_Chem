@@ -3,8 +3,6 @@
 # DART software - Copyright UCAR. This open source software is provided
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
-#
-# DART $Id: regression_test.csh 13126 2019-04-25 01:59:32Z thoar@ucar.edu $
 
 set GOLDSTANDARD = /glade/p/image/DART_test_cases/wrf_chem/gold_standard_fast/2008060500/dart_filter
 set TESTCASE = /glade/scratch/thoar/DART_TEST_AVE/MOPnIASnMOD_Exp_2_MgDA_20M_100km_COnXXnAOD_CPSR_Joint_All/2008060500/dart_filter
@@ -91,9 +89,4 @@ foreach FILE ( obs_seq.final )
 end
 
 exit 0
-
-# <next few lines under version control, do not edit>
-# $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/models/wrf_chem/shell_scripts/regression_test.csh $
-# $Revision: 13126 $
-# $Date: 2019-04-24 19:59:32 -0600 (Wed, 24 Apr 2019) $
 

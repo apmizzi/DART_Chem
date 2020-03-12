@@ -25,6 +25,7 @@ program wrf_dart_obs_preprocess
 !     - superob aircraft and satellite wind data
 !
 !     created Oct. 2007 Ryan Torn, NCAR/MMM
+!     extended for chemical species by Arthur P Mizzi, ACOM
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -48,10 +49,11 @@ use     obs_kind_mod, only : RADIOSONDE_U_WIND_COMPONENT, ACARS_U_WIND_COMPONENT
                              AIRNOW_CO, AIRNOW_O3, &
                              PANDA_CO, PANDA_O3, PANDA_PM25
 ! APM/JB ---
-use time_manager_mod, only : time_type, set_calendar_type, GREGORIAN, set_time
+
+use     time_manager_mod, only : time_type, set_calendar_type, GREGORIAN, set_time
 use ensemble_manager_mod, only : ensemble_type, init_ensemble_manager, end_ensemble_manager
-use        model_mod, only : static_init_model
-use           netcdf
+use            model_mod, only : static_init_model
+use  netcdf
 
 implicit none
 
@@ -70,9 +72,9 @@ character(len=129) :: file_name_input    = 'obs_seq.old',        &
                       sat_wind_extra     = 'obs_seq.satwnd',     &
                       profiler_extra     = 'obs_seq.profiler',   &
                       gpsro_extra        = 'obs_seq.gpsro',      &
-                      trop_cyclone_extra = 'obs_seq.tc',         &
+                      trop_cyclone_extra = 'obs_seq.tc'
 ! APM/JB +++
-                      modis_aod_extra    = 'obs_seq.modis_aod',  &
+character(len=129) :: modis_aod_extra    = 'obs_seq.modis_aod',  &
                       mopitt_co_extra    = 'obs_seq.mopitt_co',  &
                       iasi_co_extra      = 'obs_seq.iasi_co',    &
                       iasi_o3_extra      = 'obs_seq.iasi_o3',    &
@@ -82,9 +84,8 @@ character(len=129) :: file_name_input    = 'obs_seq.old',        &
                       panda_co_extra     = 'obs_seq.panda_co',   &
                       panda_o3_extra     = 'obs_seq.panda_o3',   &
                       panda_pm25_extra   = 'obs_seq.panda_pm25'
-character(len=80)  :: name, sgday, sgsec
+
 ! APM/JB ---
-integer            :: max_num_obs              = 600000   ! Largest number of obs in one sequence
 logical            :: overwrite_obs_time       = .false.  ! true to overwrite all observation times
 
 !  boundary-specific parameters
@@ -114,58 +115,59 @@ real(r8)           :: sat_wind_horiz_int       = 100.0_r8   ! horizontal interva
 real(r8)           :: sat_wind_pres_int        = 2500.0_r8  ! pressure interval for super-ob
 logical            :: overwrite_ncep_satwnd_qc = .false.    ! true to overwrite NCEP QC (see instructions)
 
-! APM/JB +++
-!  MODIS AOD specific parameters
-logical            :: superob_modis_aod           = .false.    ! super-ob sat wind data
-real(r8)           :: modis_aod_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
-real(r8)           :: modis_aod_pres_int          = 2500.0_r8  ! pressure interval for super-ob
-logical            :: overwrite_ncep_modis_aod_qc = .false.    ! true to overwrite NCEP QC (see instructions)
-!  MOPITT CO specific parameters
-logical            :: superob_mopitt_co           = .false.    ! super-ob sat wind data
-real(r8)           :: mopitt_co_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
-real(r8)           :: mopitt_co_pres_int          = 2500.0_r8  ! pressure interval for super-ob
-logical            :: overwrite_ncep_mopitt_co_qc = .false.    ! true to overwrite NCEP QC (see instructions)
-!  IASI CO specific parameters
-logical            :: superob_iasi_co             = .false.    ! super-ob sat wind data
-real(r8)           :: iasi_co_horiz_int           = 100.0_r8   ! horizontal interval for super-ob
-real(r8)           :: iasi_co_pres_int            = 2500.0_r8  ! pressure interval for super-ob
-logical            :: overwrite_ncep_iasi_co_qc   = .false.    ! true to overwrite NCEP QC (see instructions)
-!  IASI O3 specific parameters
-logical            :: superob_iasi_o3             = .false.    ! super-ob sat wind data
-real(r8)           :: iasi_o3_horiz_int           = 100.0_r8   ! horizontal interval for super-ob
-real(r8)           :: iasi_o3_pres_int            = 2500.0_r8  ! pressure interval for super-ob
-logical            :: overwrite_ncep_iasi_o3_qc   = .false.    ! true to overwrite NCEP QC (see instructions)
-!  OMI NO2 specific parameters
-logical            :: superob_omi_no2             = .false.    ! super-ob sat wind data
-real(r8)           :: omi_no2_horiz_int           = 100.0_r8   ! horizontal interval for super-ob
-real(r8)           :: omi_no2_pres_int            = 2500.0_r8  ! pressure interval for super-ob
-logical            :: overwrite_ncep_omi_no2_qc   = .false.    ! true to overwrite NCEP QC (see instructions)
-!  AIRNOW CO specific parameters
-logical            :: superob_airnow_co           = .false.    ! super-ob sat wind data
-real(r8)           :: airnow_co_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
-real(r8)           :: airnow_co_pres_int          = 2500.0_r8  ! pressure interval for super-ob
-logical            :: overwrite_ncep_airnow_co_qc = .false.    ! true to overwrite NCEP QC (see instructions)
-!  AIRNOW O3 specific parameters
-logical            :: superob_airnow_o3           = .false.    ! super-ob sat wind data
-real(r8)           :: airnow_o3_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
-real(r8)           :: airnow_o3_pres_int          = 2500.0_r8  ! pressure interval for super-ob
-logical            :: overwrite_ncep_airnow_o3_qc = .false.    ! true to overwrite NCEP QC (see instructions)
-!  PANDA CO specific parameters
-logical            :: superob_panda_co            = .false.    ! super-ob sat wind data
-real(r8)           :: panda_co_horiz_int          = 100.0_r8   ! horizontal interval for super-ob
-real(r8)           :: panda_co_pres_int           = 2500.0_r8  ! pressure interval for super-ob
-logical            :: overwrite_ncep_panda_co_qc  = .false.    ! true to overwrite NCEP QC (see instructions)
-!  PANDA O3 specific parameters
-logical            :: superob_panda_o3            = .false.    ! super-ob sat wind data
-real(r8)           :: panda_o3_horiz_int          = 100.0_r8   ! horizontal interval for super-ob
-real(r8)           :: panda_o3_pres_int           = 2500.0_r8  ! pressure interval for super-ob
-logical            :: overwrite_ncep_panda_o3_qc  = .false.    ! true to overwrite NCEP QC (see instructions)
-!  PANDA PM25 specific parameters
-logical            :: superob_panda_pm25           = .false.    ! super-ob sat wind data
-real(r8)           :: panda_pm25_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
-real(r8)           :: panda_pm25_pres_int          = 2500.0_r8  ! pressure interval for super-ob
-logical            :: overwrite_ncep_panda_pm25_qc = .false.    ! true to overwrite NCEP QC (see instructions)
-! APM/JB ---
+!>@todo FIXME either implement these or remove them. 
+! NOTUSED ! APM/JB +++
+! NOTUSED !  MODIS AOD specific parameters
+! NOTUSED logical            :: superob_modis_aod           = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: modis_aod_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: modis_aod_pres_int          = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_modis_aod_qc = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  MOPITT CO specific parameters
+! NOTUSED logical            :: superob_mopitt_co           = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: mopitt_co_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: mopitt_co_pres_int          = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_mopitt_co_qc = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  IASI CO specific parameters
+! NOTUSED logical            :: superob_iasi_co             = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: iasi_co_horiz_int           = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: iasi_co_pres_int            = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_iasi_co_qc   = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  IASI O3 specific parameters
+! NOTUSED logical            :: superob_iasi_o3             = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: iasi_o3_horiz_int           = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: iasi_o3_pres_int            = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_iasi_o3_qc   = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  OMI NO2 specific parameters
+! NOTUSED logical            :: superob_omi_no2             = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: omi_no2_horiz_int           = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: omi_no2_pres_int            = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_omi_no2_qc   = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  AIRNOW CO specific parameters
+! NOTUSED logical            :: superob_airnow_co           = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: airnow_co_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: airnow_co_pres_int          = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_airnow_co_qc = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  AIRNOW O3 specific parameters
+! NOTUSED logical            :: superob_airnow_o3           = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: airnow_o3_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: airnow_o3_pres_int          = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_airnow_o3_qc = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  PANDA CO specific parameters
+! NOTUSED logical            :: superob_panda_co            = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: panda_co_horiz_int          = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: panda_co_pres_int           = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_panda_co_qc  = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  PANDA O3 specific parameters
+! NOTUSED logical            :: superob_panda_o3            = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: panda_o3_horiz_int          = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: panda_o3_pres_int           = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_panda_o3_qc  = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  PANDA PM25 specific parameters
+! NOTUSED logical            :: superob_panda_pm25           = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: panda_pm25_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: panda_pm25_pres_int          = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_panda_pm25_qc = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED ! APM/JB ---
 
 !  surface obs. specific parameters
 logical            :: overwrite_ncep_sfc_qc    = .false.  ! true to overwrite NCEP QC (see instructions)
@@ -179,41 +181,48 @@ namelist /wrf_obs_preproc_nml/file_name_input, file_name_output,      &
          trop_cyclone_extra, gpsro_extra, tc_sonde_radii, increase_bdy_error,      &
          maxobsfac, obsdistbdy, sat_wind_horiz_int, aircraft_horiz_int, &
          overwrite_obs_time, &
+         modis_aod_extra, mopitt_co_extra, iasi_co_extra, iasi_o3_extra, omi_no2_extra, &
+         airnow_co_extra, airnow_o3_extra, panda_co_extra, panda_o3_extra, panda_pm25_extra
+
+!>@todo FIXME either implement these or remove them. 
 ! APM/JB +++
-         superob_modis_aod, modis_aod_pres_int, modis_aod_extra, modis_aod_horiz_int, &
-         superob_mopitt_co, mopitt_co_pres_int, mopitt_co_extra, mopitt_co_horiz_int, &
-         superob_iasi_co, iasi_co_pres_int, iasi_co_extra, iasi_co_horiz_int, &
-         superob_iasi_o3, iasi_o3_pres_int, iasi_o3_extra, iasi_o3_horiz_int, &
-         superob_omi_no2, omi_no2_pres_int, omi_no2_extra, omi_no2_horiz_int, &
-         superob_airnow_co, airnow_co_pres_int, airnow_co_extra, airnow_co_horiz_int, &
-         superob_airnow_o3, airnow_o3_pres_int, airnow_o3_extra, airnow_o3_horiz_int, &
-         superob_panda_co, panda_co_pres_int, panda_co_extra, panda_co_horiz_int, &
-         superob_panda_o3, panda_o3_pres_int, panda_o3_extra, panda_o3_horiz_int, &
-         superob_panda_pm25, panda_pm25_pres_int, panda_pm25_extra, panda_pm25_horiz_int
+! NOTUSED          superob_modis_aod, modis_aod_pres_int, modis_aod_extra, modis_aod_horiz_int, &
+! NOTUSED          superob_mopitt_co, mopitt_co_pres_int, mopitt_co_extra, mopitt_co_horiz_int, &
+! NOTUSED          superob_iasi_co, iasi_co_pres_int, iasi_co_extra, iasi_co_horiz_int, &
+! NOTUSED          superob_iasi_o3, iasi_o3_pres_int, iasi_o3_extra, iasi_o3_horiz_int, &
+! NOTUSED          superob_omi_no2, omi_no2_pres_int, omi_no2_extra, omi_no2_horiz_int, &
+! NOTUSED          superob_airnow_co, airnow_co_pres_int, airnow_co_extra, airnow_co_horiz_int, &
+! NOTUSED          superob_airnow_o3, airnow_o3_pres_int, airnow_o3_extra, airnow_o3_horiz_int, &
+! NOTUSED          superob_panda_co, panda_co_pres_int, panda_co_extra, panda_co_horiz_int, &
+! NOTUSED          superob_panda_o3, panda_o3_pres_int, panda_o3_extra, panda_o3_horiz_int, &
+! NOTUSED          superob_panda_pm25, panda_pm25_pres_int, panda_pm25_extra, panda_pm25_horiz_int
 ! APM/JB ---
 
 ! ----------------------------------------------------------------------
 ! Declare other variables
 ! ----------------------------------------------------------------------
 
+character(len=80)       :: name, sgday, sgsec
+
 character(len=129)      :: obs_seq_read_format
-character(len=80)       :: name
 
 integer                 :: io, iunit, fid, var_id, obs_seq_file_id, num_copies, &
                            num_qc, num_obs, max_obs_seq, nx, ny, gday, gsec
+integer                 :: max_num_obs              = 600000   ! Largest number of obs in one sequence
 
 real(r8)                :: real_nx, real_ny
 
 logical                 :: file_exist, pre_I_format
 
 type(obs_sequence_type) :: seq_all, seq_rawin, seq_sfc, seq_acars, seq_satwnd, &
-                           seq_prof, seq_tc, seq_gpsro, seq_other
+                           seq_prof, seq_tc, seq_gpsro, seq_other, &
 
 ! APM/JB +++
                            seq_modis_aod, seq_mopitt_co, seq_iasi_co, seq_iasi_o3, &
                            seq_omi_no2, seq_airnow_co, seq_airnow_o3, &
                            seq_panda_co, seq_panda_o3, seq_panda_pm25
 ! APM/JB ---
+
 
 type(time_type)         :: anal_time
 
@@ -315,12 +324,6 @@ overwrite_obs_time, anal_time, seq_rawin, seq_sfc, seq_acars, seq_satwnd, &
 seq_tc, seq_gpsro, seq_modis_aod, seq_mopitt_co, seq_iasi_co, seq_iasi_o3, seq_omi_no2, &
 seq_airnow_co, seq_airnow_o3, seq_panda_co, seq_panda_o3, seq_panda_pm25, seq_other)
 ! APM/JB ---
-
-call read_and_parse_input_seq(file_name_input, real_nx, real_ny, obs_boundary, &
-include_sig_data, obs_pressure_top, obs_height_top, sfc_elevation_check, &
-sfc_elevation_tol, overwrite_ncep_sfc_qc, overwrite_ncep_satwnd_qc, &
-overwrite_obs_time, anal_time, seq_rawin, seq_sfc, seq_acars, seq_satwnd, & 
-seq_tc, seq_gpsro, seq_other)
 
 !  add supplimental rawinsonde observations from file
 call add_supplimental_obs(sonde_extra, seq_rawin, max_obs_seq, &
@@ -606,12 +609,12 @@ logical, intent(in)                    :: siglevel, sfcelev, overwrite_time
 real(r8), intent(in)                   :: obs_bdy, ptop, htop, elev_max
 
 integer  :: nloc, okind, dom_id
-logical  :: file_exist, last_obs, pass_checks, first_obs, &
-! APM/JB +++
-            modis_aod_obs_check, mopitt_co_obs_check, iasi_co_obs_check, &
-            iasi_o3_obs_check, omi_no2_obs_check, airnow_co_obs_check, airnow_o3_obs_check, &
-            panda_co_obs_check, panda_o3_obs_check, panda_pm25_obs_check
-! APM/JB ---
+logical  :: file_exist, last_obs, pass_checks, first_obs
+!! APM/JB +++
+!            modis_aod_obs_check, mopitt_co_obs_check, iasi_co_obs_check, &
+!            iasi_o3_obs_check, omi_no2_obs_check, airnow_co_obs_check, airnow_o3_obs_check, &
+!            panda_co_obs_check, panda_o3_obs_check, panda_pm25_obs_check
+!! APM/JB ---
 
 real(r8) :: xyz_loc(3), xloc, yloc
 real(r8) :: real_nx, real_ny
@@ -1219,7 +1222,7 @@ real(r8), intent(in)            :: elev_max
 
 integer  :: istatus(1)
 logical  :: rawinsonde_obs_check
-real(r8) :: xyz_loc(3), xmod(1), hsfc(1)
+real(r8) :: xyz_loc(3), hsfc(1)
 
 rawinsonde_obs_check = .true.
 xyz_loc = get_location(obs_loc)
@@ -1350,13 +1353,13 @@ type(obs_sequence_type), intent(inout) :: rawin_seq, sfc_seq, acars_seq, &
 ! APM/JB ---
 
 character(len=129)    :: qcmeta
-integer               :: fid, var_id, okind, dom_id, i, j
-logical               :: file_exist, last_obs, input_ncep_qc, &
-! APM/JB +++
-                         modis_aod_obs_check, mopitt_co_obs_check, iasi_co_obs_check, &
-                         iasi_o3_obs_check, omi_no2_obs_check, airnow_co_obs_check, airnow_o3_obs_check, &
-                         panda_co_obs_check, panda_o3_obs_check, panda_pm25_obs_check
-! APM/JB ---
+integer               :: fid, okind, dom_id, i, j
+logical               :: file_exist, last_obs, input_ncep_qc
+!! APM/JB +++
+!                         modis_aod_obs_check, mopitt_co_obs_check, iasi_co_obs_check, &
+!                         iasi_o3_obs_check, omi_no2_obs_check, airnow_co_obs_check, airnow_o3_obs_check, &
+!                         panda_co_obs_check, panda_o3_obs_check, panda_pm25_obs_check
+!! APM/JB ---
 real(r8), allocatable :: xland(:,:), qc(:)
 real(r8)              :: xyz_loc(3), xloc, yloc
 
@@ -2591,7 +2594,7 @@ real(r8), intent(in) :: xyz_loc(3), elev_max
 
 integer              :: istatus(1)
 logical              :: surface_obs_check
-real(r8)             :: xmod(1), hsfc(1)
+real(r8)             :: hsfc(1)
 
 surface_obs_check = .true.
 

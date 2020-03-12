@@ -3,9 +3,6 @@
 # DART software - Copyright UCAR. This open source software is provided
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
-#
-# $Id: da_create_dart_ncep_ascii_to_obs_input_nml_RT.ksh 13133 2019-04-25 21:47:54Z nancy@ucar.edu $
-#
 
 #########################################################################
 #
@@ -68,17 +65,20 @@ cat > input.nml << EOF
     max_gpsro_obs = 100000 /
 
 &preprocess_nml
-    input_obs_kind_mod_file = '${DART_DIR}/obs_kind/DEFAULT_obs_kind_mod.F90',
-    output_obs_kind_mod_file= '${DART_DIR}/obs_kind/obs_kind_mod.f90',
-    input_obs_def_mod_file  = '${DART_DIR}/obs_def/DEFAULT_obs_def_mod.F90',
-    output_obs_def_mod_file = '${DART_DIR}/obs_def/obs_def_mod.f90',
-    input_files             = '${DART_DIR}/obs_def/obs_def_reanalysis_bufr_mod.f90',
-                              '${DART_DIR}/obs_def/obs_def_altimeter_mod.f90',
-                              '${DART_DIR}/obs_def/obs_def_gps_mod.f90' /
+   input_obs_kind_mod_file     = '../../assimilation_code/modules/observations/DEFAULT_obs_kind_mod.F90',
+   output_obs_kind_mod_file    = '../../assimilation_code/modules/observations/obs_kind_mod.f90',
+   input_obs_def_mod_file      = '../../observations/forward_operators/DEFAULT_obs_def_mod.F90',
+   output_obs_def_mod_file     = '../../observations/forward_operators/obs_def_mod.f90',
+   input_files                 = '../../observations/forward_operators/obs_def_reanalysis_bufr_mod.f90',
+                                 '../../observations/forward_operators/obs_def_gps_mod.f90',
+                                 '../../observations/forward_operators/obs_def_eval_mod.f90'
+&preprocess_nml
+    input_obs_kind_mod_file = '${DART_DIR}/assimilation_code/modules/observation/DEFAULT_obs_kind_mod.F90',
+    output_obs_kind_mod_file= '${DART_DIR}/assimilation_code/modules/observation/obs_kind_mod.f90',
+    input_obs_def_mod_file  = '${DART_DIR}/observations/forward_operators/DEFAULT_obs_def_mod.F90',
+    output_obs_def_mod_file = '${DART_DIR}/observations/forward_operators/obs_def_mod.f90',
+    input_files             = '${DART_DIR}/observations/forward_operators/obs_def_reanalysis_bufr_mod.f90',
+                              '${DART_DIR}/observations/forward_operators/obs_def_altimeter_mod.f90',
+                              '${DART_DIR}/observations/forward_operators/obs_def_gps_mod.f90' /
 EOF
-#
-# <next few lines under version control, do not edit>
-# $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/models/wrf_chem/hybrid_scripts/da_create_dart_ncep_ascii_to_obs_input_nml_RT.ksh $
-# $Id: da_create_dart_ncep_ascii_to_obs_input_nml_RT.ksh 13133 2019-04-25 21:47:54Z nancy@ucar.edu $
-# $Revision: 13133 $
-# $Date: 2019-04-25 15:47:54 -0600 (Thu, 25 Apr 2019) $
+

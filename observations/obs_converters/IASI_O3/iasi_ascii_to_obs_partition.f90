@@ -1,96 +1,92 @@
-! Data Assimilation Research Testbed -- DART
-! Copyright 2004-2007, Data Assimilation Research Section
-! University Corporation for Atmospheric Research
-! Licensed under the GPL -- www.gpl.org/licenses/gpl.html
-
-program create_iasi_obs_sequence
-
-! <next few lines under version control, do not edit>
-! $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/observations/IASI_O3/iasi_ascii_to_obs_partition.f90 $
-! $Id: iasi_ascii_to_obs_partition.f90 13124 2019-04-25 00:53:18Z thoar@ucar.edu $
-! $Revision: 13124 $
-! $Date: 2019-04-24 18:53:18 -0600 (Wed, 24 Apr 2019) $
+! Copyright 2019 University Corporation for Atmospheric Research and 
+! Colorado Department of Public Health and Environment.
 !
+! Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
+! this file except in compliance with the License. You may obtain a copy of the 
+! License at      http://www.apache.org/licenses/LICENSE-2.0
+!
+! Unless required by applicable law or agreed to in writing, software distributed
+! under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
+! CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+! specific language governing permissions and limitations under the License.
+!
+! Development of this code utilized the RMACC Summit supercomputer, which is 
+! supported by the National Science Foundation (awards ACI-1532235 and ACI-1532236),
+! the University of Colorado Boulder, and Colorado State University.
+! The Summit supercomputer is a joint effort of the University of Colorado Boulder
+! and Colorado State University.
+
+program iasi_ascii_to_obs_partition
+
 !=============================================
 ! IASI O3 retrieval obs
 !=============================================
 !
-  use    utilities_mod, only : timestamp, 		&
-                               register_module, 		&
-                               open_file, 		&
-                               close_file, 		&
-                               initialize_utilities, 	&
-                               open_file, 		&
-                               close_file, 		&
-                               find_namelist_in_file,  	&
-                               check_namelist_read,    	&
-                               error_handler, 		&
-                               E_ERR,			& 
-                               E_WARN,			& 
-                               E_MSG, 			&
+  use    utilities_mod, only : timestamp, &
+                               register_module, &
+                               open_file, &
+                               close_file, &
+                               initialize_utilities, &
+                               open_file, &
+                               close_file, &
+                               find_namelist_in_file, &
+                               check_namelist_read, &
+                               error_handler, &
+                               E_ERR, & 
+                               E_WARN, & 
+                               E_MSG, &
                                E_DBG
   
-  use obs_sequence_mod, only : obs_sequence_type, 	&
-                               interactive_obs, 		&
-                               write_obs_seq, 		&
-                               interactive_obs_sequence,  &
-                               static_init_obs_sequence,  &
-                               init_obs_sequence,         &
-                               init_obs,                  &
-                               set_obs_values,            &
-                               set_obs_def,               &
-                               set_qc,                    &
-                               set_qc_meta_data,          &
-                               set_copy_meta_data,        &
-                               insert_obs_in_seq,         &
+  use obs_sequence_mod, only : obs_sequence_type, &
+                               interactive_obs, &
+                               write_obs_seq, &
+                               interactive_obs_sequence, &
+                               static_init_obs_sequence, &
+                               init_obs_sequence, &
+                               init_obs, &
+                               set_obs_values, &
+                               set_obs_def, &
+                               set_qc, &
+                               set_qc_meta_data, &
+                               set_copy_meta_data, &
+                               insert_obs_in_seq, &
                                obs_type
                       
-     use obs_def_mod,      only : obs_def_type, get_obs_def_time, read_obs_def,     &
-                             write_obs_def, destroy_obs_def,                   &
-                             interactive_obs_def, copy_obs_def,                &
-                             set_obs_def_time, set_obs_def_type_of_obs,               &
-                             set_obs_def_error_variance, set_obs_def_location, &
-                             set_obs_def_key, get_obs_def_location
+  use obs_def_mod, only : obs_def_type, &
+                          set_obs_def_time, &
+                          set_obs_def_type_of_obs, &
+                          set_obs_def_error_variance, &
+                          set_obs_def_location, &
+                          set_obs_def_key
 
-! use obs_def_mod, only      : set_obs_def_kind,          &
-!                              set_obs_def_location,      &
-!                              set_obs_def_time,          &
-!                              set_obs_def_key,           &
-!                              set_obs_def_error_variance,&
-!                              obs_def_type,              &
-!                              init_obs_def,              &
-!                              get_obs_kind
-  
-  use obs_def_iasi_O3_mod, only :  set_obs_def_iasi_o3
+  use obs_def_iasi_O3_mod, only : set_obs_def_iasi_o3
   
   use  assim_model_mod, only : static_init_assim_model
   
-  use location_mod, only  : location_type, 		&
-                            set_location
+  use location_mod, only : location_type, &
+                           set_location
   
-  use time_manager_mod, only : set_date, 			&
-                               set_calendar_type, 	&
-                               time_type, 		&
+  use time_manager_mod, only : set_date, &
+                               set_calendar_type, &
+                               time_type, &
                                get_time
 
-  use obs_kind_mod, only   : QTY_O3, 		&
-                             IASI_O3_RETRIEVAL,   &
-                             get_type_of_obs_from_menu
+  use obs_kind_mod, only : QTY_O3, &
+                           IASI_O3_RETRIEVAL, &
+                           get_type_of_obs_from_menu
 
-  use random_seq_mod, only : random_seq_type, 	&
-                             init_random_seq, 	&
+  use random_seq_mod, only : random_seq_type, &
+                             init_random_seq, &
                              random_uniform
 
-  use sort_mod, only       : index_sort
-
+  use sort_mod, only : index_sort
 
   implicit none
-!
+
 ! version controlled file description for error handling, do not edit                          
-  character(len=128), parameter :: &
-   source   = "$URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/observations/IASI_O3/iasi_ascii_to_obs_partition.f90 $", &
-   revision = "$Revision: 13124 $", &
-   revdate  = "$Date: 2019-04-24 18:53:18 -0600 (Wed, 24 Apr 2019) $"
+character(len=*), parameter :: source   = "iasi_ascii_to_obs_partition.f90"
+character(len=*), parameter :: revision = ''
+character(len=*), parameter :: revdate  = ''
 !
 ! add variables AFA
   type(obs_sequence_type) :: seq
@@ -221,16 +217,9 @@ program create_iasi_obs_sequence
   minute_lst=-9999
   second_lst=-9999 
 !
-  call find_namelist_in_file("input.nml", "create_iasi_obs_nml", iunit)
-  read(iunit, nml = create_iasi_obs_nml, iostat = io)
-  call check_namelist_read(iunit, io, "create_iasi_obs_nml")
-
-! Record the namelist values used for the run ...
-  call error_handler(E_MSG,'init_create_iasi_obs','create_iasi_obs_nml values are',' ',' ',' ')
-  write(     *     , nml=create_iasi_obs_nml)
 
 ! Record the current time, date, etc. to the logfile
-  call initialize_utilities('create_obs_sequence')
+  call initialize_utilities(source)
   call register_module(source,revision,revdate)
 
 ! Initialize the assim_model module, need this to get model
@@ -239,6 +228,15 @@ program create_iasi_obs_sequence
 
 ! Initialize the obs_sequence module
   call static_init_obs_sequence()
+
+  call find_namelist_in_file("input.nml", "create_iasi_obs_nml", iunit)
+  read(iunit, nml = create_iasi_obs_nml, iostat = io)
+  call check_namelist_read(iunit, io, "create_iasi_obs_nml")
+
+! Record the namelist values used for the run ...
+  call error_handler(E_MSG,'init_create_iasi_obs','create_iasi_obs_nml values are',' ',' ',' ')
+  write(     *     , nml=create_iasi_obs_nml)
+
 
 ! Initialize an obs_sequence structure
   call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)
@@ -1249,7 +1247,9 @@ program create_iasi_obs_sequence
 ! Clean up
 !-----------------------------------------------------------------------------
   call timestamp(string1=source,string2=revision,string3=revdate,pos='end')
-end program create_iasi_obs_sequence
+end program iasi_ascii_to_obs_partition
+
+
 !
     subroutine mat_prd(A_mat,B_mat,C_mat,na,ma,nb,mb)
 !
@@ -1445,3 +1445,4 @@ end program create_iasi_obs_sequence
       enddo
       calc_greg_sec=calc_greg_sec+sec
    end function calc_greg_sec
+

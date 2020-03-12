@@ -4,8 +4,6 @@
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
 #
-# DART $Id: mkmf_perturb_chem_icbc_CORR_RT_MA 13154 2019-05-02 23:08:09Z thoar@ucar.edu $
-#
 # usage: mkmf_perturb_chem_icbc_CORR_RT_MA [ -mpi | -nompi ]
 #
 # without any args (or with -nompi), builds without mpi libraries, and it will run
@@ -54,14 +52,9 @@ endif
 # remove temp file and now really call mkmf to generate makefile
 rm -f ${pathFile}.back
 
-    ../../../../../../mkmf/mkmf -p ${EXENAME} \
--t  ../../../../../../mkmf/mkmf.template \
+    ../../../../../../build_templates/mkmf -p ${EXENAME} \
+-t  ../../../../../../build_templates/mkmf.template \
 -a "../../../../../.." ${wrapper_arg} ${pathFile}
 
 exit $status
-
-# <next few lines under version control, do not edit>
-# $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/models/wrf_chem/run_scripts/RUN_PERT_CHEM/ICBC_PERT/work/mkmf_perturb_chem_icbc_CORR_RT_MA $
-# $Revision: 13154 $
-# $Date: 2019-05-02 17:08:09 -0600 (Thu, 02 May 2019) $
 

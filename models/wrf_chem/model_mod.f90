@@ -1,36 +1,28 @@
-! DART software - Copyright UCAR. This open source software is provided
-! by UCAR, "as is", without charge, subject to all terms of use at
-! http://www.image.ucar.edu/DAReS/DART/DART_download
+! Copyright 2019 University Corporation for Atmospheric Research and 
+! Colorado Department of Public Health and Environment.
 !
-! $Id$
+! Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
+! this file except in compliance with the License. You may obtain a copy of the 
+! License at      http://www.apache.org/licenses/LICENSE-2.0
+!
+! Unless required by applicable law or agreed to in writing, software distributed
+! under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
+! CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+! specific language governing permissions and limitations under the License.
+!
+! Development of this code utilized the RMACC Summit supercomputer, which is 
+! supported by the National Science Foundation (awards ACI-1532235 and ACI-1532236),
+! the University of Colorado Boulder, and Colorado State University.
+! The Summit supercomputer is a joint effort of the University of Colorado Boulder
+! and Colorado State University.
 
-!> @mainpage Remote Memory Access version of DART code.
-!>
-!> Forward operator, vertical conversion
-!>
-!> WRF
-!>
-!> For distributed phb array see distributed_phb_model_mod.f90
-!> \todo To do list
-!> @author dart@ucar.edu
-!>
-!> \subpage test
-!> 
-!> \page test
 
-!> WRF model mod
 module model_mod
 
 
-! Assimilation interface for WRF model
-!> \defgroup wrf model_mod
-!> Model mod
-!> 
-!> Model mod for WRF
-!> @{
 !-----------------------------------------------------------------------
 !
-!     interface for WRF
+!     interface for WRF_CHEM
 !
 !-----------------------------------------------------------------------
 !---------------- m o d u l e   i n f o r m a t i o n ------------------
@@ -87,7 +79,7 @@ use      obs_kind_mod,   only : QTY_U_WIND_COMPONENT, QTY_V_WIND_COMPONENT, &
                                 QTY_VORTEX_PMIN, QTY_VORTEX_WMAX, &
                                 QTY_SKIN_TEMPERATURE, QTY_LANDMASK, &
                                 get_index_for_quantity, get_num_quantities, &
-                                get_name_for_quantity, get_obs_kind_var_type
+                                get_name_for_quantity
 ! APM/AFAJ ++
 ! Mods for chemistry
 use      obs_kind_mod, only : QTY_SO2, QTY_O3, QTY_CO, QTY_NO, QTY_NO2, QTY_HNO3, QTY_HNO4, &
@@ -213,10 +205,9 @@ public :: wrf_dom, wrf_static_data_for_dart
 
 !-----------------------------------------------------------------------
 ! version controlled file description for error handling, do not edit
-character(len=256), parameter :: source   = &
-   "$URL$"
-character(len=32 ), parameter :: revision = "$Revision$"
-character(len=128), parameter :: revdate  = "$Date$"
+character(len=*), parameter :: source   = 'wrf_chem/model_mod.f90'
+character(len=*), parameter :: revision = ''
+character(len=*), parameter :: revdate  = ''
 
 ! miscellaneous
 integer, parameter :: max_state_variables = 100
@@ -416,17 +407,9 @@ real(r8) :: stdlon,truelat1,truelat2 !,latinc,loninc
 
 ! have a single, module global error string (rather than 
 ! replicate it in each subroutine and use up more stack space)
-! KRF orig master
-!character(len=129) :: errstring, msgstring2, msgstring3
 
-!KRF modified Mizzi
 character(len=512) :: errstring, msgstring2, msgstring3
-!character(len=512) :: msgstring1, msgstring2, msgstring3
 !
-! APM/AFAJ ++ 
-   integer  :: kaod, zk_aod
-   real(r8) :: aod1,aod2,aod3,aod4,aod5,ang
-! APM/AFAJ --
 
 contains
 
@@ -609,7 +592,7 @@ WRFDomains : do id=1,num_domains
 !-------------------------------------------------------
 ! read WRF dimensions
 !-------------------------------------------------------
-   call read_wrf_dimensions(ncid, wrf_filename, &
+   call read_wrf_dimensions(ncid, &
                                  wrf%dom(id)%bt, wrf%dom(id)%bts, &
                                  wrf%dom(id)%sn, wrf%dom(id)%sns, &
                                  wrf%dom(id)%we, wrf%dom(id)%wes, &
@@ -795,7 +778,7 @@ WRFDomains : do id=1,num_domains
 ! actual location in state variable table
          my_index =  wrf%dom(id)%var_index_list(ind)
          wrf%dom(id)%var_type(ind) = ind ! types are just the order for this domain
-         wrf%dom(id)%dart_kind(ind) = get_raw_obs_kind_index(trim(wrf_state_variables(2,my_index)))
+         wrf%dom(id)%dart_kind(ind) = get_index_for_quantity(trim(wrf_state_variables(2,my_index)))
 !      
          if ( debug ) then
             print *,'dart kind identified: ',trim(wrf_state_variables(2,my_index)),' ', &
@@ -836,18 +819,23 @@ WRFDomains : do id=1,num_domains
             wrf%dom(id)%clamp_or_fail(ind)
          endif
 !      
-         write(msgstring1, '(A,I4,2A)') 'state vector array ', ind, ' is ', &
+         write(errstring, '(A,I4,2A)') 'state vector array ', ind, ' is ', &
          trim(wrf_state_variables(1,my_index))
-         call error_handler(E_MSG, 'static_init_model: ', msgstring1)
+         call error_handler(E_ERR,'model_mod.f90::static_init_model', errstring, &
+                      source, revision, revdate)
       enddo
       call nc_check(nf90_close(ncid_emiss_chemi),'static_init_model','close wrfchemi_d0'//idom)
       print *, 'APM: end of chemi variables'
+!
+! Read emiss firechemi variables
+      do ind = wrf%dom(id)%number_of_conv_variables + wrf%dom(id)%number_of_emiss_chemi_variables + 1, &
+      wrf%dom(id)%number_of_wrf_variables
 !
 ! actual location in state variable table
          my_index =  wrf%dom(id)%var_index_list(ind)
 !      
          wrf%dom(id)%var_type(ind) = ind ! types are just the order for this domain
-         wrf%dom(id)%dart_kind(ind) = get_raw_obs_kind_index(trim(wrf_state_variables(2,my_index)))
+         wrf%dom(id)%dart_kind(ind) = get_index_for_quantity(trim(wrf_state_variables(2,my_index)))
 !      
          if ( debug ) then
             print*,'dart kind identified: ',trim(wrf_state_variables(2,my_index)),' ', &
@@ -888,9 +876,9 @@ WRFDomains : do id=1,num_domains
             wrf%dom(id)%clamp_or_fail(ind)
          endif
 !      
-         write(msgstring1, '(A,I4,2A)') 'state vector array ', ind, ' is ', &
+         write(msgstring2, '(A,I4,2A)') 'state vector array ', ind, ' is ', &
          trim(wrf_state_variables(1,my_index))
-         call error_handler(E_MSG, 'static_init_model: ', msgstring1)
+         call error_handler(E_MSG, 'static_init_model: ', text=msgstring2)
       enddo
       call nc_check(nf90_close(ncid_emiss_firechemi),'static_init_model', &
       'close wrffirechemi_d0'//idom)
@@ -1268,6 +1256,10 @@ real(r8)            :: dx,dy,dxm,dym,dx_u,dxm_u,dy_v,dym_v
 integer             :: id
 logical             :: surf_var
 real(r8) :: a1(ens_size) 
+! APM/AFAJ ++ 
+   integer  :: kaod, zk_aod
+   real(r8) :: aod1(ens_size),aod2(ens_size),aod3(ens_size),aod4(ens_size),aod5(ens_size),ang(ens_size)
+! APM/AFAJ --
 real(r8) :: zloc(ens_size)
 integer  :: k(ens_size)
 real(r8) :: dz(ens_size), dzm(ens_size)
@@ -3066,7 +3058,7 @@ else
    ! Interpolation for the O3 field at level k
             ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_o3)
             iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_o3)
-            ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_o3)
+            ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_o3)
             iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_o3)
 
             x_ill = get_state(ill, state_handle)
@@ -3084,7 +3076,7 @@ else
    ! Interpolation for the O3 field at level k+1
             ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_o3)
             iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_o3)
-            ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_o3)
+            ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_o3)
             iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_o3)
 
             x_ill = get_state(ill, state_handle)
@@ -3130,7 +3122,7 @@ else
    ! Interpolation for the CO field at level k
             ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_co)
             iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_co)
-            ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_co)
+            ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_co)
             iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_co)
 
             x_ill = get_state(ill, state_handle)
@@ -3151,7 +3143,7 @@ else
    ! Interpolation for the CO field at level k+1
             ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_co)
             iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_co)
-            ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_co)
+            ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_co)
             iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_co)
 
             x_ill = get_state(ill, state_handle)
@@ -3190,7 +3182,7 @@ else
               wrf%dom(id)%type_tauaer3 >= 0 .and. wrf%dom(id)%type_tauaer4 >= 0) then
 !
             zk_aod = 32 !wrf%dom(id)%bt ! KRF hard coded wrf levels - can this be changed to uniquek loop?
-            aod5 = 0.0_r8
+            aod5(:) = 0.0_r8
 !
 ! Verrtical integration loop
             do kaod = 1, zk_aod
@@ -3212,14 +3204,14 @@ else
                  ill = get_dart_vector_index(ll(1), ll(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer1)
                  iul = get_dart_vector_index(ul(1), ul(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer1)
                  ilr = get_dart_vector_index(lr(1), lr(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer1)
-                 iur = get_dart_vector_index(ur(1), ur(2), koad, domain_id(id),wrf%dom(id)%type_tauaer1)
+                 iur = get_dart_vector_index(ur(1), ur(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer1)
 
                  x_ill = get_state(ill, state_handle)
                  x_iul = get_state(iul, state_handle)
                  x_ilr = get_state(ilr, state_handle)
                  x_iur = get_state(iur, state_handle)
 
-                 aod1 = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
+                 aod1(:) = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
                else
                  write(*,*) 'APM TAUER1 Failed bounds check: kaod,zk_aod',kaod,zk_aod
                endif
@@ -3236,14 +3228,14 @@ else
                   ill = get_dart_vector_index(ll(1), ll(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer2)
                   iul = get_dart_vector_index(ul(1), ul(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer2)
                   ilr = get_dart_vector_index(lr(1), lr(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer2)
-                  iur = get_dart_vector_index(ur(1), ur(2), koad, domain_id(id),wrf%dom(id)%type_tauaer2)
+                  iur = get_dart_vector_index(ur(1), ur(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer2)
  
                   x_ill = get_state(ill, state_handle)
                   x_iul = get_state(iul, state_handle)
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
 
-                  aod2 = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
+                  aod2(:) = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
                else
                   write(*,*) 'APM TAUER2 Failed bounds check: kaod,zk_aod',kaod,zk_aod
                endif
@@ -3260,13 +3252,14 @@ else
                   ill = get_dart_vector_index(ll(1), ll(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer3)
                   iul = get_dart_vector_index(ul(1), ul(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer3)
                   ilr = get_dart_vector_index(lr(1), lr(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer3)
-                  iur = get_dart_vector_index(ur(1), ur(2), koad, domain_id(id),wrf%dom(id)%type_tauaer3)
+                  iur = get_dart_vector_index(ur(1), ur(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer3)
 
                   x_ill = get_state(ill, state_handle)
                   x_iul = get_state(iul, state_handle)
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
-                  aod3 = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
+
+                  aod3(:) = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
                else
                   write(*,*) 'APM TAUER3 Failed bounds check: kaod,zk_aod',kaod,zk_aod
                endif
@@ -3283,23 +3276,26 @@ else
                   ill = get_dart_vector_index(ll(1), ll(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer4)
                   iul = get_dart_vector_index(ul(1), ul(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer4)
                   ilr = get_dart_vector_index(lr(1), lr(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer4)
-                  iur = get_dart_vector_index(ur(1), ur(2), koad, domain_id(id),wrf%dom(id)%type_tauaer4)
+                  iur = get_dart_vector_index(ur(1), ur(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer4)
 
                   x_ill = get_state(ill, state_handle)
                   x_iul = get_state(iul, state_handle)
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
-                  aod4 =  dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
+
+                  aod4(:) =  dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
                else
                   write(*,*) 'APM TAUER4 Failed bounds check: kaod,zk_aod',kaod,zk_aod
                endif
 !
-               where ( (aod1 > 0.0_r8) .and. (aod4 > 0.0_r8) ) then
-                  ang = log(aod1/aod4)/1.2030
-                  aod5 = aod5 + aod2*((0.7273)**ang)
-               elsewhere
-                  write(*,*) 'APM AOD conversion failed ',aod1,aod2,aod3,aod4
-               endwhere
+               do e = 1, ens_size
+                  if ( (aod1(e) > 0.0_r8) .and. (aod4(e) > 0.0_r8) ) then
+                    ang(e) = log(aod1(e)/aod4(e))/1.2030
+                    aod5(e) = aod5(e) + aod2(e)*((0.7273)**ang(e))
+                  else
+                     write(*,*) 'APM AOD conversion failed',aod1,aod2,aod3,aod4 
+                  end if
+               enddo
             enddo
             fld(1,:) = aod5
          endif
@@ -3316,7 +3312,7 @@ else
 !         print *, "APM:j ",boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_no2)
 !         print *, "APM:k ",boundsCheck( k, .false.,                id, dim=3, type=wrf%dom(id)%type_no2)
 
-   do uk 1, count
+   do uk = 1, count
    ! Check to make sure retrieved integer gridpoints are in valid range
          if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_no2 ) .and. &
               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_no2 ) .and. &
@@ -3332,7 +3328,7 @@ else
    ! Interpolation for the NO2 field at level k
             ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_no2)
             iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_no2)
-            ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_no2)
+            ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_no2)
             iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_no2)
 
             x_ill = get_state(ill, state_handle)
@@ -3349,7 +3345,7 @@ else
    ! Interpolation for the NO2 field at level k+1
             ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
             iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
-            ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
+            ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
             iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
 
             x_ill = get_state(ill, state_handle)
@@ -3388,7 +3384,7 @@ else
              ! Interpolation for the SO2 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so2)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so2)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_so2)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so2)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so2)
 
                x_ill = get_state(ill, state_handle)
@@ -3405,7 +3401,7 @@ else
            ! Interpolation for the SO2 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so2)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so2)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_so2)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so2)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so2)
 
                x_ill = get_state(ill, state_handle)
@@ -3474,7 +3470,7 @@ else
            ! Interpolation for the BC1 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc1)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc1)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_bc1)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc1)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc1)
 
                x_ill = get_state(ill, state_handle)
@@ -3491,7 +3487,7 @@ else
            ! Interpolation for the BC1 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc1)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc1)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_bc1)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc1)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc1)
 
                x_ill = get_state(ill, state_handle)
@@ -3561,7 +3557,7 @@ else
            ! Interpolation for the BC2 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc2)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc2)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_bc2)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc2)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc2)
 
                x_ill = get_state(ill, state_handle)
@@ -3578,7 +3574,7 @@ else
            ! Interpolation for the BC2 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc2)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc2)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_bc2)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc2)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc2)
 
                x_ill = get_state(ill, state_handle)
@@ -3646,7 +3642,7 @@ else
            ! Interpolation for the OC1 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc1)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc1)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_oc1)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc1)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc1)
 
                x_ill = get_state(ill, state_handle)
@@ -3663,7 +3659,7 @@ else
            ! Interpolation for the OC1 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc1)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc1)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_oc1)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc1)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc1)
 
                x_ill = get_state(ill, state_handle)
@@ -3732,7 +3728,7 @@ else
            ! Interpolation for the OC2 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc2)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc2)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_oc2)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc2)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc2)
 
                x_ill = get_state(ill, state_handle)
@@ -3749,7 +3745,7 @@ else
            ! Interpolation for the OC2 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc2)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc2)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_oc2)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc2)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc2)
 
                x_ill = get_state(ill, state_handle)
@@ -3818,7 +3814,7 @@ else
            ! Interpolation for the DST01 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst01)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst01)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_dst01)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst01)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst01)
 
                x_ill = get_state(ill, state_handle)
@@ -3836,7 +3832,7 @@ else
            ! Interpolation for the DST01 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst01)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst01)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_dst01)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst01)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst01)
 
                x_ill = get_state(ill, state_handle)
@@ -3902,7 +3898,7 @@ else
            ! Interpolation for the DST02 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst02)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst02)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_dst02)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst02)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst02)
 
                x_ill = get_state(ill, state_handle)
@@ -3920,7 +3916,7 @@ else
            ! Interpolation for the DST02 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst02)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst02)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_dst02)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst02)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst02)
     
                x_ill = get_state(ill, state_handle)
@@ -3985,7 +3981,7 @@ else
            ! Interpolation for the DST03 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst03)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst03)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_dst03)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst03)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst03)
 
                x_ill = get_state(ill, state_handle)
@@ -4003,7 +3999,7 @@ else
            ! Interpolation for the DST01 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst03)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst03)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_dst03)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst03)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst03)
     
                x_ill = get_state(ill, state_handle)
@@ -4069,7 +4065,7 @@ else
            ! Interpolation for the DST04 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst04)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst04)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_dst04)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst04)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst04)
 
                x_ill = get_state(ill, state_handle)
@@ -4087,7 +4083,7 @@ else
            ! Interpolation for the DST04 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst04)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst04)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_dst04)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst04)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst04)
     
                x_ill = get_state(ill, state_handle)
@@ -4153,7 +4149,7 @@ else
            ! Interpolation for the DST05 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst05)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst05)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_dst05)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst05)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst05)
 
                x_ill = get_state(ill, state_handle)
@@ -4171,7 +4167,7 @@ else
            ! Interpolation for the DST05 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst05)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst05)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_dst05)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst05)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst05)
 
                x_ill = get_state(ill, state_handle)
@@ -4239,7 +4235,7 @@ else
            ! Interpolation for the SSLT01 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt01)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt01)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_sslt01)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt01)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt01)
 
                x_ill = get_state(ill, state_handle)
@@ -4257,7 +4253,7 @@ else
            ! Interpolation for the SSLT01 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt01)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt01)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt01)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt01)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt01)
 
                x_ill = get_state(ill, state_handle)
@@ -4323,7 +4319,7 @@ else
            ! Interpolation for the SSLT02 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt02)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt02)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_sslt02)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt02)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt02)
 
                x_ill = get_state(ill, state_handle)
@@ -4341,7 +4337,7 @@ else
            ! Interpolation for the SSLT02 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt02)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt02)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt02)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt02)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt02)
 
                x_ill = get_state(ill, state_handle)
@@ -4407,7 +4403,7 @@ else
            ! Interpolation for the SSLT03 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt03)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt03)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_sslt03)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt03)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt03)
 
                x_ill = get_state(ill, state_handle)
@@ -4425,7 +4421,7 @@ else
            ! Interpolation for the SSLT03 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt03)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt03)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt03)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt03)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt03)
 
                x_ill = get_state(ill, state_handle)
@@ -4492,7 +4488,7 @@ else
            ! Interpolation for the SSLT04 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt04)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt04)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_sslt04)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt04)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt04)
 
                x_ill = get_state(ill, state_handle)
@@ -4510,7 +4506,7 @@ else
            ! Interpolation for the SSLT04 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt04)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt04)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt04)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt04)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt04)
 
                x_ill = get_state(ill, state_handle)
@@ -4579,7 +4575,7 @@ else
            ! Interpolation for the SO4 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so4)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so4)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_so4)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so4)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so4)
 
                x_ill = get_state(ill, state_handle)
@@ -4597,7 +4593,7 @@ else
            ! Interpolation for the SO4 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so4)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so4)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_so4)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so4)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so4)
 
                x_ill = get_state(ill, state_handle)
@@ -4665,7 +4661,7 @@ else
            ! Interpolation for the PM25 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm25)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm25)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_pm25)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm25)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm25)
 
                x_ill = get_state(ill, state_handle)
@@ -4683,7 +4679,7 @@ else
            ! Interpolation for the PM25 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm25)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm25)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_pm25)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm25)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm25)
 
                x_ill = get_state(ill, state_handle)
@@ -4751,7 +4747,7 @@ else
            ! Interpolation for the PM10 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm10)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm10)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk), domain_id(id),wrf%dom(id)%type_pm10)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm10)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm10)
 
                x_ill = get_state(ill, state_handle)
@@ -4769,7 +4765,7 @@ else
            ! Interpolation for the PM10 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm10)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm10)
-               ilr = get_dart_vector_index(lr(1), lr(2), unqiuek(uk)+1, domain_id(id),wrf%dom(id)%type_pm10)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm10)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm10)
 
                x_ill = get_state(ill, state_handle)
@@ -8426,7 +8422,6 @@ istatus2 = 0
 
 base_array = get_location(base_loc) 
 base_which = nint(query_location(base_loc))
-base_obs_kind = get_obs_kind_var_type(base_type)
 
 if (vertical_localization_on()) then
    if (base_which /= wrf%dom(1)%localization_coord) then
@@ -8477,355 +8472,6 @@ if (istatus1 == 0) then
             dist(k) = get_dist(base_loc, local_loc, base_type, loc_qtys(t_ind))
          endif
       endif
-
-! APM/AFAJ/LXL +++
-! Chem/Met interaction mods:
-!     When commented:   Met obs update Chem and Met state variables
-!                       and Chem obs update Chem and Met state variables.
-!
-!     When uncommented: Met obs update only Met state variables
-!                       and Chem obs update only Chem state variables.
-!
-! Variable locaization
-      if ( use_varloc ) then
-         if ((base_obs_kind.ne.QTY_O3)       .and. &
-         (base_obs_kind.ne.QTY_CO)           .and. &
-         (base_obs_kind.ne.QTY_NO)           .and. &
-         (base_obs_kind.ne.QTY_AOD)) then
-!
-! Met obs go here
-            if ((obs_kind(t_ind).ne.QTY_SO2)         .and. &
-            (obs_kind(t_ind).ne.QTY_O3)              .and. &
-            (obs_kind(t_ind).ne.QTY_CO)              .and. &
-            (obs_kind(t_ind).ne.QTY_NO)              .and. &
-            (obs_kind(t_ind).ne.QTY_NO2)             .and. &
-            (obs_kind(t_ind).ne.QTY_HNO3)            .and. &
-            (obs_kind(t_ind).ne.QTY_HNO4)            .and. &
-            (obs_kind(t_ind).ne.QTY_N2O5)            .and. &
-            (obs_kind(t_ind).ne.QTY_PAN)             .and. &
-            (obs_kind(t_ind).ne.QTY_MEK)             .and. &
-            (obs_kind(t_ind).ne.QTY_ALD)             .and. &
-            (obs_kind(t_ind).ne.QTY_CH3O2)           .and. &
-            (obs_kind(t_ind).ne.QTY_C3H8)            .and. &
-            (obs_kind(t_ind).ne.QTY_C2H6)            .and. &
-            (obs_kind(t_ind).ne.QTY_ACET)            .and. &
-            (obs_kind(t_ind).ne.QTY_HCHO)            .and. &
-            (obs_kind(t_ind).ne.QTY_C2H4)            .and. &
-            (obs_kind(t_ind).ne.QTY_C3H6)            .and. &
-            (obs_kind(t_ind).ne.QTY_TOL)             .and. &
-            (obs_kind(t_ind).ne.QTY_MVK)             .and. &
-            (obs_kind(t_ind).ne.QTY_BIGALK)          .and. &
-            (obs_kind(t_ind).ne.QTY_ISOPR)           .and. &
-            (obs_kind(t_ind).ne.QTY_MACR)            .and. &
-            (obs_kind(t_ind).ne.QTY_GLYALD)          .and. &
-            (obs_kind(t_ind).ne.QTY_C10H16)          .and. &
-            (obs_kind(t_ind).ne.QTY_AOD)             .and. &
-            (obs_kind(t_ind).ne.QTY_BC1)             .and. &
-            (obs_kind(t_ind).ne.QTY_BC2)             .and. &
-            (obs_kind(t_ind).ne.QTY_OC1)             .and. &
-            (obs_kind(t_ind).ne.QTY_OC2)             .and. &
-            (obs_kind(t_ind).ne.QTY_DMS)             .and. &
-            (obs_kind(t_ind).ne.QTY_DST01)           .and. &
-            (obs_kind(t_ind).ne.QTY_DST02)           .and. &
-            (obs_kind(t_ind).ne.QTY_DST03)           .and. &
-            (obs_kind(t_ind).ne.QTY_DST04)           .and. &
-            (obs_kind(t_ind).ne.QTY_DST05)           .and. &
-            (obs_kind(t_ind).ne.QTY_SO4)             .and. &
-            (obs_kind(t_ind).ne.QTY_SSLT01)          .and. &
-            (obs_kind(t_ind).ne.QTY_SSLT02)          .and. &
-            (obs_kind(t_ind).ne.QTY_SSLT03)          .and. &
-            (obs_kind(t_ind).ne.QTY_SSLT04)          .and. &
-            (obs_kind(t_ind).ne.QTY_TAUAER1)         .and. &
-            (obs_kind(t_ind).ne.QTY_TAUAER2)         .and. &
-            (obs_kind(t_ind).ne.QTY_TAUAER3)         .and. &
-            (obs_kind(t_ind).ne.QTY_TAUAER4)         .and. &
-            (obs_kind(t_ind).ne.QTY_PM10)            .and. &
-            (obs_kind(t_ind).ne.QTY_PM25)            .and. &
-            (obs_kind(t_ind).ne.QTY_E_CO)            .and. &
-            (obs_kind(t_ind).ne.QTY_E_NO)            .and. &
-            (obs_kind(t_ind).ne.QTY_EBU_CO)          .and. &
-            (obs_kind(t_ind).ne.QTY_EBU_NO)          .and. &
-            (obs_kind(t_ind).ne.QTY_EBU_OC)          .and. &
-            (obs_kind(t_ind).ne.QTY_EBU_BC)          .and. &
-            (obs_kind(t_ind).ne.QTY_EBU_c2h4)        .and. &
-            (obs_kind(t_ind).ne.QTY_EBU_ch2o)        .and. &
-            (obs_kind(t_ind).ne.QTY_EBU_ch3oh)) then
-!
-! Met state variable go here
-               dist(k) = dist(k)
-            else
-!
-! Chem state variable go here
-               dist(k) = 1.0e9
-            endif
-!
-! Chem obs go here
-         else if ((obs_kind(t_ind).eq.QTY_SO2)    .or. &
-         (obs_kind(t_ind).eq.QTY_O3)              .or. &
-         (obs_kind(t_ind).eq.QTY_CO)              .or. &
-         (obs_kind(t_ind).eq.QTY_NO)              .or. &
-         (obs_kind(t_ind).eq.QTY_NO2)             .or. &
-         (obs_kind(t_ind).eq.QTY_HNO3)            .or. &
-         (obs_kind(t_ind).eq.QTY_HNO4)            .or. &
-         (obs_kind(t_ind).eq.QTY_N2O5)            .or. &
-         (obs_kind(t_ind).eq.QTY_PAN)             .or. &
-         (obs_kind(t_ind).eq.QTY_MEK)             .or. &
-         (obs_kind(t_ind).eq.QTY_ALD)             .or. &
-         (obs_kind(t_ind).eq.QTY_CH3O2)           .or. &
-         (obs_kind(t_ind).eq.QTY_C3H8)            .or. &
-         (obs_kind(t_ind).eq.QTY_C2H6)            .or. &
-         (obs_kind(t_ind).eq.QTY_ACET)            .or. &
-         (obs_kind(t_ind).eq.QTY_HCHO)            .or. &
-         (obs_kind(t_ind).eq.QTY_C2H4)            .or. &
-         (obs_kind(t_ind).eq.QTY_C3H6)            .or. &
-         (obs_kind(t_ind).eq.QTY_TOL)             .or. &
-         (obs_kind(t_ind).eq.QTY_MVK)             .or. &
-         (obs_kind(t_ind).eq.QTY_BIGALK)          .or. &
-         (obs_kind(t_ind).eq.QTY_ISOPR)           .or. &
-         (obs_kind(t_ind).eq.QTY_MACR)            .or. &
-         (obs_kind(t_ind).eq.QTY_GLYALD)          .or. &
-         (obs_kind(t_ind).eq.QTY_C10H16)          .or. &
-         (obs_kind(t_ind).eq.QTY_AOD)             .or. &
-         (obs_kind(t_ind).eq.QTY_BC1)             .or. &
-         (obs_kind(t_ind).eq.QTY_BC2)             .or. &
-         (obs_kind(t_ind).eq.QTY_OC1)             .or. &
-         (obs_kind(t_ind).eq.QTY_OC2)             .or. &
-         (obs_kind(t_ind).eq.QTY_DMS)             .or. &
-         (obs_kind(t_ind).eq.QTY_DST01)           .or. &
-         (obs_kind(t_ind).eq.QTY_DST02)           .or. &
-         (obs_kind(t_ind).eq.QTY_DST03)           .or. &
-         (obs_kind(t_ind).eq.QTY_DST04)           .or. &
-         (obs_kind(t_ind).eq.QTY_DST05)           .or. &
-         (obs_kind(t_ind).eq.QTY_SO4)             .or. &
-         (obs_kind(t_ind).eq.QTY_SSLT01)          .or. &
-         (obs_kind(t_ind).eq.QTY_SSLT02)          .or. &
-         (obs_kind(t_ind).eq.QTY_SSLT03)          .or. &
-         (obs_kind(t_ind).eq.QTY_SSLT04)          .or. &
-         (obs_kind(t_ind).eq.QTY_TAUAER1)         .or. &
-         (obs_kind(t_ind).eq.QTY_TAUAER2)         .or. &
-         (obs_kind(t_ind).eq.QTY_TAUAER3)         .or. &
-         (obs_kind(t_ind).eq.QTY_TAUAER4)         .or. &
-         (obs_kind(t_ind).eq.QTY_PM10)            .or. &
-         (obs_kind(t_ind).eq.QTY_PM25)            .or. &
-         (obs_kind(t_ind).eq.QTY_E_CO)            .or. &
-         (obs_kind(t_ind).ne.QTY_E_NO)            .or. &
-         (obs_kind(t_ind).eq.QTY_EBU_CO)          .or. &
-         (obs_kind(t_ind).ne.QTY_EBU_NO)          .or. &
-         (obs_kind(t_ind).ne.QTY_EBU_OC)          .or. &
-         (obs_kind(t_ind).ne.QTY_EBU_BC)          .or. &
-         (obs_kind(t_ind).ne.QTY_EBU_c2h4)        .or. &
-         (obs_kind(t_ind).ne.QTY_EBU_ch2o)        .or. &
-         (obs_kind(t_ind).ne.QTY_EBU_ch3oh)) then
-!
-! Chem state variable go here
-            dist(k) = dist(k)
-         else
-!
-! Met state variable go here
-            dist(k) = 1.0e9
-         endif
-      endif
-!
-! Independent assimilaiton of chem obs
-! APM - All Chem Obs must be checked in this statement
-      if (use_indep_chem_assim) then
-         if ((base_obs_kind.eq.QTY_O3)       .or. &
-         (base_obs_kind.eq.QTY_CO)           .or. &
-         (base_obs_kind.eq.QTY_NO)           .or. &
-         (base_obs_kind.eq.QTY_NO2)          .or. &
-         (base_obs_kind.eq.QTY_HNO3)         .or. &
-         (base_obs_kind.eq.QTY_HNO4)         .or. &
-         (base_obs_kind.eq.QTY_N2O5)         .or. &
-         (base_obs_kind.eq.QTY_PAN)          .or. &
-         (base_obs_kind.eq.QTY_MEK)          .or. &
-         (base_obs_kind.eq.QTY_ALD)          .or. &
-         (base_obs_kind.eq.QTY_CH3O2)        .or. &
-         (base_obs_kind.eq.QTY_C3H8)         .or. &
-         (base_obs_kind.eq.QTY_C2H6)         .or. &
-         (base_obs_kind.eq.QTY_ACET)         .or. &
-         (base_obs_kind.eq.QTY_HCHO)         .or. &
-         (base_obs_kind.eq.QTY_C2H4)         .or. &
-         (base_obs_kind.eq.QTY_C3H6)         .or. &
-         (base_obs_kind.eq.QTY_TOL)          .or. &
-         (base_obs_kind.eq.QTY_MVK)          .or. &
-         (base_obs_kind.eq.QTY_BIGALK)       .or. &
-         (base_obs_kind.eq.QTY_ISOPR)        .or. &
-         (base_obs_kind.eq.QTY_MACR)         .or. &
-         (base_obs_kind.eq.QTY_GLYALD)       .or. &
-         (base_obs_kind.eq.QTY_C10H16)       .or. &
-         (base_obs_kind.eq.QTY_BC1)          .or. &
-         (base_obs_kind.eq.QTY_BC2)          .or. &
-         (base_obs_kind.eq.QTY_DMS)          .or. &
-         (base_obs_kind.eq.QTY_DST01)        .or. &
-         (base_obs_kind.eq.QTY_DST02)        .or. &
-         (base_obs_kind.eq.QTY_DST03)        .or. &
-         (base_obs_kind.eq.QTY_DST04)        .or. &
-         (base_obs_kind.eq.QTY_SO4)          .or. &
-         (base_obs_kind.eq.QTY_SSLT01)       .or. &
-         (base_obs_kind.eq.QTY_SSLT02)       .or. &
-         (base_obs_kind.eq.QTY_SSLT03)       .or. &
-         (base_obs_kind.eq.QTY_SSLT04)       .or. &
-         (base_obs_kind.eq.QTY_TAUAER1)      .or. &
-         (base_obs_kind.eq.QTY_TAUAER2)      .or. &
-         (base_obs_kind.eq.QTY_TAUAER3)      .or. &
-         (base_obs_kind.eq.QTY_TAUAER4)      .or. &
-         (base_obs_kind.eq.QTY_PM10)         .or. &
-         (base_obs_kind.eq.QTY_PM25)         .or. &
-!         (base_obs_kind.eq.QTY_NOy)          .or. &
-!         (base_obs_kind.eq.QTY_PB)           .or. &
-!         (base_obs_kind.eq.QTY_NMOC)         .or. &
-         (base_obs_kind.eq.QTY_AOD)) then
-!
-! Chem obs go here
-            if ((base_obs_kind.eq.QTY_O3).and.((obs_kind(t_ind).eq.QTY_O3))) then
-               dist(k) = dist(k)
-            else if ((base_obs_kind.eq.QTY_CO).and.((obs_kind(t_ind).eq.QTY_CO).or. &
-            (obs_kind(t_ind).eq.QTY_E_CO))) then
-               dist(k) = dist(k)
-            else if ((base_obs_kind.eq.QTY_NO).and.((obs_kind(t_ind).eq.QTY_NO).or. &
-            (obs_kind(t_ind).eq.QTY_E_NO).or.(obs_kind(t_ind).eq.QTY_E_NO2))) then
-               dist(k) = dist(k)
-            else if ((base_obs_kind.eq.QTY_NO2).and.((obs_kind(t_ind).eq.QTY_NO2).or. &
-            (obs_kind(t_ind).eq.QTY_E_NO).or.(obs_kind(t_ind).eq.QTY_E_NO2))) then
-               dist(k) = dist(k)
-            else if ((base_obs_kind.eq.QTY_SO2).and.((obs_kind(t_ind).eq.QTY_SO2).or. &
-            (obs_kind(t_ind).eq.QTY_E_SO2))) then
-               dist(k) = dist(k)
-            else if ((base_obs_kind.eq.QTY_PM10).and.((obs_kind(t_ind).eq.QTY_PM10)&
-            .or.(obs_kind(t_ind).eq.QTY_PM25)&
-            .or.(obs_kind(t_ind).eq.QTY_SO4)&
-            .or.(obs_kind(t_ind).eq.QTY_BC1)&
-            .or.(obs_kind(t_ind).eq.QTY_BC2)&
-            .or.(obs_kind(t_ind).eq.QTY_OC1)&
-            .or.(obs_kind(t_ind).eq.QTY_OC2)&
-            .or.(obs_kind(t_ind).eq.QTY_DST01)&
-            .or.(obs_kind(t_ind).eq.QTY_DST02)&
-            .or.(obs_kind(t_ind).eq.QTY_DST03)&
-            .or.(obs_kind(t_ind).eq.QTY_DST04)&
-            .or.(obs_kind(t_ind).eq.QTY_SSLT01)&
-            .or.(obs_kind(t_ind).eq.QTY_SSLT02)&
-            .or.(obs_kind(t_ind).eq.QTY_SSLT03)&
-            .or.(obs_kind(t_ind).eq.QTY_E_PM_10)&
-            .or.(obs_kind(t_ind).eq.QTY_E_PM_25)&
-            .or.(obs_kind(t_ind).eq.QTY_E_BC)&
-            .or.(obs_kind(t_ind).eq.QTY_E_OC)&
-            )) then
-                dist(k) = dist(k)
-            else if ((base_obs_kind.eq.QTY_PM25).and.((obs_kind(t_ind).eq.QTY_PM25)&
-            .or.(obs_kind(t_ind).eq.QTY_SO4)&
-            .or.(obs_kind(t_ind).eq.QTY_BC1)&
-            .or.(obs_kind(t_ind).eq.QTY_BC2)&
-            .or.(obs_kind(t_ind).eq.QTY_OC1)&
-            .or.(obs_kind(t_ind).eq.QTY_OC2)&
-            .or.(obs_kind(t_ind).eq.QTY_DST01)&
-            .or.(obs_kind(t_ind).eq.QTY_DST02)&
-            .or.(obs_kind(t_ind).eq.QTY_SSLT01)&
-            .or.(obs_kind(t_ind).eq.QTY_SSLT02)&
-            .or.(obs_kind(t_ind).eq.QTY_E_PM_25)&
-            .or.(obs_kind(t_ind).eq.QTY_E_BC)&
-            .or.(obs_kind(t_ind).eq.QTY_E_OC)&
-            )) then
-                dist(k) = dist(k)
-            else if ((base_obs_kind.eq.QTY_AOD).and.((obs_kind(t_ind).eq.QTY_TAUAER1).or. &
-            (obs_kind(t_ind).eq.QTY_TAUAER2).or. &
-            (obs_kind(t_ind).eq.QTY_TAUAER3).or. &
-            (obs_kind(t_ind).eq.QTY_TAUAER4).or. &
-            (obs_kind(t_ind).eq.QTY_PM10).or. &
-            (obs_kind(t_ind).eq.QTY_PM25).or. &
-            (obs_kind(t_ind).eq.QTY_DST01).or. &
-            (obs_kind(t_ind).eq.QTY_DST02).or. &
-            (obs_kind(t_ind).eq.QTY_DST03).or. &
-            (obs_kind(t_ind).eq.QTY_DST04).or. &
-            (obs_kind(t_ind).eq.QTY_DST05).or. &
-            (obs_kind(t_ind).eq.QTY_OC1).or. &
-            (obs_kind(t_ind).eq.QTY_OC2).or. &
-            (obs_kind(t_ind).eq.QTY_BC1).or. &
-            (obs_kind(t_ind).eq.QTY_BC2).or. &
-            (obs_kind(t_ind).eq.QTY_SSLT01).or. &
-            (obs_kind(t_ind).eq.QTY_SSLT02).or. &
-            (obs_kind(t_ind).eq.QTY_SSLT03).or. &
-            (obs_kind(t_ind).eq.QTY_SSLT04).or. &
-            (obs_kind(t_ind).eq.QTY_SO4).or. &
-            (obs_kind(t_ind).eq.QTY_E_PM_10).or.&
-            (obs_kind(t_ind).eq.QTY_E_PM_25).or.&
-            (obs_kind(t_ind).eq.QTY_E_OC).or. &
-            (obs_kind(t_ind).eq.QTY_E_BC) &
-            )) then
-               dist(k) = dist(k)
-            else
-               dist(k) = 1.0e9
-            endif
-         else
-!
-! Met obs go here
-            if ((obs_kind(t_ind).ne.QTY_SO2)         .and. &
-            (obs_kind(t_ind).ne.QTY_O3)              .and. &
-            (obs_kind(t_ind).ne.QTY_CO)              .and. &
-            (obs_kind(t_ind).ne.QTY_NO)              .and. &
-            (obs_kind(t_ind).ne.QTY_NO2)             .and. &
-            (obs_kind(t_ind).ne.QTY_HNO3)            .and. &
-            (obs_kind(t_ind).ne.QTY_HNO4)            .and. &
-            (obs_kind(t_ind).ne.QTY_N2O5)            .and. &
-            (obs_kind(t_ind).ne.QTY_PAN)             .and. &
-            (obs_kind(t_ind).ne.QTY_MEK)             .and. &
-            (obs_kind(t_ind).ne.QTY_ALD)             .and. &
-            (obs_kind(t_ind).ne.QTY_CH3O2)           .and. &
-            (obs_kind(t_ind).ne.QTY_C3H8)            .and. &
-            (obs_kind(t_ind).ne.QTY_C2H6)            .and. &
-            (obs_kind(t_ind).ne.QTY_ACET)            .and. &
-            (obs_kind(t_ind).ne.QTY_HCHO)            .and. &
-            (obs_kind(t_ind).ne.QTY_C2H4)            .and. &
-            (obs_kind(t_ind).ne.QTY_C3H6)            .and. &
-            (obs_kind(t_ind).ne.QTY_TOL)             .and. &
-            (obs_kind(t_ind).ne.QTY_MVK)             .and. &
-            (obs_kind(t_ind).ne.QTY_BIGALK)          .and. &
-            (obs_kind(t_ind).ne.QTY_ISOPR)           .and. &
-            (obs_kind(t_ind).ne.QTY_MACR)            .and. &
-            (obs_kind(t_ind).ne.QTY_GLYALD)          .and. &
-            (obs_kind(t_ind).ne.QTY_C10H16)          .and. &
-            (obs_kind(t_ind).ne.QTY_AOD)             .and. &
-            (obs_kind(t_ind).ne.QTY_BC1)             .and. &
-            (obs_kind(t_ind).ne.QTY_BC2)             .and. &
-            (obs_kind(t_ind).ne.QTY_OC1)             .and. &
-            (obs_kind(t_ind).ne.QTY_OC2)             .and. &
-            (obs_kind(t_ind).ne.QTY_DMS)             .and. &
-            (obs_kind(t_ind).ne.QTY_DST01)           .and. &
-            (obs_kind(t_ind).ne.QTY_DST02)           .and. &
-            (obs_kind(t_ind).ne.QTY_DST03)           .and. &
-            (obs_kind(t_ind).ne.QTY_DST04)           .and. &
-            (obs_kind(t_ind).ne.QTY_DST05)           .and. &
-            (obs_kind(t_ind).ne.QTY_SO4)             .and. &
-            (obs_kind(t_ind).ne.QTY_SSLT01)          .and. &
-            (obs_kind(t_ind).ne.QTY_SSLT02)          .and. &
-            (obs_kind(t_ind).ne.QTY_SSLT03)          .and. &
-            (obs_kind(t_ind).ne.QTY_SSLT04)          .and. &
-            (obs_kind(t_ind).ne.QTY_TAUAER1)         .and. &
-            (obs_kind(t_ind).ne.QTY_TAUAER2)         .and. &
-            (obs_kind(t_ind).ne.QTY_TAUAER3)         .and. &
-            (obs_kind(t_ind).ne.QTY_TAUAER4)         .and. &
-            (obs_kind(t_ind).ne.QTY_PM10)            .and. &
-            (obs_kind(t_ind).ne.QTY_PM25)            .and. &
-            (obs_kind(t_ind).ne.QTY_E_CO)            .and. &
-            (obs_kind(t_ind).ne.QTY_E_NO)            .and. &
-            (obs_kind(t_ind).ne.QTY_EBU_CO)            .and. &
-            (obs_kind(t_ind).ne.QTY_EBU_NO)            .and. &
-            (obs_kind(t_ind).ne.QTY_EBU_OC)            .and. &
-            (obs_kind(t_ind).ne.QTY_EBU_BC)            .and. &
-            (obs_kind(t_ind).ne.QTY_EBU_c2h4)          .and. &
-            (obs_kind(t_ind).ne.QTY_EBU_ch2o)          .and. &
-            (obs_kind(t_ind).ne.QTY_EBU_ch3oh)) then
-!
-! Met state variable go here
-               dist(k) = dist(k)
-            else
-!
-! Chem state variable go here
-               dist(k) = 1.0e9
-            endif
-         endif
-      endif
-! APM/AFAJ/LXL ---
-!
 
       !print*, 'k ', k, 'rank ', my_task_id()
 
@@ -9958,8 +9604,9 @@ do i = 1, size(in_state_vector)
           (.not. in_state_vector(QTY_TAUAER2))   .or. &
           (.not. in_state_vector(QTY_TAUAER3))   .or. &
           (.not. in_state_vector(QTY_TAUAER4))) then
-         write(msgstring1, *) 'AOD assimilation requires TAUAER1, 2, 3, and 4 in state vector'
-         call error_handler(E_MSG, 'fill_dart_kinds_table', msgstring1)
+         write(errstring, *) 'AOD assimilation requires TAUAER1, 2, 3, and 4 in state vector'
+         call error_handler(E_MSG, 'fill_dart_kinds_table', errstring, &
+                            source, revision, revdate)
       endif
 
    ! for assimilating PM in situ observations
@@ -9974,8 +9621,9 @@ do i = 1, size(in_state_vector)
           (.not. in_state_vector(QTY_SO4))   .or. &
           (.not. in_state_vector(QTY_OC1))   .or. &
           (.not. in_state_vector(QTY_OC2))) then
-         write(msgstring1, *) 'PM2.5 assimilation requires P25, BC1,2, DUST_1,2, SEAS_1,2, sulf, OC1,2 in state vector'
-         call error_handler(E_MSG, 'fill_dart_kinds_table', msgstring1)
+         write(errstring, *) 'PM2.5 assimilation requires P25, BC1,2, DUST_1,2, SEAS_1,2, sulf, OC1,2 in state vector'
+         call error_handler(E_MSG, 'fill_dart_kinds_table', errstring, &
+                            source, revision, revdate)
       endif
    case (QTY_PM10)
       if ((.not. in_state_vector(QTY_PM25))   .or. &
@@ -9992,8 +9640,9 @@ do i = 1, size(in_state_vector)
           (.not. in_state_vector(QTY_OC1))   .or. &
           (.not. in_state_vector(QTY_OC2))   .or. &
           (.not. in_state_vector(QTY_PM10))) then
-         write(msgstring1, *) 'PM2.5 assimilation requires P25, P10, BC1,2, DUST_1,2,3,4 SEAS_1,2,3, sulf, OC1,2 in state vector'
-         call error_handler(E_MSG, 'fill_dart_kinds_table', msgstring1)
+         write(errstring, *) 'PM2.5 assimilation requires P25, P10, BC1,2, DUST_1,2,3,4 SEAS_1,2,3, sulf, OC1,2 in state vector'
+         call error_handler(E_MSG, 'fill_dart_kinds_table', errstring, &
+                            source, revision, revdate)
      endif
 
    ! by default anything else is fine
@@ -10987,9 +10636,9 @@ integer               :: dimid
 ! the order is inverse to that in wrf ncfile. we,sn,bt,time
    do dimid = 1,ndims-1
 
-      write(msgstring1,*)'inquire_dimension ',dimid,' of "'//trim(wrf_var_name)//'"'
+      write(msgstring2,*)'inquire_dimension ',dimid,' of "'//trim(wrf_var_name)//'"'
       call nc_check(nf90_inquire_dimension(ncid, dimids(dimid), len=var_size(dimid)), &
-                    'get_emiss_variable_size_from_file', msgstring1)
+                    'get_emiss_variable_size_from_file', msgstring2)
    enddo
 
 ! if a 2D variable fill the vertical dimension with 1
@@ -11017,10 +10666,3 @@ end subroutine get_emiss_variable_size_from_file
 
 end module model_mod
 
-!> @}
-
-! <next few lines under version control, do not edit>
-! $URL$
-! $Id$
-! $Revision$
-! $Date$

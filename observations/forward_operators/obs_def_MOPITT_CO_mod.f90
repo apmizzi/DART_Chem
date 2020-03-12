@@ -1,8 +1,20 @@
-! DART software - Copyright 2004 - 2013 UCAR. This open source software is
-! provided by UCAR, "as is", without charge, subject to all terms of use at
-! http://www.image.ucar.edu/DAReS/DART/DART_download
+! Copyright 2019 University Corporation for Atmospheric Research and 
+! Colorado Department of Public Health and Environment.
 !
-! DART $Id: obs_def_MOPITT_CO_mod.f90 13121 2019-04-24 16:32:43Z mizzi@ucar.edu $
+! Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
+! this file except in compliance with the License. You may obtain a copy of the 
+! License at      http://www.apache.org/licenses/LICENSE-2.0
+!
+! Unless required by applicable law or agreed to in writing, software distributed
+! under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
+! CONDITIONS OF ANY KIND, either express or implied. See the License for the 
+! specific language governing permissions and limitations under the License.
+!
+! Development of this code utilized the RMACC Summit supercomputer, which is 
+! supported by the National Science Foundation (awards ACI-1532235 and ACI-1532236),
+! the University of Colorado Boulder, and Colorado State University.
+! The Summit supercomputer is a joint effort of the University of Colorado Boulder
+! and Colorado State University.
 
 ! BEGIN DART PREPROCESS KIND LIST
 ! MOPITT_CO_RETRIEVAL, QTY_CO
@@ -81,10 +93,9 @@ real(r8), allocatable, dimension(:) :: mopitt_psurf
 integer,  allocatable, dimension(:) :: mopitt_nlevels
 
 ! version controlled file description for error handling, do not edit
-character(len=*), parameter :: source   = &
-   "$URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/obs_def/obs_def_MOPITT_CO_mod.f90 $"
-character(len=*), parameter :: revision = "$Revision: 13121 $"
-character(len=*), parameter :: revdate  = "$Date: 2019-04-24 10:32:43 -0600 (Wed, 24 Apr 2019) $"
+character(len=*), parameter :: source   = 'obs_def_MOPITT_CO_mod.f90'
+character(len=*), parameter :: revision = ''
+character(len=*), parameter :: revdate  = ''
 
 character(len=512) :: string1, string2
 
@@ -354,7 +365,7 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
          loc2 = set_location(mloc(1),mloc(2),prs_mopitt, VERTISPRESSURE)
       endif!
 !
-! KRF this doesn't work correctly. Need to mask vals interpolated?
+! KRF: First interpolate, then check obs values by mask and assign value.
       istatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_co, obs_val, obsval_istatus)
       call track_status(ens_size, obsval_istatus, obs_val, istatus, return_now)
@@ -365,6 +376,7 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
          obs_val=co_wrf_1
       endwhere 
 
+! KRF: Original code below
      !if(prs_mopitt .ge. prs_wrf_1) then
      !   istatus=0
      !   obs_val=co_wrf_1
@@ -374,7 +386,8 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
      !   call track_status(ens_size, obsval_istatus, obs_val, istatus, return_now)
      !   if (return_now) return 
      !endif
-!
+
+! KRF: Use array mask to check bounds instead and assign default values.
 ! check for lower bound
       if ( any(obs_val < co_min) ) then
           write(string1, *)'APM: NOTICE resetting minimum MOPITT CO value ',ilev
@@ -384,6 +397,7 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
       where ( obs_val < co_min )
          obs_val = co_min
       endwhere
+! KRF: Orginal code below
      !if (obs_val.lt.co_min) then
      !   write(string1, *)'APM: NOTICE resetting minimum MOPITT CO value ',ilev
      !   call error_handler(E_MSG,'set_obs_def_mopitt_co',string1,source,revision,revdate)
@@ -625,8 +639,3 @@ end subroutine write_mopitt_avg_kernels
 end module obs_def_mopitt_mod
 ! END DART PREPROCESS MODULE CODE
 
-! <next few lines under version control, do not edit>
-! $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/obs_def/obs_def_MOPITT_CO_mod.f90 $
-! $Id: obs_def_MOPITT_CO_mod.f90 13121 2019-04-24 16:32:43Z mizzi@ucar.edu $
-! $Revision: 13121 $
-! $Date: 2019-04-24 10:32:43 -0600 (Wed, 24 Apr 2019) $

@@ -286,7 +286,11 @@ integer, parameter, public :: &
     QTY_LEAF_NITROGEN               = 127, &
     QTY_WATER_TABLE_DEPTH           = 128, &
     QTY_FPAR                        = 129, &
-    QTY_TOTAL_WATER_STORAGE         = 130
+    QTY_TOTAL_WATER_STORAGE         = 130, &
+    QTY_SNOW_TEMPERATURE            = 131, &
+    QTY_SURFACE_RUNOFF              = 132, &
+    QTY_UNDER_RUNOFF                = 133, &
+    QTY_AQUIFER_WATER               = 134
 
 ! kinds for NOAH  (Tim Hoar)
 integer, parameter, public :: &
@@ -378,7 +382,7 @@ integer, parameter, public :: &
     QTY_OC202                       = 208, &
     QTY_PM10                        = 209, &
     QTY_PM25                        = 210, &
-    QTY_NOy                         = 211, &
+    QTY_NOY                         = 211, &
     QTY_PB                          = 212, &
     QTY_NMOC                        = 213, &
     QTY_E_O3                        = 214, &
@@ -405,9 +409,9 @@ integer, parameter, public :: &
     QTY_EBU_NO                      = 232, &
     QTY_EBU_OC                      = 233, &
     QTY_EBU_BC                      = 234, &
-    QTY_EBU_c2h4                    = 235, &
-    QTY_EBU_ch2o                    = 236, &
-    QTY_EBU_ch3oh                   = 237
+    QTY_EBU_C2H4                    = 235, &
+    QTY_EBU_CH2O                    = 236, &
+    QTY_EBU_CH3OH                   = 237
 
 
 integer, parameter, public :: &
@@ -454,6 +458,17 @@ integer, parameter, public :: &
   QTY_GND_GPS_VTEC                  = 285, &
   QTY_DENSITY_ION_OP                = 286, &
   QTY_TOTAL_ELECTRON_CONTENT        = 287
+
+!! WRF_Hydro specific observations/states
+integer, parameter, public :: &
+  QTY_STREAM_FLOW                   = 290, &
+  QTY_SURFACE_HEAD                  = 291, &
+  QTY_DEEP_GROUNDWATER_LEVEL        = 292, &
+  QTY_STREAM_HEIGHT                 = 293, &
+  QTY_GROUND_SURF_TEMPERATURE       = 294, &
+  QTY_CANOPY_TEMPERATURE            = 295, &
+  QTY_BUCKET_MULTIPLIER             = 296, &
+  QTY_RUNOFF_MULTIPLIER             = 297
  
 ! more land kinds
 integer, parameter, public :: &
@@ -532,7 +547,7 @@ integer, parameter, public :: &
   QTY_CWP_PATH                      = 363, &
   QTY_CWP_PATH_ZERO                 = 364
 
-! WACCAM
+! WACCM
 integer, parameter, public :: &
   QTY_ION_O_MIXING_RATIO            = 365, &
   QTY_ATOMIC_H_MIXING_RATIO         = 366
@@ -801,6 +816,10 @@ obs_kind_names(127) = obs_kind_type(QTY_LEAF_NITROGEN         ,'QTY_LEAF_NITROGE
 obs_kind_names(128) = obs_kind_type(QTY_WATER_TABLE_DEPTH     ,'QTY_WATER_TABLE_DEPTH')
 obs_kind_names(129) = obs_kind_type(QTY_FPAR                  ,'QTY_FPAR')
 obs_kind_names(130) = obs_kind_type(QTY_TOTAL_WATER_STORAGE   ,'QTY_TOTAL_WATER_STORAGE')
+obs_kind_names(131) = obs_kind_type(QTY_SNOW_TEMPERATURE      ,'QTY_SNOW_TEMPERATURE')
+obs_kind_names(132) = obs_kind_type(QTY_SURFACE_RUNOFF        ,'QTY_SURFACE_RUNOFF')
+obs_kind_names(133) = obs_kind_type(QTY_UNDER_RUNOFF          ,'QTY_UNDER_RUNOFF')
+obs_kind_names(134) = obs_kind_type(QTY_AQUIFER_WATER         ,'QTY_AQUIFER_WATER')
 
 obs_kind_names(140) = obs_kind_type(QTY_NEUTRON_INTENSITY     ,'QTY_NEUTRON_INTENSITY')
 obs_kind_names(141) = obs_kind_type(QTY_CANOPY_WATER          ,'QTY_CANOPY_WATER')
@@ -874,7 +893,7 @@ obs_kind_names(207) = obs_kind_type(QTY_OC102,          'QTY_OC102')
 obs_kind_names(208) = obs_kind_type(QTY_OC202,          'QTY_OC202')
 obs_kind_names(209) = obs_kind_type(QTY_PM10,           'QTY_PM10')
 obs_kind_names(210) = obs_kind_type(QTY_PM25,           'QTY_PM25')
-obs_kind_names(211) = obs_kind_type(QTY_NOy,            'QTY_NOy')
+obs_kind_names(211) = obs_kind_type(QTY_NOY,            'QTY_NOY')
 obs_kind_names(212) = obs_kind_type(QTY_PB,             'QTY_PB')
 obs_kind_names(213) = obs_kind_type(QTY_NMOC,           'QTY_NMOC')
 obs_kind_names(214) = obs_kind_type(QTY_E_O3,           'QTY_E_O3')
@@ -900,9 +919,9 @@ obs_kind_names(231) = obs_kind_type(QTY_EBU_CO,         'QTY_EBU_CO')
 obs_kind_names(232) = obs_kind_type(QTY_EBU_NO,         'QTY_EBU_NO')
 obs_kind_names(233) = obs_kind_type(QTY_EBU_OC,         'QTY_EBU_OC')
 obs_kind_names(234) = obs_kind_type(QTY_EBU_BC,         'QTY_EBU_BC')
-obs_kind_names(235) = obs_kind_type(QTY_EBU_c2h4,       'QTY_EBU_c2h4')
-obs_kind_names(236) = obs_kind_type(QTY_EBU_ch2o,       'QTY_EBU_ch2o')
-obs_kind_names(237) = obs_kind_type(QTY_EBU_ch3oh,      'QTY_EBU_ch3oh')
+obs_kind_names(235) = obs_kind_type(QTY_EBU_C2H4,       'QTY_EBU_C2H4')
+obs_kind_names(236) = obs_kind_type(QTY_EBU_CH2O,       'QTY_EBU_CH2O')
+obs_kind_names(237) = obs_kind_type(QTY_EBU_CH3OH,      'QTY_EBU_CH3OH')
 
 obs_kind_names(247) = obs_kind_type(QTY_CO2,            'QTY_CO2')
 obs_kind_names(248) = obs_kind_type(QTY_NH3,            'QTY_NH3')
@@ -945,6 +964,15 @@ obs_kind_names(284) = obs_kind_type(QTY_VELOCITY_VERTICAL_NO  ,'QTY_VELOCITY_VER
 obs_kind_names(285) = obs_kind_type(QTY_GND_GPS_VTEC          ,'QTY_GND_GPS_VTEC')
 obs_kind_names(286) = obs_kind_type(QTY_DENSITY_ION_OP        ,'QTY_DENSITY_ION_OP')
 obs_kind_names(287) = obs_kind_type(QTY_TOTAL_ELECTRON_CONTENT,'QTY_TOTAL_ELECTRON_CONTENT')
+
+obs_kind_names(290) = obs_kind_type(QTY_STREAM_FLOW             ,'QTY_STREAM_FLOW')
+obs_kind_names(291) = obs_kind_type(QTY_SURFACE_HEAD            ,'QTY_SURFACE_HEAD')
+obs_kind_names(292) = obs_kind_type(QTY_DEEP_GROUNDWATER_LEVEL  ,'QTY_DEEP_GROUNDWATER_LEVEL')
+obs_kind_names(293) = obs_kind_type(QTY_STREAM_HEIGHT           ,'QTY_STREAM_HEIGHT')
+obs_kind_names(294) = obs_kind_type(QTY_GROUND_SURF_TEMPERATURE ,'QTY_GROUND_SURF_TEMPERATURE')
+obs_kind_names(295) = obs_kind_type(QTY_CANOPY_TEMPERATURE      ,'QTY_CANOPY_TEMPERATURE')
+obs_kind_names(296) = obs_kind_type(QTY_BUCKET_MULTIPLIER       ,'QTY_BUCKET_MULTIPLIER')
+obs_kind_names(297) = obs_kind_type(QTY_RUNOFF_MULTIPLIER       ,'QTY_RUNOFF_MULTIPLIER')
 
 obs_kind_names(300) = obs_kind_type(QTY_BRIGHTNESS_TEMPERATURE,'QTY_BRIGHTNESS_TEMPERATURE')
 obs_kind_names(301) = obs_kind_type(QTY_VEGETATION_TEMPERATURE,'QTY_VEGETATION_TEMPERATURE')

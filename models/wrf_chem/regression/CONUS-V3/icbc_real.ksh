@@ -954,7 +954,6 @@ EOF
    ln -sf $DART_DIR/models/wrf/work/wrf_to_dart    .
    ln -sf $DART_DIR/models/wrf/work/dart_to_wrf    .
    ln -sf $DART_DIR/models/wrf/work/pert_wrf_bc    .
-   ln -sf $DART_DIR/models/wrf/work/wakeup_filter  .
    ln -sf $DART_DIR/models/wrf/work/obs_diag       .
    ln -sf $DART_DIR/models/wrf/work/filter         .
    cp $DART_DIR/models/wrf/shell_scripts/advance_model.csh  .

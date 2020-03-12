@@ -1,6 +1,15 @@
 This file contains instructions for building and running the WRF-Chem/DART 
 release and test case.
 
+=============================================================================
+UPDATE: 11 December 2019
+The WRF-Chem/DART interface has been upgraded to be DART-Manhattan compliant.
+Source code, scripts, supporting files have been modified to meet 
+Manhattan standards. This README now reflects updated procedures and scripts
+to use for running this tutorial with WRF-Chem/DART Manhattan.  
+=============================================================================
+
+
 INTRODUCTION:
 
 The WRF-Chem/DART release is a "cleaned-up" version of my working/development
@@ -71,15 +80,15 @@ BUILD INSTRUCTIONS:
 Also, it assumes that you have DART, WRF-Chem, WPS, and WRFDA built and
 running on your system.
 
-2. Go to the "../mkmf" directory, copy the appropriate
+2. Go to the "../build_templates" directory, copy the appropriate
 "mkmf.template.compiler_type.etc" into "mkmf.template", and modify/adapt
 "mkmf.template" to your system.
 
 3. Go to "../models/wrf_chem/work" and run "./quickbuild.csh". If this
-step completes successfully, you should have some 30 WRF-Chem/DART
+step completes successfully, you should have some 33 WRF-Chem/DART
 executables in this "work" directory.
 
-4. Go to "../observations" and run "./buildall.csh".  This will build the
+4. Go to "../observations/obs_converters" and run "./buildall.csh".  This will build the
 observation converters, which convert observations from their native format
 to DART format.  If this step completes successfully you should have
 observation converter executables in the observation type "work" directories.
@@ -104,8 +113,8 @@ members have completed computing on a specific task.
 and "PARALLEL" job submission options.  It will likely need to be modified to
 accomodate your particular job scheduler/load manager.
 
-7. Go to "../models/wrf_chem/runs_scripts/RUN_REAL/FINAL_TEST_SCRIPTS" and
-edit the "real_time_PANDA_RETR_RELEASE_TEST_CU.ksh" script for your system.
+7. Go to "../models/wrf_chem/runs_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS" and
+edit the "real_time_PANDA_RETR_RELEASE_TEST_NCAR_MANHATTAN.ksh" script for your system.
 The is the test case run script.  You will need to edit: 
  (i) "CODE VERSIONS" variables to match your code version and identifiers; 
  (ii) "ROOT DIRECTORIES" variables to match the root paths on your system.  
@@ -132,12 +141,12 @@ data assimilation), updates the lateral boundary conditions to account for
 changes to the data assimilation, and generates the forecast ensemble.
 That completes the first two cycles.
 
-9. The date-time string for the Initial Cycle is "2014071418" - that means
-July 14, 2014 at 18:00 UTC.  To run the "Initial Cycle" you should not need
+9. The date-time string for the Initial Cycle is "2014072418" - that means
+July 24, 2014 at 18:00 UTC.  To run the "Initial Cycle" you should not need
 to make changes to the CYCLE_STR_DATE or the CYCLE_END_DATE variables.  
 Also you should not need to change any of the "SELECT COMPONENT RUN OPTIONS"
 variables.  To run the "First Assimilation Cycle" you will need to change
-the "CYCLE_STR_DATE" and "CYCLE_END_DATE" to "2014071500" and set
+the "CYCLE_STR_DATE" and "CYCLE_END_DATE" to "2014072500" and set
 "RUN_GEOGRID" to "false".
 
 10. When you submit the run_script, it should create the

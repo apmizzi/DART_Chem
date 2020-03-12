@@ -1,0 +1,10 @@
+wrfinput_d01_e001
+wrfinput_d01_e002
+wrfinput_d01_e003
+wrfinput_d01_e004
+wrfinput_d01_e005
+wrfinput_d01_e006
+wrfinput_d01_e007
+wrfinput_d01_e008
+wrfinput_d01_e009
+wrfinput_d01_e010

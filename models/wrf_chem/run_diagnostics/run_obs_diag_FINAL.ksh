@@ -3,9 +3,6 @@
 # DART software - Copyright UCAR. This open source software is provided
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
-#
-# $Id: run_obs_diag_FINAL.ksh 13169 2019-05-09 14:40:33Z mizzi@ucar.edu $
-#
 
 ###############################################################################
 #
@@ -506,11 +503,4 @@ rm -rf file_list.txt
 rm -rf input.nml
 rm -rf LargeInnov.txt
 rm -rf obs_diag
-#
 
-#
-# <next few lines under version control, do not edit>
-# $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/models/wrf_chem/run_diagnostics/run_obs_diag_FINAL.ksh $
-# $Id: run_obs_diag_FINAL.ksh 13169 2019-05-09 14:40:33Z mizzi@ucar.edu $
-# $Revision: 13169 $
-# $Date: 2019-05-09 08:40:33 -0600 (Thu, 09 May 2019) $

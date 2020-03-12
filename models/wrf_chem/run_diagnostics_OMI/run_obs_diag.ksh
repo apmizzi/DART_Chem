@@ -4,8 +4,6 @@
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
 #
-# $Id: run_obs_diag.ksh 13133 2019-04-25 21:47:54Z nancy@ucar.edu $
-#
 
 ###############################################################################
 #
@@ -451,9 +449,4 @@ rm -rf input.nml
 rm -rf LargeInnov.txt
 rm -rf obs_diag
 exit
-#
-# <next few lines under version control, do not edit>
-# $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/models/wrf_chem/run_diagnostics_OMI/run_obs_diag.ksh $
-# $Id: run_obs_diag.ksh 13133 2019-04-25 21:47:54Z nancy@ucar.edu $
-# $Revision: 13133 $
-# $Date: 2019-04-25 15:47:54 -0600 (Thu, 25 Apr 2019) $
+

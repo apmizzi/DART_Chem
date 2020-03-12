@@ -4,8 +4,6 @@
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
 #
-# DART $Id: advance_global_model.csh 13126 2019-04-25 01:59:32Z thoar@ucar.edu $
-#
 # Standard script for use in assimilation applications
 # where the model advance is executed as a separate process.
 #
@@ -370,9 +368,4 @@ ${REMOVE} ${temp_dir}
 \rm -rf $control_file
 
 exit 0
-
-# <next few lines under version control, do not edit>
-# $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/models/wrf_chem/shell_scripts/advance_global_model.csh $
-# $Revision: 13126 $
-# $Date: 2019-04-24 19:59:32 -0600 (Wed, 24 Apr 2019) $
 

@@ -3,9 +3,6 @@
 # DART software - Copyright UCAR. This open source software is provided
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
-#
-# $Id: da_create_dart_airnow_input_nml.ksh 13133 2019-04-25 21:47:54Z nancy@ucar.edu $
-#
 
 #########################################################################
 #
@@ -65,13 +62,14 @@ cat > input.nml << EOF
    logfilename                 = 'dart_log.out',
 /
 &preprocess_nml
-   input_obs_kind_mod_file     = '../../obs_kind/DEFAULT_obs_kind_mod.F90',
-   output_obs_kind_mod_file    = '../../obs_kind/obs_kind_mod.f90',
-   input_obs_def_mod_file      = '../../obs_def/DEFAULT_obs_def_mod.F90',
-   output_obs_def_mod_file     = '../../obs_def/obs_def_mod.f90',
-   input_files                 = '../../obs_def/obs_def_reanalysis_bufr_mod.f90',
-                                 '../../obs_def/obs_def_gps_mod.f90',
-                                 '../../obs_def/obs_def_eval_mod.f90'
+   input_obs_kind_mod_file     = '../../assimilation_code/modules/observations/DEFAULT_obs_kind_mod.F90',
+   output_obs_kind_mod_file    = '../../assimilation_code/modules/observations/obs_kind_mod.f90',
+   input_obs_def_mod_file      = '../../observations/forward_operators/DEFAULT_obs_def_mod.F90',
+   output_obs_def_mod_file     = '../../observations/forward_operators/obs_def_mod.f90',
+   input_files                 = '../../observations/forward_operators/obs_def_reanalysis_bufr_mod.f90',
+                                 '../../observations/forward_operators/obs_def_gps_mod.f90',
+                                 '../../observations/forward_operators/obs_def_eval_mod.f90'
+
 /
 &merge_obs_seq_nml
    num_input_files             = 2,
@@ -80,10 +78,3 @@ cat > input.nml << EOF
 /
 EOF
 
-
-#
-# <next few lines under version control, do not edit>
-# $URL: https://svn-dares-dart.cgd.ucar.edu/DART/tags/wrf-chem.r13172/models/wrf_chem/hybrid_scripts/da_create_dart_airnow_input_nml.ksh $
-# $Id: da_create_dart_airnow_input_nml.ksh 13133 2019-04-25 21:47:54Z nancy@ucar.edu $
-# $Revision: 13133 $
-# $Date: 2019-04-25 15:47:54 -0600 (Thu, 25 Apr 2019) $
