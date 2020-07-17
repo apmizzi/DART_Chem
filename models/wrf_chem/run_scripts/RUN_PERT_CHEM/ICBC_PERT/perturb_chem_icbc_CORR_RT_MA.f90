@@ -51,6 +51,8 @@
              character(len=20)                           :: cmem
              character(len=5),dimension(nbdy_exts)       :: bdy_exts=(/'_BXS ','_BXE ','_BYS ','_BYE ','_BTXS', &
              '_BTXE','_BTYS','_BTYE'/)
+!
+! the default bdy_dims is for FRAPPE
              integer,dimension(nbdy_exts)                :: bdy_dims=(/139,139,179,179,139,139,179,179/)
              character(len=150),allocatable,dimension(:) :: ch_chem_spc
              logical                                     :: sw_corr_tm,sw_seed
@@ -87,6 +89,8 @@
              print *, 'sw_seed            ',sw_seed
              nzp=nz+1
              num_mem=nint(nnum_mem)
+             bdy_dims=(/ny,ny,nx,nx,ny,ny,nx,nx/)
+
 !
 ! Allocate arrays
              allocate(ch_chem_spc(nchem_spcs))
@@ -843,4 +847,3 @@
              end if
              call random_seed(put=aseed)
           end subroutine init_random_seed
-

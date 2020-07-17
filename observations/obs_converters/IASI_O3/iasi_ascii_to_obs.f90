@@ -18,258 +18,293 @@
 
 program iasi_ascii_to_obs
 
+! RAWR - observations in the format provided by the distribution center.
+! RETR - observations in retrieval space format (ppbv) with the QOR subtractions.
+! QOR  - observations in phase space format with QOR transformation.
+! CPSR - observations in phase space format with the CPSR trasformations. 
+!
 !=============================================
 ! IASI O3 retrieval obs
 !=============================================
 !
-  use    utilities_mod, only : timestamp, &
-                               register_module, &
-                               open_file, &
-                               close_file, &
-                               initialize_utilities, &
-                               open_file, &
-                               close_file, &
-                               find_namelist_in_file, &
-                               check_namelist_read, &
-                               error_handler, &
-                               E_ERR, & 
-                               E_WARN, & 
-                               E_MSG, &
-                               E_DBG
-  
-  use obs_sequence_mod, only : obs_sequence_type, &
-                               interactive_obs, &
-                               write_obs_seq, &
-                               interactive_obs_sequence, &
-                               static_init_obs_sequence, &
-                               init_obs_sequence, &
-                               init_obs, &
-                               set_obs_values, &
-                               set_obs_def, &
-                               set_qc, &
-                               set_qc_meta_data, &
-                               set_copy_meta_data, &
-                               insert_obs_in_seq, &
-                               obs_type
-                      
- use  obs_def_mod, only : obs_def_type, &
-                          set_obs_def_time, &
-                          set_obs_def_type_of_obs, &
-                          set_obs_def_error_variance, &
-                          set_obs_def_location, &
-                          set_obs_def_key
-
-  use obs_def_iasi_O3_mod, only :  set_obs_def_iasi_o3
-  
-  use  assim_model_mod, only : static_init_assim_model
-  
-  use location_mod, only  : location_type, &
+   use    utilities_mod, only : timestamp, 		&
+                                register_module, 		&
+                                open_file, 		&
+                                close_file, 		&
+                                initialize_utilities, 	&
+                                find_namelist_in_file,  	&
+                                check_namelist_read,    	&
+                                error_handler, 		&
+                                E_ERR,			& 
+                                E_WARN,			& 
+                                E_MSG, 			&
+                                E_DBG
+   
+   use obs_sequence_mod, only : obs_sequence_type, 	&
+                                interactive_obs, 		&
+                                write_obs_seq, 		&
+                                interactive_obs_sequence,  &
+                                static_init_obs_sequence,  &
+                                init_obs_sequence,         &
+                                init_obs,                  &
+                                set_obs_values,            &
+                                set_obs_def,               &
+                                set_qc,                    &
+                                set_qc_meta_data,          &
+                                set_copy_meta_data,        &
+                                insert_obs_in_seq,         &
+                                obs_type
+   
+   use obs_def_mod, only      : set_obs_def_location,      &
+                                set_obs_def_time,          &
+                                set_obs_def_key,           &
+                                set_obs_def_error_variance,&
+                                obs_def_type,              &
+                                set_obs_def_type_of_obs
+   
+   use obs_def_IASI_O3_mod, only : set_obs_def_iasi_o3
+   
+   use  assim_model_mod, only : static_init_assim_model
+   
+   use location_mod, only : location_type,                 &
                             set_location
-  
-  use time_manager_mod, only : set_date, &
-                               set_calendar_type, &
-                               time_type, &
-                               get_time
-
-  use obs_kind_mod, only   : QTY_O3, &
-                             IASI_O3_RETRIEVAL,   &
-                             get_type_of_obs_from_menu
-
-  use random_seq_mod, only : random_seq_type, &
-                             init_random_seq, &
-                             random_uniform
-
-  use sort_mod, only       : index_sort
-
-
-  implicit none
-
-! version controlled file description for error handling, do not edit                          
-  character(len=*), parameter :: source   = 'iasi_ascii_to_obs.f90'
-  character(len=*), parameter :: revision = ''
-  character(len=*), parameter :: revdate  = ''
+   
+   use time_manager_mod, only : set_date, 			&
+                                set_calendar_type, 	&
+                                time_type, 		&
+                                get_time
+   
+   use obs_kind_mod, only   : QTY_O3,                      &
+                              IASI_O3_RETRIEVAL,         &
+                              get_type_of_obs_from_menu
+   
+   use random_seq_mod, only : random_seq_type,             &
+                              init_random_seq,             &
+                              random_uniform
+   
+   use sort_mod, only       : index_sort
+   
+   implicit none
 !
-! add variables AFA
-  type(obs_sequence_type) :: seq
-  type(obs_type)          :: obs
-  type(obs_type)          :: obs_old
-  type(obs_def_type)      :: obs_def
-  type(location_type)     :: obs_location
-  type(time_type)         :: obs_time
-  integer                 :: obs_kind
-  integer                 :: obs_key
-  !
-  integer,parameter       :: fileid=88
-  integer,parameter       :: max_num_obs=1000000
-  integer,parameter       :: ias_dim=41
-  integer,parameter       :: num_copies=1, num_qc=1
-  integer,parameter       :: lwrk=5*ias_dim
+! version controlled file description for error handling, do not edit
+   character(len=*), parameter :: source   = 'iasi_ascii_to_obs.f90'
+   character(len=*), parameter :: revision = ''
+   character(len=*), parameter :: revdate  = ''
 !
-! 44 km
-!  integer,parameter      :: nlon_qc=900, nlat_qc=301, nqc_obs=40 
-!  real*8,parameter       :: dlon_qc=.4, dlat_qc=.6
-! 68 km
-!  integer,parameter      :: nlon_qc=600, nlat_qc=190, nqc_obs=40 
-!  real*8,parameter       :: dlon_qc=.6, dlat_qc=.95
-! 89 km
-  integer,parameter       :: nlon_qc=451, nlat_qc=151, nqc_obs=40 
-  real*8,parameter        :: dlon_qc=.8, dlat_qc=1.2
-! 111 km
-!  integer,parameter       :: nlon_qc=360, nlat_qc=121, nqc_obs=40 
-!  real*8,parameter        :: dlon_qc=1., dlat_qc=1.5
+   type(obs_sequence_type) :: seq
+   type(obs_type)          :: obs
+   type(obs_type)          :: obs_old
+   type(obs_def_type)      :: obs_def
+   type(location_type)     :: obs_location
+   type(time_type)         :: obs_time
+   integer                 :: obs_kind
+   integer                 :: obs_key
 !
-  type (random_seq_type)  :: inc_ran_seq
+   integer,parameter       :: fileid=88
+   integer,parameter       :: max_num_obs=1000000
+   integer,parameter       :: ias_dim=41
+   integer,parameter       :: num_copies=1, num_qc=1
+   integer,parameter       :: lwrk=5*ias_dim
 !
-  integer                 :: year, month, day, hour
-  integer                 :: year1, month1, day1, hour1, minute, second 
-  integer                 :: year_lst, month_lst, day_lst, hour_lst, minute_lst, second_lst 
-  integer                 :: iunit, io, icopy, calendar_type
-  integer                 :: qc_count, ios
-  integer                 :: nlvls, nlvlsp, index_qc, klvls
-  integer                 :: lon_qc, lat_qc
-  integer                 :: i, j, k, l, kk, ik, ikk, k1, k2, kstr 
-  integer                 :: line_count, index, nlev, nlevp, prs_idx
-  integer                 :: seconds, days, which_vert, old_ob
-  integer,dimension(max_num_obs)             :: qc_iasi, qc_thinning
-  integer,dimension(12)                      :: days_in_month=(/ &
-                                           31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
-  integer,dimension(nlon_qc,nlat_qc)         :: xg_count
-  integer,dimension(nlon_qc,nlat_qc,500)     :: xg
-  integer,dimension(1000)                    :: index_20
-  integer,dimension(nlon_qc,nlat_qc)         :: xg_nlvls
+   real                    :: qc_del,lat_mean
+   integer                 :: nlon_qc,nlat_qc
+   real*8                  :: dlon_qc,dlat_qc
+   type (random_seq_type)  :: inc_ran_seq
 !
-  real*8                          :: eps_tol=1.e-3
-  real*8                          :: dofs, o3_tot_col, o3_tot_err
-  real*8                          :: latitude, longitude, level
-  real*8                          :: o3_psurf, err, o3_error, o3_prior_trm
-  real                            :: bin_beg, bin_end
-  real                            :: sec, lat, lon, dummy, nlevels
-  real                            :: pi ,rad2deg, re, wt, corr_err, fac, fac_obs_error
-  real                            :: ln_10, xg_sec_avg, o3_log_max, o3_log_min, o3_min
-  real                            :: ias_psf, irot, nlvls_fix
-  real*8, dimension(1000)         :: unif
-  real*8, dimension(num_qc)       :: o3_qc
-  real*8, dimension(ias_dim)      :: o3_avgker, o3_aircol, o3_prior
-  real*8, dimension(ias_dim)     :: o3_press, o3_altag
-  real*8, dimension(num_copies)   :: o3_vmr
-  real,dimension(ias_dim)        :: ias_alt,ias_prs
-  real,dimension(ias_dim)         :: x_r, x_p, x_r_vmr, x_r_col, x_p_vmr, x_p_col, air_col
-  real,dimension(ias_dim)         :: ret_x_r, ret_x_p
-  real,dimension(ias_dim)         :: raw_x_r, raw_x_p, err2_rs_r, raw_err, ret_err
-  real,dimension(ias_dim)         :: xcomp, xcomperr, xapr
-  real,dimension(ias_dim,ias_dim) :: avgker, avg_k, adj_avg_k
-  real,dimension(ias_dim,ias_dim) :: temp_mat
-  real,dimension(ias_dim,ias_dim) :: cov_use, raw_cov, ret_cov
-  real,dimension(ias_dim,ias_dim) :: cov_a_col, cov_m_col, cov_r_col
-  real,dimension(ias_dim,ias_dim) :: cov_a_vmr, cov_m_vmr, cov_r_vmr
-  real,dimension(nlon_qc,nlat_qc) :: xg_psf, xg_lon, xg_lat, xg_twt
-  real,dimension(nlon_qc,nlat_qc,ias_dim) :: xg_sec, xg_raw_err, xg_ret_err
-  real,dimension(nlon_qc,nlat_qc,ias_dim) :: xg_raw_adj_x_r, xg_raw_adj_x_p, xg_raw_x_r, xg_raw_x_p
-  real,dimension(nlon_qc,nlat_qc,ias_dim) :: xg_ret_adj_x_r, xg_ret_adj_x_p, xg_ret_x_r, xg_ret_x_p
-  real,dimension(nlon_qc,nlat_qc,ias_dim) :: xg_norm, xg_nint
-  real,dimension(nlon_qc,nlat_qc,ias_dim,ias_dim) :: xg_avg_k, xg_raw_cov, xg_ret_cov
-  real,dimension(nlon_qc,nlat_qc,ias_dim) :: xg_prs, xg_alt, xg_air_col, xg_prs_norm
+   integer                 :: year, month, day, hour
+   integer                 :: year1, month1, day1, hour1, minute, second 
+   integer                 :: year_lst, month_lst, day_lst, hour_lst, minute_lst, second_lst 
+   integer                 :: iunit, io, icopy, calendar_type
+   integer                 :: qc_count, ios
+   integer                 :: nlvls, nlvlsp, index_qc, klvls
+   integer                 :: lon_qc, lat_qc
+   integer                 :: i, j, k, l, kk, ik, ikk, k1, k2, kstr 
+   integer                 :: line_count, index, nlev, nlevp, prs_idx
+   integer                 :: seconds, days, which_vert, old_ob
+   integer                 :: spc_vloc,iasi_co_vloc,iasi_o3_vloc,kmax,itrm
+   integer,dimension(max_num_obs)             :: qc_iasi, qc_thinning
+   integer,dimension(12)                      :: days_in_month=(/ &
+                                              31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
+   integer,dimension(1000)                    :: index_20
 !
-  double precision,dimension(ias_dim) ::  adj_x_p 
+   real*8                          :: eps_tol=1.e-3,log10e
+   real*8                          :: dofs, sdof, o3_tot_col, o3_tot_err
+   real*8                          :: latitude, longitude, level
+   real*8                          :: o3_psurf, err, o3_error, o3_prior_trm
+   real                            :: bin_beg, bin_end
+   real                            :: sec, lat, lon, dummy, nlevels
+   real                            :: pi ,rad2deg, re, wt, corr_err, fac, fac_obs_error
+   real                            :: ln_10, xg_sec_avg, o3_log_max, o3_log_min, o3_min
+   real                            :: prs_loc
+   real                            :: lat_min,lat_max,lon_min,lon_max,lat_mn
+   real                            :: ias_psf
+   integer                         :: irot, nlvls_fix, nqc_obs
+   real*8, dimension(1000)         :: unif
+   real*8, dimension(num_qc)       :: o3_qc
+   real*8, dimension(ias_dim)      :: o3_avgker, o3_aircol, o3_prior
+   real*8, dimension(ias_dim)      :: o3_press, o3_altag
+   real*8, dimension(num_copies)   :: o3_vmr
+   real,dimension(ias_dim)         :: ias_alt, ias_prs
+   real,dimension(ias_dim)         :: x_r, x_p, x_r_vmr, x_r_col, x_p_vmr, x_p_col, air_col 
+   real,dimension(ias_dim)         :: ret_x_r, ret_x_p
+   real,dimension(ias_dim)         :: raw_x_r, raw_x_p, err2_rs_r, raw_err, ret_err
+   real,dimension(ias_dim)         :: xcomp, xcomperr, xapr
+   real,dimension(ias_dim,ias_dim) :: avgker, avg_k, adj_avg_k
+   real,dimension(ias_dim,ias_dim) :: temp_mat
+   real,dimension(ias_dim,ias_dim) :: cov_use, raw_cov, ret_cov 
+   real,dimension(ias_dim,ias_dim) :: cov_a_col, cov_m_col, cov_r_col
+   real,dimension(ias_dim,ias_dim) :: cov_a_vmr, cov_m_vmr, cov_r_vmr
 !
-  character*129           :: qc_meta_data='IASI O3 QC index'
-  character*129           :: file_name='iasi_obs_seq'
-  character*2             :: chr_month, chr_day, chr_hour
-  character*4             :: chr_year
-  character*129           :: filedir, filename, copy_meta_data, filen
-  character*129           :: transform_typ
-  character*129           :: IASI_CO_retrieval_type
-  character*129           :: IASI_O3_retrieval_type
+   double precision,dimension(ias_dim) :: raw_adj_x_r, ret_adj_x_r, adj_x_p 
+!
+   character*129           :: qc_meta_data='IASI O3 QC index'
+   character*129           :: file_name='iasi_obs_seq'
+   character*2             :: chr_month, chr_day, chr_hour
+   character*4             :: chr_year
+   character*129           :: filedir, filename, copy_meta_data, filen
+   character*129           :: transform_typ
+   character*129           :: IASI_CO_retrieval_type
+   character*129           :: IASI_O3_retrieval_type
+!
+! SUPER OBBING ARRAYS
+   integer,allocatable,dimension(:,:)       :: xg_count
+   integer,allocatable,dimension(:,:,:)     :: xg
+   integer,allocatable,dimension(:,:)       :: xg_nlvls
+   real,allocatable,dimension(:,:)          :: xg_psf, xg_lon, xg_lat,xg_twt
+   real,allocatable,dimension(:,:,:)        :: xg_sec, xg_raw_err, xg_ret_err
+   real,allocatable,dimension(:,:,:)        :: xg_raw_adj_x_r, xg_raw_adj_x_p, xg_raw_x_r, xg_raw_x_p
+   real,allocatable,dimension(:,:,:)        :: xg_ret_adj_x_r, xg_ret_adj_x_p, xg_ret_x_r, xg_ret_x_p
+   real,allocatable,dimension(:,:,:)        :: xg_norm, xg_nint
+   real,allocatable,dimension(:,:,:,:)      :: xg_avg_k, xg_raw_cov, xg_ret_cov
+   real,allocatable,dimension(:,:,:)        :: xg_prs,xg_alt, xg_air_col, xg_prs_norm
 !
 ! QOR/CPSR variables
-  integer                                        :: info,nlvls_trc,qstatus
-  integer                                        :: cpsr_co_trunc_lim, cpsr_o3_trunc_lim
-  real,dimension(lwrk)                           :: wrk
-  double precision,allocatable,dimension(:)      :: ZV,SV_cov
-  double precision,allocatable,dimension(:)      :: rr_x_r,rr_x_p
-  double precision,allocatable,dimension(:)      :: rs_x_r,rs_x_p
-  double precision,allocatable,dimension(:,:)    :: Z,ZL,ZR,SV,U_cov,V_cov,UT_cov,VT_cov
-  double precision,allocatable,dimension(:,:)    :: rr_avg_k,rr_cov
-  double precision,allocatable,dimension(:,:)    :: rs_avg_k,rs_cov
+   integer                                        :: info,nlvls_trc,qstatus
+   integer                                        :: cpsr_co_trunc_lim, cpsr_o3_trunc_lim
+   double precision,dimension(lwrk)               :: wrk
+   double precision,allocatable,dimension(:)      :: ZV,SV_cov
+   double precision,allocatable,dimension(:)      :: rr_x_r,rr_x_p
+   double precision,allocatable,dimension(:)      :: rs_x_r,rs_x_p
+   double precision,allocatable,dimension(:,:)    :: Z,ZL,ZR,SV,U_cov,V_cov,UT_cov,VT_cov
+   double precision,allocatable,dimension(:,:)    :: rr_avg_k,rr_cov
+   double precision,allocatable,dimension(:,:)    :: rs_avg_k,rs_cov
 !
-  logical                 :: use_log_co
-  logical                 :: use_log_o3
-  logical                 :: use_cpsr_co_trunc
-  logical                 :: use_cpsr_o3_trunc
+   logical                 :: use_log_co
+   logical                 :: use_log_o3
+   logical                 :: use_cpsr_co_trunc
+   logical                 :: use_cpsr_o3_trunc
 !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-! IASI_O3_retrieval_type:
-!     RAWR - retrievals in VMR (ppb) units
-!     QOR  - quasi-optimal retrievals
-!     CPSR - compact phase space retrievals
-!
-  namelist /create_iasi_obs_nml/filedir,filename,year,month,day,hour,bin_beg, bin_end, &
-         IASI_CO_retrieval_type,IASI_O3_retrieval_type,fac_obs_error,use_log_co,use_log_o3, &
-         use_cpsr_co_trunc,cpsr_co_trunc_lim,use_cpsr_o3_trunc,cpsr_o3_trunc_lim
+   namelist /create_iasi_obs_nml/filedir,filename,year,month,day,hour,bin_beg, bin_end, &
+            IASI_CO_retrieval_type,IASI_O3_retrieval_type,fac_obs_error,use_log_co,use_log_o3, &
+            use_cpsr_co_trunc,cpsr_co_trunc_lim,use_cpsr_o3_trunc,cpsr_o3_trunc_lim, &
+            iasi_co_vloc,iasi_o3_vloc,lon_min,lon_max,lat_min,lat_max
 !
 ! Set constants
-  ln_10=log(10.)
-  pi=4.*atan(1.)
-  rad2deg=360./(2.*pi)
-  re=6371000.
-  corr_err=.15
-  corr_err=1.
-  year_lst=-9999
-  month_lst=-9999
-  day_lst=-9999
-  hour_lst=-9999
-  minute_lst=-9999
-  second_lst=-9999 
+   log10e=log10(exp(1.0))
+   pi=4.*atan(1.)
+   rad2deg=360./(2.*pi)
+   re=6371000.
+   corr_err=.15
+   corr_err=1.
+   year_lst=-9999
+   month_lst=-9999
+   day_lst=-9999
+   hour_lst=-9999
+   minute_lst=-9999
+   second_lst=-9999 
+   fac=1.0
+   iasi_co_vloc=0
+   iasi_o3_vloc=0
+   lon_min=-9999
+   lon_max=-9999
+   lat_min=-9999
+   lat_max=-9999
 !
 ! Record the current time, date, etc. to the logfile
-  call initialize_utilities(source)
-  call register_module(source,revision,revdate)
-
+   call initialize_utilities(source)
+   call register_module(source,revision,revdate)
+!
 ! Initialize the assim_model module, need this to get model
 ! state meta data for locations of identity observations
 !  call static_init_assim_model()
-
+!
 ! Initialize the obs_sequence module
-  call static_init_obs_sequence()
-
-  call find_namelist_in_file("input.nml", "create_iasi_obs_nml", iunit)
-  read(iunit, nml = create_iasi_obs_nml, iostat = io)
-  call check_namelist_read(iunit, io, "create_iasi_obs_nml")
-
+   call static_init_obs_sequence()
+!
+   call find_namelist_in_file("input.nml", "create_iasi_obs_nml", iunit)
+   read(iunit, nml = create_iasi_obs_nml, iostat = io)
+   call check_namelist_read(iunit, io, "create_iasi_obs_nml")
+!
 ! Record the namelist values used for the run ...
-  call error_handler(E_MSG,'init_create_iasi_obs','create_iasi_obs_nml values are',' ',' ',' ')
-  write(     *     , nml=create_iasi_obs_nml)
-
+   call error_handler(E_MSG,'init_create_iasi_obs','create_iasi_obs_nml values are',' ',' ',' ')
+   write(     *     , nml=create_iasi_obs_nml)
+!
 ! Initialize an obs_sequence structure
-  call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)
-
+   call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)
+!
 ! Initialize the obs variable
-  call init_obs(obs, num_copies, num_qc)
-
+   call init_obs(obs, num_copies, num_qc)
+!
 ! If use_log_o3 is 'true' the make sure retrieval type is RETR
-  if (use_log_o3 .and. trim(IASI_O3_retrieval_type) .ne. 'RETR') then
-     print *, 'APM: if use_log_o3=true then IASI_O3_retrieval_type=RETR'
-     stop
-  endif 
-  
-  do icopy =1, num_copies
-     if (icopy == 1) then
+   if (use_log_o3 .and. trim(IASI_O3_retrieval_type).ne.'RETR') then
+      print *, 'APM: if use_log_o3=true then IASI_O3_retrieval_type=RETR'
+      stop
+   endif 
+!
+   do icopy =1, num_copies
+      if (icopy == 1) then
          copy_meta_data='IASI O3 observation'
-     else
+      else
          copy_meta_data='Truth'
-     endif
-     call set_copy_meta_data(seq, icopy, copy_meta_data)
-  enddo
+      endif
+      call set_copy_meta_data(seq, icopy, copy_meta_data)
+   enddo
 
-  call set_qc_meta_data(seq, 1, qc_meta_data)
+   call set_qc_meta_data(seq, 1, qc_meta_data)
 
-  qc_iasi(:)=100
-  qc_thinning(:)=100
+   qc_iasi(:)=100
+   qc_thinning(:)=100
 !
 ! assign obs error scale factor
-  fac=fac_obs_error
-
+   fac=fac_obs_error
+!
+! define qc arrays (add 1 degree to each side of the qc box)
+! qc-del is the size of the qc_bax in km
+!
+! 39 degress is the central latitude for Colorado:
+! nlat_qc=cos(39) * 2. * 3.14 * 6371 km /del_x_km
+! nlon_qc=2. *3.14 *6371 km /del_y_km
+! dlat_qc=180./nlat_qc
+! dlon_qc=360./nlon_qc
+!
+   nqc_obs=40
+   qc_del=30.
+   lat_min=lat_min-1.
+   lat_max=lat_max+1.
+   lon_min=lon_min-1.
+   lon_max=lon_max+1.
+   lat_mean=(lat_min+lat_max)/2.
+   nlon_qc=(lon_max-lon_min)/360.*2.*pi*re/1000./qc_del+1
+   nlat_qc=cos(lat_mean/rad2deg)*(lat_max-lat_min)/360.*2.*pi*re/1000./qc_del+1
+   dlon_qc=(lon_max-lon_min)/(nlon_qc-1)
+   dlat_qc=(lat_max-lat_min)/(nlat_qc-1)
+!
+   allocate (xg_count(nlon_qc,nlat_qc))
+   allocate (xg(nlon_qc,nlat_qc,500))
+   allocate (xg_nlvls(nlon_qc,nlat_qc))
+   allocate (xg_lon(nlon_qc,nlat_qc),xg_lat(nlon_qc,nlat_qc), &
+   xg_twt(nlon_qc,nlat_qc))
+   allocate (xg_sec(nlon_qc,nlat_qc,ias_dim),xg_raw_err(nlon_qc,nlat_qc,ias_dim), &
+   xg_ret_err(nlon_qc,nlat_qc,ias_dim))
+   allocate (xg_raw_adj_x_r(nlon_qc,nlat_qc,ias_dim),xg_raw_adj_x_p(nlon_qc,nlat_qc,ias_dim), &
+   xg_raw_x_r(nlon_qc,nlat_qc,ias_dim),xg_raw_x_p(nlon_qc,nlat_qc,ias_dim))
+   allocate (xg_ret_adj_x_r(nlon_qc,nlat_qc,ias_dim),xg_ret_adj_x_p(nlon_qc,nlat_qc,ias_dim), &
+   xg_ret_x_r(nlon_qc,nlat_qc,ias_dim), xg_ret_x_p(nlon_qc,nlat_qc,ias_dim))
+   allocate (xg_norm(nlon_qc,nlat_qc,ias_dim),xg_nint(nlon_qc,nlat_qc,ias_dim))
+   allocate (xg_avg_k(nlon_qc,nlat_qc,ias_dim,ias_dim), &
+   xg_raw_cov(nlon_qc,nlat_qc,ias_dim,ias_dim),xg_ret_cov(nlon_qc,nlat_qc,ias_dim,ias_dim))
+   allocate (xg_prs(nlon_qc,nlat_qc,ias_dim),xg_prs_norm(nlon_qc,nlat_qc,ias_dim))
+!
 !-------------------------------------------------------
 ! Read IASI obs
 !-------------------------------------------------------
@@ -285,13 +320,13 @@ program iasi_ascii_to_obs
   write(chr_hour,'(i2.2)') hour
 
   if ( mod(year,4) == 0 ) then
-     days_in_month(2) = days_in_month(2) + 1
+       days_in_month(2) = days_in_month(2) + 1
   endif
   if ( mod(year,100) == 0 ) then
-     days_in_month(2) = days_in_month(2) - 1
+       days_in_month(2) = days_in_month(2) - 1
   endif
   if ( mod(year,400) == 0 ) then
-     days_in_month(2) = days_in_month(2) + 1
+       days_in_month(2) = days_in_month(2) + 1
   endif
   if(hour.gt.24) then
      print *, 'APM 1: hour error ',hour
@@ -301,30 +336,33 @@ program iasi_ascii_to_obs
 ! Open IASI binary file
   filen=chr_year//chr_month//chr_day//chr_hour//'.dat'
   write(6,*)'opening ',TRIM(filedir)//TRIM(filen)
-!
+
 ! Read IASI file 1
   index_qc=0
   line_count = 0
   open(fileid,file=TRIM(filedir)//TRIM(filen),                     &
-     form='formatted', status='old',  &
-     iostat=ios)
+       form='formatted', status='old',  &
+       iostat=ios)
 !
 ! Error Check
   if (ios /=0) then
-     write(6,*) 'no iasi o3 file for the day ', day
-     go to 999
+      write(6,*) 'no iasi file for the day ', day
+      go to 999
   endif
-!
-! Read IASI
-  read(fileid,*,iostat=ios) transform_typ, sec, lat, lon, dummy, nlevels
-!  print *, 'trans_typ, sec, lat, lon, dummy, nlevels ',trim(transform_typ),sec,lat,lon,dummy,levels
 
+! Read IASI
+! lon = [-180,180]; lat = [-90,90]
+  read(fileid,*,iostat=ios) transform_typ, sec, lat, lon, dummy, nlevels 
+  if(lon.lt.0.) lon=lon+360.
+!  print *, 'trans_typ, sec, lat, lon, dummy, nlevels, trim(transform_typ),sec,lat,lon,dummy,nlevels
+!
 ! Error Check
   if (ios /=0) then
-     write(6,*) 'no data on file ', TRIM(filen)
-     go to 999
+      write(6,*) 'no data in file ', TRIM(filen)
+      go to 999
   endif
   nlvls=nint(nlevels)
+!
 !-------------------------------------------------------
 ! MAIN LOOP FOR IASI OBS
 !-------------------------------------------------------
@@ -344,57 +382,52 @@ program iasi_ascii_to_obs
      read(fileid,*) temp_mat(1:nlvls,1:nlvls)
      do i=1,nlvls
         cov_a_col(i,1:nlvls)=temp_mat(i,1:nlvls)
-!       print *, 'cov_a_col i ',i,(cov_a_col(i,j),j=1,nlvls)
      enddo
      read(fileid,*) temp_mat(1:nlvls,1:nlvls)
      do i=1,nlvls
         cov_m_col(i,1:nlvls)=temp_mat(i,1:nlvls)
-!        print *, 'cov_m_col i ',i,(cov_m+col(i,j),j=1,nlvls)
      enddo
      read(fileid,*) temp_mat(1:nlvls,1:nlvls)
      do i=1,nlvls
         cov_r_col(i,1:nlvls)=temp_mat(i,1:nlvls)
-!        print *, 'cov_r i ',i,(cov_r_col(i,j),j=1,nlvls)
      enddo
-!
      read(fileid,*) temp_mat(1:nlvls,1:nlvls)
      do i=1,nlvls
         cov_a_vmr(i,1:nlvls)=temp_mat(i,1:nlvls)
-!        print *, 'cov_a_vmr i ',i,(cov_a_vmr(i,j),j=1,nlvls)
      enddo
      read(fileid,*) temp_mat(1:nlvls,1:nlvls)
      do i=1,nlvls
         cov_m_vmr(i,1:nlvls)=temp_mat(i,1:nlvls)
-!        print *, 'cov_m_vmr i ',i,(cov_m_vmr(i,j),j=1,nlvls)
      enddo
      read(fileid,*) temp_mat(1:nlvls,1:nlvls)
      do i=1,nlvls
         cov_r_vmr(i,1:nlvls)=temp_mat(i,1:nlvls)
-!        print *, 'cov_r_vmr i ',i,(cov_r_vmr(i,j),j=1,nlvls)
      enddo
-!       
-     index_qc = index_qc + 1
-     qc_iasi(index_qc)=0
+!
+     print *, 'lon,lon_min,lon_max ',lon,lon_min,lon_max
+     print *, 'lat,lat_min,lat_max ',lat,lat_min,lat_max
+     print *, ' '
+     if(lon.ge.lon_min .and. lon.le.lon_max .and. &
+     lat.ge.lat_min .and. lat.le.lat_max) then       
+        index_qc = index_qc + 1
+        qc_iasi(index_qc)=0
 !
 !-------------------------------------------------------
-! Bin to nlat_qcxnlon_qc
+! Bin to nlat_qc x nlon_qc
 !-------------------------------------------------------
 ! find lon_qc, lat_qc
-     lon_qc=nint((lon+180)/dlon_qc) + 1
-     lat_qc=nint((lat+90)/dlat_qc) + 1
-     if (lat>89.5) then
-         lat_qc=nlat_qc
-     elseif (lat<-89.5) then
-         lat_qc=1
+        lon_qc=nint((lon - lon_min)/dlon_qc)+1
+        lat_qc=nint((lat - lat_min)/dlat_qc)+1
+!
+        xg_count(lon_qc,lat_qc)=xg_count(lon_qc,lat_qc)+1
+        xg(lon_qc,lat_qc,xg_count(lon_qc,lat_qc))=index_qc
      endif
-
-     xg_count(lon_qc,lat_qc)=xg_count(lon_qc,lat_qc)+1
-     xg(lon_qc,lat_qc,xg_count(lon_qc,lat_qc))=index_qc
 !
 !read next data point
-
-     read(fileid,*,iostat=ios) transform_typ, sec, lat, lon, dummy, nlevels
-!     print *, 'trans_typ, sec, lat, lon, dummy, nlevels ',trim(transform_typ),sec,lat,lon,dummy,nlevels
+! lon = [-180,180]
+     read(fileid,*,iostat=ios) transform_typ, sec, lat, lon, dummy, nlevels 
+     if(lon.lt.0.) lon=lon+360.
+!     print *, 'trans_typ, sec, lat, lon, dummy, nlevels, ',trim(transform_typ),sec,lat,lon,dummy,nlevels
      nlvls=nint(nlevels)
   enddo !ios
 
@@ -402,15 +435,13 @@ program iasi_ascii_to_obs
 
   close(fileid)
 !
-! Now do the thinning
+! Now do the thinning (draw nqc_obs obs)
   call init_random_seq(inc_ran_seq)
   do i=1,nlon_qc
      do j=1,nlat_qc
         if (xg_count(i,j)>nqc_obs) then
-!
-! draw nqc_obs
            do ik=1,xg_count(i,j)
-               unif(ik)=random_uniform(inc_ran_seq)
+              unif(ik)=random_uniform(inc_ran_seq)
            enddo
            call index_sort(unif,index_20,xg_count(i,j))
            do ik=1,nqc_obs
@@ -427,6 +458,7 @@ program iasi_ascii_to_obs
   enddo !i
 !
 !===================================================================================
+!
 ! Read IASI file AGAIN
   index_qc=0
   xg_lon(:,:)=0.
@@ -455,39 +487,41 @@ program iasi_ascii_to_obs
 !
 ! NOTE NOTE NOTE Check if it should be BIG_ENDIAN
   open(fileid,file=TRIM(filedir)//TRIM(filen),                     &
-     form='formatted', status='old',   &
-     iostat=ios)
-!
+       form='formatted', status='old',   &
+       iostat=ios)
+
 ! Error Check
   if (ios /=0) then
-     write(6,*) 'no iasi file for the day ', day
-     go to 999
+      write(6,*) 'no iasi file for the day ', day
+      go to 999
   endif
 !
 ! Read IASI
-  read(fileid,*,iostat=ios) transform_typ, sec, lat, lon, dummy, nlevels
+! lon = [-180,180]
+  read(fileid,*,iostat=ios) transform_typ, sec, lat, lon, dummy, nlevels 
+  if(lon.lt.0.) lon=lon+360.
+!  print *, 'trans_typ, sec, lat, lon, dummy, nlevels, ',trim(transform_typ),sec,lat,lon,dummy,nlevels
   nlvls=nint(nlevels)
 !
 ! Error Check
   if (ios /=0) then
-    write(6,*) 'no data on file ', TRIM(filen)
-    go to 999
+      write(6,*) 'no data on file ', TRIM(filen)
+      go to 999
   endif
 !
 !-------------------------------------------------------
-! MAIN LOOP FOR IASI OBS
+! MAIN LOOP FOR IASI OBS (ppbv)
 !-------------------------------------------------------
 !
   do while(ios == 0)
      index_qc=index_qc+1
-     ! Read IASI variables
+! Read IASI variables
      read(fileid,*) ias_psf
      read(fileid,*) ias_alt(1:nlvls)
      read(fileid,*) ias_prs(1:nlvls)
      read(fileid,*) temp_mat(1:nlvls,1:nlvls)
      do i=1,nlvls
         avg_k(i,1:nlvls)=temp_mat(i,1:nlvls)
-!        print *, 'avg_k ',i,(avg_k(i,j),j=1,nlvls)
      enddo
      read(fileid,*) x_p_col(1:nlvls)
      read(fileid,*) x_p_vmr(1:nlvls)
@@ -496,33 +530,26 @@ program iasi_ascii_to_obs
      read(fileid,*) temp_mat(1:nlvls,1:nlvls)
      do i=1,nlvls
         cov_a_col(i,1:nlvls)=temp_mat(i,1:nlvls)
-!        print *, 'cov_a_col i ',i,(cov_a_col(i,j),j=1,nlvls)
      enddo
      read(fileid,*) temp_mat(1:nlvls,1:nlvls)
      do i=1,nlvls
         cov_m_col(i,1:nlvls)=temp_mat(i,1:nlvls)
-!        print *, 'cov_m_col i ',i,(cov_m+col(i,j),j=1,nlvls)
      enddo
      read(fileid,*) temp_mat(1:nlvls,1:nlvls)
      do i=1,nlvls
         cov_r_col(i,1:nlvls)=temp_mat(i,1:nlvls)
-!        print *, 'cov_r i ',i,(cov_r_col(i,j),j=1,nlvls)
      enddo
-!
      read(fileid,*) temp_mat(1:nlvls,1:nlvls)
      do i=1,nlvls
         cov_a_vmr(i,1:nlvls)=temp_mat(i,1:nlvls)
-!        print *, 'cov_a_vmr i ',i,(cov_a_vmr(i,j),j=1,nlvls)
      enddo
      read(fileid,*) temp_mat(1:nlvls,1:nlvls)
      do i=1,nlvls
         cov_m_vmr(i,1:nlvls)=temp_mat(i,1:nlvls)
-!        print *, 'cov_m_vmr i ',i,(cov_m_vmr(i,j),j=1,nlvls)
      enddo
      read(fileid,*) temp_mat(1:nlvls,1:nlvls)
      do i=1,nlvls
         cov_r_vmr(i,1:nlvls)=temp_mat(i,1:nlvls)
-!        print *, 'cov_r_vmr i ',i,(cov_r_vmr(i,j),j=1,nlvls)
      enddo
 !
 ! calculate the air column for column to vmr conversion
@@ -550,8 +577,8 @@ program iasi_ascii_to_obs
      if ( o3_qc(1) == 0 )  then
 !
 ! calculate bin indexes
-        lon_qc=nint((lon+180)/dlon_qc) + 1
-        lat_qc=nint((lat+90)/dlat_qc) + 1
+        lon_qc=nint((lon - lon_min)/dlon_qc)+1
+        lat_qc=nint((lat - lat_min)/dlat_qc)+1
         if (lat>89.5) then
            lat_qc=nlat_qc
         elseif (lat<-89.5) then
@@ -606,13 +633,12 @@ program iasi_ascii_to_obs
            endif
         enddo
 !
-! Calculate superobs
+! Calculate superobs 
         kstr=ias_dim-nlvls+1
         wt=cos(lat/rad2deg)
         xg_twt(lon_qc,lat_qc)=xg_twt(lon_qc,lat_qc)+wt
         xg_lon(lon_qc,lat_qc)=xg_lon(lon_qc,lat_qc)+lon*wt
         xg_lat(lon_qc,lat_qc)=xg_lat(lon_qc,lat_qc)+lat*wt
-        xg_psf(lon_qc,lat_qc)=xg_psf(lon_qc,lat_qc)+ias_psf*wt
         do i=kstr,ias_dim
            xg_norm(lon_qc,lat_qc,i)=xg_norm(lon_qc,lat_qc,i)+wt
            xg_prs_norm(lon_qc,lat_qc,i)=xg_prs_norm(lon_qc,lat_qc,i)+wt
@@ -638,10 +664,12 @@ program iasi_ascii_to_obs
               xg_avg_k(lon_qc,lat_qc,i,j)=xg_avg_k(lon_qc,lat_qc,i,j)+avg_k(i-kstr+1,j-kstr+1)*wt
            enddo
         enddo
-     endif    ! co_qc(1)
+     endif    ! o3_qc(1)
 !
 ! read next data point
-     read(fileid,*,iostat=ios) transform_typ, sec, lat, lon, dummy, nlevels
+! lon = [-180,180]
+     read(fileid,*,iostat=ios) transform_typ, sec, lat, lon, dummy, nlevels 
+     if(lon.lt.0) lon=lon+360.
      nlvls=nint(nlevels)
   enddo    !ios
 !
@@ -653,11 +681,6 @@ program iasi_ascii_to_obs
         xg_lon(i,j)=xg_lon(i,j)/xg_twt(i,j)
         xg_lat(i,j)=xg_lat(i,j)/xg_twt(i,j)
         xg_psf(i,j)=xg_psf(i,j)/xg_twt(i,j)
-!
-! Skip for SINGLE_CLUSTER   
-!        if((xg_lon(i,j).lt.-97. .or. xg_lon(i,j).gt.-93.) .or. &
-!           (xg_lat(i,j).lt.38.  .or. xg_lat(i,j).gt.42.)) cycle
-!
         do k=1,ias_dim
            if(xg_norm(i,j,k).eq.0) cycle
            xg_sec(i,j,k)=xg_sec(i,j,k)/xg_norm(i,j,k)
@@ -667,10 +690,10 @@ program iasi_ascii_to_obs
            xg_air_col(i,j,k)=xg_air_col(i,j,k)/real(xg_norm(i,j,k))
            xg_raw_x_r(i,j,k)=xg_raw_x_r(i,j,k)/real(xg_norm(i,j,k))
            xg_raw_x_p(i,j,k)=xg_raw_x_p(i,j,k)/real(xg_norm(i,j,k))
-           xg_raw_err(i,j,k)=xg_raw_err(i,j,k)/real(xg_norm(i,j,k))
+           xg_raw_err(i,j,k)=xg_raw_err(i,j,k)/sqrt(real(xg_norm(i,j,k)))
            xg_ret_x_r(i,j,k)=xg_ret_x_r(i,j,k)/real(xg_norm(i,j,k))
            xg_ret_x_p(i,j,k)=xg_ret_x_p(i,j,k)/real(xg_norm(i,j,k))
-           xg_ret_err(i,j,k)=xg_ret_err(i,j,k)/real(xg_norm(i,j,k))
+           xg_ret_err(i,j,k)=xg_ret_err(i,j,k)/sqrt(real(xg_norm(i,j,k)))
            xg_raw_adj_x_p(i,j,k)=xg_raw_adj_x_p(i,j,k)/real(xg_norm(i,j,k))
            do l=1,ias_dim
               if(xg_norm(i,j,l).eq.0) cycle
@@ -735,12 +758,14 @@ program iasi_ascii_to_obs
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
         if(trim(IASI_O3_retrieval_type) .eq. 'QOR') then
+!
 ! Calculate SVD of raw_cov (Z=U_xxx * SV_xxx * VT_xxx)
            allocate(Z(nlvls,nlvls),SV_cov(nlvls),SV(nlvls,nlvls))
            allocate(U_cov(nlvls,nlvls),UT_cov(nlvls,nlvls),V_cov(nlvls,nlvls),VT_cov(nlvls,nlvls))
            allocate(rs_avg_k(nlvls,nlvls),rs_cov(nlvls,nlvls),rs_x_r(nlvls),rs_x_p(nlvls))       
            allocate(rr_avg_k(nlvls,nlvls),rr_cov(nlvls,nlvls),rr_x_r(nlvls),rr_x_p(nlvls))       
            allocate(ZL(nlvls,nlvls),ZR(nlvls,nlvls),ZV(nlvls))
+!
            Z(1:nlvls,1:nlvls)=dble(xg_raw_cov(i,j,kstr:ias_dim,kstr:ias_dim))
            call dgesvd('A','A',nlvls,nlvls,Z,nlvls,SV_cov,U_cov,nlvls,VT_cov,nlvls,wrk,lwrk,info)
            nlvls_trc=0
@@ -753,65 +778,65 @@ program iasi_ascii_to_obs
                  VT_cov(k,:)=0.
               endif 
            enddo
-!           print *,'nlvls_trc ',nlvls_trc
-!           print *, 'SV ',SV_cov(:)
+!              print *,'nlvls_trc ',nlvls_trc
+!              print *, 'SV ',SV_cov(:)
 !
-! Scale the singular vectors (NO SCALE/SCALE)     
-!!           do k=1,nlvls_trc
-!!              U_cov(:,k)=U_cov(:,k)/sqrt(SV_cov(k))
-!!           enddo
-!           print *, 'nlvls_trc ',nlvls_trc
-!           print *, 'SV ',SV_cov(:)
-!          
+! Scale the singular vectors
+           do k=1,nlvls_trc
+              U_cov(:,k)=U_cov(:,k)/sqrt(SV_cov(k))
+           enddo
+!              print *, 'nlvls_trc ',nlvls_trc
+!              print *, 'SV ',SV_cov(:)
+!        
            call mat_transpose(U_cov,UT_cov,nlvls,nlvls)
            call mat_transpose(VT_cov,V_cov,nlvls,nlvls)
            call vec_to_mat(SV_cov,SV,nlvls)
-!           do k=1,nlvls
-!              print *, 'U ',k,(U_cov(k,l),l=1,nlvls)
-!           enddo
-!           do k=1,nlvls
-!              print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
-!           enddo
+!              do k=1,nlvls
+!                print *, 'U ',k,(U_cov(k,l),l=1,nlvls)
+!              enddo
+!              do k=1,nlvls
+!                print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
+!              enddo
 !
 ! Rotate terms in the forward operator
            ZL(1:nlvls,1:nlvls)=dble(xg_avg_k(i,j,kstr:ias_dim,kstr:ias_dim))
            call mat_prd(UT_cov(1:nlvls,1:nlvls),ZL(1:nlvls,1:nlvls), &
            rs_avg_k(1:nlvls,1:nlvls),nlvls,nlvls,nlvls,nlvls)
-!           do k=1,nlvls
-!              print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
-!           enddo
-!           do k=kstr,ias_dim
-!              print *, 'xg_avg_k ',k,(xg_avg_k(i,j,k,l),l=kstr,ias_dim)
-!           enddo
-!           do k=1,nlvls
-!              print *, 'rs_avg_k ',k,(rs_avg_k(k,l),l=1,nlvls)
-!           enddo
+!              do k=1,nlvls
+!                print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
+!              enddo
+!              do k=kstr,ias_dim
+!                print *, 'xg_avg_k ',k,(xg_avg_k(i,j,k,l),l=kstr,ias_dim)
+!              enddo
+!              do k=1,nlvls
+!                print *, 'rs_avg_k ',k,(rs_avg_k(k,l),l=1,nlvls)
+!              enddo
            ZL(1:nlvls,1:nlvls)=dble(xg_raw_cov(i,j,kstr:ias_dim,kstr:ias_dim))
            call mat_tri_prd(UT_cov(1:nlvls,1:nlvls),ZL(1:nlvls,1:nlvls),U_cov(1:nlvls,1:nlvls), &
            rs_cov(1:nlvls,1:nlvls),nlvls,nlvls,nlvls,nlvls,nlvls,nlvls)
-!           do k=1,nlvls
-!              print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
-!           enddo
-!           do k=kstr,ias_dim
-!              print *, 'xg_raw_cov ',k,(xg_raw_cov(i,j,k,l),l=kstr,ias_dim)
-!           enddo
-!           do k=1,nlvls
-!              print *, 'rs_cov ',k,(rs_cov(k,l),l=1,nlvls)
-!           enddo
+!              do k=1,nlvls
+!                print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
+!              enddo
+!              do k=kstr,ias_dim
+!                print *, 'xg_raw_cov ',k,(xg_raw_cov(i,j,k,l),l=kstr,ias_dim)
+!              enddo
+!              do k=1,nlvls
+!                print *, 'rs_cov ',k,(rs_cov(k,l),l=1,nlvls)
+!              enddo
            ZV(1:nlvls)=dble(xg_raw_adj_x_r(i,j,kstr:ias_dim))
            call lh_mat_vec_prd(UT_cov(1:nlvls,1:nlvls),ZV(1:nlvls),rs_x_r(1:nlvls),nlvls)
-!           do k=1,nlvls
-!              print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
-!           enddo
-!           print *, 'xg_adj_x_r ',(xg_raw_adj_x_r(i,j,l),l=kstr,ias_dim)
-!           print *, 'rs_x_r ',(rs_x_r(l),l=1,nlvls)
+!              do k=1,nlvls
+!                print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
+!              enddo
+!              print *, 'xg_adj_x_r ',(xg_raw_adj_x_r(i,j,l),l=kstr,ias_dim)
+!              print *, 'rs_x_r ',(rs_x_r(l),l=1,nlvls)
            ZV(1:nlvls)=dble(xg_raw_adj_x_p(i,j,kstr:ias_dim))
            call lh_mat_vec_prd(UT_cov(1:nlvls,1:nlvls),ZV(1:nlvls),rs_x_p(1:nlvls),nlvls)
-!           do k=1,nlvls
-!              print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
-!           enddo
-!           print *, 'xg_adj_x_p ',(xg_raw_adj_x_p(i,j,l),l=kstr,ias_dim)
-!           print *, 'rs_x_p ',(rs_x_p(l),l=1,nlvls)
+!              do k=1,nlvls
+!                 print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
+!              enddo
+!              print *, 'xg_adj_x_p ',(xg_raw_adj_x_p(i,j,l),l=kstr,ias_dim)
+!              print *, 'rs_x_p ',(rs_x_p(l),l=1,nlvls)
 !
 ! Get new errors (check if err2_rs_r < 0 the qstatus=1)
            qstatus=0.0
@@ -836,60 +861,70 @@ program iasi_ascii_to_obs
            Z(1:nlvls,1:nlvls)=dble(xg_avg_k(i,j,kstr:ias_dim,kstr:ias_dim))
            call dgesvd('A','A',nlvls,nlvls,Z,nlvls,SV_cov,U_cov,nlvls,VT_cov,nlvls,wrk,lwrk,info)
            nlvls_trc=0
+           sdof=0.
+!
+! APM: the phase space truncation should not be done here
+! because it impacts the projection of the compressed averaging kernel
+! onto the left on-zero singular vectors of the error covariance.
            do k=1,nlvls
               if(SV_cov(k).ge.eps_tol) then
                  nlvls_trc=k
+                 sdof=sdof+SV_cov(k)
               else
                  SV_cov(k)=0
                  U_cov(:,k)=0. 
                  VT_cov(k,:)=0.
               endif 
            enddo
-!           print *,'nlvls_trc ',nlvls_trc
-!           print *, 'SV ',SV_cov(:)
+!              print *,'nlvls_trc ',nlvls_trc
+!              print *, 'SV ',SV_cov(:)
            call mat_transpose(U_cov,UT_cov,nlvls,nlvls)
            call mat_transpose(VT_cov,V_cov,nlvls,nlvls)
            call vec_to_mat(SV_cov,SV,nlvls)
 !
 ! Rotate terms in the forward operator
            ZL(1:nlvls,1:nlvls)=dble(xg_avg_k(i,j,kstr:ias_dim,kstr:ias_dim))
+! averaging kernel
            call mat_prd(UT_cov(1:nlvls,1:nlvls),ZL(1:nlvls,1:nlvls), &
            rr_avg_k(1:nlvls,1:nlvls),nlvls,nlvls,nlvls,nlvls)
-!           do k=1,nlvls
-!              print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
-!           enddo
-!           do k=kstr,ias_dim
-!              print *, 'xg_avg_k ',k,(xg_avg_k(i,j,k,l),l=kstr,ias_dim)
-!           enddo
-!           do k=1,nlvls
-!              print *, 'rr_avg_k ',k,(rr_avg_k(k,l),l=1,nlvls)
-!           enddo
+!              do k=1,nlvls
+!                print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
+!              enddo
+!              do k=kstr,ias_dim
+!                print *, 'xg_avg_k ',k,(xg_avg_k(i,j,k,l),l=kstr,ias_dim)
+!              enddo
+!              do k=1,nlvls
+!                print *, 'rr_avg_k ',k,(rr_avg_k(k,l),l=1,nlvls)
+!              enddo
+
+! retrieval error covariance
            ZL(1:nlvls,1:nlvls)=dble(xg_raw_cov(i,j,kstr:ias_dim,kstr:ias_dim))
            call mat_tri_prd(UT_cov(1:nlvls,1:nlvls),ZL(1:nlvls,1:nlvls),U_cov(1:nlvls,1:nlvls), &
            rr_cov(1:nlvls,1:nlvls),nlvls,nlvls,nlvls,nlvls,nlvls,nlvls)
-!           do k=1,nlvls
-!              print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
-!           enddo
-!           do k=kstr,mop_dim
-!              print *, 'xg_raw_cov ',k,(xg_raw_cov(i,j,k,l),l=kstr,ias_dim)
-!           enddo
-!           do k=1,nlvls
-!              print *, 'rr_cov ',k,(rr_cov(k,l),l=1,nlvls)
-!           enddo
+!              do k=1,nlvls
+!                print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
+!              enddo
+!              do k=kstr,ias_dim
+!                print *, 'xg_raw_cov ',k,(xg_raw_cov(i,j,k,l),l=kstr,ias_dim)
+!              enddo
+!              do k=1,nlvls
+!                print *, 'rr_cov ',k,(rr_cov(k,l),l=1,nlvls)
+!              enddo
+! adjusted retrieval
            ZV(1:nlvls)=dble(xg_raw_adj_x_r(i,j,kstr:ias_dim))
            call lh_mat_vec_prd(UT_cov(1:nlvls,1:nlvls),ZV(1:nlvls),rr_x_r(1:nlvls),nlvls)
-!           do k=1,nlvls
-!              print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
-!           enddo
-!           print *, 'xg_adj_x_r ',(xg_raw_adj_x_r(i,j,l),l=kstr,ias_dim)
-!           print *, 'rr_x_r ',(rr_x_r(l),l=1,nlvls)
+!              do k=1,nlvls
+!                print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
+!              enddo
+!              print *, 'xg_adj_x_r ',(xg_raw_adj_x_r(i,j,l),l=kstr,ias_dim)
+!              print *, 'rr_x_r ',(rr_x_r(l),l=1,nlvls)
            ZV(1:nlvls)=dble(xg_raw_adj_x_p(i,j,kstr:ias_dim))
            call lh_mat_vec_prd(UT_cov(1:nlvls,1:nlvls),ZV(1:nlvls),rr_x_p(1:nlvls),nlvls)
-!           do k=1,nlvls
-!              print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
-!           enddo
-!           print *, 'xg_adj_x_p ',(xg_raw_adj_x_p(i,j,l),l=kstr,ias_dim)
-!           print *, 'rr_x_p ',(rr_x_p(l),l=1,nlvls)
+!              do k=1,nlvls
+!                 print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
+!              enddo
+!              print *, 'xg_adj_x_p ',(xg_raw_adj_x_p(i,j,l),l=kstr,ias_dim)
+!              print *, 'rr_x_p ',(rr_x_p(l),l=1,nlvls)
 !
 ! Calculate SVD of rr_cov (Z=U_xxx * SV_xxx * VT_xxx) - SECOND ROTATION
            Z(1:nlvls,1:nlvls)=rr_cov(1:nlvls,1:nlvls)
@@ -900,62 +935,78 @@ program iasi_ascii_to_obs
               VT_cov(k,:)=0.
            enddo
 !
-! Scale the singular vectors (NO SCALE/SCALE)     
+! Scale the singular vectors
            do k=1,nlvls_trc
               U_cov(:,k)=U_cov(:,k)/sqrt(SV_cov(k))
            enddo
-!           print *, 'nlvls_trc ',nlvls_trc
-!           print *, 'SV ',SV_cov(:)
+!              print *, 'nlvls_trc ',nlvls_trc
+!              print *, 'SV ',SV_cov(:)
 !          
            call mat_transpose(U_cov,UT_cov,nlvls,nlvls)
            call mat_transpose(VT_cov,V_cov,nlvls,nlvls)
            call vec_to_mat(SV_cov,SV,nlvls)
-!           do k=1,nlvls
-!              print *, 'U ',k,(U_cov(k,l),l=1,nlvls)
-!           enddo
-!           do k=1,nlvls
-!              print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
-!           enddo
+!              do k=1,nlvls
+!                print *, 'U ',k,(U_cov(k,l),l=1,nlvls)
+!              enddo
+!              do k=1,nlvls
+!                print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
+!              enddo
 !
 ! Rotate terms in the forward operator
-           ZL(1:nlvls,1:nlvls)=rr_avg_k(1:nlvls,1:nlvls)
+           ZL(:,:)=0.
+           do k=1,nlvls
+              do kk=1,nlvls
+                 ZL(k,kk)=rr_avg_k(k,kk)
+              enddo
+           enddo
            call mat_prd(UT_cov(1:nlvls,1:nlvls),ZL(1:nlvls,1:nlvls), &
            rs_avg_k(1:nlvls,1:nlvls),nlvls,nlvls,nlvls,nlvls)
-!           do k=1,nlvls
-!              print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
-!           enddo
-!           do k=1,nlvls
-!              print *, 'rr_avg_k ',k,(rr_avg_k(k,l),l=1,nlvls)
-!           enddo
-!           do k=1,nlvls
-!              print *, 'rs_avg_k ',k,(rs_avg_k(k,l),l=1,nlvls)
-!           enddo
-           ZL(1:nlvls,1:nlvls)=rr_cov(1:nlvls,1:nlvls)
+!              do k=1,nlvls
+!                print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
+!              enddo
+!              do k=1,nlvls
+!                print *, 'rr_avg_k ',k,(rr_avg_k(k,l),l=1,nlvls)
+!              enddo
+!              do k=1,nlvls
+!                print *, 'rs_avg_k ',k,(rs_avg_k(k,l),l=1,nlvls)
+!              enddo
+           ZL(:,:)=0.
+           do k=1,nlvls
+              do kk=1,nlvls
+                 ZL(k,kk)=rr_cov(k,kk)
+              enddo
+           enddo
            call mat_tri_prd(UT_cov(1:nlvls,1:nlvls),ZL(1:nlvls,1:nlvls),U_cov(1:nlvls,1:nlvls), &
            rs_cov(1:nlvls,1:nlvls),nlvls,nlvls,nlvls,nlvls,nlvls,nlvls)
-!           do k=1,nlvls
-!              print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
-!           enddo
-!           do k=1,nlvls
-!              print *, 'rr_cov ',k,(rr_cov(k,l),l=1,nlvls)
-!           enddo
-!           do k=1,nlvls
-!              print *, 'rs_cov ',k,(rs_cov(k,l),l=1,nlvls)
-!           enddo
-           ZV(1:nlvls)=rr_x_r(1:nlvls)
+!              do k=1,nlvls
+!                print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
+!              enddo
+!              do k=1,nlvls
+!                print *, 'rr_cov ',k,(rr_cov(k,l),l=1,nlvls)
+!              enddo
+!              do k=1,nlvls
+!                print *, 'rs_cov ',k,(rs_cov(k,l),l=1,nlvls)
+!              enddo
+           ZV(:)=0.
+           do k=1,nlvls    
+              ZV(k)=rr_x_r(k)
+           enddo
            call lh_mat_vec_prd(UT_cov(1:nlvls,1:nlvls),ZV(1:nlvls),rs_x_r(1:nlvls),nlvls)
-!           do k=1,nlvls
-!              print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
-!           enddo
-!           print *, 'rr_x_r ',(rr_x_r(l),l=1,nlvls)
-!           print *, 'rs_x_r ',(rs_x_r(l),l=1,nlvls)
-           ZV(1:nlvls)=rr_x_p(1:nlvls)
+!              do k=1,nlvls
+!                print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
+!              enddo
+!              print *, 'rr_x_r ',(rr_x_r(l),l=1,nlvls)
+!              print *, 'rs_x_r ',(rs_x_r(l),l=1,nlvls)
+           ZV(:)=0.
+           do k=1,nlvls
+              ZV(k)=rr_x_p(k)
+           enddo
            call lh_mat_vec_prd(UT_cov(1:nlvls,1:nlvls),ZV(1:nlvls),rs_x_p(1:nlvls),nlvls)
-!           do k=1,nlvls
-!              print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
-!           enddo
-!           print *, 'rr_x_p ',(rr_x_p(l),l=1,nlvls)
-!           print *, 'rs_x_p ',(rs_x_p(l),l=1,nlvls)
+!              do k=1,nlvls
+!                 print *, 'UT ',k,(UT_cov(k,l),l=1,nlvls)
+!              enddo
+!              print *, 'rr_x_p ',(rr_x_p(l),l=1,nlvls)
+!              print *, 'rs_x_p ',(rs_x_p(l),l=1,nlvls)
 !
 ! Get new errors (check if err2_rs_r < 0 the qstatus=1)
            qstatus=0.0
@@ -981,62 +1032,37 @@ program iasi_ascii_to_obs
         endif
 !
 ! Truncate the number of CPSR modes
-        if(use_cpsr_o3_trunc .and. nlvls_fix .gt. cpsr_o3_trunc_lim) then
-           print *,'APM change limit ', nlvls_fix,cpsr_o3_trunc_lim
+        if(use_cpsr_o3_trunc .and. nlvls_fix.gt.cpsr_o3_trunc_lim) then
+           print *, 'APM: change limit ',nlvls_fix, cpsr_o3_trunc_lim
            nlvls_fix=cpsr_o3_trunc_lim
         endif
-!
+!        
         do k=1,nlvls_fix
-!
-! Remove the higher modes (or remove the upper troposphere obs)
-! This removes upper most ob in physical space and the highest mode ob in phase space
-           if(irot.eq.0 .and. k+kstr-1.ge.17) cycle
-!           if(irot.eq.0 .and. (k+kstr-1.eq.15 .or. k+kstr-1.eq.16 .or. k+kstr-1.ge.17)) cycle
-!           if(irot.eq.1 .and. k.eq.nlvls_trc) cycle
            qc_count=qc_count+1
 !
-! RAW with NO ROT
+! RAWR
            if(trim(IASI_O3_retrieval_type) .eq. 'RAWR') then
-              xcomp(k)=xg_raw_x_r(i,j,k+kstr-1)
+              xcomp(k)=xg_raw_adj_x_r(i,j,k+kstr-1)
               xcomperr(k)=fac*xg_raw_err(i,j,k+kstr-1)
-              xapr(k)=xg_raw_adj_x_p(i,j,k+kstr-1)
+!              xapr(k)=xg_raw_adj_x_p(i,j,k+kstr-1)
+              xapr(k)=0.
               do l=1,xg_nlvls(i,j)
                  avgker(k,l)=xg_avg_k(i,j,k+kstr-1,l+kstr-1)
               enddo
            endif
 !
-! RET with NO ROT
+! RETR
            if(trim(IASI_O3_retrieval_type) .eq. 'RETR') then
-              xcomp(k)=xg_ret_x_r(i,j,k+kstr-1)
+              xcomp(k)=xg_ret_adj_x_r(i,j,k+kstr-1)
               xcomperr(k)=fac*xg_ret_err(i,j,k+kstr-1)
-              xapr(k)=xg_raw_adj_x_p(i,j,k+kstr-1)
+!              xapr(k)=xg_ret_adj_x_p(i,j,k+kstr-1)
+              xapr(k)=0.
               do l=1,xg_nlvls(i,j)
                  avgker(k,l)=xg_avg_k(i,j,k+kstr-1,l+kstr-1)
               enddo
-           endif  
+           endif
 !
-! RAW QOR with NO ROT
-!           xcomp(k)=xg_raw_adj_x_r(i,j,k+kstr-1)
-!           xcomperr(k)=fac*xg_raw_err(i,j,k+kstr-1)
-!           xapr(k)=0.
-!           do l=1,xg_nlvls(i,j)
-!              avgker(k,l)=xg_avg_k(i,j,k+kstr-1,l+kstr-1)
-!           enddo
-!
-! RET QOR with NO ROT
-! (This form cannot be done because averaging kernel is not in log10 format)
-!
-! RAW QOR with ROT and NO SCALE
-! comment scaling
-!           xcomp(k)=rs_x_r(k)
-!           xcomperr(k)=fac*err2_rs_r(k)
-!           xapr(k)=0.
-!           do l=1,xg_nlvls(i,j)
-!              avgker(k,l)=rs_avg_k(k,l)
-!           enddo
-!
-! RAW QOR with ROT and SCALE
-! uncomment scaling
+! RAWR QOR
            if(trim(IASI_O3_retrieval_type) .eq. 'QOR') then
               xcomp(k)=rs_x_r(k)
               xcomperr(k)=fac*err2_rs_r(k)
@@ -1046,17 +1072,7 @@ program iasi_ascii_to_obs
               enddo
            endif
 !
-! RAW CPSR with ROT and NO SCALE
-! comment scaling
-!           xcomp(k)=rs_x_r(k)
-!           xcomperr(k)=fac*err2_rs_r(k)
-!           xapr(k)=0.
-!           do l=1,xg_nlvls(i,j)
-!              avgker(k,l)=rs_avg_k(k,l)
-!           enddo
-!
-! RAW CPSR with ROT and SCALE
-! uncomment scaling
+! RAWR CPSR
            if(trim(IASI_O3_retrieval_type) .eq. 'CPSR') then
               xcomp(k)=rs_x_r(k)
               xcomperr(k)=fac*err2_rs_r(k)
@@ -1066,7 +1082,7 @@ program iasi_ascii_to_obs
               enddo
            endif
 !
-! Calculate vertical average seconds
+! Calculate average seconds
            xg_sec_avg=0.
            do l=1,xg_nlvls(i,j)
               xg_sec_avg=xg_sec_avg+xg_sec(i,j,l+kstr-1)/xg_nlvls(i,j)
@@ -1079,11 +1095,7 @@ program iasi_ascii_to_obs
 !
 ! location
            latitude=xg_lat(i,j) 
-           if (xg_lon(i,j)<0) then
-              longitude=xg_lon(i,j)+360
-           else
-              longitude=xg_lon(i,j)
-           endif
+           longitude=xg_lon(i,j)
 !
 ! time (get time from sec IASI variable)
            hour1 = int(xg_sec_avg/3600d0)
@@ -1159,16 +1171,25 @@ program iasi_ascii_to_obs
 ! Use each mixing ratio as a separate obs
 !--------------------------------------------------------
 !
-! APM: change the vertical location
-!           level=(xg_prs(i,j,k+kstr-1)+xg_prs(i,j,k+kstr))/2*100
-           level=xg_prs(i,j,k+kstr-1)*100
-           which_vert=2       ! pressure surfaces
-           if(irot.eq.1) then
-              level=k
-              which_vert=1       ! level
-           endif  
+           spc_vloc=iasi_o3_vloc
+           if(spc_vloc.eq.1) then
+              call vertical_locate(prs_loc,kmax,xg_prs(i,j,kstr:ias_dim), &
+              avgker(k,1:xg_nlvls(i,j)),xg_nlvls(i,j),xg_nlvls(i,j))
+              if(irot.eq.1) then
+                 level=prs_loc*100.
+                 which_vert=2       ! pressure surface
+              elseif(irot.eq.0) then
+                 level=prs_loc*100.
+                 which_vert=2       ! pressure surface
+              endif
+           elseif(irot.eq.1) then
+              level=1
+              which_vert=-2         ! undefined
+           elseif(irot.eq.0) then  
+              level=(xg_prs(i,j,k+kstr-1)+xg_prs(i,j,k+kstr))/2*100.
+              which_vert=2          ! pressure surface
+           endif
            obs_kind = IASI_O3_RETRIEVAL
-!
            obs_location=set_location(longitude, latitude, level, which_vert)
            o3_psurf=xg_psf(i,j)*100.
            o3_avgker(1:xg_nlvls(i,j))=avgker(k,1:xg_nlvls(i,j))
@@ -1192,52 +1213,58 @@ program iasi_ascii_to_obs
            call set_qc(obs, o3_qc, num_qc)
            call set_obs_def(obs, obs_def)
 !
-!           if ( qc_count == 1 .or. old_ob.eq.1) then
+           if ( qc_count == 1 .or. old_ob.eq.1) then
               call insert_obs_in_seq(seq, obs)
-!           else
-!              call insert_obs_in_seq(seq, obs, obs_old )
-!           endif
+           else
+              call insert_obs_in_seq(seq, obs, obs_old )
+           endif
            obs_old=obs
         enddo
         if(trim(IASI_O3_retrieval_type).eq.'QOR' .or. &
         trim(IASI_O3_retrieval_type).eq.'CPSR') then 
            deallocate(Z,SV_cov,SV)
            deallocate(U_cov,UT_cov,V_cov,VT_cov)
-           deallocate(rr_avg_k,rr_cov,rr_x_r,rr_x_p)       
            deallocate(rs_avg_k,rs_cov,rs_x_r,rs_x_p)       
+           deallocate(rr_avg_k,rr_cov,rr_x_r,rr_x_p)       
            deallocate(ZL,ZR,ZV)
+
         endif
      enddo
   enddo   
+  deallocate (xg_count,xg,xg_nlvls)
+  deallocate (xg_lon,xg_lat,xg_twt)
+  deallocate (xg_sec,xg_raw_err,xg_ret_err)
+  deallocate (xg_raw_adj_x_r,xg_raw_adj_x_p,xg_raw_x_r,xg_raw_x_p)
+  deallocate (xg_ret_adj_x_r,xg_ret_adj_x_p,xg_ret_x_r, xg_ret_x_p)
+  deallocate (xg_norm,xg_nint)
+  deallocate (xg_avg_k,xg_raw_cov,xg_ret_cov)
+  deallocate (xg_prs,xg_prs_norm)
 !
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
-  if  (bin_beg == 3.01) then
-     file_name=trim(file_name)//chr_year//chr_month//chr_day//'06'
-  elseif (bin_beg == 9.01) then
-     file_name=trim(file_name)//chr_year//chr_month//chr_day//'12'
-  elseif (bin_beg == 15.01) then
-     file_name=trim(file_name)//chr_year//chr_month//chr_day//'18'
-  elseif (bin_beg == 21.01) then
-     file_name=trim(file_name)//chr_year//chr_month//chr_day//'24'
-  endif !bin
+ if  (bin_beg == 3.01) then
+    file_name=trim(file_name)//chr_year//chr_month//chr_day//'06'
+ elseif (bin_beg == 9.01) then
+    file_name=trim(file_name)//chr_year//chr_month//chr_day//'12'
+ elseif (bin_beg == 15.01) then
+    file_name=trim(file_name)//chr_year//chr_month//chr_day//'18'
+ elseif (bin_beg == 21.01) then
+    file_name=trim(file_name)//chr_year//chr_month//chr_day//'24'
+ endif !bin
 
-  call write_obs_seq(seq, file_name)
+ call write_obs_seq(seq, file_name)
 
 999 continue
-  close(fileid)
+ close(fileid)
 
 !-----------------------------------------------------------------------------
 ! Clean up
 !-----------------------------------------------------------------------------
-  call timestamp(string1=source,string2=revision,string3=revdate,pos='end')
+ call timestamp(string1=source,string2=revision,string3=revdate,pos='end')
 
 end program iasi_ascii_to_obs
-
-
-
-
+!
     subroutine mat_prd(A_mat,B_mat,C_mat,na,ma,nb,mb)
 !
 ! compute dot product of two matrics
@@ -1432,4 +1459,62 @@ end program iasi_ascii_to_obs
       enddo
       calc_greg_sec=calc_greg_sec+sec
    end function calc_greg_sec
-
+!
+   subroutine vertical_locate(prs_loc,kmax,prs,avgk,nlvp,nlvk)
+!
+! This subroutine is attache to iasi_ascii_to_obs.f90 to identify to vertical
+! location for vertical localization 
+! 
+      implicit none
+      integer,parameter           :: nlv=10
+      integer                     :: nlvp,nlvk
+      integer                     :: k,kk,kk_st,kk_nd,kmax
+      real                        :: wt_ctr,wt_end,zmax,sum
+      real                        :: prs_loc
+      real,dimension(nlvp)        :: prs
+      real,dimension(nlvk)        :: avgk
+      real,dimension(nlv)         :: avgk_sm
+!
+! apply vertical smoother
+      wt_ctr=2.
+      wt_end=1.
+      avgk_sm(:)=0.
+      do k=1,nlvk
+         if(k.eq.1) then
+            avgk_sm(k)=(wt_ctr*avgk(k)+wt_end*avgk(k+1))/(wt_ctr+wt_end)
+            cycle
+         elseif(k.eq.nlvk) then
+            avgk_sm(k)=(wt_end*avgk(k-1)+wt_ctr*avgk(k))/(wt_ctr+wt_end)
+            cycle
+         else
+            avgk_sm(k)=(wt_end*avgk(k-1)+wt_ctr*avgk(k)+wt_end*avgk(k+1))/(wt_ctr+2.*wt_end)
+         endif
+      enddo
+      print *, 'avgk_sm ',avgk_sm(:)
+!
+! locate the three-point maximum
+      zmax=-1.e10
+      kmax=0
+      do k=2,nlvk-1
+         kk_st=k-1
+         kk_nd=k+1
+         sum=0.
+         do kk=kk_st,kk_nd
+            sum=sum+avgk_sm(kk)
+         enddo
+         if(abs(sum).gt.zmax) then
+            zmax=abs(sum)
+            kmax=k
+         endif
+      enddo
+      if(kmax.eq.1) then
+         prs_loc=(prs(1)+prs(2))/2.
+         kmax=2
+      elseif(kmax.eq.nlvk) then
+         prs_loc=(prs(nlvk-1)+prs(nlvk))/2.
+         kmax=nlvk-1
+      else 
+         prs_loc=prs(kmax)
+      endif
+      return
+  end subroutine vertical_locate

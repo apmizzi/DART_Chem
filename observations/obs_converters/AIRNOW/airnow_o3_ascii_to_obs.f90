@@ -22,62 +22,60 @@ program airnow_o3_ascii_to_obs
 ! AIRNOW SURFACE AQ obs
 ! Based from create_obs_sequence.f90
 !=============================================
-
-      use    utilities_mod, only :    timestamp, &
-                                      register_module, &
-                                      initialize_utilities, &
-                                      find_namelist_in_file, &
-                                      check_namelist_read, &
-                                      error_handler, &
-                                      E_ERR,& 
-                                      E_WARN,& 
-                                      E_MSG, &
+!
+      use    utilities_mod, only :    timestamp,                 &
+                                      register_module,           &
+                                      initialize_utilities,      &
+                                      find_namelist_in_file,     &
+                                      check_namelist_read,       &
+                                      error_handler,             &
+                                      E_ERR,                     & 
+                                      E_WARN,                    & 
+                                      E_MSG,                     &
                                       E_DBG
-
-      use obs_sequence_mod, only :    obs_sequence_type, &
-                                      interactive_obs, &
-                                      write_obs_seq, &
-                                      interactive_obs_sequence, &
-                                      static_init_obs_sequence, &
-                                      init_obs_sequence, &
-                                      init_obs, &
-                                      set_obs_values, &
-                                      set_obs_def, &
-                                      set_qc, &
-                                      set_qc_meta_data, &
-                                      set_copy_meta_data, &
-                                      insert_obs_in_seq, &
+!
+      use obs_sequence_mod, only :    obs_sequence_type,         &
+                                      write_obs_seq,             &
+                                      static_init_obs_sequence,  &
+                                      init_obs_sequence,         &
+                                      init_obs,                  &
+                                      set_obs_values,            &
+                                      set_obs_def,               &
+                                      set_qc,                    &
+                                      set_qc_meta_data,          &
+                                      set_copy_meta_data,        &
+                                      insert_obs_in_seq,         &
                                       obs_type
-
-     use obs_def_mod, only : obs_def_type, &
-                             set_obs_def_time, &
-                             set_obs_def_type_of_obs, &
-                             set_obs_def_error_variance, &
-                             set_obs_def_location, &
-                             set_obs_def_key
-
-      use assim_model_mod, only : static_init_assim_model
-
-      use location_mod, only : location_type, &
-                               set_location
-
-      use time_manager_mod, only : set_date, &
-                                   set_calendar_type, &
-                                   time_type, &
-                                   get_time
-
-      use obs_kind_mod, only : AIRNOW_CO, &
-                               get_type_of_obs_from_menu
-
-      use random_seq_mod, only : random_seq_type, &
-                                 init_random_seq, &
-                                 random_uniform
-
-      use sort_mod, only : index_sort
+!
+      use obs_def_mod, only :         obs_def_type,              &
+                                      set_obs_def_time,          &
+                                      set_obs_def_type_of_obs,   &
+                                      set_obs_def_error_variance,&
+                                      set_obs_def_location,      &
+                                      set_obs_def_key
+!
+      use assim_model_mod, only :     static_init_assim_model
+!
+      use location_mod, only :        location_type,             &
+                                      set_location
+!
+      use time_manager_mod, only :    set_date,                  &
+                                      set_calendar_type,         &
+                                      time_type,                 &
+                                      get_time
+!
+      use obs_kind_mod, only :        AIRNOW_O3,                 &
+                                      get_type_of_obs_from_menu
+!
+      use random_seq_mod, only :      random_seq_type,           &
+                                      init_random_seq,           &
+                                      random_uniform
+!
+      use sort_mod, only :            index_sort
 
       implicit none
-!
-! version controlled file description for error handling, do not edit                          
+
+! version controlled file description for error handling, do not edit
       character(len=*), parameter :: source   = 'airnow_o3_ascii_to_obs.f90'
       character(len=*), parameter :: revision = ''
       character(len=*), parameter :: revdate  = ''
@@ -116,7 +114,7 @@ program airnow_o3_ascii_to_obs
       real,dimension(indx_max)     :: lat,lon,obs_val,obs_err
       real*8,dimension(num_qc)     :: obs_qc
       real*8,dimension(num_copies) :: obs_val_out
-      real                         :: co_log_max, co_log_min
+      real                         :: o3_log_max, o3_log_min
       character(len=2)             :: chr_month, chr_day
       character(len=4)             :: chr_year
       character(len=20)            :: dmy
@@ -127,13 +125,14 @@ program airnow_o3_ascii_to_obs
       character(len=129)           :: qc_meta_data='AIRNOW QC index'
       character(len=129)           :: file_name='airnow_obs_seq'
       character(len=180)           :: file_in
-      logical                      :: use_log_co, use_log_o3
+      logical                      :: use_log_co,use_log_o3,use_log_nox,use_log_so2,use_log_pm10,use_log_pm25
 
-      real                         :: pi,err_frac,ran1,ran2,zfac
+      real                         :: pi,err_fac,ran1,ran2,zfac
 
       namelist /create_airnow_obs_nml/year0,month0,day0,hour0,beg_year,beg_mon,beg_day, &
       beg_hour,beg_min,beg_sec,end_year,end_mon,end_day,end_hour,end_min,end_sec, &
-      file_in,lat_mn,lat_mx,lon_mn,lon_mx,use_log_co,use_log_o3 
+      file_in,lat_mn,lat_mx,lon_mn,lon_mx,use_log_co,use_log_o3,use_log_nox, &
+      use_log_so2,use_log_pm10,use_log_pm25
 
 !============================================================
 !obs sequence extra variables
@@ -141,7 +140,7 @@ program airnow_o3_ascii_to_obs
 
       pi=4.*atan(1.0)
       fac=1.0
-      err_frac=0.4
+      err_fac=0.3
       obs_qc(1)=0.
 
       save_greg_sec=-9999                                                 
@@ -169,10 +168,9 @@ program airnow_o3_ascii_to_obs
          call set_copy_meta_data(seq, icopy, copy_meta_data)
       enddo
       call set_qc_meta_data(seq, 1, qc_meta_data)
-
+!
 ! READ AIRNOW OBSERVATIONS
-
-      ! Read the namelist entry
+! Read the namelist entry
       call find_namelist_in_file("create_airnow_obs_nml.nl", "create_airnow_obs_nml", iunit)
       read(iunit, nml = create_airnow_obs_nml, iostat = io)
       call check_namelist_read(iunit, io, "create_airnow_obs_nml")
@@ -235,11 +233,6 @@ program airnow_o3_ascii_to_obs
             lon_mn .le. lon_temp .and. lon_mx .ge. lon_temp .and. &
             beg_greg_sec .le. data_greg_sec_temp .and. end_greg_sec .ge. data_greg_sec_temp) then
             indx=indx+1
-!            call random_number(ran1)
-!            if(ran1.eq.0.) call random_number(ran1)
-!            call random_number(ran2)
-!            if(ran2.eq.0.) call random_number(ran2)
-!            zfac=sqrt(-2.*log(ran1))*cos(2.*pi*ran2)
             lat(indx)=lat_temp
             lon(indx)=lon_temp
             year(indx)=year_temp
@@ -247,19 +240,13 @@ program airnow_o3_ascii_to_obs
             day(indx)=day_temp
             hour(indx)=hour_temp
             minute(indx)=minute_temp
-            obs_val(indx)=obs_val_temp*fac
-! physical space error
-!            obs_err(indx)=obs_val_temp*fac*err_frac
-            obs_err(indx)=(exp(err_frac)-1.)*obs_val_temp*fac
-            if (use_log_co) then
-!               co_log_max=log(obs_val(indx)+obs_err(indx))
-!               co_log_min=log(obs_val(indx)-obs_err(indx))
-!               obs_err(indx)=co_log_max-log(obs_val(indx))
-! log space error
-               obs_err(indx)=err_frac
-               obs_val(indx)=log(obs_val(indx))
-            endif
             data_greg_sec(indx)=data_greg_sec_temp
+            obs_val(indx)=obs_val_temp*fac
+            obs_err(indx)=obs_val_temp*fac*err_fac
+            if (use_log_o3) then
+               obs_val(indx)=log(obs_val_temp*fac)
+               obs_err(indx)=err_fac
+            endif
          endif
       enddo
 !      print *, 'APM - At end of input file read ',nndx
@@ -274,9 +261,6 @@ program airnow_o3_ascii_to_obs
       close(iunit)
       nndx=indx
 !
-! sort data by greg_sec
-
-!
 ! put data in obs_seq_file
       qc_count=0
       do indx=1,nndx
@@ -286,7 +270,6 @@ program airnow_o3_ascii_to_obs
 !
 ! location
          obs_val_out(1:num_copies)=obs_val(indx)
-!         level=0.0
          level=1
          latitude=lat(indx) 
          if (lon(indx)<0) then
@@ -311,7 +294,7 @@ program airnow_o3_ascii_to_obs
          which_vert           = 1       ! vert is level
          obs_location         = set_location(longitude, latitude, level, which_vert)
          ob_err_var           = obs_err(indx)*obs_err(indx)
-         obs_kind             = AIRNOW_CO
+         obs_kind             = AIRNOW_O3
 !        
          call set_obs_def_type_of_obs(obs_def, obs_kind)
          call set_obs_def_location(obs_def, obs_location)
@@ -349,11 +332,8 @@ program airnow_o3_ascii_to_obs
 ! Clean up
 !-----------------------------------------------------------------------------
       call timestamp(string1=source,string2=revision,string3=revdate,pos='end')
-
    end program airnow_o3_ascii_to_obs
-
-
-
+!
    integer function calc_greg_sec(year,month,day,hour,minute,sec,days_in_month)
       implicit none
       integer                  :: i,j,k,year,month,day,hour,minute,sec

@@ -16,32 +16,31 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 
-
 ! BEGIN DART PREPROCESS KIND LIST
 ! IASI_O3_RETRIEVAL, QTY_O3
 ! END DART PREPROCESS KIND LIST
-!
+
 ! BEGIN DART PREPROCESS USE OF SPECIAL OBS_DEF MODULE
-!   use obs_def_iasi_O3_mod, only : write_iasi_o3, read_iasi_o3, &
-!                                  interactive_iasi_o3, get_expected_iasi_o3, &
-!                                  set_obs_def_iasi_o3
+!   use obs_def_IASI_O3_mod, only : write_iasi_o3, read_iasi_o3, &
+!                                   interactive_iasi_o3, get_expected_iasi_o3, &
+!                                   set_obs_def_iasi_o3
 ! END DART PREPROCESS USE OF SPECIAL OBS_DEF MODULE
-!
+
 ! BEGIN DART PREPROCESS GET_EXPECTED_OBS_FROM_DEF
-!         case(IASI_O3_RETRIEVAL)                                                           
-!            call get_expected_iasi_o3(state_handle, ens_size, location, obs_def%key, expected_obs, istatus)  
+!      case(IASI_O3_RETRIEVAL)                                                           
+!          call get_expected_iasi_o3(state_handle, ens_size, location, obs_def%key, expected_obs, istatus)  
 ! END DART PREPROCESS GET_EXPECTED_OBS_FROM_DEF
-!
+
 ! BEGIN DART PREPROCESS READ_OBS_DEF
 !      case(IASI_O3_RETRIEVAL)
 !         call read_iasi_o3(obs_def%key, ifile, fileformat)
 ! END DART PREPROCESS READ_OBS_DEF
-!
+
 ! BEGIN DART PREPROCESS WRITE_OBS_DEF
 !      case(IASI_O3_RETRIEVAL)
 !         call write_iasi_o3(obs_def%key, ifile, fileformat)
 ! END DART PREPROCESS WRITE_OBS_DEF
-!
+
 ! BEGIN DART PREPROCESS INTERACTIVE_OBS_DEF
 !      case(IASI_O3_RETRIEVAL)
 !         call interactive_iasi_o3(obs_def%key)
@@ -50,26 +49,27 @@
 ! BEGIN DART PREPROCESS SET_OBS_DEF_IASI_O3
 !      case(IASI_O3_RETRIEVAL)
 !         call set_obs_def_iasi_o3(obs_def%key)
+!         call set_obs_def_iasi_o3(key, avg_kernel, pressure, iasi_prior_trm, &
+!         iasi_psf, iasi_altitude, iasi_air_column, iasi_prior, iasi_nlevels)
+!
 ! END DART PREPROCESS SET_OBS_DEF_IASI_O3
 !
 ! BEGIN DART PREPROCESS MODULE CODE
+module obs_def_IASI_O3_mod
 
-module obs_def_iasi_O3_mod
-
-use types_mod,only          : r8
-use utilities_mod,only      : register_module, error_handler, E_ERR, E_MSG, &
+use        types_mod, only : r8, missing_r8
+use    utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &
                              nmlfileunit, check_namelist_read, &
                              find_namelist_in_file, do_nml_file, do_nml_term, &
                              ascii_file_format
-use location_mod,only       : location_type, set_location, get_location, VERTISHEIGHT,&
-                              VERTISPRESSURE, VERTISLEVEL, VERTISSURFACE
-use assim_model_mod,only    : interpolate
-use obs_kind_mod,only       : QTY_O3, QTY_SURFACE_PRESSURE, QTY_PRESSURE
-use mpi_utilities_mod,only  : my_task_id  
+use     location_mod, only : location_type, set_location, get_location, VERTISPRESSURE, VERTISLEVEL, VERTISSURFACE, VERTISUNDEF
+
+use  assim_model_mod, only : interpolate
+use    obs_kind_mod, only  : QTY_O3, QTY_SURFACE_PRESSURE, QTY_PRESSURE, QTY_LANDMASK
 use ensemble_manager_mod,  only : ensemble_type
 use obs_def_utilities_mod, only : track_status
 
-implicit none 
+implicit none
 private
 
 public :: write_iasi_o3,        &
@@ -77,22 +77,22 @@ public :: write_iasi_o3,        &
           interactive_iasi_o3,  &
           get_expected_iasi_o3, &
           set_obs_def_iasi_o3
-!
-! Storage for the special information required for observations of this type
-integer, parameter          :: MAX_IASI_O3_OBS = 6000000
-integer, parameter          :: IASI_DIM = 41
-integer                     :: num_iasi_o3_obs = 0
 
-real(r8), allocatable, dimension(:,:)  :: avg_kernel
-real(r8), allocatable, dimension(:,:)  :: pressure
-real(r8), allocatable, dimension(:)    :: iasi_prior_trm
-real(r8), allocatable, dimension(:)    :: iasi_psurf
-real(r8), allocatable, dimension(:,:)  :: iasi_altitude
-real(r8), allocatable, dimension(:,:)  :: iasi_air_column
-real(r8), allocatable, dimension(:,:)  :: iasi_prior
-integer, allocatable, dimension(:)     :: iasi_nlevels
+! Storage for the special information required for observations of this type
+integer, parameter               :: MAX_IASI_O3_OBS = 10000000
+integer, parameter               :: IASI_DIM = 41
+integer                          :: num_iasi_o3_obs = 0
 !
-! nominal iasi height levels in m
+real(r8), allocatable, dimension(:,:) :: avg_kernel
+real(r8), allocatable, dimension(:,:) :: pressure
+real(r8), allocatable, dimension(:)   :: iasi_prior_trm
+real(r8), allocatable, dimension(:)   :: iasi_psurf
+real(r8), allocatable, dimension(:,:) :: iasi_altitude
+real(r8), allocatable, dimension(:,:) :: iasi_air_column
+real(r8), allocatable, dimension(:,:) :: iasi_prior
+integer,  allocatable, dimension(:)   :: iasi_nlevels
+!
+! Nominal iasi height levels in m
 real(r8)                    :: iasi_altitude_ref(IASI_DIM) =(/ &
                                0.,1000.,2000.,3000.,4000., &
                                5000.,6000.,7000.,8000.,9000., &
@@ -102,7 +102,7 @@ real(r8)                    :: iasi_altitude_ref(IASI_DIM) =(/ &
                                25000.,26000.,27000.,28000.,29000., &
                                30000.,31000.,32000.,33000.,34000., &
                                35000.,36000.,37000.,38000.,39000., &
-                               40000. /) 
+                               40000. /)
 !
 ! version controlled file description for error handling, do not edit
 character(len=*), parameter :: source   = 'obs_def_IASI_O3_mod.f90'
@@ -111,14 +111,14 @@ character(len=*), parameter :: revdate  = ''
 
 character(len=512) :: string1, string2
 
-logical, save       :: module_initialized = .false.
-integer             :: counts1 = 0
-
+logical, save :: module_initialized = .false.
+logical       :: use_log_o3
+integer       :: counts1 = 0
 character(len=129)  :: IASI_O3_retrieval_type
-logical             :: use_log_o3 =.false.
 !
 ! IASI_O3_retrieval_type:
-!     RAWR - retrievals in VMR (ppb) units
+!     RAWR - retrievals in format from supplier
+!     RETR - retrievals in retrieval (ppbv) format
 !     QOR  - quasi-optimal retrievals
 !     CPSR - compact phase space retrievals
 namelist /obs_def_IASI_O3_nml/ IASI_O3_retrieval_type, use_log_o3
@@ -137,17 +137,17 @@ if (module_initialized) return
 call register_module(source, revision, revdate)
 module_initialized = .true.
 
-allocate(avg_kernel(     MAX_IASI_O3_OBS,IASI_DIM))
-allocate(pressure(       MAX_IASI_O3_OBS,IASI_DIM))
-allocate(iasi_prior_trm( MAX_IASI_O3_OBS))
-allocate(iasi_psurf(     MAX_IASI_O3_OBS))
-allocate(iasi_altitude(  MAX_IASI_O3_OBS,IASI_DIM))
-allocate(iasi_air_column(MAX_IASI_O3_OBS,IASI_DIM))
-allocate(iasi_prior     (MAX_IASI_O3_OBS,IASI_DIM))
-allocate(iasi_nlevels(   MAX_IASI_O3_OBS))
+allocate (avg_kernel(     MAX_IASI_O3_OBS,IASI_DIM))
+allocate (pressure(       MAX_IASI_O3_OBS,IASI_DIM))
+allocate (iasi_prior_trm( MAX_IASI_O3_OBS))
+allocate (iasi_psurf(     MAX_IASI_O3_OBS))
+allocate (iasi_altitude(  MAX_IASI_O3_OBS,IASI_DIM))
+allocate (iasi_air_column(MAX_IASI_O3_OBS,IASI_DIM))
+allocate (iasi_prior(     MAX_IASI_O3_OBS,IASI_DIM))
+allocate (iasi_nlevels(   MAX_IASI_O3_OBS))
 
 ! Read the namelist entry.
-IASI_O3_retrieval_type='RAWR'
+IASI_O3_retrieval_type='RETR'
 use_log_o3=.false.
 call find_namelist_in_file("input.nml", "obs_def_IASI_O3_nml", iunit)
 read(iunit, nml = obs_def_IASI_O3_nml, iostat = rc)
@@ -158,7 +158,6 @@ if (do_nml_file()) write(nmlfileunit, nml=obs_def_IASI_O3_nml)
 if (do_nml_term()) write(     *     , nml=obs_def_IASI_O3_nml)
 
 end subroutine initialize_module
-
 !----------------------------------------------------------------------
 !>
 
@@ -319,8 +318,10 @@ read(*, *) pressure(num_iasi_o3_obs,:)
 end subroutine interactive_iasi_o3
 !
 !----------------------------------------------------------------------
+!
 subroutine get_expected_iasi_o3(state_handle, ens_size, location, key, val, istatus)
-
+!----------------------------------------------------------------------
+!subroutine get_expected_iasi_o3(state, location, key, val, istatus)
    type(ensemble_type), intent(in)  :: state_handle
    integer,             intent(in)  :: ens_size
    type(location_type), intent(in)  :: location
@@ -328,37 +329,34 @@ subroutine get_expected_iasi_o3(state_handle, ens_size, location, key, val, ista
    real(r8),            intent(out) :: val(ens_size)
    integer,             intent(out) :: istatus(ens_size)
 !
-   integer, parameter  :: wrf_nlev=32 ! Yikes, hard coded top model level!
-   integer             :: i, kstr, ilev, istrat(ens_size), imem
-   integer             :: apm_dom, apm_mm
+   integer,parameter   :: wrf_nlev=33
+   integer             :: i, kstr, ilev, icnt
    type(location_type) :: loc2
    real(r8)            :: mloc(3), prs_wrf(wrf_nlev)
-   real(r8)            :: obs_val(ens_size), obs_val_fnl(ens_size), o3_min, o3_min_str, obs_val_temp(ens_size)
-   real(r8)            :: o3_min_log, o3_min_str_log, level, missing
-   real(r8)            :: o3_wrf_sfc(ens_size), o3_wrf_1(ens_size), o3_wrf_top(ens_size)
-   real(r8)            :: o3_wrf_1_temp(ens_size), o3_wrf_top_temp(ens_size)
-   real(r8)            :: prs_wrf_sfc(ens_size), prs_wrf_1(ens_size), prs_wrf_nlev(ens_size)
-   real(r8)            :: prs_iasi_sfc
-     
-   real(r8)            :: ylon, ylat, ubv_obs_val, ubv_delt_prs
-   real(r8)            :: prs_top, prs_bot, wt_dw, wt_up
-   real(r8)            :: term, prior_term
+   real(r8)            :: obs_val(ens_size), obs_sum, o3_min, o3_min_log, level, missing
+   real(r8)            :: prs_wrf_sfc(ens_size), o3_wrf_sfc(ens_size)
+   real(r8)            :: prs_wrf_1(ens_size), prs_wrf_nlev(ens_size), o3_wrf_1(ens_size), o3_wrf_nlev(ens_size)
+   real(r8)            :: prs_iasi_sfc, prs_iasi
    integer             :: nlevels
-   integer             :: icnt=0
-   character(len=130)  :: apm_spec
 
-   real(r8)            :: vert_mode_filt
+   real(r8)            :: vert_mode_filt(ens_size)
+   real(r8)            ::  prs_bot, prs_top, o3_min_str, o3_min_str_log
+
+   character(len=*), parameter :: routine = 'get_expected_iasi_o3'
+
    logical :: return_now
    integer :: sfcp_istatus(ens_size)
    integer :: plev1_istatus(ens_size)
-   integer :: ptop_istatus(ens_size)
+   integer :: plev2_istatus(ens_size)
+   integer :: o3_istatus(ens_size)
    integer :: o31_istatus(ens_size)
-   integer :: o3top_istatus(ens_size)
+   integer :: o32_istatus(ens_size)
+   integer :: obsval_istatus(ens_size)
 !
 ! Initialize DART
    if ( .not. module_initialized ) call initialize_module
-! 
-! Initialize variables
+!
+! Initialize variables (IASI is ppbv; WRF O3 is ppmv)
    prs_bot         = 150.*1.e2
    prs_top         = 50*1.e2
    o3_min          = 0.004 * 1.e-3
@@ -372,195 +370,164 @@ subroutine get_expected_iasi_o3(state_handle, ens_size, location, key, val, ista
       o3_min_str=o3_min_str_log
    endif
 !
-! Get location information
-   mloc=get_location(location)
-   if (mloc(2) .gt. 90.0_r8) then
+! Get location infomation
+   mloc = get_location(location)
+   if (mloc(2)>90.0_r8) then
       mloc(2)=90.0_r8
-   elseif (mloc(2) .lt. -90.0_r8) then
+   elseif (mloc(2)<-90.0_r8) then
       mloc(2)=-90.0_r8
    endif
+   prs_iasi=mloc(3)
 !
 ! IASI surface pressure
-   prs_iasi_sfc=iasi_psurf(key)
+   prs_iasi_sfc = iasi_psurf(key)
 !
 ! WRF surface pressure
-   istatus(:)=0
    level=0.0_r8
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
-   call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_wrf_sfc, sfcp_istatus)  
+   istatus(:)=0
+   sfcp_istatus(:)=0
+   call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_wrf_sfc, sfcp_istatus)
+   if(any(sfcp_istatus/=0)) then
+      write(string1, *)'APM NOTICE: WRF prs_wrf_sfc is bad '
+      call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
+   endif
    call track_status(ens_size, sfcp_istatus, prs_wrf_sfc, istatus, return_now)
    if(return_now) return
 !
-! WRF pressure first level
-   istatus(:)=0
-   level=real(1)
+! WRF pressure at first level
+   level=1.0_r8
    loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+   istatus(:) = 0
+   plev1_istatus(:)=0
    call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_wrf_1, plev1_istatus)
+   if(any(plev1_istatus/=0)) then
+      write(string1, *)'APM NOTICE: WRF prs_wrf_1 is bad '
+      call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
+   endif
    call track_status(ens_size, plev1_istatus, prs_wrf_1, istatus, return_now)
    if(return_now) return
 !
-! WRF pressure top level
-   istatus(:)=0
+! WRF pressure at top level
    level=real(wrf_nlev)
    loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-   call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_wrf_nlev, ptop_istatus)
-   call track_status(ens_size, ptop_istatus, prs_wrf_nlev, istatus, return_now)
+   istatus(:) = 0
+   plev2_istatus(:)=0
+   call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_wrf_nlev, plev2_istatus)
+   if(any(plev2_istatus/=0)) then
+      write(string1, *)'APM NOTICE: WRF prs_wrf_nlev is bad '
+      call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
+   endif
+   call track_status(ens_size, plev2_istatus, prs_wrf_nlev, istatus, return_now)
    if(return_now) return
 !
-! WRF ozone at surface
-!   istatus = 0
-!   loc2 = set_location(mloc(1), mloc(2), prs_wrf_sfc, VERTISSURFACE)
-!   call interpolate(state, loc2, KIND_O3, o3_wrf_sfc, istatus) 
-!   if(istatus/=0) then
-!      write(string1, *)'APM NOTICE: WRF o3 at surface is bad ',istatus
-!      call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
-!      stop
-!   endif              
-!
-
 ! WRF ozone at first level
-! KRF Add member loop. Calls interpolate for every member with temp array,
-! then fills final member array. 
-do imem = 1, ens_size
-   istatus(:) = 0
-   loc2 = set_location(mloc(1), mloc(2), prs_wrf_1(imem), VERTISPRESSURE)
-   call interpolate(state_handle, ens_size, loc2, QTY_O3, o3_wrf_1_temp, o31_istatus)
-   call track_status(ens_size, o31_istatus, o3_wrf_1_temp, istatus, return_now)
-   o3_wrf_1(imem) = o3_wrf_1_temp(imem)
-   if (any(istatus /= 0)) return
-
+   level=1.0_r8
+   loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+   istatus(:)=0
+   o31_istatus(:)=0
+   call interpolate(state_handle, ens_size, loc2, QTY_O3, o3_wrf_1, o31_istatus) 
+   if(any(o31_istatus/=0)) then
+      write(string1, *)'APM NOTICE: WRF o3_wrf_1 is bad '
+      call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
+   endif
+   call track_status(ens_size, o31_istatus, o3_wrf_1, istatus, return_now)
+   if(return_now) return
+   o3_wrf_sfc=o3_wrf_1
 !
-! WRF ozone at top
-   istatus(:) = 0
-   loc2 = set_location(mloc(1), mloc(2), prs_wrf_nlev(imem), VERTISPRESSURE)
-   call interpolate(state_handle, ens_size, loc2, QTY_O3, o3_wrf_top_temp, o3top_istatus) 
-   call track_status(ens_size, o3top_istatus, o3_wrf_top_temp, istatus, return_now)
-   o3_wrf_top(imem) = o3_wrf_top_temp(imem)
-   if (any(istatus /= 0)) return
-
-end do
-
+! WRF ozone at top level
+   level=real(wrf_nlev)
+   loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+   istatus(:)=0
+   o32_istatus(:)=0
+   call interpolate(state_handle, ens_size, loc2, QTY_O3, o3_wrf_nlev, o32_istatus) 
+   if(any(o32_istatus/=0)) then
+      write(string1, *)'APM NOTICE: WRF o3_wrf_nlev is bad '
+      call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
+   endif
+   call track_status(ens_size, o32_istatus, o3_wrf_nlev, istatus, return_now)
+   if(return_now) return
+   o3_wrf_sfc=o3_wrf_1
 !
 ! Apply IASI Averaging kernel A and IASI Prior (I-A)xa
-! x = Axm + (I-A)xa , where x is a 41-element vector !
+! x = Axm + (I-A)xa , where x is a 19 element vector 
 !
 ! loop through IASI levels
-   val = 0.0_r8
+   val(:) = 0.0_r8
    do ilev = 1, nlevels
+      if (ilev.eq.1) then
+         prs_iasi=(prs_iasi_sfc+pressure(key,ilev))/2.
+         loc2 = set_location(mloc(1),mloc(2),prs_iasi, VERTISPRESSURE)
+      else
+         prs_iasi=(pressure(key,ilev-1)+pressure(key,ilev))/2.
+         loc2 = set_location(mloc(1),mloc(2),prs_iasi, VERTISPRESSURE)
+      endif
 !
-! get location of obs
-      istrat=0
+      istatus(:)=0
+      obsval_istatus(:)=0
+      call interpolate(state_handle, ens_size, loc2, QTY_O3, obs_val, obsval_istatus)
 !
-!
-! point in model interior      
-! KRF Add  member loop to call interpolate for temp array for each member
-! then fill final obs_val. 
-
-      do imem = 1, ens_size
-        if(pressure(key,ilev).lt.prs_wrf_1(imem) .and. pressure(key,ilev).ge.prs_wrf_nlev(imem)) then
-            istatus(:) = 0
-            loc2 = set_location(mloc(1),mloc(2), pressure(key,ilev), VERTISPRESSURE)
-            call interpolate(state_handle, ens_size, loc2, QTY_O3, obs_val_temp, istatus)
-            call track_status(ens_size, o3top_istatus, obs_val_temp, istatus, return_now)
-
-          if(istatus(imem).ne.0) then
-             write(string1, *)'ilev obs_val_temp,ias_pr ',ilev,obs_val_temp,pressure(key,ilev)/100.
-             call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
-             write(string1, *)'key, ilev ',key,ilev,pressure(key,ilev),prs_wrf_1
-             call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
-             stop
-          else
-             obs_val(imem) = obs_val_temp(imem)
-          end if
-
-        end if
-      end do
-
-!     if(pressure(key,ilev).lt.prs_wrf_1 .and. pressure(key,ilev).ge.prs_wrf_nlev) then
-!        istatus(:) = 0
-!        loc2 = set_location(mloc(1),mloc(2), pressure(key,ilev), VERTISPRESSURE)
-!        call interpolate(state_handle, ens_size, loc2, QTY_O3, obs_val, istatus) 
-!        if(any(istatus.ne.0)) then
-!           write(string1, *)'ilev obs_val,ias_pr ',ilev,obs_val,pressure(key,ilev)/100.
-!           call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
-!           write(string1, *)'key, ilev ',key,ilev,pressure(key,ilev),prs_wrf_1
-!           call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
-!           stop
-!        endif      
-!     endif
-
-! KRF model surface block below commented out originally
-! point at model surface 
-!      if(pressure(key,ilev).ge.prs_wrf_sfc) then
-!         obs_val=o3_wrf_sfc
-!      endif
-! KRFend
-
-! point between surface and first level
-
-! KRF: Use array masks
-      where ( prs_wrf_1 <= pressure(key,ilev) )
-         obs_val=o3_wrf_1
+! points below model level 1 pressure
+      where(prs_iasi.ge.prs_wrf_1)
+         obs_val = o3_wrf_1
+         istatus=0
+         obsval_istatus=0
       endwhere
-     !if(pressure(key,ilev).ge.prs_wrf_1) then
-     !   obs_val=o3_wrf_1
-     !endif
-
 !
-! KRF: Use array masks
-! point above model top
-      where ( prs_wrf_nlev > pressure(key,ilev) )
-         istrat=1
-         obs_val=iasi_prior(key,ilev)
+! points above model level nlev pressure
+      where(prs_iasi.lt.prs_wrf_nlev)
+         obs_val = o3_wrf_nlev
+         istatus=0
+         obsval_istatus=0
       endwhere
-     !if(pressure(key,ilev).lt.prs_wrf_nlev) then
-     !   istrat=1
-     !   obs_val=iasi_prior(key,ilev)
-     !endif
 !
-! scale to ppb
-! KRF add member loop for istrat. 
-    do imem = 1,ens_size
-       if (istrat(imem).eq.0) then
-          if ( use_log_o3 ) then
-            obs_val(imem)=obs_val(imem) + 2.303 * 3.0
-          else
-            obs_val(imem) = obs_val(imem) * 1.e3
-          endif
-       end if
-    end do
+! all other points
+      if(any(obsval_istatus/=0)) then 
+         write(string1, *)'APM NOTICE: WRF obs_val is bad ',prs_iasi
+         call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
+      endif
+      call track_status(ens_size, obsval_istatus, obs_val, istatus, return_now)
+      if (return_now) return
+!
+! check for lower bound
+      if(any(obs_val.lt.o3_min)) then
+         write(string1, *)'APM: NOTICE resetting minimum IASI O3 value '
+         call error_handler(E_MSG,'set_obs_def_iasi_o3',string1,source,revision,revdate)
+      end if
+      where(obs_val.lt.o3_min )
+         obs_val = o3_min
+      endwhere
+!
+! scale model value to ppb
+      if (use_log_o3) then
+         obs_val=obs_val + 2.303 * 3.0
+      else
+         obs_val = obs_val * 1.e3
+      endif
 !
 ! blend upper tropospnere with the prior (WRF O3 biased relative to IASI).
-      obs_val_fnl=obs_val
-      if(pressure(key,ilev).le.prs_bot .and. pressure(key,ilev).ge.prs_top) then
-         wt_dw=pressure(key,ilev)-prs_top
-         wt_up=prs_bot-pressure(key,ilev)
-         obs_val_fnl=(wt_dw*obs_val + wt_up*iasi_prior(key,ilev))/(wt_dw+wt_up)
-      endif
-      if(pressure(key,ilev).lt.prs_top) then 
-         obs_val_fnl=iasi_prior(key,ilev)
-      endif
+!      obs_val_fnl=obs_val
+!      if(pressure(key,ilev).le.prs_bot .and. pressure(key,ilev).ge.prs_top) then
+!         wt_dw=pressure(key,ilev)-prs_top
+!         wt_up=prs_bot-pressure(key,ilev)
+!         obs_val_fnl=(wt_dw*obs_val + wt_up*iasi_prior(key,ilev))/(wt_dw+wt_up)
+!      endif
+!      if(pressure(key,ilev).lt.prs_top) then 
+!         obs_val_fnl=iasi_prior(key,ilev)
+!      endif
 !
 ! apply averaging kernel
       if( use_log_o3 ) then
-         val = val + avg_kernel(key,ilev) * exp(obs_val_fnl)
+         val = val + avg_kernel(key,ilev) * exp(obs_val)
       else
-         val = val + avg_kernel(key,ilev) * obs_val_fnl
+         val = val + avg_kernel(key,ilev) * obs_val  
       endif
-  end do
- 
+   enddo
 !
    val = val + iasi_prior_trm(key)
 !
-   if (trim(IASI_O3_retrieval_type).eq.'RETR') then
-      val = log10(val)
-   endif
-   if(any(val.lt.0.)) then
-      icnt=icnt+1
-      print *, 'APM: Expected O3 is negative ',mloc(3),val
-   endif
 end subroutine get_expected_iasi_o3
-
+!
 !----------------------------------------------------------------------
 
 subroutine set_obs_def_iasi_o3(key, o3_avgker, o3_press, o3_prior_trm, o3_psurf, o3_altitude, &
@@ -1593,8 +1560,6 @@ subroutine apm_interpolate(obs_val,del_prs,lon,lat,lev,xlon,xlat,xlev,dataf,nx,n
    del_prs=xlev(k_lw)-xlev(k_up)
 end subroutine apm_interpolate
 
-
-end module obs_def_iasi_O3_mod
-
+end module obs_def_IASI_O3_mod
 ! END DART PREPROCESS MODULE CODE
 

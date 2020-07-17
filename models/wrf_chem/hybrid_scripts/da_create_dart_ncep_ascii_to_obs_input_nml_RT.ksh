@@ -65,14 +65,6 @@ cat > input.nml << EOF
     max_gpsro_obs = 100000 /
 
 &preprocess_nml
-   input_obs_kind_mod_file     = '../../assimilation_code/modules/observations/DEFAULT_obs_kind_mod.F90',
-   output_obs_kind_mod_file    = '../../assimilation_code/modules/observations/obs_kind_mod.f90',
-   input_obs_def_mod_file      = '../../observations/forward_operators/DEFAULT_obs_def_mod.F90',
-   output_obs_def_mod_file     = '../../observations/forward_operators/obs_def_mod.f90',
-   input_files                 = '../../observations/forward_operators/obs_def_reanalysis_bufr_mod.f90',
-                                 '../../observations/forward_operators/obs_def_gps_mod.f90',
-                                 '../../observations/forward_operators/obs_def_eval_mod.f90'
-&preprocess_nml
     input_obs_kind_mod_file = '${DART_DIR}/assimilation_code/modules/observation/DEFAULT_obs_kind_mod.F90',
     output_obs_kind_mod_file= '${DART_DIR}/assimilation_code/modules/observation/obs_kind_mod.f90',
     input_obs_def_mod_file  = '${DART_DIR}/observations/forward_operators/DEFAULT_obs_def_mod.F90',

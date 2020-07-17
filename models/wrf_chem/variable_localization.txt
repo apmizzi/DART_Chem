@@ -1,38 +1,25 @@
-# use_varloc table
-
-
-
 #
-# APM/AFAJ/LXL +++
-# Chem/Met interaction mods:
-#  Met obs update only Met state variables
-#  and Chem obs update only Chem state variables.
+# There are two types of chemistry observations/state variables localization settings
+# 1) use_varloc = true and use_indep_chem_assim = false
+#    With this setting: (i) CO, O3, NO, NO2, SO2, PM10, PM25, and AOD observations may
+#    update any chemistry state variable but may not update any meteorological state 
+#    variable; and (ii) no meteorlogical observation may update any chemistry state variable
+#         
+# 2) use_varloc = false and use_indep_chem_assim = true
+#    With this setting: (i) a chemistry observation may update only the related chemistry 
+#    state variables and no meteorological state variables; and (ii) no meteorlogical 
+#    observation may update any chemistry state variable
 #
 GROUP vchem1
-   QTY_O3
    QTY_CO
-   QTY_NO
-   QTY_AOD
-END GROUP
-
-GROUP vmet1
-   ALLQTYS EXCEPT vchem1
-END GROUP
-
-GROUP vchem2
-   QTY_SO2
    QTY_O3
-   QTY_CO
    QTY_NO
    QTY_NO2
+   QTY_SO2
+   QTY_SO4
    QTY_HNO3
    QTY_HNO4
    QTY_N2O5
-   QTY_PAN
-   QTY_MEK
-   QTY_ALD
-   QTY_CH3O2
-   QTY_C3H8
    QTY_C2H6
    QTY_ACET
    QTY_HCHO
@@ -43,20 +30,166 @@ GROUP vchem2
    QTY_BIGALK
    QTY_ISOPR
    QTY_MACR
-   QTY_GLYALD
+   QTY_C3H8
    QTY_C10H16
-   QTY_AOD
-   QTY_BC1
-   QTY_BC2
-   QTY_OC1
-   QTY_OC2
-   QTY_DMS
    QTY_DST01
    QTY_DST02
    QTY_DST03
    QTY_DST04
    QTY_DST05
+   QTY_BC1
+   QTY_BC2
+   QTY_OC1
+   QTY_OC2
+   QTY_TAUAER1
+   QTY_TAUAER2
+   QTY_TAUAER3
+   QTY_TAUAER4
+   QTY_PM10
+   QTY_P25
+   QTY_P10
+   QTY_SSLT01
+   QTY_SSLT02
+   QTY_SSLT03
+   QTY_SSLT04
+   QTY_E_CO
+   QTY_E_NO
+   QTY_E_NO2
+   QTY_E_SO2
+   QTY_E_SO4
+   QTY_E_PM25
+   QTY_E_PM10
+   QTY_E_BC
+   QTY_E_OC
+   QTY_EBU_CO
+   QTY_EBU_NO
+   QTY_EBU_NO2
+   QTY_EBU_SO2
+   QTY_EBU_SO4
+   QTY_EBU_OC
+   QTY_EBU_BC
+   QTY_EBU_c2h4
+   QTY_EBU_ch2o
+   QTY_EBU_ch3oh
+   QTY_GLYALD
+   QTY_PAN
+   QTY_MEK
+   QTY_ALD
+   QTY_CH3O2
+   QTY_AOD
+   QTY_DMS
+END GROUP
+#
+GROUP vmet1
+    ALLQTYS EXCEPT vchem2
+END GROUP
+#
+GROUP vchem2
+   QTY_CO
+   QTY_O3
+   QTY_NO
+   QTY_NO2
+   QTY_SO2
+   QTY_PM10
+   QTY_PM25
+   QTY_AOD
+END GROUP
+#
+GROUP vchem_obs_CO
+   QTY_CO
+END GROUP
+#
+GROUP vchem_var_CO
+   QTY_CO
+   QTY_E_CO
+END GROUP
+#
+GROUP vchem_obs_O3
+   QTY_O3
+END GROUP
+#
+GROUP vchem_obs_NOx
+   QTY_NO
+   QTY_NO2
+END GROUP
+#
+GROUP vchem_var_NOx
+   QTY_NO
+   QTY_NO2
+   QTY_E_NO
+   QTY_E_NO2
+END GROUP
+#
+GROUP vchem_obs_SO2
+   QTY_SO2
+END GROUP
+#
+GROUP vchem_var_SO2
+   QTY_SO2
+   QTY_E_SO2
+END GROUP
+#
+GROUP vchem_obs_PM10
+   QTY_PM10
+END GROUP
+#
+GROUP vchem_var_PM10
+   QTY_PM10
    QTY_SO4
+   QTY_BC1
+   QTY_BC2
+   QTY_OC1
+   QTY_OC2
+   QTY_DST01
+   QTY_DST02
+   QTY_DST03
+   QTY_DST04
+   QTY_SSLT01
+   QTY_SSLT02
+   QTY_SSLT03
+   QTY_E_PM25
+   QTY_E_PM10
+   QTY_E_BC
+   QTY_E_OC
+   QTY_E_SO4
+END GROUP
+#
+GROUP vchem_obs_PM25
+   QTY_PM25
+END GROUP
+#
+GROUP vchem_var_PM25
+   QTY_PM25
+   QTY_SO4
+   QTY_BC1
+   QTY_BC2
+   QTY_OC1
+   QTY_OC2
+   QTY_DST01
+   QTY_DST02
+   QTY_SSLT01
+   QTY_SSLT02
+   QTY_E_PM25
+   QTY_E_BC
+   QTY_E_OC
+   QTY_E_SO4
+END GROUP
+#
+GROUP vchem_obs_AOD
+   QTY_AOD
+END GROUP
+#
+GROUP vchem_var_AOD
+   QTY_SO4
+   QTY_BC1
+   QTY_BC2
+   QTY_OC1
+   QTY_OC2
+   QTY_DST01
+   QTY_DST02
+   QTY_DST03
+   QTY_DST04
+   QTY_DST05
    QTY_SSLT01
    QTY_SSLT02
    QTY_SSLT03
@@ -65,33 +198,37 @@ GROUP vchem2
    QTY_TAUAER2
    QTY_TAUAER3
    QTY_TAUAER4
-   QTY_PM10
-   QTY_PM25
-   QTY_E_CO
-   QTY_E_NO
-   QTY_EBU_CO
-   QTY_EBU_NO
-   QTY_EBU_OC
-   QTY_EBU_BC
-   QTY_EBU_c2h4
-   QTY_EBU_ch2o
-   QTY_EBU_ch3oh
+   QTY_E_PM25
+   QTY_E_PM10
+   QTY_E_BC
+   QTY_E_OC
+   QTY_E_SO4
 END GROUP
-
-
-GROUP vmet2
-  ALLQTYS EXCEPT vchem2
-END GROUP
-
-
-# turn off where you don't want impacts.
-# anything not in these rules gets full impact.
-
+#
 IMPACT
-  vchem1 vmet1    0.0
-  vmet1  vchem1   0.0
-  vchem2 vmet2    0.0
-  vmet2  vchem2   0.0
+#
+# meterology observations cannot update chemistry state variables
+  vmet1           vchem1           0.0
+#
+# chemistry  observations cannot update meterorology state variables
+  vchem1          vmet1            0.0
+#
+# turn off chemistry observations updating any chemistry state variable
+  vchem1          vchem1           0.0
+#
+# for use_varloc = true and use_independent_chemistry_assimilation = false
+# use the following:
+  vchem2          vchem1           1.0
+#
+# for use_varloc = false and use_independent_chemistry_assimilation = true
+# use the following:
+#  vchem_obs_CO    vchem_var_CO     1.0
+#  vchem_obs_O3    vchem_obs_O3     1.0
+#  vchem_obs_NOx   vchem_var_NOx    1.0
+#  vchem_obs_SO2   vchem_var_SO2    1.0
+#  vchem_obs_PM10  vchem_var_PM10   1.0
+#  vchem_obs_PM25  vchem_var_PM10   PM25
+#  vchem_obs_AOD   vchem_var_AOD    1.0
 END IMPACT
 
 

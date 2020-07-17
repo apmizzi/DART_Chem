@@ -5,6 +5,8 @@
      input_obs_def_mod_file = '../../../../observations/forward_operators/DEFAULT_obs_def_mod.F90',
     output_obs_def_mod_file = '../../../../observations/forward_operators/obs_def_mod.f90',
    input_files              = '../../../../observations/forward_operators/obs_def_AIRNOW_OBS_mod.f90',
+                              '../../../../observations/forward_operators/obs_def_AIRNOW_PM10_mod.f90',
+                              '../../../../observations/forward_operators/obs_def_AIRNOW_PM25_mod.f90',
  /
 
 &obs_kind_nml

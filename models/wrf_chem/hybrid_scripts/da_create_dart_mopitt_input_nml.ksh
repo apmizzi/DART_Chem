@@ -26,10 +26,14 @@ cat > input.nml << EOF
    filename                    = ${NL_FILENAME}
    MOPITT_CO_retrieval_type    = ${NL_MOPITT_CO_RETRIEVAL_TYPE}
    fac_obs_error               = ${NL_FAC_OBS_ERROR}
-   use_log_co                  = ${NL_USE_LOG_CO}
    use_cpsr_co_trunc           = ${NL_USE_CPSR_CO_TRUNC}
    cpsr_co_trunc_lim           = ${NL_CPSR_CO_TRUNC_LIM}
    mopitt_co_vloc              = ${NL_MOPITT_CO_VLOC}
+   use_log_co                  = ${NL_USE_LOG_CO}
+   lon_min                     = ${NNL_MIN_LON}
+   lon_max                     = ${NNL_MAX_LON}
+   lat_min                     = ${NNL_MIN_LAT}
+   lat_max                     = ${NNL_MAX_LAT}
 /
 &obs_sequence_nml
    write_binary_obs_sequence   = .false.

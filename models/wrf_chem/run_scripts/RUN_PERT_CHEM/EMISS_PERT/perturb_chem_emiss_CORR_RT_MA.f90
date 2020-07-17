@@ -1063,4 +1063,3 @@
              end if
              call random_seed(put=aseed)
           end subroutine init_random_seed
-

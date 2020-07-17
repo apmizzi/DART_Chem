@@ -11,17 +11,16 @@ export NODES=$4
 export TASKS=$5
 export EXECUTE=$6
 export TYPE=$7
+export ACCOUNT=$8
 RANDOM=$$
 #
-if [[ -f job.ksh ]]; then rm -rf job.ksh; fi
+rm -rf job.ksh
 touch job.ksh
 #
 if [[ ${TYPE} == PARALLEL ]]; then
-#
-# for parallel job
    cat << EOF > job.ksh
 #!/bin/ksh -aeux
-#SBATCH --account ucb93_summit1
+#SBATCH --account ${ACCOUNT}
 #SBATCH --job-name ${JOBID}
 #SBATCH --qos ${CLASS}
 #SBATCH --time ${TIME_LIMIT}
@@ -29,12 +28,10 @@ if [[ ${TYPE} == PARALLEL ]]; then
 #SBATCH --nodes ${NODES}
 #SBATCH --ntasks ${TASKS}
 #SBATCH --partition shas
-. /etc/profile.d/lmod.sh
-module load intel impi netcdf nco 
-mpirun -np \${SLURM_NTASKS} ./${EXECUTE} > index_${RANDOM}.html 2>&1
+mpirun -np \${SLURM_NTASKS} ./${EXECUTE} > index.html 2>&1
 export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+rm -rf SUCCESS     
+rm -rf FAILED          
 if [[ \$RC = 0 ]]; then
    touch SUCCESS
 else
@@ -44,23 +41,20 @@ fi
 EOF
 #
 elif [[ ${TYPE} == SERIAL ]]; then
-#
-# for serial job
    cat << EOF > job.ksh
 #!/bin/ksh -aeux
+#SBATCH --account ${ACCOUNT}
 #SBATCH --job-name ${JOBID}
 #SBATCH --qos ${CLASS}
 #SBATCH --time ${TIME_LIMIT}
-#SBATCH --output ${JOBID}.log-%j.out
+#SBATCH --output ${JOBID}.log
 #SBATCH --nodes ${NODES}
 #SBATCH --ntasks ${TASKS}
 #SBATCH --partition shas
-. /etc/profile.d/lmod.sh
-module load intel impi netcdf nco 
-./${EXECUTE} > index_${RANDOM}.html 2>&1
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+./${EXECUTE} > index.html 2>&1
+export RC=\$?
+rm -rf SUCCESS     
+rm -rf FAILED          
 if [[ \$RC = 0 ]]; then
    touch SUCCESS
 else

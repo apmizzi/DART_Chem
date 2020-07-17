@@ -38,4 +38,5 @@ ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_MOPITT_CO_
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_IASI_CO_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_IASI_O3_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_quality_control_nml.ksh
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_impact_tool_nml.ksh
 echo on

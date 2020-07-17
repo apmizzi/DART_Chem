@@ -83,7 +83,7 @@ integer                          :: num_mopitt_co_obs = 0
 !
 ! MOPITT pressures (level 1 is place holder for surface pressure)
 real(r8)   :: mopitt_pressure(MOPITT_DIM) =(/ &
-                              100000.,90000.,80000.,70000.,60000.,50000.,40000.,30000.,20000.,1000. /)
+                              90000.,80000.,70000.,60000.,50000.,40000.,30000.,20000.,10000.,5000. /)
 real(r8)   :: mopitt_pressure_mid(MOPITT_DIM) =(/ &
                               100000.,85000.,75000.,65000.,55000.,45000.,35000.,25000.,15000.,7500. /)
 
@@ -106,8 +106,8 @@ character(len=129)  :: MOPITT_CO_retrieval_type
 logical             :: use_log_co
 !
 ! MOPITT_CO_retrieval_type:
-!     RAWR - retrievals in VMR (ppb) units
-!     RETR - retrievals in log10(VMR ([ ])) units
+!     RAWR - retrievals in format from supplier
+!     RETR - retrievals in retrieval (ppbv) format
 !     QOR  - quasi-optimal retrievals
 !     CPSR - compact phase space retrievals
     namelist /obs_def_MOPITT_CO_nml/ MOPITT_CO_retrieval_type, use_log_co
@@ -272,19 +272,21 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
    real(r8),            intent(out) :: val(ens_size)
    integer,             intent(out) :: istatus(ens_size)
 !
-  !integer,parameter   :: wrf_nlev=33 !not used
-   integer             :: i, kstr, ilev
+   integer,parameter   :: wrf_nlev=33
+   integer,parameter   :: mop_nlev=10
+   integer             :: i, kstr, ilev, icnt
    type(location_type) :: loc2
-   real(r8)            :: mloc(3) ! not used  prs_wrf(wrf_nlev)
-   real(r8)            :: obs_val(ens_size), co_min, co_min_log, level, missing
+   real(r8)            :: mloc(3), prs_wrf(wrf_nlev)
+   real(r8)            :: obs_val(ens_size), obs_sum, co_min, co_min_log, level, missing
    real(r8)            :: prs_wrf_sfc(ens_size), co_wrf_sfc(ens_size)
-   real(r8)            :: prs_wrf_1(ens_size), prs_wrf_2(ens_size), co_wrf_1(ens_size), co_wrf_2(ens_size)! not used  , prs_wrf_nlev(ens_size)
+   real(r8)            :: prs_wrf_1(ens_size), prs_wrf_2(ens_size), co_wrf_1(ens_size), co_wrf_2(ens_size), prs_wrf_nlev(ens_size)
    real(r8)            :: prs_mopitt_sfc, prs_mopitt
    integer             :: nlevels,nlevelsp
 
    real(r8)            :: vert_mode_filt
 
    character(len=*), parameter :: routine = 'get_expected_mopitt_co'
+
    logical :: return_now
    integer :: sfcp_istatus(ens_size)
    integer :: plev1_istatus(ens_size)
@@ -300,6 +302,7 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
    co_min_log  = log(co_min)
    missing     = -888888.0_r8
    nlevels     = mopitt_nlevels(key)
+   kstr        = mop_nlev-nlevels+1
    if ( use_log_co ) then
       co_min=co_min_log
    endif
@@ -311,16 +314,21 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
    elseif (mloc(2)<-90.0_r8) then
       mloc(2)=-90.0_r8
    endif
+   prs_mopitt=mloc(3)
 !
 ! MOPITT surface pressure
    prs_mopitt_sfc = mopitt_psurf(key)
-   mopitt_pressure(1)=mopitt_psurf(key)
 !
 ! WRF surface pressure
    level=0.0_r8
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
    istatus(:)=0
-   call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_wrf_sfc, sfcp_istatus)  
+   sfcp_istatus(:)=0
+   call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_wrf_sfc, sfcp_istatus)
+   if(any(sfcp_istatus/=0)) then
+      write(string1, *)'APM NOTICE: WRF prs_wrf_sfc is bad '
+      call error_handler(E_MSG,'set_obs_def_mopitt_co',string1,source,revision,revdate)
+   endif
    call track_status(ens_size, sfcp_istatus, prs_wrf_sfc, istatus, return_now)
    if(return_now) return
 !
@@ -328,7 +336,12 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
    level=1.0_r8
    loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
    istatus(:) = 0
+   plev1_istatus(:)=0
    call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_wrf_1, plev1_istatus)
+   if(any(plev1_istatus/=0)) then
+      write(string1, *)'APM NOTICE: WRF prs_wrf_1 is bad '
+      call error_handler(E_MSG,'set_obs_def_mopitt_co',string1,source,revision,revdate)
+   endif
    call track_status(ens_size, plev1_istatus, prs_wrf_1, istatus, return_now)
    if(return_now) return
 !
@@ -336,7 +349,12 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
    level=2.0_r8
    loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
    istatus(:) = 0
+   plev2_istatus(:)=0
    call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_wrf_2, plev2_istatus)
+   if(any(plev2_istatus/=0)) then
+      write(string1, *)'APM NOTICE: WRF prs_wrf_2 is bad '
+      call error_handler(E_MSG,'set_obs_def_mopitt_co',string1,source,revision,revdate)
+   endif
    call track_status(ens_size, plev2_istatus, prs_wrf_2, istatus, return_now)
    if(return_now) return
 !
@@ -344,84 +362,68 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
    level=1.0_r8
    loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
    istatus(:)=0
-   call interpolate(state_handle, ens_size, loc2, QTY_co, co_wrf_1, co_istatus) 
+   co_istatus(:)=0
+   call interpolate(state_handle, ens_size, loc2, QTY_CO, co_wrf_1, co_istatus) 
+   if(any(co_istatus/=0)) then
+      write(string1, *)'APM NOTICE: WRF co_wrf_1 is bad '
+      call error_handler(E_MSG,'set_obs_def_mopitt_co',string1,source,revision,revdate)
+   endif
    call track_status(ens_size, co_istatus, co_wrf_1, istatus, return_now)
-   co_wrf_sfc=co_wrf_1
    if(return_now) return
+   co_wrf_sfc=co_wrf_1
 !
 ! Apply MOPITT Averaging kernel A and MOPITT Prior (I-A)xa
 ! x = Axm + (I-A)xa , where x is a 10 element vector 
 !
 ! loop through MOPITT levels
    val = 0.0_r8
-   do ilev = 1, nlevels
-!
-! get location of obs
-      if (ilev.eq.1) then
+   do ilev = kstr, mop_nlev
+      if (ilev.eq.kstr) then
          prs_mopitt=(prs_mopitt_sfc+mopitt_pressure(ilev))/2.
          loc2 = set_location(mloc(1),mloc(2),prs_mopitt, VERTISPRESSURE)
       else
          prs_mopitt=(mopitt_pressure(ilev-1)+mopitt_pressure(ilev))/2.
          loc2 = set_location(mloc(1),mloc(2),prs_mopitt, VERTISPRESSURE)
-      endif!
+      endif
 !
-! KRF: First interpolate, then check obs values by mask and assign value.
       istatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_co, obs_val, obsval_istatus)
+      obsval_istatus(:)=0
+      call interpolate(state_handle, ens_size, loc2, QTY_CO, obs_val, obsval_istatus)
+      where(prs_mopitt.ge.prs_wrf_1)
+         obs_val = co_wrf_1
+         istatus=0
+         obsval_istatus=0
+      endwhere
+      if(any(obsval_istatus/=0)) then 
+         write(string1, *)'APM NOTICE: WRF obs_val is bad ',prs_mopitt
+         call error_handler(E_MSG,'set_obs_def_mopitt_co',string1,source,revision,revdate)
+      endif
       call track_status(ens_size, obsval_istatus, obs_val, istatus, return_now)
       if (return_now) return
-
-      where ( prs_wrf_1 <= prs_mopitt )
-         istatus(:)=0
-         obs_val=co_wrf_1
-      endwhere 
-
-! KRF: Original code below
-     !if(prs_mopitt .ge. prs_wrf_1) then
-     !   istatus=0
-     !   obs_val=co_wrf_1
-     !else
-     !   istatus(:)=0
-     !   call interpolate(state_handle, ens_size, loc2, QTY_CO, obs_val, obsval_istatus)
-     !   call track_status(ens_size, obsval_istatus, obs_val, istatus, return_now)
-     !   if (return_now) return 
-     !endif
-
-! KRF: Use array mask to check bounds instead and assign default values.
+!
 ! check for lower bound
-      if ( any(obs_val < co_min) ) then
-          write(string1, *)'APM: NOTICE resetting minimum MOPITT CO value ',ilev
+      if(any(obs_val.lt.co_min)) then
+         write(string1, *)'APM: NOTICE resetting minimum MOPITT CO value '
          call error_handler(E_MSG,'set_obs_def_mopitt_co',string1,source,revision,revdate)
       end if
-
-      where ( obs_val < co_min )
+      where(obs_val.lt.co_min )
          obs_val = co_min
       endwhere
-! KRF: Orginal code below
-     !if (obs_val.lt.co_min) then
-     !   write(string1, *)'APM: NOTICE resetting minimum MOPITT CO value ',ilev
-     !   call error_handler(E_MSG,'set_obs_def_mopitt_co',string1,source,revision,revdate)
-     !   obs_val = co_min 
-     !endif
 !
 ! apply averaging kernel
       if( use_log_co ) then
-         val = val + avg_kernel(key,ilev) * log10(exp(obs_val) * 1.e3)  
-!         print *, 'ilev,value, incr ', ilev, val, avg_kernel(key,ilev)*log10(exp(obs_val)/1.e6)
-!         print *, 'ilev,obs_val,exp ', ilev, obs_val, exp(obs_val)/1.e6
-!         print *, 'ilev,avg_ker,obs ', ilev, avg_kernel(key,ilev), log10(exp(obs_val)/1.e6)
-!         print *, ' '
+         val = val + avg_kernel(key,ilev-kstr+1) * log10(exp(obs_val) * 1.e3)  
       else
-         val = val + avg_kernel(key,ilev) * log10(obs_val * 1.e3)  
+         val = val + avg_kernel(key,ilev-kstr+1) * log10(obs_val * 1.e3)  
       endif
    enddo
-   if (trim(MOPITT_CO_retrieval_type).eq.'RETR' .or. trim(MOPITT_CO_retrieval_type).eq.'QOR' &
+!
+! NOTE: For the following the mopitt_prior is zero due to the QOR subtraction
+   if (trim(MOPITT_CO_retrieval_type).eq.'RAWR' .or. trim(MOPITT_CO_retrieval_type).eq.'QOR' &
    .or. trim(MOPITT_CO_retrieval_type).eq.'CPSR') then
-!      val = val + mopitt_prior(key)
-!         print *, 'prior term       ',mopitt_prior(key)
-!         print *, ' '
-   elseif (trim(MOPITT_CO_retrieval_type).eq.'RAWR') then
-!      val = val + mopitt_prior(key)
+      val = val + mopitt_prior(key)
+   elseif (trim(MOPITT_CO_retrieval_type).eq.'RETR') then
+      val = val + mopitt_prior(key)
       val = (10.**val) * 1.e-3
    endif
 !

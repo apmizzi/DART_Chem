@@ -16,8 +16,15 @@
 
 ! code to perturb the wrfchem emission files
 
-          program main
-             implicit none
+program main
+
+implicit none
+
+! version controlled file description for error handling, do not edit
+character(len=*), parameter :: source   = 'perturb_chem_emiss_CORR_RT_MA_MPI.f90'
+character(len=*), parameter :: revision = ''
+character(len=*), parameter :: revdate  = ''
+
              include 'mpif.h'
              integer                                  :: unit,unita,unitb,num_procs,rank,stat
              integer                                  :: nx,ny,nz,nzp,nz_chem,nz_fire,nz_biog
@@ -28,14 +35,15 @@
              integer                                  :: jj_str,jj_end,jj_npt,jj_sft
              real                                     :: pi,grav,u_ran_1,u_ran_2,nnum_mem
              real                                     :: sprd_chem,sprd_fire,sprd_biog
-             real                                     :: zdist,zfac,tmp
+             real                                     :: zdist,zfac,tmp,zmin
              real                                     :: grid_length,vcov
              real                                     :: corr_lngth_hz
              real                                     :: corr_lngth_vt
              real                                     :: corr_lngth_tm
              real                                     :: corr_tm_delt
-             real                                     :: wgt,wgt_summ
-             real                                     :: pert_fire_sum,pert_biog_sum
+             real                                     :: wgt,wgt_summ,wgt_end
+             real,allocatable,dimension(:)            :: pert_chem_sum_old
+             real,allocatable,dimension(:)            :: pert_chem_sum_new
              real                                     :: mean,std,get_dist
              real                                     :: atime1,atime2,atime3,atime4,atime5,atime6
 
@@ -43,11 +51,19 @@
              real,allocatable,dimension(:,:)          :: xland,lat,lon
              real,allocatable,dimension(:,:,:)        :: geo_ht,wgt_sum
              real,allocatable,dimension(:,:,:,:)      :: A_chem,A_fire,A_biog
-             real,allocatable,dimension(:,:,:)        :: pert_chem,pert_fire,pert_biog
+             real,allocatable,dimension(:,:,:)        :: pert_chem_old
+             real,allocatable,dimension(:,:,:)        :: pert_chem_new
+             real,allocatable,dimension(:,:,:)        :: pert_chem_end,pert_fire_end,pert_biog_end
              real,allocatable,dimension(:,:)          :: chem_data2d
              real,allocatable,dimension(:,:,:)        :: chem_data3d
-             real,allocatable,dimension(:,:,:)        :: chem_fac_mem
-             real,allocatable,dimension(:,:,:,:)      :: chem_fac_pr,fire_fac_pr,biog_fac_pr
+             real,allocatable,dimension(:,:,:,:)      :: chem_data3d_sav
+             real,allocatable,dimension(:,:,:)        :: chem_data3d_mean
+             real,allocatable,dimension(:,:,:)        :: chem_data3d_sprd
+             real,allocatable,dimension(:,:,:)        :: chem_data3d_frac
+             real,allocatable,dimension(:,:,:)        :: chem_fac_mem_old, chem_fac_mem_new
+             real,allocatable,dimension(:,:,:,:)      :: chem_fac_old,fire_fac_old,biog_fac_old
+             real,allocatable,dimension(:,:,:,:)      :: chem_fac_new,fire_fac_new,biog_fac_new
+             real,allocatable,dimension(:,:,:,:)      :: chem_fac_end,fire_fac_end,biog_fac_end
              real,allocatable,dimension(:,:,:,:)      :: chem_fac,fire_fac,biog_fac,dist
              real,allocatable,dimension(:)            :: mems,pers,pert_chem_sum
              character(len=150)                       :: pert_path_pr,pert_path_po
@@ -71,19 +87,20 @@
              call mpi_comm_size(MPI_COMM_WORLD,num_procs,ierr)
 !
 ! Assign constants
-             if(rank.eq.0) then
-                pi=4.*atan(1.)
-                grav=9.8
-                nz_fire=1
-                nz_biog=1
-                zfac=2.
+             pi=4.*atan(1.)
+             grav=9.8
+             nz_fire=1
+             nz_biog=1
+             zfac=2.
+             zmin=1.e-10
 !
 ! Read control namelist
-                unit=20
-                open(unit=unit,file='perturb_chem_emiss_corr_nml.nl',form='formatted', &
-                status='old',action='read')
-                read(unit,perturb_chem_emiss_corr_nml)
-                close(unit)
+             unit=20
+             open(unit=unit,file='perturb_chem_emiss_corr_nml.nl',form='formatted', &
+             status='old',action='read')
+             read(unit,perturb_chem_emiss_corr_nml)
+             close(unit)
+             if(rank.eq.0) then
                 print *, 'nx                 ',nx
                 print *, 'ny                 ',ny
                 print *, 'nz                 ',nz
@@ -109,334 +126,174 @@
                 print *, 'corr_lngth_vt      ',corr_lngth_vt
                 print *, 'corr_lngth_tm      ',corr_lngth_tm
                 print *, 'corr_tm_delt       ',corr_tm_delt
-                nzp=nz+1
-                num_mem=nint(nnum_mem)
+             endif
+             nzp=nz+1
+             num_mem=nint(nnum_mem)
 !
 ! Allocate arrays
-                allocate(ch_chem_spc(nchem_spcs),ch_fire_spc(nfire_spcs),ch_biog_spc(nbiog_spcs))
+             allocate(ch_chem_spc(nchem_spcs),ch_fire_spc(nfire_spcs),ch_biog_spc(nbiog_spcs))
 !
 ! Read the species namelist
-                unit=20
-                open(unit=unit,file='perturb_emiss_chem_spec_nml.nl',form='formatted', &
-                status='old',action='read')
-                read(unit,perturb_chem_emiss_spec_nml)
-                close(unit)
+             unit=20
+             open(unit=unit,file='perturb_emiss_chem_spec_nml.nl',form='formatted', &
+             status='old',action='read')
+             read(unit,perturb_chem_emiss_spec_nml)
+             close(unit)
+!
+! Get land mask
+             allocate(xland(nx,ny))
+             call get_WRFINPUT_land_mask(xland,nx,ny)
 !
 ! Get lat / lon data
-                allocate(lat(nx,ny),lon(nx,ny))
-                call get_WRFINPUT_lat_lon(lat,lon,nx,ny)
+             allocate(lat(nx,ny),lon(nx,ny))
+             call get_WRFINPUT_lat_lon(lat,lon,nx,ny)
 !
 ! Get mean geopotential height data
-                allocate(geo_ht(nx,ny,nz))
-                call get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp,num_mem)
-                geo_ht(:,:,:)=geo_ht(:,:,:)/grav
+             allocate(geo_ht(nx,ny,nz))
+             call get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp,num_mem)
+             geo_ht(:,:,:)=geo_ht(:,:,:)/grav
 !
 ! Construct the vertical correlations transformation matrix
-                if(sw_chem) then
-                   allocate(A_chem(nx,ny,nz_chem,nz_chem))
-                   do k=1,nz_chem
-                      do l=1,nz_chem
-                         do i=1,nx
-                            do j=1,ny
-                               vcov=1.-abs(geo_ht(i,j,k)-geo_ht(i,j,l))/corr_lngth_vt
-                               if(vcov.lt.0.) vcov=0.
-! row 1            
-                               if(k.eq.1 .and. l.eq.1) then
-                                  A_chem(i,j,k,l)=1.
-                               elseif(k.eq.1 .and. l.gt.1) then
-                                  A_chem(i,j,k,l)=0.
-                               endif
-! row 2            
-                               if(k.eq.2 .and. l.eq.1) then
+             if(sw_chem) then
+                allocate(A_chem(nx,ny,nz_chem,nz_chem))
+                A_chem(:,:,:,:)=0.
+                do k=1,nz_chem
+                   do l=1,nz_chem
+                      do i=1,nx
+                         do j=1,ny
+                            vcov=1.-abs(geo_ht(i,j,k)-geo_ht(i,j,l))/corr_lngth_vt
+                            if(vcov.lt.0.) vcov=0.
+! row 1         
+                            if(k.eq.1 .and. l.eq.1) then
+                               A_chem(i,j,k,l)=1.
+                            elseif(k.eq.1 .and. l.gt.1) then
+                               A_chem(i,j,k,l)=0.
+                            endif
+! row 2         
+                            if(k.eq.2 .and. l.eq.1) then
+                               A_chem(i,j,k,l)=vcov
+                            elseif(k.eq.2 .and. l.eq.2) then
+                               A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l-1)*A_chem(i,j,k,l-1))
+                            elseif (k.eq.2 .and. l.gt.2) then
+                               A_chem(i,j,k,l)=0.
+                            endif
+! row 3 and greater         
+                            if(k.ge.3) then
+                               if(l.eq.1) then
                                   A_chem(i,j,k,l)=vcov
-                               elseif(k.eq.2 .and. l.eq.2) then
-                                  A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l-1)*A_chem(i,j,k,l-1))
-                               elseif (k.eq.2 .and. l.gt.2) then
-                                  A_chem(i,j,k,l)=0.
+                               elseif(l.lt.k .and. l.ne.1) then
+                                  do ll=1,l-1
+                                     A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,l,ll)*A_chem(i,j,k,ll)
+                                  enddo
+                                  if(A_chem(i,j,l,l).ne.0) A_chem(i,j,k,l)=(vcov-A_chem(i,j,k,l))/A_chem(i,j,l,l)
+                               elseif(l.eq.k) then
+                                  do ll=1,l-1
+                                     A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,k,ll)*A_chem(i,j,k,ll)
+                                  enddo
+                                  A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l))
                                endif
-! row 3 and greater
-                               if(k.ge.3) then
-                                  if(l.eq.1) then
-                                     A_chem(i,j,k,l)=vcov
-                                  elseif(l.lt.k .and. l.ne.1) then
-                                     do ll=1,l-1
-                                        A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,l,ll)*A_chem(i,j,k,ll)
-                                     enddo
-                                     if(A_chem(i,j,l,l).ne.0) A_chem(i,j,k,l)=(vcov-A_chem(i,j,k,l))/A_chem(i,j,l,l)
-                                  elseif(l.eq.k) then
-                                     do ll=1,l-1
-                                        A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,k,ll)*A_chem(i,j,k,ll)
-                                     enddo
-                                     A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l))
-                                  endif
-                               endif
-                            enddo
+                            endif
                          enddo
                       enddo
                    enddo
-                endif
-                if(sw_fire) then
-                   allocate(A_fire(nx,ny,nz_fire,nz_fire))
-                   do k=1,nz_fire
-                      do l=1,nz_fire
-                         do i=1,nx
-                            do j=1,ny
-                               vcov=1.-abs(geo_ht(i,j,k)-geo_ht(i,j,l))/corr_lngth_vt
-                               if(vcov.lt.0.) vcov=0.
-! row 1            
-                               if(k.eq.1 .and. l.eq.1) then
-                                  A_fire(i,j,k,l)=1.
-                               elseif(k.eq.1 .and. l.gt.1) then
-                                  A_fire(i,j,k,l)=0.
-                               endif
-! row 2            
-                               if(k.eq.2 .and. l.eq.1) then
-                                  A_fire(i,j,k,l)=vcov
-                               elseif(k.eq.2 .and. l.eq.2) then
-                                  A_fire(i,j,k,l)=sqrt(1.-A_fire(i,j,k,l-1)*A_fire(i,j,k,l-1))
-                               elseif (k.eq.2 .and. l.gt.2) then
-                                  A_fire(i,j,k,l)=0.
-                               endif
-! row 3 and greater
-                               if(k.ge.3) then
-                                  if(l.eq.1) then
-                                     A_fire(i,j,k,l)=vcov
-                                  elseif(l.lt.k .and. l.ne.1) then
-                                     do ll=1,l-1
-                                        A_fire(i,j,k,l)=A_fire(i,j,k,l)+A_fire(i,j,l,ll)*A_fire(i,j,k,ll)
-                                     enddo
-                                     if(A_fire(i,j,l,l).ne.0) A_fire(i,j,k,l)=(vcov-A_fire(i,j,k,l))/A_fire(i,j,l,l)
-                                  elseif(l.eq.k) then
-                                     do ll=1,l-1
-                                        A_fire(i,j,k,l)=A_fire(i,j,k,l)+A_fire(i,j,k,ll)*A_fire(i,j,k,ll)
-                                     enddo
-                                     A_fire(i,j,k,l)=sqrt(1.-A_fire(i,j,k,l))
-                                  endif
-                               endif
-                            enddo
-                         enddo
-                      enddo
-                   enddo
-                endif
-                if(sw_biog) then
-                   allocate(A_biog(nx,ny,nz_biog,nz_biog))
-                   do k=1,nz_biog
-                      do l=1,nz_biog
-                         do i=1,nx
-                            do j=1,ny
-                               vcov=1.-abs(geo_ht(i,j,k)-geo_ht(i,j,l))/corr_lngth_vt
-                               if(vcov.lt.0.) vcov=0.
-! row 1            
-                               if(k.eq.1 .and. l.eq.1) then
-                                  A_biog(i,j,k,l)=1.
-                               elseif(k.eq.1 .and. l.gt.1) then
-                                  A_biog(i,j,k,l)=0.
-                               endif
-! row 2            
-                               if(k.eq.2 .and. l.eq.1) then
-                                  A_biog(i,j,k,l)=vcov
-                               elseif(k.eq.2 .and. l.eq.2) then
-                                  A_biog(i,j,k,l)=sqrt(1.-A_biog(i,j,k,l-1)*A_biog(i,j,k,l-1))
-                               elseif (k.eq.2 .and. l.gt.2) then
-                                  A_biog(i,j,k,l)=0.
-                               endif
-! row 3 and greater
-                               if(k.ge.3) then
-                                  if(l.eq.1) then
-                                     A_biog(i,j,k,l)=vcov
-                                  elseif(l.lt.k .and. l.ne.1) then
-                                     do ll=1,l-1
-                                        A_biog(i,j,k,l)=A_biog(i,j,k,l)+A_biog(i,j,l,ll)*A_biog(i,j,k,ll)
-                                     enddo
-                                     if(A_biog(i,j,l,l).ne.0) A_biog(i,j,k,l)=(vcov-A_biog(i,j,k,l))/A_biog(i,j,l,l)
-                                  elseif(l.eq.k) then
-                                     do ll=1,l-1
-                                        A_biog(i,j,k,l)=A_biog(i,j,k,l)+A_biog(i,j,k,ll)*A_biog(i,j,k,ll)
-                                     enddo
-                                     A_biog(i,j,k,l)=sqrt(1.-A_biog(i,j,k,l))
-                                  endif
-                               endif
-                            enddo
-                         enddo
-                      enddo
-                   enddo
-                endif
-                deallocate(geo_ht)
-!
-! Get horiztonal grid length
-                grid_length=get_dist(lat(nx/2,ny/2),lat(nx/2+1,ny/2),lon(nx/2,ny/2),lon(nx/2+1,ny/2))
-!
-! Calculate number of horizontal grid points to be correlated 
-                ngrid_corr=ceiling(zfac*corr_lngth_hz/grid_length)+1
-                print *, 'ngrid_corr         ',ngrid_corr
-!
-! Calculate distances
-!                allocate(dist(nx,ny,2*ngrid_corr+1,2*ngrid_corr+1))
-!                dist(:,:,:,:)=-9999.
-!                do i=1,nx
-!                   do j=1,ny
-!                      ii_str=max(1,i-ngrid_corr)
-!                      ii_end=min(nx,i+ngrid_corr)
-!                      ii_npt=ii_end-ii_str+1
-!                      jj_str=max(1,j-ngrid_corr)
-!                      jj_end=min(ny,j+ngrid_corr)
-!                      jj_npt=jj_end-jj_str+1
-!                      do ii_sft=1,ii_npt
-!                         ii=ii_str+ii_sft-1
-!                         do jj_sft=1,jj_npt
-!                            jj=jj_str+jj_sft-1
-!                            dist(i,j,ii_sft,jj_sft)=get_dist(lat(ii,jj),lat(i,j),lon(ii,jj),lon(i,j))
-!                         enddo
-!                      enddo
-!                   enddo
-!                enddo
-!                deallocate(lat,lon)
-                do imem=1,num_mem
-                   call mpi_send(num_mem,1,MPI_INT,imem,1,MPI_COMM_WORLD,ierr)
-!                   print *, imem,'send num_mem ',num_mem
-                   call mpi_send(nx,1,MPI_INT,imem,2,MPI_COMM_WORLD,ierr)
-!                   print *, imem,'send nx ',nx
-                   call mpi_send(ny,1,MPI_INT,imem,3,MPI_COMM_WORLD,ierr)
-!                   print *, imem,'send ny ',ny
-                   call mpi_send(nz,1,MPI_INT,imem,4,MPI_COMM_WORLD,ierr)
-!                   print *, imem,'send nx ',nx
-                   call mpi_send(nz_chem,1,MPI_INT,imem,5,MPI_COMM_WORLD,ierr)
-!                   print *, imem,'send nz_chem ',nz_chem
-                   call mpi_send(nz_fire,1,MPI_INT,imem,6,MPI_COMM_WORLD,ierr)
-!                   print *, imem,'send nz_fire ',nz_fire
-                   call mpi_send(nz_biog,1,MPI_INT,imem,7,MPI_COMM_WORLD,ierr)
-!                   print *, imem,'nz_biog ',nz_biog
-                   call mpi_send(sw_chem,1,MPI_LOGICAL,imem,8,MPI_COMM_WORLD,ierr)
-                   call mpi_send(sw_fire,1,MPI_LOGICAL,imem,9,MPI_COMM_WORLD,ierr)
-                   call mpi_send(sw_biog,1,MPI_LOGICAL,imem,10,MPI_COMM_WORLD,ierr)
-
-                   call mpi_send(ngrid_corr,1,MPI_INT,imem,11,MPI_COMM_WORLD,ierr)
-!                   print *, imem,'send ngrid_corr ',ngrid_corr
-                   call mpi_send(corr_lngth_hz,1,MPI_FLOAT,imem,12,MPI_COMM_WORLD,ierr)
-!                   print *, imem,'corr_lngth_hz ',corr_lngth_hz
-!
-!                   allocate(tmp_arry(nx*ny*(2*ngrid_corr+1)*(2*ngrid_corr+1)))
-!                   call apm_pack(tmp_arry,dist,nx,ny,(2*ngrid_corr+1),(2*ngrid_corr+1))
-!                   call mpi_send(tmp_arry,nx*ny*(2*ngrid_corr+1)*(2*ngrid_corr+1),MPI_FLOAT,imem,13,MPI_COMM_WORLD,ierr)
-!                   deallocate(tmp_arry)
-!
-                   if(sw_chem) then
-                      allocate(tmp_arry(nx*ny*nz_chem*nz_chem))
-                      call apm_pack(tmp_arry,A_chem,nx,ny,nz_chem,nz_chem)
-                      call mpi_send(tmp_arry,nx*ny*nz_chem*nz_chem,MPI_FLOAT,imem,14,MPI_COMM_WORLD,ierr)
-                      deallocate(tmp_arry)
-                   endif
-                   if(sw_fire) then
-                      allocate(tmp_arry(nx*ny*nz_fire*nz_fire))
-                      call apm_pack(tmp_arry,A_fire,nx,ny,nz_fire,nz_fire)
-                      call mpi_send(tmp_arry,nx*ny*nz_fire*nz_fire,MPI_FLOAT,imem,15,MPI_COMM_WORLD,ierr)
-                      deallocate(tmp_arry)
-                   endif
-                   if(sw_biog) then
-                      allocate(tmp_arry(nx*ny*nz_biog*nz_biog))
-                      call apm_pack(tmp_arry,A_biog,nx,ny,nz_biog,nz_biog)
-                      call mpi_send(tmp_arry,nx*ny*nz_biog*nz_biog,MPI_FLOAT,imem,16,MPI_COMM_WORLD,ierr)
-                      deallocate(tmp_arry)
-                   endif
-                   call mpi_send(nchem_spcs,1,MPI_INT,imem,17,MPI_COMM_WORLD,ierr)
-                   call mpi_send(nfire_spcs,1,MPI_INT,imem,18,MPI_COMM_WORLD,ierr)
-                   call mpi_send(nbiog_spcs,1,MPI_INT,imem,19,MPI_COMM_WORLD,ierr)
-                   call mpi_send(sw_seed,1,MPI_LOGICAL,imem,20,MPI_COMM_WORLD,ierr)
-
-                   allocate(tmp_arry(nx*ny))
-                   call apm_pack_2d(tmp_arry,lat,nx,ny,1,1)
-                   call mpi_send(tmp_arry,nx*ny,MPI_FLOAT,imem,151,MPI_COMM_WORLD,ierr)
-                   deallocate(tmp_arry)
-                   allocate(tmp_arry(nx*ny))
-                   call apm_pack_2d(tmp_arry,lon,nx,ny,1,1)
-                   call mpi_send(tmp_arry,nx*ny,MPI_FLOAT,imem,152,MPI_COMM_WORLD,ierr)
-                   deallocate(tmp_arry)
-                   call mpi_send(zfac,1,MPI_FLOAT,imem,153,MPI_COMM_WORLD,ierr)
-
                 enddo
              endif
-!
-! Get data on each process
-             if(rank.ne.0) then
-                call mpi_recv(num_mem,1,MPI_INT,0,1,MPI_COMM_WORLD,stat,ierr)
-!                print *,rank,'receive num_mem ',num_mem 
-                call mpi_recv(nx,1,MPI_INT,0,2,MPI_COMM_WORLD,stat,ierr)
-!                print *,rank,'receive nx ',nx 
-                call mpi_recv(ny,1,MPI_INT,0,3,MPI_COMM_WORLD,stat,ierr)
-!                print *,rank,'receive ny ',ny 
-                call mpi_recv(nz,1,MPI_INT,0,4,MPI_COMM_WORLD,stat,ierr)
-!                print *,rank,'receive nz ',nz 
-                call mpi_recv(nz_chem,1,MPI_INT,0,5,MPI_COMM_WORLD,stat,ierr)
-!                print *,rank,'receive nz_chem ',nz_chem 
-                call mpi_recv(nz_fire,1,MPI_INT,0,6,MPI_COMM_WORLD,stat,ierr)
-!                print *,rank,'receive nz_fire ',nz_fire 
-                call mpi_recv(nz_biog,1,MPI_INT,0,7,MPI_COMM_WORLD,stat,ierr)
-!                print *,rank,'receive nz_biog ',nz_biog 
-                call mpi_recv(sw_chem,1,MPI_LOGICAL,0,8,MPI_COMM_WORLD,stat,ierr)
-                call mpi_recv(sw_fire,1,MPI_LOGICAL,0,9,MPI_COMM_WORLD,stat,ierr)
-                call mpi_recv(sw_biog,1,MPI_LOGICAL,0,10,MPI_COMM_WORLD,stat,ierr)
-
-                call mpi_recv(ngrid_corr,1,MPI_INT,0,11,MPI_COMM_WORLD,stat,ierr)
-!                print *,rank,'receive ngrid_corr ',ngrid_corr 
-                call mpi_recv(corr_lngth_hz,1,MPI_FLOAT,0,12,MPI_COMM_WORLD,stat,ierr)
-!                print *,rank,'receive corr_lngth_hz ',corr_lngth_hz 
-!
-!                allocate(dist(nx,ny,2*ngrid_corr+1,2*ngrid_corr+1))
-!                dist(:,:,:,:)=0.
-!                allocate(tmp_arry(nx*ny*(2*ngrid_corr+1)*(2*ngrid_corr+1)))
-!                call mpi_recv(tmp_arry,nx*ny*(2*ngrid_corr+1)*(2*ngrid_corr+1),MPI_FLOAT,0,13,MPI_COMM_WORLD,stat,ierr)
-!                call apm_unpack(tmp_arry,dist,nx,ny,(2*ngrid_corr+1),(2*ngrid_corr+1))
-!                print *,rank,'receive dist ',dist(1,1,1,1),dist(nx/2,ny/2,ngrid_corr,ngrid_corr)
-!                deallocate(tmp_arry)
-!
-                if(sw_chem) then
-                   allocate(tmp_arry(nx*ny*nz_chem*nz_chem))
-                   allocate(A_chem(nx,ny,nz_chem,nz_chem))
-                   A_chem(:,:,:,:)=0.
-                   call mpi_recv(tmp_arry,nx*ny*nz_chem*nz_chem,MPI_FLOAT,0,14,MPI_COMM_WORLD,stat,ierr)
-                   call apm_unpack(tmp_arry,A_chem,nx,ny,nz_chem,nz_chem)
-!                   print *,rank,'receive A_chem ',A_chem(1,1,1,1),A_chem(nx/2,ny/2,nz_chem/2,nz_chem/2)
-                   deallocate(tmp_arry)
-                endif
-                if(sw_fire) then
-                   allocate(tmp_arry(nx*ny*nz_fire*nz_fire))
-                   allocate(A_fire(nx,ny,nz_fire,nz_fire))
-                   A_fire(:,:,:,:)=0.
-                   call mpi_recv(tmp_arry,nx*ny*nz_fire*nz_fire,MPI_FLOAT,0,15,MPI_COMM_WORLD,stat,ierr)
-                   call apm_unpack(tmp_arry,A_fire,nx,ny,nz_fire,nz_fire)
-!                   print *,rank,'receive A_fire ',A_fire(1,1,1,1),A_fire(nx/2,ny/2,nz_fire/2,nz_fire/2)
-                   deallocate(tmp_arry)
-                endif
-                if(sw_biog) then
-                   allocate(tmp_arry(nx*ny*nz_biog*nz_biog))
-                   allocate(A_biog(nx,ny,nz_biog,nz_biog))
-                   A_biog(:,:,:,:)=0.
-                   call mpi_recv(tmp_arry,nx*ny*nz_biog*nz_biog,MPI_FLOAT,0,16,MPI_COMM_WORLD,stat,ierr)
-                   call apm_unpack(tmp_arry,A_biog,nx,ny,nz_biog,nz_biog)
-                   deallocate(tmp_arry)
-                endif
-                call mpi_recv(nchem_spcs,1,MPI_INT,0,17,MPI_COMM_WORLD,stat,ierr)
-!                print *,rank,'receive nchem_spcs ',nchem_spcs 
-                call mpi_recv(nfire_spcs,1,MPI_INT,0,18,MPI_COMM_WORLD,stat,ierr)
-!                print *,rank,'receive nfire_spcs ',nfire_spcs 
-                call mpi_recv(nbiog_spcs,1,MPI_INT,0,19,MPI_COMM_WORLD,stat,ierr)
-!                print *,rank,'receive nbiog_spcs ',nbiog_spcs 
-                call mpi_recv(sw_seed,1,MPI_LOGICAL,0,20,MPI_COMM_WORLD,stat,ierr)
-!                print *,rank,'receive sw_seed ',sw_seed 
-
-                allocate(lat(nx,ny),lon(nx,ny))
-                allocate(tmp_arry(nx*ny))
-                call mpi_recv(tmp_arry,nx*ny,MPI_FLOAT,0,151,MPI_COMM_WORLD,stat,ierr)
-                call apm_unpack_2d(tmp_arry,lat,nx,ny,1,1)
-                deallocate(tmp_arry)
-                allocate(tmp_arry(nx*ny))
-                call mpi_recv(tmp_arry,nx*ny,MPI_FLOAT,0,152,MPI_COMM_WORLD,stat,ierr)
-                call apm_unpack_2d(tmp_arry,lon,nx,ny,1,1)
-                deallocate(tmp_arry)
-                call mpi_recv(zfac,1,MPI_FLOAT,0,153,MPI_COMM_WORLD,stat,ierr)
-
+             if(sw_fire) then
+                allocate(A_fire(nx,ny,nz_fire,nz_fire))
+                A_fire(:,:,:,:)=0.
+                do k=1,nz_fire
+                   do l=1,nz_fire
+                      do i=1,nx
+                         do j=1,ny
+                            vcov=1.-abs(geo_ht(i,j,k)-geo_ht(i,j,l))/corr_lngth_vt
+                         if(vcov.lt.0.) vcov=0.
+! row 1         
+                            if(k.eq.1 .and. l.eq.1) then
+                               A_fire(i,j,k,l)=1.
+                            elseif(k.eq.1 .and. l.gt.1) then
+                               A_fire(i,j,k,l)=0.
+                            endif
+! row 2         
+                            if(k.eq.2 .and. l.eq.1) then
+                               A_fire(i,j,k,l)=vcov
+                            elseif(k.eq.2 .and. l.eq.2) then
+                               A_fire(i,j,k,l)=sqrt(1.-A_fire(i,j,k,l-1)*A_fire(i,j,k,l-1))
+                            elseif (k.eq.2 .and. l.gt.2) then
+                               A_fire(i,j,k,l)=0.
+                            endif
+! row 3 and greater
+                            if(k.ge.3) then
+                               if(l.eq.1) then
+                                  A_fire(i,j,k,l)=vcov
+                               elseif(l.lt.k .and. l.ne.1) then
+                                  do ll=1,l-1
+                                     A_fire(i,j,k,l)=A_fire(i,j,k,l)+A_fire(i,j,l,ll)*A_fire(i,j,k,ll)
+                                  enddo
+                                  if(A_fire(i,j,l,l).ne.0) A_fire(i,j,k,l)=(vcov-A_fire(i,j,k,l))/A_fire(i,j,l,l)
+                               elseif(l.eq.k) then
+                                  do ll=1,l-1
+                                     A_fire(i,j,k,l)=A_fire(i,j,k,l)+A_fire(i,j,k,ll)*A_fire(i,j,k,ll)
+                                  enddo
+                                  A_fire(i,j,k,l)=sqrt(1.-A_fire(i,j,k,l))
+                               endif
+                            endif
+                         enddo
+                      enddo
+                   enddo
+                enddo
              endif
-             call mpi_barrier(MPI_COMM_WORLD,ierr)
+             if(sw_biog) then
+                allocate(A_biog(nx,ny,nz_biog,nz_biog))
+                A_biog(:,:,:,:)=0.
+                do k=1,nz_biog
+                   do l=1,nz_biog
+                      do i=1,nx
+                         do j=1,ny
+                            vcov=1.-abs(geo_ht(i,j,k)-geo_ht(i,j,l))/corr_lngth_vt
+                            if(vcov.lt.0.) vcov=0.
+! row 1         
+                            if(k.eq.1 .and. l.eq.1) then
+                               A_biog(i,j,k,l)=1.
+                            elseif(k.eq.1 .and. l.gt.1) then
+                               A_biog(i,j,k,l)=0.
+                            endif
+! row 2         
+                            if(k.eq.2 .and. l.eq.1) then
+                               A_biog(i,j,k,l)=vcov
+                            elseif(k.eq.2 .and. l.eq.2) then
+                               A_biog(i,j,k,l)=sqrt(1.-A_biog(i,j,k,l-1)*A_biog(i,j,k,l-1))
+                            elseif (k.eq.2 .and. l.gt.2) then
+                               A_biog(i,j,k,l)=0.
+                            endif
+! row 3 and greater
+                            if(k.ge.3) then
+                               if(l.eq.1) then
+                                  A_biog(i,j,k,l)=vcov
+                               elseif(l.lt.k .and. l.ne.1) then
+                                  do ll=1,l-1
+                                     A_biog(i,j,k,l)=A_biog(i,j,k,l)+A_biog(i,j,l,ll)*A_biog(i,j,k,ll)
+                                  enddo
+                                  if(A_biog(i,j,l,l).ne.0) A_biog(i,j,k,l)=(vcov-A_biog(i,j,k,l))/A_biog(i,j,l,l)
+                               elseif(l.eq.k) then
+                                  do ll=1,l-1
+                                     A_biog(i,j,k,l)=A_biog(i,j,k,l)+A_biog(i,j,k,ll)*A_biog(i,j,k,ll)
+                                  enddo
+                                  A_biog(i,j,k,l)=sqrt(1.-A_biog(i,j,k,l))
+                               endif
+                            endif
+                         enddo
+                      enddo
+                   enddo
+                enddo
+             endif
+             deallocate(geo_ht)
+!
+! Get horiztonal grid length
+             grid_length=get_dist(lat(nx/2,ny/2),lat(nx/2+1,ny/2),lon(nx/2,ny/2),lon(nx/2+1,ny/2))
+!
+! Calculate number of horizontal grid points to be correlated 
+             ngrid_corr=ceiling(zfac*corr_lngth_hz/grid_length)+1
+             if(rank.eq.0) print *, 'ngrid_corr         ',ngrid_corr
 !
 ! Calcualte new random number seed
              if(num_mem.lt.num_procs-1) then
@@ -444,16 +301,26 @@
                 call mpi_finalize(ierr)
                 stop
              endif
-             if(sw_seed) call init_random_seed()
 !
+! Reset the random numer seed on all processes
+             if(sw_seed) call init_random_seed()
              if(rank.ne.0) then
                 if(sw_chem) then
-!
-! If using different random field for each species,
-! the species loop goes here
-!                   do isp=1,nchem_spcs
-!
-                   allocate(pert_chem(nx,ny,nz_chem))
+                   if(sw_corr_tm) then
+                      allocate(pert_chem_old(nx,ny,nz_chem))
+                      do i=1,nx
+                         do j=1,ny
+                            do k=1,nz_chem
+                               call random_number(u_ran_1)
+                               if(u_ran_1.eq.0.) call random_number(u_ran_1)
+                               call random_number(u_ran_2)
+                               if(u_ran_2.eq.0.) call random_number(u_ran_2)
+                               pert_chem_old(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+                            enddo
+                          enddo
+                      enddo
+                   endif
+                   allocate(pert_chem_new(nx,ny,nz_chem))
                    do i=1,nx
                       do j=1,ny
                          do k=1,nz_chem
@@ -461,15 +328,50 @@
                             if(u_ran_1.eq.0.) call random_number(u_ran_1)
                             call random_number(u_ran_2)
                             if(u_ran_2.eq.0.) call random_number(u_ran_2)
-                            pert_chem(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+                            pert_chem_new(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
                          enddo 
                       enddo
                    enddo
+!                   if(rank.eq.1) print *, 'pert_chem_old ',pert_chem_old(1,1,1),pert_chem_old(nx/2,ny/2,nz_chem/2),pert_chem_old(nx,ny,nz_chem)
+!                   if(rank.eq.1) print *, 'pert_chem_new ',pert_chem_new(1,1,1),pert_chem_new(nx/2,ny/2,nz_chem/2),pert_chem_new(nx,ny,nz_chem)
+!
 ! Impose horizontal correlations
-                   print *,rank,'chemi horizontal correlations'
-                   allocate(chem_fac_mem(nx,ny,nz_chem))
+                   if(rank.eq.1) print *,rank,'chemi horizontal correlations'
                    allocate(wgt_sum(nx,ny,nz_chem))
-                   chem_fac_mem(:,:,:)=0.
+                   wgt_sum(:,:,:)=0.
+                   if(sw_corr_tm) then
+                      allocate(chem_fac_mem_old(nx,ny,nz_chem))
+                      chem_fac_mem_old(:,:,:)=0.
+                      do i=1,nx
+                         do j=1,ny
+                            ii_str=max(1,i-ngrid_corr)
+                            ii_end=min(nx,i+ngrid_corr)
+                            jj_str=max(1,j-ngrid_corr)
+                            jj_end=min(ny,j+ngrid_corr)
+                            do ii=ii_str,ii_end
+                               do jj=jj_str,jj_end
+                                  zdist=get_dist(lat(ii,jj),lat(i,j),lon(ii,jj),lon(i,j))
+                                  if(zdist.le.2.0*corr_lngth_hz) then
+                                     wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
+                                     do k=1,nz_chem
+                                        wgt_sum(i,j,k)=wgt_sum(i,j,k)+wgt
+                                        chem_fac_mem_old(i,j,k)=chem_fac_mem_old(i,j,k)+wgt*pert_chem_old(ii,jj,k)
+                                     enddo
+                                  endif
+                               enddo
+                            enddo
+                            do k=1,nz_chem
+                               if(wgt_sum(i,j,k).gt.0) then
+                                  chem_fac_mem_old(i,j,k)=chem_fac_mem_old(i,j,k)/wgt_sum(i,j,k)
+                               else
+                                  chem_fac_mem_old(i,j,k)=pert_chem_old(i,j,k)
+                               endif                            
+                            enddo
+                         enddo
+                      enddo
+                   endif
+                   allocate(chem_fac_mem_new(nx,ny,nz_chem))
+                   chem_fac_mem_new(:,:,:)=0.
                    wgt_sum(:,:,:)=0.
                    do i=1,nx
                       do j=1,ny
@@ -484,54 +386,91 @@
                                   do k=1,nz_chem
                                      wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
                                      wgt_sum(i,j,k)=wgt_sum(i,j,k)+wgt
-                                     chem_fac_mem(i,j,k)=chem_fac_mem(i,j,k)+wgt*pert_chem(ii,jj,k)
+                                     chem_fac_mem_new(i,j,k)=chem_fac_mem_new(i,j,k)+wgt*pert_chem_new(ii,jj,k)
                                   enddo
                                endif
                             enddo
                          enddo
                          do k=1,nz_chem
                             if(wgt_sum(i,j,k).ne.0) then
-                               chem_fac_mem(i,j,k)=chem_fac_mem(i,j,k)/wgt_sum(i,j,k)
+                               chem_fac_mem_new(i,j,k)=chem_fac_mem_new(i,j,k)/wgt_sum(i,j,k)
                             endif
                          enddo
                       enddo
                    enddo
+!                   if(rank.eq.1) print *, 'chem_fac_mem_old ',chem_fac_mem_old(1,1,1),chem_fac_mem_old(nx/2,ny/2,nz_chem/2),chem_fac_mem_old(nx,ny,nz_chem)
+!                   if(rank.eq.1) print *, 'chem_fac_mem_new ',chem_fac_mem_new(1,1,1),chem_fac_mem_new(nx/2,ny/2,nz_chem/2),chem_fac_mem_new(nx,ny,nz_chem)
                    deallocate(wgt_sum)
-                   deallocate(pert_chem)
+                   if(sw_corr_tm) then
+                      deallocate(pert_chem_old)
+                   endif
+                   deallocate(pert_chem_new)
 !
 ! Impose vertical correlations
-                   print *,rank,'chemi vertical correlations'
-                   allocate(pert_chem_sum(nz_chem))
+                   if(rank.eq.1) print *,rank,'chemi vertical correlations'
+                   if(sw_corr_tm) then
+                      allocate(pert_chem_sum_old(nz_chem))
+                      do i=1,nx
+                         do j=1,ny
+                            pert_chem_sum_old(:)=0.
+                            do k=1,nz_chem
+                               do kk=1,nz_chem 
+                                  pert_chem_sum_old(k)=pert_chem_sum_old(k)+A_chem(i,j,k,kk)*chem_fac_mem_old(i,j,kk)
+                               enddo
+                            enddo
+                            do k=1,nz_chem
+                               chem_fac_mem_old(i,j,k)=pert_chem_sum_old(k)
+                            enddo 
+                         enddo
+                      enddo
+                      deallocate(pert_chem_sum_old)
+                   endif
+                   allocate(pert_chem_sum_new(nz_chem))
                    do i=1,nx
                       do j=1,ny
-                         pert_chem_sum(:)=0.
+                         pert_chem_sum_new(:)=0.
                          do k=1,nz_chem
                             do kk=1,nz_chem 
-                               pert_chem_sum(k)=pert_chem_sum(k)+A_chem(i,j,k,kk)*chem_fac_mem(i,j,kk)
+                               pert_chem_sum_new(k)=pert_chem_sum_new(k)+A_chem(i,j,k,kk)*chem_fac_mem_new(i,j,kk)
                             enddo
-                             pert_chem_sum(k)=chem_fac_mem(i,j,k)
                          enddo
                          do k=1,nz_chem
-                             chem_fac_mem(i,j,k)=pert_chem_sum(k)
+                            chem_fac_mem_new(i,j,k)=pert_chem_sum_new(k)
                          enddo 
                       enddo
                    enddo
-                   deallocate(pert_chem_sum)
+                   deallocate(pert_chem_sum_new)    
+!                   if(rank.eq.1) print *, 'chem_fac_mem_old ',chem_fac_mem_old(1,1,1),chem_fac_mem_old(nx/2,ny/2,nz_chem/2),chem_fac_mem_old(nx,ny,nz_chem)
+!                   if(rank.eq.1) print *, 'chem_fac_mem_new ',chem_fac_mem_new(1,1,1),chem_fac_mem_new(nx/2,ny/2,nz_chem/2),chem_fac_mem_new(nx,ny,nz_chem)
                    allocate(tmp_arry(nx*ny*nz_chem))
-!                   print *, 'chem_fac send ',rank,chem_fac_mem(1,1,1),chem_fac_mem(nx/2,ny/2,nz_chem/2), &
-!                   chem_fac_mem(nx,ny,nz_chem)
-                   call apm_pack(tmp_arry,chem_fac_mem,nx,ny,nz_chem,1)
-                   call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT,0,30+rank,MPI_COMM_WORLD,ierr)
+                   if(sw_corr_tm) then
+                      call apm_pack(tmp_arry,chem_fac_mem_old,nx,ny,nz_chem,1)
+                      print *, 'rank: ',rank,tmp_arry(1),tmp_arry(nx*ny*nz_chem/2),tmp_arry(nx*ny*nz_chem)
+                      call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT,0,0*num_mem+rank,MPI_COMM_WORLD,ierr)
+                      deallocate(chem_fac_mem_old)
+                   endif
+                   call apm_pack(tmp_arry,chem_fac_mem_new,nx,ny,nz_chem,1)
+                   print *, 'rank: ',rank,tmp_arry(1),tmp_arry(nx*ny*nz_chem/2),tmp_arry(nx*ny*nz_chem)
+                   call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT,0,1*num_mem+rank,MPI_COMM_WORLD,ierr)
                    deallocate(tmp_arry)
-                   deallocate(chem_fac_mem)     
+                   deallocate(chem_fac_mem_new)     
                 endif
                 if(sw_fire) then
-!
-! If using different random field for each species,
-! the species loop goes here
-!                   do isp=1,nfire_spcs
-!
-                   allocate(pert_chem(nx,ny,nz_fire))
+                   if(sw_corr_tm) then
+                      allocate(pert_chem_old(nx,ny,nz_fire))
+                      do i=1,nx
+                         do j=1,ny
+                            do k=1,nz_fire
+                               call random_number(u_ran_1)
+                               if(u_ran_1.eq.0.) call random_number(u_ran_1)
+                               call random_number(u_ran_2)
+                               if(u_ran_2.eq.0.) call random_number(u_ran_2)
+                               pert_chem_old(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+                            enddo
+                         enddo
+                      enddo
+                   endif
+                   allocate(pert_chem_new(nx,ny,nz_fire))
                    do i=1,nx
                       do j=1,ny
                          do k=1,nz_fire
@@ -539,15 +478,47 @@
                             if(u_ran_1.eq.0.) call random_number(u_ran_1)
                             call random_number(u_ran_2)
                             if(u_ran_2.eq.0.) call random_number(u_ran_2)
-                            pert_chem(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+                            pert_chem_new(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
                          enddo 
                       enddo
                    enddo
 ! Impose horizontal correlations
-                   print *,rank,'fire horizontal correlations'
-                   allocate(chem_fac_mem(nx,ny,nz_fire))
+                   if(rank.eq.1) print *,rank,'fire horizontal correlations'
                    allocate(wgt_sum(nx,ny,nz_fire))
-                   chem_fac_mem(:,:,:)=0.
+                   wgt_sum(:,:,:)=0.
+                   if(sw_corr_tm) then
+                      allocate(chem_fac_mem_old(nx,ny,nz_fire))
+                      chem_fac_mem_old(:,:,:)=0.
+                      do i=1,nx
+                         do j=1,ny
+                            ii_str=max(1,i-ngrid_corr)
+                            ii_end=min(nx,i+ngrid_corr)
+                            jj_str=max(1,j-ngrid_corr)
+                            jj_end=min(ny,j+ngrid_corr)
+                            do ii=ii_str,ii_end
+                               do jj=jj_str,jj_end
+                                  zdist=get_dist(lat(ii,jj),lat(i,j),lon(ii,jj),lon(i,j))
+                                  if(zdist.le.2.0*corr_lngth_hz) then
+                                     wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
+                                     do k=1,nz_fire
+                                        wgt_sum(i,j,k)=wgt_sum(i,j,k)+wgt
+                                        chem_fac_mem_old(i,j,k)=chem_fac_mem_old(i,j,k)+wgt*pert_chem_old(ii,jj,k)
+                                     enddo
+                                  endif
+                               enddo
+                            enddo
+                            do k=1,nz_fire
+                               if(wgt_sum(i,j,k).gt.0) then
+                                  chem_fac_mem_old(i,j,k)=chem_fac_mem_old(i,j,k)/wgt_sum(i,j,k)
+                               else
+                                  chem_fac_mem_old(i,j,k)=pert_chem_old(i,j,k)
+                               endif                            
+                            enddo
+                         enddo
+                      enddo
+                   endif
+                   allocate(chem_fac_mem_new(nx,ny,nz_fire))
+                   chem_fac_mem_new(:,:,:)=0.
                    wgt_sum(:,:,:)=0.
                    do i=1,nx
                       do j=1,ny
@@ -562,51 +533,85 @@
                                   do k=1,nz_fire
                                      wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
                                      wgt_sum(i,j,k)=wgt_sum(i,j,k)+wgt
-                                     chem_fac_mem(i,j,k)=chem_fac_mem(i,j,k)+wgt*pert_chem(ii,jj,k)
+                                     chem_fac_mem_new(i,j,k)=chem_fac_mem_new(i,j,k)+wgt*pert_chem_new(ii,jj,k)
                                   enddo
                                endif
                             enddo
                          enddo
                          do k=1,nz_fire
                             if(wgt_sum(i,j,k).ne.0) then
-                               chem_fac_mem(i,j,k)=chem_fac_mem(i,j,k)/wgt_sum(i,j,k)
+                               chem_fac_mem_new(i,j,k)=chem_fac_mem_new(i,j,k)/wgt_sum(i,j,k)
                             endif
                          enddo
                       enddo
                    enddo
                    deallocate(wgt_sum)
-                   deallocate(pert_chem)
+                   if(sw_corr_tm) then
+                      deallocate(pert_chem_old)
+                   endif
+                   deallocate(pert_chem_new)
 !
 ! Impose vertical correlations
-                   print *,rank,'fire vertical correlations'
-                   allocate(pert_chem_sum(nz_fire))
+                   if(rank.eq.1) print *,rank,'fire vertical correlations'
+                   if(sw_corr_tm) then
+                      allocate(pert_chem_sum_old(nz_fire))
+                      do i=1,nx
+                         do j=1,ny
+                            pert_chem_sum_old(:)=0.
+                            do k=1,nz_fire
+                               do kk=1,nz_fire 
+                                  pert_chem_sum_old(k)=pert_chem_sum_old(k)+A_fire(i,j,k,kk)*chem_fac_mem_old(i,j,kk)
+                               enddo
+                            enddo
+                            do k=1,nz_fire
+                               chem_fac_mem_old(i,j,k)=pert_chem_sum_old(k)
+                            enddo 
+                         enddo
+                      enddo
+                      deallocate(pert_chem_sum_old)
+                   endif
+                   allocate(pert_chem_sum_new(nz_fire))
                    do i=1,nx
                       do j=1,ny
-                         pert_chem_sum(:)=0.
+                         pert_chem_sum_new(:)=0.
                          do k=1,nz_fire
                             do kk=1,nz_fire 
-                               pert_chem_sum(k)=pert_chem_sum(k)+A_fire(i,j,k,kk)*chem_fac_mem(i,j,kk)
+                               pert_chem_sum_new(k)=pert_chem_sum_new(k)+A_fire(i,j,k,kk)*chem_fac_mem_new(i,j,kk)
                             enddo
                          enddo
-                         do k=1,nz_chem
-                            chem_fac_mem(i,j,k)=pert_chem_sum(k)
+                         do k=1,nz_fire
+                            chem_fac_mem_new(i,j,k)=pert_chem_sum_new(k)
                          enddo 
                       enddo
                    enddo
-                   deallocate(pert_chem_sum)
+                   deallocate(pert_chem_sum_new)
                    allocate(tmp_arry(nx*ny*nz_fire))
-                   call apm_pack(tmp_arry,chem_fac_mem,nx,ny,nz_fire,1)
-                   call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT,0,30+num_mem+rank,MPI_COMM_WORLD,ierr)
+                   if(sw_corr_tm) then
+                      call apm_pack(tmp_arry,chem_fac_mem_old,nx,ny,nz_fire,1)
+                      call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT,0,2*num_mem+rank,MPI_COMM_WORLD,ierr)
+                      deallocate(chem_fac_mem_old)
+                   endif
+                   call apm_pack(tmp_arry,chem_fac_mem_new,nx,ny,nz_fire,1)
+                   call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT,0,3*num_mem+rank,MPI_COMM_WORLD,ierr)
                    deallocate(tmp_arry)
-                   deallocate(chem_fac_mem)
+                   deallocate(chem_fac_mem_new)     
                 endif
                 if(sw_biog) then
-!
-! If using different random field for each species,
-! the species loop goes here
-!                   do isp=1,nbiog_spc
-!
-                   allocate(pert_biog(nx,ny,nz_biog))
+                   if(sw_corr_tm) then
+                      allocate(pert_chem_old(nx,ny,nz_biog))
+                      do i=1,nx
+                         do j=1,ny
+                            do k=1,nz_biog
+                               call random_number(u_ran_1)
+                               if(u_ran_1.eq.0.) call random_number(u_ran_1)
+                               call random_number(u_ran_2)
+                               if(u_ran_2.eq.0.) call random_number(u_ran_2)
+                               pert_chem_old(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+                            enddo
+                         enddo
+                      enddo
+                   endif
+                   allocate(pert_chem_new(nx,ny,nz_biog))
                    do i=1,nx
                       do j=1,ny
                          do k=1,nz_biog
@@ -614,15 +619,47 @@
                             if(u_ran_1.eq.0.) call random_number(u_ran_1)
                             call random_number(u_ran_2)
                             if(u_ran_2.eq.0.) call random_number(u_ran_2)
-                            pert_chem(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+                            pert_chem_new(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
                          enddo 
                       enddo
                    enddo
 ! Impose horizontal correlations
-                   print *,rank,'biog horizontal correlations'
-                   allocate(chem_fac_mem(nx,ny,nz_biog))
+                   if(rank.eq.1) print *,rank,'biog horizontal correlations'
                    allocate(wgt_sum(nx,ny,nz_biog))
-                   chem_fac_mem(:,:,:)=0.
+                   wgt_sum(:,:,:)=0.
+                   if(sw_corr_tm) then
+                      allocate(chem_fac_mem_old(nx,ny,nz_biog))
+                      chem_fac_mem_old(:,:,:)=0.
+                      do i=1,nx
+                         do j=1,ny
+                            ii_str=max(1,i-ngrid_corr)
+                            ii_end=min(nx,i+ngrid_corr)
+                            jj_str=max(1,j-ngrid_corr)
+                            jj_end=min(ny,j+ngrid_corr)
+                            do ii=ii_str,ii_end
+                               do jj=jj_str,jj_end
+                                  zdist=get_dist(lat(ii,jj),lat(i,j),lon(ii,jj),lon(i,j))
+                                  if(zdist.le.2.0*corr_lngth_hz) then
+                                     wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
+                                     do k=1,nz_biog
+                                        wgt_sum(i,j,k)=wgt_sum(i,j,k)+wgt
+                                        chem_fac_mem_old(i,j,k)=chem_fac_mem_old(i,j,k)+wgt*pert_chem_old(ii,jj,k)
+                                     enddo
+                                  endif
+                               enddo
+                            enddo
+                            do k=1,nz_biog
+                               if(wgt_sum(i,j,k).gt.0) then
+                                  chem_fac_mem_old(i,j,k)=chem_fac_mem_old(i,j,k)/wgt_sum(i,j,k)
+                               else
+                                  chem_fac_mem_old(i,j,k)=pert_chem_old(i,j,k)
+                               endif                            
+                            enddo
+                         enddo
+                      enddo
+                   endif
+                   allocate(chem_fac_mem_new(nx,ny,nz_biog))
+                   chem_fac_mem_new(:,:,:)=0.
                    wgt_sum(:,:,:)=0.
                    do i=1,nx
                       do j=1,ny
@@ -637,77 +674,120 @@
                                   do k=1,nz_biog
                                      wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
                                      wgt_sum(i,j,k)=wgt_sum(i,j,k)+wgt
-                                     chem_fac_mem(i,j,k)=chem_fac_mem(i,j,k)+wgt*pert_chem(ii,jj,k)
+                                     chem_fac_mem_new(i,j,k)=chem_fac_mem_new(i,j,k)+wgt*pert_chem_new(ii,jj,k)
                                   enddo
                                endif
                             enddo
                          enddo
                          do k=1,nz_biog
                             if(wgt_sum(i,j,k).ne.0) then
-                               chem_fac_mem(i,j,k)=chem_fac_mem(i,j,k)/wgt_sum(i,j,k)
+                               chem_fac_mem_new(i,j,k)=chem_fac_mem_new(i,j,k)/wgt_sum(i,j,k)
                             endif
                          enddo
                       enddo
                    enddo
-!                   deallocate(dist)
                    deallocate(wgt_sum)
-                   deallocate(pert_chem)
-                   deallocate(lat,lon)
+                   if(sw_corr_tm) then
+                      deallocate(pert_chem_old)
+                   endif
+                   deallocate(pert_chem_new)
 !
 ! Impose vertical correlations
-                   print *,rank,'biog vertical correlations'
-                   allocate(pert_chem_sum(nz_biog))
+                   if(rank.eq.1) print *,rank,'biog vertical correlations'
+                   if(sw_corr_tm) then
+                      allocate(pert_chem_sum_old(nz_biog))
+                      do i=1,nx
+                         do j=1,ny
+                            pert_chem_sum_old(:)=0.
+                            do k=1,nz_biog
+                               do kk=1,nz_biog 
+                                  pert_chem_sum_old(k)=pert_chem_sum_old(k)+A_biog(i,j,k,kk)*chem_fac_mem_old(i,j,kk)
+                               enddo
+                            enddo
+                            do k=1,nz_biog
+                               chem_fac_mem_old(i,j,k)=pert_chem_sum_old(k)
+                            enddo 
+                         enddo
+                      enddo
+                      deallocate(pert_chem_sum_old)
+                   endif
+                   allocate(pert_chem_sum_new(nz_biog))
                    do i=1,nx
                       do j=1,ny
-                         pert_chem_sum(:)=0.
+                         pert_chem_sum_new(:)=0.
                          do k=1,nz_biog
-                            do kk=1,nz_biog
-                               pert_chem_sum(k)=pert_chem_sum(k)+A_biog(i,j,k,kk)*chem_fac_mem(i,j,kk)
+                            do kk=1,nz_biog 
+                               pert_chem_sum_new(k)=pert_chem_sum_new(k)+A_biog(i,j,k,kk)*chem_fac_mem_new(i,j,kk)
                             enddo
                          enddo
-                         do k=1,nz_chem
-                            chem_fac_mem(i,j,k)=pert_chem_sum(k)
+                         do k=1,nz_biog
+                             chem_fac_mem_new(i,j,k)=pert_chem_sum_new(k)
                          enddo 
                       enddo
                    enddo
-                   deallocate(pert_chem_sum)
+                   deallocate(pert_chem_sum_new)
                    allocate(tmp_arry(nx*ny*nz_biog))
-                   call apm_pack(tmp_arry,chem_fac_mem,nx,ny,nz_biog,1)
-                   call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT,0,30+2*num_mem+rank,MPI_COMM_WORLD,ierr)
+                   if(sw_corr_tm) then
+                      call apm_pack(tmp_arry,chem_fac_mem_old,nx,ny,nz_biog,1)
+                      call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT,0,4*num_mem+rank,MPI_COMM_WORLD,ierr)
+                      deallocate(chem_fac_mem_old)
+                   endif
+                   call apm_pack(tmp_arry,chem_fac_mem_new,nx,ny,nz_biog,1)
+                   call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT,0,5*num_mem+rank,MPI_COMM_WORLD,ierr)
                    deallocate(tmp_arry)
-                   deallocate(chem_fac_mem)     
+                   deallocate(chem_fac_mem_new)     
                 endif
-             endif
-             if(rank.ne.0) then
+                deallocate(lat,lon)
                 call mpi_finalize(ierr)
                 stop
-             endif
 !
-             if (rank.eq.0) then
+! Root process
+             else if (rank.eq.0) then
                 if(sw_chem) then 
-                   allocate(chem_fac(nx,ny,nz_chem,num_mem))
-                   chem_fac(:,:,:,:)=0.
                    allocate(tmp_arry(nx*ny*nz_chem))
+                   if(sw_corr_tm) then
+                      allocate(chem_fac_old(nx,ny,nz_chem,num_mem))
+                      do imem=1,num_mem
+                         call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT,imem,0*num_mem+imem,MPI_COMM_WORLD,stat,ierr)
+                         print *, 'rank: ',imem,tmp_arry(1),tmp_arry(nx*ny*nz_chem/2),tmp_arry(nx*ny*nz_chem)
+                         call apm_unpack(tmp_arry,chem_fac_old(:,:,:,imem),nx,ny,nz_chem,1)
+                      enddo
+                   endif
+                   allocate(chem_fac_new(nx,ny,nz_chem,num_mem))
                    do imem=1,num_mem
-                      call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT,imem,30+imem,MPI_COMM_WORLD,stat,ierr)
-                      call apm_unpack(tmp_arry,chem_fac(:,:,:,imem),nx,ny,nz_chem,1)
-!                      print *, 'chem_fac recv ',chem_fac(1,1,1,imem),chem_fac(nx/2,ny/2,nz_chem/2,imem), &
-!                      chem_fac(nx,ny,nz_chem,imem)
+                      call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT,imem,1*num_mem+imem,MPI_COMM_WORLD,stat,ierr)
+                         print *, 'rank: ',imem,tmp_arry(1),tmp_arry(nx*ny*nz_chem/2),tmp_arry(nx*ny*nz_chem)
+                      call apm_unpack(tmp_arry,chem_fac_new(:,:,:,imem),nx,ny,nz_chem,1)
                    enddo
                    deallocate(tmp_arry)
 !
 ! Recenter about ensemble mean
                    print *,'chemi recentering'
                    allocate(mems(num_mem),pers(num_mem))             
+                   if(sw_corr_tm) then
+                      do i=1,nx
+                         do j=1,ny
+                            do k=1,nz_chem
+                               mems(:)=chem_fac_new(i,j,k,:)
+                               mean=sum(mems)/real(num_mem)
+                               pers=(mems-mean)*(mems-mean)
+                               std=sqrt(sum(pers)/real(num_mem-1))
+                               do imem=1,num_mem
+                                  chem_fac_old(i,j,k,imem)=(chem_fac_old(i,j,k,imem)-mean)*sprd_chem/std
+                               enddo
+                            enddo
+                         enddo
+                      enddo
+                   endif
                    do i=1,nx
                       do j=1,ny
                          do k=1,nz_chem
-                            mems(:)=chem_fac(i,j,k,:)
+                            mems(:)=chem_fac_new(i,j,k,:)
                             mean=sum(mems)/real(num_mem)
                             pers=(mems-mean)*(mems-mean)
                             std=sqrt(sum(pers)/real(num_mem-1))
                             do imem=1,num_mem
-                               chem_fac(i,j,k,imem)=(chem_fac(i,j,k,imem)-mean)*sprd_chem/std
+                               chem_fac_new(i,j,k,imem)=(chem_fac_new(i,j,k,imem)-mean)*sprd_chem/std
                             enddo
                          enddo
                       enddo
@@ -716,32 +796,28 @@
 !
 ! Impose temporal correlations
                    print *,'chemi temporal correlations'
-                   allocate(chem_fac_pr(nx,ny,nz_chem,num_mem))
-                   chem_fac_pr(:,:,:,:)=0.
                    unita=30
                    unitb=40
-                   open(unit=unitb,file=trim(pert_path_po)//'/pert_chem_emiss_po', &
-                   form='unformatted',status='unknown')
-                   wgt=0.
-                   if (sw_corr_tm) then
-                      open(unit=unita,file=trim(pert_path_pr)//'/pert_chem_emiss_pr', &
+                   if(.not.sw_corr_tm) then
+                      allocate(chem_fac_old(nx,ny,nz_chem,num_mem))
+                      open(unit=unita,file=trim(pert_path_pr)//'/pert_chem_emiss', &
                       form='unformatted',status='unknown')
-                      read(unita) chem_fac_pr
-                      wgt=1.-corr_tm_delt/corr_lngth_tm
+                      read(unita) chem_fac_old
                       close(unita)
                    endif
-                   chem_fac(:,:,:,:)=wgt*chem_fac_pr(:,:,:,:)+sqrt(1.-wgt*wgt)*chem_fac(:,:,:,:)
-                   write(unitb) chem_fac
+                   allocate(chem_fac_end(nx,ny,nz_chem,num_mem))
+                   wgt_end=1.-1.0*corr_tm_delt/corr_lngth_tm
+                   chem_fac_end(:,:,:,:)=wgt_end*chem_fac_old(:,:,:,:)+sqrt(1.-wgt_end*wgt_end)*chem_fac_new(:,:,:,:) 
+                   open(unit=unitb,file=trim(pert_path_po)//'/pert_chem_emiss', &
+                   form='unformatted',status='unknown')
+                   write(unitb) chem_fac_end
                    close(unitb)
-                   deallocate(chem_fac_pr)
 !
-! Perturb the members
-!
-! If using the same random field for each species,
-! the species loop goes here
+! Perturb the members (emission units are moles km-2 hr-1)
                    allocate(chem_data3d(nx,ny,nz_chem))
                    do isp=1,nchem_spcs
                       print *, 'perturb the chemi EMISSs ',trim(ch_chem_spc(isp))
+                      allocate(chem_data3d_sav(nx,ny,nz_chem,num_mem))
                       do imem=1,num_mem
                          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
                          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
@@ -751,38 +827,93 @@
                          do i=1,nx
                             do j=1,ny
                                do k=1,nz_chem
-                                  tmp=chem_data3d(i,j,k)
-                                  chem_data3d(i,j,k)=chem_data3d(i,j,k)*exp(chem_fac(i,j,k,imem))
+                                  chem_data3d(i,j,k)=chem_data3d(i,j,k)*exp(chem_fac_end(i,j,k,imem))
                                enddo
                             enddo
                          enddo 
+                         chem_data3d_sav(:,:,:,imem)=chem_data3d(:,:,:)
                          call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d,nx,ny,nz_chem)
+                      enddo                             ! members loop
+!
+! Calculate mean and variance
+                      print *, 'calculate mean and variance ',trim(ch_chem_spc(isp))
+                      allocate(mems(num_mem),pers(num_mem))
+                      allocate(chem_data3d_mean(nx,ny,nz_chem))
+                      allocate(chem_data3d_sprd(nx,ny,nz_chem))
+                      allocate(chem_data3d_frac(nx,ny,nz_chem))
+                      do i=1,nx
+                         do j=1,ny
+                            do k=1,nz_chem
+                               mems(:)=chem_data3d_sav(i,j,k,1:num_mem)
+                               mean=sum(mems)/real(num_mem)
+                               pers(:)=(mems(:)-mean)*(mems(:)-mean)
+                               std=sqrt(sum(pers)/real(num_mem-1))
+                               chem_data3d_mean(i,j,k)=mean
+                               chem_data3d_sprd(i,j,k)=std
+                               chem_data3d_frac(i,j,k)=std/mean
+                            enddo
+                         enddo
                       enddo
-                   enddo
-                   deallocate(chem_data3d,chem_fac)
+                      print *, 'save mean and variance ',trim(ch_chem_spc(isp))
+                      deallocate(mems,pers)                   
+                      wrfchem_file=trim(wrfchemi)//'_mean'
+                      call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_mean,nx,ny,nz_chem)
+                      wrfchem_file=trim(wrfchemi)//'_sprd'
+                      call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_sprd,nx,ny,nz_chem)
+                      wrfchem_file=trim(wrfchemi)//'_frac'
+                      call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_frac,nx,ny,nz_chem)
+                      deallocate(chem_data3d_sav)
+                      deallocate(chem_data3d_mean)
+                      deallocate(chem_data3d_sprd)
+                      deallocate(chem_data3d_frac)
+                   enddo                              ! species loop
+                   deallocate(chem_data3d)
+                   deallocate(chem_fac_old)
+                   deallocate(chem_fac_new)
                 endif
                 if(sw_fire) then 
-                   allocate(fire_fac(nx,ny,nz_fire,num_mem))
-                   fire_fac(:,:,:,:)=0.
                    allocate(tmp_arry(nx*ny*nz_fire))
+                   if(sw_corr_tm) then
+                      allocate(fire_fac_old(nx,ny,nz_fire,num_mem))
+                      do imem=1,num_mem
+                         call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT,imem,2*num_mem+imem,MPI_COMM_WORLD,stat,ierr)
+                         call apm_unpack(tmp_arry,fire_fac_old(:,:,:,imem),nx,ny,nz_fire,1)
+                      enddo
+                   endif
+                   allocate(fire_fac_new(nx,ny,nz_fire,num_mem))
                    do imem=1,num_mem
-                      call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT,imem,30+num_mem+imem,MPI_COMM_WORLD,stat,ierr)
-                      call apm_unpack(tmp_arry,fire_fac(:,:,:,imem),nx,ny,nz_fire,1)
+                      call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT,imem,3*num_mem+imem,MPI_COMM_WORLD,stat,ierr)
+                      call apm_unpack(tmp_arry,fire_fac_new(:,:,:,imem),nx,ny,nz_fire,1)
                    enddo
                    deallocate(tmp_arry)
 !
 ! Recenter about ensemble mean
                    print *,'fire recentering'
                    allocate(mems(num_mem),pers(num_mem))             
+                   if(sw_corr_tm) then
+                      do i=1,nx
+                         do j=1,ny
+                            do k=1,nz_fire
+                               mems(:)=fire_fac_new(i,j,k,:)
+                               mean=sum(mems)/real(num_mem)
+                               pers=(mems-mean)*(mems-mean)
+                               std=sqrt(sum(pers)/real(num_mem-1))
+                               do imem=1,num_mem
+                                  fire_fac_old(i,j,k,imem)=(fire_fac_old(i,j,k,imem)-mean)*sprd_fire/std
+                               enddo
+                            enddo
+                         enddo
+                      enddo
+                   endif
                    do i=1,nx
                       do j=1,ny
                          do k=1,nz_fire
-                            mems(:)=fire_fac(i,j,k,:)
+                            mems(:)=fire_fac_new(i,j,k,:)
                             mean=sum(mems)/real(num_mem)
                             pers=(mems-mean)*(mems-mean)
                             std=sqrt(sum(pers)/real(num_mem-1))
                             do imem=1,num_mem
-                               fire_fac(i,j,k,imem)=(fire_fac(i,j,k,imem)-mean)*sprd_fire/std
+                               fire_fac_new(i,j,k,imem)=(fire_fac_new(i,j,k,imem)-mean)*sprd_fire/std
                             enddo
                          enddo
                       enddo
@@ -791,33 +922,28 @@
 !
 ! Impose temporal correlations
                    print *,'fire temporal correlations'
-                   allocate(fire_fac_pr(nx,ny,nz_fire,num_mem))
-                   fire_fac_pr(:,:,:,:)=0.
                    unita=30
                    unitb=40
-                   open(unit=unitb,file=trim(pert_path_po)//'/pert_fire_emiss', &
-                   form='unformatted',status='unknown')
-                   wgt=0.
-                   if (sw_corr_tm) then
+                   if(.not.sw_corr_tm) then
+                      allocate(fire_fac_old(nx,ny,nz_fire,num_mem))
                       open(unit=unita,file=trim(pert_path_pr)//'/pert_fire_emiss', &
                       form='unformatted',status='unknown')
-                      read(unita) fire_fac_pr
-                      wgt=1.-corr_tm_delt/corr_lngth_tm
+                      read(unita) fire_fac_old
                       close(unita)
                    endif
-                   fire_fac(:,:,:,:)=wgt*fire_fac_pr(:,:,:,:)+sqrt(1.-wgt*wgt)*fire_fac(:,:,:,:)
-                   write(unitb) fire_fac
+                   allocate(fire_fac_end(nx,ny,nz_fire,num_mem))
+                   wgt_end=1.-1.0*corr_tm_delt/corr_lngth_tm
+                   fire_fac_end(:,:,:,:)=wgt_end*fire_fac_old(:,:,:,:)+sqrt(1.-wgt_end*wgt_end)*fire_fac_new(:,:,:,:) 
+                   open(unit=unitb,file=trim(pert_path_po)//'/pert_fire_icbc', &
+                   form='unformatted',status='unknown')
+                   write(unitb) fire_fac_end
                    close(unitb)
-                   deallocate(fire_fac_pr)
 !
 ! Perturb the members
-                   print *, 'perturb the fire EMISSs'
-!
-! If using the same random field for each species,
-! the species loop goes here
                    allocate(chem_data3d(nx,ny,nz_fire))
                    do isp=1,nfire_spcs
                       print *, 'perturb the fire EMISSs ',trim(ch_fire_spc(isp))
+                      allocate(chem_data3d_sav(nx,ny,nz_fire,num_mem))
                       do imem=1,num_mem
                          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
                          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
@@ -827,38 +953,92 @@
                          do i=1,nx
                             do j=1,ny
                                do k=1,nz_fire
-                                  chem_data3d(i,j,k)=chem_data3d(i,j,k)*exp(fire_fac(i,j,k,imem))
+                                  tmp=chem_data3d(i,j,k)
+                                  chem_data3d(i,j,k)=chem_data3d(i,j,k)*exp(fire_fac_old(i,j,k,imem))
                                enddo
                             enddo
                          enddo 
-                         call put_WRFCHEM_emiss_data(wrffire_file,ch_fire_spc(isp),chem_data3d,nx,ny,nz_fire)
+                         call put_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),chem_data3d,nx,ny,nz_fire)
+                         chem_data3d_sav(:,:,:,imem)=chem_data3d(:,:,:)
                       enddo
-                   enddo
-                   deallocate(chem_data3d,fire_fac)
 !
+! Calculate mean and variance
+                      allocate(mems(num_mem),pers(num_mem))
+                      allocate(chem_data3d_mean(nx,ny,nz_fire))
+                      allocate(chem_data3d_sprd(nx,ny,nz_fire))
+                      allocate(chem_data3d_frac(nx,ny,nz_fire))
+                      do i=1,nx
+                         do j=1,ny
+                            do k=1,nz_fire
+                               mems(:)=chem_data3d_sav(i,j,k,1:num_mem)
+                               mean=sum(mems)/real(num_mem)
+                               pers(:)=(mems(:)-mean)*(mems(:)-mean)
+                               std=sqrt(sum(pers)/real(num_mem-1))
+                               chem_data3d_mean(i,j,k)=mean
+                               chem_data3d_sprd(i,j,k)=std
+                               chem_data3d_frac(i,j,k)=std/mean
+                            enddo
+                         enddo
+                      enddo
+                      deallocate(mems,pers)                   
+                      wrffire_file=trim(wrffirechemi)//'_mean'
+                      call put_WRFCHEM_emiss_data(wrffire_file,ch_chem_spc(isp),chem_data3d_mean,nx,ny,nz_fire)
+                      wrffire_file=trim(wrffirechemi)//'_sprd'
+                      call put_WRFCHEM_emiss_data(wrffire_file,ch_chem_spc(isp),chem_data3d_sprd,nx,ny,nz_fire)
+                      wrffire_file=trim(wrffirechemi)//'_frac'
+                      call put_WRFCHEM_emiss_data(wrffire_file,ch_chem_spc(isp),chem_data3d_frac,nx,ny,nz_fire)
+                      deallocate(chem_data3d_sav)
+                      deallocate(chem_data3d_mean)
+                      deallocate(chem_data3d_sprd)
+                      deallocate(chem_data3d_frac)
+                   enddo
+                   deallocate(chem_data3d)
+                   deallocate(fire_fac_old)
+                   deallocate(fire_fac_new)
                 endif
                 if(sw_biog) then 
-                   allocate(biog_fac(nx,ny,nz_biog,num_mem))
-                   biog_fac(:,:,:,:)=0.
                    allocate(tmp_arry(nx*ny*nz_biog))
+                   if(sw_corr_tm) then
+                      allocate(biog_fac_old(nx,ny,nz_biog,num_mem))
+                      do imem=1,num_mem
+                         call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT,imem,4*num_mem+imem,MPI_COMM_WORLD,stat,ierr)
+                         call apm_unpack(tmp_arry,biog_fac_old(:,:,:,imem),nx,ny,nz_biog,1)
+                      enddo
+                   endif
+                   allocate(biog_fac_new(nx,ny,nz_biog,num_mem))
                    do imem=1,num_mem
-                      call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT,imem,30+2*num_mem+imem,MPI_COMM_WORLD,stat,ierr)
-                      call apm_unpack(tmp_arry,biog_fac(:,:,:,imem),nx,ny,nz_biog,1)
+                      call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT,imem,5*num_mem+imem,MPI_COMM_WORLD,stat,ierr)
+                      call apm_unpack(tmp_arry,biog_fac_new(:,:,:,imem),nx,ny,nz_biog,1)
                    enddo
                    deallocate(tmp_arry)
 !
 ! Recenter about ensemble mean
                    print *,'biog recentering'
                    allocate(mems(num_mem),pers(num_mem))             
+                   if(sw_corr_tm) then
+                      do i=1,nx
+                         do j=1,ny
+                            do k=1,nz_biog
+                               mems(:)=biog_fac_new(i,j,k,:)
+                               mean=sum(mems)/real(num_mem)
+                               pers=(mems-mean)*(mems-mean)
+                               std=sqrt(sum(pers)/real(num_mem-1))
+                               do imem=1,num_mem
+                                  biog_fac_old(i,j,k,imem)=(biog_fac_old(i,j,k,imem)-mean)*sprd_biog/std
+                               enddo
+                            enddo
+                         enddo
+                      enddo
+                   endif
                    do i=1,nx
                       do j=1,ny
                          do k=1,nz_biog
-                            mems(:)=biog_fac(i,j,k,:)
+                            mems(:)=biog_fac_new(i,j,k,:)
                             mean=sum(mems)/real(num_mem)
                             pers=(mems-mean)*(mems-mean)
                             std=sqrt(sum(pers)/real(num_mem-1))
                             do imem=1,num_mem
-                               biog_fac(i,j,k,imem)=(biog_fac(i,j,k,imem)-mean)*sprd_biog/std
+                               biog_fac_new(i,j,k,imem)=(biog_fac_new(i,j,k,imem)-mean)*sprd_biog/std
                             enddo
                          enddo
                       enddo
@@ -867,33 +1047,28 @@
 !
 ! Impose temporal correlations
                    print *,'biog temporal correlations'
-                   allocate(biog_fac_pr(nx,ny,nz_biog,num_mem))
-                   biog_fac_pr(:,:,:,:)=0.
                    unita=30
                    unitb=40
-                   open(unit=unitb,file=trim(pert_path_po)//'/pert_biog_emiss', &
-                   form='unformatted',status='unknown')
-                   wgt=0.
-                   if (sw_corr_tm) then
+                   if(.not.sw_corr_tm) then
+                      allocate(biog_fac_old(nx,ny,nz_biog,num_mem))
                       open(unit=unita,file=trim(pert_path_pr)//'/pert_biog_emiss', &
                       form='unformatted',status='unknown')
-                      read(unita) biog_fac_pr
-                      wgt=1.-corr_tm_delt/corr_lngth_tm
+                      read(unita) biog_fac_old
                       close(unita)
                    endif
-                   biog_fac(:,:,:,:)=wgt*biog_fac_pr(:,:,:,:)+sqrt(1.-wgt*wgt)*biog_fac(:,:,:,:)
-                   write(unitb) biog_fac
+                   allocate(biog_fac_end(nx,ny,nz_biog,num_mem))
+                   wgt_end=1.-1.0*corr_tm_delt/corr_lngth_tm
+                   biog_fac_end(:,:,:,:)=wgt_end*biog_fac_old(:,:,:,:)+sqrt(1.-wgt_end*wgt_end)*biog_fac_new(:,:,:,:) 
+                   open(unit=unitb,file=trim(pert_path_po)//'/pert_biog_icbc', &
+                   form='unformatted',status='unknown')
+                   write(unitb) biog_fac_end
                    close(unitb)
-                   deallocate(biog_fac_pr)
 !
 ! Perturb the members
-                   print *, 'perturb the biog EMISSs'
-!
-! If using the same random field for each species,
-! the species loop goes here
                    allocate(chem_data3d(nx,ny,nz_biog))
                    do isp=1,nbiog_spcs
                       print *, 'perturb the biog EMISSs ',trim(ch_biog_spc(isp))
+                      allocate(chem_data3d_sav(nx,ny,nz_biog,num_mem))
                       do imem=1,num_mem
                          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
                          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
@@ -903,14 +1078,46 @@
                          do i=1,nx
                             do j=1,ny
                                do k=1,nz_biog
-                                  chem_data3d(i,j,k)=chem_data3d(i,j,k)*exp(biog_fac(i,j,k,imem))
+                                  tmp=chem_data3d(i,j,k)
+                                  chem_data3d(i,j,k)=chem_data3d(i,j,k)*exp(biog_fac_old(i,j,k,imem))
                                enddo
                             enddo
                          enddo 
-                         call put_WRFCHEM_emiss_data(wrfbiog_file,ch_biog_spc(isp),chem_data3d,nx,ny,nz_biog)
+                         call put_WRFCHEM_emiss_data(wrfchem_file,ch_biog_spc(isp),chem_data3d,nx,ny,nz_biog)
+                         chem_data3d_sav(:,:,:,imem)=chem_data3d(:,:,:)
                       enddo
+                      allocate(mems(num_mem),pers(num_mem))
+                      allocate(chem_data3d_mean(nx,ny,nz_biog))
+                      allocate(chem_data3d_sprd(nx,ny,nz_biog))
+                      allocate(chem_data3d_frac(nx,ny,nz_biog))
+                      do i=1,nx
+                         do j=1,ny
+                            do k=1,nz_biog
+                               mems(:)=chem_data3d_sav(i,j,k,1:num_mem)
+                               mean=sum(mems)/real(num_mem)
+                               pers(:)=(mems(:)-mean)*(mems(:)-mean)
+                               std=sqrt(sum(pers)/real(num_mem-1))
+                               chem_data3d_mean(i,j,k)=mean
+                               chem_data3d_sprd(i,j,k)=std
+                               chem_data3d_frac(i,j,k)=std/mean
+                            enddo
+                         enddo
+                      enddo
+                      deallocate(mems,pers)                   
+                      wrfbiog_file=trim(wrfbiogchemi)//'_mean'
+                      call put_WRFCHEM_emiss_data(wrfbiog_file,ch_chem_spc(isp),chem_data3d_mean,nx,ny,nz_biog)
+                      wrfbiog_file=trim(wrfbiogchemi)//'_sprd'
+                      call put_WRFCHEM_emiss_data(wrfbiog_file,ch_chem_spc(isp),chem_data3d_sprd,nx,ny,nz_biog)
+                      wrfbiog_file=trim(wrfbiogchemi)//'_frac'
+                      call put_WRFCHEM_emiss_data(wrfbiog_file,ch_chem_spc(isp),chem_data3d_frac,nx,ny,nz_biog)
+                      deallocate(chem_data3d_sav)
+                      deallocate(chem_data3d_mean)
+                      deallocate(chem_data3d_sprd)
+                      deallocate(chem_data3d_frac)
                    enddo
-                   deallocate(chem_data3d,biog_fac)
+                   deallocate(chem_data3d)
+                   deallocate(biog_fac_old)
+                   deallocate(biog_fac_new)
                 endif
              endif
              call mpi_finalize(ierr)
@@ -1480,4 +1687,3 @@
                 enddo
              enddo
           end subroutine apm_unpack_2d
-    

@@ -1,36 +1,17 @@
 %
 path='/scratch/summit/mizzi/DART_OBS_DIAG';
 %
-%exp         = '/real_FRAPPE_RETR_CONTROL/obs_diag_output.nc';
-exp         = '/real_FRAPPE_RETR_MOP_CO/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_RETR_MOP_AIR_CO/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_CPSR_MOP_CO_VLOC/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_CPSR_MOP_AIR_CO/obs_diag_output.nc';
-%
-%exp         = '/real_FRAPPE_RETR_MOP_CO/2014071406/NOVLOC_HORZ_1p5/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_RETR_MOP_CO/2014071406/VLOC_HORZ_1p5/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_RETR_MOP_CO/2014071406/NOVLOC_NOHORZ_1p5/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_RETR_MOP_CO/2014071406/VLOC_NOHORZ_1p5/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_RETR_MOP_CO/2014071406/NOVLOC_NOHORZ_0p5/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_RETR_MOP_CO/2014071406/NOVLOC_NOHORZ_0p5_CUT_p05/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_RETR_MOP_CO/2014071406/VLOC_NOHORZ_0p5/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_RETR_MOP_CO/2014071406/NOVLOC_NOHORZ_0p5_CUT_p05/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_RETR_MOP_CO/2014071406/VLOC_NOHORZ_0p5_CUT_p05/obs_diag_output.nc';
-%
-%exp         = '/real_FRAPPE_CPSR_MOP_CO_NOVLOC/2014071406/NOVLOC_HORZ_1p5/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_CPSR_MOP_CO_NOVLOC/2014071406/NOVLOC_NOHORZ_1p5/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_CPSR_MOP_CO_VLOC/2014071406/VLOC_1p5/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_CPSR_MOP_CO_VLOC/2014071406/VLOC_1p0/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_CPSR_MOP_CO_VLOC/2014071406/VLOC_0p6/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_CPSR_MOP_CO_VLOC/2014071406/VLOC_0p5/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_CPSR_MOP_CO_VLOC/2014071406/VLOC_1p5_CUT_p05/obs_diag_output.nc';
-%exp         = '/real_FRAPPE_CPSR_MOP_CO_VLOC/2014071406/VLOC_0p5_CUT_p05/obs_diag_output.nc';
+%exp         = '/real_FRAPPE_CONTROL/obs_diag_output.nc';
+%exp         = '/real_FRAPPE_RETR_MOP_CO_INF_DAMP/obs_diag_output.nc';
+exp         = '/real_FRAPPE_RETR_IAS_CO_INF_DAMP/obs_diag_output.nc';
+%exp         = '/real_FRAPPE_RETR_MOP_AIR_CO_CUT_p05/obs_diag_output.nc';
+%exp         = '/real_FRAPPE_CPSR_MOP_CO_INF_DAMP/obs_diag_output.nc';
+%exp         = '/real_FRAPPE_CPSR_IAS_CO_INF_DAMP/obs_diag_output.nc';
 %
 fname=strcat(path,exp);
 %
 npar=1;
 copystring    = {'totalspread'};
-copystring    = {'spread'};
 nvar=1;
 %obsname      = {'AIRNOW_CO'};
 %obsname      = {'AIRNOW_O3'};

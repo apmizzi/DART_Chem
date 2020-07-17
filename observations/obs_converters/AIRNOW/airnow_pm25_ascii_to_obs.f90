@@ -16,7 +16,7 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 
-program airnow_co_ascii_to_obs
+program airnow_pm25_ascii_to_obs
 
 !=============================================
 ! AIRNOW SURFACE AQ obs
@@ -64,7 +64,7 @@ program airnow_co_ascii_to_obs
                                       time_type,                 &
                                       get_time
 !
-      use obs_kind_mod, only :        AIRNOW_CO,                 &
+      use obs_kind_mod, only :        AIRNOW_PM25,                 &
                                       get_type_of_obs_from_menu
 !
       use random_seq_mod, only :      random_seq_type,           &
@@ -76,7 +76,7 @@ program airnow_co_ascii_to_obs
       implicit none
 
 ! version controlled file description for error handling, do not edit
-      character(len=*), parameter :: source   = 'airnow_co_ascii_to_obs.f90'
+      character(len=*), parameter :: source   = 'airnow_pm25_ascii_to_obs.f90'
       character(len=*), parameter :: revision = ''
       character(len=*), parameter :: revdate  = ''
 !
@@ -114,7 +114,7 @@ program airnow_co_ascii_to_obs
       real,dimension(indx_max)     :: lat,lon,obs_val,obs_err
       real*8,dimension(num_qc)     :: obs_qc
       real*8,dimension(num_copies) :: obs_val_out
-      real                         :: co_log_max, co_log_min
+      real                         :: pm25_log_max, pm25_log_min
       character(len=2)             :: chr_month, chr_day
       character(len=4)             :: chr_year
       character(len=20)            :: dmy
@@ -243,7 +243,7 @@ program airnow_co_ascii_to_obs
             data_greg_sec(indx)=data_greg_sec_temp
             obs_val(indx)=obs_val_temp*fac
             obs_err(indx)=obs_val_temp*fac*err_fac
-            if (use_log_co) then
+            if (use_log_pm25) then
                obs_val(indx)=log(obs_val_temp*fac)
                obs_err(indx)=err_fac
             endif
@@ -295,7 +295,7 @@ program airnow_co_ascii_to_obs
          which_vert           = 1       ! vert is level
          obs_location         = set_location(longitude, latitude, level, which_vert)
          ob_err_var           = obs_err(indx)*obs_err(indx)
-         obs_kind             = AIRNOW_CO
+         obs_kind             = AIRNOW_PM25
 !        
          call set_obs_def_type_of_obs(obs_def, obs_kind)
          call set_obs_def_location(obs_def, obs_location)
@@ -333,7 +333,7 @@ program airnow_co_ascii_to_obs
 ! Clean up
 !-----------------------------------------------------------------------------
       call timestamp(string1=source,string2=revision,string3=revdate,pos='end')
-   end program airnow_co_ascii_to_obs
+   end program airnow_pm25_ascii_to_obs
 !
    integer function calc_greg_sec(year,month,day,hour,minute,sec,days_in_month)
       implicit none

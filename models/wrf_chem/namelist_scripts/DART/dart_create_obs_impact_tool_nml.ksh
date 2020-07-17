@@ -1,7 +1,7 @@
 #!/bin/ksh -x
 #########################################################################
 #
-# Purpose: Create DART &dart_to_wrf_nml 
+# Purpose: Create DART &obs_impact_tool_nml 
 #
 #########################################################################
 #
@@ -9,10 +9,10 @@
 rm -f input.nml_temp
 touch input.nml_temp
 cat > input.nml_temp << EOF
-&obs_impact_tool_nml
-  input_filename          = '${DART_DIR}/models/wrf_chem/variable_localization.txt'
-  output_filename         = '${DART_DIR}/models/wrf_chem/work/control_impact_runtime.table'
-  debug                   = .false.
+ &obs_impact_tool_nml                                                                                     
+  input_filename = ${NL_IMPACT_TOOL_INPUT:-'cross_correlations.txt'}
+  output_filename = ${NL_IMPACT_TOOL_OUTPUT:-'control_impact_runtime.txt'}
+  debug = ${NL_DART_DEBUG:-.false.}
 /
 EOF
 #
