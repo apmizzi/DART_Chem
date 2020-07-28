@@ -35,6 +35,10 @@ cat > input.nml << EOF
    cpsr_o3_trunc_lim           = ${NL_CPSR_O3_TRUNC_LIM}
    iasi_co_vloc                = ${NL_IASI_CO_VLOC}
    iasi_o3_vloc                = ${NL_IASI_O3_VLOC}
+   lon_min                     = ${NNL_MIN_LON}
+   lon_max                     = ${NNL_MAX_LON}
+   lat_min                     = ${NNL_MIN_LAT}
+   lat_max                     = ${NNL_MAX_LAT}
 /
 &obs_sequence_nml
    write_binary_obs_sequence   = .false.

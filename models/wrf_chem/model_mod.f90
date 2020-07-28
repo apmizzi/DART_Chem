@@ -91,14 +91,14 @@ use      obs_kind_mod, only : QTY_SO2, QTY_O3, QTY_CO, QTY_NO, QTY_NO2, QTY_HNO3
                               QTY_DMS, QTY_DST01, QTY_DST02, QTY_DST03, QTY_DST04, &
                               QTY_DST05, QTY_SO4, QTY_SSLT01, QTY_SSLT02, QTY_SSLT03, &
                               QTY_SSLT04, QTY_TAUAER1, QTY_TAUAER2, QTY_TAUAER3, QTY_TAUAER4, &
-                              QTY_PM25, QTY_PM10, &
+                              QTY_P25, QTY_P10, QTY_PM25, QTY_PM10, &
 !
 ! LXL/APM +++
                               QTY_E_CO, QTY_E_NO, QTY_E_NO2, QTY_E_SO2, QTY_E_OC, &
-                              QTY_E_BC, QTY_E_PM_10, QTY_E_PM_25, &
+                              QTY_E_BC, QTY_E_PM10, QTY_E_PM25, &
                               QTY_EBU_CO, QTY_EBU_NO, &
-                              QTY_EBU_OC, QTY_EBU_BC, QTY_EBU_c2h4, QTY_EBU_ch2o, &
-                              QTY_EBU_ch3oh
+                              QTY_EBU_OC, QTY_EBU_BC, QTY_EBU_C2H4, QTY_EBU_CH2O, &
+                              QTY_EBU_CH3OH
 
 ! APM/AFAJ/LXL ---
 
@@ -363,7 +363,7 @@ TYPE wrf_static_data_for_dart
               type_no2, type_bc1, type_bc2, type_oc1, type_oc2, &
               type_dst01, type_dst02, type_dst03, type_dst04, type_dst05, &
               type_sslt01, type_sslt02, type_sslt03, type_sslt04, &
-              type_so4, type_pm10, type_pm25, type_hno3, &
+              type_so4, type_pm10, type_pm25, type_p25, type_p10, type_hno3, &
               type_hno4, type_n2o5, type_pan, type_mek, type_ald, type_ch3o2, &
               type_c3h8, type_c2h6, type_acet, type_hcho, type_c2h4, type_c3h6, &
               type_tol, type_mvk, type_biglak, type_isopr, type_macr, type_glyald, &
@@ -1008,6 +1008,25 @@ print *, 'finished chemi variables read'
    wrf%dom(id)%type_o3 = get_type_ind_from_type_string(id,'o3')
    wrf%dom(id)%type_no  = get_type_ind_from_type_string(id,'no')
    wrf%dom(id)%type_no2 = get_type_ind_from_type_string(id,'no2')
+   wrf%dom(id)%type_so2 = get_type_ind_from_type_string(id,'so2')
+   wrf%dom(id)%type_so4 = get_type_ind_from_type_string(id,'sulf')
+   wrf%dom(id)%type_pm10 = get_type_ind_from_type_string(id,'PM10')
+   wrf%dom(id)%type_pm25 = get_type_ind_from_type_string(id,'PM25')
+   wrf%dom(id)%type_p25 = get_type_ind_from_type_string(id,'P25')
+   wrf%dom(id)%type_p10 = get_type_ind_from_type_string(id,'P10')
+   wrf%dom(id)%type_bc1 = get_type_ind_from_type_string(id,'BC1')
+   wrf%dom(id)%type_bc2 = get_type_ind_from_type_string(id,'BC2')
+   wrf%dom(id)%type_oc1 = get_type_ind_from_type_string(id,'OC1')
+   wrf%dom(id)%type_oc2 = get_type_ind_from_type_string(id,'OC2')
+   wrf%dom(id)%type_dst01 = get_type_ind_from_type_string(id,'DUST_1')
+   wrf%dom(id)%type_dst02 = get_type_ind_from_type_string(id,'DUST_2')
+   wrf%dom(id)%type_dst03 = get_type_ind_from_type_string(id,'DUST_3')
+   wrf%dom(id)%type_dst04 = get_type_ind_from_type_string(id,'DUST_4')
+   wrf%dom(id)%type_dst05 = get_type_ind_from_type_string(id,'DUST_5')
+   wrf%dom(id)%type_sslt01 = get_type_ind_from_type_string(id,'SEAS_1')
+   wrf%dom(id)%type_sslt02 = get_type_ind_from_type_string(id,'SEAS_2')
+   wrf%dom(id)%type_sslt03 = get_type_ind_from_type_string(id,'SEAS_3')
+   wrf%dom(id)%type_sslt04 = get_type_ind_from_type_string(id,'SEAS_4')
    wrf%dom(id)%type_tauaer1 = get_type_ind_from_type_string(id,'TAUAER1')
    wrf%dom(id)%type_tauaer2 = get_type_ind_from_type_string(id,'TAUAER2')
    wrf%dom(id)%type_tauaer3 = get_type_ind_from_type_string(id,'TAUAER3')
@@ -3377,14 +3396,12 @@ else
    endif
 !
 
-
 !1.zd SO2
    elseif ( obs_kind == QTY_SO2 ) then
 
       if ( wrf%dom(id)%type_so2 >= 0 ) then
 
          do uk = 1, count
-print *, 'APM: uk ',uk
       ! Check to make sure retrieved integer gridpoints are in valid range
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_so2 ) .and. &
                  boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_so2 ) .and. &
@@ -3396,62 +3413,42 @@ print *, 'APM: uk ',uk
                   print*, 'model_mod.f90 :: model_interpolate :: getCorners SO2 rc = ', rc
                   call abort
                endif
-print *, 'APM:       complete get corners ',uk
  
       ! Interpolation for the SO2 field at level k
-print *, 'APM:       i,j,k,dom_id,wrf%dom(id)%type_so2 ',ll(1),ll(2),uniquek(uk),domain_id(id),wrf%dom(id)%type_so2
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so2)
-print *, 'APM:       ill ',ill  
-print *, 'APM:       i,j,k,dom_id,wrf%dom(id)%type_so2 ',ul(1),ul(2),uniquek(uk),domain_id(id),wrf%dom(id)%type_so2
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so2)
-print *, 'APM:       iul ',iul  
-print *, 'APM:       i,j,k,dom_id,wrf%dom(id)%type_so2 ',lr(1),lr(2),uniquek(uk),domain_id(id),wrf%dom(id)%type_so2
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so2)
-print *, 'APM:       ilr ',ilr  
-print *, 'APM:       i,j,k,dom_id,wrf%dom(id)%type_so2 ',ur(1),ur(2),uniquek(uk),domain_id(id),wrf%dom(id)%type_so2
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so2)
-print *, 'APM:       iur ',iur  
-print *, 'APM:       ill,iul,ilr,iur ',ill,iul,ilr,iur
 
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-print *, 'APM:       x_ill,x_iul,x_ilr,x_iur ',x_ill,x_iul,x_ilr,x_iur
-print *, 'APM:       dx,dy,dxm,dym ',dx,dy,dxm,dym
 
                do e = 1, ens_size
                   if ( k(e) == uniquek(uk) ) then
                      fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
                   endif
                enddo
-print *, 'APM:       fld(1,:) ',fld(1,:)
-print *, 'APM:       complete interpolation level k ',uk
 
            ! Interpolation for the SO2 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so2)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so2)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so2)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so2)
-print *, 'APM:       x_ill,x_iul,x_ilr,x_iur ',x_ill,x_iul,x_ilr,x_iur
 
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-print *, 'APM:       x_ill,x_iul,x_ilr,x_iur ',x_ill,x_iul,x_ilr,x_iur
-print *, 'APM:       dx,dy,dxm,dym ',dx,dy,dxm,dym
 
                do e = 1, ens_size
                   if ( k(e) == uniquek(uk) ) then
                      fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
                   endif
                enddo
-print *, 'APM:       fld(2,:) ',fld(2,:)
-print *, 'APM:       complete interpolation level k+1 ',uk
             endif
          enddo
-print *, 'APM:       complete SO2 interpolation '
       endif
 !
 
@@ -4300,6 +4297,116 @@ print *, 'APM:       complete SO2 interpolation '
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm10)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm10)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm10)
+
+               x_ill = get_state(ill, state_handle)
+               x_iul = get_state(iul, state_handle)
+               x_ilr = get_state(ilr, state_handle)
+               x_iur = get_state(iur, state_handle)
+
+               do e = 1, ens_size
+                  if ( k(e) == uniquek(uk) ) then
+                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
+                  endif
+               enddo
+            endif
+         enddo
+         endif
+
+!1.ze P25
+   elseif ( obs_kind == QTY_P25 ) then
+
+         if ( wrf%dom(id)%type_p25 >= 0 ) then
+
+
+          do uk = 1, count
+            if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_p25 ) .and. &
+                 boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_p25 ) .and. &
+                 boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_p25 ) ) then
+
+               call getCorners(i, j, id, wrf%dom(id)%type_p25, ll, ul, lr, ur, rc )
+               if ( rc .ne. 0 ) then
+                    print*, 'model_mod.f90 :: model_interpolate :: getCorners P25 rc = ', rc
+                    call abort
+               endif
+
+           ! Interpolation for the PM10 field at level k
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p25)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p25)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p25)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p25)
+
+               x_ill = get_state(ill, state_handle)
+               x_iul = get_state(iul, state_handle)
+               x_ilr = get_state(ilr, state_handle)
+               x_iur = get_state(iur, state_handle)
+
+
+               do e = 1, ens_size
+                  if ( k(e) == uniquek(uk) ) then
+                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
+                  endif
+               enddo
+
+           ! Interpolation for the P25 field at level k+1
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p25)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p25)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p25)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p25)
+
+               x_ill = get_state(ill, state_handle)
+               x_iul = get_state(iul, state_handle)
+               x_ilr = get_state(ilr, state_handle)
+               x_iur = get_state(iur, state_handle)
+
+               do e = 1, ens_size
+                  if ( k(e) == uniquek(uk) ) then
+                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
+                  endif
+               enddo
+            endif
+         enddo
+         endif
+
+!1.zf P10
+   elseif ( obs_kind == QTY_P10 ) then
+
+         if ( wrf%dom(id)%type_p10 >= 0 ) then
+
+
+          do uk = 1, count
+            if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_p10 ) .and. &
+                 boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_p10 ) .and. &
+                 boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_p10 ) ) then
+
+               call getCorners(i, j, id, wrf%dom(id)%type_p10, ll, ul, lr, ur, rc )
+               if ( rc .ne. 0 ) then
+                    print*, 'model_mod.f90 :: model_interpolate :: getCorners P10 rc = ', rc
+                    call abort
+               endif
+
+           ! Interpolation for the PM10 field at level k
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p10)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p10)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p10)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p10)
+
+               x_ill = get_state(ill, state_handle)
+               x_iul = get_state(iul, state_handle)
+               x_ilr = get_state(ilr, state_handle)
+               x_iur = get_state(iur, state_handle)
+
+
+               do e = 1, ens_size
+                  if ( k(e) == uniquek(uk) ) then
+                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
+                  endif
+               enddo
+
+           ! Interpolation for the P10 field at level k+1
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p10)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p10)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p10)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p10)
 
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
@@ -9100,54 +9207,65 @@ do i = 1, size(in_state_vector)
          call error_handler(E_MSG, 'fill_dart_kinds_table', errstring, &
                             source, revision, revdate)
       endif
- 
+
    ! the MODIS AOD assimilation case
    case (QTY_AOD)
-      if ((.not. in_state_vector(QTY_TAUAER1))   .or. &
-          (.not. in_state_vector(QTY_TAUAER2))   .or. &
-          (.not. in_state_vector(QTY_TAUAER3))   .or. &
-          (.not. in_state_vector(QTY_TAUAER4))) then
-         write(errstring, *) 'AOD assimilation requires TAUAER1, 2, 3, and 4 in state vector'
+      if ((.not. in_state_vector(QTY_SO4))     .or. &
+         (.not. in_state_vector(QTY_OC2))      .or. &
+         (.not. in_state_vector(QTY_OC2))      .or. &
+         (.not. in_state_vector(QTY_BC1))      .or. &
+         (.not. in_state_vector(QTY_BC2))      .or. &
+         (.not. in_state_vector(QTY_SSLT01))   .or. &
+         (.not. in_state_vector(QTY_SSLT02))   .or. &
+         (.not. in_state_vector(QTY_SSLT03))   .or. &
+         (.not. in_state_vector(QTY_SSLT04))   .or. &
+         (.not. in_state_vector(QTY_DST01))    .or. &
+         (.not. in_state_vector(QTY_DST02))    .or. &
+         (.not. in_state_vector(QTY_DST03))    .or. &
+         (.not. in_state_vector(QTY_DST04))    .or. &
+         (.not. in_state_vector(QTY_DST05)))   then
+         write(errstring, *) 'MODIS AOD assimilation requires SO4, OC1-2, BC1-2, SSLT01-04,and DST01-05 in state vector'
          call error_handler(E_MSG, 'fill_dart_kinds_table', errstring, &
                             source, revision, revdate)
       endif
 
-   ! for assimilating PM in situ observations
-   case (QTY_PM25)
-      if ((.not. in_state_vector(QTY_PM25))   .or. &
-          (.not. in_state_vector(QTY_BC1))   .or. &
-          (.not. in_state_vector(QTY_BC2))   .or. &
-          (.not. in_state_vector(QTY_DST01))   .or. &
-          (.not. in_state_vector(QTY_DST02))   .or. &
-          (.not. in_state_vector(QTY_SSLT01))   .or. &
-          (.not. in_state_vector(QTY_SSLT02))   .or. &
-          (.not. in_state_vector(QTY_SO4))   .or. &
-          (.not. in_state_vector(QTY_OC1))   .or. &
-          (.not. in_state_vector(QTY_OC2))) then
-         write(errstring, *) 'PM2.5 assimilation requires P25, BC1,2, DUST_1,2, SEAS_1,2, sulf, OC1,2 in state vector'
-         call error_handler(E_MSG, 'fill_dart_kinds_table', errstring, &
-                            source, revision, revdate)
-      endif
+   ! for assimilating PM10 in situ observations
    case (QTY_PM10)
-      if ((.not. in_state_vector(QTY_PM25))   .or. &
-          (.not. in_state_vector(QTY_BC1))   .or. &
-          (.not. in_state_vector(QTY_BC2))   .or. &
-          (.not. in_state_vector(QTY_DST01))   .or. &
-          (.not. in_state_vector(QTY_DST02))   .or. &
-          (.not. in_state_vector(QTY_DST03))   .or. &
-          (.not. in_state_vector(QTY_DST04))   .or. &
-          (.not. in_state_vector(QTY_SSLT01))   .or. &
-          (.not. in_state_vector(QTY_SSLT02))   .or. &
-          (.not. in_state_vector(QTY_SSLT03))   .or. &
-          (.not. in_state_vector(QTY_SO4))   .or. &
-          (.not. in_state_vector(QTY_OC1))   .or. &
-          (.not. in_state_vector(QTY_OC2))   .or. &
-          (.not. in_state_vector(QTY_PM10))) then
-         write(errstring, *) 'PM2.5 assimilation requires P25, P10, BC1,2, DUST_1,2,3,4 SEAS_1,2,3, sulf, OC1,2 in state vector'
+      if ((.not. in_state_vector(QTY_P25))     .or. &
+         (.not. in_state_vector(QTY_SO4))      .or. &
+         (.not. in_state_vector(QTY_BC1))      .or. &
+         (.not. in_state_vector(QTY_BC2))      .or. &
+         (.not. in_state_vector(QTY_OC1))      .or. &
+         (.not. in_state_vector(QTY_OC2))      .or. &
+         (.not. in_state_vector(QTY_DST01))    .or. &
+         (.not. in_state_vector(QTY_DST02))    .or. &
+         (.not. in_state_vector(QTY_DST03))    .or. &
+         (.not. in_state_vector(QTY_DST04))    .or. &
+         (.not. in_state_vector(QTY_SSLT01))   .or. &
+         (.not. in_state_vector(QTY_SSLT02))   .or. &
+         (.not. in_state_vector(QTY_SSLT03)))  then
+         write(errstring, *) 'PM10 assimilation requires P25, SO4, BC1-2, OC1-2, DST01-04, and  SSLT01-04 in state vector'
          call error_handler(E_MSG, 'fill_dart_kinds_table', errstring, &
                             source, revision, revdate)
      endif
 
+   ! for assimilating PM25 in situ observations
+   case (QTY_PM25)
+      if ((.not. in_state_vector(QTY_P25))     .or. &
+         (.not. in_state_vector(QTY_SO4))      .or. &
+         (.not. in_state_vector(QTY_BC1))      .or. &
+         (.not. in_state_vector(QTY_BC2))      .or. &
+         (.not. in_state_vector(QTY_OC1))      .or. &
+         (.not. in_state_vector(QTY_OC2))      .or. &
+         (.not. in_state_vector(QTY_DST01))    .or. &
+         (.not. in_state_vector(QTY_DST02))    .or. &
+         (.not. in_state_vector(QTY_SSLT01))   .or. &
+         (.not. in_state_vector(QTY_SSLT02)))  then
+         write(errstring, *) 'PM2.5 assimilation requires P25, BC1-2, OC1-2, DST01-02, and SSLT01-02 in state vector'
+         call error_handler(E_MSG, 'fill_dart_kinds_table', errstring, &
+                            source, revision, revdate)
+      endif
+ 
    ! by default anything else is fine
 
    end select
@@ -9204,14 +9322,54 @@ if (in_state_vector(QTY_GEOPOTENTIAL_HEIGHT) .and. &
 in_state_vector(QTY_RADAR_REFLECTIVITY) = .true.
 in_state_vector(QTY_POWER_WEIGHTED_FALL_SPEED) = .true.
 
-! AOD assimilaiton case
-if (in_state_vector(QTY_TAUAER1)    .and. &
-   in_state_vector(QTY_TAUAER2)    .and. &
-   in_state_vector(QTY_TAUAER3)    .and. &
-   in_state_vector(QTY_TAUAER4))  then
-   in_state_vector(QTY_AOD)  = .true.
+! PM10 assimilaiton case
+if (in_state_vector(QTY_P25)    .and. &
+   in_state_vector(QTY_SO4)     .and. &
+   in_state_vector(QTY_BC1)     .and. &
+   in_state_vector(QTY_BC2)     .and. &
+   in_state_vector(QTY_OC1)     .and. &
+   in_state_vector(QTY_OC2)     .and. &
+   in_state_vector(QTY_DST01)   .and. &
+   in_state_vector(QTY_DST02)   .and. &
+   in_state_vector(QTY_DST03)   .and. &
+   in_state_vector(QTY_DST04)   .and. &
+   in_state_vector(QTY_SSLT01)  .and. &
+   in_state_vector(QTY_SSLT02)  .and. &
+   in_state_vector(QTY_SSLT03)) then
+   in_state_vector(QTY_PM10)  = .true.
 endif
 
+! PM25 assimilaiton case
+if (in_state_vector(QTY_P25)    .and. &
+   in_state_vector(QTY_SO4)     .and. &
+   in_state_vector(QTY_BC1)     .and. &
+   in_state_vector(QTY_BC2)     .and. &
+   in_state_vector(QTY_OC1)     .and. &
+   in_state_vector(QTY_OC2)     .and. &
+   in_state_vector(QTY_DST01)   .and. &
+   in_state_vector(QTY_DST02)   .and. &
+   in_state_vector(QTY_SSLT01)  .and. &
+   in_state_vector(QTY_SSLT02)) then
+   in_state_vector(QTY_PM25)  = .true.
+endif
+
+! AOD assimilaiton case
+if (in_state_vector(QTY_SO4)    .and. &
+   in_state_vector(QTY_OC1)     .and. &
+   in_state_vector(QTY_OC2)     .and. &
+   in_state_vector(QTY_BC1)     .and. &
+   in_state_vector(QTY_BC2)     .and. &
+   in_state_vector(QTY_SSLT01)  .and. &
+   in_state_vector(QTY_SSLT02)  .and. &
+   in_state_vector(QTY_SSLT03)  .and. &
+   in_state_vector(QTY_SSLT04)  .and. &
+   in_state_vector(QTY_DST01)   .and. &
+   in_state_vector(QTY_DST02)   .and. &
+   in_state_vector(QTY_DST03)   .and. &
+   in_state_vector(QTY_DST04)   .and. &
+   in_state_vector(QTY_DST05))  then
+   in_state_vector(QTY_AOD)  =  .true.
+endif
 
 ! FIXME:  i was going to suggest nuking this routine all together because it makes
 ! the default behavior be to exit with an error when requesting to interpolate an

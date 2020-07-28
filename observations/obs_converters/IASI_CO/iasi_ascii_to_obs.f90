@@ -359,7 +359,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,ias_dimp),xg_prs_norm(nlon_qc,nlat_qc,ias_dimp)
 !-------------------------------------------------------
   do while(ios == 0)
        ! Read IASI variables
-       read(fileid,*) ias_prs(1:nlvls)
+       read(fileid,*) ias_prs(1:nlvlsp)
        read(fileid,*) x_r(1:nlvls)
        read(fileid,*) x_p(1:nlvls)
        read(fileid,*) x_p_col(1:nlvls)
@@ -381,9 +381,6 @@ allocate (xg_prs(nlon_qc,nlat_qc,ias_dimp),xg_prs_norm(nlon_qc,nlat_qc,ias_dimp)
        enddo
        read(fileid,*) co_tot_col,co_tot_err
 !
-       print *, 'lon,lon_min,lon_max ',lon,lon_min,lon_max
-       print *, 'lat,lat_min,lat_max ',lat,lat_min,lat_max
-       print *, ' '
        if(lon.ge.lon_min .and. lon.le.lon_max .and. &
        lat.ge.lat_min .and. lat.le.lat_max) then       
           index_qc = index_qc + 1
@@ -494,7 +491,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,ias_dimp),xg_prs_norm(nlon_qc,nlat_qc,ias_dimp)
 !
   do while(ios == 0)
      index_qc=index_qc+1
-     read(fileid,*) ias_prs(1:nlvls)
+     read(fileid,*) ias_prs(1:nlvlsp)
      read(fileid,*) x_r(1:nlvls)
      read(fileid,*) x_p(1:nlvls)
      read(fileid,*) x_p_col(1:nlvls)
@@ -594,7 +591,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,ias_dimp),xg_prs_norm(nlon_qc,nlat_qc,ias_dimp)
 ! Calculate RETR errors
         do i=1,nlvls
            do j=1,nlvls
-!              ret_cov(i,j)=cov_use(i,j)/raw_x_r(i)/raw_x_p(j)
+!              ret_cov(i,j)=cov_use(i,j)/raw_x_r(i)/raw_x_r(j)
               ret_cov(i,j)=cov_use(i,j)
            enddo
         enddo
@@ -679,8 +676,8 @@ allocate (xg_prs(nlon_qc,nlat_qc,ias_dimp),xg_prs_norm(nlon_qc,nlat_qc,ias_dimp)
 !           xg_ret_adj_x_p(i,j,k)=xg_ret_adj_x_p(i,j,k)/real(xg_norm(i,j,k))
            do l=1,ias_dim
               if(xg_norm(i,j,l).eq.0) cycle
-              xg_ret_cov(i,j,k,l)=xg_ret_cov(i,j,k,l)/real(xg_norm(i,j,k))
               xg_raw_cov(i,j,k,l)=xg_raw_cov(i,j,k,l)/real(xg_norm(i,j,k))
+              xg_ret_cov(i,j,k,l)=xg_ret_cov(i,j,k,l)/real(xg_norm(i,j,k))
               xg_avg_k(i,j,k,l)=xg_avg_k(i,j,k,l)/real(xg_norm(i,j,k))
            enddo
         enddo
@@ -693,12 +690,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,ias_dimp),xg_prs_norm(nlon_qc,nlat_qc,ias_dimp)
              klvls=klvls-1
           endif
         enddo
-!
-! Check number of vertical levels
-        if(klvls.ne.xg_nlvls(i,j)) then
-           print *, 'APM: Vertical location error ',klvls,xg_nlvls(i,j)
-           stop
-        endif
+        xg_nlvls(i,j)=klvls
         nlvls=xg_nlvls(i,j)
         kstr=ias_dim-xg_nlvls(i,j)+1
 !
@@ -1124,7 +1116,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,ias_dimp),xg_prs_norm(nlon_qc,nlat_qc,ias_dimp)
 !
            spc_vloc=iasi_co_vloc
            if(spc_vloc.eq.1) then
-              call vertical_locate(prs_loc,kmax,xg_prs(i,j,kstr:ias_dim), &
+              call vertical_locate(prs_loc,kmax,xg_prs(i,j,kstr:ias_dimp), &
               avgker(k,1:xg_nlvls(i,j)),xg_nlvls(i,j),xg_nlvls(i,j))
               if(irot.eq.1) then
                  level=prs_loc*100.

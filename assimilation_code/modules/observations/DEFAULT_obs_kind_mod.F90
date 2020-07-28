@@ -403,8 +403,8 @@ integer, parameter, public :: &
     QTY_SFCB202                     = 226, &
     QTY_SFOC102                     = 227, &
     QTY_SFOC202                     = 228, &
-    QTY_E_PM_10                     = 229, &
-    QTY_E_PM_25                     = 230, &
+    QTY_E_PM10                      = 229, &
+    QTY_E_PM25                      = 230, &
     QTY_EBU_CO                      = 231, &
     QTY_EBU_NO                      = 232, &
     QTY_EBU_OC                      = 233, &
@@ -918,8 +918,8 @@ obs_kind_names(226) = obs_kind_type(QTY_SFCB2,          'QTY_SFCB202')
 obs_kind_names(227) = obs_kind_type(QTY_SFOC1,          'QTY_SFOC102')
 obs_kind_names(228) = obs_kind_type(QTY_SFOC2,          'QTY_SFOC202')
 
-obs_kind_names(229) = obs_kind_type(QTY_E_PM_10,        'QTY_E_PM_10')
-obs_kind_names(230) = obs_kind_type(QTY_E_PM_25,        'QTY_E_PM_25')
+obs_kind_names(229) = obs_kind_type(QTY_E_PM10,         'QTY_E_PM10')
+obs_kind_names(230) = obs_kind_type(QTY_E_PM25,         'QTY_E_PM25')
 obs_kind_names(231) = obs_kind_type(QTY_EBU_CO,         'QTY_EBU_CO')
 obs_kind_names(232) = obs_kind_type(QTY_EBU_NO,         'QTY_EBU_NO')
 obs_kind_names(233) = obs_kind_type(QTY_EBU_OC,         'QTY_EBU_OC')

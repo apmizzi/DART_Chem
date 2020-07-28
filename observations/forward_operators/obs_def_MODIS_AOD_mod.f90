@@ -64,16 +64,10 @@ private
 
 public :: get_expected_modis_aod
 
-! Storage for the special information required for observations of this type
-integer, parameter               :: MAX_MODIS_AOD_OBS = 10000000
-integer                          :: num_modis_aod_obs = 0
-
 ! version controlled file description for error handling, do not edit
 character(len=*), parameter :: source   = 'obs_def_MODIS_AOD_mod.f90'
 character(len=*), parameter :: revision = ''
 character(len=*), parameter :: revdate  = ''
-
-character(len=512) :: string1, string2
 
 logical, save :: module_initialized = .false.
 logical       :: use_log_aod
@@ -92,8 +86,9 @@ if (module_initialized) return
 
 call register_module(source, revision, revdate)
 module_initialized = .true.
-use_log_aod=.false.
+
 ! Read the namelist entry.
+use_log_aod=.false.
 call find_namelist_in_file("input.nml", "obs_def_MODIS_AOD_nml", iunit)
 read(iunit, nml = obs_def_MODIS_AOD_nml, iostat = rc)
 call check_namelist_read(iunit, rc, "obs_def_MODIS_AOD_nml")
@@ -191,177 +186,176 @@ subroutine get_expected_modis_aod(state_handle, ens_size, location, val, istatus
       mloc(2)=-90.0_r8
    endif
 
-   do ilev=1,aod_nlev
+   do ilev=aod_nlev,aod_nlev
       mloc(3)=real(ilev)
       nloc = set_location(mloc(1), mloc(2), mloc(3), VERTISLEVEL)
       mloc(3)=real(ilev+1)
       nploc = set_location(mloc(1), mloc(2), mloc(3), VERTISLEVEL)
 !
 ! water vapor mixing ratio (kg/kg) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     qmr_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_VAPOR_MIXING_RATIO, qvapor, qmr_istatus)
-     call track_status(ens_size, qmr_istatus, qvapor, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      qmr_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_VAPOR_MIXING_RATIO, qvapor, qmr_istatus)
+      call track_status(ens_size, qmr_istatus, qvapor, istatus, return_now)
+      if(return_now) return
 !
 ! sulfate (kg/kg) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     sulf_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_SO4, sulf, sulf_istatus)
-     call track_status(ens_size, sulf_istatus, sulf, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      sulf_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_SO4, sulf, sulf_istatus)
+      call track_status(ens_size, sulf_istatus, sulf, istatus, return_now)
+      if(return_now) return
 !
 ! dust (ug/kg - dry air) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     dst1_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_DST01, DUST1, dst1_istatus)
-     call track_status(ens_size, dst1_istatus, DUST1, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      dst1_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_DST01, DUST1, dst1_istatus)
+      call track_status(ens_size, dst1_istatus, DUST1, istatus, return_now)
+      if(return_now) return
 !
 ! dust (ug/kg - dry air) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     dst2_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_DST02, DUST2, dst2_istatus)
-     call track_status(ens_size, dst2_istatus, DUST2, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      dst2_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_DST02, DUST2, dst2_istatus)
+      call track_status(ens_size, dst2_istatus, DUST2, istatus, return_now)
+      if(return_now) return
 !
 ! dust (ug/kg - dry air) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     dst3_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_DST03, DUST3, dst3_istatus)
-     call track_status(ens_size, dst3_istatus, DUST3, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      dst3_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_DST03, DUST3, dst3_istatus)
+      call track_status(ens_size, dst3_istatus, DUST3, istatus, return_now)
+      if(return_now) return
 !
 ! dust (ug/kg - dry air) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     dst4_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_DST04, DUST4, dst4_istatus)
-     call track_status(ens_size, dst4_istatus, DUST4, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      dst4_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_DST04, DUST4, dst4_istatus)
+      call track_status(ens_size, dst4_istatus, DUST4, istatus, return_now)
+      if(return_now) return
 !
 ! dust (ug/kg - dry air) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     dst5_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_DST05, DUST5, dst5_istatus)
-     call track_status(ens_size, dst5_istatus, DUST5, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      dst5_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_DST05, DUST5, dst5_istatus)
+      call track_status(ens_size, dst5_istatus, DUST5, istatus, return_now)
+      if(return_now) return
 !
 ! hydrophilic black carbon (ug/kg - dry air) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     bc1_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_BC1, BC1, bc1_istatus)
-     call track_status(ens_size, bc1_istatus, BC1, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      bc1_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_BC1, BC1, bc1_istatus)
+      call track_status(ens_size, bc1_istatus, BC1, istatus, return_now)
+      if(return_now) return
 !
 ! hydrophilic black carbon (ug/kg - dry air) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     bc2_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_BC2, BC2, bc2_istatus)
-     call track_status(ens_size, bc2_istatus, BC2, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      bc2_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_BC2, BC2, bc2_istatus)
+      call track_status(ens_size, bc2_istatus, BC2, istatus, return_now)
+      if(return_now) return
 !
 ! hydrophilic organic carbon (ug/kg - dry air) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     oc1_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_OC1, OC1, oc1_istatus)
-     call track_status(ens_size, oc1_istatus, OC1, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      oc1_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_OC1, OC1, oc1_istatus)
+      call track_status(ens_size, oc1_istatus, OC1, istatus, return_now)
+      if(return_now) return
 !
 ! hydrophilic organic carbon (ug/kg - dry air) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     oc2_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_OC2, OC2, oc2_istatus)
-     call track_status(ens_size, oc2_istatus, OC2, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      oc2_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_OC2, OC2, oc2_istatus)
+      call track_status(ens_size, oc2_istatus, OC2, istatus, return_now)
+      if(return_now) return
 !
 ! sea salt (ug/kg - dry air) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     ss1_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_SSLT01, SS1, ss1_istatus)
-     call track_status(ens_size, ss1_istatus, SS1, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      ss1_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_SSLT01, SS1, ss1_istatus)
+      call track_status(ens_size, ss1_istatus, SS1, istatus, return_now)
+      if(return_now) return
 !
 ! sea salt (ug/kg - dry air) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     ss2_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_SSLT02, SS2, ss2_istatus)
-     call track_status(ens_size, ss2_istatus, SS2, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      ss2_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_SSLT02, SS2, ss2_istatus)
+      call track_status(ens_size, ss2_istatus, SS2, istatus, return_now)
+      if(return_now) return
 !
 ! sea salt (ug/kg - dry air) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     ss3_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_SSLT03, SS3, ss3_istatus)
-     call track_status(ens_size, ss3_istatus, SS3, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      ss3_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_SSLT03, SS3, ss3_istatus)
+      call track_status(ens_size, ss3_istatus, SS3, istatus, return_now)
+      if(return_now) return
 !
 ! sea salt (ug/kg - dry air) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     ss4_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_SSLT04, SS4, ss4_istatus)
-     call track_status(ens_size, ss4_istatus, SS4, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      ss4_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_SSLT04, SS4, ss4_istatus)
+      call track_status(ens_size, ss4_istatus, SS4, istatus, return_now)
+      if(return_now) return
 !
 ! perturbation theta (K) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     tmp_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_POTENTIAL_TEMPERATURE, Theta, tmp_istatus)
-     call track_status(ens_size, tmp_istatus, Theta, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      tmp_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_POTENTIAL_TEMPERATURE, Theta, tmp_istatus)
+      call track_status(ens_size, tmp_istatus, Theta, istatus, return_now)
+      if(return_now) return
 !
 ! perturbation pressure (Pa) at this location - this calls the model_mod code.
-     istatus(:)=0.
-     prs_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_PRESSURE, P, prs_istatus)
-     call track_status(ens_size, prs_istatus, P, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      prs_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_PRESSURE, P, prs_istatus)
+      call track_status(ens_size, prs_istatus, P, istatus, return_now)
+      if(return_now) return
+!
+! geopotential height (m) at this location - this calls the model_mod code.
+      istatus(:)=0.
+      phu_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nloc, QTY_GEOPOTENTIAL_HEIGHT, PH_up, phu_istatus)
+      call track_status(ens_size, phu_istatus, PH_up, istatus, return_now)
+      if(return_now) return
 !
 ! geopotential height (m) below this location - this calls the model_mod code.
-     istatus(:)=0.
-     phd_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_GEOPOTENTIAL_HEIGHT, PH_dn, phd_istatus)
-     call track_status(ens_size, phd_istatus, PH_dn, istatus, return_now)
-     if(return_now) return
-!
-! geopotential height (m) above this location - this calls the model_mod code.
-     istatus(:)=0.
-     phu_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_GEOPOTENTIAL_HEIGHT, PH_up, phu_istatus)
-     call track_status(ens_size, phu_istatus, PH_up, istatus, return_now)
-     if(return_now) return
+      istatus(:)=0.
+      phd_istatus(:)=0.
+      call interpolate(state_handle, ens_size, nploc, QTY_GEOPOTENTIAL_HEIGHT, PH_dn, phd_istatus)
+      call track_status(ens_size, phd_istatus, PH_dn, istatus, return_now)
+      if(return_now) return
 !
 ! p25 at this location - this calls the model_mod code.
-     istatus(:)=0.
-     p25_istatus(:)=0.
-     call interpolate(state_handle, ens_size, location, QTY_P25, p25, p25_istatus)
-     call track_status(ens_size, p25_istatus, p25, istatus, return_now)
-     if(return_now) return
+!      istatus(:)=0.
+!      p25_istatus(:)=0.
+!      call interpolate(state_handle, ens_size, nloc, QTY_P25, p25, p25_istatus)
+!      call track_status(ens_size, p25_istatus, p25, istatus, return_now)
+!      if(return_now) return
 !
 ! The actual forward operator computation.  This is the value that
 ! will be returned.  istatus (the return code) of 0 is good,
 ! return any value > 0 for error.  (values < 0 reserved for
 ! system use.)
 !
-     T = Theta / (100000./P)**(Rd/Cp)
-     Tv = Theta / (100000./P)**(Rd/Cp) * qvapor/(1.+qvapor)
-     rho_d = P/(Rd*T)
-     rho_m = P/(Rd*Tv)
+      T = Theta / (100000./P)**(Rd/Cp)
+      Tv = Theta / (100000./P)**(Rd/Cp) * qvapor/(1.+qvapor)
+      rho_d = P/(Rd*T)
+      rho_m = P/(Rd*Tv)
 !
 ! Expected Modis AOD
-     if (use_log_aod) then
-        val = val + (3.673*exp(sulf) + 2.473*(exp(OC1)+exp(OC2)) + 8.99*(exp(BC1)+exp(BC2)) + &
-        2.548*exp(SS1) + .889*exp(SS2) + .227*exp(SS3) + .096*exp(SS4) + 1.596*exp(DUST1) + &
-        .507*exp(DUST2) + .275*exp(DUST3) + .140*exp(DUST4) + .078*exp(DUST5)) * &
-        rho_d * (PH_up-PH_dn) * fac
-     else
-        val = val + (3.673*sulf + 2.473*(OC1+OC2) + 8.99*(BC1+BC2) + &
-        2.548*SS1 + .889*SS2 + .227*SS3 + .096*SS4 + 1.596*DUST1 + &
-        .507*DUST2 + .275*DUST3 + .140*DUST4 + .078*DUST5) * &
-        rho_d * (PH_up-PH_dn) * fac
-     endif 
- enddo
-
- istatus(:) = 0
+      if (use_log_aod) then
+         val = val + (3.673*exp(sulf) + 2.473*(exp(OC1)+exp(OC2)) + 8.99*(exp(BC1)+exp(BC2)) + &
+         2.548*exp(SS1) + .889*exp(SS2) + .227*exp(SS3) + .096*exp(SS4) + 1.596*exp(DUST1) + &
+         .507*exp(DUST2) + .275*exp(DUST3) + .140*exp(DUST4) + .078*exp(DUST5)) * &
+         rho_d * (PH_up-PH_dn) * fac
+      else
+         val = val + (3.673*sulf + 2.473*(OC1+OC2) + 8.99*(BC1+BC2) + &
+         2.548*SS1 + .889*SS2 + .227*SS3 + .096*SS4 + 1.596*DUST1 + &
+         .507*DUST2 + .275*DUST3 + .140*DUST4 + .078*DUST5) * &
+         rho_d * (PH_up-PH_dn) * fac
+      endif
+   enddo
+   istatus(:) = 0
 !
 end subroutine get_expected_modis_aod
 !

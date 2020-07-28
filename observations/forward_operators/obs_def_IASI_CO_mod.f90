@@ -123,14 +123,14 @@ call register_module(source, revision, revdate)
 module_initialized = .true.
 
 allocate (avg_kernel(   MAX_IASI_CO_OBS,IASI_DIM))
-allocate (pressure(     MAX_IASI_CO_OBS,IASI_DIM))
+allocate (pressure(     MAX_IASI_CO_OBS,IASI_DIMP))
 allocate (iasi_prior(   MAX_IASI_CO_OBS))
 allocate (iasi_psurf(   MAX_IASI_CO_OBS))
 allocate (iasi_nlevels( MAX_IASI_CO_OBS))
 allocate (iasi_nlevelsp(MAX_IASI_CO_OBS))
 
 ! Read the namelist entry.
-IASI_CO_retrieval_type='RETR'
+IASI_CO_retrieval_type='RAWR'
 use_log_co=.false.
 call find_namelist_in_file("input.nml", "obs_def_IASI_CO_nml", iunit)
 read(iunit, nml = obs_def_IASI_CO_nml, iostat = rc)
@@ -267,7 +267,7 @@ end subroutine interactive_iasi_co
 !
 subroutine get_expected_iasi_co(state_handle, ens_size, location, key, val, istatus)
 !----------------------------------------------------------------------
-!subroutine get_expected_iasi_co(state, location, key, val, istatus)
+!subroutine get_expected_iasi_co(state_handle, ens_size, location, key, val, istatus)
    type(ensemble_type), intent(in)  :: state_handle
    integer,             intent(in)  :: ens_size
    type(location_type), intent(in)  :: location
@@ -275,11 +275,11 @@ subroutine get_expected_iasi_co(state_handle, ens_size, location, key, val, ista
    real(r8),            intent(out) :: val(ens_size)
    integer,             intent(out) :: istatus(ens_size)
 !
-   integer,parameter   :: wrf_nlev=33
+   integer,parameter   :: wrf_nlev=32
    integer             :: i, kstr, ilev, icnt
    type(location_type) :: loc2
    real(r8)            :: mloc(3), prs_wrf(wrf_nlev)
-   real(r8)            :: obs_val(ens_size), obs_sum, co_min, co_min_log, level, missing
+   real(r8)            :: obs_val(ens_size), co_min, co_min_log, level, missing
    real(r8)            :: prs_wrf_sfc(ens_size), co_wrf_sfc(ens_size)
    real(r8)            :: prs_wrf_1(ens_size), prs_wrf_2(ens_size), co_wrf_1(ens_size), co_wrf_2(ens_size), prs_wrf_nlev(ens_size)
    real(r8)            :: prs_iasi_sfc, prs_iasi
@@ -458,6 +458,7 @@ iasi_prior(   key)   = co_prior
 iasi_psurf(   key)   = co_psurf
 iasi_nlevels( key)   = co_nlevels
 iasi_nlevelsp(key)   = co_nlevelsp
+
 end subroutine set_obs_def_iasi_co
 !
 function read_iasi_prior(ifile, fform)
