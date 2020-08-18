@@ -308,8 +308,8 @@ integer, parameter, public :: &
 !! possibly of interest to other models with Chemistry species.
 !! DO NOT USE numbers between 151-250 without talking to me, please?  (nancy)
 
-! these chemistry kinds match the numbers Arthur Mizzi is using
-! KRF fill in gaps with addition APM chem fields.
+!
+! APM: Numbers 151-250 are reserved for APM chemistry variables
 integer, parameter, public :: &
     QTY_O3                          = 151, &
     QTY_CO                          = 152, &
@@ -320,110 +320,76 @@ integer, parameter, public :: &
     QTY_N2O5                        = 157, &
     QTY_PAN                         = 158, &
     QTY_MEK                         = 159, &
-    QTY_ALD                         = 160   
-
-! more chemistry kinds (Jerome Barre)  (through 249)
-integer, parameter, public :: &
-    QTY_CO01                        = 161, &
-    QTY_CO02                        = 162, &
-    QTY_CO03                        = 163, &
-
-! additional Mizzi fields
-    QTY_CH3O2                       = 164, &
-    QTY_C3H8                        = 165, &
-    QTY_C2H6                        = 166, &
-    QTY_ACET                        = 167, &
-    QTY_HCHO                        = 168, &
-    QTY_C2H4                        = 169   
-
-integer, parameter, public :: &
-    QTY_SFCO                        = 170, &
-    QTY_SFCO01                      = 171, &
-    QTY_SFCO02                      = 172, &
-    QTY_SFCO03                      = 173, &
-    QTY_STATE_VAR_POWER             = 174, &
-    QTY_C3H6                        = 175, &
-    QTY_TOL                         = 176, &
-    QTY_MVK                         = 177, &
-    QTY_BIGALK                      = 178, &
-    QTY_ISOPR                       = 179, &
-    QTY_MACR                        = 180, &
-    QTY_GLYALD                      = 181, &
-    QTY_C10H16                      = 182, &
+    QTY_ALD                         = 160, &   
+    QTY_CH3O2                       = 161, &
+    QTY_C3H8                        = 162, &
+    QTY_C2H6                        = 163, &
+    QTY_ACET                        = 164, &
+    QTY_HCHO                        = 165, &
+    QTY_C2H4                        = 166, &   
+    QTY_C3H6                        = 167, &
+    QTY_TOL                         = 168, &
+    QTY_MVK                         = 169, &
+    QTY_BIGALK                      = 170, &
+    QTY_ISOPR                       = 171, &
+    QTY_MACR                        = 172, &
+    QTY_GLYALD                      = 173, &
+    QTY_C10H16                      = 174, &
 !
-    QTY_BC1                         = 183, &
-    QTY_BC2                         = 184, &
-    QTY_DMS                         = 185, &
-    QTY_DST01                       = 186, &
-    QTY_DST02                       = 187, &
-    QTY_DST03                       = 188, &
-    QTY_DST04                       = 189, &
-    QTY_DST05                       = 190, &
-    QTY_SO4                         = 191, &
-    QTY_SSLT01                      = 192, &
-    QTY_SSLT02                      = 193, &
-    QTY_SSLT03                      = 194, &
-    QTY_SSLT04                      = 195, &
-    QTY_TAUAER1                     = 196, &   
-    QTY_TAUAER2                     = 197, &
-    QTY_TAUAER3                     = 198, &
-    QTY_TAUAER4                     = 199  
-
-
+    QTY_AOD                         = 175, &
+    QTY_BC1                         = 176, &
+    QTY_BC2                         = 177, &
+    QTY_OC1                         = 178, &
+    QTY_OC2                         = 179, &
+    QTY_DMS                         = 180, &
+    QTY_DST01                       = 181, &
+    QTY_DST02                       = 182, &
+    QTY_DST03                       = 183, &
+    QTY_DST04                       = 184, &
+    QTY_DST05                       = 185, &
+    QTY_SO4                         = 186, &
+    QTY_SSLT01                      = 187, &
+    QTY_SSLT02                      = 188, &
+    QTY_SSLT03                      = 189, &
+    QTY_SSLT04                      = 190, &
+    QTY_TAUAER1                     = 191, &   
+    QTY_TAUAER2                     = 192, &
+    QTY_TAUAER3                     = 193, &
+    QTY_TAUAER4                     = 194, &  
+    QTY_PM25                        = 195, &
+    QTY_PM10                        = 196, &
+    QTY_NOY                         = 197, &
+    QTY_PB                          = 198, &
+    QTY_NMOC                        = 199, &
+!
+    QTY_P25                         = 200, &
+    QTY_P10                         = 201, &
+    QTY_E_CO                        = 202, &
+    QTY_E_NO                        = 203, &
+    QTY_E_NO2                       = 204, &
+    QTY_E_SO2                       = 205, &
+    QTY_E_SO4                       = 206, &
+    QTY_E_PM25                      = 207, &
+    QTY_E_PM10                      = 208, &
+    QTY_E_BC                        = 209, &   
+    QTY_E_OC                        = 210, &
+    QTY_EBU_CO                      = 211, &
+    QTY_EBU_NO                      = 212, &
+    QTY_EBU_NO2                     = 213, &
+    QTY_EBU_SO2                     = 214, &
+    QTY_EBU_SO4                     = 215, &
+    QTY_EBU_OC                      = 216, &
+    QTY_EBU_BC                      = 217, &
+    QTY_EBU_C2H4                    = 218, &
+    QTY_EBU_CH2O                    = 219, &
+    QTY_EBU_CH3OH                   = 220
+!
+! more chemistry kinds (Jerome Barre) - last three slots
 integer, parameter, public :: &
-    QTY_AOD                         = 200, &
-    QTY_CB1                         = 201, &
-    QTY_CB2                         = 202, &
-    QTY_OC1                         = 203, &
-    QTY_OC2                         = 204, &
-    QTY_CB102                       = 205, &
-    QTY_CB202                       = 206, &
-    QTY_OC102                       = 207, &
-    QTY_OC202                       = 208, &
-    QTY_PM10                        = 209, &
-    QTY_PM25                        = 210, &
-    QTY_NOY                         = 211, &
-    QTY_PB                          = 212, &
-    QTY_NMOC                        = 213, &
-    QTY_E_O3                        = 214, &
-    QTY_E_CO                        = 215, &
-    QTY_E_NO                        = 216, &
-    QTY_E_NO2                       = 217, &
-    QTY_E_SO2                       = 218, &
-    QTY_E_OC                        = 219, &
-    QTY_E_BC                        = 220   
-
-integer, parameter, public :: &
-
-    QTY_SFCB1                       = 221, &
-    QTY_SFCB2                       = 222, &
-    QTY_SFOC1                       = 223, &
-    QTY_SFOC2                       = 224, &
-    QTY_SFCB102                     = 225, &
-    QTY_SFCB202                     = 226, &
-    QTY_SFOC102                     = 227, &
-    QTY_SFOC202                     = 228, &
-    QTY_E_PM10                      = 229, &
-    QTY_E_PM25                      = 230, &
-    QTY_EBU_CO                      = 231, &
-    QTY_EBU_NO                      = 232, &
-    QTY_EBU_OC                      = 233, &
-    QTY_EBU_BC                      = 234, &
-    QTY_EBU_C2H4                    = 235, &
-    QTY_EBU_CH2O                    = 236, &
-    QTY_EBU_CH3OH                   = 237, &
-    QTY_P25                         = 238, &
-    QTY_P10                         = 239, &
-    QTY_EBU_NO2                     = 240, &
-    QTY_EBU_SO2                     = 241, &
-    QTY_EBU_SO4                     = 242, &
-    QTY_E_SO4                       = 243
-
-integer, parameter, public :: &
-    QTY_CO2                         = 247, &
-    QTY_NH3                         = 248, &
-    QTY_CH4                         = 249
-
+    QTY_CO2                         = 248, &
+    QTY_NH3                         = 249, &
+    QTY_CH4                         = 250
+!
 ! kinds for GITM (Alexey Morozov)
 integer, parameter, public :: &
   QTY_TEMPERATURE_ELECTRON          = 251, &
@@ -556,11 +522,42 @@ integer, parameter, public :: &
 integer, parameter, public :: &
   QTY_ION_O_MIXING_RATIO            = 365, &
   QTY_ATOMIC_H_MIXING_RATIO         = 366
+!
+! APM: Move KLR variables out of the APM chemistry block
+integer, parameter, public :: &
+    QTY_CO01                        = 367, &
+    QTY_CO02                        = 368, &
+    QTY_CO03                        = 369
+!
+integer, parameter, public :: &
+    QTY_SFCO                        = 370, &
+    QTY_SFCO01                      = 371, &
+    QTY_SFCO02                      = 372, &
+    QTY_SFCO03                      = 373, &
+    QTY_STATE_VAR_POWER             = 374
+!
+integer, parameter, public :: &
+    QTY_CB1                         = 375, &
+    QTY_CB2                         = 376, &
+    QTY_CB102                       = 377, &
+    QTY_CB202                       = 378, &
+    QTY_OC102                       = 379, &
+    QTY_OC202                       = 380
+!
+integer, parameter, public :: &
+    QTY_SFCB1                       = 381, &
+    QTY_SFCB2                       = 382, &
+    QTY_SFOC1                       = 383, &
+    QTY_SFOC2                       = 384, &
+    QTY_SFCB102                     = 385, &
+    QTY_SFCB202                     = 386, &
+    QTY_SFOC102                     = 387, &
+    QTY_SFOC202                     = 388
 
 ! max_defined_quantities is private to this module.  see comment below near the max_obs_specific
 ! declaration for more info about publics and private values.
 
-integer, parameter :: max_defined_quantities = 366
+integer, parameter :: max_defined_quantities = 388
 
 !----------------------------------------------------------------------------
 ! This list is autogenerated by the 'preprocess' program.  To add new
@@ -842,102 +839,73 @@ obs_kind_names(157) = obs_kind_type(QTY_N2O5,           'QTY_N2O5')
 obs_kind_names(158) = obs_kind_type(QTY_PAN,            'QTY_PAN')
 obs_kind_names(159) = obs_kind_type(QTY_MEK,            'QTY_MEK')
 obs_kind_names(160) = obs_kind_type(QTY_ALD,            'QTY_ALD')
-
-obs_kind_names(161) = obs_kind_type(QTY_CO01,           'QTY_CO01')
-obs_kind_names(162) = obs_kind_type(QTY_CO02,           'QTY_CO02')
-obs_kind_names(163) = obs_kind_type(QTY_CO03,           'QTY_CO03')
-
-obs_kind_names(164) = obs_kind_type(QTY_CH3O2,          'QTY_CH3O2')
-obs_kind_names(165) = obs_kind_type(QTY_C3H8,           'QTY_C3H8')
-obs_kind_names(166) = obs_kind_type(QTY_C2H6,           'QTY_C2H6')
-obs_kind_names(167) = obs_kind_type(QTY_ACET,           'QTY_ACET')
-obs_kind_names(168) = obs_kind_type(QTY_HCHO,           'QTY_HCHO')
-obs_kind_names(169) = obs_kind_type(QTY_C2H4,           'QTY_C2H4')
-
-obs_kind_names(170) = obs_kind_type(QTY_SFCO,           'QTY_SFCO')
-obs_kind_names(171) = obs_kind_type(QTY_SFCO01,         'QTY_SFCO01')
-obs_kind_names(172) = obs_kind_type(QTY_SFCO02,         'QTY_SFCO02')
-obs_kind_names(173) = obs_kind_type(QTY_SFCO03,         'QTY_SFCO03')
-obs_kind_names(174) = obs_kind_type(QTY_STATE_VAR_POWER,'QTY_STATE_VAR_POWER')
-
-obs_kind_names(175) = obs_kind_type(QTY_C3H6,           'QTY_C3H6')
-obs_kind_names(176) = obs_kind_type(QTY_TOL,            'QTY_TOL')
-obs_kind_names(177) = obs_kind_type(QTY_MVK,            'QTY_MVK')
-obs_kind_names(178) = obs_kind_type(QTY_BIGALK,         'QTY_BIGALK')
-obs_kind_names(179) = obs_kind_type(QTY_ISOPR,          'QTY_ISOPR')
-obs_kind_names(180) = obs_kind_type(QTY_MACR,           'QTY_MACR')
-obs_kind_names(181) = obs_kind_type(QTY_GLYALD,         'QTY_GLYALD')
-obs_kind_names(182) = obs_kind_type(QTY_C10H16,         'QTY_C10H16')
+obs_kind_names(161) = obs_kind_type(QTY_CH3O2,          'QTY_CH3O2')
+obs_kind_names(162) = obs_kind_type(QTY_C3H8,           'QTY_C3H8')
+obs_kind_names(163) = obs_kind_type(QTY_C2H6,           'QTY_C2H6')
+obs_kind_names(164) = obs_kind_type(QTY_ACET,           'QTY_ACET')
+obs_kind_names(165) = obs_kind_type(QTY_HCHO,           'QTY_HCHO')
+obs_kind_names(166) = obs_kind_type(QTY_C2H4,           'QTY_C2H4')
+obs_kind_names(167) = obs_kind_type(QTY_C3H6,           'QTY_C3H6')
+obs_kind_names(168) = obs_kind_type(QTY_TOL,            'QTY_TOL')
+obs_kind_names(169) = obs_kind_type(QTY_MVK,            'QTY_MVK')
+obs_kind_names(170) = obs_kind_type(QTY_BIGALK,         'QTY_BIGALK')
+obs_kind_names(171) = obs_kind_type(QTY_ISOPR,          'QTY_ISOPR')
+obs_kind_names(172) = obs_kind_type(QTY_MACR,           'QTY_MACR')
+obs_kind_names(173) = obs_kind_type(QTY_GLYALD,         'QTY_GLYALD')
+obs_kind_names(174) = obs_kind_type(QTY_C10H16,         'QTY_C10H16')
 !
-obs_kind_names(183) = obs_kind_type(QTY_BC1,            'QTY_BC1')
-obs_kind_names(184) = obs_kind_type(QTY_BC2,            'QTY_BC2')
-obs_kind_names(185) = obs_kind_type(QTY_DMS,            'QTY_DMS')
-obs_kind_names(186) = obs_kind_type(QTY_DST01,          'QTY_DST01')
-obs_kind_names(187) = obs_kind_type(QTY_DST02,          'QTY_DST02')
-obs_kind_names(188) = obs_kind_type(QTY_DST03,          'QTY_DST03')
-obs_kind_names(189) = obs_kind_type(QTY_DST04,          'QTY_DST04')
-obs_kind_names(190) = obs_kind_type(QTY_DST05,          'QTY_DST05')
-obs_kind_names(191) = obs_kind_type(QTY_SO4,            'QTY_SO4')
-obs_kind_names(192) = obs_kind_type(QTY_SSLT01,         'QTY_SSLT01')
-obs_kind_names(193) = obs_kind_type(QTY_SSLT02,         'QTY_SSLT02')
-obs_kind_names(194) = obs_kind_type(QTY_SSLT03,         'QTY_SSLT03')
-obs_kind_names(195) = obs_kind_type(QTY_SSLT04,         'QTY_SSLT04')
-obs_kind_names(196) = obs_kind_type(QTY_TAUAER1,        'QTY_TAUAER1')
-obs_kind_names(197) = obs_kind_type(QTY_TAUAER2,        'QTY_TAUAER2')
-obs_kind_names(198) = obs_kind_type(QTY_TAUAER3,        'QTY_TAUAER3')
-obs_kind_names(199) = obs_kind_type(QTY_TAUAER4,        'QTY_TAUAER4')
+obs_kind_names(175) = obs_kind_type(QTY_AOD,            'QTY_AOD')
+obs_kind_names(176) = obs_kind_type(QTY_BC1,            'QTY_BC1')
+obs_kind_names(177) = obs_kind_type(QTY_BC2,            'QTY_BC2')
+obs_kind_names(178) = obs_kind_type(QTY_OC1,            'QTY_OC1')
+obs_kind_names(179) = obs_kind_type(QTY_OC2,            'QTY_OC2')
+obs_kind_names(180) = obs_kind_type(QTY_DMS,            'QTY_DMS')
+obs_kind_names(181) = obs_kind_type(QTY_DST01,          'QTY_DST01')
+obs_kind_names(182) = obs_kind_type(QTY_DST02,          'QTY_DST02')
+obs_kind_names(183) = obs_kind_type(QTY_DST03,          'QTY_DST03')
+obs_kind_names(184) = obs_kind_type(QTY_DST04,          'QTY_DST04')
+obs_kind_names(185) = obs_kind_type(QTY_DST05,          'QTY_DST05')
+obs_kind_names(186) = obs_kind_type(QTY_SO4,            'QTY_SO4')
+obs_kind_names(187) = obs_kind_type(QTY_SSLT01,         'QTY_SSLT01')
+obs_kind_names(188) = obs_kind_type(QTY_SSLT02,         'QTY_SSLT02')
+obs_kind_names(189) = obs_kind_type(QTY_SSLT03,         'QTY_SSLT03')
+obs_kind_names(190) = obs_kind_type(QTY_SSLT04,         'QTY_SSLT04')
+obs_kind_names(191) = obs_kind_type(QTY_TAUAER1,        'QTY_TAUAER1')
+obs_kind_names(192) = obs_kind_type(QTY_TAUAER2,        'QTY_TAUAER2')
+obs_kind_names(193) = obs_kind_type(QTY_TAUAER3,        'QTY_TAUAER3')
+obs_kind_names(194) = obs_kind_type(QTY_TAUAER4,        'QTY_TAUAER4')
+obs_kind_names(195) = obs_kind_type(QTY_PM25,           'QTY_PM25')
+obs_kind_names(196) = obs_kind_type(QTY_PM10,           'QTY_PM10')
+obs_kind_names(197) = obs_kind_type(QTY_NOY,            'QTY_NOY')
+obs_kind_names(198) = obs_kind_type(QTY_PB,             'QTY_PB')
+obs_kind_names(199) = obs_kind_type(QTY_NMOC,           'QTY_NMOC')
+!
+obs_kind_names(200) = obs_kind_type(QTY_P25,            'QTY_P25')
+obs_kind_names(201) = obs_kind_type(QTY_P10,            'QTY_P10')
+obs_kind_names(202) = obs_kind_type(QTY_E_CO,           'QTY_E_CO')
+obs_kind_names(203) = obs_kind_type(QTY_E_NO,           'QTY_E_NO')
+obs_kind_names(204) = obs_kind_type(QTY_E_NO2,          'QTY_E_NO2')
+obs_kind_names(205) = obs_kind_type(QTY_E_SO2,          'QTY_E_SO2')
+obs_kind_names(206) = obs_kind_type(QTY_E_SO4,          'QTY_E_SO4')
+obs_kind_names(207) = obs_kind_type(QTY_E_PM25,         'QTY_E_PM25')
+obs_kind_names(208) = obs_kind_type(QTY_E_PM10,         'QTY_E_PM10')
+obs_kind_names(209) = obs_kind_type(QTY_E_BC,           'QTY_E_BC')
+obs_kind_names(210) = obs_kind_type(QTY_E_OC,           'QTY_E_OC')
+obs_kind_names(211) = obs_kind_type(QTY_EBU_CO,         'QTY_EBU_CO')
+obs_kind_names(212) = obs_kind_type(QTY_EBU_NO,         'QTY_EBU_NO')
+obs_kind_names(213) = obs_kind_type(QTY_EBU_NO2,        'QTY_EBU_NO2')
+obs_kind_names(214) = obs_kind_type(QTY_EBU_SO2,        'QTY_EBU_SO2')
+obs_kind_names(215) = obs_kind_type(QTY_EBU_SO4,        'QTY_EBU_SO4')
+obs_kind_names(216) = obs_kind_type(QTY_EBU_OC,         'QTY_EBU_OC')
+obs_kind_names(217) = obs_kind_type(QTY_EBU_BC,         'QTY_EBU_BC')
+obs_kind_names(218) = obs_kind_type(QTY_EBU_C2H4,       'QTY_EBU_C2H4')
+obs_kind_names(219) = obs_kind_type(QTY_EBU_CH2O,       'QTY_EBU_CH2O')
+obs_kind_names(220) = obs_kind_type(QTY_EBU_CH3OH,      'QTY_EBU_CH3OH')
 
-obs_kind_names(200) = obs_kind_type(QTY_AOD,            'QTY_AOD')
-obs_kind_names(201) = obs_kind_type(QTY_CB1,            'QTY_CB1')
-obs_kind_names(202) = obs_kind_type(QTY_CB2,            'QTY_CB2')
-obs_kind_names(203) = obs_kind_type(QTY_OC1,            'QTY_OC1')
-obs_kind_names(204) = obs_kind_type(QTY_OC2,            'QTY_OC2')
-obs_kind_names(205) = obs_kind_type(QTY_CB102,          'QTY_CB102')
-obs_kind_names(206) = obs_kind_type(QTY_CB202,          'QTY_CB202')
-obs_kind_names(207) = obs_kind_type(QTY_OC102,          'QTY_OC102')
-obs_kind_names(208) = obs_kind_type(QTY_OC202,          'QTY_OC202')
-obs_kind_names(209) = obs_kind_type(QTY_PM10,           'QTY_PM10')
-obs_kind_names(210) = obs_kind_type(QTY_PM25,           'QTY_PM25')
-obs_kind_names(211) = obs_kind_type(QTY_NOY,            'QTY_NOY')
-obs_kind_names(212) = obs_kind_type(QTY_PB,             'QTY_PB')
-obs_kind_names(213) = obs_kind_type(QTY_NMOC,           'QTY_NMOC')
-obs_kind_names(214) = obs_kind_type(QTY_E_O3,           'QTY_E_O3')
-obs_kind_names(215) = obs_kind_type(QTY_E_CO,           'QTY_E_CO')
-obs_kind_names(216) = obs_kind_type(QTY_E_NO,           'QTY_E_NO')
-obs_kind_names(217) = obs_kind_type(QTY_E_NO2,          'QTY_E_NO2')
-obs_kind_names(218) = obs_kind_type(QTY_E_SO2,          'QTY_E_SO2')
-obs_kind_names(219) = obs_kind_type(QTY_E_OC,           'QTY_E_OC')
-obs_kind_names(220) = obs_kind_type(QTY_E_BC,           'QTY_E_BC')
-
-obs_kind_names(221) = obs_kind_type(QTY_SFCB1,          'QTY_SFCB1')
-obs_kind_names(222) = obs_kind_type(QTY_SFCB2,          'QTY_SFCB2')
-obs_kind_names(223) = obs_kind_type(QTY_SFOC1,          'QTY_SFOC1')
-obs_kind_names(224) = obs_kind_type(QTY_SFOC2,          'QTY_SFOC2')
-obs_kind_names(225) = obs_kind_type(QTY_SFCB1,          'QTY_SFCB102')
-obs_kind_names(226) = obs_kind_type(QTY_SFCB2,          'QTY_SFCB202')
-obs_kind_names(227) = obs_kind_type(QTY_SFOC1,          'QTY_SFOC102')
-obs_kind_names(228) = obs_kind_type(QTY_SFOC2,          'QTY_SFOC202')
-
-obs_kind_names(229) = obs_kind_type(QTY_E_PM10,         'QTY_E_PM10')
-obs_kind_names(230) = obs_kind_type(QTY_E_PM25,         'QTY_E_PM25')
-obs_kind_names(231) = obs_kind_type(QTY_EBU_CO,         'QTY_EBU_CO')
-obs_kind_names(232) = obs_kind_type(QTY_EBU_NO,         'QTY_EBU_NO')
-obs_kind_names(233) = obs_kind_type(QTY_EBU_OC,         'QTY_EBU_OC')
-obs_kind_names(234) = obs_kind_type(QTY_EBU_BC,         'QTY_EBU_BC')
-obs_kind_names(235) = obs_kind_type(QTY_EBU_C2H4,       'QTY_EBU_C2H4')
-obs_kind_names(236) = obs_kind_type(QTY_EBU_CH2O,       'QTY_EBU_CH2O')
-obs_kind_names(237) = obs_kind_type(QTY_EBU_CH3OH,      'QTY_EBU_CH3OH')
-obs_kind_names(238) = obs_kind_type(QTY_P25,            'QTY_P25')
-obs_kind_names(239) = obs_kind_type(QTY_P10,            'QTY_P10')
-obs_kind_names(240) = obs_kind_type(QTY_EBU_NO2,        'QTY_EBU_NO2')
-obs_kind_names(241) = obs_kind_type(QTY_EBU_SO2,        'QTY_EBU_SO2')
-obs_kind_names(242) = obs_kind_type(QTY_EBU_SO4,        'QTY_EBU_SO4')
-obs_kind_names(243) = obs_kind_type(QTY_E_SO4,          'QTY_E_SO4')
-
-obs_kind_names(247) = obs_kind_type(QTY_CO2,            'QTY_CO2')
-obs_kind_names(248) = obs_kind_type(QTY_NH3,            'QTY_NH3')
-obs_kind_names(249) = obs_kind_type(QTY_CH4,            'QTY_CH4')
-
+obs_kind_names(248) = obs_kind_type(QTY_CO2,            'QTY_CO2')
+obs_kind_names(249) = obs_kind_type(QTY_NH3,            'QTY_NH3')
+obs_kind_names(250) = obs_kind_type(QTY_CH4,            'QTY_CH4')
+!
 obs_kind_names(251) = obs_kind_type(QTY_TEMPERATURE_ELECTRON  ,'QTY_TEMPERATURE_ELECTRON')
 obs_kind_names(252) = obs_kind_type(QTY_TEMPERATURE_ION       ,'QTY_TEMPERATURE_ION')
 obs_kind_names(253) = obs_kind_type(QTY_DENSITY_NEUTRAL_O3P   ,'QTY_DENSITY_NEUTRAL_O3P')
@@ -1053,6 +1021,32 @@ obs_kind_names(363) = obs_kind_type(QTY_CWP_PATH,              'QTY_CWP_PATH')
 obs_kind_names(364) = obs_kind_type(QTY_CWP_PATH_ZERO,         'QTY_CWP_PATH_ZERO')
 obs_kind_names(365) = obs_kind_type(QTY_ION_O_MIXING_RATIO,    'QTY_ION_O_MIXING_RATIO')
 obs_kind_names(366) = obs_kind_type(QTY_ATOMIC_H_MIXING_RATIO, 'QTY_ATOMIC_H_MIXING_RATIO')
+!
+obs_kind_names(367) = obs_kind_type(QTY_CO01,           'QTY_CO01')
+obs_kind_names(368) = obs_kind_type(QTY_CO02,           'QTY_CO02')
+obs_kind_names(369) = obs_kind_type(QTY_CO03,           'QTY_CO03')
+!
+obs_kind_names(370) = obs_kind_type(QTY_SFCO,           'QTY_SFCO')
+obs_kind_names(371) = obs_kind_type(QTY_SFCO01,         'QTY_SFCO01')
+obs_kind_names(372) = obs_kind_type(QTY_SFCO02,         'QTY_SFCO02')
+obs_kind_names(373) = obs_kind_type(QTY_SFCO03,         'QTY_SFCO03')
+obs_kind_names(374) = obs_kind_type(QTY_STATE_VAR_POWER,'QTY_STATE_VAR_POWER')
+!
+obs_kind_names(375) = obs_kind_type(QTY_CB1,            'QTY_CB1')
+obs_kind_names(376) = obs_kind_type(QTY_CB2,            'QTY_CB2')
+obs_kind_names(377) = obs_kind_type(QTY_CB102,          'QTY_CB102')
+obs_kind_names(378) = obs_kind_type(QTY_CB202,          'QTY_CB202')
+obs_kind_names(379) = obs_kind_type(QTY_OC102,          'QTY_OC102')
+obs_kind_names(380) = obs_kind_type(QTY_OC202,          'QTY_OC202')
+!
+obs_kind_names(381) = obs_kind_type(QTY_SFCB1,          'QTY_SFCB1')
+obs_kind_names(382) = obs_kind_type(QTY_SFCB2,          'QTY_SFCB2')
+obs_kind_names(383) = obs_kind_type(QTY_SFOC1,          'QTY_SFOC1')
+obs_kind_names(384) = obs_kind_type(QTY_SFOC2,          'QTY_SFOC2')
+obs_kind_names(385) = obs_kind_type(QTY_SFCB1,          'QTY_SFCB102')
+obs_kind_names(386) = obs_kind_type(QTY_SFCB2,          'QTY_SFCB202')
+obs_kind_names(387) = obs_kind_type(QTY_SFOC1,          'QTY_SFOC102')
+obs_kind_names(388) = obs_kind_type(QTY_SFOC2,          'QTY_SFOC202')
 
 ! count here, then output below
 

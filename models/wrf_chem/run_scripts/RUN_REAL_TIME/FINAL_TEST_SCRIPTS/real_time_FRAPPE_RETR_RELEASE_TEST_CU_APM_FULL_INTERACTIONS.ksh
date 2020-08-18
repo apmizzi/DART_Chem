@@ -343,7 +343,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_PERT_WRFCHEM_CHEM_ICBC=false
       export RUN_PERT_WRFCHEM_CHEM_EMISS=false
       export RUN_MOPITT_CO_OBS=false
-      export RUN_IASI_CO_OBS=true
+      export RUN_IASI_CO_OBS=false
       export RUN_IASI_O3_OBS=false
       export RUN_OMI_NO2_OBS=false
       export RUN_AIRNOW_O3_OBS=false
@@ -357,8 +357,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_PANDA_PM25_OBS=false
       export RUN_MODIS_AOD_OBS=false
       export RUN_MET_OBS=false
-      export RUN_COMBINE_OBS=true
-      export RUN_PREPROCESS_OBS=true
+      export RUN_COMBINE_OBS=false
+      export RUN_PREPROCESS_OBS=false
 #
       if [[ ${DATE} -eq ${INITIAL_DATE}  ]]; then
          export RUN_WRFCHEM_INITIAL=true
@@ -1284,7 +1284,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
                                    'AIRCRAFT_TEMPERATURE',
                                    'SAT_U_WIND_COMPONENT',
                                    'SAT_V_WIND_COMPONENT',
-                                   'IASI_CO_RETRIEVAL'"
+                                   'MODIS_AOD_RETRIEVAL'"
 #
 # &replace_wrf_fields_nml
    export NL_FIELDNAMES="'SNOWC',
@@ -5285,7 +5285,7 @@ EOF
          if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
 #
 # Copy the adjusted emissions fields from the wrfinput files to the emissions input files
-         ncks -x -v ${WRFCHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_temp.${CMEM} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM}
+         ncks -O -x -v ${WRFCHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_temp.${CMEM} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM}
          ncks -A -v ${WRFCHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_temp.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
          ncks -A -v ${WRFFIRECHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_temp.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
          rm -rf wrfinput_d${CR_DOMAIN}_${CMEM} wrfout_d${CR_DOMAIN}_temp.${CMEM}
