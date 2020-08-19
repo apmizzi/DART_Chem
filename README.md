@@ -136,6 +136,9 @@ It will build filter and any other MPI-capable executables with MPI.
 *The 'mpif90' command you use must have been built with the same 
 version of the compiler as you are using.*
 
+If you are planning to run WRF-Chem/DART, please cd to /model/wrf_chem
+and review the README_WRF-Chem_DART_BUILD_RUN_INSTRUCTIONS file.
+
 If any of these steps fail or you don't know how to do them, go to the
 DART project web page listed above for very detailed instructions that
 should get you over any bumps in the process.

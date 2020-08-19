@@ -2,13 +2,10 @@ This file contains instructions for building and running the WRF-Chem/DART
 release and test case.
 
 =============================================================================
-UPDATE: 11 December 2019
 The WRF-Chem/DART interface has been upgraded to be DART-Manhattan compliant.
 Source code, scripts, supporting files have been modified to meet 
-Manhattan standards. This README now reflects updated procedures and scripts
-to use for running this tutorial with WRF-Chem/DART Manhattan.  
+Manhattan standards.  
 =============================================================================
-
 
 INTRODUCTION:
 
@@ -21,14 +18,14 @@ Intel Math Kernel Libraries.
 
 Since it is my working directory the distribution includes code that works and
 is tested, code that runs but has not been tested, and code that simply does
-not work yet. Once you have the test case running and want to test other features 
+not work. Once you have the test case running and want to test other features 
 of WRF-Chem/DART you should contact me at mizzi@ucar.edu to find out the 
-status of such features.
+status of those features.
 
-If you have questions about WRF-Chem/DART you should contact me because there
-is not yet a Users Guide.  If your questions are more closely related to DART 
-you should contact DART support at dart@ucar.edu.  In the event your question
-is WRF-Chem/DART related they will pass it along to me.
+If you have questions about WRF-Chem/DART you should contact me because we do 
+not have a Users Guide.  If your questions are more closely related to DART 
+you should contact DART support at dart@ucar.edu.  If your question
+is more closely related to WRF-Chem/DART, they will pass it along to me.
 
 Once WRF-Chem is built and you are able to run the test case, I suggest you
 work through the run script to learn how it is structured and to learn the
@@ -43,41 +40,46 @@ FUNDING/SUPPORT:
 
 The WRF-Chem/DART project began in mid-2012 as a cooperative effort at the 
 National Center for Atmospheric Research (NCAR) between the Data Assimilation 
-Research Section (DAReS) and the Atmospheric Chemistry Observations and Modeling 
-Laboratory (ACOM) based on funding from the National Science Foundation (NSF) and 
-the National Aeronautics and Space Administration (NASA).  In mid-2017, ACOM's 
-support for this project ceased.  Currently, WRF-Chem/DART is supported by the 
-Colorado Department of Public Health and Environment/Air Pollution Control Division 
-(CDPHE/APCD), the University of Colorado Department of Mechanical Engineering (CUME) 
-and Research Computing Program (CURC), and DAReS.  In addition WRF-Chem/DART 
-contributions have been made by the: York University, University of California at 
-Berkeley, Nanjing University, University of Colorado, and University of Arizona.
+Research Section in the Computational Information Systems Labratory (CISL) and 
+the Atmospheric Chemistry Observations and Modeling Laboratory (ACOM) based on 
+funding from the National Science Foundation (NSF) and the National Aeronautics 
+and Space Administration (NASA).  In mid-2017, ACOM's support for the project 
+ended.  From mid-2018 to early 2020, WRF-Chem/DART was supported by the Colorado 
+Department of Public Health and Environment/Air Pollution Control Division 
+(CDPHE/APCD), the University of Colorado Department of Mechanical Engineering 
+(CU-MECE) and Research Computing Program (CURC), and CISL.  From early 2020 to 
+the present WRF-Chem/DART is funded by NASA through the Universities Space Research 
+Associates (USRA) at the NASA Ames Researh Center, CU-MEC, CURC, and CISL. In 
+addition WRF-Chem/DART contributions have been made by: York University, 
+University of California at Berkeley, Nanjing University, University of Colorado, 
+and University of Arizona.
 
 TEST CASE DATA:
 
 The test case data for WRF-Chem/DART can be retrieved using the Globus data service. 
-If you do not have Globus, you can go here to sign up: https://www.globusid.org.  Once
-you are logged into Globus, the files you want are here:
+If you do not have Globus, you can go here to sign up: https://www.globusid.org.  
+Once you are logged into Globus, the files you want are here:
 
 Host Endpoint: NCAR Data Sharing Service
 Host Path:     /glade/datashare/nancy/WRF_CHEM_DART_DATA_FILES
 
-There are two files in this directory.  The input files are in PANDA_REAL_TIME_DATA.tgz, 
-and the output files are in real_PANDA_RETR_VARLOC_RELEASE_TST.tgz.  These files should 
-be readable by anyone, but be forewarned, they are very large.  The input files 67 GB, and
-the output files are 99 GB (tarred and compressed). 
+There are two files in this directory.  The input files are in FRAPPE_REAL_TIME_
+TEST_DATA.tgz, and the output files are in real_FRAPPE_RETR_RELEASE_TEST_Manhattan.tgz.  
+These files should be readable by anyone, but be forewarned, they are very large.  
+The input files are 67 GB, and the output files are 99 GB (tarred and compressed). 
 
-The test case domain is eastern Asia.  It runs the Initial Cycle on 18 UTC July 24, 2014 
-and the First Assimilation Cycle on 00 UTC July, 25, 2014.  It assimilates conventional 
-meteorological observations and MOPITT CO retrieval profiles as raw retrievals.  The script
-for running the test case is described in Step 7 of the BUILD INSTRUCTIONS.  For questions 
-about accessing the data, please contact dart@ucar,edu.  For questions about the data, please 
+The test case domain is the western continental United States (CONUS).  It runs the 
+Initial Cycle on 12 UTC July 25, 2014 and the First Assimilation Cycle on 18 UTC 
+July, 25, 2014.  It assimilates conventional meteorological observations and MOPITT CO 
+retrieval profiles as raw retrievals.  The script for running the test case is described 
+in Step 7 of the BUILD INSTRUCTIONS section below.  For questions about accessing
+the data, please contact dart@ucar,edu.  For questions about the data, please 
 contact me at mizzi@ucar.edu.   
 
 BUILD INSTRUCTIONS:
 
-1. In this discussion "../" will refers to your DART home directory.
-Also, it assumes that you have DART, WRF-Chem, WPS, and WRFDA built and
+1. In this discussion "../" refers to your DART home directory.
+It assumes that you have DART, WRF-Chem, WPS, and WRFDA built and
 running on your system.
 
 2. Go to the "../build_templates" directory, copy the appropriate
@@ -85,90 +87,101 @@ running on your system.
 "mkmf.template" to your system.
 
 3. Go to "../models/wrf_chem/work" and run "./quickbuild.csh". If this
-step completes successfully, you should have some 33 WRF-Chem/DART
+step completes successfully, you should have approximately 30 WRF-Chem/DART
 executables in this "work" directory.
 
-4. Go to "../observations/obs_converters" and run "./buildall.csh".  This will build the
-observation converters, which convert observations from their native format
-to DART format.  If this step completes successfully you should have
-observation converter executables in the observation type "work" directories.
-NOTE: "buildall.csh" is configured to build the observation converters commonly
-used in WRF-Chem/DART.  If you want other observation converters, you will
-need to build them manually or modify "buildall.csh" to add them to the build
-list.
+4. Go to "../observations/obs_converters" and run "./buildall.csh".  This 
+will build all the WRF-Chem/DART observation converters.  They convert 
+observations from their native format to the DART input format.  If this step 
+completes successfully you should have observation converter executables in 
+the observation type "work" directories. NOTE: "buildall.csh" is configured to 
+build the observation converters commonly used in WRF-Chem/DART.  If you want 
+other observation converters, you will need to build them manually or modify 
+"buildall.csh" to add them to the build list.
 
 5. Go to "../models/wrf_chem/run_scripts" and run "./buildall.csh".  This
 will build the WRF-Chem/DART support utilites.  If this step completes
 successfully, you should have WRF-Chem/DART utility executables (indicated by
-a ".exe" extension) in the utility "work" directory.  "buildall.csh" will
-build all WRF-Chem/DART utility executable existing as of the date of this
+a ".exe" extension) in the utility "work" directory.  The "buildall.csh" script will
+build all the WRF-Chem/DART utility executables existing as of the date of this
 release.  However, WRF-Chem/DART does not use all these executables because
 some are under development and some are legacy software.
 
 6. Go to "../models/wrfchem/hybrid_scripts" and modify the
 "da_run_hold_cu.ksh" and "job_script_summit.ksh" scripts for your system.
-"da_run_hold_cu.ksh" is used by the run script to test whether all ensemble
-members have completed computing on a specific task.
-"job_script_summit.ksh" is the batch job submission script. It has "SERIAL"
-and "PARALLEL" job submission options.  It will likely need to be modified to
-accomodate your particular job scheduler/load manager.
+The "da_run_hold_cu.ksh" script is used by the run script to test whether all 
+ensemble members have finished executing a specific task.  The "job_script_summit.ksh" 
+script is the batch job submission script. It has "SERIAL" and "PARALLEL" job submission 
+options.  It will likely need to be modified to accomodate your particular job 
+scheduler/load manager.
 
-7. Go to "../models/wrf_chem/runs_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS" and
-edit the "real_time_PANDA_RETR_RELEASE_TEST_NCAR_MANHATTAN.ksh" script for your system.
-The is the test case run script.  You will need to edit: 
- (i) "CODE VERSIONS" variables to match your code version and identifiers; 
- (ii) "ROOT DIRECTORIES" variables to match the root paths on your system.  
-      You should not need to change the "DEPENDENT INPUT DATA DIRECTORIES" variables; 
+7. Go to "../models/wrf_chem/runs_scripts/RUN_REAL/FINAL_TEST_SCRIPTS" and
+edit the "real_time_FRAPPE_RETR_RELEASE_TEST_CU_FULL_INTERACTIONS.ksh" script to run on 
+ your system. The is the test case run script.  You will need to edit: 
+ (i)   "CODE VERSIONS" variables to match your code version and identifiers; 
+ (ii)  "ROOT DIRECTORIES" variables to match the root paths on your system.  
+       You should not need to change the "DEPENDENT INPUT DATA DIRECTORIES" variables; 
  (iii) For now, you should not need to change the "SELECT COMPONENT RUN OPTIONS" variables, 
-       but remember this section because these switches control the various job
-       submission tasks in WRF-Chem/DART; 
- (iv) You may need to change the "COMPUTER PARAMETERS" to match the options 
-      you set in "job_script_summit.ksh" for your particular scheduler/load manager; 
- (v) You should not need to change the "RUN_DIRECTORIES" variables; and 
- (vi) Finally, I have found that different machines have different "ksh" implementation 
-      quirks.  You will likely need to modify the run script to address any differences
-      in the version of "ksh" on your machine.
+       but remember this section because these switches control the various WRF-Chem/DART
+       job tasks; 
+ (iv)  You may need to change the "COMPUTER PARAMETERS" to match the options 
+       you set in "job_script_summit.ksh" for your particular scheduler/load manager; 
+ (v)   You should not need to change the "RUN_DIRECTORIES" variables; and 
+ (vi)  Finally, I have found that different machines have different "ksh" implementation 
+       quirks.  You will likely need to modify the run script to address differences in
+       the "ksh" implementation for your machine.
 
 8. You are now ready to run the first two cycles of the WRF-Chem/DART test
-case called "real_PANDA_RETR_VARLOC_RELEASE_TEST".  The first cycle is call
-the "Initial Cycle" and the second is called the "First Assimilation Cycle".
-There is no data assimilation in the "Initial Cycle". This cycle sets up the
-initial ensemble and generates the initial forecast ensemble.  The "First
-Assimilaton Cycle" generates an input ensemble to get the lateral boundary
-conditions for the forecast step.  It also collects the relevant observations,
-conducts the ensemble data assimilation (both meteorological and chemical
-data assimilation), updates the lateral boundary conditions to account for
-changes to the data assimilation, and generates the forecast ensemble.
-That completes the first two cycles.
+case called "real_FRAPPE_RETR_RELEASE_TEST_Manhattan".  The first cycle is 
+called the "Initial Cycle" and the second cycle is called the "First Assimilation Cycle".
+There is no data assimilation (i.e., the RUN_DART_FILTER and RUN_UPDATE_BC steps are not 
+executed) in the "Initial Cycle". That cycle sets up the initial ensemble and generates the 
+initial forecast ensemble.  The "First Assimilaton Cycle" generates an input ensemble to get 
+the lateral boundary conditions for the forecast step.  It also collects the relevant 
+observations, conducts the ensemble data assimilation (both meteorological and chemical data 
+assimilation), updates the lateral boundary conditions to account for changes due to the data 
+assimilation, and generates the forecast ensemble. That completes the first two cycles.
 
-9. The date-time string for the Initial Cycle is "2014072418" - that means
-July 24, 2014 at 18:00 UTC.  To run the "Initial Cycle" you should not need
-to make changes to the CYCLE_STR_DATE or the CYCLE_END_DATE variables.  
-Also you should not need to change any of the "SELECT COMPONENT RUN OPTIONS"
-variables.  To run the "First Assimilation Cycle" you will need to change
-the "CYCLE_STR_DATE" and "CYCLE_END_DATE" to "2014072500" and set
-"RUN_GEOGRID" to "false".
+9. The date-time string for the Initial Cycle is "2014072512" - that means
+July 25, 2014 at 12:00 UTC.  To run the "Initial Cycle" you do not need to change the 
+CYCLE_STR_DATE or CYCLE_END_DATE variables.  Also you should not need to change any 
+of the "SELECT COMPONENT RUN OPTIONS" options.  To run the "First Assimilation Cycle" you will 
+need to change the "CYCLE_STR_DATE" and "CYCLE_END_DATE" to "2014072518" and set "RUN_GEOGRID" 
+to "false".
 
-10. When you submit the run_script, it should create the
-${SCRATCH_DIR}/real_PANDA_RETR_VARLOC_RELEASE directory. Inside that
-directory, you should see the following directories: "2014072418" and
-"geogrid".  The 2014072418 directory contains the runtime output for the
-"First Assimilation Cycle" and "geogrid" contains data for creating the WRF
-input files.  After completing the "First Assimilation Cycle" this directory
-with also have the "pert_file_emiss" and "pert_file_icbc" files.  These files
-contain perturbation information for the emission and initial/boundary
-condition perturbations.
+10. When you submit the run_script, it should create the ${SCRATCH_DIR}/real_FRAPPE_RETR_RELEASE_
+TEST_Manhattan directory. For a successful run, inside that directory  you should see the following 
+directories: "2014072512" and "geogrid".  The 2014072512 directory contains the runtime output 
+for the "First Assimilation Cycle" and "geogrid" contains data for creating the WRF input files.  
 
-11. If the "Initial Cycle" completes successfully, you should make the changes 
-described in Step 9 to run the First Assimilation Cycle.  If your runs are successful, 
-the output should resemble the output in the test case output data files.
+11. If the "Initial Cycle" completes successfully, you should make the changes described in Step 9 
+to run the First Assimilation Cycle.  If your First Assimilaiton Cycle  run is successful, the 
+output will be in the 2014072518 directory and should resemble the output in the corresponding 
+test case output data directory.
+
+12. There are there are three tests to see whether you have run both cycles successfully.  
+For the "Initial Cycle," "cd" to "wrfchem_initial" and do an "ls" on each of the run directories 
+"run_e001" to "run_e010".  If usccessful, you will have wrf-chem output "wrfout_d01_2014-07-25_
+12:00:00" to "wrfout_d01_2014-07-25_18:00:00" in each directory.  This is the ensemble forecast 
+output from the "Initial Cycle."  If you then do a "../cd ensemble_mean_output" and "ls" you 
+should have "wrfout_d01_2014072512_mean" to "wrfout_d01_2014072518_mean".  This is the ensemble 
+mean forecast output.  If those content of files is the same as for the test case output, the 
+"Initial Cycle" run successfully.  There will be no "localization", "dart_filter", or "update_bc"  
+directories or associated output because DART is not called during the "Initial Cycle."  For the 
+"First Assimilation Cycle" "cd" to "dart_filter" and do a "ncdiff output_mean.nc preassim_mean.nc 
+incr.nc" and a "ncview incr.nc".  That will plot the assimilation increments.  They should be the 
+same as those from the "incr.nc" file in the test case output.  The do a "../cd wrfchem_cycle_cr" 
+and an "ls" the run directories (this directory is analogous to the "wrfchem_initial" directory 
+for the "Initial Cycle."  Then do a "../cd ensemble_mean_output" and "ls" you should have 
+"wrfout_d01_2014072518_mean" to "wrfout_d01_2014072600_mean".  If those content of files is the 
+same as for the test case output, the "First Assimilation Cycle" run successfully
 
 Thank you for using WRF-Chem/DART.  Good luck!  
-And please don't hesitate to contact me with questions.
+And please do not hesitate to contact me with questions.
 
 Arthur
 
-Dr. Arthur P. Mizzi          Phone: 303-692-3141
-CDPHE/APCD/TSP		     Mobile: 303-903-5544 
-Denver, CO 80246	     E-Mail: arthur.mizzi@state.co.us
-
+Dr. Arthur P. Mizzi          Phone: 
+NASA/USRA ARC-ESD	     Mobile: 303-903-5544 
+Bld N240 260-1	             E-Mail: arthur.p.mizzi@nasa.gov
+Moffett Field, CA 94035      Alt E-Mail: mizzi@ucar.edu
