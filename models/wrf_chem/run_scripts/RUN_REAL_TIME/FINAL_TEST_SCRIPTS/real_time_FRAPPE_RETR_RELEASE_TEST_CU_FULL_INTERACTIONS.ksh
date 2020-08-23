@@ -328,10 +328,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # SELECT COMPONENT RUN OPTIONS:
    if [[ ${RUN_SPECIAL_FORECAST} = "false" ]]; then
-      export RUN_GEOGRID=true
-      export RUN_UNGRIB=true
-      export RUN_METGRID=true
-      export RUN_REAL=true
+      export RUN_GEOGRID=false
+      export RUN_UNGRIB=false
+      export RUN_METGRID=false
+      export RUN_REAL=false
       export RUN_PERT_WRFCHEM_MET_IC=true
       export RUN_PERT_WRFCHEM_MET_BC=true
       export RUN_EXO_COLDENS=true

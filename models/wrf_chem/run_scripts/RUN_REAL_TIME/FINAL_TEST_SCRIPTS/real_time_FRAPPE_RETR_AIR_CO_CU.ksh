@@ -3154,8 +3154,8 @@ EOFF
    if [[ ! -e ${D_DATE}.dat ]]; then cp ${DD_DATE}.dat ./${D_DATE}.dat; fi
 #
 # GET EXECUTABLE
-   cp ${DART_DIR}/observations/IASI_CO/work/iasi_ascii_to_obs ./.
-   ./iasi_ascii_to_obs > index.html 2>&1
+   cp ${DART_DIR}/observations/IASI_CO/work/iasi_co_ascii_to_obs ./.
+   ./iasi_co_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
    export IASI_FILE=iasi_obs_seq${D_DATE}
@@ -3389,8 +3389,8 @@ EOFF
    fi
 #
 # GET EXECUTABLE
-   cp ${DART_DIR}/observations/IASI_O3/work/iasi_ascii_to_obs ./.
-   ./iasi_ascii_to_obs > index.html 2>&1  
+   cp ${DART_DIR}/observations/IASI_O3/work/iasi_o3_ascii_to_obs ./.
+   ./iasi_o3_ascii_to_obs > index.html 2>&1  
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
    export IASI_FILE=iasi_obs_seq${D_DATE}
