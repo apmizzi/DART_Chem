@@ -1,17 +1,10 @@
 ! DART software - Copyright UCAR. This open source software is provided
 ! by UCAR, "as is", without charge, subject to all terms of use at
 ! http://www.image.ucar.edu/DAReS/DART/DART_download
-!
-! $Id$
 
-!------------------------------------------------------------------------------
-!> quality_control_mod.f90
-!>
-!> This module contains routines related to quality control.
-!>
-!------------------------------------------------------------------------------
 module quality_control_mod
 
+!> This module contains routines related to quality control.
 
 use     types_mod,    only : r8
 
@@ -25,6 +18,15 @@ use obs_sequence_mod, only : obs_sequence_type, init_obs, get_obs_from_key, &
                              get_obs_def, obs_type
 
 use obs_def_mod,      only : get_obs_def_type_of_obs, obs_def_type
+
+use obs_kind_mod,     only : MOPITT_CO_RETRIEVAL, IASI_CO_RETRIEVAL, &
+                             IASI_O3_RETRIEVAL, OMI_O3_COLUMN, OMI_NO2_COLUMN, &
+                             OMI_SO2_COLUMN, TROPOMI_CO_COLUMN, &
+                             TROPOMI_O3_COLUMN, TROPOMI_NO2_COLUMN, &
+                             TROPOMI_SO2_COLUMN, TEMPO_O3_COLUMN, &
+                             TEMPO_NO2_COLUMN, AIRNOW_CO, AIRNOW_O3, &
+                             AIRNOW_NO2, AIRNOW_SO2, AIRNOW_PM10, &
+                             AIRNOW_PM25, MODIS_AOD_RETRIEVAL
 
 !------------------------------------------------------------------------------
 
@@ -42,10 +44,9 @@ public :: initialize_qc, input_qc_ok, get_dart_qc, check_outlier_threshold, &
 
 !------------------------------------------------------------------------------
 ! version controlled file description for error handling, do not edit
-character(len=*), parameter :: source   = &
-   "$URL$"
-character(len=*), parameter :: revision = "$Revision$"
-character(len=*), parameter :: revdate  = "$Date$"
+character(len=*), parameter :: source   = 'quality_control_mod.f90'
+character(len=*), parameter :: revision = ''
+character(len=*), parameter :: revdate  = ''
 !------------------------------------------------------------------------------
 
 ! Dart quality control variables
@@ -66,11 +67,12 @@ integer, parameter :: DARTQC_FAILED_VERT_CONVERT   = 8
 
 real(r8) :: input_qc_threshold = 3.0_r8  ! values larger than input_qc_threshold will be rejected
 real(r8) :: outlier_threshold  = -1.0_r8
+real(r8) :: special_outlier_threshold = -1.0_r8
 
 logical  :: enable_special_outlier_code = .false. ! user defined outlier threshold code
-
 namelist / quality_control_nml / input_qc_threshold, outlier_threshold,  &
-   enable_special_outlier_code
+   enable_special_outlier_code, special_outlier_threshold
+
 !------------------------------------------------------------------------------
 
 contains
@@ -285,6 +287,7 @@ endif
 ! the default outlier threshold value, and enough info to extract the specific 
 ! obs type for this obs. the function should return .true. if this is an 
 ! outlier, .false. if it is ok.
+
 if (enable_special_outlier_code) then
    failed = failed_outlier(ratio, this_obs_key, obs_seq)
 else 
@@ -298,14 +301,13 @@ endif
 end subroutine check_outlier_threshold
 
 !------------------------------------------------------------------------------
-!> Function failed_outlier
-!>
 !> Intended to be easy to modify if needed to use other criteria
 !> when evaluating the outlier threshold.  Set the namelist to
 !> turn this call on (enable_special_outlier_code) and then add your
 !> own tests to this section.  Return 'true' if the tests fail,
 !> return 'false' if the obs is ok.
 !------------------------------------------------------------------------------
+
 function failed_outlier(ratio, this_obs_key, seq)
 
 ! return true if the observation value is too far away from the ensemble mean
@@ -352,6 +354,121 @@ this_obs_type = get_obs_def_type_of_obs(obs_def)
 
 select case (this_obs_type)
 
+! APM: +++
+   case (MOPITT_CO_RETRIEVAL)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (IASI_CO_RETRIEVAL)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (IASI_O3_RETRIEVAL)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (OMI_O3_COLUMN)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (OMI_NO2_COLUMN)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (OMI_SO2_COLUMN)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (TROPOMI_CO_COLUMN)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (TROPOMI_O3_COLUMN)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (TROPOMI_NO2_COLUMN)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (TROPOMI_SO2_COLUMN)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (TEMPO_O3_COLUMN)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (TEMPO_NO2_COLUMN)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (AIRNOW_CO)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (AIRNOW_O3)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (AIRNOW_NO2)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (AIRNOW_SO2)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (AIRNOW_PM10)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (AIRNOW_PM25)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (MODIS_AOD_RETRIEVAL)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
 ! example of specifying a different threshold value for one obs type:
 !   case (RADIOSONDE_TEMPERATURE)
 !      if (ratio > some_other_value) then
@@ -401,8 +518,3 @@ end function good_dart_qc
 !------------------------------------------------------------------------------
 end module quality_control_mod
 
-! <next few lines under version control, do not edit>o
-! $URL$
-! $Id$
-! $Revision$
-! $Date$

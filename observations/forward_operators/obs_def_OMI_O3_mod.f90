@@ -17,39 +17,39 @@
 ! and Colorado State University.
 !
 ! BEGIN DART PREPROCESS KIND LIST
-! OMI_NO2_COLUMN, QTY_NO2
+! OMI_O3_COLUMN, QTY_O3
 ! END DART PREPROCESS KIND LIST
 !
 ! BEGIN DART PREPROCESS USE OF SPECIAL OBS_DEF MODULE
-!   use obs_def_omi_no2_mod, only : get_expected_omi_no2, &
-!                                   read_omi_no2, &
-!                                   write_omi_no2, &
-!                                   interactive_omi_no2
+!   use obs_def_omi_o3_mod, only : get_expected_omi_o3, &
+!                                  read_omi_o3, &
+!                                  write_omi_o3, &
+!                                  interactive_omi_o3
 ! END DART PREPROCESS USE OF SPECIAL OBS_DEF MODULE
 !
 ! BEGIN DART PREPROCESS GET_EXPECTED_OBS_FROM_DEF
-!      case(OMI_NO2_COLUMN)                                                           
-!         call get_expected_omi_no2(state_handle, ens_size, location, obs_def%key, expected_obs, istatus)  
+!      case(OMI_O3_COLUMN)                                                           
+!         call get_expected_omi_o3(state_handle, ens_size, location, obs_def%key, expected_obs, istatus)  
 ! END DART PREPROCESS GET_EXPECTED_OBS_FROM_DEF
 !
 ! BEGIN DART PREPROCESS READ_OBS_DEF
-!      case(OMI_NO2_COLUMN)
-!         call read_omi_no2(obs_def%key, ifile, fileformat)
+!      case(OMI_O3_COLUMN)
+!         call read_omi_o3(obs_def%key, ifile, fileformat)
 ! END DART PREPROCESS READ_OBS_DEF
 !
 ! BEGIN DART PREPROCESS WRITE_OBS_DEF
-!      case(OMI_NO2_COLUMN)
-!         call write_omi_no2(obs_def%key, ifile, fileformat)
+!      case(OMI_O3_COLUMN)
+!         call write_omi_o3(obs_def%key, ifile, fileformat)
 ! END DART PREPROCESS WRITE_OBS_DEF
 !
 ! BEGIN DART PREPROCESS INTERACTIVE_OBS_DEF
-!      case(OMI_NO2_COLUMN)
-!         call interactive_omi_no2(obs_def%key)
+!      case(OMI_O3_COLUMN)
+!         call interactive_omi_o3(obs_def%key)
 ! END DART PREPROCESS INTERACTIVE_OBS_DEF
 !
 ! BEGIN DART PREPROCESS MODULE CODE
 
-module obs_def_omi_no2_mod
+module obs_def_omi_o3_mod
 
 use             types_mod, only : r8, MISSING_R8
 
@@ -64,7 +64,7 @@ use          location_mod, only : location_type, set_location, get_location, &
 
 use       assim_model_mod, only : interpolate
 
-use          obs_kind_mod, only : QTY_NO2, QTY_TEMPERATURE, QTY_PRESSURE, &
+use          obs_kind_mod, only : QTY_O3, QTY_TEMPERATURE, QTY_PRESSURE, &
                                   QTY_VAPOR_MIXING_RATIO
 
 use  ensemble_manager_mod, only : ensemble_type
@@ -74,21 +74,22 @@ use obs_def_utilities_mod, only : track_status
 implicit none
 private
 
-public :: write_omi_no2, &
-          read_omi_no2, &
-          interactive_omi_no2, &
-          get_expected_omi_no2, &
-          set_obs_def_omi_no2
+public :: write_omi_o3, &
+          read_omi_o3, &
+          interactive_omi_o3, &
+          get_expected_omi_o3, &
+          set_obs_def_omi_o3
 
 ! Storage for the special information required for observations of this type
-integer, parameter    :: max_omi_no2_obs = 10000000
-integer               :: num_omi_no2_obs = 0
+integer, parameter    :: max_omi_o3_obs = 10000000
+integer               :: num_omi_o3_obs = 0
 integer,  allocatable :: nlayer(:)
 real(r8), allocatable :: pressure(:,:)
-real(r8), allocatable :: scat_wt(:,:)
-real(r8), allocatable :: prs_trop(:)
+real(r8), allocatable :: avg_kernel(:,:)
+real(r8), allocatable :: prior(:,:)
+
 ! version controlled file description for error handling, do not edit
-character(len=*), parameter :: source   = 'obs_def_omi_no2_mod.f90'
+character(len=*), parameter :: source   = 'obs_def_omi_o3_mod.f90'
 character(len=*), parameter :: revision = ''
 character(len=*), parameter :: revdate  = ''
 
@@ -97,11 +98,11 @@ character(len=512) :: string1, string2
 logical, save :: module_initialized = .false.
 
 ! Namelist with default values
-logical :: use_log_no2   = .false.
+logical :: use_log_o3   = .false.
 integer :: nlayer_model = -9999
-integer :: nlayer_omi_no2 = -9999
+integer :: nlayer_omi_o3 = -9999
 
-namelist /obs_def_OMI_NO2_nml/ use_log_no2, nlayer_model, nlayer_omi_no2
+namelist /obs_def_OMI_O3_nml/ use_log_o3, nlayer_model, nlayer_omi_o3
 
 !-------------------------------------------------------------------------------
 contains
@@ -119,36 +120,36 @@ call register_module(source, revision, revdate)
 module_initialized = .true.
 
 ! Read namelist values
-call find_namelist_in_file("input.nml", "obs_def_OMI_NO2_nml", iunit)
-read(iunit, nml = obs_def_OMI_NO2_nml, iostat = rc)
-call check_namelist_read(iunit, rc, "obs_def_OM_NO2_nml")
+call find_namelist_in_file("input.nml", "obs_def_OMI_O3_nml", iunit)
+read(iunit, nml = obs_def_OMI_O3_nml, iostat = rc)
+call check_namelist_read(iunit, rc, "obs_def_OM_O3_nml")
 
 ! Record the namelist values
-if (do_nml_file()) write(nmlfileunit, nml=obs_def_OMI_NO2_nml)
-if (do_nml_term()) write(     *     , nml=obs_def_OMI_NO2_nml)
+if (do_nml_file()) write(nmlfileunit, nml=obs_def_OMI_O3_nml)
+if (do_nml_term()) write(     *     , nml=obs_def_OMI_O3_nml)
 
 ! Check for valid values
 
 if (nlayer_model < 1) then
-   write(string1,*)'obs_def_OMI_NO2_nml:nlayer_model must be > 0, it is ',nlayer_model
+   write(string1,*)'obs_def_OMI_O3_nml:nlayer_model must be > 0, it is ',nlayer_model
    call error_handler(E_ERR,'initialize_module',string1,source)
 endif
 
-if (nlayer_omi_no2 < 1) then
-   write(string1,*)'obs_def_OMI_NO2_nml:nlayer_omi_no2 must be > 0, it is ',nlayer_omi_no2
+if (nlayer_omi_o3 < 1) then
+   write(string1,*)'obs_def_OMI_O3_nml:nlayer_omi_o3 must be > 0, it is ',nlayer_omi_o3
    call error_handler(E_ERR,'initialize_module',string1,source)
 endif
 
-allocate(   nlayer(max_omi_no2_obs))
-allocate( pressure(max_omi_no2_obs,nlayer_omi_no2+1))
-allocate(  scat_wt(max_omi_no2_obs,nlayer_omi_no2))
-allocate( prs_trop(max_omi_no2_obs))
+allocate(    nlayer(max_omi_o3_obs))
+allocate(  pressure(max_omi_o3_obs,nlayer_omi_o3+1))
+allocate(avg_kernel(max_omi_o3_obs,nlayer_omi_o3))
+allocate(     prior(max_omi_o3_obs,nlayer_omi_o3))
 
 end subroutine initialize_module
 
 !-------------------------------------------------------------------------------
 
-subroutine read_omi_no2(key, ifile, fform)
+subroutine read_omi_o3(key, ifile, fform)
 
 integer,          intent(out)          :: key
 integer,          intent(in)           :: ifile
@@ -158,9 +159,9 @@ character(len=*), intent(in), optional :: fform
 
 integer               :: keyin
 integer               :: nlayer_1
-real(r8), allocatable :: pressure_1(:)
-real(r8), allocatable ::  scat_wt_1(:)
-real(r8)              :: prs_trop_1
+real(r8), allocatable ::   pressure_1(:)
+real(r8), allocatable :: avg_kernel_1(:)
+real(r8), allocatable ::      prior_1(:)
 character(len=32)     :: fileformat
 
 integer, SAVE :: counts1 = 0
@@ -171,34 +172,35 @@ fileformat = "ascii"
 if(present(fform)) fileformat = adjustl(fform)
 
 ! Need to know how many layers for this one
-nlayer_1   = read_int_scalar( ifile, fileformat, 'nlayer_1')
-prs_trop_1 = read_r8_scalar( ifile, fileformat, 'prs_trop_1')
+nlayer_1 = read_int_scalar( ifile, fileformat, 'nlayer_1')
 
-allocate( pressure_1(nlayer_1+1))
-allocate(  scat_wt_1(nlayer_1))
+allocate(  pressure_1(nlayer_1+1))
+allocate(avg_kernel_1(nlayer_1))
+allocate(     prior_1(nlayer_1))
 
 call read_r8_array(ifile, nlayer_1+1, pressure_1,   fileformat, 'pressure_1')
-call read_r8_array(ifile, nlayer_1,   scat_wt_1, fileformat, 'scat_wt_1')
+call read_r8_array(ifile, nlayer_1,   avg_kernel_1, fileformat, 'avg_kernel_1')
+call read_r8_array(ifile, nlayer_1,   prior_1,      fileformat, 'prior_1')
 keyin = read_int_scalar(ifile, fileformat, 'nlayer_1')
 
 counts1 = counts1 + 1
 key     = counts1
 
-if(counts1 > max_omi_no2_obs) then
-   write(string1, *)'Not enough space for omi no2 obs.'
-   write(string2, *)'Can only have max_omi_no2_obs (currently ',max_omi_no2_obs,')'
-   call error_handler(E_ERR,'read_omi_no2',string1,source,text2=string2)
+if(counts1 > max_omi_o3_obs) then
+   write(string1, *)'Not enough space for omi o3 obs.'
+   write(string2, *)'Can only have max_omi_o3_obs (currently ',max_omi_o3_obs,')'
+   call error_handler(E_ERR,'read_omi_o3',string1,source,text2=string2)
 endif
 
-call set_obs_def_omi_no2(key, pressure_1, scat_wt_1, prs_trop_1, nlayer_1)
+call set_obs_def_omi_o3(key, pressure_1, avg_kernel_1,prior_1, nlayer_1)
 
-deallocate(pressure_1, scat_wt_1)
+deallocate(pressure_1, avg_kernel_1, prior_1)
 
-end subroutine read_omi_no2
+end subroutine read_omi_o3
 
 !-------------------------------------------------------------------------------
 
-subroutine write_omi_no2(key, ifile, fform)
+subroutine write_omi_o3(key, ifile, fform)
 
 integer,          intent(in)           :: key
 integer,          intent(in)           :: ifile
@@ -211,50 +213,50 @@ if ( .not. module_initialized ) call initialize_module
 fileformat = "ascii"
 if(present(fform)) fileformat = adjustl(fform)
 
-! nlayer, pressure, scat_wt, and prs_trop are all scoped in this module
+! nlayer, pressure, avg_kernel, and prior are all scoped in this module
 ! you can come extend the context strings to include the key if desired.
 
 call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
-call write_r8_scalar( ifile,                     prs_trop(key), fileformat,'prs_trop')
 call write_r8_array(  ifile, nlayer(key)+1,  pressure(key,:), fileformat,'pressure')
-call write_r8_array(  ifile, nlayer(key),  scat_wt(key,:), fileformat,'scat_wt')
+call write_r8_array(  ifile, nlayer(key),  avg_kernel(key,:), fileformat,'avg_kernel')
+call write_r8_array(  ifile, nlayer(key),       prior(key,:), fileformat,'prior')
 call write_int_scalar(ifile,                             key, fileformat,'key')
 
-end subroutine write_omi_no2
+end subroutine write_omi_o3
 
 !-------------------------------------------------------------------------------
 
-subroutine interactive_omi_no2(key)
+subroutine interactive_omi_o3(key)
 
 integer, intent(out) :: key
 
 if ( .not. module_initialized ) call initialize_module
 
 ! STOP because routine is not finished.
-write(string1,*)'interactive_omi_no2 not yet working.'
-call error_handler(E_ERR, 'interactive_omi_no2', string1, source)
+write(string1,*)'interactive_omi_o3 not yet working.'
+call error_handler(E_ERR, 'interactive_omi_o3', string1, source)
 
-if(num_omi_no2_obs >= max_omi_no2_obs) then
-   write(string1, *)'Not enough space for an omi no2 obs.'
-   write(string2, *)'Can only have max_omi_no2_obs (currently ',max_omi_no2_obs,')'
-   call error_handler(E_ERR, 'interactive_omi_no2', string1, &
+if(num_omi_o3_obs >= max_omi_o3_obs) then
+   write(string1, *)'Not enough space for an omi o3 obs.'
+   write(string2, *)'Can only have max_omi_o3_obs (currently ',max_omi_o3_obs,')'
+   call error_handler(E_ERR, 'interactive_omi_o3', string1, &
               source, text2=string2)
 endif
 
 ! Increment the index
-num_omi_no2_obs = num_omi_no2_obs + 1
-key            = num_omi_no2_obs
+num_omi_o3_obs = num_omi_o3_obs + 1
+key            = num_omi_o3_obs
 
 ! Otherwise, prompt for input for the three required beasts
 
-write(*, *) 'Creating an interactive_omi_no2 observation'
+write(*, *) 'Creating an interactive_omi_o3 observation'
 write(*, *) 'This featue is not setup '
 
-end subroutine interactive_omi_no2
+end subroutine interactive_omi_o3
 
 !-------------------------------------------------------------------------------
 
-subroutine get_expected_omi_no2(state_handle, ens_size, location, key, expct_val, istatus)
+subroutine get_expected_omi_o3(state_handle, ens_size, location, key, expct_val, istatus)
 
 type(ensemble_type), intent(in)  :: state_handle
 type(location_type), intent(in)  :: location
@@ -263,28 +265,27 @@ integer,             intent(in)  :: key
 integer,             intent(out) :: istatus(:)
 real(r8),            intent(out) :: expct_val(:)
 
-character(len=*), parameter :: routine = 'get_expected_omi_no2'
+character(len=*), parameter :: routine = 'get_expected_omi_o3'
 type(location_type) :: loc2
 
 integer :: layer_omi,level_omi
 integer :: layer_mdl,level_mdl
 integer :: k,imem
-integer :: no2_istatus(ens_size)
+integer :: o3_istatus(ens_size)
 integer, dimension(ens_size) :: tmp_istatus, qmr_istatus, prs_istatus
-integer, dimension(ens_size) :: trop_indx, trop_istatus
 
 real(r8) :: eps, AvogN, Rd, Ru, grav, msq2cmsq
-real(r8) :: no2_min
+real(r8) :: o3_min
 real(r8) :: level
 real(r8) :: tmp_vir_k, tmp_vir_kp
 real(r8) :: mloc(3)
-real(r8) :: no2_val_conv
-real(r8), dimension(ens_size) :: no2_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
-real(r8), dimension(ens_size) :: no2_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
-real(r8), dimension(ens_size) :: no2_temp, tmp_temp, qmr_temp
+real(r8) :: o3_val_conv
+real(r8), dimension(ens_size) :: o3_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
+real(r8), dimension(ens_size) :: o3_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
+real(r8), dimension(ens_size) :: o3_temp, tmp_temp, qmr_temp
 
 real(r8), allocatable, dimension(:)   :: thick, prs_omi
-real(r8), allocatable, dimension(:,:) :: no2_val, tmp_val, qmr_val
+real(r8), allocatable, dimension(:,:) :: o3_val, tmp_val, qmr_val
 logical  :: return_now
 
 if ( .not. module_initialized ) call initialize_module
@@ -293,12 +294,12 @@ eps    =  0.61_r8
 Rd     = 286.9_r8
 Ru     = 8.316_r8
 grav   =   9.8_r8
-no2_min = 1.e-6_r8
+o3_min = 1.e-6_r8
 msq2cmsq = 1.e4_r8
 AvogN = 6.02214e23_r8
 
-if(use_log_no2) then
-   no2_min = log(no2_min)
+if(use_log_o3) then
+   o3_min = log(o3_min)
 endif
 
 ! Assign vertical grid information
@@ -313,6 +314,7 @@ prs_omi(:)=pressure(key,:)*100.
 ! Get location infomation
 
 mloc = get_location(location)
+
 if (    mloc(2) >  90.0_r8) then
         mloc(2) =  90.0_r8
 elseif (mloc(2) < -90.0_r8) then
@@ -324,20 +326,20 @@ endif
 ! show up in the report from 'output_forward_op_errors'
 
 istatus(:) = 0  ! set this once at the beginning
-no2_istatus = 0
+o3_istatus = 0
 tmp_istatus = 0
 qmr_istatus = 0
 
-! nitrogen dioxide at first model layer (ppmv)
+! ozone at first model layer (ppmv)
 
 level = 1.0_r8
 loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_mdl_1, no2_istatus) 
-if(any(no2_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL no2_mdl_1 is bad '
+call interpolate(state_handle, ens_size, loc2, QTY_O3, o3_mdl_1, o3_istatus) 
+if(any(o3_istatus /= 0)) then
+   write(string1, *)'APM NOTICE: MDL o3_mdl_1 is bad '
    call error_handler(E_ERR, routine, string1, source)
 endif
-call track_status(ens_size, no2_istatus, no2_mdl_1, istatus, return_now)
+call track_status(ens_size, o3_istatus, o3_mdl_1, istatus, return_now)
 if(return_now) return
 
 ! temperature at first model layer (K)
@@ -376,19 +378,19 @@ endif
 call track_status(ens_size, prs_istatus, prs_mdl_1, istatus, return_now)
 if(return_now) return
 
-! nitrogen dioxide at last model layer (ppmv)
+! ozone at last model layer (ppmv)
 
 level=real(layer_mdl-1)
 loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_mdl_n, no2_istatus) 
-if(any(no2_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL no2_mdl_n is bad '
+call interpolate(state_handle, ens_size, loc2, QTY_O3, o3_mdl_n, o3_istatus) 
+if(any(o3_istatus /= 0)) then
+   write(string1, *)'APM NOTICE: MDL o3_mdl_n is bad '
    call error_handler(E_ERR, routine, string1, source)
 endif
-call track_status(ens_size, no2_istatus, no2_mdl_n, istatus, return_now)
+call track_status(ens_size, o3_istatus, o3_mdl_n, istatus, return_now)
 if(return_now) return
 
-! temperature at last model layer (K)
+! temperature at last layer (K)
 
 level=real(layer_mdl-1)
 loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
@@ -423,16 +425,16 @@ if(any(prs_istatus /= 0)) then
    call error_handler(E_ERR, routine, string1, source)
 endif
 call track_status(ens_size, prs_istatus, prs_mdl_n, istatus, return_now)
-!if(return_now) return
+if(return_now) return
 
-! Get profiles at OMI pressure levels
+! Get profiles at OMI levels
 
-allocate(no2_val(ens_size,level_omi))
+allocate( o3_val(ens_size,level_omi))
 allocate(tmp_val(ens_size,level_omi))
 allocate(qmr_val(ens_size,level_omi))
 
 do k=1,level_omi
-   no2_istatus = 0
+   o3_istatus = 0
    tmp_istatus = 0
    qmr_istatus = 0
 
@@ -441,36 +443,36 @@ do k=1,level_omi
    ! taking a different approach here ... interpolate all the required pieces
    ! for this level and then account for known special cases before determining
    ! if there is an error or not
-   call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_temp, no2_istatus)  
+   call interpolate(state_handle, ens_size, loc2, QTY_O3, o3_temp, o3_istatus)  
    call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_temp, tmp_istatus)  
    call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_temp, qmr_istatus)  
 
    ! Correcting for expected failures near the surface
    where(prs_omi(k).ge.prs_mdl_1)
-      no2_istatus = 0
+      o3_istatus  = 0
       tmp_istatus = 0
       qmr_istatus = 0
-      no2_temp    = no2_mdl_1
+      o3_temp     = o3_mdl_1
       tmp_temp    = tmp_mdl_1
       qmr_temp    = qmr_mdl_1
    endwhere
 
    ! Correcting for expected failures near the top
    where(prs_omi(k).le.prs_mdl_n) 
-      no2_istatus = 0
+      o3_istatus  = 0
       tmp_istatus = 0
       qmr_istatus = 0
-      no2_temp    = no2_mdl_n
+      o3_temp     = o3_mdl_n
       tmp_temp    = tmp_mdl_n
       qmr_temp    = qmr_mdl_n
    endwhere
 
    ! Report all issue before returning (when E_MSG is being used)
-   if(any(no2_istatus /= 0)) then
+   if(any(o3_istatus /= 0)) then
       write(string1,*) &
-      'APM NOTICE: model NO2 obs value on OMI grid has a bad value '
+      'APM NOTICE: model O3 obs value on OMI grid has a bad value '
       call error_handler(E_MSG, routine, string1, source)
-      call track_status(ens_size, no2_istatus, no2_temp, istatus, return_now)
+      call track_status(ens_size, o3_istatus, o3_temp, istatus, return_now)
    endif
    
    if(any(tmp_istatus/=0)) then
@@ -488,50 +490,23 @@ do k=1,level_omi
    endif
    if(return_now) return
 
-   no2_val(:,k) = no2_temp(:)  
+   o3_val(:,k) = o3_temp(:)  
    tmp_val(:,k) = tmp_temp(:)  
-   qmr_val(:,k) = qmr_temp(:)  
+   qmr_val(:,k) = qmr_temp(:)
 
-   ! Convert units for no2 from ppmv
-   no2_val(:,k) = no2_val(:,k) * 1.e-6_r8
-
+   ! Convert units for o3 from ppmv
+   o3_val(:,k) = o3_val(:,k) * 1.e-6_r8
+  
 enddo
 
-trop_indx(:)=0.
-trop_istatus(:)=0
 expct_val(:)=0.0
 allocate(thick(layer_omi))
 do imem=1,ens_size
 
-   ! Find OMI index for tropopause
-
-   trop_indx(imem)=-999
-   if(prs_trop(key).ge.prs_omi(1)) then
-      trop_indx(imem)=1
-      cycle
-   elseif(prs_trop(key).le.prs_omi(layer_omi)) then
-      trop_indx(imem)=layer_omi
-      cycle
-   endif
-   do k=1,layer_omi
-      if(prs_trop(key).lt.prs_omi(k) .and. &
-      prs_trop(key).gt.prs_omi(k+1)) then
-         trop_indx(imem)=k
-         exit
-      endif
-   enddo
-   if(trop_indx(imem).lt.0) then
-      write(string1, *) &
-      'APM ERROR: Failed to find tropopause index '
-      call error_handler(E_ERR, routine, string1, source)
-!      call track_status(ens_size, trop_istatus, trop_indx, &
-!      istatus, return_now)
-   endif
-
    ! Calculate the thicknesses
 
    thick(:)=0.
-   do k=1,trop_indx(imem)
+   do k=1,layer_omi
       tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
       tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
       thick(k)   = Rd*(tmp_vir_k + tmp_vir_kp)/2.0_r8/grav* &
@@ -541,58 +516,58 @@ do imem=1,ens_size
    ! Process the vertical summation
 
    expct_val(imem)=0.0_r8
-   do k=1,trop_indx(imem)
+   do k=1,layer_omi
 
    ! Convert from VMR to molar density (mol/m^3)
-      if(use_log_no2) then
-         no2_val_conv = (exp(no2_val(imem,k))+exp(no2_val(imem,k+1)))/2.0_r8 * &
+      if(use_log_o3) then
+         o3_val_conv = (exp(o3_val(imem,k))+exp(o3_val(imem,k+1)))/2.0_r8 * &
                         (prs_omi(k)+prs_omi(k+1)) / &
                         (Ru*(tmp_val(imem,k)+tmp_val(imem,k+1)))
       else
-         no2_val_conv = (no2_val(imem,k)+no2_val(imem,k+1))/2.0_r8 * &
+         o3_val_conv = (o3_val(imem,k)+o3_val(imem,k+1))/2.0_r8 * &
                         (prs_omi(k)+prs_omi(k+1)) / &
                         (Ru*(tmp_val(imem,k)+tmp_val(imem,k+1)))
       endif
  
    ! Get expected observation
 
-      expct_val(imem) = expct_val(imem) + thick(k) * no2_val_conv * &
-                        AvogN/msq2cmsq * scat_wt(key,k) 
-
+      expct_val(imem) = expct_val(imem) + thick(k) * o3_val_conv * &
+                        avg_kernel(key,k) + (1.0_r8 - avg_kernel(key,k)) * &
+                        prior(key,k)
    enddo
 enddo
 
 ! Clean up and return
-deallocate(no2_val, tmp_val, qmr_val)
+deallocate(o3_val, tmp_val, qmr_val)
 deallocate(thick)
 deallocate(prs_omi)
 
-end subroutine get_expected_omi_no2
+end subroutine get_expected_omi_o3
 
 !-------------------------------------------------------------------------------
 
-subroutine set_obs_def_omi_no2(key, no2_pressure, no2_scat_wt, no2_prs_trop, no2_nlayer)
+subroutine set_obs_def_omi_o3(key, o3_pressure, o3_avg_kernel, o3_prior, o3_nlayer)
 
-integer,                            intent(in)   :: key, no2_nlayer
-real(r8), dimension(no2_nlayer+1),  intent(in)   :: no2_pressure
-real(r8), dimension(no2_nlayer),    intent(in)   :: no2_scat_wt
-real(r8),                           intent(in)   :: no2_prs_trop
+integer,                           intent(in)   :: key, o3_nlayer
+real(r8), dimension(o3_nlayer+1),  intent(in)   :: o3_pressure
+real(r8), dimension(o3_nlayer),    intent(in)   :: o3_avg_kernel
+real(r8), dimension(o3_nlayer),    intent(in)   :: o3_prior
 
 if ( .not. module_initialized ) call initialize_module
 
-if(num_omi_no2_obs >= max_omi_no2_obs) then
-   write(string1, *)'Not enough space for omi no2 obs.'
-   write(string2, *)'Can only have max_omi_no2_obs (currently ',max_omi_no2_obs,')'
-   call error_handler(E_ERR,'set_obs_def_omi_no2',string1,source,revision, &
+if(num_omi_o3_obs >= max_omi_o3_obs) then
+   write(string1, *)'Not enough space for omi o3 obs.'
+   write(string2, *)'Can only have max_omi_o3_obs (currently ',max_omi_o3_obs,')'
+   call error_handler(E_ERR,'set_obs_def_omi_o3',string1,source,revision, &
    revdate,text2=string2)
 endif
 
-nlayer(key) = no2_nlayer
-pressure(key,:) = no2_pressure(:)
-scat_wt(key,:) = no2_scat_wt(:)
-prs_trop(key) = no2_prs_trop
+nlayer(key) = o3_nlayer
+pressure(key,:) = o3_pressure(:)
+avg_kernel(key,:) = o3_avg_kernel(:)
+prior(key,:) = o3_prior(:)
 
-end subroutine set_obs_def_omi_no2
+end subroutine set_obs_def_omi_o3
 
 !-------------------------------------------------------------------------------
 
@@ -637,50 +612,6 @@ if ( io /= 0 ) then
 endif
 
 end subroutine write_int_scalar
-
-!-------------------------------------------------------------------------------
-
-function read_r8_scalar(ifile, fform, context)
-
-real(r8)                     :: read_r8_scalar
-integer,          intent(in) :: ifile
-character(len=*), intent(in) :: fform
-character(len=*), intent(in) :: context
-
-integer :: io
-
-if (ascii_file_format(fform)) then
-   read(ifile, *, iostat = io) read_r8_scalar
-else
-   read(ifile, iostat = io) read_r8_scalar
-endif
-if ( io /= 0 ) then
-   call error_handler(E_ERR,'read_r8_scalar', context, source)
-endif
-
-end function read_r8_scalar
-
-!-------------------------------------------------------------------------------
-
-subroutine write_r8_scalar(ifile, my_scalar, fform, context)
-
-integer,          intent(in) :: ifile
-real(r8),         intent(in) :: my_scalar
-character(len=*), intent(in) :: fform
-character(len=*), intent(in) :: context
-
-integer :: io
-
-if (ascii_file_format(fform)) then
-   write(ifile, *, iostat=io) my_scalar
-else
-   write(ifile, iostat=io) my_scalar
-endif
-if ( io /= 0 ) then
-   call error_handler(E_ERR, 'write_r8_scalar', context, source)
-endif
-
-end subroutine write_r8_scalar
 
 !-------------------------------------------------------------------------------
 
@@ -731,6 +662,6 @@ end subroutine write_r8_array
 
 
 
-end module obs_def_omi_no2_mod
+end module obs_def_omi_o3_mod
 
 ! END DART PREPROCESS MODULE CODE

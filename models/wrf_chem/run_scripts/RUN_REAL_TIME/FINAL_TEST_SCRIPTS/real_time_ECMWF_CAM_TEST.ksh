@@ -25,16 +25,16 @@
 #
 #########################################################################
 #
-export INITIAL_DATE=2014072512
-export FIRST_FILTER_DATE=2014072518
-export FIRST_DART_INFLATE_DATE=2014072518
-export FIRST_EMISS_INV_DATE=2014072518
+export INITIAL_DATE=2020020100
+export FIRST_FILTER_DATE=2020020100
+export FIRST_DART_INFLATE_DATE=2020020106
+export FIRST_EMISS_INV_DATE=2020020106
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072512
+export CYCLE_STR_DATE=2020020112
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072512
+export CYCLE_END_DATE=2020020318
 #export CYCLE_END_DATE=${CYCLE_STR_DATE}
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
@@ -135,7 +135,7 @@ fi
 #
 # Run WRF-Chem for failed forecasts
 export RUN_SPECIAL_FORECAST=false
-export NUM_SPECIAL_FORECAST=0
+export NUM_SPECIAL_FORECAST=10
 export SPECIAL_FORECAST_FAC=1./2.
 export SPECIAL_FORECAST_FAC=2./3.
 #
@@ -187,6 +187,12 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_DEBUG_LEVEL=200
 #
 # CODE VERSIONS:
+#   export WPS_VER=WPSv4.0_dmpar
+#   export WPS_GEOG_VER=GEOG_DATA
+#   export WRFDA_VER=WRFDAv4.0_dmpar
+#   export WRF_VER=WRFv4.0_dmpar
+#   export WRFCHEM_VER=WRFCHEMv4.0_dmpar
+#
    export WPS_VER=WPSv3.9.1.1_dmpar
    export WPS_GEOG_VER=GEOG_DATA
    export WRFDA_VER=WRFDAv3.9.1.1_dmpar
@@ -197,15 +203,15 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # ROOT DIRECTORIES:
    export SCRATCH_DIR=/scratch/summit/mizzi
    export WORK_DIR=/projects/mizzi
-   export INPUT_DATA_GEOG_DIR=/gpfs/summit/datasets/GEOSChem_met_emis/wrf
    export INPUT_DATA_DIR=/scratch/summit/mizzi
+   export GEOG_DATA_DIR=/gpfs/summit/datasets/GEOSChem_met_emis/wrf
 #
 # DEPENDENT INPUT DATA DIRECTORIES:
    export EXPERIMENT_DIR=${SCRATCH_DIR}
-   export RUN_DIR=${EXPERIMENT_DIR}/real_FRAPPE_RETR_RELEASE_TEST_CHK_Manhattan
+   export RUN_DIR=${EXPERIMENT_DIR}/real_ECMWF_CAM_TEST
    export TRUNK_DIR=${WORK_DIR}/TRUNK
    export WPS_DIR=${TRUNK_DIR}/${WPS_VER}
-   export WPS_GEOG_DIR=${INPUT_DATA_GEOG_DIR}/${WPS_GEOG_VER}
+   export WPS_GEOG_DIR=${GEOG_DATA_DIR}/${WPS_GEOG_VER}
    export WRFCHEM_DIR=${TRUNK_DIR}/${WRFCHEM_VER}
    export WRFDA_DIR=${TRUNK_DIR}/${WRFDA_VER}
    export DART_DIR=${TRUNK_DIR}/${DART_VER}
@@ -217,7 +223,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export WES_COLDENS_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_WES_COLDENS
    export MEGAN_BIO_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_MEGAN_BIO
    export FINN_FIRE_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_FINN_FIRE
-   export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_REAL_TIME_DATA
+   export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/ECCAM_DATA
    export MOZBC_DATA_DIR=${EXPERIMENT_DATA_DIR}/mozart_forecasts
    export EXPERIMENT_STATIC_FILES=${EXPERIMENT_DATA_DIR}/static_files
    export EXPERIMENT_WRFCHEMI_DIR=${EXPERIMENT_DATA_DIR}/anthro_emissions
@@ -329,59 +335,59 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # SELECT COMPONENT RUN OPTIONS:
    if [[ ${RUN_SPECIAL_FORECAST} = "false" ]]; then
-      export RUN_GEOGRID=true
+      export RUN_GEOGRID=false
       export RUN_UNGRIB=true
       export RUN_METGRID=true
       export RUN_REAL=true
-      export RUN_PERT_WRFCHEM_MET_IC=true
-      export RUN_PERT_WRFCHEM_MET_BC=true
-      export RUN_EXO_COLDENS=true
-      export RUN_SEASON_WES=true
-      export RUN_WRFCHEM_BIO=true
-      export RUN_WRFCHEM_FIRE=true
-      export RUN_WRFCHEM_CHEMI=true
-      export RUN_PERT_WRFCHEM_CHEM_ICBC=true
-      export RUN_PERT_WRFCHEM_CHEM_EMISS=true
-      export RUN_MOPITT_CO_OBS=true
-      export RUN_IASI_CO_OBS=true
+      export RUN_PERT_WRFCHEM_MET_IC=false
+      export RUN_PERT_WRFCHEM_MET_BC=false
+      export RUN_EXO_COLDENS=false
+      export RUN_SEASON_WES=false
+      export RUN_WRFCHEM_BIO=false
+      export RUN_WRFCHEM_FIRE=false
+      export RUN_WRFCHEM_CHEMI=false
+      export RUN_PERT_WRFCHEM_CHEM_ICBC=false
+      export RUN_PERT_WRFCHEM_CHEM_EMISS=false
+      export RUN_MOPITT_CO_OBS=false
+      export RUN_IASI_CO_OBS=false
       export RUN_IASI_O3_OBS=false
       export RUN_OMI_NO2_OBS=false
-      export RUN_AIRNOW_O3_OBS=true
-      export RUN_AIRNOW_CO_OBS=true
-      export RUN_AIRNOW_NO2_OBS=true
-      export RUN_AIRNOW_SO2_OBS=true
-      export RUN_AIRNOW_PM10_OBS=true
-      export RUN_AIRNOW_PM25_OBS=true
+      export RUN_AIRNOW_O3_OBS=false
+      export RUN_AIRNOW_CO_OBS=false
+      export RUN_AIRNOW_NO2_OBS=false
+      export RUN_AIRNOW_SO2_OBS=false
+      export RUN_AIRNOW_PM10_OBS=false
+      export RUN_AIRNOW_PM25_OBS=false
       export RUN_PANDA_CO_OBS=false
       export RUN_PANDA_O3_OBS=false
       export RUN_PANDA_PM25_OBS=false
-      export RUN_MODIS_AOD_OBS=true
-      export RUN_MET_OBS=true
-      export RUN_COMBINE_OBS=true
-      export RUN_PREPROCESS_OBS=true
+      export RUN_MODIS_AOD_OBS=false
+      export RUN_MET_OBS=false
+      export RUN_COMBINE_OBS=false
+      export RUN_PREPROCESS_OBS=false
 #
       if [[ ${DATE} -eq ${INITIAL_DATE}  ]]; then
-         export RUN_WRFCHEM_INITIAL=true
+         export RUN_WRFCHEM_INITIAL=false
          export RUN_LOCALIZATION=false
          export RUN_DART_FILTER=false
          export RUN_UPDATE_BC=false
-         export RUN_ENSEMBLE_MEAN_INPUT=true
+         export RUN_ENSEMBLE_MEAN_INPUT=false
          export RUN_WRFCHEM_CYCLE_CR=false
          export RUN_BAND_DEPTH=false
          export RUN_WRFCHEM_CYCLE_FR=false
          export RUN_ENSMEAN_CYCLE_FR=false
-         export RUN_ENSEMBLE_MEAN_OUTPUT=true
+         export RUN_ENSEMBLE_MEAN_OUTPUT=false
       else
          export RUN_WRFCHEM_INITIAL=false
-         export RUN_LOCALIZATION=true
-         export RUN_DART_FILTER=true
-         export RUN_UPDATE_BC=true
-         export RUN_ENSEMBLE_MEAN_INPUT=true
-         export RUN_WRFCHEM_CYCLE_CR=true
+         export RUN_LOCALIZATION=false
+         export RUN_DART_FILTER=false
+         export RUN_UPDATE_BC=false
+         export RUN_ENSEMBLE_MEAN_INPUT=false
+         export RUN_WRFCHEM_CYCLE_CR=false
          export RUN_BAND_DEPTH=false
          export RUN_WRFCHEM_CYCLE_FR=false
          export RUN_ENSMEAN_CYCLE_FR=false
-         export RUN_ENSEMBLE_MEAN_OUTPUT=true
+         export RUN_ENSEMBLE_MEAN_OUTPUT=false
       fi
    else
       export RUN_GEOGRID=false
@@ -767,7 +773,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_E_SN=${NNYP_STAG_CR},${NNYP_STAG_FR}
    export NL_S_VERT=1,1
    export NL_E_VERT=${NNZP_STAG_CR},${NNZP_STAG_FR}
-   export NL_NUM_METGRID_LEVELS=27
+   export NL_NUM_METGRID_LEVELS=34
    export NL_NUM_METGRID_SOIL_LEVELS=4
    export NL_DX=${DX_CR},${DX_FR}
    export NL_DY=${DX_CR},${DX_FR}
@@ -2856,9 +2862,6 @@ EOF
 #      ncra -y rmssdn wrfchemi_d${CR_DOMAIN}_tmp3 wrfchemi_d${CR_DOMAIN}_sprd
 #      rm -rf wrfchemi_d${CR_DOMAIN}_tmp*
    fi
-
-exit
-
 #
 #########################################################################
 #

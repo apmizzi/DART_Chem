@@ -1,0 +1,6 @@
+The following FOs do not work well for WRF-Chem because the retrieval alogorithm 
+extends too far above the model top:
+
+IASI_O3
+OMI_OM3
+

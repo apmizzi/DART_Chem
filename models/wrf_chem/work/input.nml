@@ -130,7 +130,15 @@
                               '../../../observations/forward_operators/obs_def_IASI_CO_mod.f90',
                               '../../../observations/forward_operators/obs_def_IASI_O3_mod.f90',
                               '../../../observations/forward_operators/obs_def_MODIS_AOD_mod.f90',
+                              '../../../observations/forward_operators/obs_def_OMI_O3_mod.f90',
                               '../../../observations/forward_operators/obs_def_OMI_NO2_mod.f90',
+                              '../../../observations/forward_operators/obs_def_OMI_SO2_mod.f90',
+                              '../../../observations/forward_operators/obs_def_TROPOMI_CO_mod.f90',
+                              '../../../observations/forward_operators/obs_def_TROPOMI_O3_mod.f90',
+                              '../../../observations/forward_operators/obs_def_TROPOMI_NO2_mod.f90',
+                              '../../../observations/forward_operators/obs_def_TROPOMI_SO2_mod.f90',
+                              '../../../observations/forward_operators/obs_def_TEMPO_O3_mod.f90',
+                              '../../../observations/forward_operators/obs_def_TEMPO_NO2_mod.f90',
    /
 
 

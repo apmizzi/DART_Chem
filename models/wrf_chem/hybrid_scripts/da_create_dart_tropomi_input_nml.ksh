@@ -6,8 +6,8 @@
 
 #########################################################################
 #
-# Purpose: Script to create DART/WRF input.nmlfor Ave's 
-# mopitt_ascii_to_obs_seq fortran format conversion 
+# Purpose: Script to create DART/WRF input.nml for 
+# omi_o3_ascii_to_obs_seq fortran format conversion 
 #
 #########################################################################
 #
@@ -15,7 +15,7 @@
 rm -f input.nml
 touch input.nml
 cat > input.nml << EOF
-&create_mopitt_obs_nml
+&create_tropomi_obs_nml
    filedir                     = ${NL_FILEDIR}
    filename                    = ${NL_FILENAME}
    year                        = ${NL_YEAR}
@@ -24,12 +24,11 @@ cat > input.nml << EOF
    hour                        = ${NL_HOUR}
    bin_beg                     = ${NL_BIN_BEG}
    bin_end                     = ${NL_BIN_END}
-   MOPITT_CO_retrieval_type    = ${NL_MOPITT_CO_RETRIEVAL_TYPE}
    fac_obs_error               = ${NL_FAC_OBS_ERROR}
    use_log_co                  = ${NL_USE_LOG_CO}
-   use_cpsr_co_trunc           = ${NL_USE_CPSR_CO_TRUNC}
-   cpsr_co_trunc_lim           = ${NL_CPSR_CO_TRUNC_LIM}
-   mopitt_co_vloc              = ${NL_MOPITT_CO_VLOC}
+   use_log_o3                  = ${NL_USE_LOG_O3}
+   use_log_no2                 = ${NL_USE_LOG_NO2}
+   use_log_so2                 = ${NL_USE_LOG_SO2}
    lon_min                     = ${NNL_MIN_LON}
    lon_max                     = ${NNL_MAX_LON}
    lat_min                     = ${NNL_MIN_LAT}
@@ -65,13 +64,17 @@ cat > input.nml << EOF
    filename_seq                = 'obs_seq2008022206',obs_seq2008022212',
    filename_out                = 'obs_seq_ncep_2008022212'
 /
-&obs_def_MOPITT_CO_nml
-   MOPITT_CO_retrieval_type    = ${NL_MOPITT_CO_RETRIEVAL_TYPE:-'RETR'},
+&obs_def_TROPOMI_CO_nml
    use_log_co                  = ${NL_USE_LOG_CO:-.false.},
+/
+&obs_def_TROPOMI_O3_nml
+   use_log_o3                  = ${NL_USE_LOG_O3:-.false.},
 / 
-&obs_def_IASI_CO_nml
-   IASI_CO_retrieval_type      = ${NL_IASI_CO_RETRIEVAL_TYPE:-'RETR'},
-   use_log_co                  = ${NL_USE_LOG_CO:-.false.},
+&obs_def_TROPOMI_NO2_nml
+   use_log_no2                 = ${NL_USE_LOG_NO2:-.false.},
+/ 
+&obs_def_TROPOMI_SO2_nml
+   use_log_so2                 = ${NL_USE_LOG_SO2:-.false.},
 / 
 EOF
 

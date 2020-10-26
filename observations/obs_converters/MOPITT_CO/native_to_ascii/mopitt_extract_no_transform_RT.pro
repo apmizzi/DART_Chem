@@ -321,6 +321,7 @@ drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1
       covmatrix = read_mopitt(mopitt_input_file, name)
       covmatrix = covmatrix
    endelse
+   print, 'APM: Completed MOPITT data read'
 ;
 ;=======================================================================
 ; Open output file

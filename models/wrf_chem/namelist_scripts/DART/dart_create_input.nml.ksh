@@ -32,6 +32,15 @@ ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_wrf_obs_preproc_nm
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_MOPITT_CO_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_IASI_CO_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_IASI_O3_nml.ksh
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_OMI_O3_nml.ksh
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_OMI_NO2_nml.ksh
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_OMI_SO2_nml.ksh
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_TROPOMI_CO_nml.ksh
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_TROPOMI_O3_nml.ksh
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_TROPOMI_NO2_nml.ksh
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_TROPOMI_SO2_nml.ksh
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_TEMPO_O3_nml.ksh
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_TEMPO_NO2_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_AIRNOW_PM10_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_AIRNOW_PM25_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_MODIS_AOD_nml.ksh

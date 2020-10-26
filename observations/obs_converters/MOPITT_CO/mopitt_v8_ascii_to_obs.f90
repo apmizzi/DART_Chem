@@ -103,7 +103,7 @@ integer                 :: obs_key
 !
 integer,parameter       :: fileid=88
 integer,parameter       :: max_num_obs=1000000
-integer,parameter       :: mop_dim=10, mop_dimp=11
+integer,parameter       :: mop_dim=10, mop_dimm=9, mop_dimp=11
 integer,parameter       :: num_copies=1, num_qc=1
 integer,parameter       :: lwrk=5*mop_dim
 !
@@ -120,7 +120,7 @@ integer                 :: qc_count, ios
 integer                 :: nlvls, nlvlsp, index_qc, klvls
 integer                 :: lon_qc, lat_qc
 integer                 :: i, j, k, l, kk, ik, ikk, k1, k2, kstr 
-integer                 :: line_count, index, nlev, nlevp, prs_idx
+integer                 :: index, nlev, nlevp, prs_idx
 integer                 :: seconds, days, which_vert, old_ob
 integer                 :: spc_vloc,mopitt_co_vloc,kmax,itrm
 integer,dimension(max_num_obs)             :: qc_mopitt, qc_thinning
@@ -144,25 +144,45 @@ real*8, dimension(num_qc)       :: co_qc
 real*8, dimension(mop_dim)      :: co_avgker
 real*8, dimension(mop_dimp)     :: co_press
 real*8, dimension(num_copies)   :: co_vmr
-real,dimension(mop_dimp)        :: nprs =(/ &
-                                1000.,900.,800.,700.,600.,500.,400.,300.,200.,100.,50. /)
-real,dimension(mop_dim)        :: nprs_mid =(/ &
-                                1000.,850.,750.,650.,550.,450.,350.,250.,150.,75. /)
+real,dimension(mop_dimm)        :: nprs =(/900.,800.,700.,600.,500.,400.,300.,200.,100./)
 real,dimension(mop_dimp)        :: mop_prs
 real,dimension(mop_dim)         :: x_r, x_p, ret_x_r,ret_x_p,raw_x_r, raw_x_p, err2_rs_r, raw_err, ret_err
 real,dimension(mop_dim)         :: xcomp, xcomperr, xapr
 real,dimension(mop_dim,mop_dim) :: avgker, avg_k, adj_avg_k
-real,dimension(mop_dim,mop_dim) :: raw_cov, ret_cov, cov_a, cov_r, cov_m, cov_use
+real,dimension(mop_dim,mop_dim) :: raw_cov, ret_cov, cov_s, cov_r, cov_m, cov_use
 !
 double precision,dimension(mop_dim) :: raw_adj_x_r, ret_adj_x_r, adj_x_p 
 !
 character*129           :: qc_meta_data='MOPITT CO QC index'
-character*129           :: file_name='mopitt_obs_seq'
+character*129           :: file_name='mopitt_co_obs_seq'
 character*2             :: chr_month, chr_day, chr_hour
 character*4             :: chr_year
 character*129           :: filedir, filename, copy_meta_data, filen
 character*129           :: transform_typ
 character*129           :: MOPITT_CO_retrieval_type
+!
+! MOPITT V8 READ ARRAYS
+integer                           :: ilv
+real                              :: obs_cnt
+real                              :: yyyy_mop,mn_mop,dy_mop,hh_mop,mm_mop,ss_mop
+real                              :: lay_mop,lev_mop
+real                              :: prs_sfc_mop
+real,dimension(mop_dimm)          :: prs_lay_mop
+real,dimension(mop_dim)           :: avgk_row_sum
+real,dimension(mop_dim,mop_dim)   :: avgk_lev
+real                              :: retr_sfc
+real,dimension(mop_dimm)          :: retr_prof_lay
+real                              :: retr_sfc_err
+real,dimension(mop_dimm)          :: retr_prof_err_lay
+real                              :: prior_sfc
+real,dimension(mop_dimm)          :: prior_prof_lay
+real                              :: prior_sfc_err
+real,dimension(mop_dimm)          :: prior_prof_err_lay
+real,dimension(mop_dim)           :: avgk_dim_col_lev
+real                              :: retr_col_amt
+real                              :: retr_col_amt_err
+real                              :: prior_col_amt
+real                              :: dry_col_amt
 !
 ! SUPER OBBING ARRAYS
 integer,allocatable,dimension(:,:)       :: xg_count
@@ -192,7 +212,7 @@ logical                 :: use_cpsr_co_trunc
 !
 namelist /create_mopitt_obs_nml/filedir,filename,year,month,day,hour,bin_beg, bin_end, &
          MOPITT_CO_retrieval_type,fac_obs_error,use_log_co,use_cpsr_co_trunc, &
-         cpsr_co_trunc_lim, mopitt_co_vloc,lon_min,lon_max,lat_min,lat_max
+         cpsr_co_trunc_lim,mopitt_co_vloc,lon_min,lon_max,lat_min,lat_max
 !
 ! Set constants
 log10e=log10(exp(1.0))
@@ -327,7 +347,6 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
 
 ! Read MOPITT file 1
   index_qc=0
-  line_count = 0
   open(fileid,file=TRIM(filedir)//TRIM(filen),                     &
        form='formatted', status='old',  &
        iostat=ios)
@@ -340,62 +359,93 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
 
 ! Read MOPITT
 ! lon = [-180,180]; lat = [-90,90]
-  read(fileid,*,iostat=ios) transform_typ, sec, lat, lon, nlevels, dofs 
-  if(lon.lt.0.) lon=lon+360.
-!  print *, 'trans_typ, sec, lat, lon, nlevels, dofs ',trim(transform_typ),sec,lat,lon,nlevels,dofs
-!
-! Error Check
-  if (ios /=0) then
-      write(6,*) 'no data in file ', TRIM(filen)
-      go to 999
-  endif
-  nlvls=nint(nlevels)
-  nlvlsp=nlvls+1
+  read(fileid,*,iostat=ios) transform_typ, obs_cnt
 !
 !-------------------------------------------------------
 ! MAIN LOOP FOR MOPITT OBS
 !-------------------------------------------------------
   do while(ios == 0)
-       ! Read MOPITT variables
-       index_qc = index_qc + 1
-       read(fileid,*) mop_prs(1:nlvls)
-       mop_prs(nlvlsp)=nprs(mop_dimp)
-       read(fileid,*) x_r(1:nlvls)
-       read(fileid,*) x_p(1:nlvls)
-       read(fileid,*) avg_k(1:nlvls,1:nlvls)
-       read(fileid,*) cov_a(1:nlvls,1:nlvls)
-       read(fileid,*) cov_r(1:nlvls,1:nlvls)
-       read(fileid,*) cov_m(1:nlvls,1:nlvls)
-       read(fileid,*) co_tot_col,co_tot_err
 !
-       print *, 'lon,lon_min,lon_max ',lon,lon_min,lon_max
-       print *, 'lat,lat_min,lat_max ',lat,lat_min,lat_max
-       print *, ' '
-       if(lon.ge.lon_min .and. lon.le.lon_max .and. &
-       lat.ge.lat_min .and. lat.le.lat_max) then       
-          qc_mopitt(index_qc)=0
+! Read format for LISTOS etc.     
+     index_qc = index_qc + 1
+     read(fileid,*) yyyy_mop, mn_mop,dy_mop,hh_mop,mm_mop,ss_mop
+     read(fileid,*) lat,lon
+     read(fileid,*) lay_mop,lev_mop
+     read(fileid,*) dofs
+     read(fileid,*) prs_sfc_mop
+     read(fileid,*) prs_lay_mop(1:lay_mop)
+     read(fileid,*) avgk_row_sum(1:lev_mop)
+     do k=1,lev_mop
+        read(fileid,*) avgk_lev(k,1:lev_mop)
+     enddo
+     read(fileid,*) retr_sfc
+     read(fileid,*) retr_prof_lay(1:lay_mop)
+     read(fileid,*) retr_sfc_err
+     read(fileid,*) retr_prof_err_lay(1:lay_mop)
+     read(fileid,*) prior_sfc
+     read(fileid,*) prior_prof_lay(1:lay_mop)
+     read(fileid,*) prior_sfc_err
+     read(fileid,*) prior_prof_err_lay(1:lay_mop)
+     do k=1,lev_mop
+        read(fileid,*) cov_s(k,1:lev_mop)
+     enddo
+     do k=1,lev_mop
+        read(fileid,*) cov_r(k,1:lev_mop)
+     enddo
+     do k=1,lev_mop
+        read(fileid,*) cov_m(k,1:lev_mop)
+     enddo
+     read(fileid,*) avgk_dim_col_lev(1:lev_mop)
+     read(fileid,*) retr_col_amt
+     read(fileid,*) retr_col_amt_err
+     read(fileid,*) prior_col_amt
+     read(fileid,*) dry_col_amt
+!
+! Process data to put it into existing variables etc.     
+! Pressure grid
+     if(prs_sfc_mop.gt.prs_lay_mop(1)) then
+        kstr=1
+     else
+        do ilv=1,lay_mop-1
+           if(prs_sfc_mop.lt.prs_lay_mop(ilv) .and. &
+              prs_sfc_mop.ge.prs_lay_mop(ilv)) then
+              kstr=ilv+1
+              exit
+           endif
+        enddo
+     endif
+     mop_prs(:)=-999.
+     nlvls=lev_mop-kstr+1 
+     mop_prs(1)=prs_sfc_mop
+     mop_prs(2:nlvls)=prs_lay_mop(kstr:lay_mop)
+!
+! Assign MOPITT variables
+     x_r(1)=log10(retr_sfc)     
+     x_r(2:nlvls)=log10(retr_prof_lay(kstr:lay_mop))
+     x_p(1)=log10(prior_sfc)     
+     x_p(2:nlvls)=log10(prior_prof_lay(kstr:lay_mop))
+     avg_k(1:nlvls,1:nlvls)=avgk_lev(kstr:lev_mop,kstr:lev_mop)
+!
+!     print *, 'lon,lon_min,lon_max ',lon,lon_min,lon_max
+!     print *, 'lat,lat_min,lat_max ',lat,lat_min,lat_max
+!     print *, ' '
 !
 !-------------------------------------------------------
 ! Bin to nlat_qc x nlon_qc
 !-------------------------------------------------------
-! find lon_qc, lat_qc
-          lon_qc=nint((lon - lon_min)/dlon_qc)+1
-          lat_qc=nint((lat - lat_min)/dlat_qc)+1
-!
-          xg_count(lon_qc,lat_qc)=xg_count(lon_qc,lat_qc)+1
-          xg(lon_qc,lat_qc,xg_count(lon_qc,lat_qc))=index_qc
-       endif
+     if(lon.ge.lon_min .and. lon.le.lon_max .and. &
+     lat.ge.lat_min .and. lat.le.lat_max) then       
+        qc_mopitt(index_qc)=0
+        lon_qc=nint((lon - lon_min)/dlon_qc)+1
+        lat_qc=nint((lat - lat_min)/dlat_qc)+1
+        xg_count(lon_qc,lat_qc)=xg_count(lon_qc,lat_qc)+1
+        xg(lon_qc,lat_qc,xg_count(lon_qc,lat_qc))=index_qc
+     endif
 !
 !read next data point
-! lon = [-180,180]
-       read(fileid,*,iostat=ios) transform_typ, sec, lat, lon, nlevels, dofs 
-       if(lon.lt.0.) lon=lon+360.
-!       print *, 'trans_typ, sec, lat, lon, nlevels, dofs ',trim(transform_typ),sec,lat,lon,nlevels,dofs
-       nlvls=nint(nlevels)
-       nlvlsp=nlvls+1
+     read(fileid,*,iostat=ios) transform_typ, obs_cnt
   enddo !ios
-
-9999   continue
+  9999 continue
 
   close(fileid)
 !
@@ -449,7 +499,6 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
   xg_sec(:,:,:)=0.
   qc_count=0
 !
-! NOTE NOTE NOTE Check if it should be BIG_ENDIAN
   open(fileid,file=TRIM(filedir)//TRIM(filen),                     &
        form='formatted', status='old',   &
        iostat=ios)
@@ -461,43 +510,69 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
   endif
 !
 ! Read MOPITT
-! lon = [-180,180]
-  read(fileid,*,iostat=ios) transform_typ, sec, lat, lon, nlevels, dofs 
-  if(lon.lt.0.) lon=lon+360.
-!  print *, 'trans_typ, sec, lat, lon, nlevels, dofs ',trim(transform_typ),sec,lat,lon,nlevels,dofs
-  nlvls=nint(nlevels)
-  nlvlsp=nlvls+1
-!
-! Error Check
-  if (ios /=0) then
-      write(6,*) 'no data on file ', TRIM(filen)
-      go to 999
-  endif
-!
-!-------------------------------------------------------
-! MAIN LOOP FOR MOPITT OBS (ppbv)
-!-------------------------------------------------------
-!
+! lon = [-180,180]; lat = [-90,90]
+  read(fileid,*,iostat=ios) transform_typ, obs_cnt
   do while(ios == 0)
-     index_qc=index_qc+1
-     read(fileid,*) mop_prs(1:nlvls)
-     mop_prs(nlvlsp)=nprs(mop_dimp)
-     read(fileid,*) x_r(1:nlvls)
-     read(fileid,*) x_p(1:nlvls)
-     read(fileid,*) avg_k(1:nlvls,1:nlvls)
-     read(fileid,*) cov_a(1:nlvls,1:nlvls)
-     read(fileid,*) cov_r(1:nlvls,1:nlvls)
-     read(fileid,*) cov_m(1:nlvls,1:nlvls)
-     read(fileid,*) co_tot_col,co_tot_err
-!     if(nlvls .lt. mop_dim-1) then
-!        print *, 'nlvls ',nlvls
-!        print *, 'x_r ',x_r(1:nlvls)
-!        print *, 'x_p ',x_p(1:nlvls)
-!        do k=1,nlvls
-!           print *, 'k, avg_k ',k,avg_k(k,1:nlvls)
-!        enddo
-!        stop
-!     endif
+!
+! Read format for LISTOS etc.     
+     index_qc = index_qc + 1
+     read(fileid,*) yyyy_mop, mn_mop,dy_mop,hh_mop,mm_mop,ss_mop
+     read(fileid,*) lat,lon
+     read(fileid,*) lay_mop,lev_mop
+     read(fileid,*) dofs
+     read(fileid,*) prs_sfc_mop
+     read(fileid,*) prs_lay_mop(1:lay_mop)
+     read(fileid,*) avgk_row_sum(1:lev_mop)
+     do k=1,lev_mop
+        read(fileid,*) avgk_lev(k,1:lev_mop)
+     enddo
+     read(fileid,*) retr_sfc
+     read(fileid,*) retr_prof_lay(1:lay_mop)
+     read(fileid,*) retr_sfc_err
+     read(fileid,*) retr_prof_err_lay(1:lay_mop)
+     read(fileid,*) prior_sfc
+     read(fileid,*) prior_prof_lay(1:lay_mop)
+     read(fileid,*) prior_sfc_err
+     read(fileid,*) prior_prof_err_lay(1:lay_mop)
+     do k=1,lev_mop
+        read(fileid,*) cov_s(k,1:lev_mop)
+     enddo
+     do k=1,lev_mop
+        read(fileid,*) cov_r(k,1:lev_mop)
+     enddo
+     do k=1,lev_mop
+        read(fileid,*) cov_m(k,1:lev_mop)
+     enddo
+     read(fileid,*) avgk_dim_col_lev(1:lev_mop)
+     read(fileid,*) retr_col_amt
+     read(fileid,*) retr_col_amt_err
+     read(fileid,*) prior_col_amt
+     read(fileid,*) dry_col_amt
+!
+! Process data to put it into existing variables etc.     
+! Pressure grid
+     if(prs_sfc_mop.gt.prs_lay_mop(1)) then
+        kstr=1
+     else
+        do ilv=1,lay_mop-1
+           if(prs_sfc_mop.lt.prs_lay_mop(ilv) .and. &
+              prs_sfc_mop.ge.prs_lay_mop(ilv)) then
+              kstr=ilv+1
+              exit
+           endif
+        enddo
+     endif  
+     mop_prs(:)=-999.
+     nlvls=lev_mop-kstr+1 
+     mop_prs(1)=prs_sfc_mop
+     mop_prs(2:nlvls)=prs_lay_mop(kstr:lay_mop)
+!
+! Assign MOPITT variables
+     x_r(1)=log10(retr_sfc)    
+     x_r(2:nlvls)=log10(retr_prof_lay(kstr:lay_mop))
+     x_p(1)=log10(prior_sfc)     
+     x_p(2:nlvls)=log10(prior_prof_lay(kstr:lay_mop))
+     avg_k(1:nlvls,1:nlvls)=avgk_lev(kstr:lev_mop,kstr:lev_mop)
 !
      if ( (qc_mopitt(index_qc)==0).and.(qc_thinning(index_qc)==0) ) then
         co_qc(1)=0
@@ -606,16 +681,13 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
               xg_avg_k(lon_qc,lat_qc,i,j)=xg_avg_k(lon_qc,lat_qc,i,j)+avg_k(i-kstr+1,j-kstr+1)*wt
            enddo
         enddo
-        xg_prs_norm(lon_qc,lat_qc,mop_dimp)=xg_prs_norm(lon_qc,lat_qc,mop_dimp)+wt
-        xg_prs(lon_qc,lat_qc,mop_dimp)=xg_prs(lon_qc,lat_qc,mop_dimp)+mop_prs(nlvlsp)*wt
+!        xg_prs_norm(lon_qc,lat_qc,mop_dimp)=xg_prs_norm(lon_qc,lat_qc,mop_dimp)+wt
+!        xg_prs(lon_qc,lat_qc,mop_dimp)=xg_prs(lon_qc,lat_qc,mop_dimp)+mop_prs(nlvlsp)*wt
      endif    ! co_qc(1)
 !
 ! read next data point
 ! lon = [-180,180]
-     read(fileid,*,iostat=ios) transform_typ, sec, lat, lon, nlevels, dofs 
-     if(lon.lt.0) lon=lon+360.
-     nlvls=nint(nlevels)
-     nlvlsp=nlvls+1
+     read(fileid,*,iostat=ios) transform_typ, obs_cnt
   enddo    !ios
 !
 ! Calculate number of vertical levels and averages
@@ -648,17 +720,17 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
               xg_avg_k(i,j,k,l)=xg_avg_k(i,j,k,l)/real(xg_norm(i,j,k))
            enddo
         enddo
-        xg_prs(i,j,mop_dimp)=xg_prs(i,j,mop_dimp)/real(xg_prs_norm(i,j,mop_dimp))
+!        xg_prs(i,j,mop_dimp)=xg_prs(i,j,mop_dimp)/real(xg_prs_norm(i,j,mop_dimp))
 !
 ! Locate index for first pressure level
         prs_idx=0
         do k=1,mop_dim
            if(nint(xg_prs(i,j,k)).ne.0) then
-              do kk=1,mop_dim
-                 if(xg_prs(i,j,k).gt.nprs(2).and.kk.eq.1) then
+              do kk=2,mop_dim
+                 if(xg_prs(i,j,1).gt.nprs(kk-1) .and. kk.eq.2) then
                     prs_idx=1
-                    exit
-                 else if(xg_prs(i,j,k).le.nprs(kk).and.xg_prs(i,j,k).gt.nprs(kk+1)) then
+                    exit   
+                 else if(xg_prs(i,j,k).le.nprs(kk-1).and.xg_prs(i,j,k).gt.nprs(kk)) then
                     prs_idx=kk
                     exit
                  endif
@@ -667,6 +739,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
               exit
            endif 
         enddo
+
 !
 ! Get number of vertical levels
         klvls=mop_dim
@@ -1029,6 +1102,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
 ! location
            latitude=xg_lat(i,j) 
            longitude=xg_lon(i,j)
+           if(longitude.lt.0.) longitude=longitude+360.
 !
 ! time (get time from sec MOPITT variable)
            hour1 = int(xg_sec_avg/3600d0)
@@ -1173,15 +1247,15 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
- if  (bin_beg == 3.01) then
-    file_name=trim(file_name)//chr_year//chr_month//chr_day//'06'
- elseif (bin_beg == 9.01) then
-    file_name=trim(file_name)//chr_year//chr_month//chr_day//'12'
- elseif (bin_beg == 15.01) then
-    file_name=trim(file_name)//chr_year//chr_month//chr_day//'18'
- elseif (bin_beg == 21.01) then
-    file_name=trim(file_name)//chr_year//chr_month//chr_day//'24'
- endif !bin
+! if  (bin_beg == 3.01) then
+!    file_name=trim(file_name)//chr_year//chr_month//chr_day//'06'
+! elseif (bin_beg == 9.01) then
+!    file_name=trim(file_name)//chr_year//chr_month//chr_day//'12'
+! elseif (bin_beg == 15.01) then
+!    file_name=trim(file_name)//chr_year//chr_month//chr_day//'18'
+! elseif (bin_beg == 21.01) then
+!    file_name=trim(file_name)//chr_year//chr_month//chr_day//'24'
+! endif !bin
 
  call write_obs_seq(seq, file_name)
 

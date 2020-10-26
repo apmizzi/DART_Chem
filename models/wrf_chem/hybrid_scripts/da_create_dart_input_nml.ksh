@@ -81,5 +81,59 @@ cat > input.nml << EOF
    IASI_O3_retrieval_type   = ${NL_IASI_O3_RETRIEVAL_TYPE:-'RAWR'},
    use_log_o3   = ${NL_USE_LOG_o3:-.false.},
 /
+ &obs_def_MODIS_AOD_nml
+   use_log_aod   = ${NL_USE_LOG_AOD:-.false.},
+/
+ &obs_def_AIRNOW_PM10_nml
+   use_log_pm10   = ${NL_USE_LOG_PM10:-.false.},
+/
+ &obs_def_AIRNOW_PM25_nml
+   use_log_pm25   = ${NL_USE_LOG_PM25:-.false.},
+/
+ &obs_def_OMI_O3_nml
+   use_log_o3   = ${NL_USE_LOG_O3:-.false.},
+   nlayer_model   = ${NL_NLAYER_MODEL:-36},
+   nlayer_omi_o3   = ${NL_NLAYER_OMI_O3:-15},
+/
+ &obs_def_OMI_NO2_nml
+   use_log_no2   = ${NL_USE_LOG_NO2:-.false.},
+   nlayer_model   = ${NL_NLAYER_MODEL:-36},
+   nlayer_omi_no2   = ${NL_NLAYER_OMI_NO2:-40},
+/
+ &obs_def_OMI_SO2_nml
+   use_log_so2   = ${NL_USE_LOG_SO2:-.false.},
+   nlayer_model   = ${NL_NLAYER_MODEL:-36},
+   nlayer_omi_so2   = ${NL_NLAYER_OMI_SO2:-75},
+/
+ &obs_def_TROPOMI_CO_nml
+   use_log_co   = ${NL_USE_LOG_CO:-.false.},
+   nlayer_model   = ${NL_NLAYER_MODEL:-36},
+   nlayer_tropomi_co   = ${NL_NLAYER_TROPOMI_CO:-55},
+/
+ &obs_def_TROPOMI_O3_nml
+   use_log_o3   = ${NL_USE_LOG_O3:-.false.},
+   nlayer_model   = ${NL_NLAYER_MODEL:-36},
+   nlayer_tropomi_o3   = ${NL_NLAYER_TROPOMI_O3:-20},
+/
+ &obs_def_TROPOMI_NO2_nml
+   use_log_no2   = ${NL_USE_LOG_NO2:-.false.},
+   nlayer_model   = ${NL_NLAYER_MODEL:-36},
+   nlayer_tropomi_no2   = ${NL_NLAYER_TROPOMI_NO2:-40},
+/
+ &obs_def_TROPOMI_SO2_nml
+   use_log_so2   = ${NL_USE_LOG_SO2:-.false.},
+   nlayer_model   = ${NL_NLAYER_MODEL:-36},
+   nlayer_tropomi_so2   = ${NL_NLAYER_TROPOMI_SO2:-40},
+/
+ &obs_def_TEMPO_O3_nml
+   use_log_o3   = ${NL_USE_LOG_O3:-.false.},
+   nlayer_model   = ${NL_NLAYER_MODEL:-36},
+   nlayer_tempo_o3   = ${NL_NLAYER_TEMPO_O3:-50},
+/
+ &obs_def_TEMPO_NO2_nml
+   use_log_no2   = ${NL_USE_LOG_NO2:-.false.},
+   nlayer_model   = ${NL_NLAYER_MODEL:-36},
+   nlayer_tempo_no2   = ${NL_NLAYER_TEMPO_NO2:-50},
+/
 EOF
 
