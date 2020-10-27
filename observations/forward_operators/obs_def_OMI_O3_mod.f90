@@ -282,9 +282,9 @@ real(r8) :: mloc(3)
 real(r8) :: o3_val_conv
 real(r8), dimension(ens_size) :: o3_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
 real(r8), dimension(ens_size) :: o3_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
-real(r8), dimension(ens_size) :: o3_temp, tmp_temp, qmr_temp
+real(r8), dimension(ens_size) :: o3_temp, tmp_temp, qmr_temp, prs_sfc
 
-real(r8), allocatable, dimension(:)   :: thick, prs_omi
+real(r8), allocatable, dimension(:)   :: thick, prs_omi, prs_omi_mem
 real(r8), allocatable, dimension(:,:) :: o3_val, tmp_val, qmr_val
 logical  :: return_now
 
@@ -309,6 +309,7 @@ level_omi = nlayer(key)+1
 layer_mdl=nlayer_model
 level_mdl=nlayer_model+1
 allocate(prs_omi(level_omi))
+allocate(prs_omi_mem(level_omi))
 prs_omi(:)=pressure(key,:)*100.
 
 ! Get location infomation
@@ -329,6 +330,18 @@ istatus(:) = 0  ! set this once at the beginning
 o3_istatus = 0
 tmp_istatus = 0
 qmr_istatus = 0
+
+! pressure at model surface (Pa)
+
+level=1.0_r8
+loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
+call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_sfc, prs_istatus) 
+if(any(prs_istatus /= 0)) then
+   write(string1, *)'APM NOTICE: MDL prs_sfc is bad '
+   call error_handler(E_ERR, routine, string1, source)
+endif
+call track_status(ens_size, prs_istatus, prs_sfc, istatus, return_now)
+if(return_now) return
 
 ! ozone at first model layer (ppmv)
 
@@ -496,12 +509,25 @@ do k=1,level_omi
 
    ! Convert units for o3 from ppmv
    o3_val(:,k) = o3_val(:,k) * 1.e-6_r8
-  
+
 enddo
+
+! Adjust the OMI pressure for WRF-Chem lower/upper boudary pressure
 
 expct_val(:)=0.0
 allocate(thick(layer_omi))
 do imem=1,ens_size
+
+   prs_omi_mem(:)=prs_omi(:)
+      if (prs_sfc.gt.prs_omi(1)) then
+         prs
+      o3_istatus  = 0
+      tmp_istatus = 0
+      qmr_istatus = 0
+      o3_temp     = o3_mdl_n
+      tmp_temp    = tmp_mdl_n
+      qmr_temp    = qmr_mdl_n
+   endwhere
 
    ! Calculate the thicknesses
 
