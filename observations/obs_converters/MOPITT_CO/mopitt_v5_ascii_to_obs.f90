@@ -137,6 +137,7 @@ real                            :: pi ,rad2deg, re, wt, corr_err, fac, fac_obs_e
 real                            :: ln_10, xg_sec_avg, co_log_max, co_log_min, co_min
 real                            :: prs_loc
 real                            :: lat_min,lat_max,lon_min,lon_max,lat_mn
+real                            :: prior_error,delta_prs,C0,Pc2
 integer                         :: irot, nlvls_fix, nqc_obs
 real*8, dimension(1000)         :: unif
 real*8, dimension(num_qc)       :: co_qc
@@ -148,8 +149,8 @@ real,dimension(mop_dim)         :: mop_prs
 real,dimension(mop_dim)         :: x_r, x_p, ret_x_r,ret_x_p,raw_x_r, raw_x_p, err2_rs_r, raw_err, ret_err
 real,dimension(mop_dim)         :: xcomp, xcomperr, xapr
 real,dimension(mop_dim,mop_dim) :: avgker, avg_k, adj_avg_k
-real,dimension(mop_dim,mop_dim) :: raw_cov, ret_cov, cov_s, cov_r, cov_m, cov_use
-real,dimension(mop_dim,mop_dim) :: cov_s_lev, cov_r_lev, cov_m_lev
+real,dimension(mop_dim,mop_dim) :: raw_cov, ret_cov, cov_p, cov_r, cov_m, cov_use
+real,dimension(mop_dim,mop_dim) :: cov_p_lev, cov_r_lev
 !
 double precision,dimension(mop_dim) :: raw_adj_x_r, ret_adj_x_r, adj_x_p 
 !
@@ -366,7 +367,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
 !-------------------------------------------------------
   do while(ios == 0)
 !
-! Read format for LISTOS etc.     
+! Read format for FRAPPE etc.     
      index_qc = index_qc + 1
      read(fileid,*) yyyy_mop, mn_mop,dy_mop,hh_mop,mm_mop,ss_mop
      sec=hh_mop*3600 + mm_mop*60 + ss_mop
@@ -376,7 +377,6 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
      read(fileid,*) dofs
      read(fileid,*) prs_sfc_mop
      read(fileid,*) prs_lay_mop(1:lay_mop)
-     read(fileid,*) avgk_row_sum(1:lev_mop)
      do k=1,lev_mop
         read(fileid,*) avgk_lev(k,1:lev_mop)
      enddo
@@ -389,19 +389,10 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
      read(fileid,*) prior_sfc_err
      read(fileid,*) prior_prof_err_lay(1:lay_mop)
      do k=1,lev_mop
-        read(fileid,*) cov_s_lev(k,1:lev_mop)
-     enddo
-     do k=1,lev_mop
         read(fileid,*) cov_r_lev(k,1:lev_mop)
      enddo
-     do k=1,lev_mop
-        read(fileid,*) cov_m_lev(k,1:lev_mop)
-     enddo
-     read(fileid,*) avgk_dim_col_lev(1:lev_mop)
      read(fileid,*) retr_col_amt
      read(fileid,*) retr_col_amt_err
-     read(fileid,*) prior_col_amt
-     read(fileid,*) dry_col_amt
 !
 ! Process data to put it into existing variables etc.     
 ! Pressure grid
@@ -416,12 +407,34 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
            endif
         enddo
      endif
+!
+! mop_prs is on the collapsed grid
      mop_prs(:)=-999.
      nlvls=lay_mop-kstr+1 
      mop_prs(1)=prs_sfc_mop
      mop_prs(2:nlvls+1)=prs_lay_mop(kstr:lay_mop)
 !
-! Assign MOPITT variables
+!==============================================
+! cov_r = cov_s + cov_m
+! avgk = I - cov_r * cov_p^-1 so cov_r = (I - avgk) * cov_p
+! cov_s = (avgk - I) * cov_p * (avg_k - I)^T 
+! cov_m = (I - avgk) * cov_p * (I + (avgk - I)^T)
+!==============================================
+!
+! Construct A Priori Error Covariance Matrix (MOPITT V4 Users Guide)
+     cov_p(:,:)=-999.
+     prior_error=0.3
+     delta_prs=100. ! (hPa)
+     C0=(prior_error*log10(exp(1.)))**2
+     Pc2=delta_prs**2
+     do i=kstr,lev_mop
+        do j=kstr,lev_mop
+           cov_p(i,j)=C0/exp(((mop_prs(i-kstr+1)- &
+           mop_prs(j-kstr+1))**2)/Pc2)
+        enddo
+     enddo
+!
+! Assign MOPITT variables on the collapsed grid
      x_r(1)=log10(retr_sfc)     
      x_r(2:nlvls+1)=log10(retr_prof_lay(kstr:lay_mop))
      x_p(1)=log10(prior_sfc)     
@@ -518,7 +531,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
   read(fileid,*,iostat=ios) transform_typ, obs_cnt
   do while(ios == 0)
 !
-! Read format for LISTOS etc.     
+! Read format for FRAPPE etc.     
      index_qc = index_qc + 1
      read(fileid,*) yyyy_mop, mn_mop,dy_mop,hh_mop,mm_mop,ss_mop
      sec=hh_mop*3600 + mm_mop*60 + ss_mop
@@ -528,7 +541,6 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
      read(fileid,*) dofs
      read(fileid,*) prs_sfc_mop
      read(fileid,*) prs_lay_mop(1:lay_mop)
-     read(fileid,*) avgk_row_sum(1:lev_mop)
      do k=1,lev_mop
         read(fileid,*) avgk_lev(k,1:lev_mop)
      enddo
@@ -541,23 +553,14 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
      read(fileid,*) prior_sfc_err
      read(fileid,*) prior_prof_err_lay(1:lay_mop)
      do k=1,lev_mop
-        read(fileid,*) cov_s_lev(k,1:lev_mop)
-     enddo
-     do k=1,lev_mop
         read(fileid,*) cov_r_lev(k,1:lev_mop)
      enddo
-     do k=1,lev_mop
-        read(fileid,*) cov_m_lev(k,1:lev_mop)
-     enddo
-     read(fileid,*) avgk_dim_col_lev(1:lev_mop)
      read(fileid,*) retr_col_amt
      read(fileid,*) retr_col_amt_err
-     read(fileid,*) prior_col_amt
-     read(fileid,*) dry_col_amt
 !
 ! Process data to put it into existing variables etc.     
 ! Pressure grid
-     if(prs_sfc_mop.ge.prs_lay_mop(1)) then
+     if(prs_sfc_mop.gt.prs_lay_mop(1)) then
         kstr=1
      else
         do ilv=1,lay_mop-1
@@ -568,12 +571,34 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
            endif
         enddo
      endif
+!
+! mop_prs is on the collapsed grid
      mop_prs(:)=-999.
      nlvls=lay_mop-kstr+1 
      mop_prs(1)=prs_sfc_mop
      mop_prs(2:nlvls+1)=prs_lay_mop(kstr:lay_mop)
 !
-! Assign MOPITT variables
+!==============================================
+! cov_r = cov_s + cov_m
+! avgk = I - cov_r * cov_p^-1 so cov_r = (I - avgk) * cov_p
+! cov_s = (avgk - I) * cov_p * (avg_k - I)^T 
+! cov_m = (I - avgk) * cov_p * (I + (avgk - I)^T)
+!==============================================
+!
+! Construct A Priori Error Covariance Matrix (MOPITT V4 Users Guide)
+     cov_p(:,:)=-999.
+     prior_error=0.3
+     delta_prs=100. ! (hPa)
+     C0=(prior_error*log10(exp(1.)))**2
+     Pc2=delta_prs**2
+     do i=kstr,lev_mop
+        do j=kstr,lev_mop
+           cov_p(i,j)=C0/exp(((mop_prs(i-kstr+1)- &
+           mop_prs(j-kstr+1))**2)/Pc2)
+        enddo
+     enddo
+!
+! Assign MOPITT variables on the collapsed grid
      x_r(1)=log10(retr_sfc)     
      x_r(2:nlvls+1)=log10(retr_prof_lay(kstr:lay_mop))
      x_p(1)=log10(prior_sfc)     

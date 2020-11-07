@@ -193,7 +193,6 @@ program tropomi_o3_ascii_to_obs
    form='formatted', status='old', iostat=ios)
 !
 ! Read TROPOMI O3
-   line_count = 0
    read(fileid,*,iostat=ios) data_type, obs_id
    do while (ios == 0)
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
@@ -234,10 +233,13 @@ program tropomi_o3_ascii_to_obs
 !
       call vertical_locate(prs_loc,prs_obs,nlev_obs,avgk_obs,nlay_obs,1)
       level=prs_loc*100.
-      which_vert=2       ! pressure surface
+      which_vert=-2      ! undefined
+!      which_vert=-1      ! surface
+!      which_vert=1       ! level
+!      which_vert=2       ! pressure surface
 !
       obs_kind = TROPOMI_O3_COLUMN
-! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90) 
+! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90)
       obs_location=set_location(lon_obs, lat_obs, level, which_vert)
 !
       call set_obs_def_type_of_obs(obs_def, obs_kind)
@@ -251,6 +253,8 @@ program tropomi_o3_ascii_to_obs
       call set_obs_def(obs, obs_def)
 !
       old_ob=0
+      print *, 'days, days_last ',days,days_last
+      print *, 'secs, secs_last ',seconds,seconds_last
       if(days.lt.days_last) then
          old_ob=1
       elseif(days.eq.days_last .and. seconds.lt.seconds_last) then
@@ -260,7 +264,6 @@ program tropomi_o3_ascii_to_obs
          days_last=days
          seconds_last=seconds
       endif
-!      print *, 'APM: ',qc_count,days,seconds
       if ( qc_count == 1 .or. old_ob.eq.1) then
          call insert_obs_in_seq(seq, obs)
       else
@@ -271,6 +274,9 @@ program tropomi_o3_ascii_to_obs
       deallocate(avgk_obs) 
       deallocate(prior_obs) 
       read(fileid,*,iostat=ios) data_type, obs_id
+      if(qc_count.eq.10 ) then
+         exit
+      endif
    enddo   
 !
 !----------------------------------------------------------------------

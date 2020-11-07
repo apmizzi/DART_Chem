@@ -354,11 +354,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_PERT_WRFCHEM_CHEM_ICBC=false
       export RUN_PERT_WRFCHEM_CHEM_EMISS=false
       export RUN_MOPITT_CO_OBS=true
-      export RUN_IASI_CO_OBS=false
+      export RUN_IASI_CO_OBS=true
       export RUN_IASI_O3_OBS=false
       export RUN_OMI_O3_OBS=false
       export RUN_OMI_NO2_OBS=false
-      export RUN_OMI_SO2_OBS=true
+      export RUN_OMI_SO2_OBS=false
       export RUN_TROPOMI_CO_OBS=false
       export RUN_TROPOMI_O3_OBS=false
       export RUN_TROPOMI_NO2_OBS=false
@@ -1052,6 +1052,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # DART input.nml parameters
 # &filter.nml
    export NL_COMPUTE_POSTERIOR=.true.
+   export NL_INPUT_QC_THRESHOLD=3.
    export NL_OUTLIER_THRESHOLD=3.
    export NL_ENABLE_SPECIAL_OUTLIER_CODE=.true.
    export NL_SPECIAL_OUTLIER_THRESHOLD=4.
@@ -1185,24 +1186,23 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
           'SEAS_2','QTY_SSLT02',               'TYPE_SSLT02','UPDATE','999',
           'SEAS_3','QTY_SSLT03',               'TYPE_SSLT03','UPDATE','999',
           'SEAS_4','QTY_SSLT04',               'TYPE_SSLT04','UPDATE','999'"
-   export WRFCHEMI_DARTVARS="E_CO,E_NO"
-   export WRFFIRECHEMI_DARTVARS="ebu_in_co,ebu_in_no,ebu_in_oc,ebu_in_bc,ebu_in_c2h4,ebu_in_ch2o,ebu_in_ch3oh"
+#
+# Both of these need kind and type definitions.  Also need to modify the WRF-Chem model_mod.f90 to add
+# get_type_ind_from_type_string statements   
+# The next line should be the same as NL_EMISS_CHEMI_VARIABLES without quotes etc.
+   export WRFCHEMI_DARTVARS="E_CO,E_NO,E_NO2,E_SO2,E_BC,E_OC,E_PM_10,E_PM_25"
+#
+# The next line should be the same as NL_EMISS_FIRECHEMI_VARIABLES without quotes etc.
+   export WRFFIRECHEMI_DARTVARS="ebu_in_co,ebu_in_no,ebu_in_no2,ebu_in_so2,ebu_in_oc,ebu_in_bc,ebu_in_c2h4,ebu_in_ch2o,ebu_in_ch3oh"
+#
    export NL_EMISS_CHEMI_VARIABLES="'E_CO',     'KIND_E_CO',     'TYPE_E_CO',     'UPDATE','999',
           'E_NO'        ,'KIND_E_NO',           'TYPE_E_NO',   'UPDATE','999',
           'E_NO2'       ,'KIND_E_NO2',          'TYPE_E_NO2',  'UPDATE','999',
           'E_SO2'       ,'KIND_E_SO2',          'TYPE_E_SO2',  'UPDATE','999',
-          'E_SO4I'      ,'KIND_E_SO4',          'TYPE_E_SO4',  'UPDATE','999',
-          'E_SO4J'      ,'KIND_E_SO4',          'TYPE_E_SO4',  'UPDATE','999',
-          'E_PM_25'     ,'KIND_E_PM25',         'TYPE_E_PM25', 'UPDATE','999',
-          'E_PM25I'     ,'KIND_E_PM25',         'TYPE_E_PM25', 'UPDATE','999',
-          'E_PM25J'     ,'KIND_E_PM25',         'TYPE_E_PM25', 'UPDATE','999',
-          'E_PM10'      ,'KIND_E_PM10',         'TYPE_E_PM10', 'UPDATE','999',
-          'E_EC1'       ,'KIND_E_BC',           'TYPE_E_BC',   'UPDATE','999',
-          'E_EC2'       ,'KIND_E_BC',           'TYPE_E_BC',   'UPDATE','999',
-          'E_ORG1'      ,'KIND_E_OC',           'TYPE_E_OC',   'UPDATE','999',
-          'E_ORG2'      ,'KIND_E_OC',           'TYPE_E_OC',   'UPDATE','999',
-          'E_PM_BC'     ,'KIND_E_BC',           'TYPE_E_BC',   'UPDATE','999',
-          'E_PM_OC'     ,'KIND_E_OC',           'TYPE_E_BC',   'UPDATE','999'"
+          'E_BC'        ,'KIND_E_BC',           'TYPE_E_BC',   'UPDATE','999',
+          'E_OC'        ,'KIND_E_OC',           'TYPE_E_BC',   'UPDATE','999',
+          'E_PM_10'     ,'KIND_E_PM10',         'TYPE_E_PM10', 'UPDATE','999',
+          'E_PM_25'     ,'KIND_E_PM25',         'TYPE_E_PM25', 'UPDATE','999'"
    export NL_EMISS_FIRECHEMI_VARIABLES="'ebu_in_co'   ,'KIND_EBU_CO',         'TYPE_EBU_CO',  'UPDATE','999',
           'ebu_in_no'    ,'KIND_EBU_NO',         'TYPE_EBU_NO',   'UPDATE','999',
           'ebu_in_no2'   ,'KIND_EBU_NO2',        'TYPE_EBU_NO2',  'UPDATE','999',
@@ -1259,10 +1259,16 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
           'SEAS_4','0.0','NULL','CLAMP',
           'E_CO','0.0','NULL','CLAMP',
           'E_NO','0.0','NULL','CLAMP',
+          'E_NO2','0.0','NULL','CLAMP',
+          'E_SO2','0.0','NULL','CLAMP',
+          'E_BC','0.0','NULL','CLAMP',
+          'E_OC','0.0','NULL','CLAMP',
           'ebu_in_co','0.0','NULL','CLAMP',
           'ebu_in_no','0.0','NULL','CLAMP',
-          'ebu_in_oc','0.0','NULL','CLAMP',
+          'ebu_in_no2','0.0','NULL','CLAMP',
+          'ebu_in_so2','0.0','NULL','CLAMP',
           'ebu_in_bc','0.0','NULL','CLAMP',
+          'ebu_in_oc','0.0','NULL','CLAMP',
           'ebu_in_c2h4','0.0','NULL','CLAMP',
           'ebu_in_ch2o','0.0','NULL','CLAMP',
           'ebu_in_ch3oh','0.0','NULL','CLAMP'"
@@ -1353,6 +1359,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
                                    'AIRCRAFT_TEMPERATURE',
                                    'SAT_U_WIND_COMPONENT',
                                    'SAT_V_WIND_COMPONENT',
+                                   'MOPITT_CO_RETRIEVAL',
+                                   'IASI_CO_RETRIEVAL',
+                                   'AIRNOW_CO',
+                                   'AIRNOW_O3',
                                    'OMI_O3_COLUMN',
                                    'OMI_NO2_COLUMN',
                                    'OMI_SO2_COLUMN'"
@@ -2800,6 +2810,8 @@ corr_tm_delt=${NL_EMISS_TIME},
 EOF
          rm -rf perturb_emiss_chem_spec_nml.nl
          cat << EOF > perturb_emiss_chem_spec_nml.nl
+#
+# These need to match the emissions species in the respective emissions files
 &perturb_chem_emiss_spec_nml
 ch_chem_spc='E_CO','E_NO','E_NO2','E_BIGALK','E_BIGENE','E_C2H4','E_C2H5OH','E_C2H6','E_C3H6','E_C3H8','E_CH2O','E_CH3CHO','E_CH3COCH3','E_CH3OH','E_MEK','E_SO2','E_TOLUENE','E_NH3','E_ISOP','E_C10H16','E_sulf','E_CO_A','E_CO_BB','E_CO02','E_CO03','E_XNO','E_XNO2','E_BALD','E_C2H2','E_BENZENE','E_XYLENE','E_CRES','E_HONO','E_PM25I','E_PM25J','E_PM_10','E_ECI','E_ECJ','E_ORGI','E_ORGJ','E_SO4I','E_SO4J','E_NO3I','E_NO3J','E_NH4I','E_NH4J','E_PM_25','E_OC','E_BC',
 ch_fire_spc='ebu_in_co','ebu_in_no','ebu_in_so2','ebu_in_bigalk','ebu_in_bigene','ebu_in_c2h4','ebu_in_c2h5oh','ebu_in_c2h6','ebu_in_c3h8','ebu_in_c3h6','ebu_in_ch2o','ebu_in_ch3cho','ebu_in_ch3coch3','ebu_in_ch3oh','ebu_in_mek','ebu_in_toluene','ebu_in_nh3','ebu_in_no2','ebu_in_open','ebu_in_c10h16','ebu_in_ch3cooh','ebu_in_cres','ebu_in_glyald','ebu_in_mgly','ebu_in_gly','ebu_in_acetol','ebu_in_isop','ebu_in_macr','ebu_in_mvk','ebu_in_oc','ebu_in_bc',
@@ -2947,22 +2959,23 @@ EOF
 # SET MOPITT PARAMETERS
       export MOPITT_FILE_PRE=MOP02J-
       export MOPITT_FILE_EXT=-L2V10.1.3.beta.hdf   
-      export MOP_OUTFILE=\'MOPITT_CO_${D_DATE}'.dat'\'
+      export OUTFILE=\'TEMP_FILE.dat\'
+      export OUTFILE_NQ=TEMP_FILE.dat
+      export MOP_OUTFILE=\'MOPITT_CO_${D_DATE}.dat\'
+      export MOP_OUTFILE_NQ=MOPITT_CO_${D_DATE}.dat
+      rm -rf ${OUTFILE}
       rm -rf ${MOP_OUTFILE}
 #
 #  SET OBS WINDOW
       export BIN_BEG=${ASIM_MN_HH}
       export BIN_END=${ASIM_MX_HH}
-      export FLG=0
 #
 # SET MOPITT INPUT DATA DIR
-      if [[ ${BIN_END} -ne 3 ]]; then
-         export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MX_YYYY}${ASIM_MX_MM}${ASIM_MX_DD}${MOPITT_FILE_EXT}\'
-      else
+      export FLG=0
+      if [[ ${BIN_END} -eq 3 ]]; then
          export FLG=1
-         export BIN_END=24
-         export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}${MOPITT_FILE_EXT}\'
       fi
+      export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MX_YYYY}${ASIM_MX_MM}${ASIM_MX_DD}${MOPITT_FILE_EXT}\'
 #
 # COPY EXECUTABLE
       export FILE=mopitt_extract_no_transform_RT.pro
@@ -2970,8 +2983,6 @@ EOF
       cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
 #
       rm -rf job.ksh
-      rm -rf idl_*.err
-      rm -rf idl_*.out
       touch job.ksh
       RANDOM=$$
       export JOBRND=${RANDOM}_idl_mopitt
@@ -2985,7 +2996,7 @@ EOF
 #
 idl << EOF
 .compile mopitt_extract_no_transform_RT.pro
-mopitt_extract_no_transform_RT, ${MOP_INFILE}, ${MOP_OUTFILE}, ${BIN_BEG}, ${BIN_END}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
+mopitt_extract_no_transform_RT, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG}, ${BIN_END}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
 EOF
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
@@ -2999,36 +3010,48 @@ fi
 EOFF
       qsub -Wblock=true job.ksh 
 #
-# GET ADDITIONAL DATA FOR DAY-TO-DAY CROSSOVER
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+         touch ${MOP_OUTFILE_NQ}
+         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+	 rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+	 rm -rf ${OUTFILE_NQ}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
       if [[ ${FLG} -eq 1 ]];  then
          export FLG=0
-         export BIN_BEG=0
-         export BIN_END=3
-         export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MX_YYYY}${ASIM_MX_MM}${ASIM_MX_DD}${MOPITT_FILE_EXT}\'
+         export BIN_BEG=21
+         export BIN_END=24
+         export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}${MOPITT_FILE_EXT}\'
+#
+# COPY EXECUTABLE
+         export FILE=mopitt_extract_no_transform_RT.pro
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
 #
          rm -rf job.ksh
-         rm -rf idl_*.err
-         rm -rf idl_*.out
          touch job.ksh
          RANDOM=$$
          export JOBRND=${RANDOM}_idl_mopitt
          cat << EOFF > job.ksh
 #!/bin/ksh -aeux
-#PBS -N ${JOBID}
-#PBS -l walltime=${TIME_LIMIT}
-#PBS -q ${CLASS}
+#PBS -N ${JOBRND}
+#PBS -l walltime=${GENERAL_TIME_LIMIT}
+#PBS -q ${GENERAL_JOB_CLASS}
 #PBS -j oe
-#PBS -l select=${NODES}:ncpus=1:model=san
+#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
 #
 idl << EOF
 .compile mopitt_extract_no_transform_RT.pro
-mopitt_extract_no_transform_RT, ${MOP_INFILE}, ${MOP_OUTFILE}, ${BIN_BEG}, ${BIN_END}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
+mopitt_extract_no_transform_RT, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG}, ${BIN_END}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
 EOF
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
 if [[ -f FAILED ]]; then rm -rf FAILED; fi          
 if [[ \$RC = 0 ]]; then
-
    touch SUCCESS
 else
    touch FAILED 
@@ -3036,6 +3059,19 @@ else
 fi
 EOFF
          qsub -Wblock=true job.ksh 
+      fi   
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+         touch ${MOP_OUTFILE_NQ}
+         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+	 rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+      fi
+      if [[ ! -e ${MOP_OUTFILE_NQ} ]]; then
+         touch NO_MOPITT_CO_${DATE}_DATA
+	 rm -rf ${OUTFILE_NQ}
       fi
 #
 # SET NAMELIST TO CONVERT MOPITT ASCII TO OBS_SEQ 
@@ -3081,8 +3117,126 @@ EOFF
          touch NO_MOPITT_CO_${DATE}
       fi
    fi
-exit
-
+#
+# SET MOPITT PARAMETERS
+#      export MOPITT_FILE_PRE=MOP02J-
+#      export MOPITT_FILE_PRE_NQ=MOP02J-
+#      export MOPITT_FILE_EXT=-L2V10.1.3.beta.hdf   
+#
+# SET OBS_WINDOW
+#      export BIN_BEG_HH=${ASIM_MN_HH}
+#      export BIN_BEG_MN=0
+#      export BIN_BEG_SS=0
+#      export BIN_END_HH=${ASIM_MX_HH}
+#      export BIN_END_MN=0
+#      export BIN_END_SS=0
+#
+# SET MOPITT INPUT DATA DIR
+#      export FLG=0
+#      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+#         export FLG=1
+#         export BIN_BEG_HH=0
+#         export BIN_BEG_MN=0
+#         export BIN_BEG_SS=0
+#      fi
+#      export INFILE=${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE_NQ}${YYYY}${MM}${DD}${MOPITT_FILE_EXT}
+#      export OUTFILE=TEMP_FILE.dat
+#      export OUTFILE_NQ=TEMP_FILE.dat
+#      export ARCHIVE_FILE=MOPITT_CO_${DATE}.dat
+#      rm -rf ${OUTFILE_NQ}
+#      rm -rf ${ARCHIVE_FILE}
+#
+# COPY EXECUTABLE
+#      export FILE=mopitt_v5_co_extract.m
+#      rm -rf ${FILE}
+#      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+#      mcc -m mopitt_v5_co_extract.m -o mopitt_v5_co_extract
+#      ./run_mopitt_v5_co_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${MOPITT_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+#      if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+#         touch ${ARCHIVE_FILE}
+#         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+#      elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+#         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+#      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+#      if [[ ${FLG} -eq 1 ]]; then
+#         export BIN_BEG_HH=${ASIM_MIN_HH}
+#         export BIN_BEG_MN=0
+#         export BIN_BEG_SS=1
+#         export BIN_END_HH=23
+#         export BIN_END_MN=59
+#         export BIN_END_SS=59
+#         export INFILE=${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE_NQ}${PAST_YYYY}${PAST_MM}${PAST_DD}${MOPITT_FILE_EXT}
+#         export OUTFILE=TEMP_FILE.dat
+#         export OUTFILE_NQ=TEMP_FILE.dat
+#         rm -rf ${OUTFILE_NQ}
+#
+# COPY EXECUTABLE
+#         export FILE=mopitt_v5_co_extract.m
+#         rm -rf ${FILE}
+#         cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+#         mcc -m mopitt_v5_co_extract.m -o mopitt_v5_co_extract
+#         ./run_mopitt_v5_co_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${MOPITT_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
+#      fi
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+#      if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+#         touch ${ARCHIVE_FILE}
+#         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+#      elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+#         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+#      fi
+#      if [[ ! -e ${ARCHIVE_FILE} ]]; then
+#         touch NO_MOPITT_CO_${DATE}_DATA
+#      fi
+#
+# SET NAMELIST TO CONVERT MOPITT_CO ASCII TO OBS_SEQ 
+#      export NL_YEAR=${D_YYYY}
+#      export NL_MONTH=${D_MM}
+#      export NL_DAY=${D_DD}
+#      export NL_HOUR=${D_HH}
+#      if [[ ${D_HH} -eq 24 ]]; then
+#         export NL_BIN_BEG=21.01
+#         export NL_BIN_END=3.00
+#      elif [[ ${D_HH} -eq 6 ]]; then
+#         export NL_BIN_BEG=3.01
+#         export NL_BIN_END=9.00
+#      elif [[ ${D_HH} -eq 12 ]]; then
+#         export NL_BIN_BEG=9.01
+#         export NL_BIN_END=15.00
+#      elif [[ ${D_HH} -eq 18 ]]; then
+#         export NL_BIN_BEG=15.01
+#         export NL_BIN_END=21.00
+#      fi
+#      cp MOPITT_CO_${D_DATE}.dat ${D_DATE}.dat
+#      export NL_FILEDIR=\'./\' 
+#      export NL_FILENAME=${D_DATE}.dat
+#      export NL_MOPITT_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_MOPITT}\'
+#      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_MOPITT}
+#      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+#      export NL_NLAYER_MODEL=${NNZP_CR}
+#      export NL_NLAYER_MOPITT_CO=9
+#
+# USE MOPITT DATA 
+#      rm -rf input.nml
+#      ${HYBRID_SCRIPTS_DIR}/da_create_dart_mopitt_input_nml.ksh
+#
+# GET EXECUTABLE
+#      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/work/mopitt_v5_ascii_to_obs ./.
+#      ./mopitt_v5_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+#      export MOPITT_FILE=mopitt_co_obs_seq
+#      touch obs_seq_mopitt_co_${DATE}.out
+#      if [[ -s ${MOPITT_FILE} ]]; then
+#         cp ${MOPITT_FILE} obs_seq_mopitt_co_${DATE}.out
+#      else
+#         touch NO_MOPITT_CO_${DATE}
+#      fi
+#   fi
 #
 #########################################################################
 #
@@ -3662,34 +3816,6 @@ EOFF
       mcc -m omi_o3_extract.m -o omi_o3_extract
       ./run_omi_o3_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
-#      rm -rf job.ksh
-#      touch job.ksh
-#      RANDOM=$$
-#      export JOBRND=${RANDOM}_idl_omi
-#      cat << EOF > job.ksh
-##!/bin/ksh -aeux
-##PBS -N ${JOBRND}
-##PBS -l walltime=${GENERAL_TIME_LIMIT}
-##PBS -q ${GENERAL_JOB_CLASS}
-##PBS -j oe
-##PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-##
-#./run_omi_o3_extract.sh ${MATLAB}
-##
-#export RC=\$?     
-#if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-#if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-#if [[ \$RC = 0 ]]; then
-#   touch SUCCESS
-#else
-#   touch FAILED 
-#   exit
-#fi
-#EOF
-#      qsub -Wblock=true job.ksh
-#
-
-#
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
@@ -3717,32 +3843,6 @@ EOFF
          cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
          mcc -m omi_o3_extract.m -o omi_o3_extract
          ./run_omi_o3_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
-#
-#         rm -rf job.ksh
-#         touch job.ksh
-#         RANDOM=$$
-#         export JOBRND=${RANDOM}_idl_omi
-#         cat << EOF > job.ksh
-##!/bin/ksh -aeux
-##PBS -N ${JOBRND}
-##PBS -l walltime=${GENERAL_TIME_LIMIT}
-##PBS -q ${GENERAL_JOB_CLASS}
-##PBS -j oe
-##PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-##
-#matlab -nosplash -nodesktop -r "omi_o3_extract(${INFILE},${OUTFILE},${OMI_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_M#M},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN_#END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-##
-#export RC=\$?     
-#if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-#if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-#if [[ \$RC = 0 ]]; then
-#   touch SUCCESS
-#else
-#   touch FAILED 
-#   exit
-#fi
-#EOF
-#         qsub -Wblock=true job.ksh 
       fi
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -3851,32 +3951,6 @@ EOFF
       mcc -m omi_no2_extract.m -o omi_no2_extract
       ./run_omi_no2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
-#      rm -rf job.ksh
-#      touch job.ksh
-#      RANDOM=$$
-#      export JOBRND=${RANDOM}_idl_omi
-#      cat << EOF > job.ksh
-##!/bin/ksh -aeux
-##PBS -N ${JOBRND}
-##PBS -l walltime=${GENERAL_TIME_LIMIT}
-##PBS -q ${GENERAL_JOB_CLASS}
-##PBS -j oe
-##PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-##
-#matlab -nosplash -nodesktop -r "omi_no2_extract(${INFILE},${OUTFILE},${OMI_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_#MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN#_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-##
-#export RC=\$?     
-#if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-#if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-#if [[ \$RC = 0 ]]; then
-#   touch SUCCESS
-#else
-#   touch FAILED 
-#   exit
-#fi
-#EOF
-#      qsub -Wblock=true job.ksh
-#
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
@@ -3905,31 +3979,6 @@ EOFF
          mcc -m omi_no2_extract.m -o omi_no2_extract
          ./run_omi_no2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
-#         rm -rf job.ksh
-#         touch job.ksh
-#         RANDOM=$$
-#         export JOBRND=${RANDOM}_idl_omi
-#         cat << EOF > job.ksh
-##!/bin/ksh -aeux
-##PBS -N ${JOBRND}
-##PBS -l walltime=${GENERAL_TIME_LIMIT}
-##PBS -q ${GENERAL_JOB_CLASS}
-##PBS -j oe
-##PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-##
-#matlab -nosplash -nodesktop -r "omi_no2_extract(${INFILE},${OUTFILE},${OMI_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_#MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN#_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-##
-#export RC=\$?     
-#if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-#if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-#if [[ \$RC = 0 ]]; then
-#   touch SUCCESS
-#else
-#   touch FAILED 
-#   exit
-#fi
-#EOF
-#         qsub -Wblock=true job.ksh 
       fi
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -4038,32 +4087,6 @@ EOFF
       mcc -m omi_so2_extract.m -o omi_so2_extract
       ./run_omi_so2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
-#      rm -rf job.ksh
-#      touch job.ksh
-#      RANDOM=$$
-#      export JOBRND=${RANDOM}_idl_omi
-#      cat << EOF > job.ksh
-##!/bin/ksh -aeux
-##PBS -N ${JOBRND}
-##PBS -l walltime=${GENERAL_TIME_LIMIT}
-##PBS -q ${GENERAL_JOB_CLASS}
-##PBS -j oe
-##PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-##
-#matlab -nosplash -nodesktop -r "omi_so2_extract(${INFILE},${OUTFILE},${OMI_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_#MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN#_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-##
-#export RC=\$?     
-#if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-#if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-#if [[ \$RC = 0 ]]; then
-#   touch SUCCESS
-#else
-#   touch FAILED 
-#   exit
-#fi
-#EOF
-#      qsub -Wblock=true job.ksh
-#
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
@@ -4091,33 +4114,7 @@ EOFF
          cp ${DART_DIR}/observations/obs_converters/OMI_SO2/native_to_ascii/${FILE} ./.
          mcc -m omi_so2_extract.m -o omi_so2_extract
         ./run_omi_so2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
-#         rm -rf job.ksh
-#         touch job.ksh
-#         RANDOM=$$
-#         export JOBRND=${RANDOM}_idl_omi
-#         cat << EOF > job.ksh
-##!/bin/ksh -aeux
-##PBS -N ${JOBRND}
-##PBS -l walltime=${GENERAL_TIME_LIMIT}
-##PBS -q ${GENERAL_JOB_CLASS}
-##PBS -j oe
-##PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-##
-#. /etc/profile.d/lmod.sh
-#module load matlab
-#matlab -nosplash -nodesktop -r "omi_so2_extract(${INFILE},${OUTFILE},${OMI_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_#MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN#_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-##
-#export RC=\$?     
-#if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-#if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-#if [[ \$RC = 0 ]]; then
-#   touch SUCCESS
-#else
-#   touch FAILED 
-#   exit
-#fi
-#EOF
-#         qsub -Wblock=true job.ksh 
+#
       fi
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -4223,32 +4220,8 @@ EOFF
       export FILE=tropomi_co_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/TROPOMI_CO/native_to_ascii/${FILE} ./.
-#
-      rm -rf job.ksh
-      touch job.ksh
-      RANDOM=$$
-      export JOBRND=${RANDOM}_idl_tropomi
-      cat << EOF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-matlab -nosplash -nodesktop -r "tropomi_co_extract(${INFILE},${OUTFILE},${TROPOMI_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-#
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOF
-      qsub -Wblock=true job.ksh
+      mcc -m tropomi_co_extract.m -o tropomi_co_extract
+     ./run_tropomi_co_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -4275,32 +4248,9 @@ EOF
          export FILE=tropomi_co_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/TROPOMI_CO/native_to_ascii/${FILE} ./.
+         mcc -m tropomi_co_extract.m -o tropomi_co_extract
+        ./run_tropomi_co_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
-         rm -rf job.ksh
-         touch job.ksh
-         RANDOM=$$
-         export JOBRND=${RANDOM}_idl_tropomi
-         cat << EOF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-matlab -nosplash -nodesktop -r "tropomi_co_extract(${INFILE},${OUTFILE},${TROPOMI_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-#
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOF
-         qsub -Wblock=true job.ksh 
       fi
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -4407,32 +4357,8 @@ EOF
       export FILE=tropomi_o3_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
-#
-      rm -rf job.ksh
-      touch job.ksh
-      RANDOM=$$
-      export JOBRND=${RANDOM}_idl_tropomi
-      cat << EOF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-matlab -nosplash -nodesktop -r "tropomi_o3_extract(${INFILE},${OUTFILE},${TROPOMI_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-#
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOF
-      qsub -Wblock=true job.ksh
+      mcc -m tropomi_o3_extract.m -o tropomi_o3_extract
+      ./run_tropomi_o3_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -4459,33 +4385,8 @@ EOF
          export FILE=tropomi_o3_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
-#
-         rm -rf job.ksh
-         touch job.ksh
-         RANDOM=$$
-         export JOBRND=${RANDOM}_idl_tropomi
-         cat << EOF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-matlab -nosplash -nodesktop -r "tropomi_o3_extract(${INFILE},${OUTFILE},${TROPOMI_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-#
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOF
-         qsub -Wblock=true job.ksh
-      fi
+         mcc -m tropomi_o3_extract.m -o tropomi_o3_extract
+        ./run_tropomi_o3_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -4591,32 +4492,8 @@ EOF
       export FILE=tropomi_no2_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
-#
-      rm -rf job.ksh
-      touch job.ksh
-      RANDOM=$$
-      export JOBRND=${RANDOM}_idl_tropomi
-      cat << EOF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-matlab -nosplash -nodesktop -r "tropomi_no2_extract(${INFILE},${OUTFILE},${TROPOMI_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-#
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOF
-      qsub -Wblock=true job.ksh
+      mcc -m tropomi_no2_extract.m -o tropomi_no2_extract
+     ./run_tropomi_no2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -4643,33 +4520,8 @@ EOF
          export FILE=tropomi_no2_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
-#
-         rm -rf job.ksh
-         touch job.ksh
-         RANDOM=$$
-         export JOBRND=${RANDOM}_idl_tropomi
-         cat << EOF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-matlab -nosplash -nodesktop -r "tropomi_no2_extract(${INFILE},${OUTFILE},${TROPOMI_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-#
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOF
-         qsub -Wblock=true job.ksh 
-      fi
+         mcc -m tropomi_no2_extract.m -o tropomi_no2_extract
+        ./run_tropomi_no2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -4775,32 +4627,8 @@ EOF
       export FILE=tropomi_so2_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/TROPOMI_SO2/native_to_ascii/${FILE} ./.
-#
-      rm -rf job.ksh
-      touch job.ksh
-      RANDOM=$$
-      export JOBRND=${RANDOM}_idl_tropomi
-      cat << EOF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-matlab -nosplash -nodesktop -r "tropomi_so2_extract(${INFILE},${OUTFILE},${TROPOMI_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-#
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOF
-      qsub -Wblock=true job.ksh
+      mcc -m tropomi_so2_extract.m -o tropomi_so2_extract
+     ./run_tropomi_so2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -4827,33 +4655,8 @@ EOF
          export FILE=tropomi_so2_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/TROPOMI_SO2/native_to_ascii/${FILE} ./.
-#
-         rm -rf job.ksh
-         touch job.ksh
-         RANDOM=$$
-         export JOBRND=${RANDOM}_idl_tropomi
-         cat << EOF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-matlab -nosplash -nodesktop -r "tropomi_so2_extract(${INFILE},${OUTFILE},${TROPOMI_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-#
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOF
-         qsub -Wblock=true job.ksh 
-      fi
+         mcc -m tropomi_so2_extract.m -o tropomi_so2_extract
+        ./run_tropomi_so2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -4956,35 +4759,11 @@ EOF
       rm -rf ${ARCHIVE_FILE}
 #
 # COPY EXECUTABLE
-      export FILE=tempo_o3_extract.m
+      export FILE=temp_o3_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
-#
-      rm -rf job.ksh
-      touch job.ksh
-      RANDOM=$$
-      export JOBRND=${RANDOM}_idl_tempo
-      cat << EOF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-matlab -nosplash -nodesktop -r "tempo_o3_extract(${INFILE},${OUTFILE},${TEMPO_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-#
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOF
-      qsub -Wblock=true job.ksh
+      mcc -m tempo_o3_extract.m -o tempo_o3_extract
+     ./run_tempo_o3_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -5008,37 +4787,13 @@ EOF
          rm -rf ${OUTFILE_NQ}
 #
 # COPY EXECUTABLE
-         export FILE=tempo_o3_extract.m
+         export FILE=temp_o3_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+         mcc -m tempo_o3_extract.m -o tempo_o3_extract
+         ./run_tempo_o3_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
-         rm -rf job.ksh
-         touch job.ksh
-         RANDOM=$$
-         export JOBRND=${RANDOM}_idl_tempo
-         cat << EOF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-matlab -nosplash -nodesktop -r "tempo_o3_extract(${INFILE},${OUTFILE},${TEMPO_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-#
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOF
-         qsub -Wblock=true job.ksh 
       fi
-#
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
@@ -5138,35 +4893,11 @@ EOF
       rm -rf ${ARCHIVE_FILE}
 #
 # COPY EXECUTABLE
-      export FILE=tempo_no2_extract.m
+      export FILE=temp_no2_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/native_to_ascii/${FILE} ./.
-#
-      rm -rf job.ksh
-      touch job.ksh
-      RANDOM=$$
-      export JOBRND=${RANDOM}_idl_tempo
-      cat << EOF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-matlab -nosplash -nodesktop -r "tempo_no2_extract(${INFILE},${OUTFILE},${TEMPO_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-#
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOF
-      qsub -Wblock=true job.ksh
+      mcc -m tempo_no2_extract.m -o tempo_no2_extract
+     ./run_tempo_no2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -5190,35 +4921,12 @@ EOF
          rm -rf ${OUTFILE_NQ}
 #
 # COPY EXECUTABLE
-         export FILE=tempo_no2_extract.m
+         export FILE=temp_no2_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/native_to_ascii/${FILE} ./.
+         mcc -m tempo_no2_extract.m -o tempo_no2_extract
+        ./run_tempo_no2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
-         rm -rf job.ksh
-         touch job.ksh
-         RANDOM=$$
-         export JOBRND=${RANDOM}_idl_tempo
-         cat << EOF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-matlab -nosplash -nodesktop -r "tempo_no2_extract(${INFILE},${OUTFILE},${TEMPO_FILE_PRE},${ASIM_MIN_YYYY},${ASIM_MIN_MM},${ASIM_MIN_DD},${BIN_BEG_HH},${BIN_BEG_MN},${BIN_BEG_SS},${ASIM_MAX_YYYY},${ASIM_MAX_MM},${ASIM_MAX_DD},${BIN_END_HH},${BIN_END_MN},${BIN_END_SS},${NNL_MIN_LON},${NNL_MAX_LON},${NNL_MIN_LAT},${NNL_MAX_LAT})"
-#
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOF
-         qsub -Wblock=true job.ksh
       fi
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -6935,10 +6643,14 @@ EOF
 # Copy emission input files
          if [[ ${LL_DATE} -le ${FIRST_EMISS_INV_DATE} || ${ADD_EMISS} = ".false." ]]; then
             cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./.
+            ncrename -d emissions_zdim_stag,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
             cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./.
+            ncrename -d emissions_zdim_stag,fire_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
          else
             cp ${BACKGND_FCST_DIR}/run_${CMEM}/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+            ncrename -d emissions_zdim_stag,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
             cp ${BACKGND_FCST_DIR}/run_${CMEM}/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+            ncrename -d emissions_zdim_stag,fire_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
          fi
 #
 # Copy background input file
@@ -7054,7 +6766,9 @@ EOF
 # Copy the adjusted emissions fields from the wrfinput files to the emissions input files
          ncks -O -x -v ${WRFCHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_temp.${CMEM} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM}
          ncks -A -v ${WRFCHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_temp.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+         ncrename -d chemi_zdim_stag,emissions_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
          ncks -A -v ${WRFFIRECHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_temp.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+         ncrename -d fire_zdim_stag,emissions_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
          rm -rf wrfinput_d${CR_DOMAIN}_${CMEM} wrfout_d${CR_DOMAIN}_temp.${CMEM}
 #
          let MEM=${MEM}+1
@@ -7063,7 +6777,8 @@ EOF
 
 exit
 
-#
+
+   #
 #########################################################################
 #
 # UPDATE COARSE RESOLUTION BOUNDARY CONDIIONS

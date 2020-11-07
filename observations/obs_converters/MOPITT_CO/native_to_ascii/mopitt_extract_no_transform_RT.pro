@@ -71,6 +71,7 @@ pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_ma
    print, 'IDL lat max  ', lat_max
 ;
    num_version=5
+   version = 'v5'
    what_cov=3
    do_DART_input=1
    do_station_output=0
@@ -78,59 +79,24 @@ pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_ma
    sband='tirnir'
    apm_no_transform='true'
 ;
-   case num_version of
-      3: version = 'v3';
-      4: version = 'v4';
-      5: version = 'v5';
-   endcase
-;
 ; the two versions have different number of vertical levels
-   if ( version eq 'v3' ) then begin
 ;
-; note that mopittlev [0] is psurf (hPa)
-      mopittpress = [1000., 850., 700., 500., 350., 250., 150.]
-   endif else begin
-;
-; note that mopittlev [0] is psurf (hPa)
-      mopittpress=[1000., 900., 800., 700., 600., 500., 400., 300., 200., 100.]
+; note that mopittlev [0] is psurf (hPa) the 1000 is a placeholder
+   mopittpress=[1000., 900., 800., 700., 600., 500., 400., 300., 200., 100.]
 ;
 ; note that covariance in v4 are to be calculated
 ; prior error covariance is fixed --see V4 User's Guide
 ; set prior covariance parameters
-      if ( what_cov eq 3 ) then begin
-         prior_error = 0.3 ; in log 
-      endif else begin
-         prior_error = 0.5 ; in log
-      endelse
-      delta_pressure_lev = 100. ; hPa
-      log10e = alog10(exp(1))
-      C0     = (prior_error*log10e)^2
-      Pc2    = delta_pressure_lev^2
+   if ( what_cov eq 3 ) then begin
+      prior_error = 0.3 ; in log 
+   endif else begin
+      prior_error = 0.5 ; in log
    endelse
+   delta_pressure_lev = 100. ; hPa
+   log10e = alog10(exp(1))
+   C0     = (prior_error*log10e)^2
+   Pc2    = delta_pressure_lev^2
    mopitt_dim = n_elements(mopittpress)
-;
-; debug level (debug=0 if no printouts)
-   debug = 0
-;
-;=======================================================================
-; assign station locations
-; define stations here for now
-; in the future, we can read a file of lat/lon/drad
-; Saskatchewan, NE Pacific, American Samoa, Ascension Is, Seychelles, 
-; Pittsburg,US, Houston, US, Baltic Sea, Indian Ocean, NW Aus 1, NW Aus 2,
-; Prague, Nigeria, Beijing, Delhi, Midway Island, Brazilia, Indonesia
-;
-; station center longitude in degrees
-   lontsloc = [-105.45, -150.00, -170.57, -14.42, 55.17, -80.00, -95.00, 17.07, 123.00, 121.00, 129.00, 15.00, 10.00, 117.00, 75.00, -175.00, -45.00, 117.0]
-;
-; station center latitude in degress
-lattsloc = [  50.33,   40.00,  -14.24,  -7.92, -4.67,  40.00,  30.00, 55.42, -12.00, -21.00, -21.00, 50.00, 10.00,  39.00, 30.00,    30.00, -45.00, -2.5]
-;
-; radius of influence in degrees
-drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1.00,   1.00,   1.00,  1.00,  1.00,   1.00,  1.00,    1.00,   1.00, 2.5]
-;
-; number of stations
-   ntsloc   = n_elements(lontsloc)
 ;
 ;=======================================================================
 ; QUALITY CONTROLS
@@ -169,14 +135,9 @@ drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1
 ;
 ; retrieval error as fraction of its  prior error
 ; this is very ad hoc based on percent apriori (post error/prior error)
-   if ( version ne 'v3' ) then begin
-      max_error_reduction_qc = 1.00  ; it's difficult to set this in log 
-                                     ; make this 95% and let dofs be its qc
-   endif else begin
-      max_error_reduction_qc = 0.5 ; in v3 this is usually our qc
-   endelse
+   max_error_reduction_qc = 1.00  ; it's difficult to set this in log 
+                                  ; make this 95% and let dofs be its qc
 ;
-; end of QC
 ;=======================================================================
 ;
 ; convert bins into seconds
@@ -215,173 +176,67 @@ drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1
    name  = 'Cloud Description'
    cloud = get_vd(mopitt_input_file, name)
 ;
-   if (version ne 'v3') then begin
 ; Read Surface Pressure
-      name  = 'Surface Pressure'
-      psurf = get_vd(mopitt_input_file, name)
-   endif else begin
-;
-; Read Retrieval Bottom Pressure
-      name  = 'Retrieval Bottom Pressure'
-      psurf = read_mopitt(mopitt_input_file, name)
-      psurf = reform(psurf[0,*])
-   endelse
+   name  = 'Surface Pressure'
+   psurf = get_vd(mopitt_input_file, name)
 ;
 ; Read Solar Zenith Angle
    name = 'Solar Zenith Angle'
    sza  = get_vd(mopitt_input_file, name)
 ;
-   if (version ne 'v3') then begin
-;
 ; Read Surface Indicator
-      name = 'Surface Index'
-      sind = get_vd(mopitt_input_file, name)
-   endif else begin
+   name = 'Surface Index'
+   sind = get_vd(mopitt_input_file, name)
 ;
-; Read Surface Indicator
-      name = 'Surface Indicator'
-      sind = get_vd(mopitt_input_file, name)
-   endelse
-;
-   if (version ne 'v3') then begin
 ;
 ; Read CO Total Colum
-      name  = 'Retrieved CO Total Column'
-      cocol = read_mopitt(mopitt_input_file, name)
-      cocol0 = reform(cocol[0,*])
-      cocol1 = reform(cocol[1,*])
-   endif else begin
-;
-; Read CO Total Column
-      name  = 'CO Total Column'
-      cocol = read_mopitt(mopitt_input_file, name)
-      cocol0 = reform(cocol[0,*])
-      cocol1 = reform(cocol[1,*])
-   endelse
-;
-   if (version ne 'v3') then begin
+   name  = 'Retrieved CO Total Column'
+   cocol = read_mopitt(mopitt_input_file, name)
+   cocol0 = reform(cocol[0,*])
+   cocol1 = reform(cocol[1,*])
 ;
 ; Read DOFS
-      name = 'Degrees of Freedom for Signal'
-      dofs = get_vd(mopitt_input_file, name)
-   endif
-;
-   if (version ne 'v3') then begin
+   name = 'Degrees of Freedom for Signal'
+   dofs = get_vd(mopitt_input_file, name)
 ;
 ; Read Retrieved Non-Surface CO Mixing Ratio
-      name     = 'Retrieved CO Mixing Ratio Profile'
-      codata   = read_mopitt(mopitt_input_file, name)
-      comix    = reform(codata[0,*,*])
-      comixerr = reform(codata[1,*,*])
+   name     = 'Retrieved CO Mixing Ratio Profile'
+   codata   = read_mopitt(mopitt_input_file, name)
+   comix    = reform(codata[0,*,*])
+   comixerr = reform(codata[1,*,*])
 ;
 ; Read Retrieved CO Surface Mixing Ratio 
-      name      = 'Retrieved CO Surface Mixing Ratio'
-      codata    = read_mopitt(mopitt_input_file, name)
-      scomix    = reform(codata[0,*])
-      scomixerr = reform(codata[1,*])
+   name      = 'Retrieved CO Surface Mixing Ratio'
+   codata    = read_mopitt(mopitt_input_file, name)
+   scomix    = reform(codata[0,*])
+   scomixerr = reform(codata[1,*])
 ;
 ; Read Retrieval Averaging Kernel Matrix
-      name   = 'Retrieval Averaging Kernel Matrix'
-      avgker = read_mopitt(mopitt_input_file, name)
+   name   = 'Retrieval Averaging Kernel Matrix'
+   avgker = read_mopitt(mopitt_input_file, name)
 ;
 ; Read A Priori Surface CO Mixing Ratio 
-      name     = 'A Priori CO Surface Mixing Ratio'
-      codata   = read_mopitt(mopitt_input_file, name)
-      sperc    = reform(codata[0,*])
-      spercerr = reform(codata[1,*])
+   name     = 'A Priori CO Surface Mixing Ratio'
+   codata   = read_mopitt(mopitt_input_file, name)
+   sperc    = reform(codata[0,*])
+   spercerr = reform(codata[1,*])
 ;
 ; Read A Priori CO Mixing Ratio Profile
-      name    = 'A Priori CO Mixing Ratio Profile'
-      codata  = read_mopitt(mopitt_input_file, name)
-      perc    = reform(codata[0,*,*])
-      percerr = reform(codata[1,*,*])
-;
-      if (version eq 'v5') then begin
+   name    = 'A Priori CO Mixing Ratio Profile'
+   codata  = read_mopitt(mopitt_input_file, name)
+   perc    = reform(codata[0,*,*])
+   percerr = reform(codata[1,*,*])
 ;
 ; Read Retrieval Error Covariance Matrix
-         name = 'Retrieval Error Covariance Matrix'
-         covmatrix = read_mopitt(mopitt_input_file, name)
-      endif
-   endif else begin
-;
-; Read CO Mixing Ratio
-      name     = 'CO Mixing Ratio'
-      codata   = read_mopitt(mopitt_input_file, name)
-      comix    = reform(codata[0,*,*])
-      comixerr = reform(codata[1,*,*])
-;
-; Read Retrieval Bottom CO Mixing Ratio
-      name      = 'Retrieval Bottom CO Mixing Ratio'
-      codata    = read_mopitt(mopitt_input_file, name)
-      scomix    = reform(codata[0,*])
-      scomixerr = reform(codata[1,*])
-;
-; Read Retrieval Error Covariance Matrix
-      name      = 'Retrieval Error Covariance Matrix'
-      covmatrix = read_mopitt(mopitt_input_file, name)
-      covmatrix = covmatrix
-   endelse
+   name = 'Retrieval Error Covariance Matrix'
+   covmatrix = read_mopitt(mopitt_input_file, name)
    print, 'APM: Completed MOPITT data read'
 ;
 ;=======================================================================
 ; Open output file
 ;=======================================================================
 ;
-; initialize unit numbers for station data
-   if ( do_station_output eq 1 ) then begin 
-      unit_array = intarr(ntsloc)
-   endif
-;
-; in cases where the file moves over to another day
-   if (bin_beg eq 0) then begin
-;
-;open previous file
-      if ( do_DART_input eq 1 ) then begin
-         openu, unit, mopitt_output_file, /get_lun
-         dummyA= ' '
-         while ~ eof(unit) do begin
-            readf, unit, dummyA
-         endwhile
-      endif
-;
-; file for station diagnostics
-      if ( do_station_output eq 1 ) then begin
-         for istation = 0L, ntsloc-1 do begin
-            if ( istation lt 10 ) then begin
-               station_mopitt_output_file = strtrim(mopitt_output_file+'.station_0'+string(istation,format='(i1)'))
-            endif else begin
-               station_mopitt_output_file = strtrim(mopitt_output_file+'.station_'+string(istation,format='(i2)'))
-            endelse
-            openu, unit_temp, station_mopitt_output_file, /get_lun
-            unit_array[istation] = unit_temp
-            dummyA = ' '
-            while ~ eof(unit_temp) do begin
-               readf, unit_temp, dummyA
-            endwhile
-         endfor
-      endif
-;
-; else open a new file
-   endif else begin
-;
-; file for DART input
-      if ( do_DART_input eq 1 ) then begin
-         openw, unit, mopitt_output_file, /get_lun
-      endif
-;
-; file for station diagnostics
-      if ( do_station_output eq 1 ) then begin
-         for istation = 0L, ntsloc-1 do begin
-            if ( istation lt 10 ) then begin
-               station_mopitt_output_file = strtrim(mopitt_output_file+'.station_0'+string(istation,format='(i1)'))
-            endif else begin
-               station_mopitt_output_file = strtrim(mopitt_output_file+'.station_'+string(istation,format='(i2)'))
-            endelse
-            openw, unit_temp, station_mopitt_output_file, /get_lun
-            unit_array[istation] = unit_temp
-         endfor
-      endif
-   endelse ; bin_beg
+   openw, unit, mopitt_output_file, /get_lun 
 ;
 ;=======================================================================
 ; define/initialize other variables here
@@ -402,238 +257,67 @@ drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1
 ;=======================================================================
 ;
 ; Now, loop through each pixels
-   for k = 0L, nx do begin 
+   for k = 0L, nx do begin
       allpix_count = allpix_count + 1.0
 ;
 ;=====================================================
-; first get all the necessary arrays
-;
-;==============================================
-; For V3, half of the posterior error covariance is reported
-; we need to construct the full covariance and averaging kernel
-; we need the prior profile and error covariance to do this
-; A = I - Cx Ca^-1
-;==============================================
-      case version of 
-         'v3' : begin
-            cov_retr = dblarr(mopitt_dim,mopitt_dim)
-            cov_retr[0,0] = (scomixerr[k]*1e-9)^2 ; ppb to VMR
-            for ik=1,mopitt_dim-1 do cov_retr[ik,ik] = (comixerr[ik-1,k]*1e-9)^2
-            cov_retr[0,1:mopitt_dim-1] = covmatrix[0,0:5,k]
-            cov_retr[1,2:mopitt_dim-1] = covmatrix[0,6:10,k]
-            cov_retr[2,3:mopitt_dim-1] = covmatrix[0,11:14,k]
-            cov_retr[3,4:mopitt_dim-1] = covmatrix[0,15:17,k]
-            cov_retr[4,5:mopitt_dim-1] = covmatrix[0,18:19,k]
-            cov_retr[5,6:mopitt_dim-1] = covmatrix[0,20:20,k]
-            for j=0,5 do begin
-               for ik=1,6 do begin
-                  cov_retr[ik,j]=cov_retr[j,ik]
-               endfor
-            endfor
-;
-; call subroutine to calculate averaging kernel A, given full error covariance Cx
-; based on Louisa Emmons' code
-            calc_avgker_v3, cov_retr, psurf[k], A, mop_dim, mopittlev, status, Cx, levind, prior, covmat_ap
-            Ca = covmat_ap
-            dfs = trace(A)
-;    
-            mopittlev = mopittpress
-;  
-; initialize qc status here
-            if status eq 1 then begin
-               qstatus = 1 
-            endif else begin
-               qstatus = 0
-            endelse          
-            mopittlev = mopittpress
-;
-; check number of levels
-; this has been check in calc_avgker_v3 but
-; let's do it again here --mopittlev has slightly different format
-; it's still 7 levels but psurf replaces the first level
-; mop_dim --> effective number of levels
-            case 1 of
-               (psurf[k] gt 850.0): begin
-                  mopittlev = mopittpress
-                  mopittlev[0]=psurf[k]
-                  mop_dim = 7
-               end
-               (psurf[k] le 850.0) and  (psurf[k] gt 700.0):  begin
-                  mopittlev = mopittpress
-                  mopittlev[1] = psurf[k]
-                  mop_dim = 6
-               end
-               (psurf[k] le 700.0) and  (psurf[k] gt 500.0):  begin
-                  mopittlev = mopittpress
-                  mopittlev[2] = psurf[k]
-                  mop_dim = 5
-               end
-               (psurf[k] le 500.0) and  (psurf[k] gt 350.0):  begin
-                  mopittlev = mopittpress
-                  mopittlev[3] = psurf[k]
-                  mop_dim = 4
-               end
-               else: begin
-                  print, 'MOPITT Surface Level Too High'
-                  qstatus = 1
-               end
-            endcase
-         end ; version v3
-         'v4' : begin
-;
-;==============================================
-; For V4, we need to calculate Cx, given A
-; Calculate Cm (see email by Merritt 12/11/2008)
-; Cx = Cs + Cm
-; A = I - Cx Ca^-1 so Cx = (I-A) Ca
-; Cs = (A-I)Ca(A-I)^T 
-; Cm = (I-A)Ca(I+(A-I)^T)
-;==============================================
-;
-            qstatus = 0
-            mopittlev = mopittpress
-            case 1 of    
-               (psurf[k] gt 900.0): begin
-                  mopittlev = mopittpress
-                  mopittlev[0]=psurf[k]
-                  mop_dim = 10
-               end
-               (psurf[k] le 900.0) and  (psurf[k] gt 800.0):  begin
-                  mopittlev = mopittpress
-                  mopittlev[1] = psurf[k]
-                  mop_dim = 9
-               end
-               (psurf[k] le 800.0) and  (psurf[k] gt 700.0):  begin
-                  mopittlev = mopittpress
-                  mopittlev[2] = psurf[k]
-                  mop_dim = 8
-               end
-               (psurf[k] le 700.0) and  (psurf[k] gt 600.0):  begin
-                  mopittlev = mopittpress
-                  mopittlev[3] = psurf[k]
-                  mop_dim = 7
-               end
-               (psurf[k] le 600.0) and  (psurf[k] gt 500.0):  begin
-                  mopittlev = mopittpress
-                  mopittlev[4] = psurf[k]
-                  mop_dim = 6
-               end
-               (psurf[k] le 500.0) and  (psurf[k] gt 400.0):  begin
-                  mopittlev = mopittpress
-                  mopittlev [5] = psurf[k]
-                  mop_dim = 5
-               end
-               else: begin
-                  print, 'MOPITT Surface Level Too High'
-                  qstatus = 1
-               end
-            endcase
-;
-; Construct prior covariance matrix
-; based on MOPITT V4 User Guide
-            covmat_ap = fltarr(mop_dim,mop_dim, /nozero)
-            d_mop_dim = mopitt_dim-mop_dim
-            for ii=d_mop_dim,mopitt_dim-1 do begin
-               for jj=d_mop_dim,mopitt_dim-1 do begin
-                  tmp=C0*( exp( -((mopittlev[ii]-mopittlev[jj])^2)/Pc2) )
-                  covmat_ap[ii-d_mop_dim,jj-d_mop_dim]=tmp
-               endfor
-            endfor
-;
-; change notation (for my case)
-            Ca = covmat_ap
-;
-; Invert the a priori covariance matrix 
-            invCa = invert(Ca, status)
-;
-; status = 0: successful
-; status = 1: singular array
-; status = 2: warning that a small pivot element was used and that
-;             significant accuracy was probably lost.
-; Status is usually 2
-;
-            if status eq 1 then begin
-               qstatus = 1
-            endif else begin
-               qstatus = 0
-            endelse
-;
-; change notation ( for clarity )
-            mop_A = avgker[*,*,k]
-;
-; need to do transpose (IDL column-major)
-            mop_A = transpose(mop_A)
-; 
-; truncate to effective number of levels
-            A = fltarr(mop_dim,mop_dim, /nozero)
-            A = mop_A[mopitt_dim-mop_dim:mopitt_dim-1,mopitt_dim-mop_dim:mopitt_dim-1]
-            I = Identity(mop_dim)
-;
-; now calculate posterior covariance
-            Cx = (I-A)##Ca
-;
-; assign dfs
-            dfs = dofs[k]
-         end ; version v4
-         'v5' : begin
-            qstatus = 0
-            mopittlev = mopittpress
+      qstatus = 0
+      mopittlev = mopittpress
 ;
 ; check number of levels
 ; mop_dim --> effective number of levels
-            case 1 of
-               (psurf[k] gt 900.0): begin
-                  mopittlev = mopittpress
-                  mopittlev[0]=psurf[k]
-                  mop_dim = 10
-               end
-               (psurf[k] le 900.0) and  (psurf[k] gt 800.0):  begin
-                  mopittlev = mopittpress
-                  mopittlev[1] = psurf[k]
-                  mop_dim = 9
-               end
-               (psurf[k] le 800.0) and  (psurf[k] gt 700.0):  begin
-                  mopittlev = mopittpress
-                  mopittlev[2] = psurf[k]
-                   mop_dim = 8
-               end
-               (psurf[k] le 700.0) and  (psurf[k] gt 600.0):  begin
-                  mopittlev = mopittpress
-                  mopittlev[3] = psurf[k]
-                  mop_dim = 7
-               end
-               (psurf[k] le 600.0) and  (psurf[k] gt 500.0):  begin
-                  mopittlev = mopittpress
-                  mopittlev[4] = psurf[k]
-                  mop_dim = 6
-               end
-               (psurf[k] le 500.0) and  (psurf[k] gt 400.0):  begin
-                  mopittlev = mopittpress
-                  mopittlev [5] = psurf[k]
-                  mop_dim = 5
-               end
-               else: begin
-                  print, 'MOPITT Surface Level Too High'
-                  qstatus = 1
-               end
-            endcase
+      mop_dim = -999
+      if (psurf[k] gt 900.0) then begin
+         mopittlev = mopittpress
+         mopittlev[0]=psurf[k]
+         mop_dim = 10
+      endif
+      if (psurf[k] le 900.0) &&  (psurf[k] gt 800.0) then begin
+         mopittlev = mopittpress
+         mopittlev[1] = psurf[k]
+         mop_dim = 9
+      endif
+      if (psurf[k] le 800.0) &&  (psurf[k] gt 700.0) then begin
+         mopittlev = mopittpress
+         mopittlev[2] = psurf[k]
+         mop_dim = 8
+      endif
+      if (psurf[k] le 700.0) &&  (psurf[k] gt 600.0) then begin
+         mopittlev = mopittpress
+         mopittlev[3] = psurf[k]
+         mop_dim = 7
+      endif
+      if (psurf[k] le 600.0) &&  (psurf[k] gt 500.0) then begin
+         mopittlev = mopittpress
+         mopittlev[4] = psurf[k]
+         mop_dim = 6
+      endif
+      if (psurf[k] le 500.0) &&  (psurf[k] gt 400.0) then begin
+         mopittlev = mopittpress
+         mopittlev [5] = psurf[k]
+         mop_dim = 5
+      endif
+      if (mop_dim lt 0) then begin
+         print, 'MOPITT Surface Level Too High'
+         qstatus = 1
+      endif
 ;
 ; Construct prior covariance matrix
 ; based on MOPITT V4 User Guide
-            covmat_ap = fltarr(mop_dim,mop_dim, /nozero)
-            d_mop_dim = mopitt_dim-mop_dim
-            for ii=d_mop_dim,mopitt_dim-1 do begin
-               for jj=d_mop_dim,mopitt_dim-1 do begin
-                  tmp=C0*( exp( -((mopittlev[ii]-mopittlev[jj])^2)/Pc2) )
-                  covmat_ap[ii-d_mop_dim,jj-d_mop_dim]=tmp
-               endfor
-            endfor
+      covmat_ap = fltarr(mop_dim,mop_dim, /nozero)
+      d_mop_dim = mopitt_dim-mop_dim
+      for ii=d_mop_dim,mopitt_dim-1 do begin
+         for jj=d_mop_dim,mopitt_dim-1 do begin
+            tmp=C0*( exp( -((mopittlev[ii]-mopittlev[jj])^2)/Pc2) )
+            covmat_ap[ii-d_mop_dim,jj-d_mop_dim]=tmp
+         endfor
+      endfor
 ;
 ; change notation (for my case)
-            Ca = covmat_ap
+      Ca = covmat_ap
 ;
 ; Invert the a priori covariance matrix
-            invCa = invert(Ca, status)
+      invCa = invert(Ca, status)
 ;
 ; status = 0: successful
 ; status = 1: singular array
@@ -641,37 +325,35 @@ drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1
 ;             significant accuracy was probably lost.
 ; Status is usually 2
 ;
-            if status eq 1 then begin
-               qstatus = 1
-            endif else begin
-               qstatus = 0
-            endelse
+      if status eq 1 then begin
+         qstatus = 1
+      endif else begin
+         qstatus = 0
+      endelse
 ;
 ; change notation ( for clarity )
-            mop_A = avgker[*,*,k]
+      mop_A = avgker[*,*,k]
 ;
 ; need to do transpose (IDL column-major)
-            mop_A = transpose(mop_A)
+      mop_A = transpose(mop_A)
 ;
 ; truncate to effective number of levels
-            A = fltarr(mop_dim,mop_dim, /nozero)
-            A = mop_A[mopitt_dim-mop_dim:mopitt_dim-1,mopitt_dim-mop_dim:mopitt_dim-1]
-            I = Identity(mop_dim)
+      A = fltarr(mop_dim,mop_dim, /nozero)
+      A = mop_A[mopitt_dim-mop_dim:mopitt_dim-1,mopitt_dim-mop_dim:mopitt_dim-1]
+      I = Identity(mop_dim)
 ;
 ; change notation (for my case)
-            mop_Cx = covmatrix[*,*,k]
+      mop_Cx = covmatrix[*,*,k]
 ;
 ; need to do transpose (IDL column-major)
-            mop_Cx = transpose(mop_Cx)
+      mop_Cx = transpose(mop_Cx)
 ;
 ; truncate to effective number of levels
-            Cx = fltarr(mop_dim,mop_dim, /nozero)
-            Cx = mop_Cx[mopitt_dim-mop_dim:mopitt_dim-1,mopitt_dim-mop_dim:mopitt_dim-1]
+      Cx = fltarr(mop_dim,mop_dim, /nozero)
+      Cx = mop_Cx[mopitt_dim-mop_dim:mopitt_dim-1,mopitt_dim-mop_dim:mopitt_dim-1]
 ;
 ; assign dfs
-            dfs = dofs[k]
-         end ;version v5
-      endcase
+      dfs = dofs[k]
 ;
 ;=====================================================
 ; APM: at this point AVE has full averaging kernal
@@ -700,18 +382,13 @@ drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1
          coerr = fltarr(mop_dim,/nozero)
          priorerr = fltarr(mop_dim,/nozero)
          priorerrb = fltarr(mop_dim,/nozero)
-         if (version ne 'v3') then begin
-            prior = fltarr(mop_dim,/nozero)
-         endif else begin
-         endelse
+         prior = fltarr(mop_dim,/nozero)
 ;
 ; assign file variables to profile quantities
          co[0] = scomix[k]*1e-9		; in mixing ratio now
          coerr[0] = scomixerr[k]*1e-9 
-         if (version ne 'v3') then begin
-            prior[0] = sperc[k]*1e-9
-            priorerrb[0] = spercerr[k]*1e-9 ; this is from MOPITT product
-         endif
+         prior[0] = sperc[k]*1e-9
+         priorerrb[0] = spercerr[k]*1e-9 ; this is from MOPITT product
 ;
          ik_lev = 0
          for ik = 1,mopitt_dim-1 do begin
@@ -728,17 +405,9 @@ drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1
 ; see notes on calculation of retrieval error
 ; the reason for this is that the prior and posterior should have
 ; the same normalization point for consistency
-         if ( version ne 'v3' ) then begin
-            for ik = 0,mop_dim-1 do begin
-               priorerr[ik] =sqrt(Ca[ik,ik])*co[ik]/log10e 
-            endfor
-         endif else begin
-;
-; for v3, it's not a problem since this is in VMR already
-            for ik = 0,mop_dim-1 do begin
-               priorerr[ik] = sqrt(Ca[ik,ik]) 
-            endfor
-         endelse
+         for ik = 0,mop_dim-1 do begin
+            priorerr[ik] =sqrt(Ca[ik,ik])*co[ik]/log10e 
+         endfor
 ;
 ; before we use 700hPa or 500 hPa level for apriori contrib
 ; i think it's better to use the maximum error reduction instead
@@ -755,7 +424,6 @@ drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1
 ;
 ; now that we have Ca, Cx, and A, we need to get xa, x and xe
 ; change notation and make sure youre in log space
-; both v3 and v4 report VMR units for xa and x
             xa = transpose(alog10(prior))
             x = transpose(alog10(co))
             I = Identity(mop_dim)
@@ -763,89 +431,20 @@ drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1
 ;======================================================================
 ;
 ; convert Cx (VMR) to fractional
-; convert Ca (VMR) to fractional
-; see email to Merritt (2/5/2010)
-            if (version eq 'v3') then begin
-               sigma_a   = Identity(mop_dim)
-               for ik=0,mop_dim-1 do begin 
-                  sigma_a[ik,ik] = log10e/co[ik] 
-               endfor
-               Cx = sigma_a##Cx##sigma_a
-               Ca = sigma_a##Ca##sigma_a
-               A = sigma_a##A##invert(sigma_a)
-;          
-; recalculate xe, posterior error
-               xe = fltarr(mop_dim, /nozero)
-               for ik=0,mop_dim-1 do begin 
-                  xe[ik] = sqrt(Cx[ik,ik])
-               endfor
-;
-; recalculate prior error
-               xe_a = fltarr(mop_dim, /nozero)
-               for ik=0,mop_dim-1 do begin
-                  xe_a[ik] = sqrt(Ca[ik,ik])
-               endfor
-            endif else begin
-;          
+; convert Ca (VMR) to fractional          
 ; recalculate xe (same as coerr but in fractional form)
-               xe = fltarr(mop_dim, /nozero)
-               for ik=0,mop_dim-1 do begin
-                  xe[ik] = sqrt(Cx[ik,ik])
-               endfor
+            xe = fltarr(mop_dim, /nozero)
+            for ik=0,mop_dim-1 do begin
+               xe[ik] = sqrt(Cx[ik,ik])
+            endfor
 ;
 ; recalculate xe_a (same as priorerr but in fractional form)
-               xe_a =  fltarr(mop_dim, /nozero)
-               for ik=0,mop_dim-1 do begin
-                  xe_a[ik] = sqrt(Ca[ik,ik])
-               endfor
+            xe_a =  fltarr(mop_dim, /nozero)
+            for ik=0,mop_dim-1 do begin
+               xe_a[ik] = sqrt(Ca[ik,ik])
+            endfor
 ;
-;==================================================================
-; this part is really for debugging 
-; In v4, these are all already in fractional from
-; convert Cx to fractional VMR
-; see email to Merritt (2/5/2010)
-;==================================================================
-               if ( debug eq 1 ) then begin
-                  sigma_a   = Identity(mop_dim)
-                  for ik=0,mop_dim-1 do begin
-                     sigma_a[ik,ik] = co[ik]/log10e
-                  endfor
-                  Cx_vmr = sigma_a##Cx##sigma_a
-                  Ca_vmr = sigma_a##Ca##sigma_a
-                  A_vmr = sigma_a##A##invert(sigma_a)
-                  xe_a_vmr =  fltarr(mop_dim, /nozero)
-                  for ik=0,mop_dim-1 do begin
-                     xe_a_vmr[ik] = sqrt(Ca_vmr[ik,ik])
-                  endfor
-;
-; convert Cx to fractional VMR
-; see email to Merritt (2/5/2010)
-                  sigma_a   = Identity(mop_dim)
-                  for ik=0,mop_dim-1 do begin
-                     sigma_a[ik,ik] = prior[ik]/log10e
-                  endfor
-                  Cx_vmr_c = sigma_a##Cx##sigma_a
-                  Ca_vmr_c = sigma_a##Ca##sigma_a
-                  A_vmr_c = sigma_a##A##invert(sigma_a)
-                  xe_a_vmr_c =  fltarr(mop_dim, /nozero)
-                  for ik=0,mop_dim-1 do begin
-                     xe_a_vmr_c[ik] = sqrt(Ca_vmr_c[ik,ik])
-                  endfor
-;
-; the following print statements checks for 
-; what priorerrb is using (xa or xhat)
-                  print, 'prior a'
-                  print, xe_a_vmr 
-                  print, 'prior b'
-                  print, priorerrb
-                  print, 'prior c'
-                  print, xe_a_vmr_c
-                  stop
-               endif  ; debug
-            endelse ; version 
 ; 
-;======================================================================
-
 ; calculate prior term (I-A)xa  in x = A x_t + (I-A)xa + Gey
 ; needed for obs/forward operator (prior term of expression)
             ImA = (I-A)
@@ -863,18 +462,6 @@ drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1
 ; A = Cx K^T Se^-1 K = G K
 ;
             Cm = ImA##Ca##( I + transpose(AmI) ) 
-;
-; it seems that we cant get a positive definite Cm due to numerical issues
-; Cm is one order of magnitude lower than Cx --yes, it's low
-; But Cm has similar pattern with the averaging kernel A
-; while Cx resembles Ca in pattern 
-; so, we can either choose to use Cx or use Cm  but with preconditioned
-; i think we should use Cm since this is how the x expression is based on
-; although i dont think it really matters a lot
-            isCx = 0
-            if (isCx eq 1) then begin
-               Cm = Cx 
-            endif
 ;
 ; Ok. Here's the SVD approach
 ; ========================================================================
@@ -895,14 +482,13 @@ drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1
 ; i think this is valid since most of the differences i see are
 ; very small --hence errors associated with numerical linear algebra
 ;
-            if (isCx eq 0) then begin
 ; for some numerical reason, Cm is not symmetric
 ; have problems doing eigenvalue decomposition with non-symmetric matrix
-               for ik = 0,mop_dim-1 do begin
-                  for ijk = ik,mop_dim-1 do begin
-                     Cm[ik,ijk]=Cm[ijk,ik]
-                  endfor
+            for ik = 0,mop_dim-1 do begin
+               for ijk = ik,mop_dim-1 do begin
+                  Cm[ik,ijk]=Cm[ijk,ik]
                endfor
+            endfor
 ;
 ; save original Cm for debugging later on
 ;
@@ -913,15 +499,15 @@ drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1
 ;       xa  - prior
 ;       x   - retrieval
 ;
-               Cm_dummy = Cm
+            Cm_dummy = Cm
 ;
 ; get eigenvalues and eigenvectors
-               eigenvalues = la_eigenql(Cm, EIGENVECTORS = eigenvectors, status=status)
-               if status ne 0 then begin
-                  print, 'Cm la_eigengl did not converge'
-                  print, Cm, status
-                  qstatus = 1
-               endif
+            eigenvalues = la_eigenql(Cm, EIGENVECTORS = eigenvectors, status=status)
+            if status ne 0 then begin
+               print, 'Cm la_eigengl did not converge'
+               print, Cm, status
+               qstatus = 1
+            endif
 ;
 ; APM: not necessary because Cm is a covariance matrix which is 
 ; symmetric, positive semidefinite => all real eigenvalues >= 0
@@ -930,29 +516,28 @@ drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1
 ; la_eigenql readme says it outputs real eigenvectors
 ; but in matlab, sometimes, eigenvalues can be complex 
 ; so might as well check for complex numbers
-               for ik=0,mop_dim-1 do begin
-                  ftype = size(eigenvalues[ik], /type)
-                  if (ftype eq 6  ) then begin
-                     qstatus = 1
-                  endif
-               endfor
+            for ik=0,mop_dim-1 do begin
+               ftype = size(eigenvalues[ik], /type)
+               if (ftype eq 6  ) then begin
+                  qstatus = 1
+               endif
+            endfor
 ;
 ; APM: not necessary - see preceding APM comment
 ;
 ; precondition by removing all negative eigenvalues
 ; and replace by floating point precision
-               eval = Identity(mop_dim) 
-               for ik=0,mop_dim-1 do begin
-                  if (eigenvalues[ik] lt (Machar()).eps  ) then begin
-                     eval[ik,ik]=(Machar()).eps
-                  endif else begin
-                     eval[ik,ik]=eigenvalues[ik]
-                  endelse
-               endfor
+            eval = Identity(mop_dim) 
+            for ik=0,mop_dim-1 do begin
+               if (eigenvalues[ik] lt (Machar()).eps  ) then begin
+                  eval[ik,ik]=(Machar()).eps
+               endif else begin
+                  eval[ik,ik]=eigenvalues[ik]
+               endelse
+            endfor
 ;
 ; reconstruct covariance matrix
-               Cm = transpose(eigenvectors)##eval##(eigenvectors)
-            endif ; isCx
+            Cm = transpose(eigenvectors)##eval##(eigenvectors)
 ;
 ;=======================================================================
 ; whoops, that was tough.
@@ -1191,251 +776,51 @@ drad     = [   1.00,    1.00,    1.00,   1.00,  1.00,   1.00,   1.00,  1.00,   1
                allqc_count = allqc_count + 1.0
 ;
 ;=========================================================================
-               if (do_DART_input eq 1) then begin
-;
-; note that the format is for mopitt_dim levels
-; mopittlev is also mopitt_dim levels
-; disregard mop_dim to mopitt_dim output
-; disregard mopitt_dim-mop_dim levels in mopittlev
-; while i think the better approach is to just output corresponding mopittlev
-; it is harder to implement
-;
-                  if (apm_no_transform eq 'false') then begin
-                     if (version eq 'v3') then begin
-                        if ( valid_nrows gt 0 ) then begin
-                           printf, unit, valid_nrows, sec[k], mop_dim, mopittlev, lat[k], lon[k], format='(12(e14.6))'
-                           for ik = output_start_row, output_end_row do begin
+               if (apm_no_transform eq 'false') then begin
+                  if ( valid_nrows gt 0 ) then begin
+                     printf, unit, valid_nrows, sec[k], mop_dim, mopittlev, lat[k], lon[k], format='(15(e14.6))'
+                     for ik = output_start_row, output_end_row do begin
 ; index --> which component?
-                              printf, unit, ik+1, format='(1(e14.6))'
+                        printf, unit, ik+1, format='(1(e14.6))'
 ; new retrieval
-                              printf, unit, yn[ik], format='(1(e14.6))'
+                        printf, unit, yn[ik], format='(1(e14.6))'
 ; new retrieval error
-                              printf, unit, e2n[ik], format='(1(e14.6))'
+                        printf, unit, e2n[ik], format='(1(e14.6))'
 ; transform prior 
-                              printf, unit, transImAxa[ik], format='(1(e14.6))'
+                        printf, unit, transImAxa[ik], format='(1(e14.6))'
 ; transformed averaging kernel
-                              printf, unit, (transA[*,ik]), format='(7(e14.6))'
-                           endfor
-                        endif
-                     endif else begin ; version 4 or 5
-                        if ( valid_nrows gt 0 ) then begin
-                           printf, unit, valid_nrows, sec[k], mop_dim, mopittlev, lat[k], lon[k], format='(15(e14.6))'
-                           for ik = output_start_row, output_end_row do begin
-; index --> which component?
-                              printf, unit, ik+1, format='(1(e14.6))'
-; new retrieval
-                              printf, unit, yn[ik], format='(1(e14.6))'
-; new retrieval error
-                              printf, unit, e2n[ik], format='(1(e14.6))'
-; transform prior 
-                              printf, unit, transImAxa[ik], format='(1(e14.6))'
-; transformed averaging kernel
-                              printf, unit, (transA[*,ik]), format='(10(e14.6))'
-                           endfor
-                        endif
-                     endelse
-                  endif ; apm_no_transform
+                        printf, unit, (transA[*,ik]), format='(10(e14.6))'
+                     endfor
+                  endif      ; valid_nrows
+               endif         ; apm_no_transform
 ; Code to write no_transform data
-                  if (apm_no_transform eq 'true') then begin
-                     if (version eq 'v3') then begin
-                        printf, unit, 'NO_SVD_TRANS', sec[k], lat[k], lon[k], $
-                        mop_dim, dfs, format='(a15,19(e14.6))'
+               if (apm_no_transform eq 'true') then begin
+                  printf, unit, 'NO_SVD_TRANS', sec[k], lat[k], lon[k], $
+                  mop_dim, dfs, format='(a15,16(e14.6))'
 ; effective pressure levels
-                        printf, unit, mopittlev(7-fix(mop_dim):6), format='(10(e14.6))'
+                  printf, unit, mopittlev(10-fix(mop_dim):9), format='(10(e14.6))'
 ; retrieval
-                        printf, unit, x, format='(10(e14.6))'
+                  printf, unit, x+9.0, format='(10(e14.6))'
 ; prior retrieval
-                        printf, unit, xa, format='(10(e14.6))'
+                  printf, unit, xa+9.0, format='(10(e14.6))'
 ; averaging kernel
-                        printf, unit, transpose(A), format='(100(e14.6))'
+                  printf, unit, transpose(A), format='(100(e14.6))'
 ; prior error covariance
-                        printf, unit, transpose(Ca), format='(100(e14.6))'
+                  printf, unit, transpose(Ca), format='(100(e14.6))'
 ; retrieval error covariance
-                        printf, unit, transpose(Cx), format='(100(e14.6))'
+                  printf, unit, transpose(Cx), format='(100(e14.6))'
 ; measurment error covariance
-                        printf, unit, transpose(Cm), format='(100(e14.6))'
+                  printf, unit, transpose(Cm), format='(100(e14.6))'
 ; total column
-                        printf, unit, cocol0[k],cocol1[k], format='(2(e14.6))'
-                     endif else begin ; version 4 or 5
-                        printf, unit, 'NO_SVD_TRANS', sec[k], lat[k], lon[k], $
-                        mop_dim, dfs, format='(a15,16(e14.6))'
-; effective pressure levels
-                        printf, unit, mopittlev(10-fix(mop_dim):9), format='(10(e14.6))'
-; retrieval
-                        printf, unit, x+9.0, format='(10(e14.6))'
-; prior retrieval
-                        printf, unit, xa+9.0, format='(10(e14.6))'
-; averaging kernel
-                        printf, unit, transpose(A), format='(100(e14.6))'
-; prior error covariance
-                        printf, unit, transpose(Ca), format='(100(e14.6))'
-; retrieval error covariance
-                        printf, unit, transpose(Cx), format='(100(e14.6))'
-; measurment error covariance
-                        printf, unit, transpose(Cm), format='(100(e14.6))'
-; total column
-                        printf, unit, cocol0[k],cocol1[k], format='(2(e14.6))'
-                     endelse
-                  endif ; apm_no_transform
-               endif ; do_DART_input
-;
-;=========================================================================
-; output station diagnostics 
-               if ( do_station_output eq 1 ) then begin
-                  if (version eq 'v3') then begin
-                     for istation = 0L, ntsloc-1 do begin
-                        unit_temp = unit_array[istation]
-                        if ( ( lon[k]+180 ge lontsloc[istation]+180 - drad[istation] ) and $
-                        ( lon[k]+180 lt lontsloc[istation]+180 + drad[istation] ) and $
-                        ( lat[k]+90  ge lattsloc[istation]+90  - drad[istation] ) and $
-                        ( lat[k]+90  lt lattsloc[istation]+90  + drad[istation] ) ) then begin 
-                           printf, unit_temp, sec[k], lat[k], lon[k], psurf[k], mop_dim, dfs, sza[k], cloud[k], sind[k], apriori_contrib, format='(10(e14.6))'
-                           printf, unit_temp, yn[*], format='(7(e14.6))'
-                           printf, unit_temp, co[*], format='(7(e14.6))'
-                           printf, unit_temp, e2n[*], format='(7(e14.6))'
-                           printf, unit_temp, coerr[*], format='(7(e14.6))'
-                           printf, unit_temp, priorerr[*], format='(7(e14.6))'
-                           printf, unit_temp, transImAxa[*], format='(7(e14.6))'
-                           printf, unit_temp, ImAxa[*], format='(7(e14.6))'
-                           printf, unit_temp, prior[*], format='(7(e14.6))'
-                           printf, unit_temp, eigenvalues[*], format='(7(e14.6))'
-                           for ik = 0, mopitt_dim-1 do begin
-                              if (ik lt mop_dim ) then begin
-                                 printf, unit_temp, (transA[*,ik]), format='(7(e14.6))'
-                              endif else begin
-                                 printf, unit_temp, (dummy_var[ik]), format='(7(e14.6))'
-                              endelse
-                           endfor
-                           for ik = 0, mopitt_dim-1 do begin
-                              if (ik lt mop_dim ) then begin
-                                 printf, unit_temp, (A[*,ik]), format='(7(e14.6))'
-                              endif else begin
-                                 printf, unit_temp, (dummy_var[ik]), format='(7(e14.6))'
-                              endelse
-                           endfor
-                           for ik = 0, mopitt_dim-1 do begin
-                              if (ik lt mop_dim ) then begin
-                                 printf, unit_temp, (Cmn[*,ik]), format='(7(e14.6))'
-                              endif else begin
-                                 printf, unit_temp, (dummy_var[ik]), format='(7(e14.6))'
-                              endelse
-                           endfor
-                           for ik = 0, mopitt_dim-1 do begin
-                              if (ik lt mop_dim ) then begin
-                                 printf, unit_temp, (Cm[*,ik]), format='(7(e14.6))'
-                              endif else begin
-                                 printf, unit_temp, (dummy_var[ik]), format='(7(e14.6))'
-                              endelse
-                           endfor
-                           for ik = 0, mopitt_dim-1 do begin
-                              if (ik lt mop_dim ) then begin
-                                 printf, unit_temp, (Ca[*,ik]), format='(7(e14.6))'
-                              endif else begin
-                                 printf, unit_temp, (dummy_var[ik]), format='(7(e14.6))'
-                              endelse
-                           endfor
-                           for ik = 0, mopitt_dim-1 do begin
-                              if (ik lt mop_dim ) then begin
-                                 printf, unit_temp, (Cx[*,ik]), format='(7(e14.6))'
-                              endif else begin
-                                 printf, unit_temp, (dummy_var[ik]), format='(7(e14.6))'
-                              endelse
-                           endfor
-                           for ik = 0, mopitt_dim-1 do begin
-                              if (ik lt mop_dim ) then begin
-                                 printf, unit_temp, (Cm_dummy[*,ik]), format='(7(e14.6))'
-                              endif else begin
-                                 printf, unit_temp, (dummy_var[ik]), format='(7(e14.6))'
-                              endelse
-                           endfor
-                        endif ; lat/lon station 
-                     endfor   ; number of stations
-                  endif else begin ; version 4 or 5
-                     for istation = 0L, ntsloc-1 do begin
-                        unit_temp = unit_array[istation]
-                        if ( ( lon[k]+180 ge lontsloc[istation]+180 - drad[istation] ) and $
-                        ( lon[k]+180 lt lontsloc[istation]+180 + drad[istation] ) and $
-                        ( lat[k]+90  ge lattsloc[istation]+90  - drad[istation] ) and $
-                        ( lat[k]+90  lt lattsloc[istation]+90  + drad[istation] ) ) then begin  
-                           printf, unit_temp, sec[k], lat[k], lon[k], psurf[k], mop_dim, dfs, sza[k], cloud[k], sind[k], apriori_contrib, format='(10(e14.6))'
-                           printf, unit_temp, yn[*], format='(10(e14.6))'
-                           printf, unit_temp, co[*], format='(10(e14.6))'
-                           printf, unit_temp, e2n[*], format='(10(e14.6))'
-                           printf, unit_temp, coerr[*], format='(10(e14.6))'
-                           printf, unit_temp, priorerr[*], format='(10(e14.6))'
-                           printf, unit_temp, transImAxa[*], format='(10(e14.6))'
-                           printf, unit_temp, ImAxa[*], format='(10(e14.6))'
-                           printf, unit_temp, prior[*], format='(10(e14.6))'
-                           printf, unit_temp, eigenvalues[*], format='(10(e14.6))'
-                           for ik = 0, mopitt_dim-1 do begin
-                              if (ik lt mop_dim ) then begin
-                                 printf, unit_temp, (transA[*,ik]), format='(10(e14.6))'
-                              endif else begin
-                                 printf, unit_temp, (dummy_var[ik]), format='(10(e14.6))'
-                              endelse 
-                           endfor
-                           for ik = 0, mopitt_dim-1 do begin
-                              if (ik lt mop_dim ) then begin
-                                 printf, unit_temp, (A[*,ik]), format='(10(e14.6))'
-                              endif else begin
-                                 printf, unit_temp, (dummy_var[ik]), format='(10(e14.6))'
-                              endelse 
-                           endfor
-                           for ik = 0, mopitt_dim-1 do begin
-                              if (ik lt mop_dim ) then begin
-                                 printf, unit_temp, (Cmn[*,ik]), format='(10(e14.6))'
-                              endif else begin
-                                 printf, unit_temp, (dummy_var[ik]), format='(10(e14.6))'
-                              endelse 
-                           endfor
-                           for ik = 0, mopitt_dim-1 do begin
-                              if (ik lt mop_dim ) then begin
-                                 printf, unit_temp, (Cm[*,ik]), format='(10(e14.6))'
-                              endif else begin
-                                 printf, unit_temp, (dummy_var[ik]), format='(10(e14.6))'
-                              endelse 
-                           endfor
-                           for ik = 0, mopitt_dim-1 do begin
-                              if (ik lt mop_dim ) then begin
-                                 printf, unit_temp, (Ca[*,ik]), format='(10(e14.6))'
-                              endif else begin
-                                  printf, unit_temp, (dummy_var[ik]), format='(10(e14.6))'
-                              endelse
-                           endfor
-                           for ik = 0, mopitt_dim-1 do begin
-                              if (ik lt mop_dim ) then begin
-                                 printf, unit_temp, (Cx[*,ik]), format='(10(e14.6))'
-                              endif else begin
-                                 printf, unit_temp, (dummy_var[ik]), format='(10(e14.6))'
-                              endelse
-                           endfor
-                           for ik = 0, mopitt_dim-1 do begin
-                              if (ik lt mop_dim ) then begin
-                                 printf, unit_temp, (Cm_dummy[*,ik]), format='(10(e14.6))'
-                              endif else begin
-                                 printf, unit_temp, (dummy_var[ik]), format='(10(e14.6))'
-                              endelse
-                           endfor
-                        endif    ; lat/lon of station
-                     endfor      ; number of stations
-                  endelse        ; version
-               endif             ; do_station_output
-            endif                ; QC - qstatus for numerical issues
-         endif 	                 ; QC - apriori contribution 
-      endif	                 ; QC - most quality control
-   endfor		         ; MOPITT pixels (k data) 
+                  printf, unit, cocol0[k],cocol1[k], format='(2(e14.6))'
+               endif    ; apm_no_transform
+            endif          ; QC - qstatus for numerical issues
+         endif             ; apriori contribution
+      endif                ; QC - most quality control
+   endfor		   ; MOPITT pixels (k data) 
 ;    
 ; close files
-   if ( do_DART_input eq 1 ) then begin
-      close, unit
-   endif
-;
-   if ( do_station_output eq 1 ) then begin
-      for istation = 0L, ntsloc-1 do begin
-         unit_temp = unit_array[istation]
-         close,unit_temp 
-      endfor
-   endif
+   close, unit
 ;
 ; print counters
    print, 'BIN TIME'

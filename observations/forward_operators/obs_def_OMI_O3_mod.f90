@@ -122,7 +122,7 @@ module_initialized = .true.
 ! Read namelist values
 call find_namelist_in_file("input.nml", "obs_def_OMI_O3_nml", iunit)
 read(iunit, nml = obs_def_OMI_O3_nml, iostat = rc)
-call check_namelist_read(iunit, rc, "obs_def_OM_O3_nml")
+call check_namelist_read(iunit, rc, "obs_def_OMI_O3_nml")
 
 ! Record the namelist values
 if (do_nml_file()) write(nmlfileunit, nml=obs_def_OMI_O3_nml)
@@ -280,6 +280,7 @@ real(r8) :: level
 real(r8) :: tmp_vir_k, tmp_vir_kp
 real(r8) :: mloc(3)
 real(r8) :: o3_val_conv
+real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
 real(r8), dimension(ens_size) :: o3_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
 real(r8), dimension(ens_size) :: o3_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
 real(r8), dimension(ens_size) :: o3_temp, tmp_temp, qmr_temp, prs_sfc
@@ -513,30 +514,29 @@ do k=1,level_omi
 enddo
 
 ! Adjust the OMI pressure for WRF-Chem lower/upper boudary pressure
+! (OMI bottom to top)
 
 expct_val(:)=0.0
 allocate(thick(layer_omi))
 do imem=1,ens_size
-
    prs_omi_mem(:)=prs_omi(:)
-      if (prs_sfc.gt.prs_omi(1)) then
-         prs
-      o3_istatus  = 0
-      tmp_istatus = 0
-      qmr_istatus = 0
-      o3_temp     = o3_mdl_n
-      tmp_temp    = tmp_mdl_n
-      qmr_temp    = qmr_mdl_n
-   endwhere
+   if (prs_sfc(imem).gt.prs_omi_mem(1)) then
+      prs_omi_mem(1)=prs_sfc(imem)
+   endif   
 
    ! Calculate the thicknesses
 
    thick(:)=0.
    do k=1,layer_omi
+      lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
+      up_wt=log(prs_omi_mem(k))-lnpr_mid
+      dw_wt=log(lnpr_mid)-log(prs_omi_mem(k+1))
+      tl_wt=up_wt+dw_wt
+      
       tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
       tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
-      thick(k)   = Rd*(tmp_vir_k + tmp_vir_kp)/2.0_r8/grav* &
-                   log(prs_omi(k)/prs_omi(k+1))
+      thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
+                   log(prs_omi_mem(k)/prs_omi_mem(k+1))
    enddo
 
    ! Process the vertical summation
@@ -546,13 +546,13 @@ do imem=1,ens_size
 
    ! Convert from VMR to molar density (mol/m^3)
       if(use_log_o3) then
-         o3_val_conv = (exp(o3_val(imem,k))+exp(o3_val(imem,k+1)))/2.0_r8 * &
-                        (prs_omi(k)+prs_omi(k+1)) / &
-                        (Ru*(tmp_val(imem,k)+tmp_val(imem,k+1)))
+         o3_val_conv = (dw_wt*exp(o3_val(imem,k))+up_wt*exp(o3_val(imem,k+1)))/tl_wt * &
+                        (dw_wt*prs_omi_mem(k)+up_wt*prs_omi_mem(k+1)) / &
+                        (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
       else
-         o3_val_conv = (o3_val(imem,k)+o3_val(imem,k+1))/2.0_r8 * &
-                        (prs_omi(k)+prs_omi(k+1)) / &
-                        (Ru*(tmp_val(imem,k)+tmp_val(imem,k+1)))
+         o3_val_conv = (dw_wt*o3_val(imem,k)+up_wt*o3_val(imem,k+1))/tl_wt * &
+                        (dw_wt*prs_omi_mem(k)+up_wt*prs_omi_mem(k+1)) / &
+                        (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
       endif
  
    ! Get expected observation

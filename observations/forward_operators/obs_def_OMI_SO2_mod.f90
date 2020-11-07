@@ -121,7 +121,7 @@ module_initialized = .true.
 ! Read namelist values
 call find_namelist_in_file("input.nml", "obs_def_OMI_SO2_nml", iunit)
 read(iunit, nml = obs_def_OMI_SO2_nml, iostat = rc)
-call check_namelist_read(iunit, rc, "obs_def_OM_SO2_nml")
+call check_namelist_read(iunit, rc, "obs_def_OMI_SO2_nml")
 
 ! Record the namelist values
 if (do_nml_file()) write(nmlfileunit, nml=obs_def_OMI_SO2_nml)

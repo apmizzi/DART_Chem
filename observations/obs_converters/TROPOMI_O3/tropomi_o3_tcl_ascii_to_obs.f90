@@ -16,10 +16,10 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 !
-program tropomi_co_ascii_to_obs
+program tropomi_o3_ascii_to_obs
 !
 !=============================================
-! TROPOMI CO column obs
+! TROPOMI O3 column obs
 !=============================================
    use utilities_mod, only          : timestamp,                  &
                                       register_module,            &
@@ -56,7 +56,7 @@ program tropomi_co_ascii_to_obs
                                       obs_def_type,               &
                                       set_obs_def_type_of_obs
 
-   use obs_def_tropomi_co_mod, only     : set_obs_def_tropomi_co
+   use obs_def_tropomi_o3_mod, only     : set_obs_def_tropomi_o3
 
    use assim_model_mod, only        : static_init_assim_model
 
@@ -68,8 +68,8 @@ program tropomi_co_ascii_to_obs
                                       time_type,                  &
                                       get_time
 
-   use obs_kind_mod, only           : QTY_CO,                     &
-                                      TROPOMI_CO_COLUMN,              &
+   use obs_kind_mod, only           : QTY_O3,                     &
+                                      TROPOMI_O3_COLUMN,              &
                                       get_type_of_obs_from_menu
 
    use random_seq_mod, only         : random_seq_type,            &
@@ -80,7 +80,7 @@ program tropomi_co_ascii_to_obs
    implicit none
 !
 ! version controlled file description for error handling, do not edit
-   character(len=*), parameter     :: source   = 'tropomi_co_ascii_to_obs.f90'
+   character(len=*), parameter     :: source   = 'tropomi_o3_ascii_to_obs.f90'
    character(len=*), parameter     :: revision = ''
    character(len=*), parameter     :: revdate  = ''
 !
@@ -121,16 +121,16 @@ program tropomi_co_ascii_to_obs
 !
    character*129                   :: filedir,filename
    character*129                   :: copy_meta_data
-   character*129                   :: qc_meta_data='TROPOMI CO QC index'
+   character*129                   :: qc_meta_data='TROPOMI O3 QC index'
    character*129                   :: chr_year,chr_month,chr_day
-   character*129                   :: file_name='tropomi_co_obs_seq'
+   character*129                   :: file_name='tropomi_o3_obs_seq'
    character*129                   :: data_type,cmd
 !
    logical                         :: use_log_co,use_log_o3,use_log_no2,use_log_so2
 !
 ! Species-specific variables
-   real*8                          :: col_amt_obs, col_amt_err_obs
-   real*8,allocatable,dimension(:) :: avgk_obs
+   real*8                          :: col_amt_obs,col_amt_err_obs
+   real*8,allocatable,dimension(:) :: avgk_obs,prior_obs
 !
    namelist /create_tropomi_obs_nml/filedir,filename,year,month,day,hour, &
    bin_beg,bin_end,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
@@ -167,7 +167,7 @@ program tropomi_co_ascii_to_obs
 !
    do icopy =1, num_copies
       if (icopy == 1) then
-         copy_meta_data='TROPOMI CO observation'
+         copy_meta_data='TROPOMI O3 observation'
       else
          copy_meta_data='Truth'
       endif
@@ -179,7 +179,7 @@ program tropomi_co_ascii_to_obs
    fac=fac_obs_error
 !
 !-------------------------------------------------------
-! Read TROPOMI CO data
+! Read TROPOMI O3 data
 !-------------------------------------------------------
 !
 ! Set dates and initialize qc_count
@@ -187,12 +187,13 @@ program tropomi_co_ascii_to_obs
    calendar_type=3                          !Gregorian
    call set_calendar_type(calendar_type)
 !
-! Open TROPOMI CO binary file
+! Open TROPOMI O3 binary file
    write(6,*)'opening ',TRIM(filedir)//TRIM(filename)
    open(fileid,file=TRIM(filedir)//TRIM(filename),                     &
    form='formatted', status='old', iostat=ios)
 !
-! Read TROPOMI CO
+! Read TROPOMI O3
+   line_count = 0
    read(fileid,*,iostat=ios) data_type, obs_id
    do while (ios == 0)
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
@@ -202,8 +203,10 @@ program tropomi_co_ascii_to_obs
       read(fileid,*,iostat=ios) nlay_obs,nlev_obs
       allocate(prs_obs(nlev_obs))
       allocate(avgk_obs(nlay_obs))
+      allocate(prior_obs(nlay_obs))
       read(fileid,*,iostat=ios) prs_obs(1:nlev_obs)
       read(fileid,*,iostat=ios) avgk_obs(1:nlay_obs)
+      read(fileid,*,iostat=ios) prior_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) col_amt_obs, col_amt_err_obs
 !
 !      print *, trim(data_type), obs_id
@@ -211,10 +214,9 @@ program tropomi_co_ascii_to_obs
 !      print *, hh_obs,mm_obs,ss_obs
 !      print *, lat_obs,lon_obs
 !      print *, nlay_obs,nlev_obs
-!      print *, ' '
 !      print *, prs_obs(1:nlev_obs)
-!      print *, ' '
 !      print *, avgk_obs(1:nlay_obs) 
+!      print *, prior_obs(1:nlay_obs) 
 !      print *, col_amt_obs
 !      print *, col_amt_err_obs
 !
@@ -230,11 +232,11 @@ program tropomi_co_ascii_to_obs
 ! Find vertical location
 !--------------------------------------------------------
 !
-      call vertical_locate(prs_loc,prs_obs,nlev_obs,avgk_obs,nlay_obs)
+      call vertical_locate(prs_loc,prs_obs,nlev_obs,avgk_obs,nlay_obs,1)
       level=prs_loc*100.
       which_vert=2       ! pressure surface
 !
-      obs_kind = TROPOMI_CO_COLUMN
+      obs_kind = TROPOMI_O3_COLUMN
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90) 
       obs_location=set_location(lon_obs, lat_obs, level, which_vert)
 !
@@ -242,7 +244,7 @@ program tropomi_co_ascii_to_obs
       call set_obs_def_location(obs_def, obs_location)
       call set_obs_def_time(obs_def, obs_time)
       call set_obs_def_error_variance(obs_def, obs_err_var)
-      call set_obs_def_tropomi_co(qc_count, prs_obs, avgk_obs, nlay_obs)
+      call set_obs_def_tropomi_o3(qc_count, prs_obs, avgk_obs, prior_obs, nlay_obs)
       call set_obs_def_key(obs_def, qc_count)
       call set_obs_values(obs, obs_val, 1)
       call set_qc(obs, tropomi_qc, num_qc)
@@ -258,6 +260,7 @@ program tropomi_co_ascii_to_obs
          days_last=days
          seconds_last=seconds
       endif
+!      print *, 'APM: ',qc_count,days,seconds
       if ( qc_count == 1 .or. old_ob.eq.1) then
          call insert_obs_in_seq(seq, obs)
       else
@@ -266,6 +269,7 @@ program tropomi_co_ascii_to_obs
       obs_old=obs
       deallocate(prs_obs)
       deallocate(avgk_obs) 
+      deallocate(prior_obs) 
       read(fileid,*,iostat=ios) data_type, obs_id
    enddo   
 !
@@ -291,9 +295,9 @@ program tropomi_co_ascii_to_obs
       call execute_command_line(trim(cmd))
    endif   
 !
-end program tropomi_co_ascii_to_obs
+end program tropomi_o3_ascii_to_obs
 !
-subroutine vertical_locate(prs_loc,prs,nlev,avgk,nlay)
+subroutine vertical_locate(prs_loc,prs,nlev,avgk,nlay,trop_indx)
 !
 ! This subroutine identifies a vertical location for 
 ! vertical positioning/localization 
@@ -301,6 +305,7 @@ subroutine vertical_locate(prs_loc,prs,nlev,avgk,nlay)
    implicit none
    integer                         :: nlay,nlev
    integer                         :: k,kstr,kmax
+   integer                         :: trop_indx
    real*8                          :: prs_loc
    real*8                          :: wt_ctr,wt_end
    real*8                          :: zmax
@@ -326,7 +331,7 @@ subroutine vertical_locate(prs_loc,prs,nlev,avgk,nlay)
 ! locate the three-point maximum
    zmax=-1.e10
    kmax=0
-   kstr=1
+   kstr=trop_indx
    do k=kstr,nlay
       if(abs(avgk_sm(k)).gt.zmax) then
          zmax=abs(avgk_sm(k))

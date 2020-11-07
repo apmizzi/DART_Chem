@@ -176,9 +176,13 @@ integer,                   intent(inout) :: dart_index       !< This is for mult
 logical,                   intent(in)    :: read_single_vars !< Read one variable at a time
 
 if (task_count() == 1) then
+   print *, 'APM: before read_transpose_single_task'
    call read_transpose_single_task(state_ens_handle, name_handle, domain, dart_index)
+   print *, 'APM: after read_transpose_single_task'
 else
+   print *, 'APM: before read_transpose_multi_task'
    call read_transpose_multi_task( state_ens_handle, name_handle, domain, dart_index, read_single_vars)
+   print *, 'APM: after read_transpose_multi_task'
 endif
 
 end subroutine read_transpose

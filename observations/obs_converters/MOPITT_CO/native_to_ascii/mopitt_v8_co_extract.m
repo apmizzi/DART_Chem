@@ -39,6 +39,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    msq2cmsq=1.e4;
    P_std=1013.25;
    grav=9.8;
+   prss=[900. 800. 700. 600. 500. 400. 300. 200. 100.];
 %
 % Convert DU to moles/m^2
    du2molpm2=4.4615e-4;
@@ -174,7 +175,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 % lon(numobs) (degrees)
       field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/Longitude';
       lon=h5read(file_in,field);
-      units=h5readatt(file_in,field,'units');  
+      units=h5readatt(file_in,field,'units');
 % prs_lay(layer) (hPa)
       field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/Pressure';
       prs_lay=h5read(file_in,field);
@@ -224,6 +225,9 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
          end
 %
 % Check domain
+	 if(lon(iobs)<0)
+	   lon(iobs)=lon(iobs)+360.;
+	 end
 	 if(lat(iobs)<lat_min | lat(iobs)>lat_max | ...
 	 lon(iobs)<lon_min | lon(iobs)>lon_max)
             continue

@@ -545,16 +545,24 @@ call initialize_file_information(num_state_ens_copies ,                     &
                                  file_info_forecast   , file_info_preassim, &
                                  file_info_postassim  , file_info_analysis, &
                                  file_info_output)
+call     trace_message('APM: After call to initialize_file_information')
+call timestamp_message('APM: After call to initialize_file_information')
 
 call check_file_info_variable_shape(file_info_output, state_ens_handle)
+call     trace_message('APM: After call to check_file_info_variable_shape')
+call timestamp_message('APM: After call to check_file_info_variable_shape')
 
 call set_inflation_mean_copy( prior_inflate, PRIOR_INF_COPY )
 call set_inflation_sd_copy(   prior_inflate, PRIOR_INF_SD_COPY )
 call set_inflation_mean_copy( post_inflate,  POST_INF_COPY )
 call set_inflation_sd_copy(   post_inflate,  POST_INF_SD_COPY )
+call     trace_message('APM: After call to inflation_mean_copy etc')
+call timestamp_message('APM: After call to inflation_mean_copy etc')
 
 call read_state(state_ens_handle, file_info_input, read_time_from_file, time1, &
                 prior_inflate, post_inflate, perturb_from_single_instance)
+call     trace_message('APM: After call to read_state')
+call timestamp_message('APM: After call to read_state')
 
 ! This must be after read_state
 call get_minmax_task_zero(prior_inflate, state_ens_handle, PRIOR_INF_COPY, PRIOR_INF_SD_COPY)

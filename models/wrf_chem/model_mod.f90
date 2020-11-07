@@ -372,7 +372,7 @@ TYPE wrf_static_data_for_dart
 ! LXL/APM +++
    integer :: type_e_co, type_e_no, type_e_no2, type_e_so2, type_e_oc, type_e_bc, &
               type_e_pm_10, type_e_pm_25, &
-              type_ebu_in_co, type_ebu_in_no, &
+              type_ebu_in_co, type_ebu_in_no, type_ebu_in_no2, type_ebu_in_so2, &
               type_ebu_in_oc, type_ebu_in_bc, &
               type_ebu_in_c2h4, type_ebu_in_ch2o, type_ebu_in_ch3oh
    integer :: number_of_conv_variables, number_of_emiss_chemi_variables, &
@@ -479,7 +479,10 @@ else
 ! Consolidate all the input variable tables into one 'wrf_state_variables' table.
 ! Since all the variables of interest are scoped module global, no arguments are needed.
 ! APM: This combines WRF-Chem conv, chemi, and firechemi variables lists into a single list
-  call concatenate_variable_tables()
+! APM: Only add the emission variables with ADD_EMISS is true (otherwise use the
+! APM: conv_state_variables list.
+   
+   call concatenate_variable_tables()
 endif
 
 if ( debug ) then
@@ -547,7 +550,7 @@ WRFDomains : do id=1,num_domains
       write(logfileunit,*) '******************'
       call error_handler(E_MSG,'static_init_model','wrf input file is "'//trim(wrf_filename)//'"')
 !
-! APM these not need because all fields in wrfinput
+! APM these not needed because all fields in wrfinput
 !      call error_handler(E_MSG,'static_init_model','wrfchemi input file is "'//trim(chem_filename)//'"')
 !      call error_handler(E_MSG,'static_init_model','wrffirechemi input file is "'//trim(fire_filename)//'"')
    endif
@@ -1036,12 +1039,14 @@ print *, 'finished chemi variables read'
       wrf%dom(id)%type_e_no = get_type_ind_from_type_string(id,'e_no')
       wrf%dom(id)%type_e_no2 = get_type_ind_from_type_string(id,'e_no2')
       wrf%dom(id)%type_e_so2 = get_type_ind_from_type_string(id,'e_so2')
-      wrf%dom(id)%type_e_oc = get_type_ind_from_type_string(id,'e_oc')
       wrf%dom(id)%type_e_bc = get_type_ind_from_type_string(id,'e_bc')
+      wrf%dom(id)%type_e_oc = get_type_ind_from_type_string(id,'e_oc')
       wrf%dom(id)%type_e_pm_10 = get_type_ind_from_type_string(id,'e_pm_10')
       wrf%dom(id)%type_e_pm_25 = get_type_ind_from_type_string(id,'e_pm_25')
       wrf%dom(id)%type_ebu_in_co = get_type_ind_from_type_string(id,'ebu_in_co')
       wrf%dom(id)%type_ebu_in_no = get_type_ind_from_type_string(id,'ebu_in_no')
+      wrf%dom(id)%type_ebu_in_no2 = get_type_ind_from_type_string(id,'ebu_in_no2')
+      wrf%dom(id)%type_ebu_in_so2 = get_type_ind_from_type_string(id,'ebu_in_so2')
       wrf%dom(id)%type_ebu_in_oc = get_type_ind_from_type_string(id,'ebu_in_oc')
       wrf%dom(id)%type_ebu_in_bc = get_type_ind_from_type_string(id,'ebu_in_bc')
       wrf%dom(id)%type_ebu_in_c2h4 = get_type_ind_from_type_string(id,'ebu_in_c2h4')

@@ -16,10 +16,6 @@ rm -f input.nml
 touch input.nml
 cat > input.nml << EOF
 &create_iasi_obs_nml
-   year                        = ${NL_YEAR}
-   month                       = ${NL_MONTH}
-   day                         = ${NL_DAY}
-   hour                        = ${NL_HOUR}
    bin_beg                     = ${NL_BIN_BEG}
    bin_end                     = ${NL_BIN_END}
    filedir                     = ${NL_FILEDIR}
@@ -39,6 +35,10 @@ cat > input.nml << EOF
    lon_max                     = ${NNL_MAX_LON}
    lat_min                     = ${NNL_MIN_LAT}
    lat_max                     = ${NNL_MAX_LAT}
+   year                        = ${NL_YEAR}
+   month                       = ${NL_MONTH}
+   day                         = ${NL_DAY}
+   hour                        = ${NL_HOUR}
 /
 &obs_sequence_nml
    write_binary_obs_sequence   = .false.
@@ -78,6 +78,11 @@ cat > input.nml << EOF
 &obs_def_IASI_CO_nml
    IASI_CO_retrieval_type      = ${NL_IASI_CO_RETRIEVAL_TYPE:-'RETR'},
    use_log_co                  = ${NL_USE_LOG_CO:-.false.},
+/ 
+&obs_def_IASI_CO_COL_nml
+   use_log_co                  = ${NL_USE_LOG_CO:-.false.},
+   nlayer_model                = ${NL_NLAYER_MODEL:-36},
+   nlayer_iasi_co_col          = ${NL_NLAYER_IASI_CO:-19},
 /
 &obs_def_IASI_O3_nml
    IASI_O3_retrieval_type      = ${NL_IASI_O3_RETRIEVAL_TYPE:-'RETR'},
