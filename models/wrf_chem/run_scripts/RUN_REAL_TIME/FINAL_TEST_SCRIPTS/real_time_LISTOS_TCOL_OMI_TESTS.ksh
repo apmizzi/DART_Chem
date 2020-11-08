@@ -1363,12 +1363,12 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
                                    'MARINE_SFC_V_WIND_COMPONENT',
                                    'MARINE_SFC_TEMPERATURE',
                                    'MARINE_SFC_SPECIFIC_HUMIDITY',
-                                   'MARINE_SURFACE_ALTIMETER',
+                                   'MARINE_SFC_ALTIMETER',
                                    'LAND_SFC_U_WIND_COMPONENT',
                                    'LAND_SFC_V_WIND_COMPONENT',
                                    'LAND_SFC_TEMPERATURE',
                                    'LAND_SFC_SPECIFIC_HUMIDITY',
-                                   'LAND_SURFACE_ALTIMETER',
+                                   'LAND_SFC_ALTIMETER',
                                    'SAT_U_WIND_COMPONENT',
                                    'SAT_V_WIND_COMPONENT'"
 #
