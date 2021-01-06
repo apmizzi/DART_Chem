@@ -82,6 +82,7 @@ public :: write_iasi_o3,        &
 integer, parameter               :: MAX_IASI_O3_OBS = 10000000
 integer, parameter               :: IASI_DIM = 41
 integer                          :: num_iasi_o3_obs = 0
+integer                          :: nlayer_model, nlayer_iasi_o3
 !
 real(r8), allocatable, dimension(:,:) :: avg_kernel
 real(r8), allocatable, dimension(:,:) :: pressure
@@ -121,7 +122,7 @@ character(len=129)  :: IASI_O3_retrieval_type
 !     RETR - retrievals in retrieval (ppbv) format
 !     QOR  - quasi-optimal retrievals
 !     CPSR - compact phase space retrievals
-namelist /obs_def_IASI_O3_nml/ IASI_O3_retrieval_type, use_log_o3
+namelist /obs_def_IASI_O3_nml/ IASI_O3_retrieval_type, use_log_o3, nlayer_model, nlayer_iasi_o3
 
 contains
 

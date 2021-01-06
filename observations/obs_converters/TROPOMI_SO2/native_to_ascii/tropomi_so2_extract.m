@@ -430,6 +430,8 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
             fprintf(fid,'\n');
             fprintf(fid,'%14.8g ',avgk_lay(1:layer,ipxl,ilin));
             fprintf(fid,'\n');
+            fprintf(fid,'%14.8g ',prior_lay(1:layer,ipxl,ilin));
+            fprintf(fid,'\n');
             fprintf(fid,'%14.8g %14.8g %14.8g \n',col_amt_1km(ipxl,ilin), ...
 	    col_amt_1km_err(ipxl,ilin),col_amt_1km_sys(ipxl,ilin));
             fprintf(fid,'%14.8g %14.8g %14.8g %14.8g %14.8g \n',amf_1km(ipxl,ilin), ...

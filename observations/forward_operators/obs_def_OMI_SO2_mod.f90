@@ -64,8 +64,8 @@ use          location_mod, only : location_type, set_location, get_location, &
 
 use       assim_model_mod, only : interpolate
 
-use          obs_kind_mod, only : QTY_SO2, QTY_TEMPERATURE, QTY_PRESSURE, &
-                                  QTY_VAPOR_MIXING_RATIO
+use          obs_kind_mod, only : QTY_SO2, QTY_TEMPERATURE, QTY_SURFACE_PRESSURE, &
+                                  QTY_PRESSURE, QTY_VAPOR_MIXING_RATIO
 
 use  ensemble_manager_mod, only : ensemble_type
 
@@ -84,6 +84,7 @@ public :: write_omi_so2, &
 integer, parameter    :: max_omi_so2_obs = 10000000
 integer               :: num_omi_so2_obs = 0
 integer,  allocatable :: nlayer(:)
+integer,  allocatable :: kend(:)
 real(r8), allocatable :: pressure(:,:)
 real(r8), allocatable :: scat_wt(:,:)
 
@@ -140,6 +141,7 @@ if (nlayer_omi_so2 < 1) then
 endif
 
 allocate(   nlayer(max_omi_so2_obs))
+allocate(   kend(max_omi_so2_obs))
 allocate( pressure(max_omi_so2_obs,nlayer_omi_so2+1))
 allocate(  scat_wt(max_omi_so2_obs,nlayer_omi_so2))
 
@@ -157,8 +159,9 @@ character(len=*), intent(in), optional :: fform
 
 integer               :: keyin
 integer               :: nlayer_1
+integer               :: kend_1
 real(r8), allocatable :: pressure_1(:)
-real(r8), allocatable ::  scat_wt_1(:)
+real(r8), allocatable :: scat_wt_1(:)
 character(len=32)     :: fileformat
 
 integer, SAVE :: counts1 = 0
@@ -170,13 +173,14 @@ if(present(fform)) fileformat = adjustl(fform)
 
 ! Need to know how many layers for this one
 nlayer_1   = read_int_scalar( ifile, fileformat, 'nlayer_1')
+kend_1   = read_int_scalar( ifile, fileformat, 'kend_1')
 
 allocate( pressure_1(nlayer_1+1))
 allocate(  scat_wt_1(nlayer_1))
 
 call read_r8_array(ifile, nlayer_1+1, pressure_1,   fileformat, 'pressure_1')
 call read_r8_array(ifile, nlayer_1,   scat_wt_1, fileformat, 'scat_wt_1')
-keyin = read_int_scalar(ifile, fileformat, 'nlayer_1')
+keyin = read_int_scalar(ifile, fileformat, 'keyin')
 
 counts1 = counts1 + 1
 key     = counts1
@@ -187,7 +191,7 @@ if(counts1 > max_omi_so2_obs) then
    call error_handler(E_ERR,'read_omi_so2',string1,source,text2=string2)
 endif
 
-call set_obs_def_omi_so2(key, pressure_1, scat_wt_1, nlayer_1)
+call set_obs_def_omi_so2(key, pressure_1, scat_wt_1, nlayer_1, kend_1)
 
 deallocate(pressure_1, scat_wt_1)
 
@@ -212,6 +216,7 @@ if(present(fform)) fileformat = adjustl(fform)
 ! you can come extend the context strings to include the key if desired.
 
 call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
+call write_int_scalar(ifile,                     kend(key), fileformat,'kend')
 call write_r8_array(  ifile, nlayer(key)+1,  pressure(key,:), fileformat,'pressure')
 call write_r8_array(  ifile, nlayer(key),  scat_wt(key,:), fileformat,'scat_wt')
 call write_int_scalar(ifile,                             key, fileformat,'key')
@@ -264,7 +269,7 @@ type(location_type) :: loc2
 
 integer :: layer_omi,level_omi
 integer :: layer_mdl,level_mdl
-integer :: k,imem
+integer :: k,imem,kend_omi
 integer :: so2_istatus(ens_size)
 integer, dimension(ens_size) :: tmp_istatus, qmr_istatus, prs_istatus
 
@@ -274,13 +279,14 @@ real(r8) :: level
 real(r8) :: tmp_vir_k, tmp_vir_kp
 real(r8) :: mloc(3)
 real(r8) :: so2_val_conv
+real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
 real(r8), dimension(ens_size) :: so2_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
 real(r8), dimension(ens_size) :: so2_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
-real(r8), dimension(ens_size) :: so2_temp, tmp_temp, qmr_temp
+real(r8), dimension(ens_size) :: so2_temp, tmp_temp, qmr_temp, prs_sfc
 
-real(r8), allocatable, dimension(:)   :: thick, prs_omi
+real(r8), allocatable, dimension(:)   :: thick, prs_omi, prs_omi_mem
 real(r8), allocatable, dimension(:,:) :: so2_val, tmp_val, qmr_val
-logical  :: return_now
+logical  :: return_now,so2_return_now,tmp_return_now,qmr_return_now
 
 if ( .not. module_initialized ) call initialize_module
 
@@ -300,10 +306,17 @@ endif
 
 layer_omi = nlayer(key)
 level_omi = nlayer(key)+1
-layer_mdl=nlayer_model
-level_mdl=nlayer_model+1
+layer_mdl = nlayer_model
+level_mdl = nlayer_model+1
+kend_omi = kend(key)
+!write(string1, *) 'APM: layer_omi ',key,layer_omi
+!call error_handler(E_MSG, routine, string1, source)
+!write(string1, *) 'APM: layer_mdl ',key,layer_mdl
+!call error_handler(E_MSG, routine, string1, source)
+
 allocate(prs_omi(level_omi))
-prs_omi(:)=pressure(key,:)*100.
+allocate(prs_omi_mem(level_omi))
+prs_omi(1:level_omi)=pressure(key,1:level_omi)*100.
 
 ! Get location infomation
 
@@ -319,106 +332,151 @@ endif
 ! show up in the report from 'output_forward_op_errors'
 
 istatus(:) = 0  ! set this once at the beginning
-so2_istatus = 0
-tmp_istatus = 0
-qmr_istatus = 0
+
+! pressure at model surface (Pa)
+
+level=0.0_r8
+loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
+istatus(:) = 0
+prs_istatus(:) = 0
+call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, prs_istatus) 
+if(any(prs_istatus /= 0)) then
+   write(string1, *)'APM NOTICE: MDL prs_sfc is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
+endif
+call track_status(ens_size, prs_istatus, prs_sfc, istatus, return_now)
+if(return_now) return
+!write(string1, *) 'APM: prs_sfc ',key,prs_sfc(1)
+!call error_handler(E_MSG, routine, string1, source)
 
 ! sulfur dioxide at first model layer (ppmv)
 
 level = 1.0_r8
 loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+so2_istatus(:) = 0
 call interpolate(state_handle, ens_size, loc2, QTY_SO2, so2_mdl_1, so2_istatus) 
 if(any(so2_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL so2_mdl_1 is bad '
-   call error_handler(E_ERR, routine, string1, source)
+   write(string1, *)'APM NOTICE: MDL so2_mdl_1 is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
 endif
 call track_status(ens_size, so2_istatus, so2_mdl_1, istatus, return_now)
 if(return_now) return
+!write(string1, *) 'APM: so2_mdl_1 ',key,so2_mdl_1(1)
+!call error_handler(E_MSG, routine, string1, source)
 
 ! temperature at first model layer (K)
 
 level=1.0_r8
 loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+tmp_istatus(:) = 0
 call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_1, tmp_istatus) 
 if(any(tmp_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL tmp_mdl_1 is bad '
-   call error_handler(E_ERR, routine, string1, source)
+   write(string1, *)'APM NOTICE: MDL tmp_mdl_1 is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
 endif
 call track_status(ens_size, tmp_istatus, tmp_mdl_1, istatus, return_now)
 if(return_now) return
+!write(string1, *) 'APM: tmp_mdl_1 ',key,tmp_mdl_1(1)
+!call error_handler(E_MSG, routine, string1, source)
 
 ! vapor mixing ratio at first model layer (Kg/Kg)
 
 level=1.0_r8
 loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+qmr_istatus(:) = 0
 call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, qmr_istatus) 
 if(any(qmr_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL qmr_mdl_1 is bad '
-   call error_handler(E_ERR, routine, string1, source)
+   write(string1, *)'APM NOTICE: MDL qmr_mdl_1 is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
 endif
 call track_status(ens_size, qmr_istatus, qmr_mdl_1, istatus, return_now)
 if(return_now) return
+!write(string1, *) 'APM: qmr_mdl_1 ',key,qmr_mdl_1(1)
+!call error_handler(E_MSG, routine, string1, source)
 
 ! pressure at first model layer (Pa)
 
 level=1.0_r8
 loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+prs_istatus(:) = 0
 call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, prs_istatus) 
 if(any(prs_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL prs_mdl_1 is bad '
-   call error_handler(E_ERR, routine, string1, source)
+   write(string1, *)'APM NOTICE: MDL prs_mdl_1 is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
 endif
 call track_status(ens_size, prs_istatus, prs_mdl_1, istatus, return_now)
 if(return_now) return
+!write(string1, *) 'APM: prs_mdl_1 ',key,prs_mdl_1(1)
+!call error_handler(E_MSG, routine, string1, source)
 
 ! sulfur dioxide at last model layer (ppmv)
 
 level=real(layer_mdl-1)
 loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+so2_istatus(:) = 0
 call interpolate(state_handle, ens_size, loc2, QTY_SO2, so2_mdl_n, so2_istatus) 
 if(any(so2_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL so2_mdl_n is bad '
-   call error_handler(E_ERR, routine, string1, source)
+   write(string1, *)'APM NOTICE: MDL so2_mdl_n is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
 endif
 call track_status(ens_size, so2_istatus, so2_mdl_n, istatus, return_now)
 if(return_now) return
+!write(string1, *) 'APM: so2_mdl_n ',key,so2_mdl_n(1)
+!call error_handler(E_MSG, routine, string1, source)
 
 ! temperature at last model layer (K)
 
 level=real(layer_mdl-1)
 loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+tmp_istatus(:) = 0
 call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_n, tmp_istatus) 
 if(any(tmp_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL tmp_mdl_n is bad '
-   call error_handler(E_ERR, routine, string1, source)
+   write(string1, *)'APM NOTICE: MDL tmp_mdl_n is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
 endif
 call track_status(ens_size, tmp_istatus, tmp_mdl_n, istatus, return_now)
 if(return_now) return
+!write(string1, *) 'APM: tmp_mdl_n ',key,tmp_mdl_n(1)
+!call error_handler(E_MSG, routine, string1, source)
 
 ! vapor mixing ratio at last model layer (Kg/Kg)
 
 level=real(layer_mdl-1)
 loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+qmr_istatus(:) = 0
 call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, qmr_istatus) 
 if(any(qmr_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL qmr_mdl_n is bad '
-   call error_handler(E_ERR, routine, string1, source)
+   write(string1, *)'APM NOTICE: MDL qmr_mdl_n is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
 endif
 call track_status(ens_size, qmr_istatus, qmr_mdl_n, istatus, return_now)
 if(return_now) return
+!write(string1, *) 'APM: qmr_mdl_n ',key,qmr_mdl_n(1)
+!call error_handler(E_MSG, routine, string1, source)
 
 ! pressure at last model layer (Pa)
 
 level=real(layer_mdl-1)
 loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+prs_istatus(:) = 0
 call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, &
 prs_mdl_n, prs_istatus) 
 if(any(prs_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL prs_mdl_n is bad '
-   call error_handler(E_ERR, routine, string1, source)
+   write(string1, *)'APM NOTICE: MDL prs_mdl_n is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
 endif
 call track_status(ens_size, prs_istatus, prs_mdl_n, istatus, return_now)
 if(return_now) return
+!write(string1, *) 'APM: prs_mdl_n ',key,prs_mdl_n(1)
+!call error_handler(E_MSG, routine, string1, source)
 
 ! Get profiles at OMI levels
 
@@ -427,9 +485,9 @@ allocate(tmp_val(ens_size,level_omi))
 allocate(qmr_val(ens_size,level_omi))
 
 do k=1,level_omi
-   so2_istatus = 0
-   tmp_istatus = 0
-   qmr_istatus = 0
+   so2_istatus(:) = 0
+   tmp_istatus(:) = 0
+   qmr_istatus(:) = 0
 
    loc2 = set_location(mloc(1), mloc(2), prs_omi(k), VERTISPRESSURE)
 
@@ -461,27 +519,30 @@ do k=1,level_omi
    endwhere
 
    ! Report all issue before returning (when E_MSG is being used)
+   so2_return_now=.false.
    if(any(so2_istatus /= 0)) then
       write(string1,*) &
-      'APM NOTICE: model SO2 obs value on OMI grid has a bad value '
+      'APM NOTICE: model SO2 obs value on OMI grid has a bad value ',key
       call error_handler(E_MSG, routine, string1, source)
-      call track_status(ens_size, so2_istatus, so2_temp, istatus, return_now)
+      call track_status(ens_size, so2_istatus, so2_temp, istatus, so2_return_now)
    endif
    
+   tmp_return_now=.false.
    if(any(tmp_istatus/=0)) then
       write(string1, *) &
-      'APM NOTICE: model TMP obs value on OMI grid has a bad value'
+      'APM NOTICE: model TMP obs value on OMI grid has a bad value',key
       call error_handler(E_MSG, routine, string1, source)
-      call track_status(ens_size, tmp_istatus, tmp_temp, istatus, return_now)
+      call track_status(ens_size, tmp_istatus, tmp_temp, istatus, tmp_return_now)
    endif
   
-   if(any(tmp_istatus/=0)) then
+   qmr_return_now=.false.
+   if(any(qmr_istatus/=0)) then
       write(string1, *) &
-      'APM NOTICE: model QMR obs value on OMI grid has a bad value '
+      'APM NOTICE: model QMR obs value on OMI grid has a bad value ',key
       call error_handler(E_MSG, routine, string1, source)
-      call track_status(ens_size, qmr_istatus, qmr_temp, istatus, return_now)
+      call track_status(ens_size, qmr_istatus, qmr_temp, istatus, qmr_return_now)
    endif
-   if(return_now) return
+   if(so2_return_now .or. tmp_return_now .or. qmr_return_now) return
 
    so2_val(:,k) = so2_temp(:)  
    tmp_val(:,k) = tmp_temp(:)  
@@ -496,51 +557,74 @@ expct_val(:)=0.0
 allocate(thick(layer_omi))
 do imem=1,ens_size
 
+   ! Adjust the OMI pressure for WRF-Chem lower/upper boudary pressure
+   ! (OMI NO2 vertical grid is bottom to top)
+
+   prs_omi_mem(:)=prs_omi(:)
+   if (prs_sfc(imem).gt.prs_omi_mem(1)) then
+      prs_omi_mem(1)=prs_sfc(imem)
+   endif   
+
    ! Calculate the thicknesses
 
    thick(:)=0.
    do k=1,layer_omi
+      lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
+      up_wt=log(prs_omi_mem(k))-lnpr_mid
+      dw_wt=log(lnpr_mid)-log(prs_omi_mem(k+1))
+      tl_wt=up_wt+dw_wt
+      
       tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
       tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
-      thick(k)   = Rd*(tmp_vir_k + tmp_vir_kp)/2.0_r8/grav* &
-                   log(prs_omi(k+1)/prs_omi(k))
+      thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
+                   log(prs_omi_mem(k)/prs_omi_mem(k+1))
    enddo
 
+!   if(imem.eq.1) then
+!      write(string1, *) 'APM: thick mem=1 ',key,thick(:)
+!      call error_handler(E_MSG, routine, string1, source)
+!   endif
    ! Process the vertical summation
 
    expct_val(imem)=0.0_r8
    do k=1,layer_omi
+      lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
+      up_wt=log(prs_omi_mem(k))-lnpr_mid
+      dw_wt=log(lnpr_mid)-log(prs_omi_mem(k+1))
+      tl_wt=up_wt+dw_wt
 
-   ! Convert from VMR to molar density (mol/m^3)
+      ! Convert from VMR to molar density (mol/m^3)
       if(use_log_so2) then
-         so2_val_conv = (exp(so2_val(imem,k))+exp(so2_val(imem,k+1)))/2.0_r8 * &
-                        (prs_omi(k)+prs_omi(k+1)) / &
-                        (Ru*(tmp_val(imem,k)+tmp_val(imem,k+1)))
+         so2_val_conv = (dw_wt*exp(so2_val(imem,k))+up_wt*exp(so2_val(imem,k+1)))/tl_wt * &
+                        (dw_wt*prs_omi(k)+up_wt*prs_omi(k+1)) / &
+                        (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
       else
-         so2_val_conv = (so2_val(imem,k)+so2_val(imem,k+1))/2.0_r8 * &
-                        (prs_omi(k)+prs_omi(k+1)) / &
-                        (Ru*(tmp_val(imem,k)+tmp_val(imem,k+1)))
+         so2_val_conv = (dw_wt*so2_val(imem,k)+up_wt*so2_val(imem,k+1))/tl_wt * &
+                        (dw_wt*prs_omi(k)+up_wt*prs_omi(k+1)) / &
+                        (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
       endif
  
-   ! Get expected observation
+      ! Get expected observation
 
       expct_val(imem) = expct_val(imem) + thick(k) * so2_val_conv * &
                         AvogN/msq2cmsq * scat_wt(key,k) 
    enddo
 enddo
+!write(string1, *) 'APM: expct_val (all mems) ',key,expct_val(:)
+!call error_handler(E_MSG, routine, string1, source
 
 ! Clean up and return
 deallocate(so2_val, tmp_val, qmr_val)
 deallocate(thick)
-deallocate(prs_omi)
+deallocate(prs_omi, prs_omi_mem)
 
 end subroutine get_expected_omi_so2
 
 !-------------------------------------------------------------------------------
 
-subroutine set_obs_def_omi_so2(key, so2_pressure, so2_scat_wt, so2_nlayer)
+subroutine set_obs_def_omi_so2(key, so2_pressure, so2_scat_wt, so2_nlayer, so2_kend)
 
-integer,                            intent(in)   :: key, so2_nlayer
+integer,                            intent(in)   :: key, so2_nlayer, so2_kend
 real(r8), dimension(so2_nlayer+1),  intent(in)   :: so2_pressure
 real(r8), dimension(so2_nlayer),    intent(in)   :: so2_scat_wt
 
@@ -554,8 +638,9 @@ if(num_omi_so2_obs >= max_omi_so2_obs) then
 endif
 
 nlayer(key) = so2_nlayer
-pressure(key,:) = so2_pressure(:)
-scat_wt(key,:) = so2_scat_wt(:)
+kend(key) = so2_kend
+pressure(key,1:so2_nlayer+1) = so2_pressure(1:so2_nlayer+1)
+scat_wt(key,1:so2_nlayer) = so2_scat_wt(1:so2_nlayer)
 
 end subroutine set_obs_def_omi_so2
 

@@ -142,8 +142,8 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       units=h5readatt(file_in,field,'Units');
       cld_frac(:,:)=double(temp(:,:))*scalef;
 % cld_prs(pixel,scanline)
-      field='/HDFEOS/SWATHS/ColumnAmountNO2/Data Fields/CloudPressure';
       clear temp
+      field='/HDFEOS/SWATHS/ColumnAmountNO2/Data Fields/CloudPressure';
       temp=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');   
       offset=h5readatt(file_in,field,'Offset');  
@@ -151,8 +151,8 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       units=h5readatt(file_in,field,'Units');
       cld_prs(:,:)=double(temp(:,:))*scalef;
 % cld_rad_frac(pixel,scanline) (scalef=.001)
-      field='/HDFEOS/SWATHS/ColumnAmountNO2/Data Fields/CloudRadianceFraction';
       clear temp
+      field='/HDFEOS/SWATHS/ColumnAmountNO2/Data Fields/CloudRadianceFraction';
       temp=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');   
       offset=h5readatt(file_in,field,'Offset');  
@@ -252,7 +252,16 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       offset=h5readatt(file_in,field,'Offset');  
       scalef=h5readatt(file_in,field,'ScaleFactor');  
       units=h5readatt(file_in,field,'Units');
-      vcd_flg(:,:)=vcd_flg(:,:)*scalef;;  
+      vcd_flg(:,:)=vcd_flg(:,:)*scalef;
+% terr_refl(pixel,scanline) (none)
+      clear temp
+      field='/HDFEOS/SWATHS/ColumnAmountNO2/Data Fields/TerrainReflectivity';
+      temp=h5read(file_in,field);
+      missing=h5readatt(file_in,field,'MissingValue');  
+      offset=h5readatt(file_in,field,'Offset');  
+      scalef=h5readatt(file_in,field,'ScaleFactor');  
+      units=h5readatt(file_in,field,'Units');
+      terr_refl(:,:)=double(temp(:,:))*scalef;
 % xtrk_flg(pixel,scanline) (none)
       field='/HDFEOS/SWATHS/ColumnAmountNO2/Data Fields/XTrackQualityFlags';
       xtrk_flg=h5read(file_in,field);
@@ -306,7 +315,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       clear temp
       [temp,rc]=time_tai93(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn);
       windate_min=single(temp);
-     clear temp
+      clear temp
       [temp,rc]=time_tai93(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx);
       windate_max=single(temp);
       clear temp
@@ -337,8 +346,14 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
          for ipxl=1:pixel
 %
 % QA/AC
-% The clear sky and cloud height < 5000 m may be part of the retrieval algorithm
-% quality control.  Could find no fields indicating cloud coverage or height
+	    if(bitand(vcd_flg(ipxl,ilin),1)~=0 | xtrk_flg(ipxl,ilin)~=0 | ...
+	    zenang(ipxl,ilin)>=85.)
+               continue
+	    end
+%
+	    if(cld_rad_frac(ipxl,ilin)>=0.5 | terr_refl(ipxl,ilin)>=0.3)
+               continue
+	    end
 %
 	    if(isnan(slnt_col_amt(ipxl,ilin)) | slnt_col_amt(ipxl,ilin)<=0)
                continue
@@ -381,7 +396,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       clear cld_frac cld_prs cld_rad_frac col_amt col_amt_std 
       clear col_amt_trop col_amt_trop_std scat_wt scat_wt_prs 
       clear slnt_col_amt slnt_col_amt_std prs_trop vcd_flg 
-      clear xtrk_flg lat lon zenang time
+      clear xtrk_flg lat lon zenang time terr_refl
    end
 end
 function [fld_interp]=prs_interp(fld,i_tmp,j_tmp,i_mdl,j_mdl, ...

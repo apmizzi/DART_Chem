@@ -16,10 +16,11 @@ rm -f input.nml
 touch input.nml
 cat > input.nml << EOF
 &create_iasi_obs_nml
-   bin_beg                     = ${NL_BIN_BEG}
-   bin_end                     = ${NL_BIN_END}
+   bin_beg_sec                 = ${NL_BIN_BEG_SEC}
+   bin_end_sec                 = ${NL_BIN_END_SEC}
    filedir                     = ${NL_FILEDIR}
    filename                    = ${NL_FILENAME}
+   fileout                     = ${NL_IAS_OUTFILE}
    IASI_CO_retrieval_type      = ${NL_IASI_CO_RETRIEVAL_TYPE}
    IASI_O3_retrieval_type      = ${NL_IASI_O3_RETRIEVAL_TYPE}
    fac_obs_error               = ${NL_FAC_OBS_ERROR}

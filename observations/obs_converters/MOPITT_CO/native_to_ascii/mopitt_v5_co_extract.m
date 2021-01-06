@@ -130,7 +130,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       field='/Retrieved CO Surface Mixing Ratio';
       temrr=hdfread(file_in,field);
       co_retr_sfc=temrr(:,1);
-      co_retr_err_sfc=temrr(:,1);
+      co_retr_err_sfc=temrr(:,2);
 % Averaging Kernel(numobs,layer,layer)
       field='/Retrieval Averaging Kernel Matrix';
       temrrr=hdfread(file_in,field);
@@ -182,9 +182,6 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 %         end
 %
 % Check domain
-	 if(lon(iobs)<0)
-	   lon(iobs)=lon(iobs)+360.;
-	 end
 	 if(lat(iobs)<lat_min | lat(iobs)>lat_max | ...
 	 lon(iobs)<lon_min | lon(iobs)>lon_max)
             continue

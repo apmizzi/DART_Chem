@@ -107,7 +107,7 @@ program tropomi_so2_ascii_to_obs
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
 !
-   real*8                          :: bin_beg,bin_end
+   real*8                          :: bin_beg_sec,bin_end_sec
    real*8                          :: lon_min,lon_max,lat_min,lat_max
    real*8                          :: fac_obs_error,fac
    real*8                          :: pi,rad2deg,re,level
@@ -119,7 +119,7 @@ program tropomi_so2_ascii_to_obs
    real*8,dimension(num_copies)    :: obs_val
    real*8,allocatable,dimension(:) :: prs_obs
 !
-   character*129                   :: filedir,filename
+   character*129                   :: filedir,filename,fileout
    character*129                   :: copy_meta_data
    character*129                   :: qc_meta_data='TROPOMI SO2 QC index'
    character*129                   :: chr_year,chr_month,chr_day
@@ -135,16 +135,18 @@ program tropomi_so2_ascii_to_obs
    real*8                          :: amf_1km_clr,amf_1km_cld
    real*8                          :: amf_7km,amf_7km_err,amf_7km_sys
    real*8                          :: amf_7km_clr,amf_7km_cld
-   real*8,allocatable,dimension(:) :: avgk_obs
+   real*8,allocatable,dimension(:) :: avgk_obs, prior
 !
-   namelist /create_tropomi_obs_nml/filedir,filename,year,month,day,hour, &
-   bin_beg,bin_end,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
+   namelist /create_tropomi_obs_nml/filedir,filename,fileout, &
+   bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
    lon_min,lon_max,lat_min,lat_max
 !
 ! Set constants
    pi=4.*atan(1.)
    rad2deg=360./(2.*pi)
    re=6371000.
+   days_last=-9999.
+   seconds_last=-9999.
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
@@ -156,9 +158,6 @@ program tropomi_so2_ascii_to_obs
    call find_namelist_in_file("input.nml", "create_tropomi_obs_nml", iunit)
    read(iunit, nml = create_tropomi_obs_nml, iostat = io)
    call check_namelist_read(iunit, io, "create_tropomi_obs_nml")
-   write(chr_year,'(i4.4)') year
-   write(chr_month,'(i2.2)') month
-   write(chr_day,'(i2.2)') day
 !
 ! Record the namelist values used for the run ...
    call error_handler(E_MSG,'init_create_tropomi_obs','create_tropomi_obs_nml values are',' ',' ',' ')
@@ -193,8 +192,9 @@ program tropomi_so2_ascii_to_obs
    call set_calendar_type(calendar_type)
 !
 ! Open TROPOMI SO2 binary file
+   fileid=100
    write(6,*)'opening ',TRIM(filedir)//TRIM(filename)
-   open(fileid,file=TRIM(filedir)//TRIM(filename), &
+   open(unit=fileid,file=TRIM(filedir)//TRIM(filename), &
    form='formatted', status='old', iostat=ios)
 !
 ! Read TROPOMI SO2
@@ -212,8 +212,10 @@ print *, hh_obs,mm_obs,ss_obs
       read(fileid,*,iostat=ios) nlay_obs,nlev_obs
       allocate(prs_obs(nlev_obs))
       allocate(avgk_obs(nlay_obs))
+      allocate(prior(nlay_obs))
       read(fileid,*,iostat=ios) prs_obs(1:nlev_obs)
       read(fileid,*,iostat=ios) avgk_obs(1:nlay_obs)
+      read(fileid,*,iostat=ios) prior(1:nlay_obs)
       read(fileid,*,iostat=ios) col_amt_1km, &
       col_amt_1km_err,col_amt_1km_sys
       read(fileid,*,iostat=ios) amf_1km, &
@@ -230,6 +232,7 @@ print *, hh_obs,mm_obs,ss_obs
 !      print *, nlay_obs,nlev_obs
 !      print *, prs_obs(1:nlev_obs)
 !      print *, avgk_obs(1:nlay_obs) 
+!      print *, prior(1:nlay_obs) 
 !      print *, col_amt_1km
 !      print *, col_amt_1km_err
 !      print *, col_amt_1km_sys
@@ -271,7 +274,7 @@ print *, hh_obs,mm_obs,ss_obs
       call set_obs_def_location(obs_def, obs_location)
       call set_obs_def_time(obs_def, obs_time)
       call set_obs_def_error_variance(obs_def, obs_err_var)
-      call set_obs_def_tropomi_so2(qc_count, prs_obs, avgk_obs, amf_1km, nlay_obs)
+      call set_obs_def_tropomi_so2(qc_count, prs_obs, avgk_obs, prior, amf_1km, nlay_obs)
       call set_obs_def_key(obs_def, qc_count)
       call set_obs_values(obs, obs_val, 1)
       call set_qc(obs, tropomi_qc, num_qc)
@@ -302,21 +305,12 @@ print *, hh_obs,mm_obs,ss_obs
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
-   if  (bin_beg == 3.01) then
-      file_name=trim(file_name)//chr_year//chr_month//chr_day//'06'
-   elseif (bin_beg == 9.01) then
-      file_name=trim(file_name)//chr_year//chr_month//chr_day//'12'
-   elseif (bin_beg == 15.01) then
-      file_name=trim(file_name)//chr_year//chr_month//chr_day//'18'
-   elseif (bin_beg == 21.01) then
-      file_name=trim(file_name)//chr_year//chr_month//chr_day//'24'
-   endif !bin
    call timestamp(string1=source,string2=revision,string3=revdate,pos='end')
-   call write_obs_seq(seq, file_name)
+   call write_obs_seq(seq, trim(fileout))
    close(fileid)
 !
 ! Remove obs_seq if empty
-   cmd='rm -rf '//trim(file_name)
+   cmd='rm -rf '//trim(fileout)
    if(qc_count.eq.0) then
       call execute_command_line(trim(cmd))
    endif   

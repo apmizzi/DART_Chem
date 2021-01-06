@@ -18,12 +18,13 @@ cat > input.nml << EOF
 &create_omi_obs_nml
    filedir                     = ${NL_FILEDIR}
    filename                    = ${NL_FILENAME}
+   fileout                     = ${NL_FILEOUT}
    year                        = ${NL_YEAR}
    month                       = ${NL_MONTH}
    day                         = ${NL_DAY}
    hour                        = ${NL_HOUR}
-   bin_beg                     = ${NL_BIN_BEG}
-   bin_end                     = ${NL_BIN_END}
+   bin_beg_sec                 = ${NL_BIN_BEG_SEC}
+   bin_end_sec                 = ${NL_BIN_END_SEC}
    fac_obs_error               = ${NL_FAC_OBS_ERROR}
    use_log_o3                  = ${NL_USE_LOG_O3}
    use_log_no2                 = ${NL_USE_LOG_NO2}
@@ -32,6 +33,11 @@ cat > input.nml << EOF
    lon_max                     = ${NNL_MAX_LON}
    lat_min                     = ${NNL_MIN_LAT}
    lat_max                     = ${NNL_MAX_LAT}
+   path_model                  = ${NL_PATH_MODEL}
+   file_model                  = ${NL_FILE_MODEL}
+   nx_model                    = ${NL_NX_MODEL}
+   ny_model                    = ${NL_NY_MODEL}
+   nz_model                    = ${NL_NZ_MODEL}
 /
 &obs_sequence_nml
    write_binary_obs_sequence   = .false.
@@ -66,17 +72,17 @@ cat > input.nml << EOF
  &obs_def_OMI_O3_nml
    use_log_o3   = ${NL_USE_LOG_O3:-.false.},
    nlayer_model   = ${NL_NLAYER_MODEL:-36},
-   nlayer_omi_o3   = ${NL_NLAYER_OMI_O3:-15},
+   nlayer_omi_o3   = ${NL_NLAYER_OMI_O3:-11},
 /
  &obs_def_OMI_NO2_nml
    use_log_no2   = ${NL_USE_LOG_NO2:-.false.},
    nlayer_model   = ${NL_NLAYER_MODEL:-36},
-   nlayer_omi_no2   = ${NL_NLAYER_OMI_NO2:-40},
+   nlayer_omi_no2   = ${NL_NLAYER_OMI_NO2:-35},
 /
  &obs_def_OMI_SO2_nml
    use_log_so2   = ${NL_USE_LOG_SO2:-.false.},
    nlayer_model   = ${NL_NLAYER_MODEL:-36},
-   nlayer_omi_so2   = ${NL_NLAYER_OMI_SO2:-75},
+   nlayer_omi_so2   = ${NL_NLAYER_OMI_SO2:-72},
 / 
 EOF
 

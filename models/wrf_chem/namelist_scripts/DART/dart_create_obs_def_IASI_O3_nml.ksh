@@ -12,6 +12,8 @@ cat > input.nml_temp << EOF
  &obs_def_IASI_O3_nml
    IASI_O3_retrieval_type   = ${NL_IASI_O3_RETRIEVAL_TYPE:-'RAWR'},
    use_log_o3   = ${NL_USE_LOG_O3:-.false.},
+   nlayer_model    = ${NL_NLAYER_MODEL:-36},
+   nlayer_iasi_o3   = ${NL_NLAYER_IASI_O3:-41},
 / 
 EOF
 #

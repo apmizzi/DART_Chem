@@ -27,14 +27,14 @@
 #
 export INITIAL_DATE=2014071400
 export FIRST_FILTER_DATE=2014071406
-export FIRST_DART_INFLATE_DATE=2014071400
+export FIRST_DART_INFLATE_DATE=2014071406
 export FIRST_EMISS_INV_DATE=2014071406
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014071400
+export CYCLE_STR_DATE=2014071800
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014071400
+export CYCLE_END_DATE=2014071800
 #export CYCLE_END_DATE=${CYCLE_STR_DATE}
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
@@ -139,11 +139,11 @@ fi
 #
 # Run WRF-Chem for failed forecasts
 export RUN_SPECIAL_FORECAST=false
-export NUM_SPECIAL_FORECAST=0
+export NUM_SPECIAL_FORECAST=1
 export SPECIAL_FORECAST_FAC=1./2.
 export SPECIAL_FORECAST_FAC=2./3.
 #
-export SPECIAL_FORECAST_MEM[1]=1
+export SPECIAL_FORECAST_MEM[1]=6
 export SPECIAL_FORECAST_MEM[2]=2
 export SPECIAL_FORECAST_MEM[3]=3
 export SPECIAL_FORECAST_MEM[4]=4
@@ -199,9 +199,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export DART_VER=DART_chem_upgrade
 #
 # ROOT DIRECTORIES:
-   export SCRATCH_DIR=/nobackupp13/amizzi/OUTPUT_DATA
-   export WORK_DIR=/nobackupp13/amizzi
-   export INPUT_DATA_DIR=/nobackupp13/amizzi/INPUT_DATA
+   export SCRATCH_DIR=/nobackupp11/amizzi/OUTPUT_DATA
+   export WORK_DIR=/nobackupp11/amizzi
+   export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
 #
 # DEPENDENT INPUT DATA DIRECTORIES:
    export EXPERIMENT_DIR=${SCRATCH_DIR}
@@ -340,7 +340,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # SELECT COMPONENT RUN OPTIONS:
    if [[ ${RUN_SPECIAL_FORECAST} = "false" ]]; then
-      export RUN_GEOGRID=true
+      export RUN_GEOGRID=false
       export RUN_UNGRIB=true
       export RUN_METGRID=true
       export RUN_REAL=true
@@ -367,10 +367,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_TEMPO_NO2_OBS=false
       export RUN_AIRNOW_O3_OBS=true
       export RUN_AIRNOW_CO_OBS=true
-      export RUN_AIRNOW_NO2_OBS=false
+      export RUN_AIRNOW_NO2_OBS=true
       export RUN_AIRNOW_SO2_OBS=false
-      export RUN_AIRNOW_PM10_OBS=false
-      export RUN_AIRNOW_PM25_OBS=false
+      export RUN_AIRNOW_PM10_OBS=true
+      export RUN_AIRNOW_PM25_OBS=true
       export RUN_PANDA_CO_OBS=false
       export RUN_PANDA_O3_OBS=false
       export RUN_PANDA_PM25_OBS=false
@@ -579,6 +579,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # COMPUTER PARAMETERS:
    export PROJ_NUMBER=P93300612
    export ACCOUNT=ucb93_summit2
+   export DEBUG_JOB_CLASS=debug
+   export DEBUG_TIME_LIMIT=02:00:00
+   export DEBUG_NODES=8
+   export DEBUG_TASKS=20
    export GENERAL_JOB_CLASS=normal
    export GENERAL_TIME_LIMIT=00:40:00
    export GENERAL_NODES=1
@@ -693,6 +697,21 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NNL_MIN_LAT=${NL_MIN_LAT}
    export NNL_MAX_LAT=${NL_MAX_LAT}
    export NL_OBS_PRESSURE_TOP=1000.
+#
+# Forward operator parameters
+   export NL_NLAYER_MODEL=${NNZP_CR}
+   export NL_NLAYER_MOPITT_CO=19
+   export NL_NLAYER_IASI_CO=19
+   export NL_NLAYER_IASI_O3=41
+   export NL_NLAYER_OMI_O3=15
+   export NL_NLAYER_OMI_NO2=40
+   export NL_NLAYER_OMI_SO2=75
+   export NL_NLAYER_TROPOMI_CO=55
+   export NL_NLAYER_TROPOMI_O3=20
+   export NL_NLAYER_TROPOMI_NO2=40
+   export NL_NLAYER_TROPOMI_SO2=40
+   export NL_NLAYER_TEMPO_O3=50
+   export NL_NLAYER_TEMPO_NO2=50
 #
 # PERT CHEM PARAMETERS
    export SPREAD_FAC=0.30
@@ -1110,7 +1129,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # &assim_tools_nml
    export NL_CUTOFF=0.1
-   export NL_SPECIAL_LOCALIZATION_OBS_TYPES="'IASI_CO_RETRIEVAL','MOPITT_CO_RETRIEVAL'.'AIRNOW_CO','AIRNOW_O3','MODIS_AOD'"
+   export NL_SPECIAL_LOCALIZATION_OBS_TYPES="'MOPITT_CO_RETRIEVAL','IASI_CO_RETRIEVAL','AIRNOW_CO','AIRNOW_O3','MODIS_AOD_RETRIEVAL'"
    export NL_SAMPLING_ERROR_CORRECTION=.true.
 # original cutoff
    export NL_SPECIAL_LOCALIZATION_CUTOFFS=0.1,0.1,0.1,0.1,0.1
@@ -1346,11 +1365,15 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
                     '${DART_DIR}/observations/forward_operators/obs_def_MODIS_AOD_mod.f90'"
 #
 # &obs_kind_nml
+#   export NL_EVALUATE_THESE_OBS_TYPES="' '"
    export NL_EVALUATE_THESE_OBS_TYPES="'MOPITT_CO_RETRIEVAL',
                                    'IASI_CO_RETRIEVAL',
                                    'AIRNOW_CO',
                                    'AIRNOW_O3',
-                                   'MODIS_AOD'"
+                                   'AIRNOW_NO2',
+                                   'AIRNOW_PM10',
+                                   'AIRNOW_PM25',
+                                   'MODIS_AOD_RETRIEVAL'"
 #
    export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'RADIOSONDE_U_WIND_COMPONENT',
@@ -1375,7 +1398,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
                                    'LAND_SFC_ALTIMETER',
                                    'SAT_U_WIND_COMPONENT',
                                    'SAT_V_WIND_COMPONENT'"
-
 #
 # &replace_wrf_fields_nml
    export NL_FIELDNAMES="'SNOWC',
@@ -1398,7 +1420,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_VERT_NORMALIZATION_HEIGHT=10000.0
    export NL_VERT_NORMALIZATION_LEVELS=20.0
    export NL_VERT_NORMALIZATION_SCALE_HEIGHT=1.5
-   export NL_SPECIAL_VERT_NORMALIZATION_OBS_TYPES="'IASI_CO_RETRIEVAL','MOPITT_CO_RETRIEVAL','AIRNOW_CO','AIRNOW_O3'.'MODIS_AOD'"
+   export NL_SPECIAL_VERT_NORMALIZATION_OBS_TYPES="'MOPITT_CO_RETRIEVAL','IASI_CO_RETRIEVAL','AIRNOW_CO','AIRNOW_O3','MODIS_AOD_RETRIEVAL'"
    export NL_SPECIAL_VERT_NORMALIZATION_PRESSURES="100000.0,100000.0,100000.0,100000.0,100000.0"
    export NL_SPECIAL_VERT_NORMALIZATION_HEIGHTS="10000.0,10000.0,10000.0,10000.0,10000.0"
    export NL_SPECIAL_VERT_NORMALIZATION_LEVELS="20.0,20.0,20.0,20.0,20.0"
@@ -2952,12 +2974,11 @@ EOF
 #      rm -rf wrfchemi_d${CR_DOMAIN}_tmp*
    fi
 #
-#########################################################################
+########################################################################
 #
 # RUN MOPITT CO OBSERVATIONS
 #
-#########################################################################
-#
+########################################################################
    if ${RUN_MOPITT_CO_OBS}; then
       if [[ ! -d ${RUN_DIR}/${DATE}/mopitt_co_obs ]]; then
          mkdir -p ${RUN_DIR}/${DATE}/mopitt_co_obs
@@ -2977,15 +2998,32 @@ EOF
       rm -rf ${MOP_OUTFILE}
 #
 #  SET OBS WINDOW
-      export BIN_BEG=${ASIM_MN_HH}
-      export BIN_END=${ASIM_MX_HH}
-#
-# SET MOPITT INPUT DATA DIR
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
       export FLG=0
-      if [[ ${BIN_END} -eq 3 ]]; then
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
          export FLG=1
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
       fi
-      export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MX_YYYY}${ASIM_MX_MM}${ASIM_MX_DD}${MOPITT_FILE_EXT}\'
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET MOPITT INPUT DATA FILE
+      export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${YYYY}${MM}${DD}${MOPITT_FILE_EXT}\'
 #
 # COPY EXECUTABLE
       export FILE=mopitt_extract_no_transform_RT.pro
@@ -3006,7 +3044,7 @@ EOF
 #
 idl << EOF
 .compile mopitt_extract_no_transform_RT.pro
-mopitt_extract_no_transform_RT, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG}, ${BIN_END}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
+mopitt_extract_no_transform_RT, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG_SEC}, ${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
 EOF
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
@@ -3032,10 +3070,23 @@ EOFF
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
       if [[ ${FLG} -eq 1 ]];  then
-         export FLG=0
-         export BIN_BEG=21
-         export BIN_END=24
-         export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}${MOPITT_FILE_EXT}\'
+         export BIN_BEG_HH=${ASIM_MN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         let HH_BEG=${BIN_BEG_HH}
+         let MN_BEG=${BIN_BEG_MN}
+         let SS_BEG=${BIN_BEG_SS}
+         let HH_END=${BIN_END_HH}
+         let MN_END=${BIN_END_MN}
+         let SS_END=${BIN_END_SS}
+         let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+         let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET MOPITT INPUT DATA FILE
+	 export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}${MOPITT_FILE_EXT}\'
 #
 # COPY EXECUTABLE
          export FILE=mopitt_extract_no_transform_RT.pro
@@ -3056,7 +3107,7 @@ EOFF
 #
 idl << EOF
 .compile mopitt_extract_no_transform_RT.pro
-mopitt_extract_no_transform_RT, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG}, ${BIN_END}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
+mopitt_extract_no_transform_RT, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG_SEC}, ${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
 EOF
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
@@ -3078,10 +3129,10 @@ EOFF
 	 rm -rf ${OUTFILE_NQ}
       elif [[ -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+	 rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${MOP_OUTFILE_NQ} ]]; then
          touch NO_MOPITT_CO_${DATE}_DATA
-	 rm -rf ${OUTFILE_NQ}
       fi
 #
 # SET NAMELIST TO CONVERT MOPITT ASCII TO OBS_SEQ 
@@ -3089,26 +3140,33 @@ EOFF
       export NL_MONTH=${D_MM}
       export NL_DAY=${D_DD}
       export NL_HOUR=${D_HH}
-      if [[ ${D_HH} -eq 24 ]]; then
-         export NL_BIN_BEG=21.01
-         export NL_BIN_END=3.00
-      elif [[ ${D_HH} -eq 6 ]]; then
-         export NL_BIN_BEG=3.01
-         export NL_BIN_END=9.00
-      elif [[ ${D_HH} -eq 12 ]]; then
-         export NL_BIN_BEG=9.01
-         export NL_BIN_END=15.00
-      elif [[ ${D_HH} -eq 18 ]]; then
-         export NL_BIN_BEG=15.01
-         export NL_BIN_END=21.00
-      fi
       cp MOPITT_CO_${D_DATE}.dat ${D_DATE}.dat
       export NL_FILEDIR=\'./\' 
       export NL_FILENAME=${D_DATE}.dat
+      export NL_MOP_OUTFILE=obs_seq_mopitt_co_${DATE}.out
       export NL_MOPITT_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_MOPITT}\'
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_MOPITT}
       export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+#
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
 #
 # USE MOPITT DATA 
       rm -rf input.nml
@@ -3119,11 +3177,7 @@ EOFF
       ./mopitt_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
-      export MOPITT_FILE=mopitt_obs_seq${D_DATE}
-      touch obs_seq_mopitt_co_${DATE}.out
-      if [[ -s ${MOPITT_FILE} ]]; then
-         cp ${MOPITT_FILE} obs_seq_mopitt_co_${DATE}.out
-      else
+      if [[! -s ${NL_MOP_OUTFILE} ]]; then
          touch NO_MOPITT_CO_${DATE}
       fi
    fi
@@ -3142,43 +3196,138 @@ EOFF
          cd ${RUN_DIR}/${DATE}/iasi_co_obs
       fi
 #
-# set file prefix for IASI
-# this depends on versions and file times (edit if necessary)
-      export FILE_PRE='VERSION2_NCAR_IASI_xxx_1C_M02'
+# SET IASI PARAMETERS
+      export IASI_FILE_PRE='VERSION2_NCAR_IASI_xxx_1C_M02'
+      export IASI_FILE_EXT='hdf'
+      export OUTFILE=\'TEMP_FILE.dat\'
+      export OUTFILE_NQ=TEMP_FILE.dat
+      export IAS_OUTFILE=\'IASI_CO_${D_DATE}.dat\'
+      export IAS_OUTFILE_NQ=IASI_CO_${D_DATE}.dat
+      let NCNT=4
+      rm -rf ${OUTFILE_NQ}
+      rm -rf ${IAS_OUTFILE_NQ}
 #
-# set file suffix for IASI
-# this depends on versions and file times (edit if necessary)
-      export FILE_EXT='hdf'
+#  SET OBS WINDOW
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
 #
-      export L_PAST_DATE=$($BUILD_DIR/da_advance_time.exe $DATE -24 2>/dev/null)
-      export L_PAST_YY=$(echo $L_PAST_DATE | cut -c1-4)
-      export L_PAST_MM=$(echo $L_PAST_DATE | cut -c5-6)
-      export L_PAST_DD=$(echo $L_PAST_DATE | cut -c7-8)
-      export L_PAST_HH=$(echo $L_PAST_DATE | cut -c9-10)
+# SET IASI INPUT DATA FILE
+      export A_DATE=${DATE}
+      while [[ ${A_DATE} -le ${ASIM_MAX_DATE} ]]; do 
+         export A_YY=$(echo $A_DATE | cut -c1-4)
+         export A_MM=$(echo $A_DATE | cut -c5-6)
+         export A_DD=$(echo $A_DATE | cut -c7-8)
+         export A_HH=$(echo $A_DATE | cut -c9-10)
+	 export A_DATE=${A_YY}${A_MM}${A_DD}${A_HH}
+	 export A_DIR=${A_YY}/${A_MM}/${A_DD}
+         export ICNT=0
+         while [[ ${ICNT} -le ${NCNT} ]]; do
+            export TEST=$($BUILD_DIR/da_advance_time.exe ${A_DATE} ${ICNT} 2>/dev/null)
+            export ND_YY=$(echo $TEST | cut -c1-4)
+            export ND_MM=$(echo $TEST | cut -c5-6)
+            export ND_DD=$(echo $TEST | cut -c7-8)
+            export ND_HH=$(echo $TEST | cut -c9-10)
+	    export ND_DATE=${ND_YY}${ND_MM}${ND_DD}${ND_HH}
+            export FILEIN=`ls ${EXPERIMENT_IASI_CO_DIR}/${A_DIR}/${IASI_FILE_PRE}_${A_DATE}*Z_${ND_DATE}*Z_*`
+            if [[ -e ${FILEIN} ]]; then 
+               export IAS_FILEIN=\'${FILEIN}\'
 #
-      let TEMP_MIN_HH=${ASIM_MIN_HH}
-      let TEMP_MAX_HH=${ASIM_MAX_HH}
-      (( BIN_BEG_SEC=${TEMP_MIN_HH}*60*60+1 ))
-      (( BIN_END_SEC=${TEMP_MAX_HH}*60*60 ))
+# COPY_EXECUTABLE
+               export FILE=iasi_extract_no_transform_UA.pro
+               rm -rf ${FILE}
+               cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
 #
-      export NCNT=3
+               rm -rf job.ksh
+               touch job.ksh
+               RANDOM=$$
+               export JOBRND=${RANDOM}_idl_iasi
+               cat << EOFF > job.ksh
+#!/bin/ksh -aeux
+#PBS -N ${JOBRND}
+#PBS -l walltime=${GENERAL_TIME_LIMIT}
+#PBS -q ${GENERAL_JOB_CLASS}
+#PBS -j oe
+#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
 #
-# Test for special case
-      if [[ ! ${HH} == 00 ]]; then
+idl << EOF
+.compile iasi_extract_no_transform_UA.pro
+
+iasi_extract_no_transform_UA,${IAS_FILEIN},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC},${NL_MIN_LON},${NL_MAX_LON},${NL_MIN_LAT},${NL_MAX_LAT}
+EOF
+export RC=\$?     
+if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
+if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+if [[ \$RC = 0 ]]; then
+   touch SUCCESS
+else
+   touch FAILED 
+   exit
+fi
+EOFF
+               qsub -Wblock=true job.ksh 
 #
-# Normal cases (06Z, 12Z, 18Z)
-         export A_DATE_START=$($BUILD_DIR/da_advance_time.exe ${ASIM_MIN_DATE} -${NCNT} 2>/dev/null)
-         export A_DATE=${A_DATE_START}
-         while [[ ${A_DATE} -le ${ASIM_MAX_DATE} ]]; do 
-            if [[ ${A_DATE} == ${A_DATE_START} ]]; then
-               export ASIM_OUTFILE=${YYYY}${MM}${DD}${HH}.dat
-               rm -rf ${ASIM_OUTFILE}
-               touch ${ASIM_OUTFILE}
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+               if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                  touch ${IAS_OUTFILE_NQ}
+                  cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	          rm -rf ${OUTFILE_NQ}
+               elif [[ -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                  cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	          rm -rf ${OUTFILE_NQ}
+               fi
             fi
+            (( ICNT=${ICNT}+1 ))
+         done
+         export A_DATE=$(${BUILD_DIR}/da_advance_time.exe ${A_DATE} 1 2>/dev/null)
+      done
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_HH=${ASIM_MN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         let HH_BEG=${BIN_BEG_HH}
+         let MN_BEG=${BIN_BEG_MN}
+         let SS_BEG=${BIN_BEG_SS}
+         let HH_END=${BIN_END_HH}
+         let MN_END=${BIN_END_MN}
+         let SS_END=${BIN_END_SS}
+         let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+         let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET IASI INPUT DATA FILE
+	 export A_DATE=${ASIM_MIN_DATE}
+         while [[ ${A_DATE} -le ${DATE} ]]; do 
             export A_YY=$(echo $A_DATE | cut -c1-4)
             export A_MM=$(echo $A_DATE | cut -c5-6)
             export A_DD=$(echo $A_DATE | cut -c7-8)
             export A_HH=$(echo $A_DATE | cut -c9-10)
+   	    export A_DATE=${A_YY}${A_MM}${A_DD}${A_HH}
+            export A_DIR=${A_YY}/${A_MM}/${A_DD}
             export ICNT=0
             while [[ ${ICNT} -le ${NCNT} ]]; do
                export TEST=$($BUILD_DIR/da_advance_time.exe ${A_DATE} ${ICNT} 2>/dev/null)
@@ -3186,21 +3335,12 @@ EOFF
                export ND_MM=$(echo $TEST | cut -c5-6)
                export ND_DD=$(echo $TEST | cut -c7-8)
                export ND_HH=$(echo $TEST | cut -c9-10)
-               export FILE=`ls ${EXPERIMENT_IASI_CO_DIR}/${A_YY}/${A_MM}/${A_DD}/${FILE_PRE}_${A_YY}${A_MM}${A_DD}${A_HH}*Z_${ND_YY}${ND_MM}${ND_DD}${ND_HH}*Z_*`
-               if [[ -e ${FILE} ]]; then 
-                  export OUTFILE_NM=TEMP_FILE.dat
-                  export INFILE=\'${FILE}\'
-                  export OUTFILE=\'${OUTFILE_NM}\'
+   	       export ND_DATE=${ND_YY}${ND_MM}${ND_DD}${ND_HH}
+               export FILEIN=`ls ${EXPERIMENT_IASI_CO_DIR}/${A_DIR}/${IASI_FILE_PRE}_${ND_DATE}*Z_${ND_DATE=}*Z_*`
+               if [[ -e ${FILEIN} ]]; then 
+                  export IAS_FILEIN=\'${FILEIN}\'
 #
-# echo what we are processing at the moment
-#                  echo ${INFILE}
-#                  echo ${OUTFILE}
-#                  echo ${BIN_BEG_SEC}
-#                  echo ${BIN_END_SEC}
-#
-# this is the call to an IDL routine to read and write variables
-# if already processed (with output), then this can be skipped (do_iasi=0)
-# else this needs to be called
+# COPY_EXECUTABLE
                   export FILE=iasi_extract_no_transform_UA.pro
                   rm -rf ${FILE}
                   cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
@@ -3219,7 +3359,7 @@ EOFF
 #
 idl << EOF
 .compile iasi_extract_no_transform_UA.pro
-iasi_extract_no_transform_UA,${INFILE},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
+iasi_extract_no_transform_UA,${IAS_FILEIN},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC},${NL_MIN_LON},${NL_MAX_LON},${NL_MIN_LAT},${NL_MAX_LAT}
 EOF
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
@@ -3233,202 +3373,70 @@ fi
 EOFF
                   qsub -Wblock=true job.ksh 
 #
-# cat the output file to the assimlation window file
-                  export ASIM_OUTFILE=${YYYY}${MM}${DD}${HH}.dat
-                  if [[ -e ${OUTFILE_NM} ]]; then
-                     cat ${OUTFILE_NM} >> ${ASIM_OUTFILE}
-                     rm -rf ${OUTFILE_NM}
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+                  if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                     touch ${IAS_OUTFILE_NQ}
+                     cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	             rm -rf ${OUTFILE_NQ}
+                  elif [[ -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                     cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	             rm -rf ${OUTFILE_NQ}
                   fi
-               fi
+	       fi
                (( ICNT=${ICNT}+1 ))
             done
-#
-# go to next hour
-            export AA_DATE=${A_DATE}
-            export A_DATE=$(${BUILD_DIR}/da_advance_time.exe ${AA_DATE} 1 2>/dev/null)
-         done
-      else   
-#
-# Special case (00Z)
-         let TEMP_MIN_HH=${ASIM_MIN_HH}
-         let TEMP_MAX_HH=${ASIM_MAX_HH}
-         (( BIN_BEG_SEC=${TEMP_MIN_HH}*60*60+1 ))
-         (( BIN_END_SEC=${TEMP_MAX_HH}*60*60 ))
-         export A_DATE_START=$($BUILD_DIR/da_advance_time.exe ${ASIM_MIN_DATE} -${NCNT} 2>/dev/null)
-         export A_DATE=${A_DATE_START}
-         while [[ ${A_DATE} -le ${ASIM_MAX_DATE} ]]; do 
-            if [[ ${A_DATE} == ${A_DATE_START} ]]; then
-               export ASIM_OUTFILE=${YYYY}${MM}${DD}${HH}.dat
-               rm -rf ${ASIM_OUTFILE}
-               touch ${ASIM_OUTFILE}
-            fi
-            export A_YY=$(echo $A_DATE | cut -c1-4)
-            export A_MM=$(echo $A_DATE | cut -c5-6)
-            export A_DD=$(echo $A_DATE | cut -c7-8)
-            export A_HH=$(echo $A_DATE | cut -c9-10)
-#
-            if [[ ${PAST_YY} == ${A_YY} && ${PAST_MM} == ${A_MM} && ${PAST_DD} == ${A_DD} ]]; then
-               (( BIN_BEG_SEC=${TEMP_MIN_HH}*60*60+1 ))
-               (( BIN_END_SEC=24*60*60 ))
-            else
-               (( BIN_BEG_SEC=1 ))
-               (( BIN_END_SEC=${TEMP_MAX_HH}*60*60 ))
-            fi 
-            export ICNT=0
-            while [[ ${ICNT} -le ${NCNT} ]]; do
-               export TEST=$($BUILD_DIR/da_advance_time.exe ${A_DATE} ${ICNT} 2>/dev/null)
-               export ND_YY=$(echo $TEST | cut -c1-4)
-               export ND_MM=$(echo $TEST | cut -c5-6)
-               export ND_DD=$(echo $TEST | cut -c7-8)
-               export ND_HH=$(echo $TEST | cut -c9-10)
-               export FILE=`ls ${EXPERIMENT_IASI_CO_DIR}/${A_YY}/${A_MM}/${A_DD}/${FILE_PRE}_${A_YY}${A_MM}${A_DD}${A_HH}*Z_${ND_YY}${ND_MM}${ND_DD}${ND_HH}*Z_*`
-               if [[ -e ${FILE} ]]; then 
-                  export OUTFILE_NM=TEMP_FILE.dat
-                  export INFILE=\'${FILE}\'
-                  export OUTFILE=\'${OUTFILE_NM}\'
-#
-# echo what we are processing at the moment
-#                  echo ${INFILE}
-#                  echo ${OUTFILE}
-#                  echo ${BIN_BEG_SEC}
-#                  echo ${BIN_END_SEC}
-#
-# this is the call to an IDL routine to read and write variables
-# if already processed (with output), then this can be skipped (do_iasi=0)
-# else this needs to be called
-                  export FILE=iasi_extract_no_transform_UA.pro
-                  rm -rf ${FILE}
-                  cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
-#
-                  rm -rf job.ksh
-                  touch job.ksh
-                  RANDOM=$$
-                  export JOBRND=${RANDOM}_idl_iasi
-                  cat << EOFF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-idl << EOF
-.compile iasi_extract_no_transform_UA.pro
-iasi_extract_no_transform_UA,${INFILE},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
-EOF
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOFF
-                  qsub -Wblock=true job.ksh 
-#
-# cat the output file to the assimlation window file
-                  export ASIM_OUTFILE=${YYYY}${MM}${DD}${HH}.dat
-                  if [[ -e ${OUTFILE_NM} ]]; then
-                     cat ${OUTFILE_NM} >> ${ASIM_OUTFILE}
-                     rm -rf ${OUTFILE_NM}
-                  fi
-               fi
-               (( ICNT=${ICNT}+1 ))
-            done
-#
-# go to next hour
-            export AA_DATE=${A_DATE}
-            export A_DATE=$(${BUILD_DIR}/da_advance_time.exe ${AA_DATE} 1 2>/dev/null)
+            export A_DATE=$(${BUILD_DIR}/da_advance_time.exe ${A_DATE} 1 2>/dev/null)
          done
       fi
-#
-# convert to obseq file
-      export L_PAST_DATE=$(${BUILD_DIR}/da_advance_time.exe ${DATE} -${ASIM_WINDOW} 2>/dev/null)  
-      export L_PAST_YYYY=$(echo $L_PAST_DATE | cut -c1-4)
-      export L_PAST_MM=$(echo $L_PAST_DATE | cut -c5-6)
-      export L_PAST_DD=$(echo $L_PAST_DATE | cut -c7-8)
-      export L_PAST_HH=$(echo $L_PAST_DATE | cut -c9-10)
-#
-# DART TIME INFO (NO LEADING ZEROS)
-      export DT_YYYY=${YYYY}
-      export DT_YY=$(echo $DATE | cut -c3-4)
-      export DT_MM=${MM} 
-      export DT_DD=${DD} 
-      export DT_HH=${HH} 
-      (( DT_MM = ${DT_MM} + 0 ))
-      (( DT_DD = ${DT_DD} + 0 ))
-      (( DT_HH = ${DT_HH} + 0 ))
-#    
-      export YEAR_INIT=${DT_YYYY}
-      export MONTH_INIT=${DT_MM}
-      export DAY_INIT=${DT_DD}
-      export HOUR_INIT=${DT_HH}
-      export YEAR_END=${DT_YYYY}
-      export MONTH_END=${DT_MM}
-      export DAY_END=${DT_DD}
-      export HOUR_END=${DT_HH}
-      export DA_TIME_WINDOW=0
-#
-# RUN_IASI_ASCII_TO_DART
-      if [[ ${HH} -eq 0 ]]; then
-         export L_YYYY=${L_PAST_YYYY}
-         export L_MM=${L_PAST_MM}
-         export L_DD=${L_PAST_DD}
-         export L_HH=24
-         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-         export DD_DATE=${YYYY}${MM}${DD}${HH}
-      else
-         export L_YYYY=${YYYY}
-         export L_MM=${MM}
-         export L_DD=${DD}
-         export L_HH=${HH}
-         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-         export DD_DATE=${D_DATE}
+      if [[ ! -e ${IAS_OUTFILE_NQ} ]]; then
+         touch NO_MOPITT_CO_${DATE}_DATA
       fi
-      export NL_YEAR=${L_YYYY}
-      export NL_MONTH=${L_MM}
-      export NL_DAY=${L_DD}
-      export NL_HOUR=${L_HH}
-      if [[ ${L_HH} -eq 24 ]]; then
-         NL_BIN_BEG=21.01
-         NL_BIN_END=3.00
-      elif [[ ${L_HH} -eq 6 ]]; then
-         NL_BIN_BEG=3.01
-         NL_BIN_END=9.00
-      elif [[ ${L_HH} -eq 12 ]]; then
-         NL_BIN_BEG=9.01
-         NL_BIN_END=15.00
-      elif [[ ${L_HH} -eq 18 ]]; then
-         NL_BIN_BEG=15.01
-         NL_BIN_END=21.00
-      fi
+#
+# SET NAMELIST TO CONVERT IASI_CO ASCII TO OBS_SEQ 
+      cp IASI_CO_${D_DATE}.dat ${D_DATE}.dat
       export NL_FILEDIR=\'./\' 
       export NL_FILENAME=${D_DATE}.dat
+      export NL_IAS_OUTFILE=obs_seq_iasi_co_${DATE}.out
       export NL_IASI_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
       export NL_IASI_O3_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_IASI}
       export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
 #
+      export NL_YEAR=${D_YYYY}
+      export NL_MONTH=${D_MM}
+      export NL_DAY=${D_DD}
+      export NL_HOUR=${D_HH}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
 # USE IASI DATA 
       rm -rf input.nml
       ${HYBRID_SCRIPTS_DIR}/da_create_dart_iasi_input_nml.ksh
-#
-# GET INTERMEDIATE ASCII DATA
-      if [[ ! -e ${D_DATE}.dat ]]; then cp ${DD_DATE}.dat ./${D_DATE}.dat; fi
 #
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/IASI_CO/work/iasi_co_ascii_to_obs ./.
       ./iasi_co_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
-      export IASI_FILE=iasi_obs_seq${D_DATE}
-      if [[ -s ${IASI_FILE} ]]; then
-         cp ${IASI_FILE} obs_seq_iasi_co_${DATE}.out
-      else
-         touch NO_DATA_${D_DATE}
+      if [[ ! -s ${NL_IAS_OUTFILE} ]]; then
+         touch NO_IASI_CO_${DATE}
       fi
    fi
 #
@@ -3680,11 +3688,12 @@ EOFF
       export BIN_BEG_HH=${ASIM_MN_HH}
       export BIN_BEG_MN=0
       export BIN_BEG_SS=0
-      export BIN_END_HH=${ASIM_MX_HH}
-      export BIN_END_MN=0
-      export BIN_END_SS=0
-#
-# SET OMI INPUT DATA DIR
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
       export FLG=0
       if [[ ${ASIM_MX_HH} -eq 3 ]]; then
          export FLG=1
@@ -3692,6 +3701,18 @@ EOFF
          export BIN_BEG_MN=0
          export BIN_BEG_SS=0
       fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# SET OMI INPUT DATA FILE
       export INFILE=${EXPERIMENT_OMI_O3_DIR}/${OMI_FILE_PRE_NQ}${YYYY}m${MM}${DD}t
       export OUTFILE=TEMP_FILE.dat
       export OUTFILE_NQ=TEMP_FILE.dat
@@ -3710,15 +3731,17 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
       if [[ ${FLG} -eq 1 ]]; then
          export BIN_BEG_HH=${ASIM_MIN_HH}
          export BIN_BEG_MN=0
-         export BIN_BEG_SS=1
+         export BIN_BEG_SS=0
          export BIN_END_HH=23
          export BIN_END_MN=59
          export BIN_END_SS=59
@@ -3739,40 +3762,46 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_OMI_O3_${DATE}_DATA
       fi
 #
 # SET NAMELIST TO CONVERT OMI_O3 ASCII TO OBS_SEQ 
-      export NL_YEAR=${D_YYYY}
-      export NL_MONTH=${D_MM}
-      export NL_DAY=${D_DD}
-      export NL_HOUR=${D_HH}
-      if [[ ${D_HH} -eq 24 ]]; then
-         export NL_BIN_BEG=21.01
-         export NL_BIN_END=3.00
-      elif [[ ${D_HH} -eq 6 ]]; then
-         export NL_BIN_BEG=3.01
-         export NL_BIN_END=9.00
-      elif [[ ${D_HH} -eq 12 ]]; then
-         export NL_BIN_BEG=9.01
-         export NL_BIN_END=15.00
-      elif [[ ${D_HH} -eq 18 ]]; then
-         export NL_BIN_BEG=15.01
-         export NL_BIN_END=21.00
-      fi
-      cp OMI_O3_${DATE}.dat ${D_DATE}.dat
       export NL_FILEDIR=\'./\' 
-      export NL_FILENAME=\'${D_DATE}.dat\'
+      export NL_FILENAME=\'${ARCHIVE_FILE}\'
+      export NL_FILEOUT=\'obs_seq_omi_o3_${DATE}.out\'
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_OMI}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
-      export NL_NLAYER_MODEL=${NNZP_CR}
-      export NL_NLAYER_OMI_O3=15
+#
+      export NL_YEAR=${D_YYYY}
+      export NL_MONTH=${D_MM}
+      export NL_DAY=${D_DD}
+      export NL_HOUR=${D_HH}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
 #
 # USE OMI DATA 
       rm -rf input.nml
@@ -3783,11 +3812,7 @@ EOFF
       ./omi_o3_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
-      export OMI_FILE=omi_o3_obs_seq
-      touch obs_seq_omi_o3_${DATE}.out
-      if [[ -s ${OMI_FILE} ]]; then
-         cp ${OMI_FILE} obs_seq_omi_o3_${DATE}.out
-      else
+      if [[ ! -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_O3_${DATE}
       fi
    fi
@@ -3815,11 +3840,12 @@ EOFF
       export BIN_BEG_HH=${ASIM_MN_HH}
       export BIN_BEG_MN=0
       export BIN_BEG_SS=0
-      export BIN_END_HH=${ASIM_MX_HH}
-      export BIN_END_MN=0
-      export BIN_END_SS=0
-#
-# SET OMI INPUT DATA DIR
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
       export FLG=0
       if [[ ${ASIM_MX_HH} -eq 3 ]]; then
          export FLG=1
@@ -3827,6 +3853,18 @@ EOFF
          export BIN_BEG_MN=0
          export BIN_BEG_SS=0
       fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# SET OMI INPUT DATA FILE
       export INFILE=${EXPERIMENT_OMI_NO2_DIR}/${OMI_FILE_PRE_NQ}${YYYY}m${MM}${DD}t
       export OUTFILE=TEMP_FILE.dat
       export OUTFILE_NQ=TEMP_FILE.dat
@@ -3845,15 +3883,17 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
       if [[ ${FLG} -eq 1 ]]; then
          export BIN_BEG_HH=${ASIM_MIN_HH}
          export BIN_BEG_MN=0
-         export BIN_BEG_SS=1
+         export BIN_BEG_SS=0
          export BIN_END_HH=23
          export BIN_END_MN=59
          export BIN_END_SS=59
@@ -3875,40 +3915,46 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_OMI_NO2_${DATE}_DATA
       fi
 #
-# SET NAMELIST TO CONVERT OMI_NO2 ASCII TO OBS_SEQ 
-      export NL_YEAR=${D_YYYY}
-      export NL_MONTH=${D_MM}
-      export NL_DAY=${D_DD}
-      export NL_HOUR=${D_HH}
-      if [[ ${D_HH} -eq 24 ]]; then
-         export NL_BIN_BEG=21.01
-         export NL_BIN_END=3.00
-      elif [[ ${D_HH} -eq 6 ]]; then
-         export NL_BIN_BEG=3.01
-         export NL_BIN_END=9.00
-      elif [[ ${D_HH} -eq 12 ]]; then
-         export NL_BIN_BEG=9.01
-         export NL_BIN_END=15.00
-      elif [[ ${D_HH} -eq 18 ]]; then
-         export NL_BIN_BEG=15.01
-         export NL_BIN_END=21.00
-      fi
-      cp OMI_NO2_${DATE}.dat ${D_DATE}.dat
-      export NL_FILEDIR=\'./\' 
-      export NL_FILENAME=\'${D_DATE}.dat\'
+# SET NAMELIST TO CONVERT OMI_NO2 ASCII TO OBS_SEQ
+      export NL_FILEDIR=\'./\'
+      export NL_FILENAME=\'${ARCHIVE_FILE}\'
+      export NL_FILEOUT=\'obs_seq_omi_no2_${DATE}.out\'
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_OMI}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
-      export NL_NLAYER_MODEL=${NNZP_CR}
-      export NL_NLAYER_OMI_NO2=40
+#
+      export NL_YEAR=${D_YYYY}
+      export NL_MONTH=${D_MM}
+      export NL_DAY=${D_DD}
+      export NL_HOUR=${D_HH}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
 #
 # USE OMI DATA 
       rm -rf input.nml
@@ -3919,11 +3965,7 @@ EOFF
       ./omi_no2_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
-      export OMI_FILE=omi_no2_obs_seq
-      touch obs_seq_omi_no2_${DATE}.out
-      if [[ -s ${OMI_FILE} ]]; then
-         cp ${OMI_FILE} obs_seq_omi_no2_${DATE}.out
-      else
+      if [[ ! -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_NO2_${DATE}
       fi
    fi
@@ -3951,11 +3993,12 @@ EOFF
       export BIN_BEG_HH=${ASIM_MN_HH}
       export BIN_BEG_MN=0
       export BIN_BEG_SS=0
-      export BIN_END_HH=${ASIM_MX_HH}
-      export BIN_END_MN=0
-      export BIN_END_SS=0
-#
-# SET OMI INPUT DATA DIR
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
       export FLG=0
       if [[ ${ASIM_MX_HH} -eq 3 ]]; then
          export FLG=1
@@ -3963,6 +4006,18 @@ EOFF
          export BIN_BEG_MN=0
          export BIN_BEG_SS=0
       fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# SET OMI INPUT DATA FILE
       export INFILE=${EXPERIMENT_OMI_SO2_DIR}/${OMI_FILE_PRE_NQ}${YYYY}m${MM}${DD}t
       export OUTFILE=TEMP_FILE.dat
       export OUTFILE_NQ=TEMP_FILE.dat
@@ -3981,15 +4036,17 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
       if [[ ${FLG} -eq 1 ]]; then
          export BIN_BEG_HH=${ASIM_MIN_HH}
          export BIN_BEG_MN=0
-         export BIN_BEG_SS=1
+         export BIN_BEG_SS=0
          export BIN_END_HH=23
          export BIN_END_MN=59
          export BIN_END_SS=59
@@ -4011,40 +4068,46 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_OMI_SO2_${DATE}_DATA
       fi
 #
 # SET NAMELIST TO CONVERT OMI_SO2 ASCII TO OBS_SEQ 
-      export NL_YEAR=${D_YYYY}
-      export NL_MONTH=${D_MM}
-      export NL_DAY=${D_DD}
-      export NL_HOUR=${D_HH}
-      if [[ ${D_HH} -eq 24 ]]; then
-         export NL_BIN_BEG=21.01
-         export NL_BIN_END=3.00
-      elif [[ ${D_HH} -eq 6 ]]; then
-         export NL_BIN_BEG=3.01
-         export NL_BIN_END=9.00
-      elif [[ ${D_HH} -eq 12 ]]; then
-         export NL_BIN_BEG=9.01
-         export NL_BIN_END=15.00
-      elif [[ ${D_HH} -eq 18 ]]; then
-         export NL_BIN_BEG=15.01
-         export NL_BIN_END=21.00
-      fi
-      cp OMI_SO2_${DATE}.dat ${D_DATE}.dat
       export NL_FILEDIR=\'./\' 
-      export NL_FILENAME=\'${D_DATE}.dat\'
+      export NL_FILENAME=\'${ARCHIVE_FILE}\'
+      export NL_FILEOUT=\'obs_seq_omi_so2_${DATE}.out\'
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_OMI}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
-      export NL_NLAYER_MODEL=${NNZP_CR}
-      export NL_NLAYER_OMI_SO2=75
+#
+      export NL_YEAR=${D_YYYY}
+      export NL_MONTH=${D_MM}
+      export NL_DAY=${D_DD}
+      export NL_HOUR=${D_HH}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
 #
 # USE OMI DATA 
       rm -rf input.nml
@@ -4055,11 +4118,7 @@ EOFF
       ./omi_so2_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
-      export OMI_FILE=omi_so2_obs_seq
-      touch obs_seq_omi_so2_${DATE}.out
-      if [[ -s ${OMI_FILE} ]]; then
-         cp ${OMI_FILE} obs_seq_omi_so2_${DATE}.out
-      else
+      if [[ ! -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_SO2_${DATE}
       fi
    fi
@@ -4117,8 +4176,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4147,8 +4208,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TROPOMI_CO_${DATE}_DATA
@@ -4180,8 +4243,6 @@ EOFF
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
-      export NL_NLAYER_MODEL=${NNZP_CR}
-      export NL_NLAYER_TROPOMI_CO=55
 #
 # USE TROPOMI DATA 
       rm -rf input.nml
@@ -4254,8 +4315,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4283,8 +4346,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TROPOMI_O3_${DATE}_DATA
@@ -4316,8 +4381,6 @@ EOFF
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
-      export NL_NLAYER_MODEL=${NNZP_CR}
-      export NL_NLAYER_TROPOMI_O3=20
 #
 # USE TROPOMI DATA 
       rm -rf input.nml
@@ -4390,8 +4453,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
         touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4420,8 +4485,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TROPOMI_NO2_${DATE}_DATA
@@ -4453,8 +4520,6 @@ EOFF
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
-      export NL_NLAYER_MODEL=${NNZP_CR}
-      export NL_NLAYER_TROPOMI_NO2=40
 #
 # USE TROPOMI DATA 
       rm -rf input.nml
@@ -4527,8 +4592,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4557,8 +4624,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TROPOMI_SO2_${DATE}_DATA
@@ -4590,8 +4659,6 @@ EOFF
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
-      export NL_NLAYER_MODEL=${NNZP_CR}
-      export NL_NLAYER_TROPOMI_SO2=40
 #
 # USE TROPOMI DATA 
       rm -rf input.nml
@@ -4664,8 +4731,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4694,8 +4763,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TEMPO_O3_${DATE}_DATA
@@ -4725,8 +4796,6 @@ EOFF
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TEMPO}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
-      export NL_NLAYER_MODEL=${NNZP_CR}
-      export NL_NLAYER_TEMPO_O3=50
 #
 # USE TEMPO DATA 
       rm -rf input.nml
@@ -4799,8 +4868,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4829,8 +4900,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TEMPO_NO2_${DATE}_DATA
@@ -4860,8 +4933,6 @@ EOFF
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TEMPO}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
-      export NL_NLAYER_MODEL=${NNZP_CR}
-      export NL_NLAYER_TEMPO_NO2=50
 #
 # USE TEMPO DATA 
       rm -rf input.nml
@@ -4900,30 +4971,22 @@ EOFF
          cp ${EXPERIMENT_AIRNOW_DIR}/airnow_o3_hourly_csv_data ./.
       fi
 #
-      export ASIM_MIN_MN=0
-      export ASIM_MIN_SS=1
-      export ASIM_MAX_MN=0
-      export ASIM_MAX_SS=0
+      export BIN_BEG_YR=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      export BIN_END_YR=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
 #
 # RUN_AIRNOW_O3_ASCII_TO_DART
-      if [[ ${HH} -eq 0 ]]; then
-         export L_YYYY=${ASIM_MIN_YYYY}
-         export L_MM=${ASIM_MIN_MM}
-         export L_DD=${ASIM_MIN_DD}
-         export L_HH=24
-         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-      else
-         export L_YYYY=${YYYY}
-         export L_MM=${MM}
-         export L_DD=${DD}
-         export L_HH=${HH}
-         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-      fi
-      export NL_YEAR=${L_YYYY}
-      export NL_MONTH=${L_MM}
-      export NL_DAY=${L_DD}
-      export NL_HOUR=${L_HH}
-#
       export NL_FILENAME=\'airnow_o3_hourly_csv_data\'
       export NL_LAT_MN=${NL_MIN_LAT}
       export NL_LAT_MX=${NL_MAX_LAT}
@@ -4975,30 +5038,22 @@ EOFF
          cp ${EXPERIMENT_AIRNOW_DIR}/airnow_co_hourly_csv_data ./.
       fi
 #
-      export ASIM_MIN_MN=0
-      export ASIM_MIN_SS=1
-      export ASIM_MAX_MN=0
-      export ASIM_MAX_SS=0
+      export BIN_BEG_YR=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      export BIN_END_YR=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
 #
 # RUN_AIRNOW_CO_ASCII_TO_DART
-      if [[ ${HH} -eq 0 ]]; then
-         export L_YYYY=${ASIM_MIN_YYYY}
-         export L_MM=${ASIM_MIN_MM}
-         export L_DD=${ASIM_MIN_DD}
-         export L_HH=24
-         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-      else
-         export L_YYYY=${YYYY}
-         export L_MM=${MM}
-         export L_DD=${DD}
-         export L_HH=${HH}
-         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-      fi
-      export NL_YEAR=${L_YYYY}
-      export NL_MONTH=${L_MM}
-      export NL_DAY=${L_DD}
-      export NL_HOUR=${L_HH}
-#
       export NL_FILENAME=\'airnow_co_hourly_csv_data\'
       export NL_LAT_MN=${NL_MIN_LAT}
       export NL_LAT_MX=${NL_MAX_LAT}
@@ -5050,30 +5105,22 @@ if ${RUN_AIRNOW_NO2_OBS}; then
          cp ${EXPERIMENT_AIRNOW_DIR}/airnow_no2_hourly_csv_data ./.
       fi
 #
-      export ASIM_MIN_MN=0
-      export ASIM_MIN_SS=1
-      export ASIM_MAX_MN=0
-      export ASIM_MAX_SS=0
+      export BIN_BEG_YR=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      export BIN_END_YR=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
 #
 # RUN_AIRNOW_NO2_ASCII_TO_DART
-      if [[ ${HH} -eq 0 ]]; then
-         export L_YYYY=${ASIM_MIN_YYYY}
-         export L_MM=${ASIM_MIN_MM}
-         export L_DD=${ASIM_MIN_DD}
-         export L_HH=24
-         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-      else
-         export L_YYYY=${YYYY}
-         export L_MM=${MM}
-         export L_DD=${DD}
-         export L_HH=${HH}
-         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-      fi
-      export NL_YEAR=${L_YYYY}
-      export NL_MONTH=${L_MM}
-      export NL_DAY=${L_DD}
-      export NL_HOUR=${L_HH}
-#
       export NL_FILENAME=\'airnow_no2_hourly_csv_data\'
       export NL_LAT_MN=${NL_MIN_LAT}
       export NL_LAT_MX=${NL_MAX_LAT}
@@ -5125,30 +5172,22 @@ if ${RUN_AIRNOW_SO2_OBS}; then
          cp ${EXPERIMENT_AIRNOW_DIR}/airnow_so2_hourly_csv_data ./.
       fi
 #
-      export ASIM_MIN_MN=0
-      export ASIM_MIN_SS=1
-      export ASIM_MAX_MN=0
-      export ASIM_MAX_SS=0
+      export BIN_BEG_YR=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      export BIN_END_YR=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
 #
 # RUN_AIRNOW_SO2_ASCII_TO_DART
-      if [[ ${HH} -eq 0 ]]; then
-         export L_YYYY=${ASIM_MIN_YYYY}
-         export L_MM=${ASIM_MIN_MM}
-         export L_DD=${ASIM_MIN_DD}
-         export L_HH=24
-         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-      else
-         export L_YYYY=${YYYY}
-         export L_MM=${MM}
-         export L_DD=${DD}
-         export L_HH=${HH}
-         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-      fi
-      export NL_YEAR=${L_YYYY}
-      export NL_MONTH=${L_MM}
-      export NL_DAY=${L_DD}
-      export NL_HOUR=${L_HH}
-#
       export NL_FILENAME=\'airnow_so2_hourly_csv_data\'
       export NL_LAT_MN=${NL_MIN_LAT}
       export NL_LAT_MX=${NL_MAX_LAT}
@@ -5200,30 +5239,22 @@ if ${RUN_AIRNOW_PM10_OBS}; then
          cp ${EXPERIMENT_AIRNOW_DIR}/airnow_pm10_hourly_csv_data ./.
       fi
 #
-      export ASIM_MIN_MN=0
-      export ASIM_MIN_SS=1
-      export ASIM_MAX_MN=0
-      export ASIM_MAX_SS=0
+      export BIN_BEG_YR=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      export BIN_END_YR=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
 #
 # RUN_AIRNOW_PM10_ASCII_TO_DART
-      if [[ ${HH} -eq 0 ]]; then
-         export L_YYYY=${ASIM_MIN_YYYY}
-         export L_MM=${ASIM_MIN_MM}
-         export L_DD=${ASIM_MIN_DD}
-         export L_HH=24
-         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-      else
-         export L_YYYY=${YYYY}
-         export L_MM=${MM}
-         export L_DD=${DD}
-         export L_HH=${HH}
-         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-      fi
-      export NL_YEAR=${L_YYYY}
-      export NL_MONTH=${L_MM}
-      export NL_DAY=${L_DD}
-      export NL_HOUR=${L_HH}
-#
       export NL_FILENAME=\'airnow_pm10_hourly_csv_data\'
       export NL_LAT_MN=${NL_MIN_LAT}
       export NL_LAT_MX=${NL_MAX_LAT}
@@ -5275,30 +5306,22 @@ if ${RUN_AIRNOW_PM25_OBS}; then
          cp ${EXPERIMENT_AIRNOW_DIR}/airnow_pm2.5_hourly_csv_data ./.
       fi
 #
-      export ASIM_MIN_MN=0
-      export ASIM_MIN_SS=1
-      export ASIM_MAX_MN=0
-      export ASIM_MAX_SS=0
+      export BIN_BEG_YR=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      export BIN_END_YR=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
 #
 # RUN_AIRNOW_PM25_ASCII_TO_DART
-      if [[ ${HH} -eq 0 ]]; then
-         export L_YYYY=${ASIM_MIN_YYYY}
-         export L_MM=${ASIM_MIN_MM}
-         export L_DD=${ASIM_MIN_DD}
-         export L_HH=24
-         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-      else
-         export L_YYYY=${YYYY}
-         export L_MM=${MM}
-         export L_DD=${DD}
-         export L_HH=${HH}
-         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-      fi
-      export NL_YEAR=${L_YYYY}
-      export NL_MONTH=${L_MM}
-      export NL_DAY=${L_DD}
-      export NL_HOUR=${L_HH}
-#
       export NL_FILENAME=\'airnow_pm2.5_hourly_csv_data\'
       export NL_LAT_MN=${NL_MIN_LAT}
       export NL_LAT_MX=${NL_MAX_LAT}
@@ -5558,22 +5581,27 @@ if ${RUN_AIRNOW_PM25_OBS}; then
          cd ${RUN_DIR}/${DATE}/modis_aod_obs
       fi
 #
-# set file prefix for MODIS
-# this depends on versions and file times (edit if necessary)
-      export FILE_PRE='MYD04_L2.A'
+# SET MODIS PARAMETERS
+      export MODIS_FILE_PRE='MYD04_L2.A'
+      export MODIS_FILE_EXT='hdf'
+      export OUTFILE=\'TEMP_FILE.dat\'
+      export OUTFILE_NQ=TEMP_FILE.dat
+      export MOD_OUTFILE=\'MODIS_AOD_${D_DATE}.dat\'
+      export MOD_OUTFILE_NQ=MODIS_AOD_${D_DATE}.dat
+      rm -rf ${OUTFILE}
+      rm -rf ${MOD_OUTFILE}
 #
-# set file suffix for MODIS
-# this depends on versions and file times (edit if necessary)
-      export FILE_EXT='hdf'
-#
-      export MODIS_INDIR=${EXPERIMENT_MODIS_AOD_DIR}
-      export OUTFILE=modis_aod_ascii_${YYYY}${MM}${DD}${HH}
+#  SET OBS WINDOW
       (( N_YYYY=${YYYY}+0 ))
       (( N_MM=${MM}+0 ))
       (( N_DD=${DD}+0 ))
       (( N_HH=${HH}+0 ))
       (( N_ASIM_WIN=${ASIM_WINDOW}+0 ))
 #
+# SET MODIS INPUT DATA FILE
+      export MODIS_INDIR=${EXPERIMENT_MODIS_AOD_DIR}
+#
+# COPY EXECUTABLE
       export FILE=modis_extract_hdf.pro
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/MODIS/native_to_ascii/${FILE} ./.
@@ -5592,7 +5620,7 @@ if ${RUN_AIRNOW_PM25_OBS}; then
 #
 idl << EOF
 .compile modis_extract_hdf.pro
-modis_extract_hdf, "${MODIS_INDIR}", "${OUTFILE}", ${N_YYYY}, ${N_MM}, ${N_DD}, ${N_HH}, ${N_ASIM_WIN}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
+modis_extract_hdf, "${MODIS_INDIR}", "${OUTFILE_NQ}", ${N_YYYY}, ${N_MM}, ${N_DD}, ${N_HH}, ${N_ASIM_WIN}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
 EOF
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
@@ -5605,20 +5633,32 @@ fi
 EOFF
       qsub -Wblock=true job.ksh 
 #
-# convert ASCII to obs_seq file
-#      rm -rf input.nml
-#      rm -rf modis_asciidata.input
-#      rm -rf modis_obs_seq.out
-      if [[ -s modis_aod_ascii_${YYYY}${MM}${DD}${HH} ]]; then
-         cp modis_aod_ascii_${YYYY}${MM}${DD}${HH} modis_asciidata.input
-         cp ${DART_DIR}/observations/obs_converters/MODIS/work/input.nml ./.
-         ${DART_DIR}/observations/obs_converters/MODIS/work/modis_ascii_to_obs
-         if [[ -s modis_obs_seq.out ]]; then
-            export MODIS_FILE=obs_seq_modis_aod_${DATE}.out
-            mv modis_obs_seq.out ${MODIS_FILE}
-         else
-            touch NO_MODIS_AOD_${DATE}
-         fi
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${MOD_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+         touch ${MOD_OUTFILE_NQ}
+         cat ${OUTFILE_NQ} >> ${MOD_OUTFILE_NQ}
+         rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${MOD_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${MOD_OUTFILE_NQ}
+         rm -rf ${OUTFILE_NQ}
+      fi
+#
+# SET NAMELIST TO CONVERT MODIS ASCII TO OBS_SEQ 
+      export NL_MOD_OUTFILE=obs_seq_modis_aod_${DATE}.out
+#
+# USE MODIS DATA 
+      rm -rf input.nml
+      rm -rf modis_asciidata.input
+      cp ${MOD_OUTFILE_NQ} modis_asciidata.input
+      cp ${DART_DIR}/observations/obs_converters/MODIS/work/input.nml ./.
+#
+# GET EXECUTABLE      
+      cp ${DART_DIR}/observations/obs_converters/MODIS/work/modis_ascii_to_obs ./.
+      ./modis_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ -s modis_obs_seq.out ]]; then
+         mv modis_obs_seq.out ${NL_MOD_OUTFILE}
       else
          touch NO_MODIS_AOD_${DATE}
       fi
@@ -5893,16 +5933,6 @@ EOFF
       export NL_USE_LOG_PM10=${USE_LOG_PM10_LOGIC}
       export NL_USE_LOG_PM25=${USE_LOG_PM25_LOGIC}
       export NL_USE_LOG_AOD=${USE_LOG_AOD_LOGIC}
-      export NL_NLAYER_MODEL=${NNZP_CR}
-      export NL_NLAYER_OMI_O3=15
-      export NL_NLAYER_OMI_NO2=40
-      export NL_NLAYER_OMI_SO2=75
-      export NL_NLAYER_TROPOMI_CO=55
-      export NL_NLAYER_TROPOMI_O3=20
-      export NL_NLAYER_TROPOMI_NO2=40
-      export NL_NLAYER_TROPOMI_SO2=40
-      export NL_NLAYER_TEMPO_O3=50
-      export NL_NLAYER_TEMPO_NO2=50
       ${HYBRID_SCRIPTS_DIR}/da_create_dart_input_nml.ksh       
 #
       ./obs_sequence_tool
@@ -6486,6 +6516,10 @@ EOF
          cd ${RUN_DIR}/${DATE}/dart_filter
       fi
 #
+# Use DART_TEST to skip copying etc, of DART input files
+      export DART_TEST=false
+      if ! ${DART_TEST}; then
+#
 # Get DART files
       cp ${WRFCHEM_DART_WORK_DIR}/filter      ./.
       cp ${DART_DIR}/assimilation_code/programs/gen_sampling_err_table/work/sampling_error_correction_table.nc ./.
@@ -6562,7 +6596,7 @@ EOF
 #
 # Add files to the DART input and output list
          echo wrfinput_d${CR_DOMAIN}_${CMEM} >> input_list.txt
-         echo wrfout_d${CR_DOMAIN}_${FILE_DATE}_temp.${CMEM} >> output_list.txt
+         echo wrfinput_d${CR_DOMAIN}_${CMEM} >> output_list.txt
 #
          let MEM=${MEM}+1
       done 
@@ -6627,6 +6661,9 @@ special_outlier_threshold=${NL_SPECIAL_OUTLIER_THRESHOLD}
 /
 EOF
 #
+# End of DART_TEST block
+      fi      
+#
 # Run DART_FILTER
 # Create job script for this member and run it 
       RANDOM=$$
@@ -6639,16 +6676,9 @@ EOF
          echo APM: ERROR in DART FILTER EXIT
          exit
       fi
-#
-# Add coordinates attributes for plotting
-#      ncatted -O -a coordinates,U,c,c,"XLONG_U XLAT_U" preassim_mean.nc
-#      ncatted -O -a coordinates,V,c,c,"XLONG_V XLAT_V" preassim_mean.nc
-#      ncatted -O -a coordinates,T,c,c,"XLONG XLAT" preassim_mean.nc
-#      ncatted -O -a coordinates,co,c,c,"XLONG XLAT" preassim_mean.nc
-#      ncatted -O -a coordinates,U,c,c,"XLONG_U XLAT_U" output_mean.nc
-#      ncatted -O -a coordinates,V,c,c,"XLONG_V XLAT_V" output_mean.nc
-#      ncatted -O -a coordinates,T,c,c,"XLONG XLAT" output_mean.nc
-#      ncatted -O -a coordinates,co,c,c,"XLONG XLAT" output_mean.nc
+      if ${DART_TEST}; then
+         exit
+      fi  
 #
 # Remove emissions fields from the wrfinput files and copy to the emissions input files
       let MEM=1
@@ -6660,10 +6690,12 @@ EOF
          if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
 #
 # Copy the adjusted emissions fields from the wrfinput files to the emissions input files
-         ncks -O -x -v ${WRFCHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_temp.${CMEM} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM}
-         ncks -A -v ${WRFCHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_temp.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+         ncks -O -x -v ${WRFCHEMI_DARTVARS} wrfinput_d${CR_DOMAIN}_${CMEM} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM}
+         ncks -O -x -v ${WRFFIRECHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM}
+	 
+         ncks -A -v ${WRFCHEMI_DARTVARS} wrfinput_d${CR_DOMAIN}_${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
          ncrename -d chemi_zdim_stag,emissions_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
-         ncks -A -v ${WRFFIRECHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_temp.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+         ncks -A -v ${WRFFIRECHEMI_DARTVARS} wrfinput_d${CR_DOMAIN}_${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
          ncrename -d fire_zdim_stag,emissions_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
          rm -rf wrfinput_d${CR_DOMAIN}_${CMEM} wrfout_d${CR_DOMAIN}_temp.${CMEM}
 #

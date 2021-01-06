@@ -51,7 +51,6 @@
 !         call set_obs_def_mopitt_co(obs_def%key)
 ! END DART PREPROCESS SET_OBS_DEF_MOPITT_CO
 
-
 ! BEGIN DART PREPROCESS MODULE CODE
 module obs_def_mopitt_mod
 
@@ -79,6 +78,7 @@ public :: write_mopitt_co, &
 ! Storage for the special information required for observations of this type
 integer, parameter               :: MAX_MOPITT_CO_OBS = 10000000
 integer, parameter               :: MOPITT_DIM = 10
+integer                          :: nlayer_model, nlayer_mopitt_co
 integer                          :: num_mopitt_co_obs = 0
 !
 ! MOPITT pressures (level 1 is place holder for surface pressure)
@@ -91,7 +91,6 @@ real(r8), allocatable, dimension(:,:) :: avg_kernel
 real(r8), allocatable, dimension(:) :: mopitt_prior
 real(r8), allocatable, dimension(:) :: mopitt_psurf
 integer,  allocatable, dimension(:) :: mopitt_nlevels
-
 ! version controlled file description for error handling, do not edit
 character(len=*), parameter :: source   = 'obs_def_MOPITT_CO_mod.f90'
 character(len=*), parameter :: revision = ''
@@ -110,7 +109,7 @@ logical             :: use_log_co
 !     RETR - retrievals in retrieval (ppbv) format
 !     QOR  - quasi-optimal retrievals
 !     CPSR - compact phase space retrievals
-    namelist /obs_def_MOPITT_CO_nml/ MOPITT_CO_retrieval_type, use_log_co
+    namelist /obs_def_MOPITT_CO_nml/ MOPITT_CO_retrieval_type, use_log_co, nlayer_model, nlayer_mopitt_co
 
 contains
 
@@ -272,7 +271,7 @@ subroutine get_expected_mopitt_co(state_handle, ens_size, location, key, val, is
    real(r8),            intent(out) :: val(ens_size)
    integer,             intent(out) :: istatus(ens_size)
 !
-   integer,parameter   :: wrf_nlev=33
+   integer,parameter   :: wrf_nlev=36
    integer,parameter   :: mop_nlev=10
    integer             :: i, kstr, ilev, icnt
    type(location_type) :: loc2

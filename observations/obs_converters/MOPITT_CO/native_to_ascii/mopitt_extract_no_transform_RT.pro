@@ -29,7 +29,7 @@ end
 ; needs calc_avgker_v3, mopitt_v4_apriori.dat and read_aprior_dat_v3 for V3
 ; afa change output_nrows_leading to output_rows_leading
 ;=======================================================================
-pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_max, lat_min, lat_max 
+pro mopitt_extract_no_transform_RT, inf, outf, bin_beg_sec, bin_end_sec, lon_min, lon_max, lat_min, lat_max 
 ;=======================================================================
 ; Code to read MOPITT data V3 or V4
 ; Outputs data to an ascii file for DART input
@@ -45,16 +45,13 @@ pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_ma
 ; But now, this is called by a shell script to process DART MOPITT obs
 ;   inf 		--> input file
 ;   outf 	--> output file
-;   bin_beg      --> beginning hour of the bin  (follows DART 6-hourly bins)
-;   bin_end      --> end hour of the bin (follows DART 6-hourly bins)
+;   bin_beg_sec --> beginning seconds of the bin  (follows DART 6-hourly bins)
+;   bin_end_sec --> end seconds of the bin (follows DART 6-hourly bins)
 ;   num_version  --> integer for MOPITT version (3 or 4)
 ;   what_cov     --> covariance (3 or 5) MOPITT has two versions for v4 
-;   do_DART_input --> integer 1 or 0 to output ascii file for DART create_mopitt_obs_sequence
-;   do_station_output --> integer 1 or 0 to output station data
-;                        see code below for station locations
 ;   output_rows_leading --> how many leading components to assimilate?
 ;   sband  --> spectral band (if tir, nir or tirnir)
-;   apm_no_transform --> switch to ignorescaling/scd transformation
+;   apm_no_transform --> switch to ignore scaling/scd transformation
 ;   when saving MOPITT data
 ;=======================================================================
 ; floating underflow in la_svd routines (compared output with matlab)
@@ -63,8 +60,8 @@ pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_ma
 ;
    print, 'IDL file in  ', inf
    print, 'IDL file out ', outf
-   print, 'IDL bin_str  ', bin_beg
-   print, 'IDL bin end  ', bin_end
+   print, 'IDL bin_str  ', bin_beg_sec
+   print, 'IDL bin end  ', bin_end_sec
    print, 'IDL lon min  ', lon_min
    print, 'IDL lon max  ', lon_max
    print, 'IDL lat min  ', lat_min
@@ -73,18 +70,14 @@ pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_ma
    num_version=5
    version = 'v5'
    what_cov=3
-   do_DART_input=1
-   do_station_output=0
    output_rows_leading=2
    sband='tirnir'
    apm_no_transform='true'
 ;
-; the two versions have different number of vertical levels
-;
 ; note that mopittlev [0] is psurf (hPa) the 1000 is a placeholder
    mopittpress=[1000., 900., 800., 700., 600., 500., 400., 300., 200., 100.]
 ;
-; note that covariance in v4 are to be calculated
+; note that covariance in v4 are to calculated
 ; prior error covariance is fixed --see V4 User's Guide
 ; set prior covariance parameters
    if ( what_cov eq 3 ) then begin
@@ -127,25 +120,18 @@ pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_ma
    sza_day = 90.0          ; all day data
    sza_nit = 180.0         ; all day and night data
 ;
-; polar regions --there are potential for biases near the poles
+; polar regions --there are potential biases near the poles
    day_lat_edge_1 = -70.0  ; 70S
    day_lat_edge_2 =  70.0  ; 70N
    nit_lat_edge_1 = -60.0  ; 60S
    nit_lat_edge_2 =  60.0  ; 60N
 ;
-; retrieval error as fraction of its  prior error
+; retrieval error as fraction of its prior error
 ; this is very ad hoc based on percent apriori (post error/prior error)
    max_error_reduction_qc = 1.00  ; it's difficult to set this in log 
                                   ; make this 95% and let dofs be its qc
 ;
 ;=======================================================================
-;
-; convert bins into seconds
-   bin_beg = bin_beg*60.0*60.0
-   bin_end = bin_end*60.0*60.0
-;
-; dummy variable (for output purposes)
-   dummy_var = [-9999, -9999, -9999,  -9999,  -9999,  -9999,  -9999,  -9999,  -9999,  -9999]
 ;
 ; Define MOPITT file name
    mopitt_input_file   = inf
@@ -187,7 +173,6 @@ pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_ma
 ; Read Surface Indicator
    name = 'Surface Index'
    sind = get_vd(mopitt_input_file, name)
-;
 ;
 ; Read CO Total Colum
    name  = 'Retrieved CO Total Column'
@@ -334,7 +319,7 @@ pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_ma
 ; change notation ( for clarity )
       mop_A = avgker[*,*,k]
 ;
-; need to do transpose (IDL column-major)
+; need to do transpose (IDL is column-major)
       mop_A = transpose(mop_A)
 ;
 ; truncate to effective number of levels
@@ -345,7 +330,7 @@ pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_ma
 ; change notation (for my case)
       mop_Cx = covmatrix[*,*,k]
 ;
-; need to do transpose (IDL column-major)
+; need to do transpose (IDL is column-major)
       mop_Cx = transpose(mop_Cx)
 ;
 ; truncate to effective number of levels
@@ -364,19 +349,12 @@ pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_ma
       if (dfs gt dofs_threshold_low && dfs lt dofs_threshold_hi && $
       ((sza[k] le sza_day && lat[k] gt day_lat_edge_1 && lat[k] lt day_lat_edge_2) || $
       (sza[k] ge sza_day && lat[k] gt nit_lat_edge_1 && lat[k] lt nit_lat_edge_2)) && $
-      sec[k] ge bin_beg && sec[k] lt bin_end && $
+      sec[k] ge bin_beg_sec && sec[k] le bin_end_sec && $
       lat[k] ge lat_min && lat[k] le lat_max && $
       lon[k] ge lon_min && lon[k] le lon_max && $
       qstatus eq 0) then begin 
-;     if (lat[k] ge lat_min && lat[k] le lat_max && $
-;     lon[k] ge lon_min && lon[k] le lon_max && $
-;     qstatus eq 0) then begin 
-;     if ( ( dfs gt dofs_threshold_low ) && ( dfs lt dofs_threshold_hi ) && $
-;     ((( sza[k] le sza_day ) && ( lat[k] gt day_lat_edge_1 ) && ( lat[k] lt day_lat_edge_2 ))) && $
-;     ( sec[k] ge bin_beg ) && (sec[k] lt bin_end ) && $
-;     ( qstatus eq 0 ) ) then begin 
 ;
-         print, dfs, sza[k], lat[k], lon[k], sec[k], psurf[k], qstatus
+;         print, dfs, sza[k], lat[k], lon[k], sec[k], psurf[k], qstatus
          qc_count = qc_count + 1.0
          co = fltarr(mop_dim,/nozero)
          coerr = fltarr(mop_dim,/nozero)
@@ -409,7 +387,7 @@ pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_ma
             priorerr[ik] =sqrt(Ca[ik,ik])*co[ik]/log10e 
          endfor
 ;
-; before we use 700hPa or 500 hPa level for apriori contrib
+; before we used 700hPa or 500 hPa level for apriori contrib
 ; i think it's better to use the maximum error reduction instead
          error_reduction = fltarr(mop_dim,/nozero) 
          for ik = 0, mop_dim-1 do begin
@@ -445,7 +423,7 @@ pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_ma
             endfor
 ;
 ; 
-; calculate prior term (I-A)xa  in x = A x_t + (I-A)xa + Gey
+; calculate prior term (I-A)xa in x = A x_t + (I-A)xa + Gey
 ; needed for obs/forward operator (prior term of expression)
             ImA = (I-A)
             AmI = (A-I)
@@ -775,24 +753,6 @@ pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_ma
             if (qstatus eq 0) then  begin
                allqc_count = allqc_count + 1.0
 ;
-;=========================================================================
-               if (apm_no_transform eq 'false') then begin
-                  if ( valid_nrows gt 0 ) then begin
-                     printf, unit, valid_nrows, sec[k], mop_dim, mopittlev, lat[k], lon[k], format='(15(e14.6))'
-                     for ik = output_start_row, output_end_row do begin
-; index --> which component?
-                        printf, unit, ik+1, format='(1(e14.6))'
-; new retrieval
-                        printf, unit, yn[ik], format='(1(e14.6))'
-; new retrieval error
-                        printf, unit, e2n[ik], format='(1(e14.6))'
-; transform prior 
-                        printf, unit, transImAxa[ik], format='(1(e14.6))'
-; transformed averaging kernel
-                        printf, unit, (transA[*,ik]), format='(10(e14.6))'
-                     endfor
-                  endif      ; valid_nrows
-               endif         ; apm_no_transform
 ; Code to write no_transform data
                if (apm_no_transform eq 'true') then begin
                   printf, unit, 'NO_SVD_TRANS', sec[k], lat[k], lon[k], $
@@ -824,7 +784,7 @@ pro mopitt_extract_no_transform_RT, inf, outf, bin_beg, bin_end, lon_min, lon_ma
 ;
 ; print counters
    print, 'BIN TIME'
-   print, bin_beg, bin_end
+   print, bin_beg_sec, bin_end_sec
    print, 'QC Count'
    print, allqc_count 
    print, 'ALL Pixels Count'

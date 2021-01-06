@@ -18,12 +18,9 @@ cat > input.nml << EOF
 &create_tropomi_obs_nml
    filedir                     = ${NL_FILEDIR}
    filename                    = ${NL_FILENAME}
-   year                        = ${NL_YEAR}
-   month                       = ${NL_MONTH}
-   day                         = ${NL_DAY}
-   hour                        = ${NL_HOUR}
-   bin_beg                     = ${NL_BIN_BEG}
-   bin_end                     = ${NL_BIN_END}
+   fileout                     = ${NL_FILEOUT}
+   bin_beg_sec                 = ${NL_BIN_BEG_SEC}
+   bin_end_sec                 = ${NL_BIN_END_SEC}
    fac_obs_error               = ${NL_FAC_OBS_ERROR}
    use_log_co                  = ${NL_USE_LOG_CO}
    use_log_o3                  = ${NL_USE_LOG_O3}
@@ -66,15 +63,23 @@ cat > input.nml << EOF
 /
 &obs_def_TROPOMI_CO_nml
    use_log_co                  = ${NL_USE_LOG_CO:-.false.},
+   nlayer_model                = ${NL_NLAYER_MODEL:-36},
+   nlayer_tropomi_co           = ${NL_NLAYER_TROPOMI_CO:-50},
 /
 &obs_def_TROPOMI_O3_nml
    use_log_o3                  = ${NL_USE_LOG_O3:-.false.},
+   nlayer_model                = ${NL_NLAYER_MODEL:-36},
+   nlayer_tropomi_o3           = ${NL_NLAYER_TROPOMI_O3:-14},
 / 
 &obs_def_TROPOMI_NO2_nml
    use_log_no2                 = ${NL_USE_LOG_NO2:-.false.},
+   nlayer_model                = ${NL_NLAYER_MODEL:-36},
+   nlayer_tropomi_no2          = ${NL_NLAYER_TROPOMI_NO2:-34},
 / 
 &obs_def_TROPOMI_SO2_nml
    use_log_so2                 = ${NL_USE_LOG_SO2:-.false.},
+   nlayer_model                = ${NL_NLAYER_MODEL:-36},
+   nlayer_tropomi_so2          = ${NL_NLAYER_TROPOMI_SO2:-34},
 / 
 EOF
 

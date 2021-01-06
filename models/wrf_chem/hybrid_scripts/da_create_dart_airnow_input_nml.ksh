@@ -16,22 +16,18 @@ rm -f create_airnow_obs_nml.nl
 touch create_airnow_obs_nml.nl
 cat > create_airnow_obs_nml.nl << EOF
 &create_airnow_obs_nml
-   year0=${NL_YEAR}
-   month0=${NL_MONTH}
-   day0=${NL_DAY}
-   hour0=${NL_HOUR}
-   beg_year=${ASIM_MIN_YYYY}
-   beg_mon=${ASIM_MIN_MM}
-   beg_day=${ASIM_MIN_DD}
-   beg_hour=${ASIM_MIN_HH}
-   beg_min=${ASIM_MIN_MN}
-   beg_sec=${ASIM_MIN_SS}
-   end_year=${ASIM_MAX_YYYY}
-   end_mon=${ASIM_MAX_MM}
-   end_day=${ASIM_MAX_DD}
-   end_hour=${ASIM_MAX_HH}
-   end_min=${ASIM_MAX_MN}
-   end_sec=${ASIM_MAX_SS}
+   beg_year=${BIN_BEG_YR}
+   beg_mon=${BIN_BEG_MM}
+   beg_day=${BIN_BEG_DD}
+   beg_hour=${BIN_BEG_HH}
+   beg_min=${BIN_BEG_MN}
+   beg_sec=${BIN_BEG_SS}
+   end_year=${BIN_END_YR}
+   end_mon=${BIN_END_MM}
+   end_day=${BIN_END_DD}
+   end_hour=${BIN_END_HH}
+   end_min=${BIN_END_MN}
+   end_sec=${BIN_END_SS}
    file_in=${NL_FILENAME}
    lat_mn=${NL_LAT_MN}
    lat_mx=${NL_LAT_MX}

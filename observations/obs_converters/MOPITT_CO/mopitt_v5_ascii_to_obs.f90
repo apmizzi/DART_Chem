@@ -378,7 +378,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
      read(fileid,*) prs_sfc_mop
      read(fileid,*) prs_lay_mop(1:lay_mop)
      do k=1,lev_mop
-        read(fileid,*) avgk_lev(k,1:lev_mop)
+        read(fileid,*) avgk_lev(1:lev_mop,k)
      enddo
      read(fileid,*) retr_sfc
      read(fileid,*) retr_prof_lay(1:lay_mop)
@@ -389,7 +389,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
      read(fileid,*) prior_sfc_err
      read(fileid,*) prior_prof_err_lay(1:lay_mop)
      do k=1,lev_mop
-        read(fileid,*) cov_r_lev(k,1:lev_mop)
+        read(fileid,*) cov_r_lev(1:lev_mop,k)
      enddo
      read(fileid,*) retr_col_amt
      read(fileid,*) retr_col_amt_err
@@ -446,7 +446,13 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
 !     print *, 'lon,lon_min,lon_max ',lon,lon_min,lon_max
 !     print *, 'lat,lat_min,lat_max ',lat,lat_min,lat_max
 !     print *, ' '
-!
+!     print *,'x_r ',x_r(:)
+!     print *,'x_p ',x_p(:)
+!     print *,'avgk ',avg_k(1,:)
+!     print *,'avgk ',avg_k(10,:)
+!     print *,'covr ',cov_r(1,:)
+!     print *,'covr ',cov_r(10,:)
+
 !-------------------------------------------------------
 ! Bin to nlat_qc x nlon_qc
 !-------------------------------------------------------
@@ -463,7 +469,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
      read(fileid,*,iostat=ios) transform_typ, obs_cnt
   enddo !ios
   9999 continue
-
+  
   close(fileid)
 !
 ! Now do the thinning (draw nqc_obs obs)
@@ -542,7 +548,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
      read(fileid,*) prs_sfc_mop
      read(fileid,*) prs_lay_mop(1:lay_mop)
      do k=1,lev_mop
-        read(fileid,*) avgk_lev(k,1:lev_mop)
+        read(fileid,*) avgk_lev(1:lev_mop,k)
      enddo
      read(fileid,*) retr_sfc
      read(fileid,*) retr_prof_lay(1:lay_mop)
@@ -553,7 +559,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
      read(fileid,*) prior_sfc_err
      read(fileid,*) prior_prof_err_lay(1:lay_mop)
      do k=1,lev_mop
-        read(fileid,*) cov_r_lev(k,1:lev_mop)
+        read(fileid,*) cov_r_lev(1:lev_mop,k)
      enddo
      read(fileid,*) retr_col_amt
      read(fileid,*) retr_col_amt_err

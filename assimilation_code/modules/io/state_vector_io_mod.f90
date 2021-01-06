@@ -181,11 +181,11 @@ logical :: inflation_handles = .false.
 if ( .not. module_initialized ) call state_vector_io_init() ! to read the namelist
 
 ! check whether file_info handle is initialized
-print *, 'APM: at call to assert_file_info_initialized'
+!print *, 'APM: at call to assert_file_info_initialized'
 call assert_file_info_initialized(file_info, 'read_state')
 
 ! check that we either have both inflation handles or neither:
-print *, 'APM: at call to check inflation file handles'
+!print *, 'APM: at call to check inflation file handles'
 if ( present(prior_inflate_handle) .neqv. present(post_inflate_handle) ) then
    call error_handler(E_ERR, 'read_state', 'must have both inflation handles or neither', &
           source,revision,revdate)
@@ -219,19 +219,19 @@ if (inflation_handles) then
    call fill_inf_from_namelist_value(state_ens_handle, post_inflate_handle)
 
 endif
-print *, 'APM: after inflation handles block'
+!print *, 'APM: after inflation handles block'
 
 if (get_single_file(file_info)) then
    ! NOTE: single file is set only in filter, and pmo
-print *, 'APM: at read_single_file'
+!print *, 'APM: at read_single_file'
    call read_single_file(state_ens_handle, file_info, read_time_from_file, model_time, perturb_from_single_copy)
-print *, 'APM: after read_single_file'
+!print *, 'APM: after read_single_file'
 else
-print *, 'APM: at read_restart_direct'
+!print *, 'APM: at read_restart_direct'
    call read_restart_direct(state_ens_handle, file_info, read_time_from_file, model_time)
-print *, 'APM: after read_restart_direct'
+!print *, 'APM: after read_restart_direct'
 endif
-print *, 'APM: after single file block'
+!print *, 'APM: after single file block'
 
 end subroutine read_state
 
@@ -295,26 +295,26 @@ type(stage_metadata_type) :: restart_files
 
 ! check whether file_info handle is initialized
 call assert_file_info_initialized(file_info, 'read_restart_direct')
-print *,'APM: after call assert_file_info_initialized'
+!print *,'APM: after call assert_file_info_initialized'
 ! do this once
 restart_files = get_stage_metadata(file_info)
-print *,'APM: after get_stage_metadata'
+!print *,'APM: after get_stage_metadata'
 
 ! read time from input file if time not set in namelist
 !>@todo Check time constistency across files? This is assuming they are consistent.
 if(use_time_from_file) then
    model_time = read_model_time(get_restart_filename(restart_files, 1, 1)) ! Any of the restarts?
 endif
-print *,'APM: after use_time_from_file'
+!print *,'APM: after use_time_from_file'
 
 state_ens_handle%time = model_time
 
 ! read in the data and transpose
 dart_index = 1 ! where to start in state_ens_handle%copies - this is modified by read_transpose
 do domain = 1, get_num_domains()
-print *,'APM: before read_transpose',domain,dart_index
+!print *,'APM: before read_transpose',domain,dart_index
    call read_transpose(state_ens_handle, restart_files, domain, dart_index, buffer_state_io)
-print *,'APM: after read_transpose',domain,dart_index
+!print *,'APM: after read_transpose',domain,dart_index
 enddo
 
 ! Need Temporary print of initial model time?

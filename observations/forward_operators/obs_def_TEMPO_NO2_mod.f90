@@ -62,8 +62,8 @@ module obs_def_tempo_no2_mod
                                              VERTISPRESSURE, VERTISSURFACE, VERTISLEVEL, &
                                              VERTISUNDEF
    use  assim_model_mod, only              : interpolate
-   use    obs_kind_mod, only               : QTY_NO2,QTY_TEMPERATURE,QTY_PRESSURE, &
-                                             QTY_VAPOR_MIXING_RATIO
+   use    obs_kind_mod, only               : QTY_NO2,QTY_TEMPERATURE,QTY_SURFACE_PRESSURE, &
+                                             QTY_PRESSURE, QTY_VAPOR_MIXING_RATIO
    use  ensemble_manager_mod, only         : ensemble_type
    use obs_def_utilities_mod, only         : track_status
 !

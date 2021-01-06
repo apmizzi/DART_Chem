@@ -80,6 +80,7 @@ integer, parameter               :: MAX_IASI_CO_OBS = 10000000
 integer, parameter               :: IASI_DIM = 19
 integer, parameter               :: IASI_DIMP = 20
 integer                          :: num_iasi_co_obs = 0
+integer                          :: nlayer_model, nlayer_iasi_co
 !
 real(r8), allocatable, dimension(:,:) :: avg_kernel
 real(r8), allocatable, dimension(:,:) :: pressure
@@ -106,7 +107,7 @@ logical             :: use_log_co
 !     RETR - retrievals in retrieval (ppbv) format
 !     QOR  - quasi-optimal retrievals
 !     CPSR - compact phase space retrievals
-    namelist /obs_def_IASI_CO_nml/ IASI_CO_retrieval_type, use_log_co
+    namelist /obs_def_IASI_CO_nml/ IASI_CO_retrieval_type, use_log_co, nlayer_model, nlayer_iasi_co
 
 contains
 

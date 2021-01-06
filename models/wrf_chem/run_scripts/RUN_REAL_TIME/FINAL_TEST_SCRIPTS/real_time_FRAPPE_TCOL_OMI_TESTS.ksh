@@ -25,16 +25,16 @@
 #
 #########################################################################
 #
-export INITIAL_DATE=2014071412
-export FIRST_FILTER_DATE=2014071418
-export FIRST_DART_INFLATE_DATE=2014071418
-export FIRST_EMISS_INV_DATE=2014071418
+export INITIAL_DATE=2014071400
+export FIRST_FILTER_DATE=2014071406
+export FIRST_DART_INFLATE_DATE=2014071406
+export FIRST_EMISS_INV_DATE=2014071406
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014071418
+export CYCLE_STR_DATE=2014071406
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014071418
+export CYCLE_END_DATE=2014071406
 #export CYCLE_END_DATE=${CYCLE_STR_DATE}
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
@@ -354,7 +354,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_PERT_WRFCHEM_CHEM_ICBC=false
       export RUN_PERT_WRFCHEM_CHEM_EMISS=false
       export RUN_MOPITT_CO_OBS=true
-      export RUN_IASI_CO_OBS=true
+      export RUN_IASI_CO_OBS=false
       export RUN_IASI_O3_OBS=false
       export RUN_OMI_O3_OBS=false
       export RUN_OMI_NO2_OBS=false
@@ -2015,7 +2015,8 @@ EOF
             export NL_SEED_ARRAY1=$(${BUILD_DIR}/da_advance_time.exe ${DATE} 0 -f hhddmmyycc)
             export NL_SEED_ARRAY2=`echo ${MEM} \* 100000 | bc -l `
             ${HYBRID_SCRIPTS_DIR}/da_create_wrfda_namelist.ksh
-            cp ${EXPERIMENT_PREPBUFR_DIR}/${DATE}/prepbufr.gdas.${DATE}.wo40.be ob.bufr
+#            cp ${EXPERIMENT_PREPBUFR_DIR}/${DATE}/prepbufr.gdas.${DATE}.wo40.be ob.bufr
+            cp ${EXPERIMENT_PREPBUFR_DIR}/prepbufr.gdas.${DATE}.nr ob.bufr
             cp ${DA_INPUT_FILE} fg
             cp ${BE_DIR}/be.dat.cv3 be.dat
             cp ${WRFDA_DIR}/run/LANDUSE.TBL ./.
@@ -2955,77 +2956,31 @@ EOF
       else
          cd ${RUN_DIR}/${DATE}/mopitt_co_obs
       fi
+#      
+      export USE_OLD_CODE=false
+      export USE_NEW_CODE=true
+      if ${USE_OLD_CODE}; then
 #
 # SET MOPITT PARAMETERS
-      export MOPITT_FILE_PRE=MOP02J-
-      export MOPITT_FILE_EXT=-L2V10.1.3.beta.hdf   
-      export OUTFILE=\'TEMP_FILE.dat\'
-      export OUTFILE_NQ=TEMP_FILE.dat
-      export MOP_OUTFILE=\'MOPITT_CO_${D_DATE}.dat\'
-      export MOP_OUTFILE_NQ=MOPITT_CO_${D_DATE}.dat
-      rm -rf ${OUTFILE}
-      rm -rf ${MOP_OUTFILE}
+         export MOPITT_FILE_PRE=MOP02J-
+         export MOPITT_FILE_EXT=-L2V10.1.3.beta.hdf   
+         export OUTFILE=\'TEMP_FILE.dat\'
+         export OUTFILE_NQ=TEMP_FILE.dat
+         export MOP_OUTFILE=\'MOPITT_CO_${D_DATE}.dat\'
+         export MOP_OUTFILE_NQ=MOPITT_CO_${D_DATE}.dat
+         rm -rf ${OUTFILE}
+         rm -rf ${MOP_OUTFILE}
 #
 #  SET OBS WINDOW
-      export BIN_BEG=${ASIM_MN_HH}
-      export BIN_END=${ASIM_MX_HH}
+         export BIN_BEG=${ASIM_MN_HH}
+         export BIN_END=${ASIM_MX_HH}
 #
 # SET MOPITT INPUT DATA DIR
-      export FLG=0
-      if [[ ${BIN_END} -eq 3 ]]; then
-         export FLG=1
-      fi
-      export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MX_YYYY}${ASIM_MX_MM}${ASIM_MX_DD}${MOPITT_FILE_EXT}\'
-#
-# COPY EXECUTABLE
-      export FILE=mopitt_extract_no_transform_RT.pro
-      rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
-#
-      rm -rf job.ksh
-      touch job.ksh
-      RANDOM=$$
-      export JOBRND=${RANDOM}_idl_mopitt
-      cat << EOFF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-idl << EOF
-.compile mopitt_extract_no_transform_RT.pro
-mopitt_extract_no_transform_RT, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG}, ${BIN_END}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
-EOF
-export RC=\$?     
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOFF
-      qsub -Wblock=true job.ksh 
-#
-# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
-      if [[ ! -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
-         touch ${MOP_OUTFILE_NQ}
-         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
-	 rm -rf ${OUTFILE_NQ}
-      elif [[ -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
-         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
-	 rm -rf ${OUTFILE_NQ}
-      fi
-#
-# END OF PREVIOUS DAY (hours 21 to 24 obs)
-      if [[ ${FLG} -eq 1 ]];  then
          export FLG=0
-         export BIN_BEG=21
-         export BIN_END=24
-         export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}${MOPITT_FILE_EXT}\'
+         if [[ ${BIN_END} -eq 3 ]]; then
+            export FLG=1
+         fi
+         export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MX_YYYY}${ASIM_MX_MM}${ASIM_MX_DD}${MOPITT_FILE_EXT}\'
 #
 # COPY EXECUTABLE
          export FILE=mopitt_extract_no_transform_RT.pro
@@ -3059,184 +3014,240 @@ else
 fi
 EOFF
          qsub -Wblock=true job.ksh 
-      fi   
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
-      if [[ ! -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
-         touch ${MOP_OUTFILE_NQ}
-         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
-	 rm -rf ${OUTFILE_NQ}
-      elif [[ -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
-         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
-      fi
-      if [[ ! -e ${MOP_OUTFILE_NQ} ]]; then
-         touch NO_MOPITT_CO_${DATE}_DATA
-	 rm -rf ${OUTFILE_NQ}
-      fi
-#
-# SET NAMELIST TO CONVERT MOPITT ASCII TO OBS_SEQ 
-      export NL_YEAR=${D_YYYY}
-      export NL_MONTH=${D_MM}
-      export NL_DAY=${D_DD}
-      export NL_HOUR=${D_HH}
-      if [[ ${D_HH} -eq 24 ]]; then
-         export NL_BIN_BEG=21.01
-         export NL_BIN_END=3.00
-      elif [[ ${D_HH} -eq 6 ]]; then
-         export NL_BIN_BEG=3.01
-         export NL_BIN_END=9.00
-      elif [[ ${D_HH} -eq 12 ]]; then
-         export NL_BIN_BEG=9.01
-         export NL_BIN_END=15.00
-      elif [[ ${D_HH} -eq 18 ]]; then
-         export NL_BIN_BEG=15.01
-         export NL_BIN_END=21.00
-      fi
-      cp MOPITT_CO_${D_DATE}.dat ${D_DATE}.dat
-      export NL_FILEDIR=\'./\' 
-      export NL_FILENAME=${D_DATE}.dat
-      export NL_MOPITT_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_MOPITT}\'
-      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_MOPITT}
-      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
-      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
-#
-# USE MOPITT DATA 
-      rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_mopitt_input_nml.ksh
-#
-# GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/work/mopitt_ascii_to_obs ./.
-      ./mopitt_ascii_to_obs > index.html 2>&1
-#
-# COPY OUTPUT TO ARCHIVE LOCATION
-      export MOPITT_FILE=mopitt_obs_seq${D_DATE}
-      touch obs_seq_mopitt_co_${DATE}.out
-      if [[ -s ${MOPITT_FILE} ]]; then
-         cp ${MOPITT_FILE} obs_seq_mopitt_co_${DATE}.out
-      else
-         touch NO_MOPITT_CO_${DATE}
-      fi
-   fi
-#
-# SET MOPITT PARAMETERS
-#      export MOPITT_FILE_PRE=MOP02J-
-#      export MOPITT_FILE_PRE_NQ=MOP02J-
-#      export MOPITT_FILE_EXT=-L2V10.1.3.beta.hdf   
-#
-# SET OBS_WINDOW
-#      export BIN_BEG_HH=${ASIM_MN_HH}
-#      export BIN_BEG_MN=0
-#      export BIN_BEG_SS=0
-#      export BIN_END_HH=${ASIM_MX_HH}
-#      export BIN_END_MN=0
-#      export BIN_END_SS=0
-#
-# SET MOPITT INPUT DATA DIR
-#      export FLG=0
-#      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
-#         export FLG=1
-#         export BIN_BEG_HH=0
-#         export BIN_BEG_MN=0
-#         export BIN_BEG_SS=0
-#      fi
-#      export INFILE=${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE_NQ}${YYYY}${MM}${DD}${MOPITT_FILE_EXT}
-#      export OUTFILE=TEMP_FILE.dat
-#      export OUTFILE_NQ=TEMP_FILE.dat
-#      export ARCHIVE_FILE=MOPITT_CO_${DATE}.dat
-#      rm -rf ${OUTFILE_NQ}
-#      rm -rf ${ARCHIVE_FILE}
-#
-# COPY EXECUTABLE
-#      export FILE=mopitt_v5_co_extract.m
-#      rm -rf ${FILE}
-#      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
-#      mcc -m mopitt_v5_co_extract.m -o mopitt_v5_co_extract
-#      ./run_mopitt_v5_co_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${MOPITT_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
-#
-# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
-#      if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
-#         touch ${ARCHIVE_FILE}
-#         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
-#      elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
-#         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
-#      fi
+         if [[ ! -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+            touch ${MOP_OUTFILE_NQ}
+            cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+            rm -rf ${OUTFILE_NQ}
+         elif [[ -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+            cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+            rm -rf ${OUTFILE_NQ}
+         fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
-#      if [[ ${FLG} -eq 1 ]]; then
-#         export BIN_BEG_HH=${ASIM_MIN_HH}
-#         export BIN_BEG_MN=0
-#         export BIN_BEG_SS=1
-#         export BIN_END_HH=23
-#         export BIN_END_MN=59
-#         export BIN_END_SS=59
-#         export INFILE=${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE_NQ}${PAST_YYYY}${PAST_MM}${PAST_DD}${MOPITT_FILE_EXT}
-#         export OUTFILE=TEMP_FILE.dat
-#         export OUTFILE_NQ=TEMP_FILE.dat
-#         rm -rf ${OUTFILE_NQ}
+         if [[ ${FLG} -eq 1 ]];  then
+            export FLG=0
+            export BIN_BEG=21
+            export BIN_END=24
+            export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}${MOPITT_FILE_EXT}\'
 #
 # COPY EXECUTABLE
-#         export FILE=mopitt_v5_co_extract.m
-#         rm -rf ${FILE}
-#         cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
-#         mcc -m mopitt_v5_co_extract.m -o mopitt_v5_co_extract
-#         ./run_mopitt_v5_co_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${MOPITT_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
-#      fi
+            export FILE=mopitt_extract_no_transform_RT.pro
+            rm -rf ${FILE}
+            cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+#	    
+            rm -rf job.ksh
+            touch job.ksh
+            RANDOM=$$
+            export JOBRND=${RANDOM}_idl_mopitt
+            cat << EOFF > job.ksh
+#!/bin/ksh -aeux
+#PBS -N ${JOBRND}
+#PBS -l walltime=${GENERAL_TIME_LIMIT}
+#PBS -q ${GENERAL_JOB_CLASS}
+#PBS -j oe
+#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
+#
+idl << EOF
+.compile mopitt_extract_no_transform_RT.pro
+mopitt_extract_no_transform_RT, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG}, ${BIN_END}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
+EOF
+export RC=\$?     
+if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
+if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+if [[ \$RC = 0 ]]; then
+   touch SUCCESS
+else
+   touch FAILED 
+   exit
+fi
+EOFF
+            qsub -Wblock=true job.ksh 
+         fi   
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
-#      if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
-#         touch ${ARCHIVE_FILE}
-#         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
-#      elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
-#         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
-#      fi
-#      if [[ ! -e ${ARCHIVE_FILE} ]]; then
-#         touch NO_MOPITT_CO_${DATE}_DATA
-#      fi
+         if [[ ! -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+            touch ${MOP_OUTFILE_NQ}
+            cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+            rm -rf ${OUTFILE_NQ}
+         elif [[ -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+            cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+            rm -rf ${OUTFILE_NQ}
+         fi
+         if [[ ! -e ${MOP_OUTFILE_NQ} ]]; then
+            touch NO_MOPITT_CO_${DATE}_DATA
+         fi
 #
-# SET NAMELIST TO CONVERT MOPITT_CO ASCII TO OBS_SEQ 
-#      export NL_YEAR=${D_YYYY}
-#      export NL_MONTH=${D_MM}
-#      export NL_DAY=${D_DD}
-#      export NL_HOUR=${D_HH}
-#      if [[ ${D_HH} -eq 24 ]]; then
-#         export NL_BIN_BEG=21.01
-#         export NL_BIN_END=3.00
-#      elif [[ ${D_HH} -eq 6 ]]; then
-#         export NL_BIN_BEG=3.01
-#         export NL_BIN_END=9.00
-#      elif [[ ${D_HH} -eq 12 ]]; then
-#         export NL_BIN_BEG=9.01
-#         export NL_BIN_END=15.00
-#      elif [[ ${D_HH} -eq 18 ]]; then
-#         export NL_BIN_BEG=15.01
-#         export NL_BIN_END=21.00
-#      fi
-#      cp MOPITT_CO_${D_DATE}.dat ${D_DATE}.dat
-#      export NL_FILEDIR=\'./\' 
-#      export NL_FILENAME=${D_DATE}.dat
-#      export NL_MOPITT_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_MOPITT}\'
-#      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_MOPITT}
-#      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
-#      export NL_NLAYER_MODEL=${NNZP_CR}
-#      export NL_NLAYER_MOPITT_CO=9
+# SET NAMELIST TO CONVERT MOPITT ASCII TO OBS_SEQ 
+         export NL_YEAR=${D_YYYY}
+         export NL_MONTH=${D_MM}
+         export NL_DAY=${D_DD}
+         export NL_HOUR=${D_HH}
+         if [[ ${D_HH} -eq 24 ]]; then
+            export NL_BIN_BEG=21.01
+            export NL_BIN_END=3.00
+         elif [[ ${D_HH} -eq 6 ]]; then
+            export NL_BIN_BEG=3.01
+            export NL_BIN_END=9.00
+         elif [[ ${D_HH} -eq 12 ]]; then
+            export NL_BIN_BEG=9.01
+            export NL_BIN_END=15.00
+         elif [[ ${D_HH} -eq 18 ]]; then
+            export NL_BIN_BEG=15.01
+            export NL_BIN_END=21.00
+         fi
+         cp MOPITT_CO_${D_DATE}.dat ${D_DATE}.dat
+         export NL_FILEDIR=\'./\' 
+         export NL_FILENAME=${D_DATE}.dat
+         export NL_MOPITT_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_MOPITT}\'
+         export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_MOPITT}
+         export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+         export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
 #
 # USE MOPITT DATA 
-#      rm -rf input.nml
-#      ${HYBRID_SCRIPTS_DIR}/da_create_dart_mopitt_input_nml.ksh
+         rm -rf input.nml
+         ${HYBRID_SCRIPTS_DIR}/da_create_dart_mopitt_input_nml.ksh
 #
 # GET EXECUTABLE
-#      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/work/mopitt_v5_ascii_to_obs ./.
-#      ./mopitt_v5_ascii_to_obs > index.html 2>&1
+         cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/work/mopitt_ascii_to_obs ./.
+         ./mopitt_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
-#      export MOPITT_FILE=mopitt_co_obs_seq
-#      touch obs_seq_mopitt_co_${DATE}.out
-#      if [[ -s ${MOPITT_FILE} ]]; then
-#         cp ${MOPITT_FILE} obs_seq_mopitt_co_${DATE}.out
-#      else
-#         touch NO_MOPITT_CO_${DATE}
-#      fi
-#   fi
+         export MOPITT_FILE=mopitt_obs_seq${D_DATE}
+         touch obs_seq_mopitt_co_${DATE}.out
+         if [[ -s ${MOPITT_FILE} ]]; then
+            cp ${MOPITT_FILE} obs_seq_mopitt_co_${DATE}.out
+         else
+            touch NO_MOPITT_CO_${DATE}
+         fi
+      fi
+      if ${USE_NEW_CODE}; then
+#
+# SET MOPITT PARAMETERS
+         export MOPITT_FILE_PRE=MOP02J-
+         export MOPITT_FILE_PRE_NQ=MOP02J-
+         export MOPITT_FILE_EXT=-L2V10.1.3.beta.hdf   
+#
+# SET OBS_WINDOW
+         export BIN_BEG_HH=${ASIM_MN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_HH=${ASIM_MX_HH}
+         export BIN_END_MN=0
+         export BIN_END_SS=0
+#
+# SET MOPITT INPUT DATA DIR
+         export FLG=0
+         if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+            export FLG=1
+            export BIN_BEG_HH=0
+            export BIN_BEG_MN=0
+            export BIN_BEG_SS=0
+         fi
+         export INFILE=${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE_NQ}${YYYY}${MM}${DD}${MOPITT_FILE_EXT}
+         export OUTFILE=TEMP_FILE.dat
+         export OUTFILE_NQ=TEMP_FILE.dat
+         export ARCHIVE_FILE=MOPITT_CO_${DATE}.dat
+         rm -rf ${OUTFILE_NQ}
+         rm -rf ${ARCHIVE_FILE}
+#
+# COPY EXECUTABLE
+         export FILE=mopitt_v5_co_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+         mcc -m mopitt_v5_co_extract.m -o mopitt_v5_co_extract
+         ./run_mopitt_v5_co_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${MOPITT_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_MIN_LON} ${NL_MAX_LON} ${NL_MIN_LAT} ${NL_MAX_LAT}
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+         if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+            touch ${ARCHIVE_FILE}
+            cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+	    rm -rf ${OUTFILE_NQ}
+         elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+            cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+	    rm -rf ${OUTFILE_NQ}
+         fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+         if [[ ${FLG} -eq 1 ]]; then
+            export BIN_BEG_HH=${ASIM_MIN_HH}
+            export BIN_BEG_MN=0
+            export BIN_BEG_SS=1
+            export BIN_END_HH=23
+            export BIN_END_MN=59
+            export BIN_END_SS=59
+            export INFILE=${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE_NQ}${PAST_YYYY}${PAST_MM}${PAST_DD}${MOPITT_FILE_EXT}
+            export OUTFILE=TEMP_FILE.dat
+            export OUTFILE_NQ=TEMP_FILE.dat
+            rm -rf ${OUTFILE_NQ}
+#
+# COPY EXECUTABLE
+            export FILE=mopitt_v5_co_extract.m
+            rm -rf ${FILE}
+            cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+            mcc -m mopitt_v5_co_extract.m -o mopitt_v5_co_extract
+            ./run_mopitt_v5_co_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${MOPITT_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_MIN_LON} ${NL_MAX_LON} ${NL_MIN_LAT} ${NL_MAX_LAT}
+         fi
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+         if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+            touch ${ARCHIVE_FILE}
+            cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+	    rm -rf ${OUTFILE_NQ}
+         elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+            cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+	    rm -rf ${OUTFILE_NQ}
+         fi
+         if [[ ! -e ${ARCHIVE_FILE} ]]; then
+            touch NO_MOPITT_CO_${DATE}_DATA
+         fi
+#
+# SET NAMELIST TO CONVERT MOPITT_CO ASCII TO OBS_SEQ 
+         export NL_YEAR=${D_YYYY}
+         export NL_MONTH=${D_MM}
+         export NL_DAY=${D_DD}
+         export NL_HOUR=${D_HH}
+         if [[ ${D_HH} -eq 24 ]]; then
+            export NL_BIN_BEG=21.01
+            export NL_BIN_END=3.00
+         elif [[ ${D_HH} -eq 6 ]]; then
+            export NL_BIN_BEG=3.01
+            export NL_BIN_END=9.00
+         elif [[ ${D_HH} -eq 12 ]]; then
+            export NL_BIN_BEG=9.01
+            export NL_BIN_END=15.00
+         elif [[ ${D_HH} -eq 18 ]]; then
+            export NL_BIN_BEG=15.01
+            export NL_BIN_END=21.00
+         fi
+         cp MOPITT_CO_${D_DATE}.dat ${D_DATE}.dat
+         export NL_FILEDIR=\'./\' 
+         export NL_FILENAME=${D_DATE}.dat
+         export NL_MOPITT_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_MOPITT}\'
+         export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_MOPITT}
+         export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+         export NL_NLAYER_MODEL=${NNZP_CR}
+         export NL_NLAYER_MOPITT_CO=9
+#
+# USE MOPITT DATA 
+         rm -rf input.nml
+         ${HYBRID_SCRIPTS_DIR}/da_create_dart_mopitt_input_nml.ksh
+#
+# GET EXECUTABLE
+         cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/work/mopitt_v5_ascii_to_obs ./.
+         ./mopitt_v5_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+         export MOPITT_FILE=mopitt_co_obs_seq
+         touch obs_seq_mopitt_co_${DATE}.out
+         if [[ -s ${MOPITT_FILE} ]]; then
+            cp ${MOPITT_FILE} obs_seq_mopitt_co_${DATE}.out
+         else
+            touch NO_MOPITT_CO_${DATE}
+         fi
+      fi
+   fi
 #
 #########################################################################
 #
@@ -3820,8 +3831,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -3849,8 +3862,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_OMI_O3_${DATE}_DATA
@@ -3955,8 +3970,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -3985,8 +4002,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_OMI_NO2_${DATE}_DATA
@@ -4091,8 +4110,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4121,8 +4142,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_OMI_SO2_${DATE}_DATA
@@ -4227,8 +4250,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4257,8 +4282,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TROPOMI_CO_${DATE}_DATA
@@ -4364,8 +4391,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4388,16 +4417,20 @@ EOFF
          mcc -m tropomi_o3_extract.m -o tropomi_o3_extract
         ./run_tropomi_o3_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
+     fi
+#
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
-      if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
-         touch ${ARCHIVE_FILE}
-         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
-      elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
-         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
-      fi
-      if [[ ! -e ${ARCHIVE_FILE} ]]; then
-         touch NO_TROPOMI_O3_${DATE}_DATA
-      fi
+     if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+        touch ${ARCHIVE_FILE}
+        cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+        rm -rf ${OUTFILE_NQ}
+     elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+        cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+        rm -rf ${OUTFILE_NQ}
+     fi
+     if [[ ! -e ${ARCHIVE_FILE} ]]; then
+        touch NO_TROPOMI_O3_${DATE}_DATA
+     fi
 #
 # SET NAMELIST TO CONVERT TROPOMI_O3 ASCII TO OBS_SEQ 
       export NL_YEAR=${D_YYYY}
@@ -4499,8 +4532,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
         touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4523,12 +4558,15 @@ EOFF
          mcc -m tropomi_no2_extract.m -o tropomi_no2_extract
         ./run_tropomi_no2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
+     fi	
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TROPOMI_NO2_${DATE}_DATA
@@ -4634,8 +4672,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4658,12 +4698,16 @@ EOFF
          mcc -m tropomi_so2_extract.m -o tropomi_so2_extract
         ./run_tropomi_so2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
+     fi
+#
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TROPOMI_SO2_${DATE}_DATA
@@ -4769,8 +4813,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4798,8 +4844,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TEMPO_O3_${DATE}_DATA
@@ -4903,8 +4951,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4933,8 +4983,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TEMPO_NO2_${DATE}_DATA
@@ -5756,7 +5808,9 @@ EOFF
          export L_MM=$(echo $L_DATE | cut -c5-6)
          export L_DD=$(echo $L_DATE | cut -c7-8)
          export L_HH=$(echo $L_DATE | cut -c9-10)
-         cp ${EXPERIMENT_PREPBUFR_DIR}/${L_YYYY}${L_MM}${L_DD}${L_HH}/prepbufr.gdas.${L_YYYY}${L_MM}${L_DD}${L_HH}.wo40.be prepqm${L_YY}${L_MM}${L_DD}${L_HH}
+#         cp ${EXPERIMENT_PREPBUFR_DIR}/${L_YYYY}${L_MM}${L_DD}${L_HH}/prepbufr.gdas.${L_YYYY}${L_MM}${L_DD}${L_HH}.wo40.be prepqm${L_YY}${L_MM}${L_DD}${L_HH}
+         cp ${EXPERIMENT_PREPBUFR_DIR}/prepbufr.gdas.${L_YYYY}${L_MM}${L_DD}${L_HH}.nr prepqm${L_YY}${L_MM}${L_DD}${L_HH}
+
          export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} +6 2>/dev/null)
       done
 #
@@ -5773,6 +5827,9 @@ EOFF
 #
       mv obs_seq${D_DATE} obs_seq_prep_${DATE}.out
    fi
+   
+exit
+   
 #
 #########################################################################
 #

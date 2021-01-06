@@ -129,7 +129,7 @@ program airnow_no2_ascii_to_obs
 
       real                         :: pi,err_fac,ran1,ran2,zfac
 
-      namelist /create_airnow_obs_nml/year0,month0,day0,hour0,beg_year,beg_mon,beg_day, &
+      namelist /create_airnow_obs_nml/beg_year,beg_mon,beg_day, &
       beg_hour,beg_min,beg_sec,end_year,end_mon,end_day,end_hour,end_min,end_sec, &
       file_in,lat_mn,lat_mx,lon_mn,lon_mx,use_log_co,use_log_o3,use_log_nox, &
       use_log_so2,use_log_pm10,use_log_pm25
@@ -177,10 +177,6 @@ program airnow_no2_ascii_to_obs
 
       min0=0
       sec0=0
-      print *, 'year            ',year0
-      print *, 'month           ',month0
-      print *, 'day             ',day0
-      print *, 'hour            ',hour0
       print *, 'beg_year        ',beg_year
       print *, 'beg_mon         ',beg_mon
       print *, 'beg_day         ',beg_day
@@ -201,9 +197,10 @@ program airnow_no2_ascii_to_obs
 !
 ! Fix leap year number of days
       days_in_month(2)=28
-      if(year0/4*4.eq.0) days_in_month(2)=29
-      anal_greg_sec=calc_greg_sec(year0,month0,day0,hour0,min0,sec0,days_in_month)
+      if(beg_year/4*4.eq.0) days_in_month(2)=29
       beg_greg_sec=calc_greg_sec(beg_year,beg_mon,beg_day,beg_hour,beg_min,beg_sec,days_in_month)
+      days_in_month(2)=28
+      if(end_year/4*4.eq.0) days_in_month(2)=29
       end_greg_sec=calc_greg_sec(end_year,end_mon,end_day,end_hour,end_min,end_sec,days_in_month)
 !
 ! Skip header
@@ -316,16 +313,6 @@ program airnow_no2_ascii_to_obs
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
-      if  (beg_hour == 3) then
-         file_name=trim(file_name)//chr_year//chr_month//chr_day//'06'
-      elseif (beg_hour == 9) then
-         file_name=trim(file_name)//chr_year//chr_month//chr_day//'12'
-      elseif (beg_hour == 15) then
-         file_name=trim(file_name)//chr_year//chr_month//chr_day//'18'
-      elseif (beg_hour == 21) then
-         file_name=trim(file_name)//chr_year//chr_month//chr_day//'24'
-      endif !bin
-!
       call write_obs_seq(seq, file_name)
       close(fileid)
 

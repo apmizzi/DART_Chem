@@ -3022,8 +3022,10 @@ EOF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -3051,8 +3053,10 @@ EOF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_MOPITT_CO_${DATE}_DATA
@@ -3156,8 +3160,10 @@ EOF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -3186,8 +3192,10 @@ EOF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_IASI_CO_${DATE}_DATA
@@ -3545,8 +3553,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -3600,8 +3610,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_OMI_O3_${DATE}_DATA
@@ -3732,8 +3744,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -3787,8 +3801,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_OMI_NO2_${DATE}_DATA
@@ -3919,8 +3935,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -3975,8 +3993,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_OMI_SO2_${DATE}_DATA
@@ -4107,8 +4127,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4164,8 +4186,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TROPOMI_CO_${DATE}_DATA
@@ -4271,8 +4295,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4299,8 +4325,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TROPOMI_O3_${DATE}_DATA
@@ -4432,8 +4460,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
         touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4487,8 +4517,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TROPOMI_NO2_${DATE}_DATA
@@ -4620,8 +4652,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4675,8 +4709,10 @@ EOFF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TROPOMI_SO2_${DATE}_DATA
@@ -4806,8 +4842,10 @@ EOF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -4859,8 +4897,10 @@ EOF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TEMPO_O3_${DATE}_DATA
@@ -4988,8 +5028,10 @@ EOF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
@@ -5041,8 +5083,10 @@ EOF
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          touch ${ARCHIVE_FILE}
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
          cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
       fi
       if [[ ! -e ${ARCHIVE_FILE} ]]; then
          touch NO_TEMPO_NO2_${DATE}_DATA

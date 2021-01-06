@@ -21,14 +21,15 @@
 ! END DART PREPROCESS KIND LIST
 !
 ! BEGIN DART PREPROCESS USE OF SPECIAL OBS_DEF MODULE
-!   use obs_def_tropomi_so2_mod, only : write_tropomi_so2, read_tropomi_so2, &
-!                               interactive_tropomi_so2, get_expected_tropomi_so2, &
-!                               set_obs_def_tropomi_so2
+!   use obs_def_tropomi_so2_mod, only : get_expected_tropomi_so2, &
+!                                  read_tropomi_so2, &
+!                                  write_tropomi_so2, &
+!                                  interactive_tropomi_so2
 ! END DART PREPROCESS USE OF SPECIAL OBS_DEF MODULE
 !
 ! BEGIN DART PREPROCESS GET_EXPECTED_OBS_FROM_DEF
-!         case(TROPOMI_SO2_COLUMN)                                                           
-!            call get_expected_tropomi_so2(state_handle, ens_size, location, obs_def%key, expected_obs, istatus)  
+!      case(TROPOMI_SO2_COLUMN)                                                           
+!         call get_expected_tropomi_so2(state_handle, ens_size, location, obs_def%key, expected_obs, istatus)  
 ! END DART PREPROCESS GET_EXPECTED_OBS_FROM_DEF
 !
 ! BEGIN DART PREPROCESS READ_OBS_DEF
@@ -46,418 +47,765 @@
 !         call interactive_tropomi_so2(obs_def%key)
 ! END DART PREPROCESS INTERACTIVE_OBS_DEF
 !
-! BEGIN DART PREPROCESS SET_OBS_DEF_TROPOMI_SO2
-!      case(TROPOMI_SO2_COLUMN)
-!         call set_obs_def_tropomi_so2(obs_def%key)
-! END DART PREPROCESS SET_OBS_DEF
-!
 ! BEGIN DART PREPROCESS MODULE CODE
+
 module obs_def_tropomi_so2_mod
-   use        types_mod, only              : r8,missing_r8
-   use    utilities_mod, only              : register_module, error_handler, E_ERR, E_MSG, &
-                                             nmlfileunit, check_namelist_read, &
-                                             find_namelist_in_file, do_nml_file, do_nml_term, &
-                                             ascii_file_format
-   use     location_mod, only              : location_type, set_location, get_location, &
-                                             VERTISPRESSURE, VERTISSURFACE, VERTISLEVEL, &
-                                             VERTISUNDEF
-   use  assim_model_mod, only              : interpolate
-   use    obs_kind_mod, only               : QTY_SO2,QTY_TEMPERATURE,QTY_PRESSURE, &
-                                             QTY_VAPOR_MIXING_RATIO
-   use  ensemble_manager_mod, only         : ensemble_type
-   use obs_def_utilities_mod, only         : track_status
-!
-   implicit none
-   private
-   public :: write_tropomi_so2, &
-             read_tropomi_so2, &
-             interactive_tropomi_so2, &
-             get_expected_tropomi_so2, &
-             set_obs_def_tropomi_so2
-!
+
+use             types_mod, only : r8, MISSING_R8
+
+use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &
+                                  nmlfileunit, check_namelist_read, &
+                                  find_namelist_in_file, do_nml_file, do_nml_term, &
+                                  ascii_file_format
+
+use          location_mod, only : location_type, set_location, get_location, &
+                                  VERTISPRESSURE, VERTISSURFACE, VERTISLEVEL, &
+                                  VERTISUNDEF
+
+use       assim_model_mod, only : interpolate
+
+use          obs_kind_mod, only : QTY_SO2, QTY_TEMPERATURE, QTY_SURFACE_PRESSURE, &
+                                  QTY_PRESSURE, QTY_VAPOR_MIXING_RATIO
+
+use  ensemble_manager_mod, only : ensemble_type
+
+use obs_def_utilities_mod, only : track_status
+
+implicit none
+private
+
+public :: write_tropomi_so2, &
+          read_tropomi_so2, &
+          interactive_tropomi_so2, &
+          get_expected_tropomi_so2, &
+          set_obs_def_tropomi_so2
+
 ! Storage for the special information required for observations of this type
-   integer, parameter                     :: max_tropomi_so2_obs = 10000000
-   integer, parameter                     :: tropomi_dim = 100
-   integer                                :: num_tropomi_so2_obs = 0
-   integer, allocatable, dimension(:)     :: nlayer
-   integer                                :: nlayer_model,nlayer_tropomi_so2
-   real(r8), allocatable, dimension(:)    :: amf_1km
-   real(r8), allocatable, dimension(:,:)  :: pressure
-   real(r8), allocatable, dimension(:,:)  :: avg_kernel
-!
+integer, parameter    :: max_tropomi_so2_obs = 10000000
+integer               :: num_tropomi_so2_obs = 0
+integer,  allocatable :: nlayer(:)
+real(r8), allocatable :: amf_1km(:)
+real(r8), allocatable :: pressure(:,:)
+real(r8), allocatable :: avg_kernel(:,:)
+real(r8), allocatable :: prior(:,:)
+
 ! version controlled file description for error handling, do not edit
-   character(len=*), parameter            :: source   = 'obs_def_tropomi_so2_mod.f90'
-   character(len=*), parameter            :: revision = ''
-   character(len=*), parameter            :: revdate  = ''
-!
-   character(len=512)                     :: string1, string2, string3
-!
-   logical, save                          :: module_initialized = .false.
-   integer                                :: counts1 = 0
-   logical                                :: use_log_so2
-!
-   namelist /obs_def_TROPOMI_SO2_nml/use_log_so2,nlayer_model,nlayer_tropomi_so2
-!
-   contains
-!
-   subroutine initialize_module
-      integer           :: iunit, rc
-!
+character(len=*), parameter :: source   = 'obs_def_tropomi_so2_mod.f90'
+character(len=*), parameter :: revision = ''
+character(len=*), parameter :: revdate  = ''
+
+character(len=512) :: string1, string2
+
+logical, save :: module_initialized = .false.
+
+! Namelist with default values
+logical :: use_log_so2   = .false.
+integer :: nlayer_model = -9999
+integer :: nlayer_tropomi_so2 = -9999
+
+namelist /obs_def_TROPOMI_SO2_nml/ use_log_so2, nlayer_model, nlayer_tropomi_so2
+
+!-------------------------------------------------------------------------------
+contains
+!-------------------------------------------------------------------------------
+
+subroutine initialize_module
+
+integer :: iunit, rc
+
 ! Prevent multiple calls from executing this code more than once.
-      if (module_initialized) return
-      call register_module(source, revision, revdate)
-      module_initialized = .true.
-!
-      allocate(nlayer(max_tropomi_so2_obs))
-      allocate(amf_1km(max_tropomi_so2_obs))
-      allocate(pressure(max_tropomi_so2_obs,tropomi_dim+1))
-      allocate(avg_kernel(max_tropomi_so2_obs,tropomi_dim))
-!
+
+if (module_initialized) return
+
+call register_module(source, revision, revdate)
+module_initialized = .true.
+
 ! Read namelist values
-      use_log_so2=.false.
-      call find_namelist_in_file("input.nml", "obs_def_TROPOMI_SO2_nml", iunit)
-      read(iunit, nml = obs_def_TROPOMI_SO2_nml, iostat = rc)
-      call check_namelist_read(iunit, rc, "obs_def_TROPOMI_SO2_nml")
-!
+call find_namelist_in_file("input.nml", "obs_def_TROPOMI_SO2_nml", iunit)
+read(iunit, nml = obs_def_TROPOMI_SO2_nml, iostat = rc)
+call check_namelist_read(iunit, rc, "obs_def_TROPOMI_SO2_nml")
+
 ! Record the namelist values
-     if (do_nml_file()) write(nmlfileunit, nml=obs_def_TROPOMI_SO2_nml)
-     if (do_nml_term()) write(     *     , nml=obs_def_TROPOMI_SO2_nml)
-   end subroutine initialize_module
-!
-   subroutine read_tropomi_so2(key, ifile, fform)
-      integer, intent(out)                   :: key
-      integer, intent(in)                    :: ifile
-      character(len=*), intent(in), optional :: fform
-!
-      integer                                :: keyin
-      integer                                :: nlayer_1
-      real(r8)                               :: amf_1km_1
-      real(r8), dimension(tropomi_dim+1)     :: pressure_1
-      real(r8), dimension(tropomi_dim)       :: avg_kernel_1
-      character(len=32)                      :: fileformat
-!
-      if ( .not. module_initialized ) call initialize_module
-!
-      fileformat = "ascii" 
-      if(present(fform)) fileformat = trim(adjustl(fform))
-!
-      nlayer_1 = 0
-      amf_1km_1 = 0.0_r8
-      pressure_1(:) = 0.0_r8
-      avg_kernel_1(:) = 0.0_r8
-!
-      SELECT CASE (fileformat)
-         CASE ("unf", "UNF", "unformatted", "UNFORMATTED")
-            nlayer_1 = read_tropomi_nlayer(ifile, fileformat)
-            amf_1km_1 = read_tropomi_amf_1km(ifile, fileformat)
-            pressure_1(1:nlayer_1+1) = read_tropomi_pressure(ifile, nlayer_1+1, fileformat)
-            avg_kernel_1(1:nlayer_1) = read_tropomi_avg_kernel(ifile, nlayer_1, fileformat)
-            read(ifile) keyin
-         CASE DEFAULT
-            nlayer_1 = read_tropomi_nlayer(ifile, fileformat)
-            amf_1km_1 = read_tropomi_amf_1km(ifile, fileformat)
-            pressure_1(1:nlayer_1+1) = read_tropomi_pressure(ifile, nlayer_1+1, fileformat)
-            avg_kernel_1(1:nlayer_1) = read_tropomi_avg_kernel(ifile, nlayer_1, fileformat)
-            read(ifile, *) keyin
-      END SELECT
-!
-      counts1 = counts1 + 1
-      key = counts1
-      call set_obs_def_tropomi_so2(key, pressure_1, avg_kernel_1, amf_1km_1, nlayer_1)
-   end subroutine read_tropomi_so2
-!
-   subroutine write_tropomi_so2(key, ifile, fform)
-      integer, intent(in)                    :: key
-      integer, intent(in)                    :: ifile
-      character(len=*), intent(in), optional :: fform
-!
-      integer                                :: nlayer_tmp
-      real(r8)                               :: amf_1km_tmp
-      real(r8), dimension(tropomi_dim+1)     :: pressure_tmp
-      real(r8), dimension(tropomi_dim)       :: avg_kernel_tmp
-      character(len=32)                      :: fileformat
-!
-      if ( .not. module_initialized ) call initialize_module
-!
-      fileformat = "ascii"
-      if(present(fform)) fileformat = trim(adjustl(fform))
-!
-      nlayer_tmp=nlayer(key)
-      amf_1km_tmp=amf_1km(key)
-      pressure_tmp=pressure(key,:)
-      avg_kernel_tmp=avg_kernel(key,:)
-!
-      SELECT CASE (fileformat)
-         CASE ("unf", "UNF", "unformatted", "UNFORMATTED")
-         call write_tropomi_nlayer(ifile, nlayer_tmp, fileformat)
-         call write_tropomi_amf_1km(ifile, amf_1km_tmp, fileformat)
-         call write_tropomi_pressure(ifile, pressure_tmp, nlayer_tmp+1, fileformat)
-         call write_tropomi_avg_kernel(ifile, avg_kernel_tmp, nlayer_tmp, fileformat)
-         write(ifile) key
-      CASE DEFAULT
-         call write_tropomi_nlayer(ifile, nlayer_tmp, fileformat)
-         call write_tropomi_amf_1km(ifile, amf_1km_tmp, fileformat)
-         call write_tropomi_pressure(ifile, pressure_tmp, nlayer_tmp+1, fileformat)
-         call write_tropomi_avg_kernel(ifile, avg_kernel_tmp, nlayer_tmp, fileformat)
-         write(ifile, *) key
-      END SELECT 
-   end subroutine write_tropomi_so2
-!
-   subroutine interactive_tropomi_so2(key)
-      integer, intent(out) :: key
-!
-      if ( .not. module_initialized ) call initialize_module
-!
-      if(num_tropomi_so2_obs >= max_tropomi_so2_obs) then
-         write(string1, *)'Not enough space for an tropomi so2 obs.'
-         write(string2, *)'Can only have max_tropomi_so2_obs (currently ',max_tropomi_so2_obs,')'
-         call error_handler(E_ERR,'interactive_tropomi_so2',string1,source,revision,revdate,text2=string2)
-      endif
-!
+if (do_nml_file()) write(nmlfileunit, nml=obs_def_TROPOMI_SO2_nml)
+if (do_nml_term()) write(     *     , nml=obs_def_TROPOMI_SO2_nml)
+
+! Check for valid values
+
+if (nlayer_model < 1) then
+   write(string1,*)'obs_def_TROPOMI_SO2_nml:nlayer_model must be > 0, it is ',nlayer_model
+   call error_handler(E_ERR,'initialize_module',string1,source)
+endif
+
+if (nlayer_tropomi_so2 < 1) then
+   write(string1,*)'obs_def_TROPOMI_SO2_nml:nlayer_tropomi_so2 must be > 0, it is ',nlayer_tropomi_so2
+   call error_handler(E_ERR,'initialize_module',string1,source)
+endif
+
+allocate(    nlayer(max_tropomi_so2_obs))
+allocate(    amf_1km(max_tropomi_so2_obs))
+allocate(  pressure(max_tropomi_so2_obs,nlayer_tropomi_so2+1))
+allocate(avg_kernel(max_tropomi_so2_obs,nlayer_tropomi_so2))
+allocate(     prior(max_tropomi_so2_obs,nlayer_tropomi_so2))
+
+end subroutine initialize_module
+
+!-------------------------------------------------------------------------------
+
+subroutine read_tropomi_so2(key, ifile, fform)
+
+integer,          intent(out)          :: key
+integer,          intent(in)           :: ifile
+character(len=*), intent(in), optional :: fform
+
+! temporary arrays to hold buffer till we decide if we have enough room
+
+integer               :: keyin
+integer               :: nlayer_1
+real(r8)              :: amf_1km_1
+real(r8), allocatable :: pressure_1(:)
+real(r8), allocatable :: avg_kernel_1(:)
+real(r8), allocatable :: prior_1(:)
+character(len=32)     :: fileformat
+
+integer, SAVE :: counts1 = 0
+
+if ( .not. module_initialized ) call initialize_module
+
+fileformat = "ascii" 
+if(present(fform)) fileformat = adjustl(fform)
+
+! Need to know how many layers for this one
+nlayer_1 = read_int_scalar( ifile, fileformat, 'nlayer_1')
+amf_1km_1 = read_r8_scalar( ifile, fileformat, 'amf_1km_1')
+
+allocate(  pressure_1(nlayer_1+1))
+allocate(avg_kernel_1(nlayer_1))
+allocate(     prior_1(nlayer_1))
+
+call read_r8_array(ifile, nlayer_1+1, pressure_1,   fileformat, 'pressure_1')
+call read_r8_array(ifile, nlayer_1,   avg_kernel_1, fileformat, 'avg_kernel_1')
+call read_r8_array(ifile, nlayer_1,   prior_1, fileformat, 'prior_1')
+keyin = read_int_scalar(ifile, fileformat, 'nlayer_1')
+
+counts1 = counts1 + 1
+key     = counts1
+
+if(counts1 > max_tropomi_so2_obs) then
+   write(string1, *)'Not enough space for tropomi so2 obs.'
+   write(string2, *)'Can only have max_tropomi_so2_obs (currently ',max_tropomi_so2_obs,')'
+   call error_handler(E_ERR,'read_tropomi_so2',string1,source,text2=string2)
+endif
+
+call set_obs_def_tropomi_so2(key, pressure_1, avg_kernel_1, prior_1, amf_1km_1, nlayer_1)
+
+deallocate(pressure_1, avg_kernel_1, prior_1)
+
+end subroutine read_tropomi_so2
+
+!-------------------------------------------------------------------------------
+
+subroutine write_tropomi_so2(key, ifile, fform)
+
+integer,          intent(in)           :: key
+integer,          intent(in)           :: ifile
+character(len=*), intent(in), optional :: fform
+
+character(len=32) :: fileformat
+
+if ( .not. module_initialized ) call initialize_module
+
+fileformat = "ascii"
+if(present(fform)) fileformat = adjustl(fform)
+
+! nlayer, amf_1km, pressure, and avg_kernel are all scoped in this module
+! you can come extend the context strings to include the key if desired.
+
+call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
+call write_r8_scalar( ifile,                     amf_1km(key), fileformat,'amf_1km')
+call write_r8_array(  ifile, nlayer(key)+1,      pressure(key,:), fileformat,'pressure')
+call write_r8_array(  ifile, nlayer(key),        avg_kernel(key,:), fileformat,'avg_kernel')
+call write_r8_array(  ifile, nlayer(key),        prior(key,:), fileformat,'prior')
+call write_int_scalar(ifile,                     key, fileformat,'key')
+
+end subroutine write_tropomi_so2
+
+!-------------------------------------------------------------------------------
+
+subroutine interactive_tropomi_so2(key)
+
+integer, intent(out) :: key
+
+if ( .not. module_initialized ) call initialize_module
+
+! STOP because routine is not finished.
+write(string1,*)'interactive_tropomi_so2 not yet working.'
+call error_handler(E_ERR, 'interactive_tropomi_so2', string1, source)
+
+if(num_tropomi_so2_obs >= max_tropomi_so2_obs) then
+   write(string1, *)'Not enough space for an tropomi so2 obs.'
+   write(string2, *)'Can only have max_tropomi_so2_obs (currently ',max_tropomi_so2_obs,')'
+   call error_handler(E_ERR, 'interactive_tropomi_so2', string1, &
+              source, text2=string2)
+endif
+
 ! Increment the index
-      num_tropomi_so2_obs = num_tropomi_so2_obs + 1
-      key = num_tropomi_so2_obs
-!
+num_tropomi_so2_obs = num_tropomi_so2_obs + 1
+key            = num_tropomi_so2_obs
+
 ! Otherwise, prompt for input for the three required beasts
-      write(*, *) 'Creating an interactive_tropomi_so2 observation'
-      write(*, *) 'This featue is not setup '
-   end subroutine interactive_tropomi_so2
-!
-   subroutine get_expected_tropomi_so2(state_handle, ens_size, location, key, val, istatus)
-      type(ensemble_type),intent(in)              :: state_handle
-      type(location_type),intent(in)              :: location
-      integer,intent(in)                          :: ens_size
-      integer,intent(in)                          :: key
-!
-      integer,dimension(ens_size),intent(out)     :: istatus
-      real*8,dimension(ens_size),intent(out)      :: val
-!
-      type(location_type)                    :: loc2
-      integer                                :: i,kend,imem
-      integer                                :: nnlayer
-      integer,dimension(ens_size)            :: kstr,nnlevels,this_istatus
-      real*8	                          :: level,missing
-      real*8                                 :: so2_min,mg 
-      real*8,dimension(3)                    :: mloc
-      real*8,dimension(ens_size)             :: obs_val,wrf_psf,tropomi_psf,tropomi_psf_save
-      real*8,dimension(ens_size,tropomi_dim)     :: so2_vmr
-      logical                                :: return_now
-!
-! Initialize DART
-      if ( .not. module_initialized ) call initialize_module
-!
-      so2_min=1.e-6
-      missing=-1.2676506e30
-      mg=4.716046511627907e-21  
-      level   = 1.0_r8
-!
-! Get tropomi nlayer
-      nnlayer = nlayer(key)
-!
+
+write(*, *) 'Creating an interactive_tropomi_so2 observation'
+write(*, *) 'This featue is not setup '
+
+end subroutine interactive_tropomi_so2
+
+!-------------------------------------------------------------------------------
+
+subroutine get_expected_tropomi_so2(state_handle, ens_size, location, key, expct_val, istatus)
+
+type(ensemble_type), intent(in)  :: state_handle
+type(location_type), intent(in)  :: location
+integer,             intent(in)  :: ens_size
+integer,             intent(in)  :: key
+integer,             intent(out) :: istatus(:)
+real(r8),            intent(out) :: expct_val(:)
+
+character(len=*), parameter :: routine = 'get_expected_tropomi_so2'
+type(location_type) :: loc2
+
+integer :: layer_tropomi,level_tropomi
+integer :: layer_mdl,level_mdl
+integer :: k,imem
+integer :: so2_istatus(ens_size)
+integer, dimension(ens_size) :: tmp_istatus, qmr_istatus, prs_istatus
+
+real(r8) :: eps, AvogN, Rd, Ru, grav, msq2cmsq
+real(r8) :: so2_min
+real(r8) :: level
+real(r8) :: tmp_vir_k, tmp_vir_kp
+real(r8) :: mloc(3)
+real(r8) :: so2_val_conv
+real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
+real(r8), dimension(ens_size) :: so2_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
+real(r8), dimension(ens_size) :: so2_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
+real(r8), dimension(ens_size) :: so2_temp, tmp_temp, qmr_temp, prs_sfc
+
+real(r8), allocatable, dimension(:)   :: thick, prs_tropomi, prs_tropomi_mem
+real(r8), allocatable, dimension(:,:) :: so2_val, tmp_val, qmr_val
+logical  :: return_now,so2_return_now,tmp_return_now,qmr_return_now
+
+if ( .not. module_initialized ) call initialize_module
+
+eps    =  0.61_r8
+Rd     = 286.9_r8
+Ru     = 8.316_r8
+grav   =   9.8_r8
+so2_min = 1.e-6_r8
+msq2cmsq = 1.e4_r8
+AvogN = 6.02214e23_r8
+
+if(use_log_so2) then
+   so2_min = log(so2_min)
+endif
+
+! Assign vertical grid information
+
+layer_tropomi = nlayer(key)
+level_tropomi = nlayer(key)+1
+layer_mdl=nlayer_model
+level_mdl=nlayer_model+1
+!write(string1, *) 'APM: layer_tropomi ',key,layer_tropomi
+!call error_handler(E_MSG, routine, string1, source)
+!write(string1, *) 'APM: layer_mdl ',key,layer_mdl
+!call error_handler(E_MSG, routine, string1, source)
+
+allocate(prs_tropomi(level_tropomi))
+allocate(prs_tropomi_mem(level_tropomi))
+prs_tropomi(1:level_tropomi)=pressure(key,1:level_tropomi)*100.
+
 ! Get location infomation
-      mloc = get_location(location)
-      if (mloc(2)>90.0_r8) then
-         mloc(2)=90.0_r8
-      elseif (mloc(2)<-90.0_r8) then
-         mloc(2)=-90.0_r8
+
+mloc = get_location(location)
+
+if (    mloc(2) >  90.0_r8) then
+        mloc(2) =  90.0_r8
+elseif (mloc(2) < -90.0_r8) then
+        mloc(2) = -90.0_r8
+endif
+
+! You could set a unique error code for each condition and then just return
+! without having to issue a warning message. The error codes would then
+! show up in the report from 'output_forward_op_errors'
+
+istatus(:) = 0  ! set this once at the beginning
+
+! pressure at model surface (Pa)
+
+level=0.0_r8
+loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
+istatus(:) = 0
+prs_istatus(:) = 0
+return_now=.false.
+call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, prs_istatus) 
+if(any(prs_istatus /= 0)) then
+   write(string1, *)'APM NOTICE: MDL prs_sfc is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
+endif
+call track_status(ens_size, prs_istatus, prs_sfc, istatus, return_now)
+if(return_now) return
+!write(string1, *) 'APM: prs_sfc ',key,prs_sfc(1)
+!call error_handler(E_MSG, routine, string1, source)
+
+! sulfur dioxide at first model layer (ppmv)
+
+level = 1.0_r8
+loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+so2_istatus(:) = 0
+return_now=.false.
+call interpolate(state_handle, ens_size, loc2, QTY_SO2, so2_mdl_1, so2_istatus) 
+if(any(so2_istatus /= 0)) then
+   write(string1, *)'APM NOTICE: MDL so2_mdl_1 is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
+endif
+call track_status(ens_size, so2_istatus, so2_mdl_1, istatus, return_now)
+if(return_now) return
+!write(string1, *) 'APM: so2_mdl_1 ',key,so2_mdl_1(1)
+!call error_handler(E_MSG, routine, string1, source)
+
+! temperature at first model layer (K)
+
+level=1.0_r8
+loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+tmp_istatus(:) = 0
+return_now=.false.
+call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_1, tmp_istatus) 
+if(any(tmp_istatus /= 0)) then
+   write(string1, *)'APM NOTICE: MDL tmp_mdl_1 is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
+endif
+call track_status(ens_size, tmp_istatus, tmp_mdl_1, istatus, return_now)
+if(return_now) return
+!write(string1, *) 'APM: tmp_mdl_1 ',key,tmp_mdl_1(1)
+!call error_handler(E_MSG, routine, string1, source)
+
+! vapor mixing ratio at first model layer (Kg/Kg)
+
+level=1.0_r8
+loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+qmr_istatus(:) = 0
+return_now=.false.
+call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, qmr_istatus) 
+if(any(qmr_istatus /= 0)) then
+   write(string1, *)'APM NOTICE: MDL qmr_mdl_1 is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
+endif
+call track_status(ens_size, qmr_istatus, qmr_mdl_1, istatus, return_now)
+if(return_now) return
+!write(string1, *) 'APM: qmr_mdl_1 ',key,qmr_mdl_1(1)
+!call error_handler(E_MSG, routine, string1, source)
+
+! pressure at first model layer (Pa)
+
+level=1.0_r8
+loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+prs_istatus(:) = 0
+return_now=.false.
+call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, prs_istatus) 
+if(any(prs_istatus /= 0)) then
+   write(string1, *)'APM NOTICE: MDL prs_mdl_1 is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
+endif
+call track_status(ens_size, prs_istatus, prs_mdl_1, istatus, return_now)
+if(return_now) return
+!write(string1, *) 'APM: prs_mdl_1 ',key,prs_mdl_1(1)
+!call error_handler(E_MSG, routine, string1, source)
+
+! sulfur dioxide at last model layer (ppmv)
+
+level=real(layer_mdl-1)
+loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+so2_istatus(:) = 0
+return_now=.false.
+call interpolate(state_handle, ens_size, loc2, QTY_SO2, so2_mdl_n, so2_istatus) 
+if(any(so2_istatus /= 0)) then
+   write(string1, *)'APM NOTICE: MDL so2_mdl_n is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
+endif
+call track_status(ens_size, so2_istatus, so2_mdl_n, istatus, return_now)
+if(return_now) return
+!write(string1, *) 'APM: so2_mdl_n ',key,so2_mdl_n(1)
+!call error_handler(E_MSG, routine, string1, source)
+
+! temperature at last layer (K)
+
+level=real(layer_mdl-1)
+loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+tmp_istatus(:) = 0
+return_now=.false.
+call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_n, tmp_istatus) 
+if(any(tmp_istatus /= 0)) then
+   write(string1, *)'APM NOTICE: MDL tmp_mdl_n is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
+endif
+call track_status(ens_size, tmp_istatus, tmp_mdl_n, istatus, return_now)
+if(return_now) return
+!write(string1, *) 'APM: tmp_mdl_n ',key,tmp_mdl_n(1)
+!call error_handler(E_MSG, routine, string1, source)
+
+! vapor mixing ratio at last model layer (Kg/Kg)
+
+level=real(layer_mdl-1)
+loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+qmr_istatus(:) = 0
+return_now=.false.
+call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, qmr_istatus) 
+if(any(qmr_istatus /= 0)) then
+   write(string1, *)'APM NOTICE: MDL qmr_mdl_n is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
+endif
+call track_status(ens_size, qmr_istatus, qmr_mdl_n, istatus, return_now)
+if(return_now) return
+!write(string1, *) 'APM: qmr_mdl_n ',key,qmr_mdl_n(1)
+!call error_handler(E_MSG, routine, string1, source)
+
+! pressure at last model layer (Pa)
+
+level=real(layer_mdl-1)
+loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+istatus(:) = 0
+prs_istatus(:) = 0
+return_now=.false.
+call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, &
+prs_mdl_n, prs_istatus) 
+if(any(prs_istatus /= 0)) then
+   write(string1, *)'APM NOTICE: MDL prs_mdl_n is bad ',key
+   call error_handler(E_MSG, routine, string1, source)
+endif
+call track_status(ens_size, prs_istatus, prs_mdl_n, istatus, return_now)
+if(return_now) return
+!write(string1, *) 'APM: prs_mdl_n ',key,prs_mdl_n(1)
+!call error_handler(E_MSG, routine, string1, source)
+
+! Get profiles at TROPOMI levels
+
+allocate(so2_val(ens_size,level_tropomi))
+allocate(tmp_val(ens_size,level_tropomi))
+allocate(qmr_val(ens_size,level_tropomi))
+
+do k=1,level_tropomi
+   so2_istatus(:) = 0
+   tmp_istatus(:) = 0
+   qmr_istatus(:) = 0
+
+   loc2 = set_location(mloc(1), mloc(2), prs_tropomi(k), VERTISPRESSURE)
+
+   ! taking a different approach here ... interpolate all the required pieces
+   ! for this level and then account for known special cases before determining
+   ! if there is an error or not
+   call interpolate(state_handle, ens_size, loc2, QTY_SO2, so2_temp, so2_istatus)  
+   call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_temp, tmp_istatus)  
+   call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_temp, qmr_istatus)  
+
+   ! Correcting for expected failures near the surface
+   where(prs_tropomi(k).ge.prs_mdl_1)
+      so2_istatus  = 0
+      tmp_istatus = 0
+      qmr_istatus = 0
+      so2_temp     = so2_mdl_1
+      tmp_temp    = tmp_mdl_1
+      qmr_temp    = qmr_mdl_1
+   endwhere
+
+   ! Correcting for expected failures near the top
+   where(prs_tropomi(k).le.prs_mdl_n) 
+      so2_istatus  = 0
+      tmp_istatus = 0
+      qmr_istatus = 0
+      so2_temp     = so2_mdl_n
+      tmp_temp    = tmp_mdl_n
+      qmr_temp    = qmr_mdl_n
+   endwhere
+
+   ! Report all issue before returning (when E_MSG is being used)
+   so2_return_now=.false.
+   if(any(so2_istatus /= 0)) then
+      write(string1,*) &
+      'APM NOTICE: model SO2 obs value on TROPOMI grid has a bad value '
+      call error_handler(E_MSG, routine, string1, source)
+      call track_status(ens_size, so2_istatus, so2_temp, istatus, return_now)
+   endif
+   
+   tmp_return_now=.false.
+   if(any(tmp_istatus/=0)) then
+      write(string1, *) &
+      'APM NOTICE: model TMP obs value on TROPOMI grid has a bad value'
+      call error_handler(E_MSG, routine, string1, source)
+      call track_status(ens_size, tmp_istatus, tmp_temp, istatus, return_now)
+   endif
+  
+   qmr_return_now=.false.
+   if(any(qmr_istatus/=0)) then
+      write(string1, *) &
+      'APM NOTICE: model QMR obs value on TROPOMI grid has a bad value '
+      call error_handler(E_MSG, routine, string1, source)
+      call track_status(ens_size, qmr_istatus, qmr_temp, istatus, return_now)
+   endif
+   if(return_now) return
+
+   so2_val(:,k) = so2_temp(:)  
+   tmp_val(:,k) = tmp_temp(:)  
+   qmr_val(:,k) = qmr_temp(:)
+
+   ! Convert units for so2 from ppmv
+   so2_val(:,k) = so2_val(:,k) * 1.e-6_r8
+
+enddo
+!write(string1, *) 'APM: so2_val mem=1 ',key,so2_val(1,:)
+!call error_handler(E_MSG, routine, string1, source)
+!write(string1, *) 'APM: tmp_val mem=1 ',key,tmp_val(1,:)
+!call error_handler(E_MSG, routine, string1, source)
+!write(string1, *) 'APM: qmr_val mem=1 ',key,qmr_val(1,:)
+!call error_handler(E_MSG, routine, string1, source)
+
+expct_val(:)=0.0
+allocate(thick(layer_tropomi))
+do imem=1,ens_size
+
+   ! Adjust the TROPOMI pressure for WRF-Chem lower/upper boudary pressure
+   ! (TROPOMI SO2 vertical grid is bottom to top)
+
+   prs_tropomi_mem(:)=prs_tropomi(:)
+   if (prs_sfc(imem).gt.prs_tropomi_mem(1)) then
+      prs_tropomi_mem(1)=prs_sfc(imem)
+   endif   
+
+   ! Calculate the thicknesses
+
+   thick(:)=0.
+   do k=1,layer_tropomi
+      lnpr_mid=(log(prs_tropomi_mem(k+1))+log(prs_tropomi_mem(k)))/2.
+      up_wt=log(prs_tropomi_mem(k))-lnpr_mid
+      dw_wt=log(lnpr_mid)-log(prs_tropomi_mem(k+1))
+      tl_wt=up_wt+dw_wt
+      
+      tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
+      tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
+      thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
+                   log(prs_tropomi_mem(k)/prs_tropomi_mem(k+1))
+   enddo
+
+!   if(imem.eq.1) then
+!      write(string1, *) 'APM: thick mem=1 ',key,thick(:)
+!      call error_handler(E_MSG, routine, string1, source)
+!   endif
+   ! Process the vertical summation
+
+   expct_val(imem)=0.0_r8
+   do k=1,layer_tropomi
+      lnpr_mid=(log(prs_tropomi_mem(k+1))+log(prs_tropomi_mem(k)))/2.
+      up_wt=log(prs_tropomi_mem(k))-lnpr_mid
+      dw_wt=log(lnpr_mid)-log(prs_tropomi_mem(k+1))
+      tl_wt=up_wt+dw_wt
+
+      ! Convert from VMR to molar density (mol/m^3)
+      if(use_log_so2) then
+         so2_val_conv = (dw_wt*exp(so2_val(imem,k))+up_wt*exp(so2_val(imem,k+1)))/tl_wt * &
+                        (dw_wt*prs_tropomi_mem(k)+up_wt*prs_tropomi_mem(k+1)) / &
+                        (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
+      else
+         so2_val_conv = (dw_wt*so2_val(imem,k)+up_wt*so2_val(imem,k+1))/tl_wt * &
+                        (dw_wt*prs_tropomi_mem(k)+up_wt*prs_tropomi_mem(k+1)) / &
+                        (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
       endif
-!
-! Interpolate WRF SO2 data to TROPOMI pressure level midpoint
-      obs_val = 0.0_r8
-      istatus = 0
-      call interpolate(state_handle, ens_size, loc2, QTY_SO2, obs_val, this_istatus)  
-      call track_status(ens_size, this_istatus, obs_val, istatus, return_now)
-      if (istatus(imem) .ne. 0 .and. istatus(imem) .ne. 2) then
-         write(string1, *)'APM ERROR: istatus,kstr,obs_val ',istatus,kstr,obs_val 
-         call error_handler(E_MSG, 'set_obs_def_tropomi_so2', string1, source, revision, revdate, &
-         text2=string2, text3=string3)
-         call abort
-      endif
-!
-      val(:) = 0.0_r8
-      do imem = 1, ens_size
-         do i=1,nnlayer
-            if (i .eq. 1) then 
-               val(:) = val(:) + 0.5
-            else
-               val(:) = val(:) + 0.5
-            endif
-         enddo
-      enddo
-   end subroutine get_expected_tropomi_so2
-!
-   subroutine set_obs_def_tropomi_so2(key, so2_pressure, so2_avgker, so2_amf_1km, so2_nlayer)
-      integer,intent(in)                         :: key, so2_nlayer
-      real*8,intent(in)                          :: so2_amf_1km
-      real*8,dimension(so2_nlayer+1),intent(in)  :: so2_pressure
-      real*8,dimension(so2_nlayer),intent(in)    :: so2_avgker
-!
-      if ( .not. module_initialized ) call initialize_module
-!
-      if(num_tropomi_so2_obs >= max_tropomi_so2_obs) then
-         write(string1, *)'Not enough space for tropomi so2 obs.'
-         write(string2, *)'Can only have max_tropomi_so2_obs (currently ',max_tropomi_so2_obs,')'
-         call error_handler(E_ERR,'set_obs_def_tropomi_so2',string1,source,revision,revdate,text2=string2)
-      endif
-!
-      nlayer(key) = so2_nlayer
-      amf_1km(key) = so2_amf_1km
-      pressure(key,:) = so2_pressure(:)
-      avg_kernel(key,:) = so2_avgker(:)
-   end subroutine set_obs_def_tropomi_so2
-!
-   function read_tropomi_nlayer(ifile, fform)
-      integer                                :: read_tropomi_nlayer
-      integer,intent(in)                     :: ifile
-      character(len=*),intent(in),optional   :: fform
-      character(len=32)                      :: fileformat
-!
-      if ( .not. module_initialized ) call initialize_module
-!
-      fileformat = "ascii"
-      if(present(fform)) fileformat = trim(adjustl(fform))
-!
-      SELECT CASE (fileformat)
-         CASE("unf", "UNF", "unformatted", "UNFORMATTED")
-            read(ifile) read_tropomi_nlayer
-         CASE DEFAULT
-            read(ifile, *) read_tropomi_nlayer
-      END SELECT
-   end function read_tropomi_nlayer
-!
-   subroutine write_tropomi_nlayer(ifile, nlayer_tmp, fform)
-      integer,intent(in)                     :: ifile
-      integer,intent(in)                     :: nlayer_tmp
-      character(len=*),intent(in),optional   :: fform
-      character(len=32)                      :: fileformat
-!
-      if ( .not. module_initialized ) call initialize_module
-!
-      fileformat = "ascii"
-      if(present(fform)) fileformat = trim(adjustl(fform))
-!
-      SELECT CASE (fileformat)
-         CASE("unf", "UNF", "unformatted", "UNFORMATTED")
-            write(ifile) nlayer_tmp
-         CASE DEFAULT
-            write(ifile, *) nlayer_tmp
-      END SELECT
-   end subroutine write_tropomi_nlayer
-!
-   function read_tropomi_amf_1km(ifile, fform)
-      real*8                                 :: read_tropomi_amf_1km
-      integer,intent(in)                     :: ifile
-      character(len=*),intent(in),optional   :: fform
-      character(len=32)                      :: fileformat
-!
-      if ( .not. module_initialized ) call initialize_module
-!
-      fileformat = "ascii"
-      if(present(fform)) fileformat = trim(adjustl(fform))
-!
-      SELECT CASE (fileformat)
-         CASE("unf", "UNF", "unformatted", "UNFORMATTED")
-            read(ifile) read_tropomi_amf_1km
-         CASE DEFAULT
-            read(ifile, *) read_tropomi_amf_1km
-      END SELECT
-   end function read_tropomi_amf_1km
-!
-   subroutine write_tropomi_amf_1km(ifile, amf_1km_tmp, fform)
-      integer,intent(in)                     :: ifile
-      real*8,intent(in)                      :: amf_1km_tmp
-      character(len=*),intent(in),optional   :: fform
-      character(len=32)                      :: fileformat
-!
-      if ( .not. module_initialized ) call initialize_module
-!
-      fileformat = "ascii"
-      if(present(fform)) fileformat = trim(adjustl(fform))
-!
-      SELECT CASE (fileformat)
-         CASE("unf", "UNF", "unformatted", "UNFORMATTED")
-            write(ifile) amf_1km_tmp
-         CASE DEFAULT
-            write(ifile, *) amf_1km_tmp
-      END SELECT
-   end subroutine write_tropomi_amf_1km
-!
-   function read_tropomi_pressure(ifile, nlevel, fform)
-      real(r8)                               :: read_tropomi_pressure(nlevel)
-      integer,intent(in)                     :: ifile, nlevel
-      character(len=*),intent(in),optional   :: fform
-      character(len=32)                      :: fileformat
-!
-      if ( .not. module_initialized ) call initialize_module
-      read_tropomi_pressure(:) = 0.0_r8
-!
-      fileformat = "ascii"
-      if(present(fform)) fileformat = trim(adjustl(fform))
-!
-      SELECT CASE (fileformat)
-         CASE("unf", "UNF", "unformatted", "UNFORMATTED")
-            read(ifile) read_tropomi_pressure(1:nlevel)
-         CASE DEFAULT
-            read(ifile, *) read_tropomi_pressure(1:nlevel)
-      END SELECT
-   end function read_tropomi_pressure
-!
-   subroutine write_tropomi_pressure(ifile, pressure_tmp, nlevel_tmp, fform)
-      integer,intent(in)                        :: ifile,nlevel_tmp
-      real*8,dimension(nlevel_tmp),intent(in)   :: pressure_tmp
-      character(len=*),intent(in),optional      :: fform
-      character(len=32)                         :: fileformat
-!
-      if ( .not. module_initialized ) call initialize_module
-!
-      fileformat = "ascii"
-      if(present(fform)) fileformat = trim(adjustl(fform))
-!
-      SELECT CASE (fileformat)
-         CASE("unf", "UNF", "unformatted", "UNFORMATTED")
-            write(ifile) pressure_tmp(1:nlevel_tmp)
-         CASE DEFAULT
-            write(ifile, *) pressure_tmp(1:nlevel_tmp)
-      END SELECT
-   end subroutine write_tropomi_pressure
-!
-   function read_tropomi_avg_kernel(ifile, nlayer, fform)
-      real(r8)                               :: read_tropomi_avg_kernel(nlayer)
-      integer,intent(in)                     :: ifile, nlayer
-      character(len=*),intent(in),optional   :: fform
-      character(len=32)                      :: fileformat
-!
-      if ( .not. module_initialized ) call initialize_module
-      read_tropomi_avg_kernel(:) = 0.0_r8
-!
-      fileformat = "ascii"
-      if(present(fform)) fileformat = trim(adjustl(fform))
-!
-      SELECT CASE (fileformat)
-         CASE("unf", "UNF", "unformatted", "UNFORMATTED")
-            read(ifile) read_tropomi_avg_kernel(1:nlayer)
-         CASE DEFAULT
-            read(ifile, *) read_tropomi_avg_kernel(1:nlayer)
-      END SELECT
-   end function read_tropomi_avg_kernel
-!
-   subroutine write_tropomi_avg_kernel(ifile, avg_kernel_tmp, nlayer_tmp, fform)
-      integer,intent(in)                        :: ifile,nlayer_tmp
-      real*8,dimension(nlayer_tmp),intent(in)   :: avg_kernel_tmp
-      character(len=*),intent(in),optional      :: fform
-      character(len=32)                         :: fileformat
-!
-      if ( .not. module_initialized ) call initialize_module
-!
-      fileformat = "ascii"
-      if(present(fform)) fileformat = trim(adjustl(fform))
-!
-      SELECT CASE (fileformat)
-         CASE("unf", "UNF", "unformatted", "UNFORMATTED")
-            write(ifile) avg_kernel_tmp(1:nlayer_tmp)
-         CASE DEFAULT
-            write(ifile, *) avg_kernel_tmp(1:nlayer_tmp)
-      END SELECT
-   end subroutine write_tropomi_avg_kernel
+ 
+      ! Get expected observation
+
+      expct_val(imem) = expct_val(imem) + thick(k) * so2_val_conv * &
+                        avg_kernel(key,k) + thick(k) * (1.0_r8 - &
+                        avg_kernel(key,k)) * prior(key,k) 
+   enddo
+enddo
+!write(string1, *) 'APM: expct_val (all mems) ',key,expct_val(:)
+!call error_handler(E_MSG, routine, string1, source)
+
+! Clean up and return
+deallocate(so2_val, tmp_val, qmr_val)
+deallocate(thick)
+deallocate(prs_tropomi, prs_tropomi_mem)
+
+end subroutine get_expected_tropomi_so2
+
+!-------------------------------------------------------------------------------
+
+subroutine set_obs_def_tropomi_so2(key, so2_pressure, so2_avg_kernel, so2_prior, so2_amf_1km, so2_nlayer)
+
+integer,                           intent(in)   :: key, so2_nlayer
+real(r8),                          intent(in)   :: so2_amf_1km
+real(r8), dimension(so2_nlayer+1),  intent(in)   :: so2_pressure
+real(r8), dimension(so2_nlayer),    intent(in)   :: so2_avg_kernel
+real(r8), dimension(so2_nlayer),    intent(in)   :: so2_prior
+
+if ( .not. module_initialized ) call initialize_module
+
+if(num_tropomi_so2_obs >= max_tropomi_so2_obs) then
+   write(string1, *)'Not enough space for tropomi so2 obs.'
+   write(string2, *)'Can only have max_tropomi_so2_obs (currently ',max_tropomi_so2_obs,')'
+   call error_handler(E_ERR,'set_obs_def_tropomi_so2',string1,source,revision, &
+   revdate,text2=string2)
+endif
+
+nlayer(key) = so2_nlayer
+amf_1km(key) = so2_amf_1km
+pressure(key,1:so2_nlayer+1) = so2_pressure(1:so2_nlayer+1)
+avg_kernel(key,1:so2_nlayer) = so2_avg_kernel(1:so2_nlayer)
+prior(key,1:so2_nlayer) = so2_prior(1:so2_nlayer)
+
+end subroutine set_obs_def_tropomi_so2
+
+!-------------------------------------------------------------------------------
+
+function read_int_scalar(ifile, fform, context)
+
+integer                      :: read_int_scalar
+integer,          intent(in) :: ifile
+character(len=*), intent(in) :: fform
+character(len=*), intent(in) :: context
+
+integer :: io
+
+if (ascii_file_format(fform)) then
+   read(ifile, *, iostat = io) read_int_scalar
+else
+   read(ifile, iostat = io) read_int_scalar
+endif
+if ( io /= 0 ) then
+   call error_handler(E_ERR,'read_int_scalar', context, source)
+endif
+
+end function read_int_scalar
+
+!-------------------------------------------------------------------------------
+
+subroutine write_int_scalar(ifile, my_scalar, fform, context)
+
+integer,          intent(in) :: ifile
+integer,          intent(in) :: my_scalar
+character(len=*), intent(in) :: fform
+character(len=*), intent(in) :: context
+
+integer :: io
+
+if (ascii_file_format(fform)) then
+   write(ifile, *, iostat=io) my_scalar
+else
+   write(ifile, iostat=io) my_scalar
+endif
+if ( io /= 0 ) then
+   call error_handler(E_ERR, 'write_int_scalar', context, source)
+endif
+
+end subroutine write_int_scalar
+
+!-------------------------------------------------------------------------------
+
+function read_r8_scalar(ifile, fform, context)
+
+real(r8)                     :: read_r8_scalar
+integer,          intent(in) :: ifile
+character(len=*), intent(in) :: fform
+character(len=*), intent(in) :: context
+
+integer :: io
+
+if (ascii_file_format(fform)) then
+   read(ifile, *, iostat = io) read_r8_scalar
+else
+   read(ifile, iostat = io) read_r8_scalar
+endif
+if ( io /= 0 ) then
+   call error_handler(E_ERR,'read_r8_scalar', context, source)
+endif
+
+end function read_r8_scalar
+
+!-------------------------------------------------------------------------------
+
+subroutine write_r8_scalar(ifile, my_scalar, fform, context)
+
+integer,          intent(in) :: ifile
+real(r8),         intent(in) :: my_scalar
+character(len=*), intent(in) :: fform
+character(len=*), intent(in) :: context
+
+integer :: io
+
+if (ascii_file_format(fform)) then
+   write(ifile, *, iostat=io) my_scalar
+else
+   write(ifile, iostat=io) my_scalar
+endif
+if ( io /= 0 ) then
+   call error_handler(E_ERR, 'write_r8_scalar', context, source)
+endif
+
+end subroutine write_r8_scalar
+
+!-------------------------------------------------------------------------------
+
+subroutine read_r8_array(ifile, num_items, r8_array, fform, context)
+
+integer,          intent(in)  :: ifile, num_items
+real(r8),         intent(out) :: r8_array(:)
+character(len=*), intent(in)  :: fform
+character(len=*), intent(in)  :: context
+
+integer :: io
+
+if (ascii_file_format(fform)) then
+   read(ifile, *, iostat = io) r8_array(1:num_items)
+else
+   read(ifile, iostat = io) r8_array(1:num_items)
+endif
+if ( io /= 0 ) then
+   call error_handler(E_ERR, 'read_r8_array', context, source)
+endif
+
+end subroutine read_r8_array
+
+!-------------------------------------------------------------------------------
+
+subroutine write_r8_array(ifile, num_items, array, fform, context)
+
+integer,          intent(in) :: ifile, num_items
+real(r8),         intent(in) :: array(:)
+character(len=*), intent(in) :: fform
+character(len=*), intent(in) :: context
+
+integer :: io
+
+if (ascii_file_format(fform)) then
+   write(ifile, *, iostat = io) array(1:num_items)
+else
+   write(ifile, iostat = io) array(1:num_items)
+endif
+if ( io /= 0 ) then
+   call error_handler(E_ERR, 'write_r8_array', context, source)
+endif
+
+end subroutine write_r8_array
+
+!-------------------------------------------------------------------------------
+
+
+
+
 end module obs_def_tropomi_so2_mod
+
 ! END DART PREPROCESS MODULE CODE

@@ -18,12 +18,13 @@ cat > input.nml << EOF
 &create_mopitt_obs_nml
    filedir                     = ${NL_FILEDIR}
    filename                    = ${NL_FILENAME}
+   fileout                     = ${NL_MOP_OUTFILE}
    year                        = ${NL_YEAR}
    month                       = ${NL_MONTH}
    day                         = ${NL_DAY}
    hour                        = ${NL_HOUR}
-   bin_beg                     = ${NL_BIN_BEG}
-   bin_end                     = ${NL_BIN_END}
+   bin_beg_sec                 = ${NL_BIN_BEG_SEC}
+   bin_end_sec                 = ${NL_BIN_END_SEC}
    MOPITT_CO_retrieval_type    = ${NL_MOPITT_CO_RETRIEVAL_TYPE}
    fac_obs_error               = ${NL_FAC_OBS_ERROR}
    use_log_co                  = ${NL_USE_LOG_CO}

@@ -87,6 +87,18 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       missing=h5readatt(file_in,field,'MissingValue');   
       units=h5readatt(file_in,field,'Units');  
       range=h5readatt(file_in,field,'ValidRange');  
+% flg_rowanom(pixel,scanline)
+      field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/Flag_RowAnomaly';
+      flg_rowanom=h5read(file_in,field);
+      missing=h5readatt(file_in,field,'MissingValue');   
+      units=h5readatt(file_in,field,'Units');  
+      range=h5readatt(file_in,field,'ValidRange');  
+% flg_saa(pixel,scanline)
+      field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/Flag_SAA';
+      flg_saa=h5read(file_in,field);
+      missing=h5readatt(file_in,field,'MissingValue');   
+      units=h5readatt(file_in,field,'Units');  
+      range=h5readatt(file_in,field,'ValidRange');  
 % cld_frac(pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/CloudFraction';
       cld_frac=h5read(file_in,field);
@@ -163,7 +175,6 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       missing=h5readatt(file_in,field,'MissingValue');   
       units=h5readatt(file_in,field,'Units');  
       range=h5readatt(file_in,field,'ValidRange');  
-%
 % layer_wt_pbl(layer,pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/PBLLayerWeight';
       layer_wt_pbl=h5read(file_in,field);
@@ -188,6 +199,8 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       missing=h5readatt(file_in,field,'MissingValue');   
       units=h5readatt(file_in,field,'Units');  
       range=h5readatt(file_in,field,'ValidRange');
+% calculate amf_total
+      amf_total(:,:)=slnt_col_amt(:,:)./col_amt(:,:);
 % lat(pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Geolocation Fields/Latitude';
       lat=h5read(file_in,field);
@@ -265,13 +278,22 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
          if(omidate<windate_min | omidate>windate_max)
             continue
          end
-         for ipxl=1:pixel
+%         for ipxl=1:pixel
+         for ipxl=5:55
 %
 % QA/AC
-% The clear sky and cloud height < 5000 m may be part of the retrieval algorithm
-% quality control.  Could find no fields indicating cloud coverage or height
-%
-   	    if(isnan(slnt_col_amt(ipxl,ilin)) | slnt_col_amt(ipxl,ilin)<=0)
+%            fprintf(' \n');
+%            fprintf('rowanom  %d saa %d crf %d \n',flg_rowanom(ipxl,ilin),flg_saa(ipxl,ilin),cld_rad_frac(ipxl,ilin));
+%            fprintf('zenang  %d snoice %d amf %d \n',zenang(ipxl,ilin),flg_snoice(ipxl,ilin),amf_total(ipxl,ilin));
+%            fprintf('lat_min  %d lat %d lat_max %d \n',lat_min,lat(ipxl,ilin),lat_max)
+%            fprintf('lon_min  %d lon %d lon_max %d \n',lon_min,lon(ipxl,ilin),lon_max)
+
+            if(flg_rowanom(ipxl,ilin)==1 | flg_saa(ipxl,ilin)==1 | ...
+	       cld_rad_frac(ipxl,ilin)>=0.3 | zenang(ipxl,ilin)>=65.0 | ...
+	       flg_snoice(ipxl,ilin)==2 | amf_total(ipxl,ilin)<=0.3)
+               continue
+            end
+	    if(isnan(slnt_col_amt(ipxl,ilin)) | slnt_col_amt(ipxl,ilin)<=0)
                continue
             end
 %
@@ -280,6 +302,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    	    lon(ipxl,ilin)<lon_min | lon(ipxl,ilin)>lon_max)
                continue
             end
+%            fprintf('ACCEPTED POINT \n');
 %
 % Save data to ascii file
             icnt=icnt+1;
@@ -299,12 +322,15 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
             fprintf(fid,'\n');
             fprintf(fid,'%14.8g ',prs_lev(1:level));
             fprintf(fid,'\n');
+            fprintf(fid,'%14.8g ',layer_wt_pbl(1:layer,ipxl,ilin));
+            fprintf(fid,'\n');
          end
       end
       clear flg_snoice cld_frac cld_prs cld_rad_frac col_amt col_amt_pbl
       clear col_amt_stl col_amt_trl col_amt_trm col_amt_tru layer_wt
       clear prs_bot layer_wt_pbl rad_cld_frac scat_wt slnt_col_amt lat lon
-      clear secs_day zenag time
+      clear secs_day zenag time amf_total
+      clear flg_rowanom flg_saa layer_wt_pbl
    end
 end
 function [fld_interp]=prs_interp(fld,i_tmp,j_tmp,i_mdl,j_mdl, ...

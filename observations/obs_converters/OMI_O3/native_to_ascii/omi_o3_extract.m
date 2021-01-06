@@ -120,6 +120,24 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       range=h5readatt(file_in,field,'ValidRange');
       col_amt(:,:)=col_amt(:,:)*scalef;
       col_amt(:,:)=col_amt(:,:)*du2molpm2;
+% qual_flg(pixel,scanline) (None)
+      field='/HDFEOS/SWATHS/OMI Column Amount O3/Data Fields/QualityFlags';
+      qual_flg=h5read(file_in,field);
+      missing=h5readatt(file_in,field,'MissingValue');  
+      offset=h5readatt(file_in,field,'Offset');  
+      scalef=h5readatt(file_in,field,'ScaleFactor');  
+      units=h5readatt(file_in,field,'Units');  
+      range=h5readatt(file_in,field,'ValidRange');
+      qual_flg(:,:)=qual_flg(:,:)*scalef;
+% xtrk_flg(pixel,scanline) (None)
+      field='/HDFEOS/SWATHS/OMI Column Amount O3/Geolocation Fields/XTrackQualityFlags';
+      xtrk_flg=h5read(file_in,field);
+      missing=h5readatt(file_in,field,'MissingValue');  
+      offset=h5readatt(file_in,field,'Offset');  
+      scalef=h5readatt(file_in,field,'ScaleFactor');  
+      units=h5readatt(file_in,field,'Units');  
+      range=h5readatt(file_in,field,'ValidRange');
+      xtrk_flg(:,:)=xtrk_flg(:,:)*scalef;
 % rad_cld_frc(pixel,scanline) (None)
       field='/HDFEOS/SWATHS/OMI Column Amount O3/Data Fields/RadiativeCloudFraction';
       rad_cld_frc=h5read(file_in,field);
@@ -173,15 +191,15 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       units=h5readatt(file_in,field,'Units');  
       range=h5readatt(file_in,field,'ValidRange');  
       secs_day(:)=secs_day(:)*scalef;
-% zen_ang(pixel,scanline) (deg)
+% zenang(pixel,scanline) (deg)
       field='/HDFEOS/SWATHS/OMI Column Amount O3/Geolocation Fields/SolarZenithAngle';
-      zen_ang=h5read(file_in,field);
+      zenang=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');  
       offset=h5readatt(file_in,field,'Offset');  
       scalef=h5readatt(file_in,field,'ScaleFactor');  
       units=h5readatt(file_in,field,'Units');  
       range=h5readatt(file_in,field,'ValidRange');  
-      zen_ang(:,:)=zen_ang(:,:)*scalef;
+      zenang(:,:)=zenang(:,:)*scalef;
 % time(scanline)
       field='/HDFEOS/SWATHS/OMI Column Amount O3/Geolocation Fields/Time';
       time=h5read(file_in,field);
@@ -232,11 +250,17 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
             continue
          end
          for ipxl=1:pixel
+	    
 %
-% QA/AC
-% The clear sky and cloud height < 5000 m may be part of the retrieval algorithm
-% quality control.  Could find no fields indicating cloud coverage or height
-%
+% QA/AC		    
+	    if(zenang(ipxl,ilin) >= 85. | qual_flg(ipxl,ilin)~=0 | ...
+	       xtrk_flg(ipxl,ilin)~=0)
+               continue
+            end
+	    if(ipxl==42 | ipxl==43 | ipxl==44 | ...
+	      ipxl==45 | ipxl==46)
+               continue
+            end
 	    if(isnan(col_amt(ipxl,ilin)) | col_amt(ipxl,ilin)<=0)
                continue
             end
@@ -269,7 +293,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
          end
       end
       clear prior_lay cld_prs col_amt rad_cld_frac avgk_lay 
-      clear lat lon secs_day zen_ang time 
+      clear lat lon secs_day zenang time 
    end
 end
 function [fld_interp]=prs_interp(fld,i_tmp,j_tmp,i_mdl,j_mdl, ...
