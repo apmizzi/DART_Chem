@@ -140,7 +140,8 @@ program airnow_no2_ascii_to_obs
 
       pi=4.*atan(1.0)
       fac=1.e-3
-      err_fac=0.3
+      err_fac=0.30
+      err_fac=0.525
       obs_qc(1)=0.
 
       save_greg_sec=-9999                                                 

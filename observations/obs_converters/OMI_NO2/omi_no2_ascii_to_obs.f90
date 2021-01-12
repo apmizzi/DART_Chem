@@ -209,7 +209,7 @@ program omi_no2_ascii_to_obs
    call set_calendar_type(calendar_type)
 !
 ! Open OMI NO2 binary file
-   fileid=100
+   fileid=101
    write(6,*)'opening ',TRIM(TRIM(filedir)//TRIM(filename))
    open(unit=fileid,file=TRIM(TRIM(filedir)//TRIM(filename)), &
    form='formatted', status='old', iostat=ios)
@@ -217,7 +217,7 @@ program omi_no2_ascii_to_obs
 ! Read OMI NO2
    line_count = 0
    read(fileid,*,iostat=ios) data_type, obs_id
-!   print *, trim(data_type), obs_id
+   print *, trim(data_type), obs_id
    do while (ios == 0)
       sum_total=sum_total+1
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
@@ -264,6 +264,7 @@ program omi_no2_ascii_to_obs
 ! Find model NO2 profile corresponding to the observation
 !--------------------------------------------------------
       reject=0
+print *, 'at call to get model'
       call get_model_profile(prf_model,path_model,file_model, &
       nx_model,ny_model,nz_model,lon_obs,lat_obs,prs_obs*100., &
       nlev_obs,scat_wt,reject)
@@ -282,6 +283,7 @@ program omi_no2_ascii_to_obs
 !--------------------------------------------------------
 ! Find vertical location
 !--------------------------------------------------------
+print *, 'at call to vertical locate'
       call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_model,nlay_obs,prs_trop,kend)
       level=prs_loc*100.
 !      print *, 'prf_model ',prf_model(:)
@@ -467,16 +469,25 @@ subroutine get_model_profile(prf_model,path_model,file_model, &
 !
 ! Get model fields   
    file_in=trim(path_model)//'/'//trim(file_model)
+   print *, 'at model read statements'
    call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_mdl,ny_mdl,1,1)
+   print *, 'finished XLONG'
    call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_mdl,ny_mdl,1,1)
+   print *, 'finished XLAT'
    call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_mdl,ny_mdl,nz_mdl,1)
+   print *, 'finished P'
    call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_mdl,ny_mdl,nz_mdl,1)
+   print *, 'finished PB'
    call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_mdl,ny_mdl,nz_mdl,1)
+   print *, 'finished T'
    call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_mdl,ny_mdl,nz_mdl,1)
+   print *, 'finished QVAPOR'
    call get_DART_diag_data(file_in,'no2',no2_fld,nx_mdl,ny_mdl,nz_mdl,1)
+   print *, 'finished no2'
    prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
    tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
    no2_fld(:,:,:)=no2_fld(:,:,:)*1.e-6
+   print *, 'finished model read statements'
 !
    do i=1,nx_mdl
       do j=1,ny_mdl
@@ -495,9 +506,11 @@ subroutine get_model_profile(prf_model,path_model,file_model, &
          enddo
       enddo
    enddo
+   print *, 'finished do loop statements'
 !
 ! Use interp_hori_vert to find obs that are outside the domain   
 ! Find model point closest to the observation point and de vertical interpolation
+print *, 'at call to interp_hori_vert'
    call interp_hori_vert(no2_mdl,vtmp_mdl,no2_fld,vtmp_fld,lon,lat, &
    lon_obs,lat_obs,prs_fld,prs_obs,nx_mdl,ny_mdl,nz_mdl,nlev_obs,reject)
    if(reject.eq.1) return
@@ -542,7 +555,8 @@ subroutine get_DART_diag_data(file_in,name,data,nx,ny,nz,nc)
 !
    real,dimension(nx,ny,nz,nc)           :: data
 !
-! open netcdf file
+   ! open netcdf file
+   print *, trim(file_in)
    rc = nf90_open(trim(file_in),NF90_NOWRITE,fid)
    if(rc.ne.nf90_noerr) call handle_err(rc,'nf90_open')
 !

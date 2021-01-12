@@ -10,39 +10,37 @@
 #
 ############################################################################### 
 #
-export START_DATE=2014072006
-export END_DATE=2014072006
 export START_DATE=2014071406
-export END_DATE=2014071406
+export END_DATE=2014071806
 #
 # Define EXPERIMENT path
-export DIR_NAME=real_FRAPPE_CONTROL
-#export DIR_NAME=real_FRAPPE_RETR_MOP_CO
-#export DIR_NAME=real_FRAPPE_CPSR_MOP_CO
+export DIR_NAME=real_FRAPPE_CONTROL_NASA
+#export DIR_NAME=real_FRAPPE_ALLCHEM_NASA
+#export DIR_NAME=real_FRAPPE_ALLCHEM_RELAX_NASA
 #
 # Define FILTER path
 export DART_FILTER=dart_filter
 #
 export DELETE_FLG=true
 export DOMAIN=01
-export NUM_MEMBERS=30
-export CYCLE_PERIOD=6
-export FCST_PERIOD=6
+export NUM_MEMBERS=10
+export CYCLE_PERIOD=12
+export FCST_PERIOD=12
 export ASIM_PERIOD=3
 export LBC_FREQ=3
 (( INTERVAL_SEC=${LBC_FREQ}*60*60 ))
 (( CYCLE_PERIOD_SEC=${CYCLE_PERIOD}*60*60 ))
 #
 # Define code versions
-export DART_VER=DART_CHEM_REPOSITORY
+export DART_VER=DART_chem_upgrade
 export WRFCHEM_VER=WRFCHEMv3.9.1.1_dmpar
 export WRF_VER=WRFv3.9.1.1_dmpar
 export WRFDA_VER=WRFDAv3.9.1.1_dmpar
 #
 # Independent path settings
-export SCRATCH_DIR=/scratch/summit/mizzi
-export PROJECT_DIR=/projects/mizzi
-export DATA_DIR=/gpfs/summit/datasets/GEOSChem_met_emis/wrf
+export SCRATCH_DIR=/nobackupp11/amizzi/OUTPUT_DATA
+export PROJECT_DIR=/nobackupp11/amizzi
+export DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
 #
 # Dependent path settings
 export RUN_DIR=${SCRATCH_DIR}/DART_OBS_DIAG/${DIR_NAME}
@@ -182,13 +180,13 @@ export NL_LAST_BIN_CENTER_SS=0
 export NL_BIN_SEPARATION_YY=0
 export NL_BIN_SEPARATION_MM=0
 export NL_BIN_SEPARATION_DD=0
-export NL_BIN_SEPARATION_HH=6
+export NL_BIN_SEPARATION_HH=${CYCLEPERIOD}
 export NL_BIN_SEPARATION_MN=0
 export NL_BIN_SEPARATION_SS=0
 export NL_BIN_WIDTH_YY=0
 export NL_BIN_WIDTH_MM=0
 export NL_BIN_WIDTH_DD=0
-export NL_BIN_WIDTH_HH=6
+export NL_BIN_WIDTH_HH=${CYCLE_PERIOD}
 export NL_BIN_WIDTH_MN=0
 export NL_BIN_WIDTH_SS=0
 export NL_TIME_TO_SKIP_YY=0
@@ -198,7 +196,7 @@ export NL_TIME_TO_SKIP_HH=0
 export NL_TIME_TO_SKIP_MN=0
 export NL_TIME_TO_SKIP_SS=0
 export NL_MAX_NUM_BINS=1000
-export NL_PLEVEL='1000., 925., 850., 700., 500., 400., 300., 250., 200., 150.'
+export NL_PLEVEL='950,, 850., 700., 500., 400.'
 export NL_NREGIONS=1
 export NL_LONLIM1=0.
 export NL_LONLIM2=360.
@@ -239,7 +237,7 @@ export NL_LAST_BIN_END_HH=${ASIM_MAX_HH_END}
 export NL_LAST_BIN_END_MN=0
 export NL_LAST_BIN_END_SS=0
 export NL_BIN_INTERVAL_DAYS=0
-export NL_BIN_INTERVAL_SECONDS=21600
+export NL_BIN_INTERVAL_SECONDS=${CYCLE_PERIOD_SEC}
 export NL_MAX_NUMBER_BINS=1000
 export NL_PRINT_TABLE=.false.
 #

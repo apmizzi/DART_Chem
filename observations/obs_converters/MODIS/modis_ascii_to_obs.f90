@@ -69,6 +69,7 @@ program modis_ascii_to_obs
 
    real(r8) :: aod, aoderr, qc
    real(r8) :: lat, lon, vert
+   real(r8) :: err_fac
 
    type(obs_sequence_type) :: obs_seq
    type(obs_type)          :: obs, prev_obs
@@ -96,6 +97,8 @@ program modis_ascii_to_obs
    max_obs    = 10000000
    num_copies = 1
    num_qc     = 1
+   err_fac    = 1.
+   err_fac    = 1.50
 
 ! call the initialization code, and initialize two empty observation types
    call static_init_obs_sequence()
@@ -162,6 +165,9 @@ program modis_ascii_to_obs
                               year, month, day, hour, minute, second, &
                               aod, aoderr
       if(lon.lt.0.) lon=lon+360.
+!
+! APM: adjust obs error for tuning purposes
+      aoderr = aoderr * err_fac
 !
 ! temp correction (July 1 comes in as July 0)
       if(month.eq.7 .and. day.eq.0) then

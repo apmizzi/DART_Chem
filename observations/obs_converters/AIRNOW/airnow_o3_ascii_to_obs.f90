@@ -141,6 +141,8 @@ program airnow_o3_ascii_to_obs
       pi=4.*atan(1.0)
       fac=1.0
       err_fac=0.3
+      err_fac=0.24
+      err_fac=0.21
       obs_qc(1)=0.
 
       save_greg_sec=-9999                                                 
