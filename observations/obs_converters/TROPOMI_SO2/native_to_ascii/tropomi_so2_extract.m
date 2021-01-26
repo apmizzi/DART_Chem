@@ -373,7 +373,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 %            continue
 %         end
          for ipxl=1:pixel
-      	 tropomidate=single(time+time_delta(ipxl,ilin));
+      	    tropomidate=single(time+time_delta(ipxl,ilin));
       	    [yyyy_tropomi,mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi, ...
       	    ss_tropomi]=invert_time(tropomidate);
 %            fprintf('%d %d %d %d %d %d \n',yyyy_tropomi,mn_tropomi,dy_tropomi, ...
@@ -384,9 +384,10 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
             end
 %
 % QA/AC
-% The clear sky and cloud height < 5000 m may be part of the retrieval algorithm
-% quality control.  Could find no fields indicating cloud coverage or height
-%
+%	    if(qa_value(ipxl,ilin)<=0.75 | zenang(ipxl,ilin)>=80.0)
+	    if(qa_value(ipxl,ilin)<0.95 | zenang(ipxl,ilin)>=80.0)
+               continue
+	    end
             if(isnan(col_amt_1km(ipxl,ilin)) | col_amt_1km(ipxl,ilin)<=0 | ...
                isnan(col_amt_1km_err(ipxl,ilin)) | col_amt_1km_err(ipxl,ilin)<=0 | ...
                isnan(col_amt_1km_sys(ipxl,ilin)) | col_amt_1km_sys(ipxl,ilin)<=0 | ...

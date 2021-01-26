@@ -50,9 +50,9 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    day_secs_end=whh_mx*60.*60. + wmm_mx*60. + wss_mx;
 %
 % Print input data
-   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
-   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
-   fprintf('domain bounds %d %d %d %d \n',lat_min,lat_max,lon_min,lon_max)
+%   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
+%   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
+%   fprintf('domain bounds %d %d %d %d \n',lat_min,lat_max,lon_min,lon_max)
 %
    for ifile=1:nfile
       file_in=char(file_list(ifile));
@@ -60,16 +60,14 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       if(isempty(indx))
          continue
       end
-      file_hh=str2double(file_in(indx+29:indx+30));
-      file_mm=str2double(file_in(indx+31:indx+32));
-      file_secs=file_hh*60.*60. + file_mm*60.;
+      file_mm=str2double(file_in(indx+29:indx+32));
+      file_secs=file_mm*60.;
 %       
-      if(file_secs<day_secs_beg | file_secs>day_secs_end)
-         continue
-      end
-%      fprintf('%d %s \n',ifile,file_in)
+%      if(file_secs<day_secs_beg | file_secs>day_secs_end)
+%         continue
+%      end
+      fprintf('%d %s \n',ifile,file_in)
 %      fprintf('%d %d %d \n',day_secs_beg,file_secs,day_secs_end)
-
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -301,7 +299,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       scalef=h5readatt(file_in,field,'ScaleFactor');  
       units=h5readatt(file_in,field,'Units');  
       zenang(:,:)=zenang(:,:)*scalef;;  
-% time(scanline)
+% time(scanline) TAI-93 time (secs)
       field='/HDFEOS/SWATHS/ColumnAmountNO2/Geolocation Fields/Time';
       time=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');   
@@ -309,7 +307,8 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       scalef=h5readatt(file_in,field,'ScaleFactor');  
       title=h5readatt(file_in,field,'Title');
       units=h5readatt(file_in,field,'Units');
-      time(:)=time(:)*scalef;  
+      time(:)=time(:)*scalef;
+      time(:)=time(:)-37;
 %
 % Loop through OMI data
       clear temp
@@ -327,6 +326,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       yyyy_omi=double(year);
       mn_omi=double(month);
       dy_omi=double(day);
+      ocnt=0;
       icnt=0;
       for ilin=1:scanline
          secs_day(ilin)=time(ilin)-base_omi;
@@ -335,14 +335,25 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
          ss_omi=double(int32(secs_day(ilin))-int32(hh_omi*3600+mm_omi*60));
          omidate=single(time(ilin));
          if(int32(hh_omi)>23 | int32(mm_omi)>59 | int32(ss_omi)>59)
-       	    fprint('hh %d mm %d ss %d APM: Error with time bounds \n', ...
-            hh_omi,mm_omi,ss_omi)
-         end 
+%            fprintf('yr %d mn %d dy %d hh %d mm %d ss %d \n', ...
+%	    year,month,day,int32(hh_omi),int32(mm_omi),int32(ss_omi))
+            [yr_nw,mn_nw,dy_nw,hh_nw,mm_nw,ss_nw,rc]=incr_time(year, ...
+            month,day,int32(hh_omi),int32(mm_omi),int32(ss_omi));
+            year=yr_nw;
+            month=mn_nw;
+            day=dy_nw;
+            hh_omi=hh_nw;
+            mm_omi=mm_nw;
+            ss_omi=ss_nw;
+%            fprintf('yr %d mn %d dy %d hh %d mm %d ss %d \n \n', ...
+%   	    year,month,day,hh_omi,mm_omi,ss_omi)
+	 end 
 %
 % Check time
          if(omidate<windate_min | omidate>windate_max)
             continue
          end
+%         fprintf('%d %d %d \n',windate_min,omidate,windate_max)
          for ipxl=1:pixel
 %
 % QA/AC
@@ -360,6 +371,10 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
             end
 %
 % Check domain
+	    ocnt=ocnt+1;
+%            fprintf('obs count %d \n',ocnt)
+%            fprintf('lat %d %d %d \n',lat_min,lat(ipxl,ilin),lat_max)
+%            fprintf('lon %d %d %d \n',lon_min,lon(ipxl,ilin),lon_max)
 	    if(lat(ipxl,ilin)<lat_min | lat(ipxl,ilin)>lat_max | ...
 	    lon(ipxl,ilin)<lon_min | lon(ipxl,ilin)>lon_max)
                continue
@@ -1009,7 +1024,7 @@ function [secs_tai93,rc]=time_tai93(year,month,day,hour,minute,second)
    secs_tai93=jult;
 end
 %
-function [yyyy,mn,dy,hh,mm,ss]=incr_time(year, ...
+function [yyyy,mn,dy,hh,mm,ss,rc]=incr_time(year, ...
 month,day,hour,minute,second);
    days_per_month=[31,28,31,30,31,30,31,31,30,31,30,31];
 %
@@ -1073,7 +1088,7 @@ month,day,hour,minute,second);
       days_mon=days_mon+1;
    end
    if(day>days_mon)
-     if(day>(days_mon+days+mon))
+     if(day>(days_mon+days_mon))
          fprintf('APM: Error days too large %d \n',day)
          return
       end
@@ -1094,4 +1109,6 @@ month,day,hour,minute,second);
    hh=hour;
    mm=minute;
    ss=second;
+   rc=0;
 end
+%

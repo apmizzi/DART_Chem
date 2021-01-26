@@ -50,9 +50,9 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    day_secs_end=whh_mx*60.*60. + wmm_mx*60. + wss_mx;
 %
 % Print input data
-   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
-   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
-   fprintf('domain bounds %d %d %d %d \n',lat_min,lat_max,lon_min,lon_max)
+%   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
+%   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
+%   fprintf('domain bounds %d %d %d %d \n',lat_min,lat_max,lon_min,lon_max)
 %
    for ifile=1:nfile
       file_in=char(file_list(ifile));
@@ -60,15 +60,14 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       if(isempty(indx))
          continue
       end
-      file_hh=str2double(file_in(indx+29:indx+30));
-      file_mm=str2double(file_in(indx+31:indx+32));
-      file_secs=file_hh*60.*60. + file_mm*60.;
-%      fprintf('%d %s \n',ifile,file_in);
-%      fprintf('%d %d %d \n',day_secs_beg,file_secs,day_secs_end);
+      file_mm=str2double(file_in(indx+29:indx+32));
+      file_secs=file_mm*60.;
 %       
-      if(file_secs<day_secs_beg | file_secs>day_secs_end)
-         continue
-      end
+%      if(file_secs<day_secs_beg | file_secs>day_secs_end)
+%         continue
+%      end
+      fprintf('%d %s \n',ifile,file_in);
+%      fprintf('%d %d %d \n',day_secs_beg,file_secs,day_secs_end);
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -239,6 +238,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       missing=h5readatt(file_in,field,'MissingValue');   
       units=h5readatt(file_in,field,'Units');  
       range=h5readatt(file_in,field,'ValidRange');  
+      time(:)=time(:)-37;
 %
 % Define level pressures (top to bottom)
       prs_lev(1)=0.01;

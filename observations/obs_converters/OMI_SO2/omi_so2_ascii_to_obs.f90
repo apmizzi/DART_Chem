@@ -313,8 +313,8 @@ program omi_so2_ascii_to_obs
       qc_count=qc_count+1
 !
 ! Obs value is the tropospheric slant column
-      obs_val(:)=pbl_sum*slnt_col_amt/col_amt
-      obs_err_var=(fac*fac_err*pbl_sum*slnt_col_amt/col_amt)**2.
+      obs_val(:)=pbl_sum*slnt_col_amt/col_amt_pbl
+      obs_err_var=(fac*fac_err*pbl_sum*slnt_col_amt/col_amt_pbl)**2.
       omi_qc(:)=0
 
       obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)

@@ -144,7 +144,6 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       field='/PRODUCT/time_utc';
       time_utc=h5read(file_in,field);
 % qa_value(pixel,scanline)
-% if qa_value < 0.5 discard
       field='/PRODUCT/qa_value';
       qa_value=ncread(file_in,field); 
       units=ncreadatt(file_in,field,'units');  
@@ -327,12 +326,13 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
          for ipxl=1:pixel
 %
 % QA/AC
-% The clear sky and cloud height < 5000 m may be part of the retrieval algorithm
-% quality control.  Could find no fields indicating cloud coverage or height
-%
-            if(isnan(col_amt_trop(ipxl,ilin)) | col_amt_trop(ipxl,ilin)<=0)
-               continue
-            end
+%	 if(qa_value(ipxl,ilin)<=0.75 | zenang(ipxl,ilin)>=80.0)
+	 if(qa_value(ipxl,ilin)<0.95 | zenang(ipxl,ilin)>=80.0)
+            continue
+	 end
+         if(isnan(col_amt_trop(ipxl,ilin)) | col_amt_trop(ipxl,ilin)<=0)
+            continue
+         end
 %      	 if(qa_value(ipxl,ilin)<=0.5)
 %               continue
 %            end

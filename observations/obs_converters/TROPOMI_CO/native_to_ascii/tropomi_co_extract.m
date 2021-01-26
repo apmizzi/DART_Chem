@@ -119,14 +119,13 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       field='/PRODUCT/time_utc';
       time_utc=h5read(file_in,field);
 %
-% if qa_value < 0.5 discard
 % qa_value(pixel,scanline)
       field='/PRODUCT/qa_value';
       units=ncreadatt(file_in,field,'units');  
       long_name=ncreadatt(file_in,field,'long_name');  
       scalef=ncreadatt(file_in,field,'scale_factor');  
       qa_value=ncread(file_in,field);
-      qa_value(:,:)=qa_value(:,:,:)*scalef;
+%      qa_value(:,:)=qa_value(:,:,:)*scalef;
 %
 % lat(pixel,scanline)
       field='/PRODUCT/latitude';
@@ -230,8 +229,9 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
          for ipxl=1:pixel
 %
 % QA/AC
-% The clear sky and cloud height < 5000 m may be part of the retrieval algorithm
-% quality control.  Could find no fields indicating cloud coverage or height
+	    if(qa_value(ipxl,ilin)<=0.75 | zenang(ipxl,ilin)>=80.0)
+               continue
+	    end
 %
 	    if(isnan(col_amt(ipxl,ilin)) | col_amt(ipxl,ilin)<=0)
                continue
@@ -246,12 +246,6 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
             if(iflg==1)
                continue
             end
-%	    if(qa_value(ipxl,ilin)<=0.5)
-%               continue
-%            end
-%	    if(zenang(ipxl,ilin)>=80.0)
-%               continue
-%           end
 %
 % Check domain
 %            fprintf('%d %d %d \n ',lat_min,lat(ipxl,ilin),lat_max)

@@ -30,7 +30,12 @@ cat > input.nml << EOF
    lon_max                     = ${NNL_MAX_LON}
    lat_min                     = ${NNL_MIN_LAT}
    lat_max                     = ${NNL_MAX_LAT}
-/
+   path_model                  = ${NL_PATH_MODEL}
+   file_model                  = ${NL_FILE_MODEL}
+   nx_model                    = ${NL_NX_MODEL}
+   ny_model                    = ${NL_NY_MODEL}
+   nz_model                    = ${NL_NZ_MODEL}/
+
 &obs_sequence_nml
    write_binary_obs_sequence   = .false.
 /

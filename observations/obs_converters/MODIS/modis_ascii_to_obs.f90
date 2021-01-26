@@ -99,6 +99,7 @@ program modis_ascii_to_obs
    num_qc     = 1
    err_fac    = 1.
    err_fac    = 1.50
+   err_fac    = 1.750
 
 ! call the initialization code, and initialize two empty observation types
    call static_init_obs_sequence()

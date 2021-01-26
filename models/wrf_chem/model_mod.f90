@@ -96,7 +96,7 @@ use      obs_kind_mod, only : QTY_SO2, QTY_O3, QTY_CO, QTY_NO, QTY_NO2, QTY_HNO3
 ! LXL/APM +++
                               QTY_E_CO, QTY_E_NO, QTY_E_NO2, QTY_E_SO2, QTY_E_OC, &
                               QTY_E_BC, QTY_E_PM10, QTY_E_PM25, &
-                              QTY_EBU_CO, QTY_EBU_NO, &
+                              QTY_EBU_CO, QTY_EBU_NO, QTY_EBU_NO2, QTY_EBU_SO2, &
                               QTY_EBU_OC, QTY_EBU_BC, QTY_EBU_C2H4, QTY_EBU_CH2O, &
                               QTY_EBU_CH3OH
 
@@ -232,6 +232,7 @@ character(len=129) :: emiss_chemi_variables(num_state_table_columns,max_state_va
 character(len=129) :: emiss_firechemi_variables(num_state_table_columns,max_state_variables) = 'NULL'
 ! LXL/APM ---
 integer :: num_domains          = 1
+integer :: number_of_variables
 integer :: calendar_type        = GREGORIAN
 integer :: assimilation_period_seconds = 21600
 ! Max height a surface obs can be away from the actual model surface
@@ -424,7 +425,7 @@ integer :: io, iunit
 
 character (len=1)     :: idom
 logical, parameter    :: debug = .false.
-integer               :: ind, ind_str,ind_end, i, j, k, id, dart_index
+integer               :: ind, indd, ind_str, ind_end, i, j, k, id, dart_index
 integer               :: my_index
 integer               :: var_element_list(max_state_variables)
 integer               :: var_element_list_conv(max_state_variables)
@@ -479,16 +480,10 @@ else
 ! Consolidate all the input variable tables into one 'wrf_state_variables' table.
 ! Since all the variables of interest are scoped module global, no arguments are needed.
 ! APM: This combines WRF-Chem conv, chemi, and firechemi variables lists into a single list
-! APM: Only add the emission variables with ADD_EMISS is true (otherwise use the
-! APM: conv_state_variables list.
+! APM: Only add the emission variables if ADD_EMISS is true (otherwise use the
+! APM: conv_state_variables list).
    
    call concatenate_variable_tables()
-endif
-
-if ( debug ) then
-  print*,'WRF state vector table'
-  print*,'default_state_variables = ',default_state_variables
-  print*,wrf_state_variables
 endif
 
 !---------------------------
@@ -536,11 +531,12 @@ WRFDomains : do id=1,num_domains
    write( idom , '(I1)') id
 !
 ! APM: this is legacy code.  Still used to make input of emissions data easier
+! APM: note that all input file variables are set to wrfinput now   
    write( wrf_filename,'(''wrfinput_d'',i2.2)')id
    write(chem_filename,'(''wrfinput_d'',i2.2)')id
    write(fire_filename,'(''wrfinput_d'',i2.2)')id
 
-   ! only print this once, no matter how many parallel tasks are running
+! only print this once, no matter how many parallel tasks are running
    if (do_output()) then
       write(     *     ,*) '******************'
       write(     *     ,*) '**  DOMAIN # ',idom,'  **'
@@ -549,52 +545,21 @@ WRFDomains : do id=1,num_domains
       write(logfileunit,*) '**  DOMAIN # ',idom,'  **'
       write(logfileunit,*) '******************'
       call error_handler(E_MSG,'static_init_model','wrf input file is "'//trim(wrf_filename)//'"')
-!
-! APM these not needed because all fields in wrfinput
-!      call error_handler(E_MSG,'static_init_model','wrfchemi input file is "'//trim(chem_filename)//'"')
-!      call error_handler(E_MSG,'static_init_model','wrffirechemi input file is "'//trim(fire_filename)//'"')
    endif
 
    if(file_exist('wrfinput_d0'//idom)) then
 
       call nc_check( nf90_open('wrfinput_d0'//idom, NF90_NOWRITE, ncid), &
                      'static_init_model','open wrfinput_d0'//idom )
-
+!      write(errstring, '(3A,I4)') 'APM: Opened ','wrfinput_d0'//idom,' on unit ',ncid
+!      call error_handler(E_MSG, 'static_init_model: ', errstring)
    else
 
       call error_handler(E_ERR,'static_init_model', &
            'Please put wrfinput_d0'//idom//' in the work directory.', source, revision,revdate)
-
    endif
 
    if(debug) write(*,*) ' ncid is ',ncid
-
-! LXL/APM +++
-! APM: checks for file existance but not needed because all fields in wrfinput
-!   if ( add_emiss ) then
-!
-! WRFCHEMI emissions
-!      if(file_exist(chem_filename)) then
-!         call nc_check(nf90_open(chem_filename, NF90_NOWRITE, ncid_emiss_chemi), &
-!                       'static_init_model','open "'//trim(chem_filename)//'"' )
-!      else
-!         call error_handler(E_ERR,'static_init_model', &
-!         'Please put "'//trim(chem_filename)//'" in the work directory.', source, revision,revdate)
-!      endif
-!      if(debug) write(*,*) ' ncid_emiss_chemi is ',ncid_emiss_chemi
-!
-! WRFFIRECHEMI emissions
-!      if(file_exist(fire_filename)) then
-!         call nc_check( nf90_open(fire_filename, NF90_NOWRITE, ncid_emiss_firechemi), &
-!         'static_init_model','open "'//trim(fire_filename)//'"')
-!      else
-!         call error_handler(E_ERR,'static_init_model', &
-!              'Please put "'//trim(fire_filename)//'" in the work directory.', source, revision,revdate)
-!      endif
-!      if(debug) write(*,*) ' ncid_emiss_firechemi is ',ncid_emiss_firechemi
-!   endif
-! LXL/APM ---
-
 
 !-------------------------------------------------------
 ! read WRF dimensions
@@ -604,43 +569,56 @@ WRFDomains : do id=1,num_domains
                                  wrf%dom(id)%sn, wrf%dom(id)%sns, &
                                  wrf%dom(id)%we, wrf%dom(id)%wes, &
                                  wrf%dom(id)%sls)
+!   print *, 'bt',wrf%dom(id)%bt
+!   print *, 'bts',wrf%dom(id)%bts
+!   print *, 'sn',wrf%dom(id)%sn
+!   print *, 'sns',wrf%dom(id)%sns
+!   print *, 'we',wrf%dom(id)%we
+!   print *, 'wes',wrf%dom(id)%wes
+!   print *, 'sls',wrf%dom(id)%sls
 
 ! LXL/APM +++
 !-------------------------------------------------------
 ! read EMISS dimensions
 !-------------------------------------------------------
    if ( add_emiss .and. (.not. default_state_variables) ) then
-      call read_emiss_dimensions(ncid, & 
+      call read_chemi_emiss_dimensions(ncid, & 
                                  chem_filename, &
                                  wrf%dom(id)%e_bt_chemi, &
                                  wrf%dom(id)%e_sn, &
                                  wrf%dom(id)%e_we )
 
-      call read_emiss_dimensions(ncid, & 
+      call read_firechemi_emiss_dimensions(ncid, & 
                                  fire_filename, &
                                  wrf%dom(id)%e_bt_firechemi, &
                                  wrf%dom(id)%e_sn, &
                                  wrf%dom(id)%e_we)
    endif
+!   write(errstring, '(A)') 'APM: Found EMISS dimensions '
+!   call error_handler(E_MSG, 'static_init_model: ', errstring)
 ! LXL/APM ---
 
 !-------------------------------------------------------
 ! read WRF file attributes
 !-------------------------------------------------------
    call read_wrf_file_attributes(ncid,id)
-
+!   write(errstring, '(A)') 'APM: Found file attributes '
+!   call error_handler(E_MSG, 'static_init_model: ', errstring)
 !-------------------------------------------------------
 ! assign boundary condition flags
 !-------------------------------------------------------
 
    call assign_boundary_conditions(id)
+!   write(errstring, '(A)') 'APM: Completed boundary condition flags '
+!   call error_handler(E_MSG, 'static_init_model: ', errstring)
 
 !-------------------------------------------------------
 ! read static data
 !-------------------------------------------------------
 
    call read_wrf_static_data(ncid,id)
-
+!   write(errstring, '(A)') 'APM: Completed read_wrf_static_data '
+!   call error_handler(E_MSG, 'static_init_model: ', errstring)
 
 !-------------------------------------------------------
 ! next block set up map
@@ -654,15 +632,17 @@ WRFDomains : do id=1,num_domains
 
 ! LXL/APM +++
 ! get the number of conv/emiss variables wanted in this domain's state
-      wrf%dom(id)%number_of_conv_variables=0
-      wrf%dom(id)%number_of_emiss_chemi_variables=0
-      wrf%dom(id)%number_of_emiss_firechemi_variables=0
+   wrf%dom(id)%number_of_conv_variables=0
+   wrf%dom(id)%number_of_emiss_chemi_variables=0
+   wrf%dom(id)%number_of_emiss_firechemi_variables=0
 !
-      wrf%dom(id)%number_of_conv_variables = get_number_of_wrf_variables(id, &
-      conv_state_variables,var_element_list_conv,var_update_list_conv)
-!      do ind=1,wrf%dom(id)%number_of_conv_variables
-!         print *, 'var_element_conv ',ind,var_element_list_conv(ind)
-!      enddo
+   wrf%dom(id)%number_of_conv_variables = get_number_of_wrf_variables(id, &
+   conv_state_variables,var_element_list_conv,var_update_list_conv)
+   wrf%dom(id)%number_of_wrf_variables=wrf%dom(id)%number_of_conv_variables
+
+!   do ind=1,wrf%dom(id)%number_of_conv_variables
+!      print *, 'var_element_list_conv ',ind,var_element_list_conv(ind)
+!   enddo
 !
    if ( add_emiss .and. (.not. default_state_variables) ) then
       wrf%dom(id)%number_of_emiss_chemi_variables = get_number_of_wrf_variables(id, &
@@ -676,12 +656,46 @@ WRFDomains : do id=1,num_domains
 !      do ind=1,wrf%dom(id)%number_of_emiss_firechemi_variables
 !         print *, 'var_element_firechemi ',ind,var_element_list_firechemi(ind)
 !      enddo
+!
+! get the total number of wrf variables (conv + chemi + firechemi) wanted in this domain's state vector 
+      wrf%dom(id)%number_of_wrf_variables = wrf%dom(id)%number_of_conv_variables + &
+      wrf%dom(id)%number_of_emiss_chemi_variables + wrf%dom(id)%number_of_emiss_firechemi_variables
+
+!      write(errstring, '(A,I4)') 'APM: Number of wrf variables ',wrf%dom(id)%number_of_wrf_variables
+!      call error_handler(E_MSG, 'static_init_model: ', errstring)
+!      write(errstring, '(A,I4)') 'APM: Number of conv variables ',wrf%dom(id)%number_of_conv_variables
+!      call error_handler(E_MSG, 'static_init_model: ', errstring)
+!      write(errstring, '(A,I4)') 'APM: Number of chemi variables ',wrf%dom(id)%number_of_emiss_chemi_variables
+!      call error_handler(E_MSG, 'static_init_model: ', errstring)
+!      write(errstring, '(A,I4)') 'APM: Number of firechemi variables ', &
+!      wrf%dom(id)%number_of_emiss_firechemi_variables
+!      call error_handler(E_MSG, 'static_init_model: ', errstring)
+!
+! conv variables
+      do ind = 1,wrf%dom(id)%number_of_conv_variables
+         var_element_list(ind)=var_element_list_conv(ind)
+         var_update_list(ind)=var_update_list_conv(ind)
+      enddo
+!
+! chemi variables
+      do ind = wrf%dom(id)%number_of_conv_variables+1,wrf%dom(id)%number_of_conv_variables + &
+         wrf%dom(id)%number_of_emiss_chemi_variables
+         indd=ind-wrf%dom(id)%number_of_conv_variables
+         var_element_list(ind)=var_element_list_chemi(indd)+wrf%dom(id)%number_of_conv_variables
+         var_update_list(ind)=var_update_list_chemi(indd)
+      enddo
+!
+! firechemi variables
+      do ind = wrf%dom(id)%number_of_conv_variables+wrf%dom(id)%number_of_emiss_chemi_variables+1, &
+         wrf%dom(id)%number_of_wrf_variables
+         indd=ind-(wrf%dom(id)%number_of_conv_variables+wrf%dom(id)%number_of_emiss_chemi_variables)
+         var_element_list(ind)=var_element_list_firechemi(indd)+ &
+         wrf%dom(id)%number_of_conv_variables+wrf%dom(id)%number_of_emiss_chemi_variables
+         var_update_list(ind)=var_update_list_firechemi(indd)
+      enddo
    endif
 ! LXL/APM ---
-! get the total number of wrf variables (conv + chemi + firechemi) wanted in this domain's state vector 
-   wrf%dom(id)%number_of_wrf_variables = get_number_of_wrf_variables(id,wrf_state_variables,var_element_list, var_update_list)
-!   print *, 'number of wrf variables ',wrf%dom(id)%number_of_wrf_variables
-
+!
 ! allocate and store the table locations of the variables valid on this domain
    allocate(wrf%dom(id)%var_index_list(wrf%dom(id)%number_of_wrf_variables))
    wrf%dom(id)%var_index_list = var_element_list(1:wrf%dom(id)%number_of_wrf_variables)
@@ -714,14 +728,24 @@ WRFDomains : do id=1,num_domains
                                     wrf%dom(id)%upper_bound, &
                                     wrf%dom(id)%clamp_or_fail)
 
+!   write(errstring, '(A)') 'APM: Completed set_variable_bound_default '
+!   call error_handler(E_MSG, 'static_init_model: ', errstring)
+
+   if ( debug ) then
+      print *, 'WRF state vector table'
+      print *, 'default_state_variables = ', default_state_variables
+      do ind = 1,wrf%dom(id)%number_of_wrf_variables
+         print *, 'wrf_state_variables = ', ind, wrf_state_variables(:,ind)
+      enddo
+   endif
+
 !  build the variable indices
 !  this accounts for the fact that some variables might not be on all domains
 
 ! LXL/APM +++
-   if ( default_state_variables ) then
-      wrf%dom(id)%number_of_conv_variables=wrf%dom(id)%number_of_wrf_variables
-   endif
    do ind = 1,wrf%dom(id)%number_of_conv_variables
+!      write(errstring, '(A,I4)') 'APM: Start read for conv variable ',ind
+!      call error_handler(E_MSG, 'static_init_model: ', errstring)
 
       ! actual location in state variable table
       my_index =  wrf%dom(id)%var_index_list(ind)
@@ -730,7 +754,8 @@ WRFDomains : do id=1,num_domains
       wrf%dom(id)%dart_kind(ind) = get_index_for_quantity(trim(wrf_state_variables(2,my_index)))
 
       if ( debug ) then
-         print*,'dart kind identified: ',trim(wrf_state_variables(2,my_index)),' ',wrf%dom(id)%dart_kind(ind)
+         print*,'dart kind identified: ',trim(wrf_state_variables(2,my_index)),' ', &
+         wrf%dom(id)%dart_kind(ind)
       endif
 
       ! get stagger and variable size
@@ -741,6 +766,8 @@ WRFDomains : do id=1,num_domains
                                        wrf%dom(id)%we, wrf%dom(id)%wes, & 
                                        wrf%dom(id)%stagger(ind),        &
                                        wrf%dom(id)%var_size(:,ind))
+!      write(errstring, '(A)') 'APM: Completed get_variable_size_from_file '
+!      call error_handler(E_MSG, 'static_init_model: ', errstring)
 
       ! get other variable metadata; units, coordinates and description
       call get_variable_metadata_from_file(ncid,id,  &
@@ -748,6 +775,9 @@ WRFDomains : do id=1,num_domains
                                        wrf%dom(id)%description(ind),         &
                                        wrf%dom(id)%coordinates(ind),         &
                                        wrf%dom(id)%units(ind) )
+
+!      write(errstring, '(A)') 'APM: Completed get_variable_metadata_from_file '
+!      call error_handler(E_MSG, 'static_init_model: ', errstring)
 
       if ( debug ) then
          print*,'variable size ',trim(wrf_state_variables(1,my_index)),' ',wrf%dom(id)%var_size(:,ind)
@@ -757,6 +787,9 @@ WRFDomains : do id=1,num_domains
       call get_variable_bounds(wrf_state_bounds, wrf_state_variables(1,my_index), &
                                wrf%dom(id)%lower_bound(ind), wrf%dom(id)%upper_bound(ind), &
                                wrf%dom(id)%clamp_or_fail(ind))
+
+!      write(errstring, '(A)') 'APM: Completed get_variable_bounds '
+!      call error_handler(E_MSG, 'static_init_model: ', errstring)
 
       if ( debug ) then
          write(*,*) 'Bounds for variable ',  &
@@ -769,16 +802,6 @@ WRFDomains : do id=1,num_domains
       write(errstring, '(A,I4,2A)') 'state vector array ', ind, ' is ', trim(wrf_state_variables(1,my_index))
       call error_handler(E_MSG, 'static_init_model: ', errstring)
    enddo
-
-   if (do_output()) then
-      write(     *     ,*)
-      write(logfileunit,*)
-   endif
-
-! close data file, we have all we need
-   if ( (.not. add_emiss) .or. default_state_variables) then
-      call nc_check(nf90_close(ncid),'static_init_model','close wrfinput_d0'//idom)
-   endif
 !
 ! LXL/APM +++
 
@@ -787,8 +810,8 @@ WRFDomains : do id=1,num_domains
 ! Read emiss chemi variables
       do ind = wrf%dom(id)%number_of_conv_variables+1,wrf%dom(id)%number_of_conv_variables + &
       wrf%dom(id)%number_of_emiss_chemi_variables
-!
-! actual location in state variable table
+
+         ! actual location in state variable table
          my_index =  wrf%dom(id)%var_index_list(ind)
          wrf%dom(id)%var_type(ind) = ind ! types are just the order for this domain
          wrf%dom(id)%dart_kind(ind) = get_index_for_quantity(trim(wrf_state_variables(2,my_index)))
@@ -797,8 +820,8 @@ WRFDomains : do id=1,num_domains
             print *,'dart kind identified: ',trim(wrf_state_variables(2,my_index)),' ', &
             wrf%dom(id)%dart_kind(ind)
          endif
-!      
-! get stagger and variable size
+      
+         ! get stagger and variable size
          call get_variable_size_from_file(ncid,id,  &
                                           wrf_state_variables(1,my_index), &
                                           wrf%dom(id)%bt, wrf%dom(id)%bts, &
@@ -806,24 +829,32 @@ WRFDomains : do id=1,num_domains
                                           wrf%dom(id)%we, wrf%dom(id)%wes, &
                                           wrf%dom(id)%stagger(ind),        &
                                           wrf%dom(id)%var_size(:,ind))
-!      
-! get other variable metadata; units, coordinates and description
+!         write(errstring, '(A)') 'APM: Completed get_variable_size_from_file '
+!         call error_handler(E_MSG, 'static_init_model: ', errstring)
+ 
+         ! get other variable metadata; units, coordinates and description
          call get_variable_metadata_from_file(ncid,id,  &
                                           wrf_state_variables(1,my_index), &
                                           wrf%dom(id)%description(ind),         &
                                           wrf%dom(id)%coordinates(ind),         &
                                           wrf%dom(id)%units(ind) )
-!      
+      
+!         write(errstring, '(A)') 'APM: Completed get_variable_metadata_from_file '
+!         call error_handler(E_MSG, 'static_init_model: ', errstring)
+
          if ( debug ) then
             print*,'variable size ',trim(wrf_state_variables(1,my_index)),' ', &
             wrf%dom(id)%var_size(:,ind)
          endif
-!      
-!  add bounds checking information
+      
+         !  add bounds checking information
          call get_variable_bounds(wrf_state_bounds, wrf_state_variables(1,my_index), &
                                   wrf%dom(id)%lower_bound(ind), wrf%dom(id)%upper_bound(ind), &
                                   wrf%dom(id)%clamp_or_fail(ind))
 !
+!         write(errstring, '(A)') 'APM: Completed get_variable_bounds '
+!         call error_handler(E_MSG, 'static_init_model: ', errstring)
+
          if ( debug ) then
             write(*,*) 'Bounds for variable ',  &
             trim(wrf_state_variables(1,my_index)), &
@@ -832,22 +863,16 @@ WRFDomains : do id=1,num_domains
             wrf%dom(id)%clamp_or_fail(ind)
          endif
 !      
-!         write(errstring, '(A,I4,2A)') 'state vector array ', ind, ' is ', &
-!         trim(wrf_state_variables(1,my_index))
-!         call error_handler(E_ERR,'model_mod.f90::static_init_model', errstring, &
-!                      source, revision, revdate)
+         write(errstring, '(A,I4,2A)') 'state vector array ', ind, ' is ', &
+         trim(wrf_state_variables(1,my_index))
+         call error_handler(E_MSG, 'static_init_model: ', errstring)
       enddo
-print *, 'finished chemi variables read'
-!
-!
-! APM: should not close this, need to read fire emissions
-!      call nc_check(nf90_close(ncid_emiss_chemi),'static_init_model','close wrfchemi_d0'//idom)
 !
 ! Read emiss firechemi variables
       do ind = wrf%dom(id)%number_of_conv_variables + wrf%dom(id)%number_of_emiss_chemi_variables + 1, &
-      wrf%dom(id)%number_of_wrf_variables
-!
-! actual location in state variable table
+         wrf%dom(id)%number_of_wrf_variables
+         
+         ! actual location in state variable table
          my_index =  wrf%dom(id)%var_index_list(ind)
 !      
          wrf%dom(id)%var_type(ind) = ind ! types are just the order for this domain
@@ -857,8 +882,8 @@ print *, 'finished chemi variables read'
             print*,'dart kind identified: ',trim(wrf_state_variables(2,my_index)),' ', &
             wrf%dom(id)%dart_kind(ind)
          endif
-!      
-! get stagger and variable size
+      
+         ! get stagger and variable size
          call get_variable_size_from_file(ncid,id,  &
                                           wrf_state_variables(1,my_index), &
                                           wrf%dom(id)%bt, wrf%dom(id)%bts, &
@@ -866,20 +891,20 @@ print *, 'finished chemi variables read'
                                           wrf%dom(id)%we, wrf%dom(id)%wes, &
                                           wrf%dom(id)%stagger(ind),        &
                                           wrf%dom(id)%var_size(:,ind))
-!      
-! get other variable metadata; units, coordinates and description
+
+         ! get other variable metadata; units, coordinates and description
          call get_variable_metadata_from_file(ncid,id,  &
                                           wrf_state_variables(1,my_index), &
                                           wrf%dom(id)%description(ind),         &
                                           wrf%dom(id)%coordinates(ind),         &
                                           wrf%dom(id)%units(ind) )
-!      
+      
          if ( debug ) then
             print*,'variable size ',trim(wrf_state_variables(1,my_index)),' ', &
             wrf%dom(id)%var_size(:,ind)
          endif
-!      
-!  add bounds checking information
+      
+         !  add bounds checking information
          call get_variable_bounds(wrf_state_bounds, wrf_state_variables(1,my_index), &
                                   wrf%dom(id)%lower_bound(ind), wrf%dom(id)%upper_bound(ind), &
                                   wrf%dom(id)%clamp_or_fail(ind))
@@ -896,9 +921,14 @@ print *, 'finished chemi variables read'
          trim(wrf_state_variables(1,my_index))
          call error_handler(E_MSG, 'static_init_model: ', text=msgstring2)
       enddo
-      call nc_check(nf90_close(ncid),'static_init_model', &
-      'close wrfinput_d0'//idom)
    endif
+   if (do_output()) then
+      write(     *     ,*)
+      write(logfileunit,*)
+   endif
+!
+! close data file, we have all we need
+   call nc_check(nf90_close(ncid),'static_init_model','close wrfinput_d0'//idom)
 ! LXL/APM ---
 !
 ! indices into 1D array - hopefully this becomes obsolete
@@ -1035,14 +1065,14 @@ print *, 'finished chemi variables read'
    wrf%dom(id)%type_tauaer3 = get_type_ind_from_type_string(id,'TAUAER3')
    wrf%dom(id)%type_tauaer4 = get_type_ind_from_type_string(id,'TAUAER4')
    if ( add_emiss) then
-      wrf%dom(id)%type_e_co = get_type_ind_from_type_string(id,'e_co')
-      wrf%dom(id)%type_e_no = get_type_ind_from_type_string(id,'e_no')
-      wrf%dom(id)%type_e_no2 = get_type_ind_from_type_string(id,'e_no2')
-      wrf%dom(id)%type_e_so2 = get_type_ind_from_type_string(id,'e_so2')
-      wrf%dom(id)%type_e_bc = get_type_ind_from_type_string(id,'e_bc')
-      wrf%dom(id)%type_e_oc = get_type_ind_from_type_string(id,'e_oc')
-      wrf%dom(id)%type_e_pm_10 = get_type_ind_from_type_string(id,'e_pm_10')
-      wrf%dom(id)%type_e_pm_25 = get_type_ind_from_type_string(id,'e_pm_25')
+      wrf%dom(id)%type_e_co = get_type_ind_from_type_string(id,'E_CO')
+      wrf%dom(id)%type_e_no = get_type_ind_from_type_string(id,'E_NO')
+      wrf%dom(id)%type_e_no2 = get_type_ind_from_type_string(id,'E_NO2')
+      wrf%dom(id)%type_e_so2 = get_type_ind_from_type_string(id,'E_SO2')
+      wrf%dom(id)%type_e_oc = get_type_ind_from_type_string(id,'E_OC')
+      wrf%dom(id)%type_e_bc = get_type_ind_from_type_string(id,'E_BC')
+      wrf%dom(id)%type_e_pm_10 = get_type_ind_from_type_string(id,'E_PM_10')
+      wrf%dom(id)%type_e_pm_25 = get_type_ind_from_type_string(id,'E_PM_25')
       wrf%dom(id)%type_ebu_in_co = get_type_ind_from_type_string(id,'ebu_in_co')
       wrf%dom(id)%type_ebu_in_no = get_type_ind_from_type_string(id,'ebu_in_no')
       wrf%dom(id)%type_ebu_in_no2 = get_type_ind_from_type_string(id,'ebu_in_no2')
@@ -9569,7 +9599,8 @@ integer               :: idim
 ! get variable ID
    call nc_check( nf90_inq_varid(ncid, trim(wrf_var_name), var_id), &
                      'get_variable_size_from_file',                 &
-                     'inq_varid '//wrf_var_name)
+                     'inq_varid '//trim(wrf_var_name))
+   print *,'variable name ',trim(wrf_var_name)
 
 ! get number of dimensions and dimension IDs
    call nc_check( nf90_inquire_variable(ncid, var_id,ndims=ndims,  &
@@ -10218,7 +10249,7 @@ end subroutine static_data_sizes
 ! LXL/APM +++
 ! LXL: Added for reading wrfchemi file
 !
-subroutine read_emiss_dimensions(ncid,fname,e_bt,e_sn,e_we)
+subroutine read_chemi_emiss_dimensions(ncid,fname,e_bt,e_sn,e_we)
 
 ! ncid: input, file handl
 ! id:   input, domain id
@@ -10233,13 +10264,13 @@ character(len=NF90_MAX_NAME)  :: dimname
 
 ! get wrf grid dimensions
 
-   call nc_check( nf90_inq_dimid(ncid, "emissions_zdim_stag", dim_id), &
+   call nc_check( nf90_inq_dimid(ncid, "chemi_zdim_stag", dim_id), &
                        'read_emiss_dimensions', &
-                       'inq_dimid emissions_zdim_stag "'//trim(fname)//'"')
+                       'inq_dimid chemi_zdim_stag "'//trim(fname)//'"')
 
    call nc_check( nf90_inquire_dimension(ncid, dim_id, name=dimname, len=e_bt), &
                        'read_emiss_dimensions', &
-                       'inquire_dimension emissions_zdim_stag "'//trim(fname)//'"')
+                       'inquire_dimension chemi_zdim_stag "'//trim(fname)//'"')
 
    call nc_check( nf90_inq_dimid(ncid, "south_north", dim_id), &
                        'read_emiss_dimensions', &
@@ -10264,8 +10295,56 @@ character(len=NF90_MAX_NAME)  :: dimname
 
    RETURN
 
-end subroutine read_emiss_dimensions
+end subroutine read_chemi_emiss_dimensions
+!
+subroutine read_firechemi_emiss_dimensions(ncid,fname,e_bt,e_sn,e_we)
 
+! ncid: input, file handl
+! id:   input, domain id
+
+integer,          intent(in)  :: ncid
+character(len=*), intent(in)  :: fname
+integer,          intent(out) :: e_bt,e_sn,e_we
+
+logical, parameter            :: debug = .false.
+integer                       :: dim_id
+character(len=NF90_MAX_NAME)  :: dimname
+
+! get wrf grid dimensions
+
+   call nc_check( nf90_inq_dimid(ncid, "fire_zdim_stag", dim_id), &
+                       'read_emiss_dimensions', &
+                       'inq_dimid fire_zdim_stag "'//trim(fname)//'"')
+
+   call nc_check( nf90_inquire_dimension(ncid, dim_id, name=dimname, len=e_bt), &
+                       'read_emiss_dimensions', &
+                       'inquire_dimension fire_zdim_stag "'//trim(fname)//'"')
+
+   call nc_check( nf90_inq_dimid(ncid, "south_north", dim_id), &
+                       'read_emiss_dimensions', &
+                       'inq_dimid south_north'//trim(fname)//'"')
+
+   call nc_check( nf90_inquire_dimension(ncid, dim_id, name=dimname, len=e_sn), &
+                       'read_emiss_dimensions', &
+                       'inquire_dimension south_north "'//trim(fname)//'"')
+
+   call nc_check( nf90_inq_dimid(ncid, "west_east", dim_id), &
+                       'read_emiss_dimensions', &
+                       'inq_dimid west_east'//trim(fname)//'"')
+
+   call nc_check( nf90_inquire_dimension(ncid, dim_id, name=dimname, len=e_we), &
+                       'read_emiss_dimensions', &
+                       'inquire_dimension west_east "'//trim(fname)//'"')
+
+   if(debug) then
+      write(*,*) ' dimensions e_bt, e_sn, e_we are ',e_bt, &
+           e_sn, e_we
+   endif
+
+   RETURN
+
+end subroutine read_firechemi_emiss_dimensions
+!
 !--------------------------------------------------------------------
 !--------------------------------------------------------------------
 subroutine get_emiss_variable_size_from_file(ncid,id,wrf_var_name,e_bt,e_sn, &
