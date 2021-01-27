@@ -291,18 +291,16 @@ program tropomi_so2_ascii_to_obs
          deallocate(prf_model) 
          cycle
       endif
-      print *, 'kend ',kend
-      print *, 'prf_model ',prf_model(:)
-      stop
+!      print *, 'kend ',kend
+!      print *, 'prf_model ',prf_model(:)
 !
 !--------------------------------------------------------
 ! Find vertical location
 !--------------------------------------------------------
 !
-      call vertical_locate(prs_loc,prs_obs,nlev_obs,avgk_obs,nlay_obs,kend)
+      call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_model,nlay_obs,kend)
       level=prs_loc*100.
       print *, 'level ',level
-stop
 !
 ! Check for maximum localization height
       if(level/100..lt.level_crit) then
@@ -400,47 +398,48 @@ stop
 !
 end program tropomi_so2_ascii_to_obs
 !
-subroutine vertical_locate(prs_loc,prs,nlev,avgk,nlay)
+subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,kend)
 !
 ! This subroutine identifies a vertical location for 
 ! vertical positioning/localization 
 ! 
    implicit none
-   integer                         :: nlay,nlev
-   integer                         :: k,kstr,kmax
-   real*8                          :: prs_loc
-   real*8                          :: wt_ctr,wt_end
-   real*8                          :: zmax
-   real*8,dimension(nlev)          :: prs
-   real*8,dimension(nlay)          :: avgk,avgk_sm
+   integer                         :: nlay_obs,nlev_obs
+   integer                         :: k,kstr,kmax,kend
+   real                            :: prs_loc
+   real                            :: wt_ctr,wt_end
+   real                            :: zmax
+   real,dimension(nlev_obs)        :: prs_obs
+   real,dimension(nlay_obs)        :: locl_prf,locl_prf_sm
 !
 ! apply vertical smoother
-   wt_ctr=2.
-   wt_end=1.
-   avgk_sm(:)=0.
-   do k=1,nlay
-      if(k.eq.1) then
-         avgk_sm(k)=(wt_ctr*avgk(k)+wt_end*avgk(k+1))/(wt_ctr+wt_end)
-         cycle
-      elseif(k.eq.nlay) then
-         avgk_sm(k)=(wt_end*avgk(k-1)+wt_ctr*avgk(k))/(wt_ctr+wt_end)
-         cycle
-      else
-         avgk_sm(k)=(wt_end*avgk(k-1)+wt_ctr*avgk(k)+wt_end*avgk(k+1))/(wt_ctr+2.*wt_end)
-      endif
-   enddo
+!   wt_ctr=2.
+!   wt_end=1.
+!   avgk_sm(:)=0.
+!   do k=1,nlay
+!      if(k.eq.1) then
+!         avgk_sm(k)=(wt_ctr*avgk(k)+wt_end*avgk(k+1))/(wt_ctr+wt_end)
+!         cycle
+!      elseif(k.eq.nlay) then
+!         avgk_sm(k)=(wt_end*avgk(k-1)+wt_ctr*avgk(k))/(wt_ctr+wt_end)
+!         cycle
+!      else
+!         avgk_sm(k)=(wt_end*avgk(k-1)+wt_ctr*avgk(k)+wt_end*avgk(k+1))/(wt_ctr+2.*wt_end)
+!      endif
+!   enddo
 !
-! locate the three-point maximum
+   locl_prf_sm(:)=locl_prf(:)   
+! locate maximum
    zmax=-1.e10
    kmax=0
-   kstr=1
-   do k=kstr,nlay
-      if(abs(avgk_sm(k)).gt.zmax) then
-         zmax=abs(avgk_sm(k))
+   do k=1,kend
+      if(abs(locl_prf_sm(k)).gt.zmax) then
+         zmax=abs(locl_prf_sm(k))
          kmax=k
       endif
    enddo
-   prs_loc=(prs(kmax)+prs(kmax+1))/2.
+   if(kmax.eq.1) kmax=kmax+1
+   prs_loc=(prs_obs(kmax)+prs_obs(kmax+1))/2.
 end subroutine vertical_locate
 !
 subroutine get_model_profile(prf_model,path_model,file_model, &

@@ -404,7 +404,6 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,kend,trop_
 ! locate maximum
    zmax=-1.e10
    kmax=0
-   kstr=trop_indx
 !   do k=1,kend
    do k=1,trop_indx
       if(abs(locl_prf_sm(k)).gt.zmax) then

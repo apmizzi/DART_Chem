@@ -367,8 +367,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_OMI_SO2_COL_OBS=false
       export RUN_TROPOMI_CO_COL_OBS=false
       export RUN_TROPOMI_O3_COL_OBS=false
-      export RUN_TROPOMI_NO2_COL_OBS=true
-      export RUN_TROPOMI_SO2_COL_OBS=false
+      export RUN_TROPOMI_NO2_COL_OBS=false
+      export RUN_TROPOMI_SO2_COL_OBS=true
       
       export RUN_TEMPO_O3_COL_OBS=false
       export RUN_TEMPO_NO2_COL_OBS=false
