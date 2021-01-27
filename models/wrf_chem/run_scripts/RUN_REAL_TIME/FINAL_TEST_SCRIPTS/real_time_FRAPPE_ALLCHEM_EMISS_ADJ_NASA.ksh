@@ -600,7 +600,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export BIO_NODES=1
    export BIO_TASKS=1
    export FILTER_JOB_CLASS=normal
+   export FILTER_JOB_CLASS=devel
    export FILTER_TIME_LIMIT=03:00:00
+   export FILTER_TIME_LIMIT=01:00:00
    export FILTER_NODES=8
    export FILTER_TASKS=16
    export WRFCHEM_JOB_CLASS=normal
@@ -1401,8 +1403,12 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
                                    'LAND_SFC_ALTIMETER',
                                    'SAT_U_WIND_COMPONENT',
                                    'SAT_V_WIND_COMPONENT',
-                                   'MOPITT_CO_RETRIEVAL',
-                                   'AIRNOW_CO'"
+                                   'AIRNOW_CO',
+                                   'AIRNOW_NO2',
+                                   'AIRNOW_SO2',
+                                   'AIRNOW_O3',
+                                   'AIRNOW_PM10',
+                                   'AIRNOW_PM25'"
 #
 # &replace_wrf_fields_nml
    export NL_FIELDNAMES="'SNOWC',

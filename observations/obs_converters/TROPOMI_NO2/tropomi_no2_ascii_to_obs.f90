@@ -1,4 +1,3 @@
-
 ! Copyright 2019 University Corporation for Atmospheric Research and 
 ! Colorado Department of Public Health and Environment.
 !
@@ -266,8 +265,8 @@ program tropomi_no2_ascii_to_obs
          deallocate(prf_model) 
          cycle
       endif
-      print *, 'kend, trop_indx ',kend,trop_indx
-      print *, 'prf_model ',prf_model(:)
+!      print *, 'kend, trop_indx ',kend,trop_indx
+!      print *, 'prf_model ',prf_model(:)
 !
 !--------------------------------------------------------
 ! Find vertical location
@@ -275,7 +274,6 @@ program tropomi_no2_ascii_to_obs
 !
       call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_model,nlay_obs,kend,trop_indx)
       level=prs_loc*100.
-      print *, 'level ',level
 !
 ! Check for maximum localization height
       if(level/100..lt.level_crit) then
@@ -349,6 +347,8 @@ program tropomi_no2_ascii_to_obs
       deallocate(avgk_obs_r8)
       deallocate(prf_model) 
       read(fileid,*,iostat=ios) data_type, obs_id
+      print *, 'sum_accept ',sum_accept
+      if(sum_accept.ge.1000) exit      
    enddo   
 !
 !----------------------------------------------------------------------

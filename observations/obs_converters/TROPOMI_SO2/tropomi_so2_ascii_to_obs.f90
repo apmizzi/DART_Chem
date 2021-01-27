@@ -378,6 +378,7 @@ program tropomi_so2_ascii_to_obs
       deallocate(prf_model) 
       deallocate(prior_obs_r8)
       read(fileid,*,iostat=ios) data_type, obs_id
+      if(sum_accept.eq.3000) exit      
    enddo   
 !
 !----------------------------------------------------------------------
