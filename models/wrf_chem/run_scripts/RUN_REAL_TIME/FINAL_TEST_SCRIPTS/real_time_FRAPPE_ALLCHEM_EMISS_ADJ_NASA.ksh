@@ -34,7 +34,7 @@ export FIRST_EMISS_INV_DATE=2014071406
 export CYCLE_STR_DATE=2014071400
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014071406
+export CYCLE_END_DATE=2014071400
 #export CYCLE_END_DATE=${CYCLE_STR_DATE}
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
@@ -138,8 +138,8 @@ if [[ ${RUN_FINE_SCALE_RESTART} = "true" ]]; then
 fi
 #
 # Run WRF-Chem for failed forecasts
-export RUN_SPECIAL_FORECAST=false
-export NUM_SPECIAL_FORECAST=1
+export RUN_SPECIAL_FORECAST=true
+export NUM_SPECIAL_FORECAST=0
 export SPECIAL_FORECAST_FAC=1./2.
 export SPECIAL_FORECAST_FAC=2./3.
 #
@@ -6705,10 +6705,6 @@ EOF
       if ${DART_TEST}; then
          exit
       fi
-
-exit
-
-      
 #
 # Remove emissions fields from the wrfinput files and copy to the emissions input files
       let MEM=1
@@ -6731,10 +6727,7 @@ exit
          let MEM=${MEM}+1
       done 
    fi
-
-exit
-
-   #
+#
 #########################################################################
 #
 # UPDATE COARSE RESOLUTION BOUNDARY CONDIIONS
