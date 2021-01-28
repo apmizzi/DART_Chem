@@ -200,9 +200,16 @@ character(len=*), parameter :: revdate  = ''
                 print *, 'APM ERROR: NOT ENOUGH PROCESSORS num_mem = ',num_mem, ' procs = ',num_procs-1
                 call mpi_finalize(ierr)
                 stop
-             endif 
+             endif
              if(sw_seed) call init_random_seed()
              if(rank.ne.0) then
+!
+! Stop excess processes
+                if(rank.gt.num_mem) then
+                   call mpi_finalize(ierr)
+                   stop
+                endif
+!            
                 if(sw_corr_tm) then
                    allocate(pert_chem_old(nx,ny,nz))
                    do i=1,nx

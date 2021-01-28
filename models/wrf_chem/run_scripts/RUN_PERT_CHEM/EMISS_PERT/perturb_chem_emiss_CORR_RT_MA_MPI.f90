@@ -1,3 +1,4 @@
+
 ! Copyright 2019 NCAR/ACOM
 ! 
 ! Licensed under the Apache License, Version 2.0 (the "License");
@@ -306,9 +307,8 @@ character(len=*), parameter :: revdate  = ''
              if(sw_seed) call init_random_seed()
              if(rank.ne.0) then
 !
-! Stop the excess processes
+! Stop excess processes
                 if(rank.gt.num_mem) then
-
                    call mpi_finalize(ierr)
                    stop
                 endif
