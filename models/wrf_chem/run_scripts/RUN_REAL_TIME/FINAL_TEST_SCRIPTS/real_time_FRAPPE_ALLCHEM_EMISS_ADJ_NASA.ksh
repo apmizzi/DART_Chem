@@ -31,7 +31,7 @@ export FIRST_DART_INFLATE_DATE=2014071406
 export FIRST_EMISS_INV_DATE=2014071406
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014071406
+export CYCLE_STR_DATE=2014071400
 #
 # END CYCLE DATE-TIME:
 export CYCLE_END_DATE=2014071406
@@ -351,8 +351,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_WRFCHEM_BIO=false
       export RUN_WRFCHEM_FIRE=false
       export RUN_WRFCHEM_CHEMI=false
-      export RUN_PERT_WRFCHEM_CHEM_ICBC=false
-      export RUN_PERT_WRFCHEM_CHEM_EMISS=false
+      export RUN_PERT_WRFCHEM_CHEM_ICBC=true
+      export RUN_PERT_WRFCHEM_CHEM_EMISS=true
       export RUN_MOPITT_CO_OBS=false
       export RUN_IASI_CO_OBS=false
       export RUN_IASI_O3_OBS=false

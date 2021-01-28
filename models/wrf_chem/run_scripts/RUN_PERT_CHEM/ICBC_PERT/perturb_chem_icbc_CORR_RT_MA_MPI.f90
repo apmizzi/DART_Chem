@@ -196,7 +196,7 @@ character(len=*), parameter :: revdate  = ''
              if(rank.eq.0) print *, 'ngrid_corr         ',ngrid_corr
 !
 ! Calculate new random number seed
-             if(num_mem.lt.num_procs-1) then
+             if(num_mem.gt.num_procs-1) then
                 print *, 'APM ERROR: NOT ENOUGH PROCESSORS num_mem = ',num_mem, ' procs = ',num_procs-1
                 call mpi_finalize(ierr)
                 stop
@@ -366,7 +366,7 @@ character(len=*), parameter :: revdate  = ''
                 enddo
                 deallocate(tmp_arry)
 !
-! Recenetering
+! Recentering
                 print *, rank,'recentering '
                 allocate(mems(num_mem),pers(num_mem))             
                 if(sw_corr_tm) then
