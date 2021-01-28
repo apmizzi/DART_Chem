@@ -4629,8 +4629,8 @@ EOFF
       export TROPOMI_FILE_EXT=.nc
       export OUTFILE=TEMP_FILE.dat
       export TRP_OUTFILE=TROPOMI_NO2_${DATE}.dat
-#      rm -rf ${OUTFILE}
-#      rm -rf ${TRP_OUTFILE}
+      rm -rf ${OUTFILE}
+      rm -rf ${TRP_OUTFILE}
 #
 # SET OBS_WINDOW
       export BIN_BEG_HH=${ASIM_MN_HH}
@@ -4662,21 +4662,21 @@ EOFF
       export TRP_INFILE=\'${EXPERIMENT_TROPOMI_NO2_DIR}/${TROPOMI_FILE_PRE}${YYYY}${MM}${DD}T\'
 #
 # COPY EXECUTABLE
-#      export FILE=tropomi_no2_extract.m
-#      rm -rf ${FILE}
-#      cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
-#      mcc -m tropomi_no2_extract.m -o tropomi_no2_extract
-#      ./run_tropomi_no2_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
+      export FILE=tropomi_no2_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
+      mcc -m tropomi_no2_extract.m -o tropomi_no2_extract
+      ./run_tropomi_no2_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
-#      if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
-#         touch ${TRP_OUTFILE}
-#         cat ${OUTFILE} >> ${TRP_OUTFILE}
-#         rm -rf ${OUTFILE}
-#      elif [[ -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
-#         cat ${OUTFILE} >> ${TRP_OUTFILE}
-#         rm -rf ${OUTFILE}
-#      fi
+      if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TRP_OUTFILE}
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
 #
 # END OF PREVIOUS DAY (hours 21 to 24 obs)
       if [[ ${FLG} -eq 1 ]]; then
@@ -4689,26 +4689,26 @@ EOFF
 	 export TRP_INFILE=\'${EXPERIMENT_TROPOMI_NO2_DIR}/${TROPOMI_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
 #
 # COPY EXECUTABLE
-#         export FILE=tropomi_no2_extract.m
-#         rm -rf ${FILE}
-#         cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
-#         mcc -m tropomi_no2_extract.m -o tropomi_no2_extract
-#         ./run_tropomi_no2_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
+         export FILE=tropomi_no2_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
+         mcc -m tropomi_no2_extract.m -o tropomi_no2_extract
+         ./run_tropomi_no2_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
 #
       fi
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
-#      if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
-#         touch ${TRP_OUTFILE}
-#         cat ${OUTFILE} >> ${TRP_OUTFILE}
-#         rm -rf ${OUTFILE}
-#      elif [[ -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
-#         cat ${OUTFILE} >> ${TRP_OUTFILE}
-#         rm -rf ${OUTFILE}
-#      fi
-#      if [[ ! -e ${TRP_OUTFILE} ]]; then
-#         touch NO_TROPOMI_NO2_${DATE}_DATA
-#      fi
+      if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TRP_OUTFILE}
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+      if [[ ! -e ${TRP_OUTFILE} ]]; then
+         touch NO_TROPOMI_NO2_${DATE}_DATA
+      fi
 #
 # SET NAMELIST TO CONVERT TROPOMI_NO2 ASCII TO OBS_SEQ 
       export NL_FILEDIR=\'./\' 
