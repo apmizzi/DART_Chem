@@ -4625,6 +4625,8 @@ EOFF
       fi
 #
 # SET TROPOMI PARAMETERS
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_RPRO_L2__NO2____
       export TROPOMI_FILE_EXT=.nc
       export OUTFILE=TEMP_FILE.dat
@@ -4666,7 +4668,7 @@ EOFF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
       mcc -m tropomi_no2_extract.m -o tropomi_no2_extract
-      ./run_tropomi_no2_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
+      ./run_tropomi_no2_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL}
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -4693,7 +4695,7 @@ EOFF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
          mcc -m tropomi_no2_extract.m -o tropomi_no2_extract
-         ./run_tropomi_no2_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NNL_MIN_LON} ${NNL_MAX_LON} ${NNL_MIN_LAT} ${NNL_MAX_LAT}
+         ./run_tropomi_no2_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${ASIM_MIN_YYYY} ${ASIM_MIN_MM} ${ASIM_MIN_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${ASIM_MAX_YYYY} ${ASIM_MAX_MM} ${ASIM_MAX_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL}
 #
       fi
 #

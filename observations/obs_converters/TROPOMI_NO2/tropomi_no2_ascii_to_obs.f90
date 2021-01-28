@@ -103,23 +103,24 @@ program tropomi_no2_ascii_to_obs
    integer                         :: nlay_obs,nlev_obs,ilv
    integer                         :: seconds,days,which_vert
    integer                         :: seconds_last,days_last
-   integer                         :: nx_model,ny_model,nz_model
+   integer                         :: nx_mdl,ny_mdl,nz_mdl
    integer                         :: reject,k,kend
+   integer                         :: i_min,j_min
    integer                         :: sum_reject,sum_accept,sum_total
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
 !
-   real*8                          :: bin_beg_sec,bin_end_sec
-   real*8                          :: lon_min,lon_max,lat_min,lat_max
-   real*8                          :: fac_obs_error,fac
-   real*8                          :: pi,rad2deg,re,level,level_crit
-   real*8                          :: lat,lon,dofs
+   real                            :: bin_beg_sec,bin_end_sec
+   real                            :: lon_min,lon_max,lat_min,lat_max
+   real                            :: fac_obs_error,fac
+   real                            :: pi,rad2deg,re,level,level_crit
+   real                            :: x_observ,y_observ,dofs
    real                            :: prs_loc
    real*8                          :: obs_err_var
 !
-   real*8,dimension(num_qc)        :: tropomi_qc
-   real*8,dimension(num_copies)    :: obs_val
+   real,dimension(num_qc)          :: tropomi_qc
+   real,dimension(num_copies)      :: obs_val
 !
    character*129                   :: filedir,filename,fileout
    character*129                   :: copy_meta_data
@@ -133,10 +134,11 @@ program tropomi_no2_ascii_to_obs
 !
 ! Species-specific variables
    integer                         :: trop_indx
-   real*8                          :: col_amt_trop_obs, col_amt_trop_err_obs
-   real*8                          :: amf_trop_obs
-   real*8                          :: amf_trop_obs_r8
+   real                            :: col_amt_trop_obs, col_amt_trop_err_obs
+   real                            :: amf_trop_obs
+   real                            :: amf_trop_obs_r8
    real                            :: lat_obs,lon_obs
+   real                            :: xi_real,xj_real
    real*8                          :: lat_obs_r8,lon_obs_r8
    real,allocatable,dimension(:)   :: avgk_obs
    real*8,allocatable,dimension(:) :: avgk_obs_r8
@@ -150,13 +152,11 @@ program tropomi_no2_ascii_to_obs
    real,allocatable,dimension(:,:,:)   :: prs_prt,prs_bas,prs_fld
    real,allocatable,dimension(:,:,:)   :: tmp_prt,tmp_fld,vtmp_fld
    real,allocatable,dimension(:,:,:)   :: no2_fld,qmr_fld
-   real,dimension(nlev_obs-1)          :: prf_model,thick,v_wgts
-   real,dimension(nlev_obs)            :: no2_mdl,vtmp_mdl,prs_obs
 !
    namelist /create_tropomi_obs_nml/filedir,filename,fileout, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
    lon_min,lon_max,lat_min,lat_max, &
-   path_model,file_model,nx_model,ny_model,nz_model
+   path_model,file_model,nx_mdl,ny_mdl,nz_mdl
 !
 ! Set constants
    pi=4.*atan(1.)
@@ -251,7 +251,7 @@ program tropomi_no2_ascii_to_obs
 !
 ! Read TROPOMI NO2
    line_count = 0
-   read(fileid,*,iostat=ios) data_type, obs_id
+   read(fileid,*,iostat=ios) data_type, obs_id, xi_real, xj_real
    do while (ios == 0)
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
       dy_obs, hh_obs, mm_obs, ss_obs
@@ -295,7 +295,7 @@ program tropomi_no2_ascii_to_obs
       x_obser=lon_obs
       y_obser=lat_obs
       if(x_obser.lt.0.) x_obser=(360.+x_obser)
-      call w3fb13(y_obser,x_obser,real(y_mdl(1,1)),real(x_mdl(1,1)+360.), &
+      call w3fb13(y_obser,x_obser,lat(1,1)),lon(1,1)+360., &
       12000.,cen_lon+360.,truelat1,truelat2,xi,xj)
       i_min = nint(xi)
       j_min = nint(xj)
@@ -334,7 +334,7 @@ program tropomi_no2_ascii_to_obs
 !      print *,'i_min,j_min,reject ',i_min,j_min,reject
       if(reject.eq.1) then
          sum_reject=sum_reject+1
-         read(fileid,*,iostat=ios) data_type, obs_id
+         read(fileid,*,iostat=ios) data_type, obs_id, xi_real, xj_real
          deallocate(prs_obs) 
          deallocate(avgk_obs)
          deallocate(prs_obs_r8) 
@@ -342,7 +342,7 @@ program tropomi_no2_ascii_to_obs
          deallocate(prf_model) 
          cycle
       else
-         call get_model_profile(prf_model,nz_model, &
+         call get_model_profile(prf_model,nz_mdl, &
          prs_obs*100.,prs_fld(imin,j_min,:),tmp_fld(imin,j_min,:), &
          qmr_fld(imin,j_min,:),no2_fld(imin,j_min,:), &
          nlev_obs,avgk_obs,kend)
@@ -359,7 +359,7 @@ program tropomi_no2_ascii_to_obs
       if(level/100..lt.level_crit) then
          reject=1
          sum_reject=sum_reject+1
-         read(fileid,*,iostat=ios) data_type, obs_id
+         read(fileid,*,iostat=ios) data_type, obs_id, xi_real, xj_real
 !         print *, trim(data_type), obs_id
          deallocate(prs_obs) 
          deallocate(avgk_obs)
@@ -432,7 +432,7 @@ program tropomi_no2_ascii_to_obs
       deallocate(tmp_fld)
       deallocate(qmr_fld)
       deallocate(no2_fld)
-      read(fileid,*,iostat=ios) data_type, obs_id
+      read(fileid,*,iostat=ios) data_type, obs_id, xi_real, xj_real
       print *, 'sum_accept ',sum_accept
       if(sum_accept.ge.1000) exit      
    enddo   
