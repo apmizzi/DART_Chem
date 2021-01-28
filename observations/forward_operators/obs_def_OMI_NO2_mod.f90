@@ -812,9 +812,6 @@ end subroutine write_r8_array
 
 !-------------------------------------------------------------------------------
 
-
-
-
 end module obs_def_omi_no2_mod
 
 ! END DART PREPROCESS MODULE CODE

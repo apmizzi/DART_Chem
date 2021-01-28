@@ -32,7 +32,7 @@
                               '../../../../observations/forward_operators/obs_def_TROPOMI_SO2_mod.f90',
                               '../../../../observations/forward_operators/obs_def_TEMPO_O3_mod.f90',
                               '../../../../observations/forward_operators/obs_def_TEMPO_NO2_mod.f90',
- /
+			      /
 
 &obs_kind_nml
  /

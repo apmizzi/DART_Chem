@@ -4,6 +4,7 @@
    output_obs_kind_mod_file = '../../../../assimilation_code/modules/observations/obs_kind_mod.f90',
      input_obs_def_mod_file = '../../../../observations/forward_operators/DEFAULT_obs_def_mod.F90',
     output_obs_def_mod_file = '../../../../observations/forward_operators/obs_def_mod.f90',
+<<<<<<< HEAD
    input_files              = '../../../../observations/forward_operators/obs_def_reanalysis_bufr_mod.f90',
                               '../../../../observations/forward_operators/obs_def_radar_mod.f90',
                               '../../../../observations/forward_operators/obs_def_upper_atm_mod.f90',
@@ -32,6 +33,9 @@
                               '../../../../observations/forward_operators/obs_def_TROPOMI_SO2_mod.f90',
                               '../../../../observations/forward_operators/obs_def_TEMPO_O3_mod.f90',
                               '../../../../observations/forward_operators/obs_def_TEMPO_NO2_mod.f90',
+=======
+   input_files              = '../../../../observations/forward_operators/obs_def_IASI_O3_mod.f90'
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
  /
 
 &obs_kind_nml

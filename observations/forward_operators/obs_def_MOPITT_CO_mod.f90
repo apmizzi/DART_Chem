@@ -91,6 +91,7 @@ real(r8), allocatable, dimension(:,:) :: avg_kernel
 real(r8), allocatable, dimension(:) :: mopitt_prior
 real(r8), allocatable, dimension(:) :: mopitt_psurf
 integer,  allocatable, dimension(:) :: mopitt_nlevels
+
 ! version controlled file description for error handling, do not edit
 character(len=*), parameter :: source   = 'obs_def_MOPITT_CO_mod.f90'
 character(len=*), parameter :: revision = ''

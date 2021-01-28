@@ -45,9 +45,13 @@ use     obs_kind_mod, only : RADIOSONDE_U_WIND_COMPONENT, ACARS_U_WIND_COMPONENT
                              MOPITT_CO_RETRIEVAL,  &
                              IASI_CO_RETRIEVAL, &
                              IASI_O3_RETRIEVAL, &
+<<<<<<< HEAD
                              OMI_O3_COLUMN, OMI_NO2_COLUMN, OMI_SO2_COLUMN, &
                              TROPOMI_CO_COLUMN, TROPOMI_O3_COLUMN, TROPOMI_NO2_COLUMN, TROPOMI_SO2_COLUMN, &
                              TEMPO_O3_COLUMN, TEMPO_NO2_COLUMN, &
+=======
+                             OMI_NO2_COLUMN, &
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
                              AIRNOW_CO, AIRNOW_O3, &
                              PANDA_CO, PANDA_O3, PANDA_PM25
 ! APM/JB ---
@@ -76,6 +80,7 @@ character(len=129) :: file_name_input    = 'obs_seq.old',        &
                       gpsro_extra        = 'obs_seq.gpsro',      &
                       trop_cyclone_extra = 'obs_seq.tc'
 ! APM/JB +++
+<<<<<<< HEAD
 character(len=129) :: modis_aod_extra    = 'obs_seq.modis_aod',   & 
                       mopitt_co_extra    = 'obs_seq.mopitt_co',   &
                       iasi_co_extra      = 'obs_seq.iasi_co',     &
@@ -93,6 +98,17 @@ character(len=129) :: modis_aod_extra    = 'obs_seq.modis_aod',   &
                       airnow_o3_extra    = 'obs_seq.airnow_o3',   &
                       panda_co_extra     = 'obs_seq.panda_co',    &
                       panda_o3_extra     = 'obs_seq.panda_o3',    &
+=======
+character(len=129) :: modis_aod_extra    = 'obs_seq.modis_aod',  &
+                      mopitt_co_extra    = 'obs_seq.mopitt_co',  &
+                      iasi_co_extra      = 'obs_seq.iasi_co',    &
+                      iasi_o3_extra      = 'obs_seq.iasi_o3',    &
+                      omi_no2_extra      = 'obs_seq.omi_no2',    &
+                      airnow_co_extra    = 'obs_seq.airnow_co',  &
+                      airnow_o3_extra    = 'obs_seq.airnow_o3',  &
+                      panda_co_extra     = 'obs_seq.panda_co',   &
+                      panda_o3_extra     = 'obs_seq.panda_o3',   &
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
                       panda_pm25_extra   = 'obs_seq.panda_pm25'
 
 ! APM/JB ---
@@ -191,10 +207,14 @@ namelist /wrf_obs_preproc_nml/file_name_input, file_name_output,      &
          trop_cyclone_extra, gpsro_extra, tc_sonde_radii, increase_bdy_error,      &
          maxobsfac, obsdistbdy, sat_wind_horiz_int, aircraft_horiz_int, &
          overwrite_obs_time, &
+<<<<<<< HEAD
          modis_aod_extra, mopitt_co_extra, iasi_co_extra, iasi_o3_extra, &
          omi_o3_extra, omi_no2_extra, omi_so2_extra, &
          tropomi_co_extra, tropomi_o3_extra, tropomi_no2_extra, tropomi_so2_extra, &
          tempo_o3_extra, tempo_no2_extra, &
+=======
+         modis_aod_extra, mopitt_co_extra, iasi_co_extra, iasi_o3_extra, omi_no2_extra, &
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
          airnow_co_extra, airnow_o3_extra, panda_co_extra, panda_o3_extra, panda_pm25_extra
 
 !>@todo FIXME either implement these or remove them. 
@@ -232,10 +252,14 @@ type(obs_sequence_type) :: seq_all, seq_rawin, seq_sfc, seq_acars, seq_satwnd, &
 
 ! APM/JB +++
                            seq_modis_aod, seq_mopitt_co, seq_iasi_co, seq_iasi_o3, &
+<<<<<<< HEAD
                            seq_omi_o3, seq_omi_no2, seq_omi_so2, & 
                            seq_tropomi_co, seq_tropomi_o3, seq_tropomi_no2, seq_tropomi_so2, &
                            seq_tempo_o3, seq_tempo_no2, &
                            seq_airnow_co, seq_airnow_o3, &
+=======
+                           seq_omi_no2, seq_airnow_co, seq_airnow_o3, &
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
                            seq_panda_co, seq_panda_o3, seq_panda_pm25
 ! APM/JB ---
 
@@ -322,6 +346,7 @@ call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_modis_aod)
 call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_mopitt_co)
 call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_iasi_co)
 call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_iasi_o3)
+<<<<<<< HEAD
 call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_o3)
 call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_no2)
 call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_so2)
@@ -331,6 +356,9 @@ call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_no2)
 call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_so2)
 call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tempo_o3)
 call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tempo_no2)
+=======
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_no2)
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
 call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_airnow_co)
 call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_airnow_o3)
 call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_panda_co)
@@ -345,10 +373,14 @@ call read_and_parse_input_seq(file_name_input, real_nx, real_ny, obs_boundary, &
 include_sig_data, obs_pressure_top, obs_height_top, sfc_elevation_check, &
 sfc_elevation_tol, overwrite_ncep_sfc_qc, overwrite_ncep_satwnd_qc, &
 overwrite_obs_time, anal_time, seq_rawin, seq_sfc, seq_acars, seq_satwnd, &
+<<<<<<< HEAD
 seq_tc, seq_gpsro, seq_modis_aod, seq_mopitt_co, seq_iasi_co, seq_iasi_o3, &
 seq_omi_o3, seq_omi_no2, seq_omi_so2, &
 seq_tropomi_co, seq_tropomi_o3, seq_tropomi_no2, seq_tropomi_so2, &
 seq_tempo_o3, seq_tempo_no2, &
+=======
+seq_tc, seq_gpsro, seq_modis_aod, seq_mopitt_co, seq_iasi_co, seq_iasi_o3, seq_omi_no2, &
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
 seq_airnow_co, seq_airnow_o3, seq_panda_co, seq_panda_o3, seq_panda_pm25, seq_other)
 ! APM/JB ---
 
@@ -428,6 +460,7 @@ call add_supplimental_obs(iasi_o3_extra, seq_iasi_o3, max_obs_seq, &
 IASI_O3_RETRIEVAL, nx, ny, obs_boundary, include_sig_data, &
 obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
 overwrite_obs_time, anal_time)
+<<<<<<< HEAD
 
 
 !
@@ -435,12 +468,15 @@ call add_supplimental_obs(omi_o3_extra, seq_omi_o3, max_obs_seq, &
 OMI_O3_COLUMN, nx, ny, obs_boundary, include_sig_data, &
 obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
 overwrite_obs_time, anal_time)
+=======
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
 !
 call add_supplimental_obs(omi_no2_extra, seq_omi_no2, max_obs_seq, &
 OMI_NO2_COLUMN, nx, ny, obs_boundary, include_sig_data, &
 obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
 overwrite_obs_time, anal_time)
 !
+<<<<<<< HEAD
 call add_supplimental_obs(omi_so2_extra, seq_omi_so2, max_obs_seq, &
 OMI_SO2_COLUMN, nx, ny, obs_boundary, include_sig_data, &
 obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
@@ -476,6 +512,8 @@ TEMPO_NO2_COLUMN, nx, ny, obs_boundary, include_sig_data, &
 obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
 overwrite_obs_time, anal_time)
 !
+=======
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
 call add_supplimental_obs(airnow_co_extra, seq_airnow_co, max_obs_seq, &
 AIRNOW_CO, nx, ny, obs_boundary, include_sig_data, &
 obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
@@ -521,6 +559,7 @@ max_obs_seq = get_num_obs(seq_tc)     + get_num_obs(seq_rawin) + &
 ! APM/JB +++
               get_num_obs(seq_modis_aod) + get_num_obs(seq_mopitt_co) + &
               get_num_obs(seq_iasi_co) + get_num_obs(seq_iasi_o3) + &
+<<<<<<< HEAD
               get_num_obs(seq_omi_o3) + &
               get_num_obs(seq_omi_no2) + &
               get_num_obs(seq_omi_so2) + &
@@ -530,6 +569,9 @@ max_obs_seq = get_num_obs(seq_tc)     + get_num_obs(seq_rawin) + &
               get_num_obs(seq_tropomi_so2) + &
               get_num_obs(seq_tempo_o3) + &
               get_num_obs(seq_tempo_no2) + &
+=======
+              get_num_obs(seq_omi_no2) + &
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
               get_num_obs(seq_airnow_co) + get_num_obs(seq_airnow_o3) + &
               get_num_obs(seq_panda_co) + get_num_obs(seq_panda_o3) + &
               get_num_obs(seq_panda_pm25)
@@ -573,6 +615,7 @@ call destroy_obs_sequence(seq_iasi_co)
 call build_master_sequence(seq_iasi_o3, seq_all)
 call destroy_obs_sequence(seq_iasi_o3)
 !
+<<<<<<< HEAD
 call build_master_sequence(seq_omi_o3, seq_all)
 call destroy_obs_sequence(seq_omi_o3)
 !
@@ -600,6 +643,11 @@ call destroy_obs_sequence(seq_tempo_o3)
 call build_master_sequence(seq_tempo_no2, seq_all)
 call destroy_obs_sequence(seq_tempo_no2)
 !
+=======
+call build_master_sequence(seq_omi_no2, seq_all)
+call destroy_obs_sequence(seq_omi_no2)
+!
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
 call build_master_sequence(seq_airnow_co, seq_all)
 call destroy_obs_sequence(seq_airnow_co)
 !
@@ -694,6 +742,7 @@ use      obs_kind_mod, only : RADIOSONDE_U_WIND_COMPONENT, ACARS_U_WIND_COMPONEN
                               MOPITT_CO_RETRIEVAL,  &
                               IASI_CO_RETRIEVAL, &
                               IASI_O3_RETRIEVAL, &
+<<<<<<< HEAD
                               OMI_O3_COLUMN, &
                               OMI_NO2_COLUMN, &
                               OMI_SO2_COLUMN, &
@@ -703,6 +752,9 @@ use      obs_kind_mod, only : RADIOSONDE_U_WIND_COMPONENT, ACARS_U_WIND_COMPONEN
                               TROPOMI_SO2_COLUMN, &
                               TEMPO_O3_COLUMN, &
                               TEMPO_NO2_COLUMN, &
+=======
+                              OMI_NO2_COLUMN, &
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
                               AIRNOW_CO, AIRNOW_O3, &
                               PANDA_CO, PANDA_O3, PANDA_PM25
 ! APM/JB ---
@@ -773,6 +825,7 @@ select case (plat_kind)
   case (IASI_O3_RETRIEVAL)
     write(6,*) 'Adding Supplimental IASI_O3 Data'
 !
+<<<<<<< HEAD
   case (OMI_O3_COLUMN)
     write(6,*) 'Adding Supplimental OMI_O3 Data'
 !
@@ -800,6 +853,11 @@ select case (plat_kind)
   case (TEMPO_NO2_COLUMN)
     write(6,*) 'Adding Supplimental TEMPO_NO2 Data'
 !
+=======
+  case (OMI_NO2_COLUMN)
+    write(6,*) 'Adding Supplimental OMI_NO2 Data'
+!
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
   case (AIRNOW_CO)
     write(6,*) 'Adding Supplimental AIRNOW_CO Data'
 !
@@ -922,6 +980,7 @@ ObsLoop:  do while ( .not. last_obs ) ! loop over all observations in a sequence
     case (IASI_O3_RETRIEVAL)
       pass_checks = iasi_o3_obs_check()
 !
+<<<<<<< HEAD
     case (OMI_O3_COLUMN)
       pass_checks = omi_o3_obs_check()
 !
@@ -949,6 +1008,11 @@ ObsLoop:  do while ( .not. last_obs ) ! loop over all observations in a sequence
     case (TEMPO_NO2_COLUMN)
       pass_checks = tempo_no2_obs_check()
 !
+=======
+    case (OMI_NO2_COLUMN)
+      pass_checks = omi_no2_obs_check()
+!
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
     case (AIRNOW_CO)
       pass_checks = airnow_co_obs_check()
 !
@@ -1438,11 +1502,16 @@ subroutine read_and_parse_input_seq(filename, nx, ny, obs_bdy, siglevel, ptop, &
                                     rawin_seq, sfc_seq, acars_seq, satwnd_seq, &
 ! APM/JB +++
                                     tc_seq, gpsro_seq, modis_aod_seq, mopitt_co_seq, &
+<<<<<<< HEAD
                                     iasi_co_seq, iasi_o3_seq, &
                                     omi_o3_seq, omi_no2_seq, omi_so2_seq, &
                                     tropomi_co_seq, tropomi_o3_seq, tropomi_no2_seq, tropomi_so2_seq, &
                                     tempo_o3_seq, tempo_no2_seq, &
                                     airnow_co_seq, airnow_o3_seq, panda_co_seq, panda_o3_seq, &
+=======
+                                    iasi_co_seq, iasi_o3_seq, omi_no2_seq, airnow_co_seq, &
+                                    airnow_o3_seq, panda_co_seq, panda_o3_seq, &
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
                                     panda_pm25_seq, other_seq)
 ! APM/JB ---
 
@@ -1484,6 +1553,7 @@ use      obs_kind_mod, only : RADIOSONDE_U_WIND_COMPONENT, RADIOSONDE_V_WIND_COM
                               MOPITT_CO_RETRIEVAL,  &
                               IASI_CO_RETRIEVAL, &
                               IASI_O3_RETRIEVAL, &
+<<<<<<< HEAD
                               OMI_O3_COLUMN, &
                               OMI_NO2_COLUMN, &
                               OMI_SO2_COLUMN, &
@@ -1493,6 +1563,9 @@ use      obs_kind_mod, only : RADIOSONDE_U_WIND_COMPONENT, RADIOSONDE_V_WIND_COM
                               TROPOMI_SO2_COLUMN, &
                               TEMPO_O3_COLUMN, &
                               TEMPO_NO2_COLUMN, &
+=======
+                              OMI_NO2_COLUMN, &
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
                               AIRNOW_CO, AIRNOW_O3, &
                               PANDA_CO, PANDA_O3, PANDA_PM25
 ! APM/JB ---
@@ -1515,11 +1588,16 @@ type(obs_sequence_type), intent(inout) :: rawin_seq, sfc_seq, acars_seq, &
                                           satwnd_seq, tc_seq, gpsro_seq, &
 ! APM/JB +++
                                           modis_aod_seq, mopitt_co_seq, &
+<<<<<<< HEAD
                                           iasi_co_seq, iasi_o3_seq, &
                                           omi_o3_seq, omi_no2_seq, omi_so2_seq, &
                                           tropomi_co_seq, tropomi_o3_seq, tropomi_no2_seq, tropomi_so2_seq, &
                                           tempo_o3_seq, tempo_no2_seq, &
                                           airnow_co_seq, airnow_o3_seq, panda_co_seq, panda_o3_seq, &
+=======
+                                          iasi_co_seq, iasi_o3_seq, omi_no2_seq, airnow_co_seq, &
+                                          airnow_o3_seq, panda_co_seq, panda_o3_seq, &
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
                                           panda_pm25_seq, other_seq
 ! APM/JB ---
 
@@ -1704,14 +1782,18 @@ InputObsLoop:  do while ( .not. last_obs ) ! loop over all observations in a seq
       call copy_obs(obs, obs_in)
       call append_obs_to_seq(iasi_o3_seq, obs)
 !
+<<<<<<< HEAD
     case ( OMI_O3_COLUMN )
       call copy_obs(obs, obs_in)
       call append_obs_to_seq(omi_o3_seq, obs)
 !
+=======
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
     case ( OMI_NO2_COLUMN )
       call copy_obs(obs, obs_in)
       call append_obs_to_seq(omi_no2_seq, obs)
 !
+<<<<<<< HEAD
     case ( OMI_SO2_COLUMN )
       call copy_obs(obs, obs_in)
       call append_obs_to_seq(omi_so2_seq, obs)
@@ -1740,6 +1822,8 @@ InputObsLoop:  do while ( .not. last_obs ) ! loop over all observations in a seq
       call copy_obs(obs, obs_in)
       call append_obs_to_seq(tempo_no2_seq, obs)
 !
+=======
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
     case ( AIRNOW_CO )
       call copy_obs(obs, obs_in)
       call append_obs_to_seq(airnow_co_seq, obs)
@@ -1963,6 +2047,7 @@ end function iasi_o3_obs_check
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
+<<<<<<< HEAD
 !   omi_o3_obs_check - function that determines whether to include an
 !                        OMI O3 observation in the sequence.
 !                        For now, this function is a placeholder and 
@@ -1984,6 +2069,8 @@ end function omi_o3_obs_check
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
+=======
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
 !   omi_no2_obs_check - function that determines whether to include an
 !                        OMI NO2 observation in the sequence.
 !                        For now, this function is a placeholder and 
@@ -2005,6 +2092,7 @@ end function omi_no2_obs_check
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
+<<<<<<< HEAD
 !   omi_so2_obs_check - function that determines whether to include an
 !                        OMI SO2 observation in the sequence.
 !                        For now, this function is a placeholder and 
@@ -2152,6 +2240,8 @@ end function tempo_no2_obs_check
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
+=======
+>>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
 !   airnow_co_obs_check - function that determines whether to include an
 !                        AIRNOW CO observation in the sequence.
 !                        For now, this function is a placeholder and 
