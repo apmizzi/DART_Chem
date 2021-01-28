@@ -305,6 +305,15 @@ character(len=*), parameter :: revdate  = ''
 ! Reset the random numer seed on all processes
              if(sw_seed) call init_random_seed()
              if(rank.ne.0) then
+!
+! Stop the excess processes
+                if(rank.gt.num_mem) then
+
+                   call mpi_finalize(ierr)
+                   stop
+                endif
+!
+! Continue with one process for each member
                 if(sw_chem) then
                    if(sw_corr_tm) then
                       allocate(pert_chem_old(nx,ny,nz_chem))
