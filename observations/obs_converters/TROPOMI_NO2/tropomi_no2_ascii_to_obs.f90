@@ -127,7 +127,7 @@ program tropomi_no2_ascii_to_obs
    character*129                   :: chr_year,chr_month,chr_day
    character*129                   :: file_name='tropomi_no2_obs_seq'
    character*129                   :: data_type,cmd
-   character*129                   :: path_model,file_model
+   character*129                   :: path_model,file_model,file_in
 !
    logical                         :: use_log_co,use_log_o3,use_log_no2,use_log_so2
 !
@@ -143,6 +143,15 @@ program tropomi_no2_ascii_to_obs
    real,allocatable,dimension(:)   :: prs_obs
    real*8,allocatable,dimension(:) :: prs_obs_r8
    real,allocatable,dimension(:)   :: prf_model
+   real                            :: cone_fac,cen_lat,cen_lon,truelat1, &
+                                      truelat2,moad_cen_lat,stand_lon, &
+                                      pole_lat,pole_lon,xi,xj,zi,zj,zlon,zlat
+   real,allocatable,dimension(:,:)     :: lon,lat
+   real,allocatable,dimension(:,:,:)   :: prs_prt,prs_bas,prs_fld
+   real,allocatable,dimension(:,:,:)   :: tmp_prt,tmp_fld,vtmp_fld
+   real,allocatable,dimension(:,:,:)   :: no2_fld,qmr_fld
+   real,dimension(nlev_obs-1)          :: prf_model,thick,v_wgts
+   real,dimension(nlev_obs)            :: no2_mdl,vtmp_mdl,prs_obs
 !
    namelist /create_tropomi_obs_nml/filedir,filename,fileout, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
@@ -156,6 +165,17 @@ program tropomi_no2_ascii_to_obs
    days_last=-9999.
    seconds_last=-9999.
    level_crit=500.
+!
+   cone_fac=.715567   
+   cen_lat=40.
+   cen_lon=-97.
+   truelat1=33.
+   truelat2=45.
+   moad_cen_lat=40.0000
+   stand_lon=-97.
+   pole_lat=90.
+   pole_lon=0.
+!   
    sum_reject=0
    sum_accept=0
    sum_total=0
@@ -202,6 +222,26 @@ program tropomi_no2_ascii_to_obs
    qc_count=0
    calendar_type=3                          !Gregorian
    call set_calendar_type(calendar_type)
+!
+! Read model data
+   allocate(lon(nx_mdl,ny_mdl))
+   allocate(lat(nx_mdl,ny_mdl))
+   allocate(prs_fld(nx_mdl,ny_mdl,nz_mdl))
+   allocate(tmp_fld(nx_mdl,ny_mdl,nz_mdl))
+   allocate(qmr_fld(nx_mdl,ny_mdl,nz_mdl))
+   allocate(no2_fld(nx_mdl,ny_mdl,nz_mdl))
+   
+   file_in=trim(path_model)//'/'//trim(file_model)
+   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_mdl,ny_mdl,1,1)
+   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_mdl,ny_mdl,1,1)
+   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_mdl,ny_mdl,nz_mdl,1)
+   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_mdl,ny_mdl,nz_mdl,1)
+   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_mdl,ny_mdl,nz_mdl,1)
+   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_mdl,ny_mdl,nz_mdl,1)
+   call get_DART_diag_data(file_in,'no2',no2_fld,nx_mdl,ny_mdl,nz_mdl,1)
+   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
+   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
+   no2_fld(:,:,:)=no2_fld(:,:,:)*1.e-6
 !
 ! Open TROPOMI NO2 binary file
    fileid=100
@@ -250,23 +290,63 @@ program tropomi_no2_ascii_to_obs
 ! Find model NO2 profile corresponding to the observation
 !--------------------------------------------------------
       reject=0
-      call get_model_profile(prf_model,path_model,file_model, &
-      nx_model,ny_model,nz_model,lon_obs,lat_obs,prs_obs*100., &
-      nlev_obs,avgk_obs,reject,kend)
+!
+! The input grids need to be in degrees
+      x_obser=lon_obs
+      y_obser=lat_obs
+      if(x_obser.lt.0.) x_obser=(360.+x_obser)
+      call w3fb13(y_obser,x_obser,real(y_mdl(1,1)),real(x_mdl(1,1)+360.), &
+      12000.,cen_lon+360.,truelat1,truelat2,xi,xj)
+      i_min = nint(xi)
+      j_min = nint(xj)
+!
+! Check lower bounds
+      if(i_min.lt.1 .and. int(xi).eq.0) then
+         i_min=1
+      elseif (i_min.lt.1 .and. int(xi).lt.0) then
+         i_min=-9999
+         j_min=-9999
+         reject=1
+      endif
+      if(j_min.lt.1 .and. int(xj).eq.0) then
+         j_min=1
+      elseif (j_min.lt.1 .and. int(xj).lt.0) then
+         i_min=-9999
+         j_min=-9999
+         reject=1
+      endif
+!
+! Check upper bounds
+      if(i_min.gt.nx_mdl .and. int(xi).eq.nx_mdl) then
+         i_min=nx_mdl
+      elseif (i_min.gt.nx_mdl .and. int(xi).gt.nx_mdl) then
+         i_min=-9999
+         j_min=-9999
+         reject=1
+      endif
+      if(j_min.gt.ny_mdl .and. int(xj).eq.ny_mdl) then
+         j_min=ny_mdl
+      elseif (j_min.gt.ny_mdl .and. int(xj).gt.ny_mdl) then
+         i_min=-9999
+         j_min=-9999
+         reject=1
+      endif
+!      print *,'i_min,j_min,reject ',i_min,j_min,reject
       if(reject.eq.1) then
          sum_reject=sum_reject+1
-!         print *, 'sum_reject ',sum_reject
          read(fileid,*,iostat=ios) data_type, obs_id
-!         print *, trim(data_type), obs_id
          deallocate(prs_obs) 
          deallocate(avgk_obs)
          deallocate(prs_obs_r8) 
          deallocate(avgk_obs_r8)
          deallocate(prf_model) 
          cycle
+      else
+         call get_model_profile(prf_model,nz_model, &
+         prs_obs*100.,prs_fld(imin,j_min,:),tmp_fld(imin,j_min,:), &
+         qmr_fld(imin,j_min,:),no2_fld(imin,j_min,:), &
+         nlev_obs,avgk_obs,kend)
       endif
-!      print *, 'kend, trop_indx ',kend,trop_indx
-!      print *, 'prf_model ',prf_model(:)
 !
 !--------------------------------------------------------
 ! Find vertical location
@@ -346,6 +426,12 @@ program tropomi_no2_ascii_to_obs
       deallocate(prs_obs_r8) 
       deallocate(avgk_obs_r8)
       deallocate(prf_model) 
+      deallocate(lon)
+      deallocate(lat)
+      deallocate(prs_fld)
+      deallocate(tmp_fld)
+      deallocate(qmr_fld)
+      deallocate(no2_fld)
       read(fileid,*,iostat=ios) data_type, obs_id
       print *, 'sum_accept ',sum_accept
       if(sum_accept.ge.1000) exit      
@@ -415,23 +501,17 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,kend,trop_
    prs_loc=(prs_obs(kmax)+prs_obs(kmax+1))/2.
 end subroutine vertical_locate
 !
-subroutine get_model_profile(prf_model,path_model,file_model, &
-   nx_mdl,ny_mdl,nz_mdl,lon_obs,lat_obs,prs_obs,nlev_obs, &
-   v_wgts,reject,kend)
+subroutine get_model_profile(prf_model,nz_mdl,prs_obs,prs_mdl, &
+   tmp_mdl,qmr_mdl,no2_mdl,nlev_obs,v_wgts,kend)
    implicit none
-   integer                                :: nx_mdl,ny_mdl,nz_mdl
+   integer                                :: nz_mdl
    integer                                :: nlev_obs
-   integer                                :: i,j,k,kend,reject
-   real                                   :: lon_obs,lat_obs
+   integer                                :: i,j,k,kend
    real                                   :: Ru,Rd,cp,eps,AvogN,msq2cmsq,grav
-   real,dimension(nx_mdl,ny_mdl)          :: lon,lat
-   real,dimension(nx_mdl,ny_mdl,nz_mdl)   :: prs_prt,prs_bas,prs_fld
-   real,dimension(nx_mdl,ny_mdl,nz_mdl)   :: tmp_prt,tmp_fld,vtmp_fld
-   real,dimension(nx_mdl,ny_mdl,nz_mdl)   :: no2_fld,qmr_fld
-   real,dimension(nlev_obs-1)             :: prf_model,thick,v_wgts
-   real,dimension(nlev_obs)               :: no2_mdl,vtmp_mdl,prs_obs
-   character(len=*)                       :: path_model,file_model
-   character(len=180)                     :: file_in
+   real,dimension(nz_mdl)                 :: prs_mdl,tmp_mdl,qmr_mdl,no2_mdl
+   real,dimension(nz_mdl)                 :: tmp_prf,vtmp_prf,no2_prf
+   real,dimension(nlev_obs-1)             :: thick,v_wgts
+   real,dimension(nlev_obs)               :: no2_prf_mdl,vtmp_prf_mdl,prs_obs
 !
 ! Constants (mks units)
    Ru=8.316
@@ -441,59 +521,40 @@ subroutine get_model_profile(prf_model,path_model,file_model, &
    AvogN=6.02214e23
    msq2cmsq=1.e4
    grav=9.8
-   reject=0
 !
-! Get model fields   
-   file_in=trim(path_model)//'/'//trim(file_model)
-   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_mdl,ny_mdl,1,1)
-   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_mdl,ny_mdl,1,1)
-   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_mdl,ny_mdl,nz_mdl,1)
-   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_mdl,ny_mdl,nz_mdl,1)
-   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_mdl,ny_mdl,nz_mdl,1)
-   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_mdl,ny_mdl,nz_mdl,1)
-   call get_DART_diag_data(file_in,'no2',no2_fld,nx_mdl,ny_mdl,nz_mdl,1)
-   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-   no2_fld(:,:,:)=no2_fld(:,:,:)*1.e-6
-!
-   do i=1,nx_mdl
-      do j=1,ny_mdl
 ! calculate temperature from potential temperature
-         do k=1,nz_mdl
-            tmp_fld(i,j,k)=tmp_fld(i,j,k)*((prs_fld(i,j,k)/ &
-            100000.)**(Rd/cp))
-         enddo         
+   do k=1,nz_mdl
+      tmp_prf(k)=tmp_mdl(k)*((prs_mdl(k)/ &
+      100000.)**(Rd/cp))
+   enddo         
 ! calculate virtual temperature
-         do k=1,nz_mdl
-            vtmp_fld(i,j,k)=tmp_fld(i,j,k)*(1.+eps*qmr_fld(i,j,k))
-         enddo         
+   do k=1,nz_mdl
+      vtmp_prf(k)=tmp_prf(k)*(1.+eps*qmr_mdl(k))
+   enddo         
 ! convert to molar density         
-         do k=1,nz_mdl
-            no2_fld(i,j,k)=no2_fld(i,j,k)*prs_fld(i,j,k)/Ru/tmp_fld(i,j,k)
-         enddo
-      enddo
+   do k=1,nz_mdl
+      no2_prf(k)=no2_mdl(k)*prs_mdl(k)/Ru/tmp_prf(k)
    enddo
-!
-! Use interp_hori_vert to find obs that are outside the domain   
-! Find model point closest to the observation point and de vertical interpolation
-   call interp_hori_vert(no2_mdl,vtmp_mdl,no2_fld,vtmp_fld,lon,lat, &
-   lon_obs,lat_obs,prs_fld,prs_obs,nx_mdl,ny_mdl,nz_mdl,nlev_obs,reject,kend)
-   if(reject.eq.1) return
+! Vertical interpolation
+   no2_prf_mdl(:)=-9999,   
+   vtmp_prf_mdl(:)=-9999,   
+   call interp_to_obs(no2_prf_mdl,no2_prf,prs_prf,prs_obs,nz_mdl,nlev_obs,kend)
+   call interp_to_obs(vtmp_prf_mdl,vtmp_prf,prs_prf,prs_obs,nz_mdl,nlev_obs,kend)
 !   
 ! calculate number density times vertical weighting
    prf_model(:)=-9999.
    do k=1,nlev_obs-1
-      thick(k)=Rd*(vtmp_mdl(k)+vtmp_mdl(k+1))/2./grav* &
+      thick(k)=Rd*(vtmp_prf_mdl(k)+vtmp_prf_mdl(k+1))/2./grav* &
       log(prs_obs(k)/prs_obs(k+1))     
    enddo
 !
 ! convert to molecules/cm^2 and apply scattering weights
    do k=1,nlev_obs-1
-      prf_model(k)=thick(k)*(no2_mdl(k)+no2_mdl(k+1))/2.* &
+      prf_model(k)=thick(k)*(no2_prf_mdl(k)+no2_prf_mdl(k+1))/2.* &
       AvogN/msq2cmsq * v_wgts(k)
    enddo
 !   print *, 'prf_mdl  ',prf_model(:)
-!   print *, 'no2 fld   ',no2_mdl(:)
+!   print *, 'no2 fld   ',no2_prf_mdl(:)
 !   print *, 'avgk_obs ',v_wgts(:)
 end subroutine get_model_profile
 !
@@ -571,287 +632,6 @@ subroutine handle_err(rc,text)
    print *, 'APM: NETCDF ERROR ',trim(text),' ',rc
    call abort
 end subroutine handle_err
-!
-subroutine interp_hori_vert(fld1_prf,fld2_prf,fld1_mdl,fld2_mdl,x_mdl,y_mdl, &
-   x_obs,y_obs,prs_mdl,prs_obs,nx_mdl,ny_mdl,nz_mdl,nlev_obs,reject,kend)
-   implicit none
-   integer                                :: nx_mdl,ny_mdl,nz_mdl,nlev_obs
-   integer                                :: i,j,k,kend,i_min,j_min
-   integer                                :: im,ip,jm,jp,quad,reject
-   real                                   :: re,pi,rad2deg
-   real                                   :: rad,rad_crit,rad_min,mdl_x,mdl_y,obs_x,obs_y
-   real                                   :: dx_dis,dy_dis
-   real                                   :: x_obs,y_obs,x_obs_temp
-   real                                   :: x_obser,y_obser
-   real                                   :: w_q1,w_q2,w_q3,w_q4,wt
-   real,dimension(nlev_obs)               :: fld1_prf,fld2_prf,prs_obs
-   real,dimension(nz_mdl)                 :: fld1_prf_mdl,fld2_prf_mdl,prs_prf_mdl
-   real,dimension(nx_mdl,ny_mdl)          :: x_mdl,y_mdl
-   real,dimension(nx_mdl,ny_mdl,nz_mdl)   :: fld1_mdl,fld2_mdl,prs_mdl
-   real                                   :: cone_fac,cen_lat,cen_lon,truelat1, &
-                                             truelat2,moad_cen_lat,stand_lon, &
-                                             pole_lat,pole_lon,xi,xj,zi,zj,zlon,zlat
-   integer                                :: ierr
-!
-! Set constants
-   pi=4.*atan(1.)
-   rad2deg=360./(2.*pi)
-   re=6371000.
-   rad_crit=10000.
-   reject=0.
-!
-   cone_fac=.715567   
-   cen_lat=40.
-   cen_lon=-97.
-   truelat1=33.
-   truelat2=45.
-   moad_cen_lat=40.0000
-   stand_lon=-97.
-   pole_lat=90.
-   pole_lon=0.
-!
-! Code to test projection and inverse projection
-!   zi=nx_mdl
-!   zj=ny_mdl
-!   call w3fb13(real(y_mdl(zi,zj)),real(x_mdl(zi,zj)+360.), &
-!   real(y_mdl(1,1)),real(x_mdl(1,1)+360.),12000.,cen_lon+360.,truelat1,truelat2,xi,xj)
-!   print *,'i,j ',zi,zj
-!   print *,'lon lat ',x_mdl(zi,zj)+360.,y_mdl(zi,zj)
-!   print *, 'xi,xj ',xi,xj
-!
-!   call w3fb14(xi,xj,real(y_mdl(1,1)),real(x_mdl(1,1)+360.),12000.,cen_lon+360.,truelat1, &
-!   truelat2,zlat,zlon,ierr)
-!   print *, 'zlon,zlat ',zlon,zlat
-!   print *, 'ierr ',ierr
-!
-! The input grids need to be in degrees
-   x_obser=x_obs
-   y_obser=y_obs
-   if(x_obser.lt.0.) x_obser=(360.+x_obser)
-   call w3fb13(y_obser,x_obser,real(y_mdl(1,1)),real(x_mdl(1,1)+360.), &
-   12000.,cen_lon+360.,truelat1,truelat2,xi,xj)
-   i_min = nint(xi)
-   j_min = nint(xj)
-!   print *,' '
-!   print *,'i_min,j_min ',i_min,j_min
-!   print *,'i_max,j_max ',nx_mdl,ny_mdl
-!   x_obs_temp=x_obs
-!   if(x_obs.gt.180.) x_obs_temp=x_obs-360.
-!   print *,'x_obs,y_obs ',x_obs_temp,y_obs
-!   print *,'x_mdl(1,1),x_mdl(1,ny_mdl),x_mdl(nx_mdl,1),x_mdl(nx_mdl,ny_mdl) ', &
-!   x_mdl(1,1),x_mdl(1,ny_mdl),x_mdl(nx_mdl,1),x_mdl(nx_mdl,ny_mdl)
-!   print *,'y_mdl(1,1),y_mdl(1,ny_mdl),y_mdl(nx_mdl,1),y_mdl(nx_mdl,ny_mdl) ', &
-!   y_mdl(1,1),y_mdl(1,ny_mdl),y_mdl(nx_mdl,1),y_mdl(nx_mdl,ny_mdl)
-!
-! Check lower bounds
-   if(i_min.lt.1 .and. int(xi).eq.0) then
-      i_min=1
-   elseif (i_min.lt.1 .and. int(xi).lt.0) then
-      i_min=-9999
-      j_min=-9999
-      reject=1
-   endif
-   if(j_min.lt.1 .and. int(xj).eq.0) then
-      j_min=1
-   elseif (j_min.lt.1 .and. int(xj).lt.0) then
-      i_min=-9999
-      j_min=-9999
-      reject=1
-   endif
-!
-! Check upper bounds
-   if(i_min.gt.nx_mdl .and. int(xi).eq.nx_mdl) then
-      i_min=nx_mdl
-   elseif (i_min.gt.nx_mdl .and. int(xi).gt.nx_mdl) then
-      i_min=-9999
-      j_min=-9999
-      reject=1
-   endif
-   if(j_min.gt.ny_mdl .and. int(xj).eq.ny_mdl) then
-      j_min=ny_mdl
-   elseif (j_min.gt.ny_mdl .and. int(xj).gt.ny_mdl) then
-      i_min=-9999
-      j_min=-9999
-      reject=1
-   endif
-!   print *,'i_min,j_min,reject ',i_min,j_min,reject
-   if(reject.eq.1) return  
-!
-! Use model point closest to the observatkon   
-   fld1_prf(:)=-9999.
-   fld2_prf(:)=-9999.
-   fld1_prf_mdl(:)=fld1_mdl(i_min,j_min,:)
-   fld2_prf_mdl(:)=fld2_mdl(i_min,j_min,:)
-   prs_prf_mdl(:)=prs_mdl(i_min,j_min,:)
-!
-! Vertical interpolation
-   call interp_to_obs(fld1_prf,fld1_prf_mdl,prs_prf_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-   call interp_to_obs(fld2_prf,fld2_prf_mdl,prs_prf_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-!   print *, 'fld1 ',fld1_prf(:)
-!   print *, 'fld2 ',fld2_prf(:)
-   return
-!
-! This part of subroutine is not used  
-! Do horizontal interpolation
-   im=i_min-1
-   if(im.eq.0) im=1
-   ip=i_min+1
-   if(ip.eq.nx_mdl+1) ip=nx_mdl
-   jm=j_min-1
-   if(jm.eq.0) jm=1
-   jp=j_min+1
-   if(jp.eq.ny_mdl+1) jp=ny_mdl
-!
-! Find quadrant
-   quad=0
-   mdl_x=x_mdl(i_min,j_min)
-   if(x_mdl(i_min,j_min).lt.0.) mdl_x=360.+x_mdl(i_min,j_min)
-   mdl_y=y_mdl(i_min,j_min)
-   if(mdl_x.ge.x_obser.and.mdl_y.ge.y_obser) quad=1 
-   if(mdl_x.le.x_obser.and.mdl_y.ge.y_obser) quad=2 
-   if(mdl_x.le.x_obser.and.mdl_y.le.y_obser) quad=3 
-   if(mdl_x.ge.x_obser.and.mdl_y.le.y_obser) quad=4
-   if(quad.eq.0) then
-      print *, 'APM:ERROR IN PROCEDURE INTERP_HORIONTAL quad = 0 '
-      stop
-   endif
-!
-! Quad 1
-   if (quad.eq.1) then
-      mdl_x=x_mdl(i_min,j_min)
-      if(x_mdl(i_min,j_min).lt.0.) mdl_x=360.+x_mdl(i_min,j_min) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,j_min))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,j_min))/rad2deg*re
-      w_q1=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(im,j_min)
-      if(x_mdl(im,j_min).lt.0.) mdl_x=360.+x_mdl(im,j_min) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(im,j_min))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(im,j_min))/rad2deg*re
-      w_q2=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(im,jm)
-      if(x_mdl(im,jm).lt.0.) mdl_x=360.+x_mdl(im,jm) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(im,jm))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(im,jm))/rad2deg*re
-      w_q3=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(i_min,jm)
-      if(x_mdl(i_min,jm).lt.0.) mdl_x=360.+x_mdl(i_min,jm) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,jm))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,jm))/rad2deg*re
-      w_q4=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-! Quad 2
-   else if (quad.eq.2) then
-      mdl_x=x_mdl(ip,j_min)
-      if(x_mdl(ip,j_min).lt.0.) mdl_x=360.+x_mdl(ip,j_min) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(ip,j_min))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(ip,j_min))/rad2deg*re
-      w_q1=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(i_min,j_min)
-      if(x_mdl(i_min,j_min).lt.0.) mdl_x=360.+x_mdl(i_min,j_min) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,j_min))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,j_min))/rad2deg*re
-      w_q2=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(i_min,jm)
-      if(x_mdl(i_min,jm).lt.0.) mdl_x=360.+x_mdl(i_min,jm) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,jm))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,jm))/rad2deg*re
-      w_q3=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(ip,jm)
-      if(x_mdl(ip,jm).lt.0.) mdl_x=360.+x_mdl(ip,jm) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(ip,jm))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(ip,jm))/rad2deg*re
-      w_q4=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-! Quad 3
-   else if (quad.eq.3) then
-      mdl_x=x_mdl(ip,jp)
-      if(x_mdl(ip,jp).lt.0.) mdl_x=360.+x_mdl(ip,jp) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(ip,jp))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(ip,jp))/rad2deg*re
-      w_q1=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(i_min,jp)
-      if(x_mdl(i_min,jp).lt.0.) mdl_x=360.+x_mdl(i_min,jp) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,jp))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,jp))/rad2deg*re
-      w_q2=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(i_min,j_min)
-      if(x_mdl(i_min,j_min).lt.0.) mdl_x=360.+x_mdl(i_min,j_min) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,j_min))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,j_min))/rad2deg*re
-      w_q3=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(ip,j_min)
-      if(x_mdl(ip,j_min).lt.0.) mdl_x=360.+x_mdl(ip,j_min) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(ip,j_min))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(ip,j_min))/rad2deg*re
-      w_q4=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-! Quad 4
-   else if (quad.eq.4) then
-      mdl_x=x_mdl(i_min,jp)
-      if(x_mdl(i_min,jp).lt.0.) mdl_x=360.+x_mdl(i_min,jp) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,jp))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,jp))/rad2deg*re
-      w_q1=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(im,jp)
-      if(x_mdl(im,jp).lt.0.) mdl_x=360.+x_mdl(im,jp) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(im,jp))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(im,jp))/rad2deg*re
-      w_q2=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(im,jm)
-      if(x_mdl(im,jm).lt.0.) mdl_x=360.+x_mdl(im,jm) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(im,jm))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(im,jm))/rad2deg*re
-      w_q3=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(i_min,j_min)
-      if(x_mdl(i_min,j_min).lt.0.) mdl_x=360.+x_mdl(i_min,j_min) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,j_min))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,j_min))/rad2deg*re
-      w_q4=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-   endif
-   if(x_obser.ne.x_mdl(i_min,j_min).or.y_obser.ne.y_mdl(i_min,j_min)) then
-      wt=1./w_q1+1./w_q2+1./w_q3+1./w_q4
-   endif
-!
-   fld1_prf_mdl(:)=0.
-   fld2_prf_mdl(:)=0.
-   prs_prf_mdl(:)=0.
-   do k=1,nz_mdl
-      if(x_obser.eq.x_mdl(i_min,j_min).and.y_obser.eq.y_mdl(i_min,j_min)) then
-         fld1_prf_mdl(k)=fld1_mdl(i_min,j_min,k)
-         fld2_prf_mdl(k)=fld2_mdl(i_min,j_min,k)
-         prs_prf_mdl(k)=prs_mdl(i_min,j_min,k)
-      else if(quad.eq.1) then
-         fld1_prf_mdl(k)=(1./w_q1*fld1_mdl(i_min,j_min,k)+1./w_q2*fld1_mdl(im,j_min,k)+ &
-         1./w_q3*fld1_mdl(im,jm,k)+1./w_q4*fld1_mdl(i_min,jm,k))/wt
-         fld2_prf_mdl(k)=(1./w_q1*fld2_mdl(i_min,j_min,k)+1./w_q2*fld2_mdl(im,j_min,k)+ &
-         1./w_q3*fld2_mdl(im,jm,k)+1./w_q4*fld2_mdl(i_min,jm,k))/wt
-         prs_prf_mdl(k)=(1./w_q1*prs_mdl(i_min,j_min,k)+1./w_q2*prs_mdl(im,j_min,k)+ &
-         1./w_q3*prs_mdl(im,jm,k)+1./w_q4*prs_mdl(i_min,jm,k))/wt
-      else if(quad.eq.2) then
-         fld1_prf_mdl(k)=(1./w_q1*fld1_mdl(ip,j_min,k)+1./w_q2*fld1_mdl(i_min,j_min,k)+ &
-         1./w_q3*fld1_mdl(i_min,jm,k)+1./w_q4*fld1_mdl(ip,jm,k))/wt
-         fld2_prf_mdl(k)=(1./w_q1*fld2_mdl(ip,j_min,k)+1./w_q2*fld2_mdl(i_min,j_min,k)+ &
-         1./w_q3*fld2_mdl(i_min,jm,k)+1./w_q4*fld2_mdl(ip,jm,k))/wt
-         prs_prf_mdl(k)=(1./w_q1*prs_mdl(ip,j_min,k)+1./w_q2*prs_mdl(i_min,j_min,k)+ &
-         1./w_q3*prs_mdl(i_min,jm,k)+1./w_q4*prs_mdl(ip,jm,k))/wt
-      else if(quad.eq.3) then
-         fld1_prf_mdl(k)=(1./w_q1*fld1_mdl(ip,jp,k)+1./w_q2*fld1_mdl(i_min,jp,k)+ &
-         1./w_q3*fld1_mdl(i_min,j_min,k)+1./w_q4*fld1_mdl(ip,j_min,k))/wt
-         fld2_prf_mdl(k)=(1./w_q1*fld2_mdl(ip,jp,k)+1./w_q2*fld2_mdl(i_min,jp,k)+ &
-         1./w_q3*fld2_mdl(i_min,j_min,k)+1./w_q4*fld2_mdl(ip,j_min,k))/wt
-         prs_prf_mdl(k)=(1./w_q1*prs_mdl(ip,jp,k)+1./w_q2*prs_mdl(i_min,jp,k)+ &
-         1./w_q3*prs_mdl(i_min,j_min,k)+1./w_q4*prs_mdl(ip,j_min,k))/wt
-      else if(quad.eq.4) then
-         fld1_prf_mdl(k)=(1./w_q1*fld1_mdl(i_min,jp,k)+1./w_q2*fld1_mdl(im,jp,k)+ &
-         1./w_q3*fld1_mdl(im,j_min,k)+1./w_q4*fld1_mdl(i_min,j_min,k))/wt
-         fld2_prf_mdl(k)=(1./w_q1*fld2_mdl(i_min,jp,k)+1./w_q2*fld2_mdl(im,jp,k)+ &
-         1./w_q3*fld2_mdl(im,j_min,k)+1./w_q4*fld2_mdl(i_min,j_min,k))/wt
-         prs_prf_mdl(k)=(1./w_q1*prs_mdl(i_min,jp,k)+1./w_q2*prs_mdl(im,jp,k)+ &
-         1./w_q3*prs_mdl(im,j_min,k)+1./w_q4*prs_mdl(i_min,j_min,k))/wt
-      endif 
-   enddo
-!
-! Vertical interpolation
-   call interp_to_obs(fld1_prf,fld1_prf_mdl,prs_prf_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-   call interp_to_obs(fld2_prf,fld2_prf_mdl,prs_prf_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-end subroutine interp_hori_vert
 !
 subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
 ! Assumes prs_obs and prs_mdl are bottom to top

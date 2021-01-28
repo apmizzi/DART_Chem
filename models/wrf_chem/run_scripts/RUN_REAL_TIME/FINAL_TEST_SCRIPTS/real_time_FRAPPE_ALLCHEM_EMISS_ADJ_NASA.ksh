@@ -1216,7 +1216,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # The next line should be the same as NL_EMISS_FIRECHEMI_VARIABLES without quotes etc.
    export WRFFIRECHEMI_DARTVARS="ebu_in_co,ebu_in_no,ebu_in_no2,ebu_in_so2,ebu_in_oc,ebu_in_bc,ebu_in_c2h4,ebu_in_ch2o,ebu_in_ch3oh"
 #
-   export NL_EMISS_CHEMI_VARIABLES="'E_CO',     'QTY_E_CO',     'TYPE_E_CO',     'UPDATE','999',
+   export NL_EMISS_CHEMI_VARIABLES="'E_CO',     'QTY_CO',     'TYPE_E_CO',     'UPDATE','999',
           'E_NO'        ,'QTY_E_NO',           'TYPE_E_NO',   'UPDATE','999',
           'E_NO2'       ,'QTY_E_NO2',          'TYPE_E_NO2',  'UPDATE','999',
           'E_SO2'       ,'QTY_E_SO2',          'TYPE_E_SO2',  'UPDATE','999',
