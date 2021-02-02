@@ -103,7 +103,7 @@ program tropomi_no2_ascii_to_obs
    integer                         :: nlay_obs,nlev_obs,ilv
    integer                         :: seconds,days,which_vert
    integer                         :: seconds_last,days_last
-   integer                         :: nx_mdl,ny_mdl,nz_mdl
+   integer                         :: nx_model,ny_model,nz_model
    integer                         :: reject,k,kend
    integer                         :: i_min,j_min
    integer                         :: sum_reject,sum_accept,sum_total
@@ -114,13 +114,13 @@ program tropomi_no2_ascii_to_obs
    real                            :: bin_beg_sec,bin_end_sec
    real                            :: lon_min,lon_max,lat_min,lat_max
    real                            :: fac_obs_error,fac
-   real                            :: pi,rad2deg,re,level,level_crit
+   real                            :: pi,rad2deg,re,level_crit
    real                            :: x_observ,y_observ,dofs
    real                            :: prs_loc
-   real*8                          :: obs_err_var
+   real*8                          :: obs_err_var,level
 !
-   real,dimension(num_qc)          :: tropomi_qc
-   real,dimension(num_copies)      :: obs_val
+   real*8,dimension(num_qc)        :: tropomi_qc
+   real*8,dimension(num_copies)    :: obs_val
 !
    character*129                   :: filedir,filename,fileout
    character*129                   :: copy_meta_data
@@ -136,18 +136,14 @@ program tropomi_no2_ascii_to_obs
    integer                         :: trop_indx
    real                            :: col_amt_trop_obs, col_amt_trop_err_obs
    real                            :: amf_trop_obs
-   real                            :: amf_trop_obs_r8
+   real*8                          :: amf_trop_obs_r8
    real                            :: lat_obs,lon_obs
-   real                            :: xi_real,xj_real
    real*8                          :: lat_obs_r8,lon_obs_r8
    real,allocatable,dimension(:)   :: avgk_obs
    real*8,allocatable,dimension(:) :: avgk_obs_r8
    real,allocatable,dimension(:)   :: prs_obs
    real*8,allocatable,dimension(:) :: prs_obs_r8
    real,allocatable,dimension(:)   :: prf_model
-   real                            :: cone_fac,cen_lat,cen_lon,truelat1, &
-                                      truelat2,moad_cen_lat,stand_lon, &
-                                      pole_lat,pole_lon,xi,xj,zi,zj,zlon,zlat
    real,allocatable,dimension(:,:)     :: lon,lat
    real,allocatable,dimension(:,:,:)   :: prs_prt,prs_bas,prs_fld
    real,allocatable,dimension(:,:,:)   :: tmp_prt,tmp_fld,vtmp_fld
@@ -156,7 +152,7 @@ program tropomi_no2_ascii_to_obs
    namelist /create_tropomi_obs_nml/filedir,filename,fileout, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
    lon_min,lon_max,lat_min,lat_max, &
-   path_model,file_model,nx_mdl,ny_mdl,nz_mdl
+   path_model,file_model,nx_model,ny_model,nz_model
 !
 ! Set constants
    pi=4.*atan(1.)
@@ -165,17 +161,6 @@ program tropomi_no2_ascii_to_obs
    days_last=-9999.
    seconds_last=-9999.
    level_crit=500.
-!
-   cone_fac=.715567   
-   cen_lat=40.
-   cen_lon=-97.
-   truelat1=33.
-   truelat2=45.
-   moad_cen_lat=40.0000
-   stand_lon=-97.
-   pole_lat=90.
-   pole_lon=0.
-!   
    sum_reject=0
    sum_accept=0
    sum_total=0
@@ -224,21 +209,23 @@ program tropomi_no2_ascii_to_obs
    call set_calendar_type(calendar_type)
 !
 ! Read model data
-   allocate(lon(nx_mdl,ny_mdl))
-   allocate(lat(nx_mdl,ny_mdl))
-   allocate(prs_fld(nx_mdl,ny_mdl,nz_mdl))
-   allocate(tmp_fld(nx_mdl,ny_mdl,nz_mdl))
-   allocate(qmr_fld(nx_mdl,ny_mdl,nz_mdl))
-   allocate(no2_fld(nx_mdl,ny_mdl,nz_mdl))
-   
+   allocate(lon(nx_model,ny_model))
+   allocate(lat(nx_model,ny_model))
+   allocate(prs_prt(nx_model,ny_model,nz_model))
+   allocate(prs_bas(nx_model,ny_model,nz_model))
+   allocate(prs_fld(nx_model,ny_model,nz_model))
+   allocate(tmp_prt(nx_model,ny_model,nz_model))
+   allocate(tmp_fld(nx_model,ny_model,nz_model))
+   allocate(qmr_fld(nx_model,ny_model,nz_model))
+   allocate(no2_fld(nx_model,ny_model,nz_model))
    file_in=trim(path_model)//'/'//trim(file_model)
-   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_mdl,ny_mdl,1,1)
-   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_mdl,ny_mdl,1,1)
-   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_mdl,ny_mdl,nz_mdl,1)
-   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_mdl,ny_mdl,nz_mdl,1)
-   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_mdl,ny_mdl,nz_mdl,1)
-   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_mdl,ny_mdl,nz_mdl,1)
-   call get_DART_diag_data(file_in,'no2',no2_fld,nx_mdl,ny_mdl,nz_mdl,1)
+   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
+   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
+   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
+   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
+   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
+   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
+   call get_DART_diag_data(file_in,'no2',no2_fld,nx_model,ny_model,nz_model,1)
    prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
    tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
    no2_fld(:,:,:)=no2_fld(:,:,:)*1.e-6
@@ -251,7 +238,7 @@ program tropomi_no2_ascii_to_obs
 !
 ! Read TROPOMI NO2
    line_count = 0
-   read(fileid,*,iostat=ios) data_type, obs_id, xi_real, xj_real
+   read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    do while (ios == 0)
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
       dy_obs, hh_obs, mm_obs, ss_obs
@@ -290,63 +277,10 @@ program tropomi_no2_ascii_to_obs
 ! Find model NO2 profile corresponding to the observation
 !--------------------------------------------------------
       reject=0
-!
-! The input grids need to be in degrees
-      x_obser=lon_obs
-      y_obser=lat_obs
-      if(x_obser.lt.0.) x_obser=(360.+x_obser)
-      call w3fb13(y_obser,x_obser,lat(1,1)),lon(1,1)+360., &
-      12000.,cen_lon+360.,truelat1,truelat2,xi,xj)
-      i_min = nint(xi)
-      j_min = nint(xj)
-!
-! Check lower bounds
-      if(i_min.lt.1 .and. int(xi).eq.0) then
-         i_min=1
-      elseif (i_min.lt.1 .and. int(xi).lt.0) then
-         i_min=-9999
-         j_min=-9999
-         reject=1
-      endif
-      if(j_min.lt.1 .and. int(xj).eq.0) then
-         j_min=1
-      elseif (j_min.lt.1 .and. int(xj).lt.0) then
-         i_min=-9999
-         j_min=-9999
-         reject=1
-      endif
-!
-! Check upper bounds
-      if(i_min.gt.nx_mdl .and. int(xi).eq.nx_mdl) then
-         i_min=nx_mdl
-      elseif (i_min.gt.nx_mdl .and. int(xi).gt.nx_mdl) then
-         i_min=-9999
-         j_min=-9999
-         reject=1
-      endif
-      if(j_min.gt.ny_mdl .and. int(xj).eq.ny_mdl) then
-         j_min=ny_mdl
-      elseif (j_min.gt.ny_mdl .and. int(xj).gt.ny_mdl) then
-         i_min=-9999
-         j_min=-9999
-         reject=1
-      endif
-!      print *,'i_min,j_min,reject ',i_min,j_min,reject
-      if(reject.eq.1) then
-         sum_reject=sum_reject+1
-         read(fileid,*,iostat=ios) data_type, obs_id, xi_real, xj_real
-         deallocate(prs_obs) 
-         deallocate(avgk_obs)
-         deallocate(prs_obs_r8) 
-         deallocate(avgk_obs_r8)
-         deallocate(prf_model) 
-         cycle
-      else
-         call get_model_profile(prf_model,nz_mdl, &
-         prs_obs*100.,prs_fld(imin,j_min,:),tmp_fld(imin,j_min,:), &
-         qmr_fld(imin,j_min,:),no2_fld(imin,j_min,:), &
-         nlev_obs,avgk_obs,kend)
-      endif
+      call get_model_profile(prf_model,nz_model, &
+      prs_obs*100.,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
+      qmr_fld(i_min,j_min,:),no2_fld(i_min,j_min,:), &
+      nlev_obs,avgk_obs,kend)
 !
 !--------------------------------------------------------
 ! Find vertical location
@@ -359,7 +293,7 @@ program tropomi_no2_ascii_to_obs
       if(level/100..lt.level_crit) then
          reject=1
          sum_reject=sum_reject+1
-         read(fileid,*,iostat=ios) data_type, obs_id, xi_real, xj_real
+         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
 !         print *, trim(data_type), obs_id
          deallocate(prs_obs) 
          deallocate(avgk_obs)
@@ -426,20 +360,23 @@ program tropomi_no2_ascii_to_obs
       deallocate(prs_obs_r8) 
       deallocate(avgk_obs_r8)
       deallocate(prf_model) 
-      deallocate(lon)
-      deallocate(lat)
-      deallocate(prs_fld)
-      deallocate(tmp_fld)
-      deallocate(qmr_fld)
-      deallocate(no2_fld)
-      read(fileid,*,iostat=ios) data_type, obs_id, xi_real, xj_real
+      read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
       print *, 'sum_accept ',sum_accept
-      if(sum_accept.ge.1000) exit      
    enddo   
 !
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
+   deallocate(lon)
+   deallocate(lat)
+   deallocate(prs_prt)
+   deallocate(prs_bas)
+   deallocate(prs_fld)
+   deallocate(tmp_prt)
+   deallocate(tmp_fld)
+   deallocate(qmr_fld)
+   deallocate(no2_fld)
+!
    print *, 'total obs ',sum_total
    print *, 'accepted ',sum_accept
    print *, 'rejected ',sum_reject
@@ -501,7 +438,7 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,kend,trop_
    prs_loc=(prs_obs(kmax)+prs_obs(kmax+1))/2.
 end subroutine vertical_locate
 !
-subroutine get_model_profile(prf_model,nz_mdl,prs_obs,prs_mdl, &
+subroutine get_model_profile(prf_mdl,nz_mdl,prs_obs,prs_mdl, &
    tmp_mdl,qmr_mdl,no2_mdl,nlev_obs,v_wgts,kend)
    implicit none
    integer                                :: nz_mdl
@@ -510,7 +447,7 @@ subroutine get_model_profile(prf_model,nz_mdl,prs_obs,prs_mdl, &
    real                                   :: Ru,Rd,cp,eps,AvogN,msq2cmsq,grav
    real,dimension(nz_mdl)                 :: prs_mdl,tmp_mdl,qmr_mdl,no2_mdl
    real,dimension(nz_mdl)                 :: tmp_prf,vtmp_prf,no2_prf
-   real,dimension(nlev_obs-1)             :: thick,v_wgts
+   real,dimension(nlev_obs-1)             :: thick,v_wgts,prf_mdl
    real,dimension(nlev_obs)               :: no2_prf_mdl,vtmp_prf_mdl,prs_obs
 !
 ! Constants (mks units)
@@ -536,13 +473,13 @@ subroutine get_model_profile(prf_model,nz_mdl,prs_obs,prs_mdl, &
       no2_prf(k)=no2_mdl(k)*prs_mdl(k)/Ru/tmp_prf(k)
    enddo
 ! Vertical interpolation
-   no2_prf_mdl(:)=-9999,   
-   vtmp_prf_mdl(:)=-9999,   
-   call interp_to_obs(no2_prf_mdl,no2_prf,prs_prf,prs_obs,nz_mdl,nlev_obs,kend)
-   call interp_to_obs(vtmp_prf_mdl,vtmp_prf,prs_prf,prs_obs,nz_mdl,nlev_obs,kend)
+   no2_prf_mdl(:)=-9999.  
+   vtmp_prf_mdl(:)=-9999.   
+   call interp_to_obs(no2_prf_mdl,no2_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
+   call interp_to_obs(vtmp_prf_mdl,vtmp_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
 !   
 ! calculate number density times vertical weighting
-   prf_model(:)=-9999.
+   prf_mdl(:)=-9999.
    do k=1,nlev_obs-1
       thick(k)=Rd*(vtmp_prf_mdl(k)+vtmp_prf_mdl(k+1))/2./grav* &
       log(prs_obs(k)/prs_obs(k+1))     
@@ -550,7 +487,7 @@ subroutine get_model_profile(prf_model,nz_mdl,prs_obs,prs_mdl, &
 !
 ! convert to molecules/cm^2 and apply scattering weights
    do k=1,nlev_obs-1
-      prf_model(k)=thick(k)*(no2_prf_mdl(k)+no2_prf_mdl(k+1))/2.* &
+      prf_mdl(k)=thick(k)*(no2_prf_mdl(k)+no2_prf_mdl(k+1))/2.* &
       AvogN/msq2cmsq * v_wgts(k)
    enddo
 !   print *, 'prf_mdl  ',prf_model(:)

@@ -105,17 +105,18 @@ program omi_no2_ascii_to_obs
    integer                         :: seconds_last,days_last
    integer                         :: nx_model,ny_model,nz_model
    integer                         :: reject,k,kend
+   integer                         :: i_min,j_min
    integer                         :: sum_reject,sum_accept,sum_total
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
 !
-   real*8                          :: bin_beg_sec,bin_end_sec
-   real*8                          :: lon_min,lon_max,lat_min,lat_max
-   real*8                          :: fac_obs_error,fac
-   real*8                          :: pi,rad2deg,re,level,level_crit
-   real*8                          :: lat,lon,dofs
-   real*8                          :: obs_err_var
+   real                            :: bin_beg_sec,bin_end_sec
+   real                            :: lon_min,lon_max,lat_min,lat_max
+   real                            :: fac_obs_error,fac
+   real                            :: pi,rad2deg,re,level_crit
+   real                            :: x_observ,y_observ,dofs
+   real*8                          :: obs_err_var,level
 !
    real*8,dimension(num_qc)        :: omi_qc
    real*8,dimension(num_copies)    :: obs_val
@@ -126,17 +127,17 @@ program omi_no2_ascii_to_obs
    character*129                   :: chr_year,chr_month,chr_day
    character*129                   :: file_name='omi_no2_obs_seq'
    character*129                   :: data_type,cmd
-   character*129                   :: path_model,file_model
+   character*129                   :: path_model,file_model,file_in
 !
    logical                         :: use_log_o3,use_log_no2,use_log_so2
 !
 ! Species-specific variables
-   real*8                          :: amfstrat,amfstrat_clr,amfstrat_cld
-   real*8                          :: amftrop,amftrop_clr,amftrop_cld
-   real*8                          :: cld_frac,cld_prs,cld_rad_frac
-   real*8                          :: col_amt,col_amt_err
-   real*8                          :: col_amt_trop,col_amt_trop_err
-   real*8                          :: slnt_col_amt,slnt_col_amt_err
+   real                            :: amfstrat,amfstrat_clr,amfstrat_cld
+   real                            :: amftrop,amftrop_clr,amftrop_cld
+   real                            :: cld_frac,cld_prs,cld_rad_frac
+   real                            :: col_amt,col_amt_err
+   real                            :: col_amt_trop,col_amt_trop_err
+   real                            :: slnt_col_amt,slnt_col_amt_err
    real                            :: prs_trop,zenang
    real*8                          :: prs_trop_r8
    real                            :: prs_loc
@@ -145,6 +146,10 @@ program omi_no2_ascii_to_obs
    real,allocatable,dimension(:)   :: scat_wt,prs_obs
    real*8,allocatable,dimension(:) :: scat_wt_r8,prs_obs_r8
    real,allocatable,dimension(:)   :: prf_model
+   real,allocatable,dimension(:,:)     :: lon,lat
+   real,allocatable,dimension(:,:,:)   :: prs_prt,prs_bas,prs_fld
+   real,allocatable,dimension(:,:,:)   :: tmp_prt,tmp_fld,vtmp_fld
+   real,allocatable,dimension(:,:,:)   :: no2_fld,qmr_fld
 !
    namelist /create_omi_obs_nml/filedir,filename,fileout,year,month,day,hour, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_o3,use_log_no2,use_log_so2, &
@@ -208,7 +213,29 @@ program omi_no2_ascii_to_obs
    calendar_type=3                          !Gregorian
    call set_calendar_type(calendar_type)
 !
-! Open OMI NO2 binary file
+! Read model data
+   allocate(lon(nx_model,ny_model))
+   allocate(lat(nx_model,ny_model))
+   allocate(prs_prt(nx_model,ny_model,nz_model))
+   allocate(prs_bas(nx_model,ny_model,nz_model))
+   allocate(prs_fld(nx_model,ny_model,nz_model))
+   allocate(tmp_prt(nx_model,ny_model,nz_model))
+   allocate(tmp_fld(nx_model,ny_model,nz_model))
+   allocate(qmr_fld(nx_model,ny_model,nz_model))
+   allocate(no2_fld(nx_model,ny_model,nz_model))
+   file_in=trim(path_model)//'/'//trim(file_model)
+   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
+   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
+   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
+   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
+   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
+   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
+   call get_DART_diag_data(file_in,'no2',no2_fld,nx_model,ny_model,nz_model,1)
+   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
+   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
+   no2_fld(:,:,:)=no2_fld(:,:,:)*1.e-6
+!
+! Open TROPOMI NO2 binary file
    fileid=100
    write(6,*)'opening ',TRIM(TRIM(filedir)//TRIM(filename))
    open(unit=fileid,file=TRIM(TRIM(filedir)//TRIM(filename)), &
@@ -216,7 +243,7 @@ program omi_no2_ascii_to_obs
 !
 ! Read OMI NO2
    line_count = 0
-   read(fileid,*,iostat=ios) data_type, obs_id
+   read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    print *, trim(data_type), obs_id
    do while (ios == 0)
       sum_total=sum_total+1
@@ -264,20 +291,10 @@ program omi_no2_ascii_to_obs
 ! Find model NO2 profile corresponding to the observation
 !--------------------------------------------------------
       reject=0
-      call get_model_profile(prf_model,path_model,file_model, &
-      nx_model,ny_model,nz_model,lon_obs,lat_obs,prs_obs*100., &
-      nlev_obs,scat_wt,reject)
-      if(reject.eq.1) then
-         sum_reject=sum_reject+1
-         read(fileid,*,iostat=ios) data_type, obs_id
-!         print *, trim(data_type), obs_id
-         deallocate(scat_wt)
-         deallocate(prs_obs) 
-         deallocate(scat_wt_r8)
-         deallocate(prs_obs_r8) 
-         deallocate(prf_model) 
-         cycle
-      endif
+      call get_model_profile(prf_model,nz_model, &
+      prs_obs*100.,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
+      qmr_fld(i_min,j_min,:),no2_fld(i_min,j_min,:), &
+      nlev_obs,scat_wt,kend)
 !
 !--------------------------------------------------------
 ! Find vertical location
@@ -291,7 +308,7 @@ program omi_no2_ascii_to_obs
       if(level/100..lt.level_crit) then
          reject=1
          sum_reject=sum_reject+1
-         read(fileid,*,iostat=ios) data_type, obs_id
+         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
 !         print *, trim(data_type), obs_id
          deallocate(scat_wt)
          deallocate(prs_obs) 
@@ -358,13 +375,23 @@ program omi_no2_ascii_to_obs
       deallocate(scat_wt_r8)
       deallocate(prs_obs_r8) 
       deallocate(prf_model)
-      read(fileid,*,iostat=ios) data_type, obs_id
+      read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
 !      print *, trim(data_type), obs_id
    enddo  
 !
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
+   deallocate(lon)
+   deallocate(lat)
+   deallocate(prs_prt)
+   deallocate(prs_bas)
+   deallocate(prs_fld)
+   deallocate(tmp_prt)
+   deallocate(tmp_fld)
+   deallocate(qmr_fld)
+   deallocate(no2_fld)
+!
    print *, 'total obs ',sum_total
    print *, 'accepted ',sum_accept
    print *, 'rejected ',sum_reject
@@ -437,23 +464,17 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,prs_trop,k
    prs_loc=(prs_obs(kmax)+prs_obs(kmax+1))/2.
 end subroutine vertical_locate
 !
-subroutine get_model_profile(prf_model,path_model,file_model, &
-   nx_mdl,ny_mdl,nz_mdl,lon_obs,lat_obs,prs_obs,nlev_obs, &
-   v_wgts,reject)
+subroutine get_model_profile(prf_mdl,nz_mdl,prs_obs,prs_mdl, &
+   tmp_mdl,qmr_mdl,no2_mdl,nlev_obs,v_wgts,kend)
    implicit none
-   integer                                :: nx_mdl,ny_mdl,nz_mdl
+   integer                                :: nz_mdl
    integer                                :: nlev_obs
-   integer                                :: i,j,k,reject
-   real                                   :: lon_obs,lat_obs
+   integer                                :: i,j,k,kend
    real                                   :: Ru,Rd,cp,eps,AvogN,msq2cmsq,grav
-   real,dimension(nx_mdl,ny_mdl)          :: lon,lat
-   real,dimension(nx_mdl,ny_mdl,nz_mdl)   :: prs_prt,prs_bas,prs_fld
-   real,dimension(nx_mdl,ny_mdl,nz_mdl)   :: tmp_prt,tmp_fld,vtmp_fld
-   real,dimension(nx_mdl,ny_mdl,nz_mdl)   :: no2_fld,qmr_fld
-   real,dimension(nlev_obs-1)             :: prf_model,thick,v_wgts
-   real,dimension(nlev_obs)               :: no2_mdl,vtmp_mdl,prs_obs
-   character(len=*)                       :: path_model,file_model
-   character(len=180)                     :: file_in
+   real,dimension(nz_mdl)                 :: prs_mdl,tmp_mdl,qmr_mdl,no2_mdl
+   real,dimension(nz_mdl)                 :: tmp_prf,vtmp_prf,no2_prf
+   real,dimension(nlev_obs-1)             :: thick,v_wgts,prf_mdl
+   real,dimension(nlev_obs)               :: no2_prf_mdl,vtmp_prf_mdl,prs_obs
 !
 ! Constants (mks units)
    Ru=8.316
@@ -463,64 +484,44 @@ subroutine get_model_profile(prf_model,path_model,file_model, &
    AvogN=6.02214e23
    msq2cmsq=1.e4
    grav=9.8
-   reject=0
 !
-! Get model fields   
-   file_in=trim(path_model)//'/'//trim(file_model)
-   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_mdl,ny_mdl,1,1)
-   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_mdl,ny_mdl,1,1)
-   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_mdl,ny_mdl,nz_mdl,1)
-   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_mdl,ny_mdl,nz_mdl,1)
-   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_mdl,ny_mdl,nz_mdl,1)
-   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_mdl,ny_mdl,nz_mdl,1)
-   call get_DART_diag_data(file_in,'no2',no2_fld,nx_mdl,ny_mdl,nz_mdl,1)
-   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-   no2_fld(:,:,:)=no2_fld(:,:,:)*1.e-6
-!
-   do i=1,nx_mdl
-      do j=1,ny_mdl
 ! calculate temperature from potential temperature
-         do k=1,nz_mdl
-            tmp_fld(i,j,k)=tmp_fld(i,j,k)*((prs_fld(i,j,k)/ &
-            100000.)**(Rd/cp))
-         enddo         
+   do k=1,nz_mdl
+      tmp_prf(k)=tmp_mdl(k)*((prs_mdl(k)/ &
+      100000.)**(Rd/cp))
+   enddo         
 ! calculate virtual temperature
-         do k=1,nz_mdl
-            vtmp_fld(i,j,k)=tmp_fld(i,j,k)*(1.+eps*qmr_fld(i,j,k))
-         enddo         
+   do k=1,nz_mdl
+      vtmp_prf(k)=tmp_prf(k)*(1.+eps*qmr_mdl(k))
+   enddo         
 ! convert to molar density         
-         do k=1,nz_mdl
-            no2_fld(i,j,k)=no2_fld(i,j,k)*prs_fld(i,j,k)/Ru/tmp_fld(i,j,k)
-         enddo
-      enddo
+   do k=1,nz_mdl
+      no2_prf(k)=no2_mdl(k)*prs_mdl(k)/Ru/tmp_prf(k)
    enddo
-!
-! Use interp_hori_vert to find obs that are outside the domain   
-! Find model point closest to the observation point and de vertical interpolation
-   call interp_hori_vert(no2_mdl,vtmp_mdl,no2_fld,vtmp_fld,lon,lat, &
-   lon_obs,lat_obs,prs_fld,prs_obs,nx_mdl,ny_mdl,nz_mdl,nlev_obs,reject)
-   if(reject.eq.1) return
+! Vertical interpolation
+   no2_prf_mdl(:)=-9999.  
+   vtmp_prf_mdl(:)=-9999.   
+   call interp_to_obs(no2_prf_mdl,no2_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
+   call interp_to_obs(vtmp_prf_mdl,vtmp_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
 !   
 ! calculate number density times vertical weighting
-   prf_model(:)=-9999.
+   prf_mdl(:)=-9999.
    do k=1,nlev_obs-1
-      thick(k)=Rd*(vtmp_mdl(k)+vtmp_mdl(k+1))/2./grav* &
+      thick(k)=Rd*(vtmp_prf_mdl(k)+vtmp_prf_mdl(k+1))/2./grav* &
       log(prs_obs(k)/prs_obs(k+1))     
    enddo
 !
 ! convert to molecules/cm^2 and apply scattering weights
    do k=1,nlev_obs-1
-!      prf_model(k)=thick(k)*(no2_mdl(k)+no2_mdl(k+1))/2.* &
+!      prf_mdl(k)=thick(k)*(no2_prf_mdl(k)+no2_prf_mdl(k+1))/2.* &
 !      AvogN/msq2cmsq * v_wgts(k)
 !
-      prf_model(k)=(no2_mdl(k)+no2_mdl(k+1))/2.* &
+      prf_mdl(k)=(no2_prf_mdl(k)+no2_prf_mdl(k+1))/2.* &
       AvogN/msq2cmsq * v_wgts(k)
    enddo
-!   print *, 'prf_mdl ',prf_model(:)
-!   print *, 'no2 fld ',no2_mdl(:)
-!   print *, 'sct_wts ',v_wgts(:)
-!   print *, 'thick   ',thick(:)
+!   print *, 'prf_mdl  ',prf_model(:)
+!   print *, 'no2 fld   ',no2_prf_mdl(:)
+!   print *, 'avgk_obs ',v_wgts(:)
 end subroutine get_model_profile
 !
 subroutine get_DART_diag_data(file_in,name,data,nx,ny,nz,nc)

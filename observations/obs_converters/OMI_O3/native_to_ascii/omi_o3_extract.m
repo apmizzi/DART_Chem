@@ -1,4 +1,4 @@
-function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,cwss_mn,cwyr_mx,cwmn_mx,cwdy_mx,cwhh_mx,cwmm_mx,cwss_mx,clon_min,clon_max,clat_min,clat_max)
+function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,cwss_mn,cwyr_mx,cwmn_mx,cwdy_mx,cwhh_mx,cwmm_mx,cwss_mx,path_mdl,file_mdl,cnx_mdl,cny_mdl)
 %
 % Get file list and number of files
    wyr_mn=str2double(cwyr_mn);
@@ -13,10 +13,8 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    whh_mx=str2double(cwhh_mx);
    wmm_mx=str2double(cwmm_mx);
    wss_mx=str2double(cwss_mx);
-   lon_min=str2double(clon_min);
-   lon_max=str2double(clon_max);
-   lat_min=str2double(clat_min);
-   lat_max=str2double(clat_max);
+   nx_mdl=str2double(cnx_mdl);
+   ny_mdl=str2double(cny_mdl);
 %
    command=strcat('rm'," ",'-rf'," ",fileout);
    [status]=system(command);
@@ -39,6 +37,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    msq2cmsq=1.e4;
    P_std=1013.25;
    grav=9.8;
+   cone_fac=.715567;   
 %
 % Convert DU to moles/m^2
    du2molpm2=4.4615e-4;
@@ -52,8 +51,22 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 % Print input data
 %   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
 %   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
-%   fprintf('domain bounds %d %d %d %d \n',lat_min,lat_max,lon_min,lon_max)
 %
+%
+% Read model grid
+   lon_mdl=ncread(strcat(path_mdl,'/',file_mdl),'XLONG');
+   lat_mdl=ncread(strcat(path_mdl,'/',file_mdl),'XLAT');
+   delx=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','DX');  
+   cen_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LAT');  
+   cen_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LON');  
+   truelat1=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','TRUELAT1');  
+   truelat2=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','TRUELAT2');  
+   moad_cen_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','MOAD_CEN_LAT');  
+   stand_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','STAND_LON');  
+   pole_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','POLE_LAT');  
+   pole_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','POLE_LON');
+%
+% Process satellite data
    for ifile=1:nfile
       file_in=char(file_list(ifile));
       indx=strfind(file_in,file_pre)-1;
@@ -267,16 +280,68 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
             end
 %
 % Check domain
-%   	    fprintf('APM lon: %d %d %d \n',lon_min,lon(ipxl,ilin),lon_max)
-%	    fprintf('APM lat: %d %d %d \n',lat_min,lat(ipxl,ilin),lat_max)
-	    if(lat(ipxl,ilin)<lat_min | lat(ipxl,ilin)>lat_max | ...
-	    lon(ipxl,ilin)<lon_min | lon(ipxl,ilin)>lon_max)
-               continue
+% Input grid needs to be in degrees
+% X coordinate is [0 to 360]
+%		 
+	    x_obser=lon(ipxl,ilin);
+            y_obser=lat(ipxl,ilin);
+            if(x_obser<0.)
+	       x_obser=360.+x_obser;
             end
+%
+	    xmdl_sw=lon_mdl(1,1);
+	    if(xmdl_sw<0.)
+	       xmdl_sw=xmdl_sw+360.;
+            end
+%
+% APM: Need to get this info from model
+	    [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
+	    xmdl_sw,12000.,cen_lon,truelat1,truelat2);
+            i_min = round(xi);
+            j_min = round(xj);
+            reject = 0;
+%
+% Check lower bounds
+            if(i_min<1 & round(xi)==0)
+	       i_min=1;
+            elseif(i_min<1 & fix(xi)<0)
+   	       i_min=-9999;
+               j_min=-9999;
+               reject=1;
+            end
+            if(j_min<1 & round(xj)==0)
+               j_min=1;
+            elseif (j_min<1 & fix(xj)<0)
+               i_min=-9999;
+               j_min=-9999;
+               reject=1;
+            end
+%
+% Check upper bounds
+            if(i_min>nx_mdl & fix(xi)==nx_mdl)
+               i_min=nx_mdl;
+            elseif (i_min>nx_mdl & fix(xi)>nx_mdl)
+               i_min=-9999;
+               j_min=-9999;
+               reject=1;
+            end
+            if(j_min>ny_mdl & fix(xj)==ny_mdl)
+	       j_min=ny_mdl;
+            elseif (j_min>ny_mdl & fix(xj)>ny_mdl)
+               i_min=-9999;
+               j_min=-9999;
+               reject=1;
+            end
+            if(reject==1)
+	       continue
+	    end
+	    if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
+	       continue
+	    end
 %
 % Save data to ascii file
             icnt=icnt+1;
-            fprintf(fid,'OMI_TOMS_O3_Obs: %d \n',icnt);
+fprintf(fid,'OMI_TOMS_O3_Obs: %d %d %d  \n',icnt,i_min,j_min);
             fprintf(fid,'%d %d %d %d %d %d \n',yyyy_omi, ...
 	    mn_omi,dy_omi,hh_omi,mm_omi,ss_omi);
 	    fprintf(fid,'%14.8f %14.8f \n',lat(ipxl,ilin),lon(ipxl,ilin));
@@ -989,4 +1054,71 @@ month,day,hour,minute,second);
    hh=hour;
    mm=minute;
    ss=second;
+end
+%
+   function [xi,xj]=w3fb13(alat,elon,alat1,elon1, ...
+   dx,elonv,alatan1,alatan2)
+%
+   rerth=6.3712e6;
+   pi=3.14159;
+%
+   if(alatan1>0)
+      h=1;
+   else
+      h=-1;
+   end
+%
+   radpd=pi/180.;
+   rebydx=rerth/dx;
+   alatn1=alatan1*radpd;
+   alatn2=alatan2*radpd;
+   if(alatan1==alatan2)
+      an=h*sin(alatn1);
+   else
+      an=log(cos(alatn1)/cos(alatn2))/ ...
+      log(tan(((h*pi/2.)-alatn1)/2.)/tan(((h*pi/2.)-alatn2)/2.));
+   end
+   cosltn=cos(alatn2);
+%
+   elon1l=elon1;
+   if(elon1-elonv>180)
+      elon1l=elon1-360;
+   end
+   if(elon1-elonv<-180)
+      elon1l=elon1+360;
+   end
+%
+   elonl=elon;
+   if(elon-elonv>180)
+      elonl=elon-360;
+   end
+   if(elon-elonv<-180)
+      elonl=elon+360;
+   end
+%
+   elonvr=elonv*radpd;
+%
+   ala1=alat1*radpd;
+   psi=(rebydx*cosltn)/(an*(tan((pi/4.)-(h*alatn2/2.))^an));
+   rmll=psi*(tan((pi/4.)-(h*ala1/2.))^an);
+%
+   elo1=elon1l*radpd;
+   arg=an*(elo1-elonvr);
+   polei=1.-h*rmll*sin(arg);
+   polej=1+rmll*cos(arg);
+%
+   ala=alat*radpd;
+%
+   rm=psi*(tan((pi/4.)-(h*ala/2.))^an);
+   elo=elonl*radpd;
+   arg=an*(elo-elonvr);
+   xi=polei+h*rm*sin(arg);
+   xj=polej-rm*cos(arg);
+%
+   if(round(xi)<1)
+      xi=xi-1;
+   end
+   if(round(xj)<1)
+      xj=xj-1;
+   end
 end

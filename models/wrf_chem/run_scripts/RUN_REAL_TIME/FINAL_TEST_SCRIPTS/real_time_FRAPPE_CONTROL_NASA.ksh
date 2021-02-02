@@ -31,14 +31,14 @@ export FIRST_DART_INFLATE_DATE=2014071406
 export FIRST_EMISS_INV_DATE=2014071406
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014071806
+export CYCLE_STR_DATE=2014071500
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014071806
+export CYCLE_END_DATE=2014071606
 #export CYCLE_END_DATE=${CYCLE_STR_DATE}
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
-export NL_FAC_OBS_ERROR_MOPITT=1.00
+export NL_FAC_OBS_ERROR_MOPITT=0.50
 export NL_FAC_OBS_ERROR_IASI=1.00
 export NL_FAC_OBS_ERROR_OMI=1.00
 export NL_FAC_OBS_ERROR_TROPOMI=1.00
@@ -72,12 +72,12 @@ if [[ ${USE_LOG} == true ]]; then
    export PM25_MAX=NULL
    export USE_LOG_CO_LOGIC=.true.
    export USE_LOG_O3_LOGIC=.true.
-   export USE_LOG_NOX_LOGIC=.false.
-   export USE_LOG_NO2_LOGIC=.false.
-   export USE_LOG_SO2_LOGIC=.false.
-   export USE_LOG_PM10_LOGIC=.false.
-   export USE_LOG_PM25_LOGIC=.false.
-   export USE_LOG_AOD_LOGIC=.false.
+   export USE_LOG_NOX_LOGIC=.true.
+   export USE_LOG_NO2_LOGIC=.true.
+   export USE_LOG_SO2_LOGIC=.true.
+   export USE_LOG_PM10_LOGIC=.true.
+   export USE_LOG_PM25_LOGIC=.true.
+   export USE_LOG_AOD_LOGIC=.true.
 else
    export CO_MIN=1.e-4
    export CO_MAX=NULL
@@ -143,9 +143,9 @@ export NUM_SPECIAL_FORECAST=1
 export SPECIAL_FORECAST_FAC=1./2.
 export SPECIAL_FORECAST_FAC=2./3.
 #
-export SPECIAL_FORECAST_MEM[1]=6
-export SPECIAL_FORECAST_MEM[2]=2
-export SPECIAL_FORECAST_MEM[3]=3
+export SPECIAL_FORECAST_MEM[1]=7
+export SPECIAL_FORECAST_MEM[2]=6
+export SPECIAL_FORECAST_MEM[3]=9
 export SPECIAL_FORECAST_MEM[4]=4
 export SPECIAL_FORECAST_MEM[5]=5
 export SPECIAL_FORECAST_MEM[6]=6
@@ -341,41 +341,41 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # SELECT COMPONENT RUN OPTIONS:
    if [[ ${RUN_SPECIAL_FORECAST} = "false" ]]; then
       export RUN_GEOGRID=false
-      export RUN_UNGRIB=true
-      export RUN_METGRID=true
-      export RUN_REAL=true
-      export RUN_PERT_WRFCHEM_MET_IC=true
-      export RUN_PERT_WRFCHEM_MET_BC=true
-      export RUN_EXO_COLDENS=true
-      export RUN_SEASON_WES=true
-      export RUN_WRFCHEM_BIO=true
-      export RUN_WRFCHEM_FIRE=true
-      export RUN_WRFCHEM_CHEMI=true
-      export RUN_PERT_WRFCHEM_CHEM_ICBC=true
-      export RUN_PERT_WRFCHEM_CHEM_EMISS=true
-      export RUN_MOPITT_CO_OBS=true
-      export RUN_IASI_CO_OBS=true
+      export RUN_UNGRIB=false
+      export RUN_METGRID=false
+      export RUN_REAL=false
+      export RUN_PERT_WRFCHEM_MET_IC=false
+      export RUN_PERT_WRFCHEM_MET_BC=false
+      export RUN_EXO_COLDENS=false
+      export RUN_SEASON_WES=false
+      export RUN_WRFCHEM_BIO=false
+      export RUN_WRFCHEM_FIRE=false
+      export RUN_WRFCHEM_CHEMI=false
+      export RUN_PERT_WRFCHEM_CHEM_ICBC=false
+      export RUN_PERT_WRFCHEM_CHEM_EMISS=false
+      export RUN_MOPITT_CO_OBS=false
+      export RUN_IASI_CO_OBS=false
       export RUN_IASI_O3_OBS=false
-      export RUN_OMI_O3_OBS=false
-      export RUN_OMI_NO2_OBS=false
-      export RUN_OMI_SO2_OBS=false
+      export RUN_OMI_O3_OBS=true
+      export RUN_OMI_NO2_OBS=true
+      export RUN_OMI_SO2_OBS=true
       export RUN_TROPOMI_CO_OBS=false
       export RUN_TROPOMI_O3_OBS=false
       export RUN_TROPOMI_NO2_OBS=false
       export RUN_TROPOMI_SO2_OBS=false
       export RUN_TEMPO_O3_OBS=false
       export RUN_TEMPO_NO2_OBS=false
-      export RUN_AIRNOW_O3_OBS=true
-      export RUN_AIRNOW_CO_OBS=true
-      export RUN_AIRNOW_NO2_OBS=true
+      export RUN_AIRNOW_O3_OBS=false
+      export RUN_AIRNOW_CO_OBS=false
+      export RUN_AIRNOW_NO2_OBS=false
       export RUN_AIRNOW_SO2_OBS=false
-      export RUN_AIRNOW_PM10_OBS=true
-      export RUN_AIRNOW_PM25_OBS=true
+      export RUN_AIRNOW_PM10_OBS=false
+      export RUN_AIRNOW_PM25_OBS=false
       export RUN_PANDA_CO_OBS=false
       export RUN_PANDA_O3_OBS=false
       export RUN_PANDA_PM25_OBS=false
-      export RUN_MODIS_AOD_OBS=true
-      export RUN_MET_OBS=true
+      export RUN_MODIS_AOD_OBS=false
+      export RUN_MET_OBS=false
       export RUN_COMBINE_OBS=true
 #
       if [[ ${DATE} -eq ${INITIAL_DATE}  ]]; then
@@ -393,7 +393,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          export RUN_PREPROCESS_OBS=true
          export RUN_WRFCHEM_INITIAL=false
-         export RUN_LOCALIZATION=true
+         export RUN_LOCALIZATION=false
          export RUN_DART_FILTER=true
          export RUN_UPDATE_BC=true
          export RUN_ENSEMBLE_MEAN_INPUT=true
@@ -1092,11 +1092,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_NUM_OUTPUT_STATE_MEMBERS=0
    export NL_NUM_OUTPUT_OBS_MEMBERS=${NUM_MEMBERS}
    if ${USE_DART_INFL}; then
-      export NL_INF_FLAVOR_PRIOR=2
+      export NL_INF_FLAVOR_POST=4
    else 
-      export NL_INF_FLAVOR_PRIOR=0
+      export NL_INF_FLAVOR_POST=0
    fi
-   export NL_INF_FLAVOR_POST=0  
+   export NL_INF_FLAVOR_PRIOR=0  
    if [[ ${START_DATE} -eq ${FIRST_DART_INFLATE_DATE} ]]; then
       export NL_INF_INITIAL_FROM_RESTART_PRIOR=.false.
       export NL_INF_SD_INITIAL_FROM_RESTART_PRIOR=.false.
@@ -1119,20 +1119,19 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_INF_SD_INITIAL_PRIOR=0.6
    export NL_INF_SD_INITIAL_POST=0.0
    export NL_INF_DAMPING_PRIOR=0.9
-   export NL_INF_DAMPING_POST=1.0
+   export NL_INF_DAMPING_POST=0.9
    export NL_INF_LOWER_BOUND_PRIOR=1.0
    export NL_INF_LOWER_BOUND_POST=1.0
    export NL_INF_UPPER_BOUND_PRIOR=100.0
    export NL_INF_UPPER_BOUND_POST=100.0
    export NL_INF_SD_LOWER_BOUND_PRIOR=0.6
-   export NL_INF_SD_LOWER_BOUND_POST=0.0
+   export NL_INF_SD_LOWER_BOUND_POST=0.6
 #
 # &assim_tools_nml
    export NL_CUTOFF=0.1
-   export NL_SPECIAL_LOCALIZATION_OBS_TYPES="'MOPITT_CO_RETRIEVAL','IASI_CO_RETRIEVAL','AIRNOW_CO','AIRNOW_O3','MODIS_AOD_RETRIEVAL'"
+   export NL_SPECIAL_LOCALIZATION_OBS_TYPES="'MOPITT_CO_RETRIEVAL','IASI_CO_RETRIEVAL','IASI_CO_COLUMN','TROPOMI_CO_COLUMN','AIRNOW_CO','IASI_O3_RETRIEVAL','OMI_O3_COLUMN','TROPOMI_O3_COLUMN','TEMPO_O3_COLUMN','AIRNOW_O3','OMI_NO2_COLUMN','TROPOMI_NO2_COLUMN','TEMPO_NO2_COLUMN','AIRNOW_NO2','OMI_SO2_COLUMN','TROPOMI_SO2_COLUMN','AIRNOW_SO2','MODIS_AOD_RETRIEVAL','AIRNOW_PM10','AIRNOW_PM25'"
    export NL_SAMPLING_ERROR_CORRECTION=.true.
-# original cutoff
-   export NL_SPECIAL_LOCALIZATION_CUTOFFS=0.1,0.1,0.1,0.1,0.1
+   export NL_SPECIAL_LOCALIZATION_CUTOFFS=0.1,0.1,0.1,0.1,0.1,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.1,0.1,0.1
    export NL_ADAPTIVE_LOCALIZATION_THRESHOLD=2000
 #
 # &ensemble_manager_nml
@@ -1206,31 +1205,33 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
           'SEAS_3','QTY_SSLT03',               'TYPE_SSLT03','UPDATE','999',
           'SEAS_4','QTY_SSLT04',               'TYPE_SSLT04','UPDATE','999'"
 #
-# Both of these need kind and type definitions.  Also need to modify the WRF-Chem model_mod.f90 to add
-# get_type_ind_from_type_string statements   
+# Both of these need kind and type definitions.
+# Also need to modify the WRF-Chem model_mod.f90 to
+# add get_type_ind_from_type_string statements   
+#
 # The next line should be the same as NL_EMISS_CHEMI_VARIABLES without quotes etc.
    export WRFCHEMI_DARTVARS="E_CO,E_NO,E_NO2,E_SO2,E_BC,E_OC,E_PM_10,E_PM_25"
 #
 # The next line should be the same as NL_EMISS_FIRECHEMI_VARIABLES without quotes etc.
    export WRFFIRECHEMI_DARTVARS="ebu_in_co,ebu_in_no,ebu_in_no2,ebu_in_so2,ebu_in_oc,ebu_in_bc,ebu_in_c2h4,ebu_in_ch2o,ebu_in_ch3oh"
 #
-   export NL_EMISS_CHEMI_VARIABLES="'E_CO',     'KIND_E_CO',     'TYPE_E_CO',     'UPDATE','999',
-          'E_NO'        ,'KIND_E_NO',           'TYPE_E_NO',   'UPDATE','999',
-          'E_NO2'       ,'KIND_E_NO2',          'TYPE_E_NO2',  'UPDATE','999',
-          'E_SO2'       ,'KIND_E_SO2',          'TYPE_E_SO2',  'UPDATE','999',
-          'E_BC'        ,'KIND_E_BC',           'TYPE_E_BC',   'UPDATE','999',
-          'E_OC'        ,'KIND_E_OC',           'TYPE_E_BC',   'UPDATE','999',
-          'E_PM_10'     ,'KIND_E_PM10',         'TYPE_E_PM10', 'UPDATE','999',
-          'E_PM_25'     ,'KIND_E_PM25',         'TYPE_E_PM25', 'UPDATE','999'"
-   export NL_EMISS_FIRECHEMI_VARIABLES="'ebu_in_co'   ,'KIND_EBU_CO',         'TYPE_EBU_CO',  'UPDATE','999',
-          'ebu_in_no'    ,'KIND_EBU_NO',         'TYPE_EBU_NO',   'UPDATE','999',
-          'ebu_in_no2'   ,'KIND_EBU_NO2',        'TYPE_EBU_NO2',  'UPDATE','999',
-          'ebu_in_so2'   ,'KIND_EBU_SO2',        'TYPE_EBU_SO2',  'UPDATE','999',
-          'ebu_in_oc'    ,'KIND_EBU_OC',         'TYPE_EBU_OC',   'UPDATE','999',
-          'ebu_in_bc'    ,'KIND_EBU_BC',         'TYPE_EBU_BC',   'UPDATE','999',
-          'ebu_in_c2h4'  ,'KIND_EBU_c2h4',       'TYPE_EBU_c2h4', 'UPDATE','999',
-          'ebu_in_ch2o'  ,'KIND_EBU_ch2o',       'TYPE_EBU_ch2o', 'UPDATE','999',
-          'ebu_in_ch3oh' ,'KIND_EBU_ch3oh',      'TYPE_EBU_ch3oh','UPDATE','999'"
+   export NL_EMISS_CHEMI_VARIABLES="'E_CO',    'QTY_E_CO',    'TYPE_E_CO',     'UPDATE','999',
+          'E_NO'        ,'QTY_E_NO',           'TYPE_E_NO',   'UPDATE','999',
+          'E_NO2'       ,'QTY_E_NO2',          'TYPE_E_NO2',  'UPDATE','999',
+          'E_SO2'       ,'QTY_E_SO2',          'TYPE_E_SO2',  'UPDATE','999',
+          'E_OC'        ,'QTY_E_OC',           'TYPE_E_OC',   'UPDATE','999',
+          'E_BC'        ,'QTY_E_BC',           'TYPE_E_BC',   'UPDATE','999',
+          'E_PM_10'     ,'QTY_E_PM10',         'TYPE_E_PM10', 'UPDATE','999',
+          'E_PM_25'     ,'QTY_E_PM25',         'TYPE_E_PM25', 'UPDATE','999'"
+   export NL_EMISS_FIRECHEMI_VARIABLES="'ebu_in_co'   ,'QTY_EBU_CO',         'TYPE_EBU_CO',  'UPDATE','999',
+          'ebu_in_no'    ,'QTY_EBU_NO',         'TYPE_EBU_NO',   'UPDATE','999',
+          'ebu_in_no2'   ,'QTY_EBU_NO2',        'TYPE_EBU_NO2',  'UPDATE','999',
+          'ebu_in_so2'   ,'QTY_EBU_SO2',        'TYPE_EBU_SO2',  'UPDATE','999',
+          'ebu_in_oc'    ,'QTY_EBU_OC',         'TYPE_EBU_OC',   'UPDATE','999',
+          'ebu_in_bc'    ,'QTY_EBU_BC',         'TYPE_EBU_BC',   'UPDATE','999',
+          'ebu_in_c2h4'  ,'QTY_EBU_C2H4',       'TYPE_EBU_C2H4', 'UPDATE','999',
+          'ebu_in_ch2o'  ,'QTY_EBU_CH2O',       'TYPE_EBU_CH2O', 'UPDATE','999',
+          'ebu_in_ch3oh' ,'QTY_EBU_CH3OH',      'TYPE_EBU_CH3OH','UPDATE','999'"
    export NL_WRF_STATE_BOUNDS="'QVAPOR','0.0','NULL','CLAMP',
           'QRAIN', '0.0','NULL','CLAMP',
           'QCLOUD','0.0','NULL','CLAMP',
@@ -1280,14 +1281,16 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
           'E_NO','0.0','NULL','CLAMP',
           'E_NO2','0.0','NULL','CLAMP',
           'E_SO2','0.0','NULL','CLAMP',
-          'E_BC','0.0','NULL','CLAMP',
           'E_OC','0.0','NULL','CLAMP',
+          'E_BC','0.0','NULL','CLAMP',
+          'E_PM_10','0.0','NULL','CLAMP',
+          'E_PM_25','0.0','NULL','CLAMP',
           'ebu_in_co','0.0','NULL','CLAMP',
           'ebu_in_no','0.0','NULL','CLAMP',
           'ebu_in_no2','0.0','NULL','CLAMP',
           'ebu_in_so2','0.0','NULL','CLAMP',
-          'ebu_in_bc','0.0','NULL','CLAMP',
           'ebu_in_oc','0.0','NULL','CLAMP',
+          'ebu_in_bc','0.0','NULL','CLAMP',
           'ebu_in_c2h4','0.0','NULL','CLAMP',
           'ebu_in_ch2o','0.0','NULL','CLAMP',
           'ebu_in_ch3oh','0.0','NULL','CLAMP'"
@@ -1351,6 +1354,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
                     '${DART_DIR}/observations/forward_operators/obs_def_AIRNOW_PM25_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_PANDA_OBS_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_IASI_CO_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_IASI_CO_COL_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_IASI_O3_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_OMI_O3_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_OMI_NO2_mod.f90',
@@ -1365,15 +1369,15 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
                     '${DART_DIR}/observations/forward_operators/obs_def_MODIS_AOD_mod.f90'"
 #
 # &obs_kind_nml
-#   export NL_EVALUATE_THESE_OBS_TYPES="' '"
-   export NL_EVALUATE_THESE_OBS_TYPES="'MOPITT_CO_RETRIEVAL',
-                                   'IASI_CO_RETRIEVAL',
-                                   'AIRNOW_CO',
-                                   'AIRNOW_O3',
-                                   'AIRNOW_NO2',
-                                   'AIRNOW_PM10',
-                                   'AIRNOW_PM25',
-                                   'MODIS_AOD_RETRIEVAL'"
+   export NL_EVALUATE_THESE_OBS_TYPES="' '"
+#   export NL_EVALUATE_THESE_OBS_TYPES="'MOPITT_CO_RETRIEVAL',
+#                                   'IASI_CO_RETRIEVAL',
+#                                   'AIRNOW_CO',
+#                                   'AIRNOW_O3',
+#                                   'AIRNOW_NO2',
+#                                   'AIRNOW_PM10',
+#                                   'AIRNOW_PM25',
+#                                   'MODIS_AOD_RETRIEVAL'"
 #
    export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'RADIOSONDE_U_WIND_COMPONENT',
@@ -1397,7 +1401,18 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
                                    'LAND_SFC_SPECIFIC_HUMIDITY',
                                    'LAND_SFC_ALTIMETER',
                                    'SAT_U_WIND_COMPONENT',
-                                   'SAT_V_WIND_COMPONENT'"
+                                   'SAT_V_WIND_COMPONENT',
+                                   'OMI_O3_COLUMN',
+                                   'OMI_NO2_COLUMN',
+                                   'OMI_SO2_COLUMN'"
+#                                   'MOPITT_CO_RETRIEVAL',
+#                                   'IASI_CO_RETRIEVAL',
+#                                   'AIRNOW_CO',
+#                                   'AIRNOW_O3',
+#                                   'AIRNOW_NO2',
+#                                   'AIRNOW_PM10',
+#                                   'AIRNOW_PM25',
+#                                   'MODIS_AOD_RETRIEVAL'"
 #
 # &replace_wrf_fields_nml
    export NL_FIELDNAMES="'SNOWC',
@@ -1420,11 +1435,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_VERT_NORMALIZATION_HEIGHT=10000.0
    export NL_VERT_NORMALIZATION_LEVELS=20.0
    export NL_VERT_NORMALIZATION_SCALE_HEIGHT=1.5
-   export NL_SPECIAL_VERT_NORMALIZATION_OBS_TYPES="'MOPITT_CO_RETRIEVAL','IASI_CO_RETRIEVAL','AIRNOW_CO','AIRNOW_O3','MODIS_AOD_RETRIEVAL'"
-   export NL_SPECIAL_VERT_NORMALIZATION_PRESSURES="100000.0,100000.0,100000.0,100000.0,100000.0"
-   export NL_SPECIAL_VERT_NORMALIZATION_HEIGHTS="10000.0,10000.0,10000.0,10000.0,10000.0"
-   export NL_SPECIAL_VERT_NORMALIZATION_LEVELS="20.0,20.0,20.0,20.0,20.0"
-   export NL_SPECIAL_VERT_NORMALIZATION_SCALE_HEIGHTS="1.5,1.5,1.5,1.5,1.5"
+   export NL_SPECIAL_VERT_NORMALIZATION_OBS_TYPES="'MOPITT_CO_RETRIEVAL','IASI_CO_RETRIEVAL','IASI_CO_COLUMN','TROPOMI_CO_COLUMN','AIRNOW_CO','IASI_O3_RETRIEVAL','OMI_O3_COLUMN','TROPOMI_O3_COLUMN','TEMPO_O3_COLUMN','AIRNOW_O3','OMI_NO2_COLUMN','TROPOMI_NO2_COLUMN','TEMPO_NO2_COLUMN','AIRNOW_NO2','OMI_SO2_COLUMN','TROPOMI_SO2_COLUMN','AIRNOW_SO2','MODIS_AOD_RETRIEVAL','AIRNOW_PM10','AIRNOW_PM25'"
+   export NL_SPECIAL_VERT_NORMALIZATION_PRESSURES="100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0"
+   export NL_SPECIAL_VERT_NORMALIZATION_HEIGHTS="10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0"
+   export NL_SPECIAL_VERT_NORMALIZATION_LEVELS="20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0"
+   export NL_SPECIAL_VERT_NORMALIZATION_SCALE_HEIGHTS="1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5"
 #
 # &obs_impact_tool_nml 
    export NL_IMPACT_TOOL_INPUT="'variable_localization.txt'"
@@ -2419,10 +2434,10 @@ EOF
       cat << EOF > ${FILE}
 &control
 domains = 2,
-fire_directory = './',
 fire_filename(1) = 'GLOBAL_FINNv15_JULSEP2014_MOZ4_09222014.txt',
 start_date = '${FIRE_START_DATE}', 
 end_date = '${FIRE_END_DATE}',
+fire_directory = './',
 wrf_directory = './',
 wrf2fire_map = 'co -> CO', 'no -> NO', 'so2 -> SO2', 'bigalk -> BIGALK',
                'bigene -> BIGENE', 'c2h4 -> C2H4', 'c2h5oh -> C2H5OH',
@@ -2488,8 +2503,8 @@ EOF
          export FILE_PATH=${EXPERIMENT_WRFCHEMI_DIR}
          cp ${FILE_PATH}/wrfchemi_d${CR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00 ./.
          cp ${FILE_PATH}/wrfchemi_d${FR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00 ./.
-         chmod a+rwx wrfchemi_d${CR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00 
-         chmod a+rwx wrfchemi_d${FR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00 
+         chmod 644 wrfchemi_d${CR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00 
+         chmod 644 wrfchemi_d${FR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00 
          export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} 1 2>/dev/null)
       done
    fi
@@ -2534,28 +2549,28 @@ EOF
 &control
 do_bc     = .false.
 do_ic     = .true.
+domain    = 1
 dir_wrf   = '${RUN_DIR}/${DATE}/wrfchem_chem_icbc/'
 dir_moz   = '${MOZBC_DATA_DIR}'
 fn_moz    = '${MOZBC_DATA}'
-domain    = 1
+def_missing_var    = .true.
 met_file_prefix    = 'met_em'
 met_file_suffix    = '.nc'
 met_file_separator = '.'
-def_missing_var    = .true.
 EOF
       rm -rf mozbc.bc.inp
       cat << EOF > mozbc.bc.inp
 &control
 do_bc     = .true.
 do_ic     = .false.
+domain    = 1
 dir_wrf   = '${RUN_DIR}/${DATE}/wrfchem_chem_icbc/'
 dir_moz   = '${MOZBC_DATA_DIR}'
 fn_moz    = '${MOZBC_DATA}'
-domain    = 1
+def_missing_var    = .true.
 met_file_prefix    = 'met_em'
 met_file_suffix    = '.nc'
 met_file_separator = '.'
-def_missing_var    = .true.
 EOF
 #
       ./runICBC_parent_rt_CR.ksh
@@ -2626,6 +2641,8 @@ sw_seed=${NL_SW_SEED},
 EOF
       rm -rf perturb_chem_icbc_spcs_nml.nl
       cat << EOF > perturb_chem_icbc_spcs_nml.nl
+#
+# These need to match the emissions species in the respective emissions files
 &perturb_chem_icbc_spcs_nml
 ch_chem_spc='o3','no','no2','no3','nh3','hno3','hno4','n2o5','ho2','h2o2','co','ch4','ch3o2','ch3ooh','hcho','ch3oh','c2h4','ald','ch3cooh','acet','mgly','pan','mpan','macr','mvk','c2h6','c3h6','c3h8','c2h5oh','c10h16','onit','onitr','isopr','isopn','acetol','glyald','hydrald','mek','bigene','open','bigalk','tol','cres','dms','so2','sulf','BC1','BC2','OC1','OC2','SEAS_1','SEAS_2','SEAS_3','SEAS_4','DUST_1','DUST_2','DUST_3','DUST_4','DUST_5','h2','n2o'
 /
@@ -2735,9 +2752,7 @@ EOF
 #
          export NL_PERT_PATH_PR=${RUN_DIR}/${DATE}/wrfchem_chem_emiss
          export NL_PERT_PATH_PO=${RUN_DIR}/${DATE}/wrfchem_chem_emiss
-# APM: the ${L_HH} -eq 00 test may be a mistake
-#         if [[ ${L_DATE} -eq ${DATE} || ${L_HH} -eq 00 ]]; then
-         if [[ ${L_DATE} -eq ${DATE} ]]; then
+         if [[ ${L_DATE} -eq ${DATE} || ${L_HH} -eq 00 ]]; then
             export NL_PERT_PATH_PR=${RUN_DIR}/${PAST_DATE}/wrfchem_chem_emiss
             export NL_PERT_PATH_PO=${RUN_DIR}/${DATE}/wrfchem_chem_emiss
          fi
@@ -2750,13 +2765,21 @@ EOF
 # COPY DATA
 
          cp ${WRFCHEM_CHEMI_DIR}/${WRFCHEMI} ${WRFCHEMI}
-         chmod a+rwx ${WRFCHEMI}
+         chmod 644 ${WRFCHEMI}
          ncatted -O -a coordinates,E_CO,c,c,"XLONG, XLAT" ${WRFCHEMI}
          ncatted -O -a coordinates,E_NO,c,c,"XLONG, XLAT" ${WRFCHEMI}
+         ncatted -O -a coordinates,E_NO2,c,c,"XLONG, XLAT" ${WRFCHEMI}
+         ncatted -O -a coordinates,E_OC,c,c,"XLONG, XLAT" ${WRFCHEMI}
+         ncatted -O -a coordinates,E_BC,c,c,"XLONG, XLAT" ${WRFCHEMI}
+         ncatted -O -a coordinates,E_PM_10,c,c,"XLONG, XLAT" ${WRFCHEMI}
+         ncatted -O -a coordinates,E_PM_25,c,c,"XLONG, XLAT" ${WRFCHEMI}
+         ncatted -O -a coordinates,E_SO2,c,c,"XLONG, XLAT" ${WRFCHEMI}
          cp ${WRFCHEM_FIRE_DIR}/${WRFFIRECHEMI} ${WRFFIRECHEMI}
-         chmod a+rwx ${WRFFIRECHEMI}
+         chmod 644 ${WRFFIRECHEMI}
          ncatted -O -a coordinates,ebu_in_co,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
          ncatted -O -a coordinates,ebu_in_no,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
+         ncatted -O -a coordinates,ebu_in_no2,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
+         ncatted -O -a coordinates,ebu_in_so2,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
          ncatted -O -a coordinates,ebu_in_oc,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
          ncatted -O -a coordinates,ebu_in_bc,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
          ncatted -O -a coordinates,ebu_in_c2h4,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
@@ -2764,7 +2787,7 @@ EOF
          ncatted -O -a coordinates,ebu_in_ch3oh,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
          if [[ ${L_HH} -eq 00 || ${L_HH} -eq 06 || ${L_HH} -eq 12 || ${L_HH} -eq 18 ]]; then
             cp ${WRFCHEM_BIO_DIR}/${WRFBIOCHEMI} ${WRFBIOCHEMI}
-            chmod a+rwx ${WRFBIOCHEMI}
+            chmod 644 ${WRFBIOCHEMI}
          fi
          let MEM=1
          while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
@@ -2846,6 +2869,8 @@ EOF
 # These need to match the emissions species in the respective emissions files
 &perturb_chem_emiss_spec_nml
 ch_chem_spc='E_CO','E_NO','E_NO2','E_BIGALK','E_BIGENE','E_C2H4','E_C2H5OH','E_C2H6','E_C3H6','E_C3H8','E_CH2O','E_CH3CHO','E_CH3COCH3','E_CH3OH','E_MEK','E_SO2','E_TOLUENE','E_NH3','E_ISOP','E_C10H16','E_sulf','E_CO_A','E_CO_BB','E_CO02','E_CO03','E_XNO','E_XNO2','E_BALD','E_C2H2','E_BENZENE','E_XYLENE','E_CRES','E_HONO','E_PM25I','E_PM25J','E_PM_10','E_ECI','E_ECJ','E_ORGI','E_ORGJ','E_SO4I','E_SO4J','E_NO3I','E_NO3J','E_NH4I','E_NH4J','E_PM_25','E_OC','E_BC',
+#
+# These need to match the emissions species in the respective emissions files
 ch_fire_spc='ebu_in_co','ebu_in_no','ebu_in_so2','ebu_in_bigalk','ebu_in_bigene','ebu_in_c2h4','ebu_in_c2h5oh','ebu_in_c2h6','ebu_in_c3h8','ebu_in_c3h6','ebu_in_ch2o','ebu_in_ch3cho','ebu_in_ch3coch3','ebu_in_ch3oh','ebu_in_mek','ebu_in_toluene','ebu_in_nh3','ebu_in_no2','ebu_in_open','ebu_in_c10h16','ebu_in_ch3cooh','ebu_in_cres','ebu_in_glyald','ebu_in_mgly','ebu_in_gly','ebu_in_acetol','ebu_in_isop','ebu_in_macr','ebu_in_mvk','ebu_in_oc','ebu_in_bc',
 ch_biog_spc='MSEBIO_ISOP',
 /
@@ -2945,8 +2970,12 @@ EOF
 #EOF
 #         rm -rf perturb_emiss_chem_spec_nml.nl
 #         cat << EOF > perturb_emiss_chem_spec_nml.nl
+#
+# These need to match the emissions species in the respective emissions files
 #&perturb_chem_emiss_spec_nml
 #ch_chem_spc='E_CO','E_NO','E_NO2','E_SO2','E_BIGALK','E_C2H4','E_C2H5OH','E_C2H6','E_C3H6','E_C3H8','E_CH2O','E_CH3CHO','E_BIGENE','E_CH3COCH3','E_CH3OH','E_MEK','E_TOLUENE','E_ISOP','E_C10H16','E_NH3','E_OC','E_BC','E_PM_10','E_PM_25',
+#
+# These need to match the emissions species in the respective emissions files
 #ch_fire_spc='ebu_in_co','ebu_in_no','ebu_in_so2','ebu_in_bigalk','ebu_in_bigene','ebu_in_c2h4','ebu_in_c2h5oh','ebu_in_c2h6','ebu_in_c3h8','ebu_in_c3h6','ebu_in_ch2o','ebu_in_ch3cho','ebu_in_ch3coch3','ebu_in_ch3oh','ebu_in_mek','ebu_in_toluene','ebu_in_nh3','ebu_in_no2','ebu_in_open','ebu_in_c10h16','ebu_in_ch3cooh','ebu_in_cres','ebu_in_glyald','ebu_in_mgly','ebu_in_gly','ebu_in_acetol','ebu_in_isop','ebu_in_macr','ebu_in_mvk','ebu_in_oc','ebu_in_bc',
 #ch_biog_spc='MSEBIO_ISOP',
 #/
@@ -2958,8 +2987,8 @@ EOF
 #         qsub -Wblock=true job.ksh
 #
 # SWAP FILE NAMES FOR TEMPORAL DECORRELATION
-#          rm -rf pert_chem_emiss_pr
-#          mv pert_chem_emiss_po pert_chem_emiss_pr
+          rm -rf pert_chem_emiss_pr
+          mv pert_chem_emiss_po pert_chem_emiss_pr
 #
 # ADVANCE TIME
          (( NL_EMISS_TIME=${NL_EMISS_TIME} + 1 ))
@@ -2979,6 +3008,7 @@ EOF
 # RUN MOPITT CO OBSERVATIONS
 #
 ########################################################################
+#
    if ${RUN_MOPITT_CO_OBS}; then
       if [[ ! -d ${RUN_DIR}/${DATE}/mopitt_co_obs ]]; then
          mkdir -p ${RUN_DIR}/${DATE}/mopitt_co_obs
@@ -5955,13 +5985,21 @@ EOFF
       if [[ ${DATE} -eq ${INITIAL_DATE} ]]; then
          echo 'This is initial date cannot run PREPROCESS '
          touch CANNOT_RUN_PREPROCESS
+	 exit
       else
 #
 # GET WRFINPUT TEMPLATE
          cp ${RUN_DIR}/${PAST_DATE}/ensemble_mean_output/wrfout_d${CR_DOMAIN}_${DATE}_mean wrfinput_d${CR_DOMAIN}
-         cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfbiochemi_d${CR_DOMAIN}_${FILE_DATE}.e001 wrfbiochemi_d${CR_DOMAIN}
-         cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${FILE_DATE}.e001 wrffirechemi_d${CR_DOMAIN}
          cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${FILE_DATE}.e001 wrfchemi_d${CR_DOMAIN}
+         cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${FILE_DATE}.e001 wrffirechemi_d${CR_DOMAIN}
+         cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfbiochemi_d${CR_DOMAIN}_${FILE_DATE}.e001 wrfbiochemi_d${CR_DOMAIN}
+         ncrename -d emissions_zdim_stag,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN} wrfchemi_d${CR_DOMAIN}_temp
+         ncrename -d emissions_zdim_stag,fire_zdim_stag -O wrffirechemi_d${CR_DOMAIN} wrffirechemi_d${CR_DOMAIN}_temp
+#
+# Copy the emissions fields to be adjusted from the emissions input files
+# to the wrfinput files
+         ncks -A -v ${WRFCHEMI_DARTVARS} wrfchemi_d${CR_DOMAIN}_temp wrfinput_d${CR_DOMAIN}
+         ncks -A -v ${WRFFIRECHEMI_DARTVARS} wrffirechemi_d${CR_DOMAIN}_temp wrfinput_d${CR_DOMAIN}
 #
 # GET DART UTILITIES
          cp ${WRFCHEM_DART_WORK_DIR}/wrf_dart_obs_preprocess ./.
@@ -6516,10 +6554,6 @@ EOF
          cd ${RUN_DIR}/${DATE}/dart_filter
       fi
 #
-# Use DART_TEST to skip copying etc, of DART input files
-      export DART_TEST=false
-      if ! ${DART_TEST}; then
-#
 # Get DART files
       cp ${WRFCHEM_DART_WORK_DIR}/filter      ./.
       cp ${DART_DIR}/assimilation_code/programs/gen_sampling_err_table/work/sampling_error_correction_table.nc ./.
@@ -6573,13 +6607,13 @@ EOF
 # Copy emission input files
          if [[ ${LL_DATE} -le ${FIRST_EMISS_INV_DATE} || ${ADD_EMISS} = ".false." ]]; then
             cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./.
-            ncrename -d emissions_zdim_stag,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
             cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./.
+            ncrename -d emissions_zdim_stag,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
             ncrename -d emissions_zdim_stag,fire_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
          else
             cp ${BACKGND_FCST_DIR}/run_${CMEM}/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
-            ncrename -d emissions_zdim_stag,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
             cp ${BACKGND_FCST_DIR}/run_${CMEM}/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+            ncrename -d emissions_zdim_stag,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
             ncrename -d emissions_zdim_stag,fire_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
          fi
 #
@@ -6591,20 +6625,12 @@ EOF
          ncks -A -v ${WRFCHEMI_DARTVARS} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfinput_d${CR_DOMAIN}_${CMEM}
          ncks -A -v ${WRFFIRECHEMI_DARTVARS} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfinput_d${CR_DOMAIN}_${CMEM}
 #
-# Copy final input file to be a template output file
-         cp wrfinput_d${CR_DOMAIN}_${CMEM} wrfout_d${CR_DOMAIN}_temp.${CMEM}
-#
 # Add files to the DART input and output list
          echo wrfinput_d${CR_DOMAIN}_${CMEM} >> input_list.txt
          echo wrfinput_d${CR_DOMAIN}_${CMEM} >> output_list.txt
 #
          let MEM=${MEM}+1
       done 
-#
-# Copy wrfinput template
-      cp wrfinput_d${CR_DOMAIN}_e001 wrfinput_d${CR_DOMAIN}
-      cp wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrfchemi_d${CR_DOMAIN}
-      cp wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrffirechemi_d${CR_DOMAIN}
 #
 # Copy "out" inflation files from prior cycle to "in" inflation files for current cycle
       if ${USE_DART_INFL}; then
@@ -6650,6 +6676,8 @@ EOF
       export NL_IASI_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
       export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+      export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
       rm -rf input.nml
       ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input.nml.ksh
 #
@@ -6660,9 +6688,6 @@ EOF
 special_outlier_threshold=${NL_SPECIAL_OUTLIER_THRESHOLD}
 /
 EOF
-#
-# End of DART_TEST block
-      fi      
 #
 # Run DART_FILTER
 # Create job script for this member and run it 
@@ -6676,11 +6701,8 @@ EOF
          echo APM: ERROR in DART FILTER EXIT
          exit
       fi
-      if ${DART_TEST}; then
-         exit
-      fi  
 #
-# Remove emissions fields from the wrfinput files and copy to the emissions input files
+# Remove emissions fields from the DART output files and copy to the emissions input files
       let MEM=1
       while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
          export CMEM=e${MEM}
@@ -6691,13 +6713,12 @@ EOF
 #
 # Copy the adjusted emissions fields from the wrfinput files to the emissions input files
          ncks -O -x -v ${WRFCHEMI_DARTVARS} wrfinput_d${CR_DOMAIN}_${CMEM} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM}
-         ncks -O -x -v ${WRFFIRECHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM}
-	 
-         ncks -A -v ${WRFCHEMI_DARTVARS} wrfinput_d${CR_DOMAIN}_${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+         ncks -O -x -v ${WRFFIRECHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM}	 
+         ncks -O -v ${WRFCHEMI_DARTVARS} wrfinput_d${CR_DOMAIN}_${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+         ncks -O -v ${WRFFIRECHEMI_DARTVARS} wrfinput_d${CR_DOMAIN}_${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
          ncrename -d chemi_zdim_stag,emissions_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
-         ncks -A -v ${WRFFIRECHEMI_DARTVARS} wrfinput_d${CR_DOMAIN}_${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
          ncrename -d fire_zdim_stag,emissions_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
-         rm -rf wrfinput_d${CR_DOMAIN}_${CMEM} wrfout_d${CR_DOMAIN}_temp.${CMEM}
+         rm -rf wrfinput_d${CR_DOMAIN}_${CMEM}
 #
          let MEM=${MEM}+1
       done 
