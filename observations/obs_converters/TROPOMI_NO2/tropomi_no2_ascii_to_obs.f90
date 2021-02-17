@@ -104,7 +104,7 @@ program tropomi_no2_ascii_to_obs
    integer                         :: seconds,days,which_vert
    integer                         :: seconds_last,days_last
    integer                         :: nx_model,ny_model,nz_model
-   integer                         :: reject,k,kend
+   integer                         :: reject,k,kk,kend
    integer                         :: i_min,j_min
    integer                         :: sum_reject,sum_accept,sum_total
 !
@@ -116,7 +116,7 @@ program tropomi_no2_ascii_to_obs
    real                            :: fac_obs_error,fac
    real                            :: pi,rad2deg,re,level_crit
    real                            :: x_observ,y_observ,dofs
-   real                            :: prs_loc
+   real                            :: prs_loc,obs_sum
    real*8                          :: obs_err_var,level
 !
    real*8,dimension(num_qc)        :: tropomi_qc
@@ -133,7 +133,7 @@ program tropomi_no2_ascii_to_obs
    logical                         :: use_log_co,use_log_o3,use_log_no2,use_log_so2
 !
 ! Species-specific variables
-   integer                         :: trop_indx
+   integer                         :: trop_indx,trop_indx_sp
    real                            :: col_amt_trop_obs, col_amt_trop_err_obs
    real                            :: amf_trop_obs
    real*8                          :: amf_trop_obs_r8
@@ -143,7 +143,8 @@ program tropomi_no2_ascii_to_obs
    real*8,allocatable,dimension(:) :: avgk_obs_r8
    real,allocatable,dimension(:)   :: prs_obs
    real*8,allocatable,dimension(:) :: prs_obs_r8
-   real,allocatable,dimension(:)   :: prf_model
+   real,allocatable,dimension(:)   :: prf_locl,prf_full
+   real                            :: trop_sum,strat_sum
    real,allocatable,dimension(:,:)     :: lon,lat
    real,allocatable,dimension(:,:,:)   :: prs_prt,prs_bas,prs_fld
    real,allocatable,dimension(:,:,:)   :: tmp_prt,tmp_fld,vtmp_fld
@@ -249,12 +250,14 @@ program tropomi_no2_ascii_to_obs
       allocate(avgk_obs_r8(nlay_obs))
       allocate(prs_obs_r8(nlev_obs))
       allocate(avgk_obs(nlay_obs))
-      allocate(prf_model(nlay_obs))
+      allocate(prf_locl(nlay_obs))
+      allocate(prf_full(nlay_obs))
       read(fileid,*,iostat=ios) prs_obs(1:nlev_obs)
       read(fileid,*,iostat=ios) avgk_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) col_amt_trop_obs, col_amt_trop_err_obs
       read(fileid,*,iostat=ios) amf_trop_obs
       read(fileid,*,iostat=ios) trop_indx
+      prs_obs(:)=prs_obs(:)*100.
       prs_obs_r8(:)=prs_obs(:)
       avgk_obs_r8(:)=avgk_obs(:)
       lon_obs_r8=lon_obs
@@ -268,54 +271,80 @@ program tropomi_no2_ascii_to_obs
 !      print *, nlay_obs,nlev_obs
 !      print *, prs_obs(1:nlev_obs)
 !      print *, avgk_obs(1:nlay_obs) 
-!      print *, col_amt_trop_obs
-!      print *, col_amt_trop_err_obs
-!      print *, amf_trop_obs
-!      print *, trop_indx
+!      print *, 'trop col ',col_amt_trop_obs
+!      print *, 'trop col err ',col_amt_trop_err_obs
+!      print *, 'trop amf ',amf_trop_obs
+!      print *, 'trop index ',trop_indx
+!      print *, 'prs_obs ',prs_obs(1:nlev_obs)
+!      print *, 'prs_mdl ',prs_fld(i_min,j_min,1:nz_model)
 !
 !--------------------------------------------------------
 ! Find model NO2 profile corresponding to the observation
 !--------------------------------------------------------
       reject=0
-      call get_model_profile(prf_model,nz_model, &
-      prs_obs*100.,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
+      call get_model_profile(prf_locl,prf_full,nz_model, &
+      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
       qmr_fld(i_min,j_min,:),no2_fld(i_min,j_min,:), &
       nlev_obs,avgk_obs,kend)
+!      print *, 'kend, prs ',kend,prs_obs(nlay_obs-kend+1)
 !
 !--------------------------------------------------------
 ! Find vertical location
 !--------------------------------------------------------
+! if kend >= trop_indx then do vertical sum to trop_indx
+! if kend < trop_indx then do vertical sum to kend and adjust the observation
 !
-      call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_model,nlay_obs,kend,trop_indx)
-      level=prs_loc*100.
+      trop_indx_sp=0      
+      if(kend.lt.trop_indx) then
+         trop_indx_sp=trop_indx
+         trop_indx=kend
+      endif
+      call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_locl,nlay_obs,kend,trop_indx)
+      level=prs_loc
 !
 ! Check for maximum localization height
-      if(level/100..lt.level_crit) then
-         reject=1
-         sum_reject=sum_reject+1
-         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
+!      if(level/100..lt.level_crit) then
+!         reject=1
+!         sum_reject=sum_reject+1
+!         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
 !         print *, trim(data_type), obs_id
-         deallocate(prs_obs) 
-         deallocate(avgk_obs)
-         deallocate(prs_obs_r8) 
-         deallocate(avgk_obs_r8)
-         deallocate(prf_model) 
-         cycle
-      endif
+!         deallocate(prs_obs) 
+!         deallocate(avgk_obs)
+!         deallocate(prs_obs_r8) 
+!         deallocate(avgk_obs_r8)
+!         deallocate(prf_locl) 
+!         deallocate(prf_full) 
+!         cycle
+!      endif
 !
 ! Process accepted observations
       print *, 'localization pressure level (hPa) ',level/100.
       sum_accept=sum_accept+1
 !
+! Adjust col_amt_obs to remove contribution above the top of the model         
+      trop_sum=0.
+      strat_sum=0.
+      do k=1,kend
+         trop_sum=trop_sum+prf_full(k)
+      enddo
+      do k=kend+1,trop_indx_sp
+         strat_sum=strat_sum+prf_full(k)
+      enddo
+!      do k=1,trop_indx
+!         obs_sum=obs_sum+prf_full(k)
+!      enddo
+!      print *, 'exp_obs ',obs_sum
+!
 ! Set data for writing obs_sequence file
       qc_count=qc_count+1
 !
 ! Obs value is the tropospheric vertical column
-!
-      obs_val(:)=col_amt_trop_obs
-      obs_err_var=(col_amt_trop_err_obs)**2.
-      tropomi_qc(:)=0
+      obs_val(:)=trop_sum*col_amt_trop_obs/(trop_sum+strat_sum)
+      obs_err_var=(trop_sum*col_amt_trop_err_obs/(trop_sum+strat_sum))**2.
+!      print *, 'obs_val ',col_amt_trop_obs
+!      print *, 'obs_err ',col_amt_trop_err_obs
 
+      tropomi_qc(:)=0
       obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
       call get_time(obs_time, seconds, days)
 !
@@ -359,7 +388,8 @@ program tropomi_no2_ascii_to_obs
       deallocate(avgk_obs)
       deallocate(prs_obs_r8) 
       deallocate(avgk_obs_r8)
-      deallocate(prf_model) 
+      deallocate(prf_locl) 
+      deallocate(prf_full) 
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
       print *, 'sum_accept ',sum_accept
    enddo   
@@ -427,7 +457,6 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,kend,trop_
 ! locate maximum
    zmax=-1.e10
    kmax=0
-!   do k=1,kend
    do k=1,trop_indx
       if(abs(locl_prf_sm(k)).gt.zmax) then
          zmax=abs(locl_prf_sm(k))
@@ -438,16 +467,16 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,kend,trop_
    prs_loc=(prs_obs(kmax)+prs_obs(kmax+1))/2.
 end subroutine vertical_locate
 !
-subroutine get_model_profile(prf_mdl,nz_mdl,prs_obs,prs_mdl, &
+subroutine get_model_profile(prf_locl,prf_full,nz_mdl,prs_obs,prs_mdl, &
    tmp_mdl,qmr_mdl,no2_mdl,nlev_obs,v_wgts,kend)
    implicit none
    integer                                :: nz_mdl
    integer                                :: nlev_obs
-   integer                                :: i,j,k,kend
+   integer                                :: i,j,k,kk,kend
    real                                   :: Ru,Rd,cp,eps,AvogN,msq2cmsq,grav
    real,dimension(nz_mdl)                 :: prs_mdl,tmp_mdl,qmr_mdl,no2_mdl
    real,dimension(nz_mdl)                 :: tmp_prf,vtmp_prf,no2_prf
-   real,dimension(nlev_obs-1)             :: thick,v_wgts,prf_mdl
+   real,dimension(nlev_obs-1)             :: thick,v_wgts,prf_locl,prf_full
    real,dimension(nlev_obs)               :: no2_prf_mdl,vtmp_prf_mdl,prs_obs
 !
 ! Constants (mks units)
@@ -479,18 +508,21 @@ subroutine get_model_profile(prf_mdl,nz_mdl,prs_obs,prs_mdl, &
    call interp_to_obs(vtmp_prf_mdl,vtmp_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
 !   
 ! calculate number density times vertical weighting
-   prf_mdl(:)=-9999.
+   prf_locl(:)=-9999.
+   prf_full(:)=-9999.
    do k=1,nlev_obs-1
       thick(k)=Rd*(vtmp_prf_mdl(k)+vtmp_prf_mdl(k+1))/2./grav* &
       log(prs_obs(k)/prs_obs(k+1))     
    enddo
 !
-! convert to molecules/cm^2 and apply scattering weights
+! apply averging kernel
    do k=1,nlev_obs-1
-      prf_mdl(k)=thick(k)*(no2_prf_mdl(k)+no2_prf_mdl(k+1))/2.* &
-      AvogN/msq2cmsq * v_wgts(k)
+      prf_locl(k)=thick(k)*(no2_prf_mdl(k)+no2_prf_mdl(k+1))/2.* &
+      v_wgts(k)
+      prf_full(k)=thick(k)*(no2_prf_mdl(k)+no2_prf_mdl(k+1))/2.* &
+      v_wgts(k)
    enddo
-!   print *, 'prf_mdl  ',prf_model(:)
+!   print *, 'prf_full  ',prf_full(:)
 !   print *, 'no2 fld   ',no2_prf_mdl(:)
 !   print *, 'avgk_obs ',v_wgts(:)
 end subroutine get_model_profile
@@ -597,9 +629,9 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
       endif
       do kk=1,nz_mdl-1
          if(prs_mdl(kk).ge.prs_obs(k) .and. prs_mdl(kk+1).lt.prs_obs(k)) then
-            wt_dw=log(prs_mdl(kk))-log(prs_obs(k))
-            wt_up=log(prs_obs(k))-log(prs_mdl(kk+1))
-            prf_mdl(k)=(wt_up*fld_mdl(kk)+wt_dw*fld_mdl(kk+1))/(wt_dw+wt_up)
+            wt_up=log(prs_mdl(kk))-log(prs_obs(k))
+            wt_dw=log(prs_obs(k))-log(prs_mdl(kk+1))
+            prf_mdl(k)=(wt_up*fld_mdl(kk+1)+wt_dw*fld_mdl(kk))/(wt_dw+wt_up)
             exit
          endif
       enddo               

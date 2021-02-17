@@ -1,3 +1,4 @@
+
   `! Copyright 2019 University Corporation for Atmospheric Research and 
 ! Colorado Department of Public Health and Environment.
 !
@@ -84,6 +85,7 @@ public :: write_tropomi_o3, &
 integer, parameter    :: max_tropomi_o3_obs = 10000000
 integer               :: num_tropomi_o3_obs = 0
 integer,  allocatable :: nlayer(:)
+integer,  allocatable :: kend(:)
 real(r8), allocatable :: pressure(:,:)
 real(r8), allocatable :: avg_kernel(:,:)
 real(r8), allocatable :: prior(:,:)
@@ -141,6 +143,7 @@ if (nlayer_tropomi_o3 < 1) then
 endif
 
 allocate(    nlayer(max_tropomi_o3_obs))
+allocate(    kend(max_tropomi_o3_obs))
 allocate(  pressure(max_tropomi_o3_obs,nlayer_tropomi_o3+1))
 allocate(avg_kernel(max_tropomi_o3_obs,nlayer_tropomi_o3))
 allocate(     prior(max_tropomi_o3_obs,nlayer_tropomi_o3))
@@ -159,6 +162,7 @@ character(len=*), intent(in), optional :: fform
 
 integer               :: keyin
 integer               :: nlayer_1
+integer               :: kend_1
 real(r8), allocatable ::   pressure_1(:)
 real(r8), allocatable :: avg_kernel_1(:)
 real(r8), allocatable ::      prior_1(:)
@@ -173,6 +177,7 @@ if(present(fform)) fileformat = adjustl(fform)
 
 ! Need to know how many layers for this one
 nlayer_1 = read_int_scalar( ifile, fileformat, 'nlayer_1')
+kend_1 = read_int_scalar( ifile, fileformat, 'kend_1')
 
 allocate(  pressure_1(nlayer_1+1))
 allocate(avg_kernel_1(nlayer_1))
@@ -181,7 +186,7 @@ allocate(     prior_1(nlayer_1))
 call read_r8_array(ifile, nlayer_1+1, pressure_1,   fileformat, 'pressure_1')
 call read_r8_array(ifile, nlayer_1,   avg_kernel_1, fileformat, 'avg_kernel_1')
 call read_r8_array(ifile, nlayer_1,   prior_1,      fileformat, 'prior_1')
-keyin = read_int_scalar(ifile, fileformat, 'nlayer_1')
+keyin = read_int_scalar(ifile, fileformat, 'keyin')
 
 counts1 = counts1 + 1
 key     = counts1
@@ -192,7 +197,7 @@ if(counts1 > max_tropomi_o3_obs) then
    call error_handler(E_ERR,'read_tropomi_o3',string1,source,text2=string2)
 endif
 
-call set_obs_def_tropomi_o3(key, pressure_1, avg_kernel_1,prior_1, nlayer_1)
+call set_obs_def_tropomi_o3(key, pressure_1, avg_kernel_1,prior_1, nlayer_1, kend_1)
 
 deallocate(pressure_1, avg_kernel_1, prior_1)
 
@@ -217,6 +222,7 @@ if(present(fform)) fileformat = adjustl(fform)
 ! you can come extend the context strings to include the key if desired.
 
 call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
+call write_int_scalar(ifile,                     kend(key), fileformat,'kend')
 call write_r8_array(  ifile, nlayer(key)+1,  pressure(key,:), fileformat,'pressure')
 call write_r8_array(  ifile, nlayer(key),  avg_kernel(key,:), fileformat,'avg_kernel')
 call write_r8_array(  ifile, nlayer(key),       prior(key,:), fileformat,'prior')
@@ -268,7 +274,7 @@ real(r8),            intent(out) :: expct_val(:)
 character(len=*), parameter :: routine = 'get_expected_tropomi_o3'
 type(location_type) :: loc2
 
-integer :: layer_tropomi,level_tropomi
+integer :: layer_tropomi,level_tropomi, kend_tropomi
 integer :: layer_mdl,level_mdl
 integer :: k,imem
 integer :: o3_istatus(ens_size)
@@ -307,6 +313,7 @@ endif
 
 layer_tropomi = nlayer(key)
 level_tropomi = nlayer(key)+1
+kend_tropomi  = kend(key)
 layer_mdl=nlayer_model
 level_mdl=nlayer_model+1
 !write(string1, *) 'APM: layer_omi ',key,layer_omi
@@ -316,7 +323,7 @@ level_mdl=nlayer_model+1
 
 allocate(prs_tropomi(level_tropomi))
 allocate(prs_tropomi_mem(level_tropomi))
-prs_tropomi(1:level_tropomi)=pressure(key,1:level_tropomi)*100.
+prs_tropomi(1:level_tropomi)=pressure(key,1:level_tropomi)
 
 ! Get location infomation
 
@@ -639,9 +646,9 @@ end subroutine get_expected_tropomi_o3
 
 !-------------------------------------------------------------------------------
 
-subroutine set_obs_def_tropomi_o3(key, o3_pressure, o3_avg_kernel, o3_prior, o3_nlayer)
+subroutine set_obs_def_tropomi_o3(key, o3_pressure, o3_avg_kernel, o3_prior, o3_nlayer, o3_kend)
 
-integer,                           intent(in)   :: key, o3_nlayer
+integer,                           intent(in)   :: key, o3_nlayer, o3_kend
 real(r8), dimension(o3_nlayer+1),  intent(in)   :: o3_pressure
 real(r8), dimension(o3_nlayer),    intent(in)   :: o3_avg_kernel
 real(r8), dimension(o3_nlayer),    intent(in)   :: o3_prior
@@ -656,6 +663,7 @@ if(num_tropomi_o3_obs >= max_tropomi_o3_obs) then
 endif
 
 nlayer(key) = o3_nlayer
+kend(key) = o3_kend
 pressure(key,1:o3_nlayer+1) = o3_pressure(1:o3_nlayer+1)
 avg_kernel(key,1:o3_nlayer) = o3_avg_kernel(1:o3_nlayer)
 prior(key,1:o3_nlayer) = o3_prior(1:o3_nlayer)

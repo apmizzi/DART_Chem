@@ -23,7 +23,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    command=strcat('ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
-   file_list=squeeze(file_list_b)   
+   file_list=squeeze(file_list_b);   
    nfile=size(file_list);
 %
 % Constants
@@ -38,6 +38,11 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    P_std=1013.25;
    grav=9.8;
    cone_fac=.715567;   
+   xcnt1=0;
+   xcnt2=0;
+   xcnt3=0;
+   xcnt4=0;
+   xcnt5=0;
 %
 % Convert DU to moles/m^2
    du2molpm2=4.4615e-4;
@@ -59,6 +64,9 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    delx=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','DX');  
    cen_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LAT');  
    cen_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LON');  
+   if(cen_lon<0)
+      cen_lon=cen_lon+360.;
+   end
    truelat1=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','TRUELAT1');  
    truelat2=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','TRUELAT2');  
    moad_cen_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','MOAD_CEN_LAT');  
@@ -75,12 +83,14 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       end
       file_mm=str2double(file_in(indx+29:indx+32));
       file_secs=file_mm*60.;
+      fprintf('min %d sec %d \n',file_mm,file_secs) 
 %       
-%      if(file_secs<day_secs_beg | file_secs>day_secs_end)
+      fprintf('%d %s \n',ifile,file_in);
+      fprintf('file str secs %d cycle end secs %d \n',file_secs,day_secs_end);
+%      if(day_secs_end<file_secs)
 %         continue
 %      end
-      fprintf('%d %s \n',ifile,file_in);
-%      fprintf('%d %d %d \n',day_secs_beg,file_secs,day_secs_end);
+      fprintf('READ OMI DATA \n')
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -221,21 +231,30 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       range=h5readatt(file_in,field,'ValidRange');  
       time(:)=time(:)*scalef;
       time(:)=time(:)-37;
+% sfc_prs(pixel,scanline)
+      field='/HDFEOS/SWATHS/OMI Column Amount O3/Data Fields/TerrainPressure';
+      sfc_prs=h5read(file_in,field);
+      missing=h5readatt(file_in,field,'MissingValue');  
+      offset=h5readatt(file_in,field,'Offset');  
+      scalef=h5readatt(file_in,field,'ScaleFactor');  
+      units=h5readatt(file_in,field,'Units');
+      range=h5readatt(file_in,field,'ValidRange');  
+      sfc_prs(:)=sfc_prs(:)*scalef;
 %
 % Define OMI vertical pressure grid (hPa) (bottom to top)
       del_lnpr=log(2.0);
       lnpr(1)=0.;
-      prs_lev(1)=exp(lnpr(1))*P_std;
+      prs_lev(:,:,1)=exp(lnpr(1))*sfc_prs(:,:);
       for k=2:level
 %         if(k==level)
-%      	    prs_lev(k)=2.e-10*P_std;
+%      	     prs_lev(:,:,k)=2.e-10*sfc_prs(:,:);
 %            continue
 %         end
          lnpr(k)=lnpr(k-1)-del_lnpr;
-         prs_lev(k)=exp(lnpr(k))*P_std;
+         prs_lev(:,:,k)=exp(lnpr(k))*sfc_prs(:,:);
       end
       for k=1:layer
-         prs_lay(k)=(prs_lev(k)+prs_lev(k+1))/2.;
+         prs_lay(:,:,k)=(prs_lev(:,:,k)+prs_lev(:,:,k+1))/2.;
       end
 %
 % Loop through OMI data
@@ -258,24 +277,31 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 %
 % Check time
          if(omidate<windate_min | omidate>windate_max)
-            continue
+%	    fprintf('%d %d %d %d %d %d  \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
+%	    fprintf('%d %d %d %d %d %d  \n',yyyy_omi,mn_omi,dy_omi,hh_omi,mm_omi,ss_omi)
+%	    fprintf('%d %d %d %d %d %d  \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
+%	    fprintf('\n')
+% 	    fprintf('%d %d %d \n',windate_min,omidate,windate_max)
+	    continue
          end
          for ipxl=1:pixel
-	    
 %
-% QA/AC		    
+% QA/AC	(qual_flg ~11000; xtrl_flg ~0;
 	    if(zenang(ipxl,ilin) >= 85. | qual_flg(ipxl,ilin)~=0 | ...
 	       xtrk_flg(ipxl,ilin)~=0)
-               continue
+ 	       xcnt1=xcnt1+1;
+	       continue
             end
 	    if(ipxl==42 | ipxl==43 | ipxl==44 | ...
 	      ipxl==45 | ipxl==46)
                continue
             end
 	    if(isnan(col_amt(ipxl,ilin)) | col_amt(ipxl,ilin)<=0)
+	      xcnt2=xcnt2+1;
                continue
             end
             if(isnan(prior_lay(layer,ipxl,ilin)) | prior_lay(layer,ipxl,ilin)<=0.)
+	      xcnt3=xcnt3+1;
                continue
             end
 %
@@ -285,7 +311,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 %		 
 	    x_obser=lon(ipxl,ilin);
             y_obser=lat(ipxl,ilin);
-            if(x_obser<0.)
+	    if(x_obser<0.)
 	       x_obser=360.+x_obser;
             end
 %
@@ -294,59 +320,61 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 	       xmdl_sw=xmdl_sw+360.;
             end
 %
-% APM: Need to get this info from model
+% APM: Need to get this info from model  
 	    [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
-	    xmdl_sw,12000.,cen_lon,truelat1,truelat2);
+	    xmdl_sw,4000.,cen_lon,truelat1,truelat2);
             i_min = round(xi);
             j_min = round(xj);
             reject = 0;
 %
 % Check lower bounds
-            if(i_min<1 & round(xi)==0)
-	       i_min=1;
-            elseif(i_min<1 & fix(xi)<0)
-   	       i_min=-9999;
-               j_min=-9999;
-               reject=1;
-            end
-            if(j_min<1 & round(xj)==0)
-               j_min=1;
-            elseif (j_min<1 & fix(xj)<0)
-               i_min=-9999;
-               j_min=-9999;
-               reject=1;
-            end
+%            if(i_min<1 & round(xi)==0)
+%	       i_min=1;
+%            elseif(i_min<1 & fix(xi)<0)
+%   	       i_min=-9999;
+%               j_min=-9999;
+%               reject=1;
+%            end
+%            if(j_min<1 & round(xj)==0)
+%               j_min=1;
+%            elseif (j_min<1 & fix(xj)<0)
+%               i_min=-9999;
+%               j_min=-9999;
+%               reject=1;
+%            end
 %
 % Check upper bounds
-            if(i_min>nx_mdl & fix(xi)==nx_mdl)
-               i_min=nx_mdl;
-            elseif (i_min>nx_mdl & fix(xi)>nx_mdl)
-               i_min=-9999;
-               j_min=-9999;
-               reject=1;
-            end
-            if(j_min>ny_mdl & fix(xj)==ny_mdl)
-	       j_min=ny_mdl;
-            elseif (j_min>ny_mdl & fix(xj)>ny_mdl)
-               i_min=-9999;
-               j_min=-9999;
-               reject=1;
-            end
+%            if(i_min>nx_mdl & fix(xi)==nx_mdl)
+%               i_min=nx_mdl;
+%            elseif (i_min>nx_mdl & fix(xi)>nx_mdl)
+%               i_min=-9999;
+%               j_min=-9999;
+%               reject=1;
+%            end
+%            if(j_min>ny_mdl & fix(xj)==ny_mdl)
+%	       j_min=ny_mdl;
+%            elseif (j_min>ny_mdl & fix(xj)>ny_mdl)
+%               i_min=-9999;
+%               j_min=-9999;
+%               reject=1;
+%            end
             if(reject==1)
+	      xcnt4=xcnt4+1;	      
 	       continue
 	    end
 	    if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
+	      xcnt5=xcnt5+1;
 	       continue
 	    end
 %
 % Save data to ascii file
             icnt=icnt+1;
-fprintf(fid,'OMI_TOMS_O3_Obs: %d %d %d  \n',icnt,i_min,j_min);
+            fprintf(fid,'OMI_TOMS_O3_Obs: %d %d %d  \n',icnt,i_min,j_min);
             fprintf(fid,'%d %d %d %d %d %d \n',yyyy_omi, ...
 	    mn_omi,dy_omi,hh_omi,mm_omi,ss_omi);
 	    fprintf(fid,'%14.8f %14.8f \n',lat(ipxl,ilin),lon(ipxl,ilin));
             fprintf(fid,'%d %d \n',layer,level);
- 	    fprintf(fid,'%14.8g ',prs_lev(1:level));
+   	    fprintf(fid,'%14.8g ',prs_lev(ipxl,ilin,1:level));
             fprintf(fid,'\n');
             fprintf(fid,'%14.8g ',avgk_lay(1:layer,ipxl,ilin));
             fprintf(fid,'\n');
@@ -356,9 +384,11 @@ fprintf(fid,'OMI_TOMS_O3_Obs: %d %d %d  \n',icnt,i_min,j_min);
          end
       end
       clear prior_lay cld_prs col_amt rad_cld_frac avgk_lay 
-      clear lat lon secs_day zenang time 
+      clear lat lon secs_day zenang time prs_lev prs_lay
    end
+   fprintf('%d %d %d %d %d \n',xcnt1,xcnt2,xcnt3,xcnt4,xcnt5)
 end
+%
 function [fld_interp]=prs_interp(fld,i_tmp,j_tmp,i_mdl,j_mdl, ...
    x_tmp,y_tmp,p_tmp,nz_tmp,x_mdl,y_mdl,p_mdl,nz_mdl)
 %

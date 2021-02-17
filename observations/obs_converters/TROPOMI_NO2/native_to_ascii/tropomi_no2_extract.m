@@ -58,6 +58,9 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    delx=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','DX');  
    cen_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LAT');  
    cen_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LON');  
+   if(cen_lon<0)
+      cen_lon=cen_lon+360.;
+   end
    truelat1=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','TRUELAT1');  
    truelat2=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','TRUELAT2');  
    moad_cen_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','MOAD_CEN_LAT');  
@@ -87,13 +90,13 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       file_str_secs=file_str_hh*60.*60. + file_str_mm*60. + file_str_ss;
       file_end_secs=file_end_hh*60.*60. + file_end_mm*60. + file_end_ss;
       fprintf('%d %s \n',ifile,file_in);
-      fprintf('%d %d %d \n',day_secs_beg,file_str_secs,day_secs_end);
-      fprintf('%d %d %d \n',day_secs_beg,file_end_secs,day_secs_end);
+      fprintf('file str %d cycle end %d \n',file_str_secs,day_secs_end);
+      fprintf('file end %d cycle str %d \n',file_end_secs,day_secs_beg);
 %       
-      if((file_str_secs<day_secs_beg & file_str_secs>day_secs_end) & ...
-      (file_end_secs<day_secs_beg & file_end_secs>day_secs_end))
+      if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
          continue
       end
+      fprintf('READ TROPOMI DATA \n')
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -338,7 +341,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
          for ipxl=1:pixel
 %
 % QA/AC
-	    if(qa_value(ipxl,ilin)<0.95 | zenang(ipxl,ilin)>=80.0)
+	    if(qa_value(ipxl,ilin)<0.50 | zenang(ipxl,ilin)>=80.0)
                continue
 	    end
             if(isnan(col_amt_trop(ipxl,ilin)) | col_amt_trop(ipxl,ilin)<=0)
@@ -362,7 +365,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 %
 % APM: Need to get this info from model
 	    [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
-	    xmdl_sw,12000.,cen_lon,truelat1,truelat2);
+	    xmdl_sw,4000.,cen_lon,truelat1,truelat2);
             i_min = round(xi);
             j_min = round(xj);
             reject = 0;

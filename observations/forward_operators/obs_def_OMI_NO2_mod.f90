@@ -1,4 +1,4 @@
-! Copyright 2019 University Corporation for Atmospheric Research and 
+! Copyright 2019 University Corporation for Atmospheric Research and
 ! Colorado Department of Public Health and Environment.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
@@ -84,6 +84,7 @@ public :: write_omi_no2, &
 integer, parameter    :: max_omi_no2_obs = 10000000
 integer               :: num_omi_no2_obs = 0
 integer,  allocatable :: nlayer(:)
+integer,  allocatable :: kend(:)
 real(r8), allocatable :: pressure(:,:)
 real(r8), allocatable :: scat_wt(:,:)
 real(r8), allocatable :: prs_trop(:)
@@ -140,6 +141,7 @@ if (nlayer_omi_no2 < 1) then
 endif
 
 allocate(   nlayer(max_omi_no2_obs))
+allocate(   kend(max_omi_no2_obs))
 allocate( pressure(max_omi_no2_obs,nlayer_omi_no2+1))
 allocate(  scat_wt(max_omi_no2_obs,nlayer_omi_no2))
 allocate( prs_trop(max_omi_no2_obs))
@@ -158,8 +160,9 @@ character(len=*), intent(in), optional :: fform
 
 integer               :: keyin
 integer               :: nlayer_1
+integer               :: kend_1
 real(r8), allocatable :: pressure_1(:)
-real(r8), allocatable ::  scat_wt_1(:)
+real(r8), allocatable :: scat_wt_1(:)
 real(r8)              :: prs_trop_1
 character(len=32)     :: fileformat
 
@@ -172,6 +175,7 @@ if(present(fform)) fileformat = adjustl(fform)
 
 ! Need to know how many layers for this one
 nlayer_1   = read_int_scalar( ifile, fileformat, 'nlayer_1')
+kend_1     = read_int_scalar( ifile, fileformat, 'kend_1')
 prs_trop_1 = read_r8_scalar( ifile, fileformat, 'prs_trop_1')
 
 allocate( pressure_1(nlayer_1+1))
@@ -179,7 +183,7 @@ allocate(  scat_wt_1(nlayer_1))
 
 call read_r8_array(ifile, nlayer_1+1, pressure_1,   fileformat, 'pressure_1')
 call read_r8_array(ifile, nlayer_1,   scat_wt_1, fileformat, 'scat_wt_1')
-keyin = read_int_scalar(ifile, fileformat, 'nlayer_1')
+keyin = read_int_scalar(ifile, fileformat, 'keyin')
 
 counts1 = counts1 + 1
 key     = counts1
@@ -190,7 +194,7 @@ if(counts1 > max_omi_no2_obs) then
    call error_handler(E_ERR,'read_omi_no2',string1,source,text2=string2)
 endif
 
-call set_obs_def_omi_no2(key, pressure_1, scat_wt_1, prs_trop_1, nlayer_1)
+call set_obs_def_omi_no2(key, pressure_1, scat_wt_1, prs_trop_1, kend_1, nlayer_1)
 
 deallocate(pressure_1, scat_wt_1)
 
@@ -215,6 +219,7 @@ if(present(fform)) fileformat = adjustl(fform)
 ! you can come extend the context strings to include the key if desired.
 
 call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
+call write_int_scalar(ifile,                     kend(key), fileformat,'kend')
 call write_r8_scalar( ifile,                     prs_trop(key), fileformat,'prs_trop')
 call write_r8_array(  ifile, nlayer(key)+1,  pressure(key,:), fileformat,'pressure')
 call write_r8_array(  ifile, nlayer(key),  scat_wt(key,:), fileformat,'scat_wt')
@@ -268,10 +273,9 @@ type(location_type) :: loc2
 
 integer :: layer_omi,level_omi
 integer :: layer_mdl,level_mdl
-integer :: k,imem
+integer :: k,kend_omi,imem
 integer :: no2_istatus(ens_size)
 integer, dimension(ens_size) :: tmp_istatus, qmr_istatus, prs_istatus
-integer, dimension(ens_size) :: trop_indx, trop_istatus
 
 real(r8) :: eps, AvogN, Rd, Ru, grav, msq2cmsq
 real(r8) :: no2_min
@@ -306,8 +310,9 @@ endif
 
 layer_omi = nlayer(key)
 level_omi = nlayer(key)+1
-layer_mdl=nlayer_model
-level_mdl=nlayer_model+1
+kend_omi  = kend(key)
+layer_mdl = nlayer_model
+level_mdl = nlayer_model+1
 !write(string1, *) 'APM: layer_omi ',key,layer_omi
 !call error_handler(E_MSG, routine, string1, source)
 !write(string1, *) 'APM: layer_mdl ',key,layer_mdl
@@ -558,8 +563,6 @@ enddo
 !write(string1, *) 'APM: qmr_val mem=1 ',key,qmr_val(1,:)
 !call error_handler(E_MSG, routine, string1, source)
 
-trop_indx(:)=0
-trop_istatus(:)=0
 expct_val(:)=0.0
 allocate(thick(layer_omi))
 do imem=1,ens_size
@@ -572,35 +575,10 @@ do imem=1,ens_size
       prs_omi_mem(1)=prs_sfc(imem)
    endif   
 
-   ! Find OMI index for tropopause
-
-   trop_indx(imem)=-999
-   if(prs_trop(key).ge.prs_omi(1)) then
-      trop_indx(imem)=1
-      cycle
-   elseif(prs_trop(key).le.prs_omi(layer_omi)) then
-      trop_indx(imem)=layer_omi
-      cycle
-   endif
-   do k=1,layer_omi
-      if(prs_trop(key).lt.prs_omi(k) .and. &
-      prs_trop(key).gt.prs_omi(k+1)) then
-         trop_indx(imem)=k
-         exit
-      endif
-   enddo
-   if(trop_indx(imem).lt.0) then
-      write(string1, *) &
-      'APM ERROR: Failed to find tropopause index ',key
-!      call error_handler(E_MSG, routine, string1, source)
-!      call track_status(ens_size, trop_istatus, real(trop_indx,8), &
-!      istatus, return_now)
-   endif
-
    ! Calculate the thicknesses
 
    thick(:)=0.
-   do k=1,trop_indx(imem)
+   do k=1,kend_omi
       lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
       up_wt=log(prs_omi_mem(k))-lnpr_mid
       dw_wt=log(lnpr_mid)-log(prs_omi_mem(k+1))
@@ -619,7 +597,7 @@ do imem=1,ens_size
    ! Process the vertical summation
 
    expct_val(imem)=0.0_r8
-   do k=1,trop_indx(imem)
+   do k=1,kend_omi
       lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
       up_wt=log(prs_omi_mem(k))-lnpr_mid
       dw_wt=log(lnpr_mid)-log(prs_omi_mem(k+1))
@@ -655,9 +633,10 @@ end subroutine get_expected_omi_no2
 
 !-------------------------------------------------------------------------------
 
-subroutine set_obs_def_omi_no2(key, no2_pressure, no2_scat_wt, no2_prs_trop, no2_nlayer)
+subroutine set_obs_def_omi_no2(key, no2_pressure, no2_scat_wt, no2_prs_trop, no2_kend, no2_nlayer)
 
 integer,                            intent(in)   :: key, no2_nlayer
+integer,                            intent(in)   :: no2_kend
 real(r8), dimension(no2_nlayer+1),  intent(in)   :: no2_pressure
 real(r8), dimension(no2_nlayer),    intent(in)   :: no2_scat_wt
 real(r8),                           intent(in)   :: no2_prs_trop
@@ -672,6 +651,7 @@ if(num_omi_no2_obs >= max_omi_no2_obs) then
 endif
 
 nlayer(key) = no2_nlayer
+kend(key) = no2_kend
 pressure(key,1:no2_nlayer+1) = no2_pressure(1:no2_nlayer+1)
 scat_wt(key,1:no2_nlayer) = no2_scat_wt(1:no2_nlayer)
 prs_trop(key) = no2_prs_trop

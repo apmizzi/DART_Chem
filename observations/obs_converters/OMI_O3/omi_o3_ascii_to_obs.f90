@@ -117,8 +117,9 @@ program omi_o3_ascii_to_obs
    real                            :: pi,rad2deg,re,level_crit
    real                            :: x_observ,y_observ,dofs
    real*8                          :: obs_err_var,level
-   real                            :: prs_trop
+   real                            :: prs_trop, obs_sum
    real                            :: omi_sum_fl,omi_sum_pr,omi_frac
+   real                            :: du2molpm2
 !
    real*8,dimension(num_qc)        :: omi_qc
    real*8,dimension(num_copies)    :: obs_val
@@ -141,7 +142,7 @@ program omi_o3_ascii_to_obs
    real,allocatable,dimension(:)   :: prf_model
    real                            :: lat_obs,lon_obs
    real*8                          :: lat_obs_r8,lon_obs_r8
-   real,allocatable,dimension(:,:)     :: lon,lat
+   real,allocatable,dimension(:,:)     :: lon,lat,psfc_fld
    real,allocatable,dimension(:,:,:)   :: prs_prt,prs_bas,prs_fld
    real,allocatable,dimension(:,:,:)   :: tmp_prt,tmp_fld,vtmp_fld
    real,allocatable,dimension(:,:,:)   :: o3_fld,qmr_fld
@@ -152,14 +153,16 @@ program omi_o3_ascii_to_obs
    path_model,file_model,nx_model,ny_model,nz_model
 !
 ! Set constants
+   du2molpm2=4.4615e-4
    pi=4.*atan(1.)
    rad2deg=360./(2.*pi)
    re=6371000.
    fac_err=0.25
+   fac_err=0.125
    days_last=-9999.
    seconds_last=-9999.
    prs_trop=-9999.
-   level_crit=500.
+   level_crit=50000.
    sum_reject=0
    sum_accept=0
    sum_total=0
@@ -213,6 +216,7 @@ program omi_o3_ascii_to_obs
 ! Read model data
    allocate(lon(nx_model,ny_model))
    allocate(lat(nx_model,ny_model))
+   allocate(psfc_fld(nx_model,ny_model))
    allocate(prs_prt(nx_model,ny_model,nz_model))
    allocate(prs_bas(nx_model,ny_model,nz_model))
    allocate(prs_fld(nx_model,ny_model,nz_model))
@@ -223,6 +227,7 @@ program omi_o3_ascii_to_obs
    file_in=trim(path_model)//'/'//trim(file_model)
    call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
    call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
+   call get_DART_diag_data(trim(file_in),'PSFC',psfc_fld,nx_model,ny_model,1,1)   
    call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
    call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
    call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
@@ -240,7 +245,7 @@ program omi_o3_ascii_to_obs
 ! Read OMI O3
    line_count = 0
    read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!   print *, trim(data_type), obs_id
+!   print *, trim(data_type), obs_id, i_min, j_min
    do while (ios == 0)
       sum_total=sum_total+1
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
@@ -257,18 +262,20 @@ program omi_o3_ascii_to_obs
       read(fileid,*,iostat=ios) avgk_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) prior_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) col_amt_obs
-      prs_obs_r8(:)=prs_obs(:)
+      prs_obs(:)=prs_obs(:)*100.
+      prs_obs_r8(:)=prs_obs(:)/100.
       avgk_obs_r8(:)=avgk_obs(:)
       prior_obs_r8(:)=prior_obs(:)
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
 !
-!      print *, trim(data_type), obs_id
+!      print *, trim(data_type), obs_id, i_min, j_min
 !      print *, yr_obs,mn_obs,dy_obs
 !      print *, hh_obs,mm_obs,ss_obs
 !      print *, lat_obs,lon_obs
 !      print *, obs_id,nlay_obs,nlev_obs
-!      print *, prs_obs(1:nlev_obs)
+!      print *, 'prs_obs ',prs_obs(1:nlev_obs)
+!      print *, 'prs_mdl ',prs_fld(i_min,j_min,1:nz_model)
 !      print *, avgk_obs(1:nlay_obs) 
 !      print *, prior_obs(1:nlay_obs)
 !      print *, col_amt_obs
@@ -278,32 +285,60 @@ program omi_o3_ascii_to_obs
 !--------------------------------------------------------
       reject=0
       call get_model_profile(prf_model,nz_model, &
-      prs_obs*100.,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
-      qmr_fld(i_min,j_min,:),o3_fld(i_min,j_min,:), &
-      nlev_obs,avgk_obs,kend)
+      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
+      qmr_fld(i_min,j_min,:),o3_fld(i_min,j_min,:),psfc_fld(i_min,j_min), &
+      nlev_obs,avgk_obs,prior_obs,kend)
+!      print *, 'exp_obs ',prf_model(1:nlay_obs)
+!      obs_sum=0.
+!      do k=1,kend
+!         obs_sum=obs_sum+prf_model(k)
+!      enddo
 !
+! Find the fraction of the OMI O3 total column that is within the WRF grid      
+!      omi_sum_fl=0.
+!      omi_sum_pr=0.
+!      do k=1,kend
+!         omi_sum_fl=omi_sum_fl + prior_obs(k)   
+!         omi_sum_pr=omi_sum_pr + prior_obs(k)
+!      end do
+!      do k=kend+1,nlay_obs
+!         omi_sum_fl=omi_sum_fl + prior_obs(k)   
+!      end do
+!      omi_frac=omi_sum_pr/omi_sum_fl
+!      print *,'obs ',col_amt_obs    
+!      print *,'scaled obs ',omi_frac*col_amt_obs    
+!      print *,'exp_obs ',obs_sum    
+! 
 !--------------------------------------------------------
 ! Find vertical location
 !--------------------------------------------------------
       call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_model,nlay_obs,kend)
-      level=prs_loc*100.
+       level=prs_loc      
+!      do k=1,nz_model-1
+!         if(prs_fld(i_min,j_min,k).ge.prs_loc .and. &
+!            prs_fld(i_min,j_min,k+1).lt.prs_loc) then
+!            level=k+1
+!            exit
+!         endif
+!      enddo
 !
 ! Check for maximum localization height
-      if(level/100..lt.level_crit) then
-         reject=1
-         sum_reject=sum_reject+1
-         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!         print *, trim(data_type), obs_id
-         deallocate(prs_obs) 
-         deallocate(avgk_obs,prior_obs) 
-         deallocate(prs_obs_r8) 
-         deallocate(avgk_obs_r8,prior_obs_r8) 
-         deallocate(prf_model) 
-         cycle
-      endif
+!      if(level.lt.level_crit) then
+!         reject=1
+!         sum_reject=sum_reject+1
+!         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
+!         print *, trim(data_type), obs_id, i_min, j_min
+!         deallocate(prs_obs) 
+!         deallocate(avgk_obs,prior_obs) 
+!         deallocate(prs_obs_r8) 
+!         deallocate(avgk_obs_r8,prior_obs_r8) 
+!         deallocate(prf_model) 
+!         cycle
+!      endif
 !      
 ! Process accepted observations
-      print *, 'localization pressure level (hPa) ',level/100.
+!      print *, 'localization pressure level (hPa) ',prs_fld(i_min,j_min,int(level))/100.
+      print *, 'localization pressure level (hPa) ',prs_loc/100.
       sum_accept=sum_accept+1
 !
 ! The OMI vertical grid extends well avbove the WRF vertical grid.  Assume the
@@ -314,11 +349,11 @@ program omi_o3_ascii_to_obs
       omi_sum_fl=0.
       omi_sum_pr=0.
       do k=1,kend
-         omi_sum_fl=omi_sum_fl + (1.-avgk_obs(k))*prior_obs(k)   
-         omi_sum_pr=omi_sum_pr + (1.-avgk_obs(k))*prior_obs(k)
+         omi_sum_fl=omi_sum_fl + prior_obs(k)   
+         omi_sum_pr=omi_sum_pr + prior_obs(k)
       end do
       do k=kend+1,nlay_obs
-         omi_sum_fl=omi_sum_fl + (1.-avgk_obs(k))*prior_obs(k)   
+         omi_sum_fl=omi_sum_fl + prior_obs(k)   
       end do
       omi_frac=omi_sum_pr/omi_sum_fl
 !
@@ -374,7 +409,7 @@ program omi_o3_ascii_to_obs
       deallocate(avgk_obs_r8,prior_obs_r8) 
       deallocate(prf_model) 
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!      print *, trim(data_type), obs_id
+!      print *, trim(data_type), obs_id, i_min, j_min
    enddo   
 !
 !----------------------------------------------------------------------
@@ -382,6 +417,7 @@ program omi_o3_ascii_to_obs
 !----------------------------------------------------------------------
    deallocate(lon)
    deallocate(lat)
+   deallocate(psfc_fld)
    deallocate(prs_prt)
    deallocate(prs_bas)
    deallocate(prs_fld)
@@ -466,15 +502,16 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,kend)
 end subroutine vertical_locate
 !
 subroutine get_model_profile(prf_mdl,nz_mdl,prs_obs,prs_mdl, &
-   tmp_mdl,qmr_mdl,o3_mdl,nlev_obs,v_wgts,kend)
+   tmp_mdl,qmr_mdl,o3_mdl,psfc_mdl,nlev_obs,v_wgts,prior,kend)
    implicit none
    integer                                :: nz_mdl
    integer                                :: nlev_obs
    integer                                :: i,j,k,kend
    real                                   :: Ru,Rd,cp,eps,AvogN,msq2cmsq,grav
+   real                                   :: psfc_mdl
    real,dimension(nz_mdl)                 :: prs_mdl,tmp_mdl,qmr_mdl,o3_mdl
    real,dimension(nz_mdl)                 :: tmp_prf,vtmp_prf,o3_prf
-   real,dimension(nlev_obs-1)             :: thick,v_wgts,prf_mdl
+   real,dimension(nlev_obs-1)             :: thick,v_wgts,prior,prf_mdl
    real,dimension(nlev_obs)               :: o3_prf_mdl,vtmp_prf_mdl,prs_obs
 !
 ! Constants (mks units)
@@ -501,7 +538,8 @@ subroutine get_model_profile(prf_mdl,nz_mdl,prs_obs,prs_mdl, &
    enddo
 ! Vertical interpolation
    o3_prf_mdl(:)=-9999.  
-   vtmp_prf_mdl(:)=-9999.   
+   vtmp_prf_mdl(:)=-9999.
+!   if(psfc_mdl.lt.prs_obs(1)) prs_obs(1)=psfc_mdl
    call interp_to_obs(o3_prf_mdl,o3_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
    call interp_to_obs(vtmp_prf_mdl,vtmp_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
 !   
@@ -513,14 +551,16 @@ subroutine get_model_profile(prf_mdl,nz_mdl,prs_obs,prs_mdl, &
    enddo
    do k=1,nlev_obs-1
 ! full term
-      prf_mdl(k)=thick(k)*(o3_prf_mdl(k)+o3_prf_mdl(k+1))/2.* &
-      AvogN/msq2cmsq * v_wgts(k)!
-! no averaging kernel
 !      prf_mdl(k)=thick(k)*(o3_prf_mdl(k)+o3_prf_mdl(k+1))/2.* &
-!      AvogN/msq2cmsq
-! no thickness
+!      v_wgts(k) + (1.-v_wgts(k))*prior(k) 
+! no prior
+      prf_mdl(k)=thick(k)*(o3_prf_mdl(k)+o3_prf_mdl(k+1))/2.* &
+      v_wgts(k)
+! no averaging kernel and no prior
+!      prf_mdl(k)=thick(k)*(o3_prf_mdl(k)+o3_prf_mdl(k+1))/2.
+! no thickness and no prior
 !      prf_mdl(k)=(o3_prf_mdl(k)+o3_prf_mdl(k+1))/2.* &
-!      AvogN/msq2cmsq * v_wgts(k)
+!      v_wgts(k)
 
    enddo
 !   print *, 'prf_mdl  ',prf_model(:)
@@ -958,9 +998,9 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
       endif
       do kk=1,nz_mdl-1
          if(prs_obs(k).le.prs_mdl(kk) .and. prs_obs(k).gt.prs_mdl(kk+1)) then
-            wt_dw=log(prs_mdl(kk))-log(prs_obs(k))
-            wt_up=log(prs_obs(k))-log(prs_mdl(kk+1))
-            prf_mdl(k)=(wt_up*fld_mdl(kk)+wt_dw*fld_mdl(kk+1))/(wt_dw+wt_up)
+            wt_up=log(prs_mdl(kk))-log(prs_obs(k))
+            wt_dw=log(prs_obs(k))-log(prs_mdl(kk+1))
+            prf_mdl(k)=(wt_dw*fld_mdl(kk)+wt_up*fld_mdl(kk+1))/(wt_dw+wt_up)
             exit
          endif
       enddo               

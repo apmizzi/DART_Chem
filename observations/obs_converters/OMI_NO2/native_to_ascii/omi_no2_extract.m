@@ -57,7 +57,10 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    lat_mdl=ncread(strcat(path_mdl,'/',file_mdl),'XLAT');
    delx=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','DX');  
    cen_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LAT');  
-   cen_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LON');  
+   cen_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LON');
+   if(cen_lon<0)
+      cen_lon=cen_lon+360.;
+   end
    truelat1=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','TRUELAT1');  
    truelat2=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','TRUELAT2');  
    moad_cen_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','MOAD_CEN_LAT');  
@@ -75,11 +78,12 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       file_mm=str2double(file_in(indx+29:indx+32));
       file_secs=file_mm*60.;
 %       
-%      if(file_secs<day_secs_beg | file_secs>day_secs_end)
+      fprintf('%d %s \n',ifile,file_in);
+      fprintf('file str secs %d cycle vend secs %d \n',file_secs,day_secs_end);
+%      if(day_secs_end<file_secs)
 %         continue
 %      end
-      fprintf('%d %s \n',ifile,file_in)
-%      fprintf('%d %d %d \n',day_secs_beg,file_secs,day_secs_end)
+      fprintf('READ OMI DATA \n')
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -382,6 +386,14 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
                continue
             end
 %
+	    if(isnan(col_amt_trop(ipxl,ilin)) | col_amt_trop(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(col_amt_trop_std(ipxl,ilin)) | col_amt_trop_std(ipxl,ilin)<=0)
+               continue
+            end
+%
 % Check domain
 % Input grid needs to be in degrees
 % X coordinate is [0 to 360]
@@ -398,8 +410,8 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
             end
 %
 % APM: Need to get this info from model
-	    [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
-	    xmdl_sw,12000.,cen_lon,truelat1,truelat2);
+            [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
+	    xmdl_sw,4000.,cen_lon,truelat1,truelat2);
             i_min = round(xi);
             j_min = round(xj);
             reject = 0;
@@ -1173,7 +1185,6 @@ month,day,hour,minute,second);
    ss=second;
    rc=0;
 end
-%
 %
    function [xi,xj]=w3fb13(alat,elon,alat1,elon1, ...
    dx,elonv,alatan1,alatan2)

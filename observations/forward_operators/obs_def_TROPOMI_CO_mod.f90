@@ -84,6 +84,7 @@ public :: write_tropomi_co, &
 integer, parameter    :: max_tropomi_co_obs = 10000000
 integer               :: num_tropomi_co_obs = 0
 integer,  allocatable :: nlayer(:)
+integer,  allocatable :: kend(:)
 real(r8), allocatable :: pressure(:,:)
 real(r8), allocatable :: avg_kernel(:,:)
 
@@ -140,6 +141,7 @@ if (nlayer_tropomi_co < 1) then
 endif
 
 allocate(    nlayer(max_tropomi_co_obs))
+allocate(    kend(max_tropomi_co_obs))
 allocate(  pressure(max_tropomi_co_obs,nlayer_tropomi_co+1))
 allocate(avg_kernel(max_tropomi_co_obs,nlayer_tropomi_co))
 
@@ -157,6 +159,7 @@ character(len=*), intent(in), optional :: fform
 
 integer               :: keyin
 integer               :: nlayer_1
+integer               :: kend_1
 real(r8), allocatable :: pressure_1(:)
 real(r8), allocatable :: avg_kernel_1(:)
 character(len=32)     :: fileformat
@@ -170,13 +173,14 @@ if(present(fform)) fileformat = adjustl(fform)
 
 ! Need to know how many layers for this one
 nlayer_1 = read_int_scalar( ifile, fileformat, 'nlayer_1')
+kend_1 = read_int_scalar( ifile, fileformat, 'kend_1')
 
 allocate(  pressure_1(nlayer_1+1))
 allocate(avg_kernel_1(nlayer_1))
 
 call read_r8_array(ifile, nlayer_1+1, pressure_1,   fileformat, 'pressure_1')
 call read_r8_array(ifile, nlayer_1,   avg_kernel_1, fileformat, 'avg_kernel_1')
-keyin = read_int_scalar(ifile, fileformat, 'nlayer_1')
+keyin = read_int_scalar(ifile, fileformat, 'keyin')
 
 counts1 = counts1 + 1
 key     = counts1
@@ -187,7 +191,7 @@ if(counts1 > max_tropomi_co_obs) then
    call error_handler(E_ERR,'read_tropomi_co',string1,source,text2=string2)
 endif
 
-call set_obs_def_tropomi_co(key, pressure_1, avg_kernel_1, nlayer_1)
+call set_obs_def_tropomi_co(key, pressure_1, avg_kernel_1, nlayer_1, kend_1)
 
 deallocate(pressure_1, avg_kernel_1)
 
@@ -212,6 +216,7 @@ if(present(fform)) fileformat = adjustl(fform)
 ! you can come extend the context strings to include the key if desired.
 
 call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
+call write_int_scalar(ifile,                     kend(key), fileformat,'kend')
 call write_r8_array(  ifile, nlayer(key)+1,  pressure(key,:), fileformat,'pressure')
 call write_r8_array(  ifile, nlayer(key),  avg_kernel(key,:), fileformat,'avg_kernel')
 call write_int_scalar(ifile,                             key, fileformat,'key')
@@ -264,7 +269,7 @@ type(location_type) :: loc2
 
 integer :: layer_tropomi,level_tropomi
 integer :: layer_mdl,level_mdl
-integer :: k,imem
+integer :: k,kk,imem,kend_tropomi
 integer :: co_istatus(ens_size)
 integer, dimension(ens_size) :: tmp_istatus, qmr_istatus, prs_istatus
 
@@ -301,6 +306,7 @@ endif
 
 layer_tropomi = nlayer(key)
 level_tropomi = nlayer(key)+1
+kend_tropomi=kend(key)
 layer_mdl=nlayer_model
 level_mdl=nlayer_model+1
 !write(string1, *) 'APM: layer_tropomi ',key,layer_tropomi
@@ -310,7 +316,7 @@ level_mdl=nlayer_model+1
 
 allocate(prs_tropomi(level_tropomi))
 allocate(prs_tropomi_mem(level_tropomi))
-prs_tropomi(1:level_tropomi)=pressure(key,1:level_tropomi)*100.
+prs_tropomi(1:level_tropomi)=pressure(key,1:level_tropomi)
 
 ! Get location infomation
 
@@ -575,49 +581,31 @@ do imem=1,ens_size
       prs_tropomi_mem(1)=prs_sfc(imem)
    endif   
 
-!   ! Calculate the thicknesses
-!
-!   thick(:)=0.
-!   do k=1,layer_tropomi
-!      lnpr_mid=(log(prs_tropomi_mem(k+1))+log(prs_tropomi_mem(k)))/2.
-!      up_wt=log(prs_tropomi_mem(k+1))-lnpr_mid
-!      dw_wt=log(lnpr_mid)-log(prs_tropomi_mem(k))
-!      tl_wt=up_wt+dw_wt
-!      
-!      tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
-!      tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
-!      thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
-!                   log(prs_tropomi_mem(k)/prs_tropomi_mem(k+1))
-!   enddo
-!
-!   if(imem.eq.1) then
-!      write(string1, *) 'APM: thick mem=1 ',key,thick(:)
-!      call error_handler(E_MSG, routine, string1, source)
-!   endif
    ! Process the vertical summation
 
    expct_val(imem)=0.0_r8
-   do k=1,layer_tropomi
-      lnpr_mid=(log(prs_tropomi_mem(k+1))+log(prs_tropomi_mem(k)))/2.
-      up_wt=log(prs_tropomi_mem(k+1))-lnpr_mid
-      dw_wt=log(lnpr_mid)-log(prs_tropomi_mem(k))
+   do k=1,kend_tropomi
+      kk=layer_tropomi-k+1
+      lnpr_mid=(log(prs_tropomi_mem(kk))+log(prs_tropomi_mem(kk-1)))/2.
+      up_wt=log(prs_tropomi_mem(kk))-lnpr_mid
+      dw_wt=log(lnpr_mid)-log(prs_tropomi_mem(kk-1))
       tl_wt=up_wt+dw_wt
 
       ! Convert from VMR to molar density (mol/m^3)
       if(use_log_co) then
-         co_val_conv = (dw_wt*exp(co_val(imem,k))+up_wt*exp(co_val(imem,k+1)))/tl_wt * &
-                        (dw_wt*prs_tropomi_mem(k)+up_wt*prs_tropomi_mem(k+1)) / &
-                        (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
+         co_val_conv = (dw_wt*exp(co_val(imem,kk))+up_wt*exp(co_val(imem,kk-1)))/tl_wt * &
+                        (dw_wt*prs_tropomi_mem(kk)+up_wt*prs_tropomi_mem(kk-1)) / &
+                        (Ru*(dw_wt*tmp_val(imem,kk)+up_wt*tmp_val(imem,kk-1)))
       else
-         co_val_conv = (dw_wt*co_val(imem,k)+up_wt*co_val(imem,k+1))/tl_wt * &
-                        (dw_wt*prs_tropomi_mem(k)+up_wt*prs_tropomi_mem(k+1)) / &
-                        (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
+         co_val_conv = (dw_wt*co_val(imem,kk)+up_wt*co_val(imem,kk-1))/tl_wt * &
+                        (dw_wt*prs_tropomi_mem(kk)+up_wt*prs_tropomi_mem(kk-1)) / &
+                        (Ru*(dw_wt*tmp_val(imem,kk)+up_wt*tmp_val(imem,kk-1)))
       endif
  
       ! Get expected observation
 
       expct_val(imem) = expct_val(imem) + co_val_conv * &
-                        avg_kernel(key,k)
+                        avg_kernel(key,kk)
    enddo
 enddo
 !write(string1, *) 'APM: expct_val (all mems) ',key,expct_val(:)
@@ -632,9 +620,9 @@ end subroutine get_expected_tropomi_co
 
 !-------------------------------------------------------------------------------
 
-subroutine set_obs_def_tropomi_co(key, co_pressure, co_avg_kernel, co_nlayer)
+subroutine set_obs_def_tropomi_co(key, co_pressure, co_avg_kernel, co_nlayer, co_kend)
 
-integer,                           intent(in)   :: key, co_nlayer
+integer,                           intent(in)   :: key, co_nlayer, co_kend
 real(r8), dimension(co_nlayer+1),  intent(in)   :: co_pressure
 real(r8), dimension(co_nlayer),    intent(in)   :: co_avg_kernel
 
@@ -648,6 +636,7 @@ if(num_tropomi_co_obs >= max_tropomi_co_obs) then
 endif
 
 nlayer(key) = co_nlayer
+kend(key) = co_kend
 pressure(key,1:co_nlayer+1) = co_pressure(1:co_nlayer+1)
 avg_kernel(key,1:co_nlayer) = co_avg_kernel(1:co_nlayer)
 

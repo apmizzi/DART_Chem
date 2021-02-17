@@ -6,7 +6,10 @@
                   181.0, 182.0, 220.0, 221.0, 230.0, 231.0,
                   232.0, 233.0, 242.0, 243.0, 245.0, 246.0,
                   252.0, 253.0, 255.0, 280.0, 281.0, 282.0,
- qctype_use = 0,1,2,4,5,6,15
+		  187.0, 287.0
+ qctype_use = 0,1,2,4,5,6,9,15
+ land_temp_error  = 1.5   ! assumed err surface temp. obs (K)
+ land_wind_error  = 1.5   ! assumed err surface wind obs (m/s)
  /
 
 

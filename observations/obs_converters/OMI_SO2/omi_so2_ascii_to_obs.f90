@@ -104,7 +104,7 @@ program omi_so2_ascii_to_obs
    integer                         :: seconds,days,which_vert
    integer                         :: seconds_last,days_last
    integer                         :: nx_model,ny_model,nz_model
-   integer                         :: reject,k,kk,kend
+   integer                         :: reject,k,kk,kend,kpbl
    integer                         :: i_min,j_min
    integer                         :: sum_reject,sum_accept,sum_total
 !
@@ -126,7 +126,7 @@ program omi_so2_ascii_to_obs
    character*129                   :: qc_meta_data='OMI SO2 QC index'
    character*129                   :: chr_year,chr_month,chr_day
    character*129                   :: file_name='omi_so2_obs_seq'
-   character*129                   :: data_type
+   character*129                   :: data_type,cmd
    character*129                   :: path_model,file_model,file_in
 !
    logical                         :: use_log_o3,use_log_no2,use_log_so2
@@ -135,14 +135,15 @@ program omi_so2_ascii_to_obs
    real                            :: col_amt,col_amt_pbl,col_amt_stl
    real                            :: cld_frac,cld_prs,cld_rad_frac,rad_cld_frac
    real                            :: slnt_col_amt
-   real                            :: zenang
-   real                            :: prs_loc,pblh_mdl,pbl_sum
+   real                            :: zenang,obs_sum
+   real                            :: prs_loc,pbl_sum
    real                            :: lat_obs,lon_obs
    real*8                          :: lat_obs_r8,lon_obs_r8
-   real,allocatable,dimension(:)   :: scat_wt,prs_obs,hgt,layer_wt_pbl
-   real*8,allocatable,dimension(:) :: scat_wt_r8,prs_obs_r8,hgt_r8
+   real,allocatable,dimension(:)   :: scat_wt,prs_obs,hgt_obs,layer_wt,layer_wt_pbl
+   real*8,allocatable,dimension(:) :: scat_wt_r8,prs_obs_r8
    real,allocatable,dimension(:)   :: prf_model
-   real,allocatable,dimension(:,:)     :: lon,lat,psfc_fld,pblh_fld,tmp2_fld,qmr2_fld
+   real,allocatable,dimension(:,:)     :: lon,lat,pblh_fld,tmp2_fld,qmr2_fld
+   real,allocatable,dimension(:,:)     :: psfc_fld
    real,allocatable,dimension(:,:,:)   :: prs_prt,prs_bas,prs_fld
    real,allocatable,dimension(:,:,:)   :: tmp_prt,tmp_fld,vtmp_fld
    real,allocatable,dimension(:,:,:)   :: so2_fld,qmr_fld
@@ -156,10 +157,10 @@ program omi_so2_ascii_to_obs
    pi=4.*atan(1.)
    rad2deg=360./(2.*pi)
    re=6371000.
-   fac_err=0.25
+   fac_err=0.75
    days_last=-9999.
    seconds_last=-9999.
-   level_crit=500.
+   level_crit=50000.
    sum_reject=0
    sum_accept=0
    sum_total=0
@@ -267,12 +268,15 @@ program omi_so2_ascii_to_obs
       allocate(prs_obs_r8(nlev_obs))
       allocate(scat_wt_r8(nlay_obs))
       allocate(prf_model(nlay_obs))
-      allocate(hgt(nlev_obs))
+      allocate(hgt_obs(nlev_obs))
+      allocate(layer_wt(nlay_obs))
       allocate(layer_wt_pbl(nlay_obs))
       read(fileid,*,iostat=ios) scat_wt(1:nlay_obs)
       read(fileid,*,iostat=ios) prs_obs(1:nlev_obs)
+      read(fileid,*,iostat=ios) layer_wt(1:nlay_obs)
       read(fileid,*,iostat=ios) layer_wt_pbl(1:nlay_obs)
-      prs_obs_r8(:)=prs_obs(:)
+      prs_obs(:)=prs_obs(:)*100.
+      prs_obs_r8(:)=prs_obs(:)/100.
       scat_wt_r8(:)=scat_wt(:)
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
@@ -294,54 +298,61 @@ program omi_so2_ascii_to_obs
 ! Find model SO2 profile corresponding to the observation
 !--------------------------------------------------------
       reject=0
-      reject=0
       call get_model_profile(prf_model,nz_model, &
-      prs_obs*100.,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
+      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
       qmr_fld(i_min,j_min,:),so2_fld(i_min,j_min,:),psfc_fld(i_min,j_min), &
-      tmp2_fld(i_min,j_min),qmr2_fld(i_min,j_min),pblh_fld(i_min,j_min), &
-      layer_wt_pbl,nlev_obs,scat_wt,kend)
+      tmp2_fld(i_min,j_min),qmr2_fld(i_min,j_min),hgt_obs,nlev_obs,scat_wt,kend)
 !
 !--------------------------------------------------------
 ! Find vertical location
 !--------------------------------------------------------
-      call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_model,nlay_obs,pblh_mdl,hgt,kend)
-      level=prs_loc*100.
+      call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_model,nlay_obs, &
+      pblh_fld(i_min,j_min),hgt_obs,kend,kpbl)
+      level=prs_loc
+      level=75000.
+!      obs_sum=0.
+!      do k=1,kend+1
+!          kk=nlay_obs-k+1      
+!          obs_sum=obs_sum+prf_model(kk)
+!      enddo
+!      print *, 'exp obs ',obs_sum
 !
 ! Check for maximum localization height
-      if(level/100..lt.level_crit) then
-         reject=1
-         sum_reject=sum_reject+1
-         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
+!      if(level.lt.level_crit) then
+!         reject=1
+!         sum_reject=sum_reject+1
+!         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
 !         print *, trim(data_type), obs_id
-         deallocate(scat_wt)
-         deallocate(prs_obs) 
-         deallocate(scat_wt_r8)
-         deallocate(prs_obs_r8) 
-         deallocate(prf_model) 
-         deallocate(hgt) 
-         deallocate(layer_wt_pbl)
-         cycle
-      endif
+!         deallocate(scat_wt)
+!         deallocate(prs_obs) 
+!         deallocate(scat_wt_r8)
+!         deallocate(prs_obs_r8) 
+!         deallocate(prf_model) 
+!         deallocate(hgt_obs) 
+!         deallocate(layer_wt)
+!         deallocate(layer_wt_pbl)
+!         cycle
+!      endif
 !      
 ! Process accepted observations
-      print *, 'localization pressure level (hPa), kend ',level/100.,kend
+      print *, 'localization pressure level (hPa) ',level/100.,kend
       sum_accept=sum_accept+1
-!
-! Adjust col_amt_pbl to remove the contribution above the top of the model
-      pbl_sum=0
-      do k=1,kend
-         kk=nlay_obs-k+1
-         pbl_sum=pbl_sum+layer_wt_pbl(kk)*col_amt_pbl
-      enddo
 !
 ! Set data for writing obs_sequence file
       qc_count=qc_count+1
 !
+! Adjust col_amt_pbl to remove the contribution above the top of the model
+      obs_sum=0.
+      do k=1,kend+1
+         kk=nlay_obs-k+1
+         obs_sum=obs_sum+layer_wt(kk)*col_amt
+      enddo
+!
 ! Obs value is the tropospheric slant column
-      obs_val(:)=pbl_sum*slnt_col_amt/col_amt_pbl
-      obs_err_var=(fac*fac_err*pbl_sum*slnt_col_amt/col_amt_pbl)**2.
+      obs_val(:)=obs_sum*slnt_col_amt/col_amt
+      obs_err_var=(fac*fac_err*obs_sum*slnt_col_amt/col_amt)**2.
       omi_qc(:)=0
-
+!
       obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
       call get_time(obs_time, seconds, days)
 !
@@ -386,10 +397,11 @@ program omi_so2_ascii_to_obs
       deallocate(prs_obs_r8) 
       deallocate(scat_wt_r8)
       deallocate(prf_model) 
-      deallocate(hgt)
+      deallocate(hgt_obs)
+      deallocate(layer_wt)
       deallocate(layer_wt_pbl)
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-   enddo   
+   enddo
 !
 !----------------------------------------------------------------------
 ! Write the sequence to a file
@@ -415,9 +427,15 @@ program omi_so2_ascii_to_obs
    call write_obs_seq(seq, fileout)
    close(fileid)
 !
+! Remove obs_seq if empty
+   cmd='rm -rf '//trim(fileout)
+   if(qc_count.eq.0) then
+      call execute_command_line(trim(cmd))
+   endif   
+!
 end program omi_so2_ascii_to_obs
 !
-subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,pblh,hgt_obs,kend)
+subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,pblh,hgt_obs,kend,kpbl)
 !
 ! This subroutine identifies a vertical location for 
 ! vertical positioning/localization
@@ -425,7 +443,7 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,pblh,hgt_o
 ! 
    implicit none
    integer                       :: nlay_obs,nlev_obs
-   integer                       :: k,kk,kstr,kkend,kend,kmax
+   integer                       :: k,kk,kstr,kpbl,kend,kmax
    real                          :: prs_loc
    real                          :: wt_ctr,wt_end
    real                          :: zmax
@@ -441,7 +459,7 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,pblh,hgt_o
 !      if(k.eq.1) then
 !         locl_prf_sm(k)=(wt_ctr*locl_prf(k)+wt_end*locl_prf(k+1))/(wt_ctr+wt_end)
 !         cycle
-!      elseif(k.eq.nlay_obs) then
+!      elseif(kk.eq.nlay_obs) then
 !         locl_prf_sm(k)=(wt_ctr*locl_prf(k-1)+wt_end*locl_prf(k))/(wt_ctr+wt_end)
 !         cycle
 !      else
@@ -452,12 +470,12 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,pblh,hgt_o
     locl_prf_sm(:)=locl_prf
 !
 ! locate pbl index
-! assumes hgt vertical grid is top down   
-   kkend=nlay_obs
+! assumes hgt vertical grid is top down
+   kpbl=nlay_obs
    do k=1,nlay_obs
       kk=nlay_obs-k+1
-      if((hgt_obs(kk)+hgt_obs(kk-1))/2.lt.pblh) then
-         kkend=k-1
+      if((hgt_obs(kk)+hgt_obs(kk-1))/2.gt.pblh) then
+         kpbl=k
          exit
       endif
    enddo      
@@ -465,7 +483,7 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,pblh,hgt_o
 ! locate maximum
    zmax=-1.e10
    kmax=0
-   do k=1,kkend
+   do k=1,kend
       kk=nlay_obs-k+1
       if(abs(locl_prf_sm(kk)).gt.zmax) then
          zmax=abs(locl_prf_sm(kk))
@@ -476,20 +494,19 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,pblh,hgt_o
    prs_loc=(prs_obs(nlay_obs-kmax+1)+prs_obs(nlay_obs-kmax))/2.
 end subroutine vertical_locate
 !
-!
 subroutine get_model_profile(prf_mdl,nz_mdl,prs_obs,prs_mdl, &
-   tmp_mdl,qmr_mdl,so2_mdl,psfc_mdl,tmp2,qmr2,pbl_hgt, &
-   lay_wt,nlev_obs,v_wgts,kend)
+   tmp_mdl,qmr_mdl,so2_mdl,psfc_mdl,tmp2,qmr2,hgt, &
+   nlev_obs,v_wgts,kend)
    implicit none
    integer                                :: nz_mdl
    integer                                :: nlev_obs
    integer                                :: i,j,k,kk,kend
    real                                   :: Ru,Rd,cp,eps,AvogN,msq2cmsq,grav
-   real                                   :: psfc_mdl,tmp2,qmr2,pbl_hgt
+   real                                   :: psfc_mdl,tmp2,qmr2
    real                                   :: thick_sfc,vtmp2_mdl
    real,dimension(nz_mdl)                 :: prs_mdl,tmp_mdl,qmr_mdl,so2_mdl
    real,dimension(nz_mdl)                 :: tmp_prf,vtmp_prf,so2_prf
-   real,dimension(nlev_obs-1)             :: thick,v_wgts,prf_mdl,lay_wt
+   real,dimension(nlev_obs-1)             :: thick,v_wgts,prf_mdl
    real,dimension(nlev_obs)               :: so2_prf_mdl,vtmp_prf_mdl,prs_obs
    real,dimension(nlev_obs)               :: hgt
 !
@@ -527,20 +544,20 @@ subroutine get_model_profile(prf_mdl,nz_mdl,prs_obs,prs_mdl, &
    if(psfc_mdl.lt.prs_obs(nlev_obs)) psfc_mdl=prs_obs(nlev_obs) 
    thick_sfc=Rd*vtmp2_mdl/grav*log(psfc_mdl/prs_obs(nlev_obs))     
    hgt(nlev_obs)=thick_sfc
-   do k=2,nlev_obs
+   do k=1,nlev_obs-1
       kk=nlev_obs-k+1
-      thick(kk)=Rd*(vtmp_prf_mdl(kk+1)+vtmp_prf_mdl(kk))/2./grav* &
-      log(prs_obs(kk+1)/prs_obs(kk))
-      hgt(kk)=hgt(kk+1)+thick(kk)
+      thick(kk)=Rd*(vtmp_prf_mdl(kk)+vtmp_prf_mdl(kk-1))/2./grav* &
+      log(prs_obs(kk)/prs_obs(kk-1))
+      hgt(kk-1)=hgt(kk)+thick(kk)
    enddo
 !
 ! convert to molecules/cm^2 and apply scattering weights
-   do k=2,nlev_obs
-      kk=nlev_obs-k+1
-!      prf_mdl(kk)=thick(kk)*(so2_prf_mdl(kk)+so2_prf_mdl(kk+1))/2.* &
+   do k=1,nlev_obs-1
+!      kk=nlev_obs-k+1
+!      prf_mdl(kk)=thick(kk)*(so2_prf_mdl(kk)+so2_prf_mdl(kk-1))/2.* &
 !      AvogN/msq2cmsq * v_wgts(kk)
 !
-      prf_mdl(kk)=(so2_prf_mdl(kk)+so2_prf_mdl(kk+1))/2.* &
+      prf_mdl(kk)=(so2_prf_mdl(kk)+so2_prf_mdl(kk-1))/2.* &
       AvogN/msq2cmsq * v_wgts(kk)
    enddo
 !   print *, 'prf_mdl  ',prf_mdl(:)
@@ -738,7 +755,7 @@ subroutine interp_hori_vert(so2_prf,vtmp_prf,vtmp2_scl,psfc_scl,pblh_scl, &
    psfc_scl=psfc_fld(i_min,j_min)
    pblh_scl=pblh_fld(i_min,j_min)
 !
-! Vertical interpolation (OMI vertical grid is top down)
+! Vertical interpolation (OMI vertical grid is bottom up)
    call interp_to_obs(so2_prf,so2_prf_mdl,prs_prf_mdl,prs_obs,nz_mdl,nlev_obs,kend,)
    call interp_to_obs(vtmp_prf,vtmp_prf_mdl,prs_prf_mdl,prs_obs,nz_mdl,nlev_obs,kend)
    return
@@ -929,9 +946,9 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
       endif
       do ll=1,nz_mdl-1
          if(prs_mdl(ll).ge.prs_obs(kk) .and. prs_mdl(ll+1).lt.prs_obs(kk)) then
-            wt_dw=log(prs_mdl(ll))-log(prs_obs(kk))
-            wt_up=log(prs_obs(kk))-log(prs_mdl(ll+1))
-            prf_mdl(kk)=(wt_up*fld_mdl(ll)+wt_dw*fld_mdl(ll+1))/(wt_dw+wt_up)
+            wt_up=log(prs_mdl(ll))-log(prs_obs(kk))
+            wt_dw=log(prs_obs(kk))-log(prs_mdl(ll+1))
+            prf_mdl(kk)=(wt_dw*fld_mdl(ll)+wt_up*fld_mdl(ll+1))/(wt_dw+wt_up)
             exit
          endif
       enddo               

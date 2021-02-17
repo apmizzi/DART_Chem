@@ -184,7 +184,7 @@ allocate(avg_kernel_1(nlayer_1))
 
 call read_r8_array(ifile, nlayer_1+1, pressure_1,   fileformat, 'pressure_1')
 call read_r8_array(ifile, nlayer_1,   avg_kernel_1, fileformat, 'avg_kernel_1')
-keyin = read_int_scalar(ifile, fileformat, 'nlayer_1')
+keyin = read_int_scalar(ifile, fileformat, 'keyin')
 
 counts1 = counts1 + 1
 key     = counts1
@@ -274,7 +274,7 @@ type(location_type) :: loc2
 
 integer :: layer_tropomi,level_tropomi
 integer :: layer_mdl,level_mdl
-integer :: k,imem
+integer :: k,imem,trop_indxx
 integer :: no2_istatus(ens_size)
 integer, dimension(ens_size) :: tmp_istatus, qmr_istatus, prs_istatus
 
@@ -311,6 +311,7 @@ endif
 
 layer_tropomi = nlayer(key)
 level_tropomi = nlayer(key)+1
+trop_indxx = trop_indx(key)
 layer_mdl=nlayer_model
 level_mdl=nlayer_model+1
 !write(string1, *) 'APM: layer_omi ',key,layer_omi
@@ -320,7 +321,7 @@ level_mdl=nlayer_model+1
 
 allocate(prs_tropomi(level_tropomi))
 allocate(prs_tropomi_mem(level_tropomi))
-prs_tropomi(1:level_tropomi)=pressure(key,1:level_tropomi)*100.
+prs_tropomi(1:level_tropomi)=pressure(key,1:level_tropomi)
 
 ! Get location infomation
 
@@ -589,7 +590,7 @@ do imem=1,ens_size
    ! Calculate the thicknesses
 
    thick(:)=0.
-   do k=1,layer_tropomi
+   do k=1,trop_indxx
       lnpr_mid=(log(prs_tropomi_mem(k+1))+log(prs_tropomi_mem(k)))/2.
       up_wt=log(prs_tropomi_mem(k))-lnpr_mid
       dw_wt=log(lnpr_mid)-log(prs_tropomi_mem(k+1))
@@ -608,7 +609,7 @@ do imem=1,ens_size
    ! Process the vertical summation
 
    expct_val(imem)=0.0_r8
-   do k=1,layer_tropomi
+   do k=1,trop_indxx
       lnpr_mid=(log(prs_tropomi_mem(k+1))+log(prs_tropomi_mem(k)))/2.
       up_wt=log(prs_tropomi_mem(k))-lnpr_mid
       dw_wt=log(lnpr_mid)-log(prs_tropomi_mem(k+1))

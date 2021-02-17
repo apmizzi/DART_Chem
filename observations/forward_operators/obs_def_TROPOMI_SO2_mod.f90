@@ -84,7 +84,8 @@ public :: write_tropomi_so2, &
 integer, parameter    :: max_tropomi_so2_obs = 10000000
 integer               :: num_tropomi_so2_obs = 0
 integer,  allocatable :: nlayer(:)
-real(r8), allocatable :: amf_1km(:)
+integer,  allocatable :: kend(:)
+real(r8), allocatable :: amf_obs(:)
 real(r8), allocatable :: pressure(:,:)
 real(r8), allocatable :: avg_kernel(:,:)
 real(r8), allocatable :: prior(:,:)
@@ -142,7 +143,8 @@ if (nlayer_tropomi_so2 < 1) then
 endif
 
 allocate(    nlayer(max_tropomi_so2_obs))
-allocate(    amf_1km(max_tropomi_so2_obs))
+allocate(    kend(max_tropomi_so2_obs))
+allocate(    amf_obs(max_tropomi_so2_obs))
 allocate(  pressure(max_tropomi_so2_obs,nlayer_tropomi_so2+1))
 allocate(avg_kernel(max_tropomi_so2_obs,nlayer_tropomi_so2))
 allocate(     prior(max_tropomi_so2_obs,nlayer_tropomi_so2))
@@ -161,7 +163,8 @@ character(len=*), intent(in), optional :: fform
 
 integer               :: keyin
 integer               :: nlayer_1
-real(r8)              :: amf_1km_1
+integer               :: kend_1
+real(r8)              :: amf_obs_1
 real(r8), allocatable :: pressure_1(:)
 real(r8), allocatable :: avg_kernel_1(:)
 real(r8), allocatable :: prior_1(:)
@@ -176,7 +179,8 @@ if(present(fform)) fileformat = adjustl(fform)
 
 ! Need to know how many layers for this one
 nlayer_1 = read_int_scalar( ifile, fileformat, 'nlayer_1')
-amf_1km_1 = read_r8_scalar( ifile, fileformat, 'amf_1km_1')
+kend_1 = read_int_scalar( ifile, fileformat, 'kend_1')
+amf_obs_1 = read_r8_scalar( ifile, fileformat, 'amf_obs_1')
 
 allocate(  pressure_1(nlayer_1+1))
 allocate(avg_kernel_1(nlayer_1))
@@ -185,7 +189,7 @@ allocate(     prior_1(nlayer_1))
 call read_r8_array(ifile, nlayer_1+1, pressure_1,   fileformat, 'pressure_1')
 call read_r8_array(ifile, nlayer_1,   avg_kernel_1, fileformat, 'avg_kernel_1')
 call read_r8_array(ifile, nlayer_1,   prior_1, fileformat, 'prior_1')
-keyin = read_int_scalar(ifile, fileformat, 'nlayer_1')
+keyin = read_int_scalar(ifile, fileformat, 'keyin')
 
 counts1 = counts1 + 1
 key     = counts1
@@ -196,7 +200,7 @@ if(counts1 > max_tropomi_so2_obs) then
    call error_handler(E_ERR,'read_tropomi_so2',string1,source,text2=string2)
 endif
 
-call set_obs_def_tropomi_so2(key, pressure_1, avg_kernel_1, prior_1, amf_1km_1, nlayer_1)
+call set_obs_def_tropomi_so2(key, pressure_1, avg_kernel_1, prior_1, amf_obs_1, nlayer_1, kend_1)
 
 deallocate(pressure_1, avg_kernel_1, prior_1)
 
@@ -217,11 +221,12 @@ if ( .not. module_initialized ) call initialize_module
 fileformat = "ascii"
 if(present(fform)) fileformat = adjustl(fform)
 
-! nlayer, amf_1km, pressure, and avg_kernel are all scoped in this module
+! nlayer, amf_obs, pressure, and avg_kernel are all scoped in this module
 ! you can come extend the context strings to include the key if desired.
 
 call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
-call write_r8_scalar( ifile,                     amf_1km(key), fileformat,'amf_1km')
+call write_int_scalar(ifile,                     kend(key), fileformat,'kend')
+call write_r8_scalar( ifile,                     amf_obs(key), fileformat,'amf_obs')
 call write_r8_array(  ifile, nlayer(key)+1,      pressure(key,:), fileformat,'pressure')
 call write_r8_array(  ifile, nlayer(key),        avg_kernel(key,:), fileformat,'avg_kernel')
 call write_r8_array(  ifile, nlayer(key),        prior(key,:), fileformat,'prior')
@@ -273,7 +278,7 @@ real(r8),            intent(out) :: expct_val(:)
 character(len=*), parameter :: routine = 'get_expected_tropomi_so2'
 type(location_type) :: loc2
 
-integer :: layer_tropomi,level_tropomi
+integer :: layer_tropomi,level_tropomi,kend_tropomi
 integer :: layer_mdl,level_mdl
 integer :: k,imem
 integer :: so2_istatus(ens_size)
@@ -284,7 +289,7 @@ real(r8) :: so2_min
 real(r8) :: level
 real(r8) :: tmp_vir_k, tmp_vir_kp
 real(r8) :: mloc(3)
-real(r8) :: so2_val_conv
+real(r8) :: so2_val_conv, prior_val_conv
 real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
 real(r8), dimension(ens_size) :: so2_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
 real(r8), dimension(ens_size) :: so2_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
@@ -312,6 +317,7 @@ endif
 
 layer_tropomi = nlayer(key)
 level_tropomi = nlayer(key)+1
+kend_tropomi  = kend(key)
 layer_mdl=nlayer_model
 level_mdl=nlayer_model+1
 !write(string1, *) 'APM: layer_tropomi ',key,layer_tropomi
@@ -321,7 +327,7 @@ level_mdl=nlayer_model+1
 
 allocate(prs_tropomi(level_tropomi))
 allocate(prs_tropomi_mem(level_tropomi))
-prs_tropomi(1:level_tropomi)=pressure(key,1:level_tropomi)*100.
+prs_tropomi(1:level_tropomi)=pressure(key,1:level_tropomi)
 
 ! Get location infomation
 
@@ -608,7 +614,7 @@ do imem=1,ens_size
    ! Process the vertical summation
 
    expct_val(imem)=0.0_r8
-   do k=1,layer_tropomi
+   do k=1,kend_tropomi
       lnpr_mid=(log(prs_tropomi_mem(k+1))+log(prs_tropomi_mem(k)))/2.
       up_wt=log(prs_tropomi_mem(k))-lnpr_mid
       dw_wt=log(lnpr_mid)-log(prs_tropomi_mem(k+1))
@@ -624,12 +630,14 @@ do imem=1,ens_size
                         (dw_wt*prs_tropomi_mem(k)+up_wt*prs_tropomi_mem(k+1)) / &
                         (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
       endif
+      prior_val_conv =  prior(key,k)*(dw_wt*prs_tropomi_mem(k)+up_wt*prs_tropomi_mem(k+1)) / &
+                        (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
  
       ! Get expected observation
 
       expct_val(imem) = expct_val(imem) + thick(k) * so2_val_conv * &
                         avg_kernel(key,k) + thick(k) * (1.0_r8 - &
-                        avg_kernel(key,k)) * prior(key,k) 
+                        avg_kernel(key,k)) * prior_val_conv
    enddo
 enddo
 !write(string1, *) 'APM: expct_val (all mems) ',key,expct_val(:)
@@ -644,10 +652,10 @@ end subroutine get_expected_tropomi_so2
 
 !-------------------------------------------------------------------------------
 
-subroutine set_obs_def_tropomi_so2(key, so2_pressure, so2_avg_kernel, so2_prior, so2_amf_1km, so2_nlayer)
+subroutine set_obs_def_tropomi_so2(key, so2_pressure, so2_avg_kernel, so2_prior, so2_amf_obs, so2_nlayer, so2_kend)
 
-integer,                           intent(in)   :: key, so2_nlayer
-real(r8),                          intent(in)   :: so2_amf_1km
+integer,                           intent(in)   :: key, so2_nlayer, so2_kend
+real(r8),                          intent(in)   :: so2_amf_obs
 real(r8), dimension(so2_nlayer+1),  intent(in)   :: so2_pressure
 real(r8), dimension(so2_nlayer),    intent(in)   :: so2_avg_kernel
 real(r8), dimension(so2_nlayer),    intent(in)   :: so2_prior
@@ -662,7 +670,8 @@ if(num_tropomi_so2_obs >= max_tropomi_so2_obs) then
 endif
 
 nlayer(key) = so2_nlayer
-amf_1km(key) = so2_amf_1km
+kend(key) = so2_kend
+amf_obs(key) = so2_amf_obs
 pressure(key,1:so2_nlayer+1) = so2_pressure(1:so2_nlayer+1)
 avg_kernel(key,1:so2_nlayer) = so2_avg_kernel(1:so2_nlayer)
 prior(key,1:so2_nlayer) = so2_prior(1:so2_nlayer)

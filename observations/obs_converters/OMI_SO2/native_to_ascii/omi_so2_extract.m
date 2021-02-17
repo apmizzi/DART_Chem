@@ -58,6 +58,9 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    delx=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','DX');  
    cen_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LAT');  
    cen_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LON');  
+   if(cen_lon<0)
+      cen_lon=cen_lon+360.;
+   end
    truelat1=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','TRUELAT1');  
    truelat2=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','TRUELAT2');  
    moad_cen_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','MOAD_CEN_LAT');  
@@ -75,11 +78,12 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       file_mm=str2double(file_in(indx+29:indx+32));
       file_secs=file_mm*60.;
 %       
-%      if(file_secs<day_secs_beg | file_secs>day_secs_end)
+      fprintf('%d %s \n',ifile,file_in);
+      fprintf('file str secs %d cycle vend secs %d \n',file_secs,day_secs_end);
+%      if(day_secs_end<file_secs)
 %         continue
 %      end
-      fprintf('%d %s \n',ifile,file_in);
-%      fprintf('%d %d %d \n',day_secs_beg,file_secs,day_secs_end);
+      fprintf('READ OMI DATA \n')
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -326,7 +330,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 %
 % APM: Need to get this info from model
 	    [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
-	    xmdl_sw,12000.,cen_lon,truelat1,truelat2);
+	    xmdl_sw,4000.,cen_lon,truelat1,truelat2);
             i_min = round(xi);
             j_min = round(xj);
             reject = 0;
@@ -386,6 +390,8 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
             fprintf(fid,'%14.8g ',scat_wt(1:layer,ipxl,ilin));
             fprintf(fid,'\n');
             fprintf(fid,'%14.8g ',prs_lev(1:level));
+            fprintf(fid,'\n');
+            fprintf(fid,'%14.8g ',layer_wt(1:layer,ipxl,ilin));
             fprintf(fid,'\n');
             fprintf(fid,'%14.8g ',layer_wt_pbl(1:layer,ipxl,ilin));
             fprintf(fid,'\n');

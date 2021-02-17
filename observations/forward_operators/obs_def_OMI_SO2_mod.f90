@@ -269,7 +269,7 @@ type(location_type) :: loc2
 
 integer :: layer_omi,level_omi
 integer :: layer_mdl,level_mdl
-integer :: k,imem,kend_omi
+integer :: k,kk,imem,kend_omi
 integer :: so2_istatus(ens_size)
 integer, dimension(ens_size) :: tmp_istatus, qmr_istatus, prs_istatus
 
@@ -552,13 +552,43 @@ do k=1,level_omi
    so2_val(:,k) = so2_val(:,k) * 1.e-6_r8
 
 enddo
-
+!   write(string1, *) &
+!   'APM NOTICE: interpolated so2',so2_val(1,1)
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *) &
+!   'APM NOTICE: interpolated so2',so2_val(1,level_omi/2)
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *) &
+!   'APM NOTICE: interpolated so2',so2_val(1,level_omi)
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *) &
+!   'APM NOTICE: interpolated tmp',tmp_val(1,1)
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *) &
+!   'APM NOTICE: interpolated tmp',tmp_val(1,level_omi/2)
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *) &
+!   'APM NOTICE: interpolated tmp',tmp_val(1,level_omi)
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *) &
+!   'APM NOTICE: interpolated qmr',qmr_val(1,1)
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *) &
+!   'APM NOTICE: interpolated qmr',qmr_val(1,level_omi/2)
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *) &
+!   'APM NOTICE: interpolated qmr',qmr_val(1,level_omi)
+!   call error_handler(E_MSG, routine, string1, source)!
+!
+!   write(string1,*) 'APM: STOP AFTER PRINTING'
+!   call error_handler(E_ERR, routine, string1, source)
+   
 expct_val(:)=0.0
 allocate(thick(layer_omi))
 do imem=1,ens_size
 
    ! Adjust the OMI pressure for WRF-Chem lower/upper boudary pressure
-   ! (OMI NO2 vertical grid is bottom to top)
+   ! (OMI SO2 vertical grid is top to bottom)
 
    prs_omi_mem(:)=prs_omi(:)
    if (prs_sfc(imem).gt.prs_omi_mem(1)) then
@@ -569,15 +599,16 @@ do imem=1,ens_size
 
    thick(:)=0.
    do k=1,layer_omi
-      lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
-      up_wt=log(prs_omi_mem(k))-lnpr_mid
-      dw_wt=log(lnpr_mid)-log(prs_omi_mem(k+1))
+      kk=level_omi-k+1
+      lnpr_mid=(log(prs_omi_mem(kk))+log(prs_omi_mem(kk-1)))/2.
+      up_wt=log(prs_omi_mem(kk))-lnpr_mid
+      dw_wt=log(lnpr_mid)-log(prs_omi_mem(kk-1))
       tl_wt=up_wt+dw_wt
       
-      tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
-      tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
-      thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
-                   log(prs_omi_mem(k)/prs_omi_mem(k+1))
+      tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,kk))*tmp_val(imem,kk)
+      tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,kk-1))*tmp_val(imem,kk-1)
+      thick(kk)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
+                   log(prs_omi_mem(kk)/prs_omi_mem(kk-1))
    enddo
 
 !   if(imem.eq.1) then
@@ -588,26 +619,27 @@ do imem=1,ens_size
 
    expct_val(imem)=0.0_r8
    do k=1,layer_omi
-      lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
-      up_wt=log(prs_omi_mem(k))-lnpr_mid
-      dw_wt=log(lnpr_mid)-log(prs_omi_mem(k+1))
+      kk=level_omi-k+1
+      lnpr_mid=(log(prs_omi_mem(kk))+log(prs_omi_mem(kk-1)))/2.
+      up_wt=log(prs_omi_mem(kk))-lnpr_mid
+      dw_wt=log(lnpr_mid)-log(prs_omi_mem(kk-1))
       tl_wt=up_wt+dw_wt
 
       ! Convert from VMR to molar density (mol/m^3)
       if(use_log_so2) then
-         so2_val_conv = (dw_wt*exp(so2_val(imem,k))+up_wt*exp(so2_val(imem,k+1)))/tl_wt * &
-                        (dw_wt*prs_omi(k)+up_wt*prs_omi(k+1)) / &
-                        (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
+         so2_val_conv = (dw_wt*exp(so2_val(imem,kk))+up_wt*exp(so2_val(imem,kk-1)))/tl_wt * &
+                        (dw_wt*prs_omi(kk)+up_wt*prs_omi(kk-1)) / &
+                        (Ru*(dw_wt*tmp_val(imem,kk)+up_wt*tmp_val(imem,kk-1)))
       else
-         so2_val_conv = (dw_wt*so2_val(imem,k)+up_wt*so2_val(imem,k+1))/tl_wt * &
-                        (dw_wt*prs_omi(k)+up_wt*prs_omi(k+1)) / &
-                        (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
+         so2_val_conv = (dw_wt*so2_val(imem,kk)+up_wt*so2_val(imem,kk-1))/tl_wt * &
+                        (dw_wt*prs_omi(kk)+up_wt*prs_omi(kk-1)) / &
+                        (Ru*(dw_wt*tmp_val(imem,kk)+up_wt*tmp_val(imem,kk-1)))
       endif
  
       ! Get expected observation
 
-      expct_val(imem) = expct_val(imem) + thick(k) * so2_val_conv * &
-                        AvogN/msq2cmsq * scat_wt(key,k) 
+      expct_val(imem) = expct_val(imem) + thick(kk) * so2_val_conv * &
+                        AvogN/msq2cmsq * scat_wt(key,kk) 
    enddo
 enddo
 !write(string1, *) 'APM: expct_val (all mems) ',key,expct_val(:)

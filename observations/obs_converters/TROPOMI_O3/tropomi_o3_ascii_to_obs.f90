@@ -104,7 +104,7 @@ program tropomi_o3_ascii_to_obs
    integer                         :: seconds,days,which_vert
    integer                         :: seconds_last,days_last
    integer                         :: nx_model,ny_model,nz_model
-   integer                         :: reject,k,kend
+   integer                         :: reject,k,kk,kend
    integer                         :: i_min,j_min
    integer                         :: sum_reject,sum_accept,sum_total
 !
@@ -116,7 +116,7 @@ program tropomi_o3_ascii_to_obs
    real                            :: fac_obs_error,fac
    real                            :: pi,rad2deg,re,level_crit
    real                            :: x_observ,y_observ,dofs
-   real                            :: prs_loc
+   real                            :: prs_loc,obs_sum
    real*8                          :: obs_err_var,level
 !
    real*8,dimension(num_qc)        :: tropomi_qc
@@ -140,7 +140,8 @@ program tropomi_o3_ascii_to_obs
    real*8,allocatable,dimension(:) :: avgk_obs_r8,prior_obs_r8
    real,allocatable,dimension(:)   :: prs_obs
    real*8,allocatable,dimension(:) :: prs_obs_r8
-   real,allocatable,dimension(:)   :: prf_model
+   real,allocatable,dimension(:)   :: prf_locl,prf_full
+   real                            :: trop_sum,strat_sum
    real,allocatable,dimension(:,:)     :: lon,lat
    real,allocatable,dimension(:,:,:)   :: prs_prt,prs_bas,prs_fld
    real,allocatable,dimension(:,:,:)   :: tmp_prt,tmp_fld,vtmp_fld
@@ -247,11 +248,13 @@ program tropomi_o3_ascii_to_obs
       allocate(prs_obs_r8(nlev_obs))
       allocate(avgk_obs_r8(nlay_obs))
       allocate(prior_obs_r8(nlay_obs))
-      allocate(prf_model(nlay_obs))
+      allocate(prf_locl(nlay_obs))
+      allocate(prf_full(nlay_obs))
       read(fileid,*,iostat=ios) prs_obs(1:nlev_obs)
       read(fileid,*,iostat=ios) avgk_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) prior_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) col_amt_obs, col_amt_err_obs
+      prs_obs(:)=prs_obs(:)*100.
       prs_obs_r8(:)=prs_obs(:)
       avgk_obs_r8(:)=avgk_obs(:)
       prior_obs_r8(:)=prior_obs(:)
@@ -266,16 +269,19 @@ program tropomi_o3_ascii_to_obs
 !      print *, prs_obs(1:nlev_obs)
 !      print *, avgk_obs(1:nlay_obs) 
 !      print *, prior_obs(1:nlay_obs) 
-!      print *, col_amt_obs
-!      print *, col_amt_err_obs
+      print *, col_amt_obs
+      print *, col_amt_err_obs
+      print *, 'prs_obs ',prs_obs(1:nlev_obs)
+      print *, 'prs_mdl ',prs_fld(i_min,j_min,1:nz_model)
+!
 !
 !--------------------------------------------------------
 ! Find model O3 profile corresponding to the observation
 ! TROPOMI O3 and WRF-Chem vertical grids are bottom to top        
 !--------------------------------------------------------
       reject=0
-      call get_model_profile(prf_model,nz_model, &
-      prs_obs*100.,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
+      call get_model_profile(prf_locl,prf_full,nz_model, &
+      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
       qmr_fld(i_min,j_min,:),o3_fld(i_min,j_min,:), &
       nlev_obs,avgk_obs,prior_obs,kend)
 !
@@ -283,8 +289,8 @@ program tropomi_o3_ascii_to_obs
 ! Find vertical location
 !--------------------------------------------------------
 !
-      call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_model,nlay_obs,kend)
-      level=prs_loc*100.
+      call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_locl,nlay_obs,kend)
+      level=prs_loc
 !
 ! Check for maximum localization height
 !      if(level/100..lt.level_crit) then
@@ -298,7 +304,8 @@ program tropomi_o3_ascii_to_obs
 !         deallocate(prs_obs_r8) 
 !         deallocate(avgk_obs_r8)
 !         deallocate(prior_obs_r8)
-!         deallocate(prf_model) 
+!         deallocate(prf_locl) 
+!         deallocate(prf_full) 
 !         cycle
 !      endif
 !      
@@ -306,22 +313,33 @@ program tropomi_o3_ascii_to_obs
       print *, 'localization pressure level (hPa) ',level/100.
       sum_accept=sum_accept+1
 !
+! Adjust col_amt_obs to remove contribution above the top of the model
+      trop_sum=0.
+      strat_sum=0.
+      do k=1,kend
+         trop_sum=trop_sum+prf_full(k)
+      enddo
+      do k=kend+1,nlay_obs
+         strat_sum=strat_sum+prf_full(k)
+      enddo
+      print *,'exp obs ',trop_sum
+!
 ! Set data for writing obs_sequence file
       qc_count=qc_count+1
 !
 ! Obs value is the tropospheric vertical column
 !
-      obs_val(:)=col_amt_obs
-      obs_err_var=(col_amt_err_obs)**2.
-      tropomi_qc(:)=0
+      obs_val(:)=col_amt_obs*trop_sum/(strat_sum+trop_sum)
+      obs_err_var=(col_amt_err_obs*trop_sum/(strat_sum+trop_sum))**2.
 
+      tropomi_qc(:)=0
       obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
       call get_time(obs_time, seconds, days)
 !
-      which_vert=-2      ! undefined
+!      which_vert=-2      ! undefined
 !      which_vert=-1      ! surface
 !      which_vert=1       ! level
-!      which_vert=2       ! pressure surface
+      which_vert=2       ! pressure surface
 !
       obs_kind = TROPOMI_O3_COLUMN
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90)
@@ -331,7 +349,7 @@ program tropomi_o3_ascii_to_obs
       call set_obs_def_location(obs_def, obs_location)
       call set_obs_def_time(obs_def, obs_time)
       call set_obs_def_error_variance(obs_def, obs_err_var)
-      call set_obs_def_tropomi_o3(qc_count, prs_obs_r8, avgk_obs_r8, prior_obs_r8, nlay_obs)
+      call set_obs_def_tropomi_o3(qc_count, prs_obs_r8, avgk_obs_r8, prior_obs_r8, nlay_obs, kend)
       call set_obs_def_key(obs_def, qc_count)
       call set_obs_values(obs, obs_val, 1)
       call set_qc(obs, tropomi_qc, num_qc)
@@ -362,7 +380,8 @@ program tropomi_o3_ascii_to_obs
       deallocate(prs_obs_r8) 
       deallocate(avgk_obs_r8)
       deallocate(prior_obs_r8)
-      deallocate(prf_model) 
+      deallocate(prf_locl) 
+      deallocate(prf_full) 
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
 !      print *, trim(data_type), obs_id
    enddo   
@@ -439,7 +458,7 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,kend)
    prs_loc=(prs_obs(kmax)+prs_obs(kmax+1))/2.
 end subroutine vertical_locate
 !
-subroutine get_model_profile(prf_mdl,nz_mdl,prs_obs,prs_mdl, &
+subroutine get_model_profile(prf_locl,prf_full,nz_mdl,prs_obs,prs_mdl, &
    tmp_mdl,qmr_mdl,o3_mdl,nlev_obs,v_wgts,prior,kend)
    implicit none
    integer                                :: nz_mdl
@@ -448,7 +467,7 @@ subroutine get_model_profile(prf_mdl,nz_mdl,prs_obs,prs_mdl, &
    real                                   :: Ru,Rd,cp,eps,AvogN,msq2cmsq,grav
    real,dimension(nz_mdl)                 :: prs_mdl,tmp_mdl,qmr_mdl,o3_mdl
    real,dimension(nz_mdl)                 :: tmp_prf,vtmp_prf,o3_prf
-   real,dimension(nlev_obs-1)             :: thick,v_wgts,prior,prf_mdl
+   real,dimension(nlev_obs-1)             :: thick,v_wgts,prior,prf_locl,prf_full
    real,dimension(nlev_obs)               :: o3_prf_mdl,vtmp_prf_mdl,prs_obs
 !
 ! Constants (mks units)
@@ -480,18 +499,24 @@ subroutine get_model_profile(prf_mdl,nz_mdl,prs_obs,prs_mdl, &
    call interp_to_obs(vtmp_prf_mdl,vtmp_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
 !   
 ! calculate number density times vertical weighting
-   prf_mdl(:)=-9999.
+   prf_locl(:)=-9999.
+   prf_full(:)=-9999.
    do k=1,nlev_obs-1
       thick(k)=Rd*(vtmp_prf_mdl(k)+vtmp_prf_mdl(k+1))/2./grav* &
       log(prs_obs(k)/prs_obs(k+1))     
    enddo
 !
-! convert to molecules/cm^2 and apply scattering weights
+! apply scattering weights
    do k=1,nlev_obs-1
-      prf_mdl(k)=thick(k)*(o3_prf_mdl(k)+o3_prf_mdl(k+1))/2.* &
-      AvogN/msq2cmsq*v_wgts(k) + (1.-v_wgts(k))*prior(k)
+! full term
+      prf_full(k)=thick(k) * (o3_prf_mdl(k)+o3_prf_mdl(k+1))/2.* &
+      v_wgts(k) + (1.-v_wgts(k))*prior(k)
+!
+! no thicknesses      
+      prf_locl(k)=(o3_prf_mdl(k)+o3_prf_mdl(k+1))/2.* &
+      v_wgts(k) + (1.-v_wgts(k))*prior(k)
    enddo
-!   print *, 'prf_mdl  ',prf_model(:)
+!   print *, 'prf_full  ',prf_full(:)
 !   print *, 'o3 fld   ',o3_prf_mdl(:)
 !   print *, 'avgk_obs ',v_wgts(:)
 end subroutine get_model_profile
@@ -873,8 +898,8 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
       endif
       do kk=1,nz_mdl-1
          if(prs_mdl(kk).ge.prs_obs(k) .and. prs_mdl(kk+1).lt.prs_obs(k)) then
-            wt_dw=log(prs_mdl(kk))-log(prs_obs(k))
-            wt_up=log(prs_obs(k))-log(prs_mdl(kk+1))
+            wt_up=log(prs_mdl(kk))-log(prs_obs(k))
+            wt_dw=log(prs_obs(k))-log(prs_mdl(kk+1))
             prf_mdl(k)=(wt_up*fld_mdl(kk)+wt_dw*fld_mdl(kk+1))/(wt_dw+wt_up)
             exit
          endif

@@ -113,7 +113,7 @@ program omi_no2_ascii_to_obs
 !
    real                            :: bin_beg_sec,bin_end_sec
    real                            :: lon_min,lon_max,lat_min,lat_max
-   real                            :: fac_obs_error,fac
+   real                            :: fac_obs_error,fac,fac_err
    real                            :: pi,rad2deg,re,level_crit
    real                            :: x_observ,y_observ,dofs
    real*8                          :: obs_err_var,level
@@ -138,7 +138,7 @@ program omi_no2_ascii_to_obs
    real                            :: col_amt,col_amt_err
    real                            :: col_amt_trop,col_amt_trop_err
    real                            :: slnt_col_amt,slnt_col_amt_err
-   real                            :: prs_trop,zenang
+   real                            :: prs_trop,zenang,obs_sum
    real*8                          :: prs_trop_r8
    real                            :: prs_loc
    real                            :: lat_obs,lon_obs
@@ -146,7 +146,7 @@ program omi_no2_ascii_to_obs
    real,allocatable,dimension(:)   :: scat_wt,prs_obs
    real*8,allocatable,dimension(:) :: scat_wt_r8,prs_obs_r8
    real,allocatable,dimension(:)   :: prf_model
-   real,allocatable,dimension(:,:)     :: lon,lat
+   real,allocatable,dimension(:,:)     :: lon,lat,psfc_fld
    real,allocatable,dimension(:,:,:)   :: prs_prt,prs_bas,prs_fld
    real,allocatable,dimension(:,:,:)   :: tmp_prt,tmp_fld,vtmp_fld
    real,allocatable,dimension(:,:,:)   :: no2_fld,qmr_fld
@@ -162,10 +162,11 @@ program omi_no2_ascii_to_obs
    re=6371000.
    days_last=-9999.
    seconds_last=-9999.
-   level_crit=500.
+   level_crit=50000.
    sum_reject=0
    sum_accept=0
    sum_total=0
+   fac_err=2.
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
@@ -216,6 +217,7 @@ program omi_no2_ascii_to_obs
 ! Read model data
    allocate(lon(nx_model,ny_model))
    allocate(lat(nx_model,ny_model))
+   allocate(psfc_fld(nx_model,ny_model))
    allocate(prs_prt(nx_model,ny_model,nz_model))
    allocate(prs_bas(nx_model,ny_model,nz_model))
    allocate(prs_fld(nx_model,ny_model,nz_model))
@@ -226,6 +228,7 @@ program omi_no2_ascii_to_obs
    file_in=trim(path_model)//'/'//trim(file_model)
    call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
    call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
+   call get_DART_diag_data(trim(file_in),'PSFC',psfc_fld,nx_model,ny_model,1,1)   
    call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
    call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
    call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
@@ -244,7 +247,7 @@ program omi_no2_ascii_to_obs
 ! Read OMI NO2
    line_count = 0
    read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-   print *, trim(data_type), obs_id
+!   print *, trim(data_type), obs_id, i_min, j_min
    do while (ios == 0)
       sum_total=sum_total+1
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
@@ -267,12 +270,14 @@ program omi_no2_ascii_to_obs
       read(fileid,*,iostat=ios) scat_wt(1:nlay_obs)
       read(fileid,*,iostat=ios) prs_obs(1:nlev_obs)
       scat_wt_r8(:)=scat_wt(:)
-      prs_obs_r8(:)=prs_obs(:)
+      prs_obs(:)=prs_obs(:)*100.
+      prs_obs_r8(:)=prs_obs(:)/100.
+      prs_trop=prs_trop*100.
       prs_trop_r8=prs_trop
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
 !
-!      print *, trim(data_type), obs_id
+!      print *, trim(data_type), obs_id, i_min, j_min
 !      print *, yr_obs,mn_obs,dy_obs
 !      print *, hh_obs,mm_obs,ss_obs
 !      print *, lat_obs,lon_obs
@@ -285,14 +290,17 @@ program omi_no2_ascii_to_obs
 !      print *, slnt_col_amt,slnt_col_amt_err
 !      print *, prs_trop,zenang
 !      print *, scat_wt(1:nlay_obs) 
-!      print *, prs_obs(1:nlev_obs)
+!      print *, 'prs_obs ',prs_obs(1:nlev_obs)
+!      print *, 'prs_mdl ',prs_fld(i_min,j_min,1:nz_model)
+!      print *, 'slnt_cl ',col_amt_trop*amftrop
+!      print *, 'err_var ',(col_amt_trop_err*amftrop)**2.
 !
 !--------------------------------------------------------
 ! Find model NO2 profile corresponding to the observation
 !--------------------------------------------------------
       reject=0
       call get_model_profile(prf_model,nz_model, &
-      prs_obs*100.,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
+      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
       qmr_fld(i_min,j_min,:),no2_fld(i_min,j_min,:), &
       nlev_obs,scat_wt,kend)
 !
@@ -300,26 +308,34 @@ program omi_no2_ascii_to_obs
 ! Find vertical location
 !--------------------------------------------------------
       call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_model,nlay_obs,prs_trop,kend)
-      level=prs_loc*100.
+      level=prs_loc
 !      print *, 'prf_model ',prf_model(:)
 !      print *, 'trop index, pressure (hPa) ',kend,prs_trop
+!      obs_sum=0.
+!      do k=1,kend
+!         obs_sum=obs_sum+prf_model(k)
+!      enddo
+!      print *, 'exp obs ',obs_sum
+!      stop
 !
 ! Check for maximum localization height
-      if(level/100..lt.level_crit) then
-         reject=1
-         sum_reject=sum_reject+1
-         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!         print *, trim(data_type), obs_id
-         deallocate(scat_wt)
-         deallocate(prs_obs) 
-         deallocate(scat_wt_r8)
-         deallocate(prs_obs_r8) 
-         deallocate(prf_model) 
-         cycle
-      endif
+!      if(level.lt.level_crit  .or. col_amt_trop*amftrop.lt.0. .or. &
+!      col_amt_trop_err*amftrop.lt.0.) then
+!      if(level.lt.level_crit) then
+!         reject=1
+!         sum_reject=sum_reject+1
+!         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
+!         print *, trim(data_type), obs_id, i_min, j_min
+!         deallocate(scat_wt)
+!         deallocate(prs_obs) 
+!         deallocate(scat_wt_r8)
+!         deallocate(prs_obs_r8) 
+!         deallocate(prf_model) 
+!         cycle
+!      endif
 !      
 ! Process accepted observations
-      print *, 'localization pressure level (hPa) ',level/100.
+      print *, 'localization pressure level (hPa) ',prs_loc/100.
       sum_accept=sum_accept+1
 !
 ! Set data for writing obs_sequence file
@@ -328,9 +344,8 @@ program omi_no2_ascii_to_obs
 ! Obs value is the tropospheric slant column
 ! scd = vcd * amf      
       obs_val(:)=col_amt_trop*amftrop
-      obs_err_var=(col_amt_trop_err*amftrop)**2.
+      obs_err_var=(fac_err*col_amt_trop_err*amftrop)**2.
       omi_qc(:)=0
-
       obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
       call get_time(obs_time, seconds, days)
 !
@@ -347,7 +362,7 @@ program omi_no2_ascii_to_obs
       call set_obs_def_location(obs_def, obs_location)
       call set_obs_def_time(obs_def, obs_time)
       call set_obs_def_error_variance(obs_def, obs_err_var)
-      call set_obs_def_omi_no2(qc_count, prs_obs_r8, scat_wt_r8, prs_trop_r8, nlay_obs)
+      call set_obs_def_omi_no2(qc_count, prs_obs_r8, scat_wt_r8, prs_trop_r8, kend, nlay_obs)
       call set_obs_def_key(obs_def, qc_count)
       call set_obs_values(obs, obs_val, 1)
       call set_qc(obs, omi_qc, num_qc)
@@ -376,7 +391,7 @@ program omi_no2_ascii_to_obs
       deallocate(prs_obs_r8) 
       deallocate(prf_model)
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!      print *, trim(data_type), obs_id
+!      print *, trim(data_type), obs_id, i_min, j_min
    enddo  
 !
 !----------------------------------------------------------------------
@@ -384,6 +399,7 @@ program omi_no2_ascii_to_obs
 !----------------------------------------------------------------------
    deallocate(lon)
    deallocate(lat)
+   deallocate(psfc_fld)
    deallocate(prs_prt)
    deallocate(prs_bas)
    deallocate(prs_fld)
@@ -396,7 +412,7 @@ program omi_no2_ascii_to_obs
    print *, 'accepted ',sum_accept
    print *, 'rejected ',sum_reject
    call timestamp(string1=source,string2=revision,string3=revdate,pos='end')
-   call write_obs_seq(seq, fileout)
+   call write_obs_seq(seq, trim(fileout))
    close(fileid)
 !
 ! Remove obs_seq if empty
@@ -439,7 +455,7 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,prs_trop,k
 !         wt_end*locl_prf(k+1))/(wt_ctr+2.*wt_end)
 !      endif
 !   enddo
-    locl_prf_sm(:)=locl_prf
+    locl_prf_sm(:)=locl_prf(:)
 !
 ! locate troposphere index
 ! assumes vertical grid is bottom up   
@@ -501,8 +517,8 @@ subroutine get_model_profile(prf_mdl,nz_mdl,prs_obs,prs_mdl, &
 ! Vertical interpolation
    no2_prf_mdl(:)=-9999.  
    vtmp_prf_mdl(:)=-9999.   
-   call interp_to_obs(no2_prf_mdl,no2_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-   call interp_to_obs(vtmp_prf_mdl,vtmp_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
+   call interp_to_obs(no2_prf_mdl,no2_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs)
+   call interp_to_obs(vtmp_prf_mdl,vtmp_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs)
 !   
 ! calculate number density times vertical weighting
    prf_mdl(:)=-9999.
@@ -902,9 +918,9 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs)
       endif
       do kk=1,nz_mdl-1
          if(prs_obs(k).le.prs_mdl(kk) .and. prs_obs(k).gt.prs_mdl(kk+1)) then
-            wt_dw=log(prs_mdl(kk))-log(prs_obs(k))
-            wt_up=log(prs_obs(k))-log(prs_mdl(kk+1))
-            prf_mdl(k)=(wt_up*fld_mdl(kk)+wt_dw*fld_mdl(kk+1))/(wt_dw+wt_up)
+            wt_up=log(prs_mdl(kk))-log(prs_obs(k))
+            wt_dw=log(prs_obs(k))-log(prs_mdl(kk+1))
+            prf_mdl(k)=(wt_dw*fld_mdl(kk)+wt_up*fld_mdl(kk+1))/(wt_dw+wt_up)
             exit
          endif
       enddo               

@@ -11,13 +11,18 @@
 #
 ############################################################################### 
 #
+export START_DATE=2018071406
+export END_DATE=2018071418
+#
 export START_DATE=2014071406
-export END_DATE=2014071606
+export END_DATE=2014071418
 #
 # Define EXPERIMENT path
 export DIR_NAME=real_FRAPPE_CONTROL_NASA
 export DIR_NAME=real_FRAPPE_ALLCHEM_NASA
 export DIR_NAME=real_FRAPPE_ALLCHEM_RELAX_NASA
+export DIR_NAME=real_FRAPPE_ALLCHEM_EMISS_ADJ_NASA
+#export DIR_NAME=real_COLO_ALLCHEM_RELAX_NASA
 #
 # Define FILTER path
 export DART_FILTER=dart_filter
@@ -197,7 +202,8 @@ export NL_TIME_TO_SKIP_HH=0
 export NL_TIME_TO_SKIP_MN=0
 export NL_TIME_TO_SKIP_SS=0
 export NL_MAX_NUM_BINS=1000
-export NL_PLEVEL='950., 850., 750., 500., 400., 300., 200.'
+export NL_PLEVEL='750.'
+export NL_PLEVEL='950., 850., 750., 500.'
 export NL_NREGIONS=1
 export NL_LONLIM1=0.
 export NL_LONLIM2=360.

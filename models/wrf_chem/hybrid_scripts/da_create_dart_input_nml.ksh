@@ -27,40 +27,26 @@ cat > input.nml << EOF
    print_only                =.false.,
    synonymous_copy_list      = ${NL_SYNONYMOUS_COPY_LIST},
    synonymous_qc_list        = ${NL_SYNONYMOUS_QC_LIST},
-   min_lat                   = ${NL_MIN_LAT:--90.0}, 
-   max_lat                   = ${NL_MAX_LAT:-90.0}, 
-   min_lon                   = ${NL_MIN_LON:-0.0}, 
-   max_lon                   = ${NL_MAX_LON:-360.0},
+   min_lat                   = -90.0, 
+   max_lat                   = 90.0, 
+   min_lon                   = 0.0, 
+   max_lon                   = 360.0,
 /
 &obs_kind_nml
-   assimilate_these_obs_types = 'RADIOSONDE_TEMPERATURE',
-                                'RADIOSONDE_U_WIND_COMPONENT',
-                                'RADIOSONDE_V_WIND_COMPONENT',
-                                'ACARS_U_WIND_COMPONENT',
-                                'ACARS_V_WIND_COMPONENT',
-                                'ACARS_TEMPERATURE',
-                                'AIRCRAFT_U_WIND_COMPONENT',
-                                'AIRCRAFT_V_WIND_COMPONENT',
-                                'AIRCRAFT_TEMPERATURE',
-                                'SAT_U_WIND_COMPONENT',
-                                'SAT_V_WIND_COMPONENT',
-                                'MODIS_AOD_RETRIEVAL',
-                                'IASI_CO_RETRIEVAL',
-                                'IASI_O3_RETRIEVAL',
-                                'MOPITT_CO_RETRIEVAL',
+   assimilate_these_obs_types = ${NL_ASSIMILATE_THESE_OBS_TYPES},
 /
  &location_nml
-   horiz_dist_only                 = .true.,
-   vert_normalization_pressure     = 187500.0,
-   vert_normalization_height       = 5000000.0,
-   vert_normalization_level        = 2666.7,
-   approximate_distance            = .false.,
-   nlon                            = 141,
-   nlat                            = 72,
+   horiz_dist_only                 = ${NL_HORIZONTAL_DIST_ONLY},
+   vert_normalization_pressure     = ${NL_VERT_NORMALIZATION_PRESSURE},
+   vert_normalization_height       = ${NL_VERT_NORMALIZATION_HEIGHT},
+   vert_normalization_level        = ${NL_VERT_NORMALIZATION_LEVELS},
+   approximate_distance            = .false,
+   nlon                            = ${NNXP_STAG_CR},
+   nlat                            = ${NNYP_STAG_CR},
    output_box_info                 = .false.,
 /
  &obs_sequence_nml
-   write_binary_obs_sequence   = .false.
+   write_binary_obs_sequence   = .false.,
 /
  &utilities_nml
    TERMLEVEL                   = 1,

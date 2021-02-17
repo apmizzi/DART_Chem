@@ -22,6 +22,7 @@
                               '../../../../observations/forward_operators/obs_def_AIRNOW_PM25_mod.f90',
                               '../../../../observations/forward_operators/obs_def_PANDA_OBS_mod.f90',
                               '../../../../observations/forward_operators/obs_def_IASI_CO_mod.f90',
+                              '../../../../observations/forward_operators/obs_def_IASI_CO_COL_mod.f90',
                               '../../../../observations/forward_operators/obs_def_IASI_O3_mod.f90',
                               '../../../../observations/forward_operators/obs_def_MODIS_AOD_mod.f90',
                               '../../../../observations/forward_operators/obs_def_OMI_O3_mod.f90',

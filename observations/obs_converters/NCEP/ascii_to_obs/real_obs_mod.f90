@@ -235,6 +235,10 @@ obsloop:  do
 
    read(obs_unit,880,end=200,iostat=io) obs_err, lon, lat, lev, zob, zob2, rcount, time, &
                               obstype, iqc, subset, pc
+   if (iqc ==9) then
+      iqc=0
+   endif
+
    if (io /= 0) then
       write(msgstring1,*)'read error was ',io,' for line ',read_counter
       call error_handler(E_ERR,'real_obs_sequence', msgstring1, source, revision, revdate)
@@ -331,7 +335,7 @@ obsloop:  do
      if(obstype == 161 .or. obstype == 163) obs_kind = ATOV_TEMPERATURE
      if(obstype == 171 .or. obstype == 173) obs_kind = ATOV_TEMPERATURE
      if(obstype == 180 .or. obstype == 182) obs_kind = MARINE_SFC_TEMPERATURE
-     if(obstype == 181 .or. obstype == 183) obs_kind = LAND_SFC_TEMPERATURE
+     if(obstype == 181 .or. obstype == 183 .or. obstype == 187) obs_kind = LAND_SFC_TEMPERATURE
    endif
 
    if(obs_prof == 5) then
@@ -341,7 +345,7 @@ obsloop:  do
        if(obstype == 130 .or. obstype == 131) obs_kind = AIRCRAFT_SPECIFIC_HUMIDITY
        if(obstype == 133                    ) obs_kind = ACARS_SPECIFIC_HUMIDITY
        if(obstype == 180 .or. obstype == 182) obs_kind = MARINE_SFC_SPECIFIC_HUMIDITY
-       if(obstype == 181 .or. obstype == 183) obs_kind = LAND_SFC_SPECIFIC_HUMIDITY
+       if(obstype == 181 .or. obstype == 183 .or. obstype == 187) obs_kind = LAND_SFC_SPECIFIC_HUMIDITY
      else if ( zob2 == 1.0_r8 .and. inc_relative_humidity ) then
        obs_kind_gen = QTY_RELATIVE_HUMIDITY
        if(obstype == 120 .or. obstype == 132) obs_kind = RADIOSONDE_RELATIVE_HUMIDITY
@@ -383,7 +387,7 @@ obsloop:  do
      if(obstype == 252 .or. obstype == 253) obs_kind = SAT_U_WIND_COMPONENT
      if(obstype == 255                    ) obs_kind = SAT_U_WIND_COMPONENT
      if(obstype == 280 .or. obstype == 282) obs_kind = MARINE_SFC_U_WIND_COMPONENT
-     if(obstype == 281 .or. obstype == 284) obs_kind = LAND_SFC_U_WIND_COMPONENT
+     if(obstype == 281 .or. obstype == 284 .or. obstype == 287) obs_kind = LAND_SFC_U_WIND_COMPONENT
    endif
 
    if(obs_prof == 9) then
@@ -397,7 +401,7 @@ obsloop:  do
      if(obstype == 252 .or. obstype == 253) obs_kind = SAT_V_WIND_COMPONENT
      if(obstype == 255                    ) obs_kind = SAT_V_WIND_COMPONENT
      if(obstype == 280 .or. obstype == 282) obs_kind = MARINE_SFC_V_WIND_COMPONENT
-     if(obstype == 281 .or. obstype == 284) obs_kind = LAND_SFC_V_WIND_COMPONENT
+     if(obstype == 281 .or. obstype == 284 .or. obstype == 287) obs_kind = LAND_SFC_V_WIND_COMPONENT
    endif
 
    if(obs_prof == 7) then
