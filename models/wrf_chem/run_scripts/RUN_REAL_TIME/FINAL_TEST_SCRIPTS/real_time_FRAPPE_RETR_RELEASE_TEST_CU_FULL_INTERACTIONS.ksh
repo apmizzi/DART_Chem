@@ -30,11 +30,16 @@ export FIRST_FILTER_DATE=2014072518
 export FIRST_DART_INFLATE_DATE=2014072518
 export FIRST_EMISS_INV_DATE=2014072518
 #
+export INITIAL_DATE=2014071512
+export FIRST_FILTER_DATE=2014071518
+export FIRST_DART_INFLATE_DATE=2014071518
+export FIRST_EMISS_INV_DATE=2014071518
+#
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072512
+export CYCLE_STR_DATE=2014071512
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072512
+export CYCLE_END_DATE=2014071512
 #export CYCLE_END_DATE=${CYCLE_STR_DATE}
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
@@ -120,7 +125,7 @@ fi
 export VARLOC=.false.
 export INDEP_CHEM_ASIM=.true.
 #
-export ADD_EMISS=false
+export ADD_EMISS=true
 export EMISS_DAMP_CYCLE=1.0
 export EMISS_DAMP_INTRA_CYCLE=1.0
 #
@@ -138,14 +143,14 @@ if [[ ${RUN_FINE_SCALE_RESTART} = "true" ]]; then
 fi
 #
 # Run WRF-Chem for failed forecasts
-export RUN_SPECIAL_FORECAST=true
+export RUN_SPECIAL_FORECAST=false
 export NUM_SPECIAL_FORECAST=1
 export SPECIAL_FORECAST_FAC=1.
-export SPECIAL_FORECAST_FAC=1./2.
 export SPECIAL_FORECAST_FAC=2./3.
+export SPECIAL_FORECAST_FAC=1./2.
 #
-export SPECIAL_FORECAST_MEM[1]=5
-export SPECIAL_FORECAST_MEM[2]=2
+export SPECIAL_FORECAST_MEM[1]=2
+export SPECIAL_FORECAST_MEM[2]=10
 export SPECIAL_FORECAST_MEM[3]=3
 export SPECIAL_FORECAST_MEM[4]=4
 export SPECIAL_FORECAST_MEM[5]=5
@@ -184,6 +189,10 @@ export RUN_INTERPOLATE=false
 #
 while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export DATE=${CYCLE_DATE}
+   export L_ADD_EMISS=${ADD_EMISS} 
+   if [[ ${DATE} -lt ${FIRST_EMISS_INV_DATE} ]]; then
+      export L_ADD_EMISS=false
+   fi
    export CYCLE_PERIOD=6
    export HISTORY_INTERVAL_HR=1
    (( HISTORY_INTERVAL_MIN = ${HISTORY_INTERVAL_HR} * 60 ))
@@ -341,7 +350,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # SELECT COMPONENT RUN OPTIONS:
    if [[ ${RUN_SPECIAL_FORECAST} = "false" ]]; then
-      export RUN_GEOGRID=false
+      export RUN_GEOGRID=true
       export RUN_UNGRIB=true
       export RUN_METGRID=true
       export RUN_REAL=true
@@ -354,7 +363,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_WRFCHEM_CHEMI=true
       export RUN_PERT_WRFCHEM_CHEM_ICBC=true
       export RUN_PERT_WRFCHEM_CHEM_EMISS=true
-      export RUN_MOPITT_CO_OBS=true
+      export RUN_MOPITT_CO_OBS=false
       export RUN_IASI_CO_OBS=false
       export RUN_IASI_O3_OBS=false
       export RUN_OMI_O3_OBS=false
@@ -367,8 +376,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_TEMPO_O3_OBS=false
       export RUN_TEMPO_NO2_OBS=false
       export RUN_AIRNOW_O3_OBS=false
-      export RUN_AIRNOW_CO_OBS=true
-      export RUN_AIRNOW_NO2_OBS=false
+      export RUN_AIRNOW_CO_OBS=false
+      export RUN_AIRNOW_NO2_OBS=true
       export RUN_AIRNOW_SO2_OBS=false
       export RUN_AIRNOW_PM10_OBS=false
       export RUN_AIRNOW_PM25_OBS=false
@@ -376,7 +385,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_PANDA_O3_OBS=false
       export RUN_PANDA_PM25_OBS=false
       export RUN_MODIS_AOD_OBS=false
-      export RUN_MET_OBS=true
+      export RUN_MET_OBS=false
       export RUN_COMBINE_OBS=true
 #
       if [[ ${DATE} -eq ${INITIAL_DATE}  ]]; then
@@ -540,7 +549,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    (( NNYP_STAG_FR=${NNYP_FR}+1 ))
    (( NNZP_STAG_FR=${NNZP_FR}+1 ))
    export NSPCS=61
-   export NNZ_CHEM=10
+   export NNZ_CHEM=11
    export NNCHEM_SPC=24
    export NNFIRE_SPC=31
    export NNBIO_SPC=1
@@ -601,9 +610,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export BIO_NODES=1
    export BIO_TASKS=1
    export FILTER_JOB_CLASS=normal
-   export FILTER_JOB_CLASS=devel
+#   export FILTER_JOB_CLASS=devel
    export FILTER_TIME_LIMIT=03:00:00
-   export FILTER_TIME_LIMIT=01:00:00
+#   export FILTER_TIME_LIMIT=01:00:00
    export FILTER_NODES=8
    export FILTER_TASKS=16
    export WRFCHEM_JOB_CLASS=normal
@@ -750,6 +759,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_I_PARENT_START=${ISTR_CR},${ISTR_FR}
    export NL_J_PARENT_START=${JSTR_CR},${JSTR_FR}
    export NL_GEOG_DATA_RES=\'10s\',\'10s\'
+   export NL_GEOG_DATA_RES=\'usgs_30s+default\',\'usgs_30s+default\'
    export NL_DX=${DX_CR}
    export NL_DY=${DX_CR}
    export NL_MAP_PROJ=\'lambert\'
@@ -971,8 +981,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_HAVE_BCS_CHEM=".true.",".true."
 #
 # APM NO_CHEM
-#   export NL_AER_RA_FEEDBACK=0,0
-   export NL_AER_RA_FEEDBACK=1,1
+   export NL_AER_RA_FEEDBACK=0,0
+#   export NL_AER_RA_FEEDBACK=1,1
    export NL_CHEMDIAG=0,1
    export NL_AER_OP_OPT=1
    export NL_OPT_PARS_OUT=1
@@ -1145,7 +1155,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_WRITE_BINARY_RESTART_FILE=.true.
 #
 # &model_nml
-   export NL_ADD_EMISS=.${ADD_EMISS}.
+   export NL_ADD_EMISS=.${L_ADD_EMISS}.
    export NL_USE_VARLOC=${VARLOC}
    export NL_USE_INDEP_CHEM_ASSIM=${INDEP_CHEM_ASIM}
    export NL_DEFAULT_STATE_VARIABLES=.false.
@@ -1213,12 +1223,13 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # add get_type_ind_from_type_string statements   
 #
 # The next line should be the same as NL_EMISS_CHEMI_VARIABLES without quotes etc.
-   export WRFCHEMI_DARTVARS="E_CO,E_NO"
+   export WRFCHEMI_DARTVARS="E_CO,E_NO,E_NO2"
 #
 # The next line should be the same as NL_EMISS_FIRECHEMI_VARIABLES without quotes etc.
    export WRFFIRECHEMI_DARTVARS="ebu_in_co,ebu_in_no,ebu_in_oc,ebu_in_bc,ebu_in_c2h4,ebu_in_ch2o,ebu_in_ch3oh"
    export NL_EMISS_CHEMI_VARIABLES="'E_CO',     'QTY_E_CO',     'TYPE_E_CO',     'UPDATE','999',
-          'E_NO'        ,'QTY_E_NO',           'TYPE_E_NO',  'UPDATE','999'"
+          'E_NO'        ,'QTY_E_NO',           'TYPE_E_NO',  'UPDATE','999',
+          'E_NO2'       ,'QTY_E_NO2',          'TYPE_E_NO2', 'UPDATE','999'"
    export NL_EMISS_FIRECHEMI_VARIABLES="'ebu_in_co'   ,'QTY_EBU_CO',         'TYPE_EBU_CO',  'UPDATE','999',
           'ebu_in_no'    ,'QTY_EBU_NO',         'TYPE_EBU_NO',   'UPDATE','999',
           'ebu_in_oc'    ,'QTY_EBU_OC',         'TYPE_EBU_OC',   'UPDATE','999',
@@ -1273,6 +1284,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
           'SEAS_4','0.0','NULL','CLAMP',
           'E_CO','0.0','NULL','CLAMP',
           'E_NO','0.0','NULL','CLAMP',
+          'E_NO2','0.0','NULL','CLAMP',
           'ebu_in_co','0.0','NULL','CLAMP',
           'ebu_in_no','0.0','NULL','CLAMP',
           'ebu_in_oc','0.0','NULL','CLAMP',
@@ -1368,8 +1380,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
                                    'AIRCRAFT_TEMPERATURE',
                                    'SAT_U_WIND_COMPONENT',
                                    'SAT_V_WIND_COMPONENT',
-                                   'MOPITT_CO_RETRIEVAL',
-                                   'AIRNOW_CO"
+                                   'AIRNOW_NO2'"
 #
 # &replace_wrf_fields_nml
    export NL_FIELDNAMES="'SNOWC',
@@ -2753,30 +2764,93 @@ EOF
             cp ${WRFCHEM_BIO_DIR}/${WRFBIOCHEMI} ${WRFBIOCHEMI}
             chmod 644 ${WRFBIOCHEMI}
          fi
-         let MEM=1
+#
+# COPY ENSEMBLE MEAN EMISSONS ADJUSTMENT FROM PREVIOUS CYCLE
+         if [[ ${DATE} -gt  ${FIRST_EMISS_INV_DATE} && ${L_ADD_EMISS} = "true" ]]; then
+            rm -rf wrfchemi_d${CR_DOMAIN}_prior_mean
+            rm -rf wrfchemi_d${CR_DOMAIN}_post_mean
+            rm -rf wrffirechemi_d${CR_DOMAIN}_prior_mean
+            rm -rf wrffirechemi_d${CR_DOMAIN}_post_mean
+#            if ${NL_PERT_CHEM}; then
+               cp ${RUN_DIR}/${PAST_DATE}/dart_filter/wrfchemi_d${CR_DOMAIN}_prior_mean ./.
+               cp ${RUN_DIR}/${PAST_DATE}/dart_filter/wrfchemi_d${CR_DOMAIN}_post_mean ./.
+#            fi
+#            if ${NL_PERT_FIRE}; then
+               cp ${RUN_DIR}/${PAST_DATE}/dart_filter/wrffirechemi_d${CR_DOMAIN}_prior_mean ./.
+               cp ${RUN_DIR}/${PAST_DATE}/dart_filter/wrffirechemi_d${CR_DOMAIN}_post_mean ./.
+#            fi
+         fi
+#
+	 let MEM=1
          while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
             export CMEM=e${MEM}
             if [[ ${MEM} -lt 100 ]]; then export CMEM=e0${MEM}; fi
             if [[ ${MEM} -lt 10  ]]; then export CMEM=e00${MEM}; fi
 #
-# link ensemble members 
+# cp ensemble members 
             export WRFINPUT=wrfinput_d${CR_DOMAIN}_${YYYY}-${MM}-${DD}_${HH}:00:00.${CMEM}
             rm -rf wrfinput_d${CR_DOMAIN}.${CMEM}
-            ln -sf ${WRFCHEM_CHEM_ICBC_DIR}/${WRFINPUT} wrfinput_d${CR_DOMAIN}.${CMEM}
+            cp ${WRFCHEM_CHEM_ICBC_DIR}/${WRFINPUT} wrfinput_d${CR_DOMAIN}.${CMEM}
 #
 # wrfchemi
             rm -rf ${WRFCHEMI}.${CMEM}
             cp ${WRFCHEMI} ${WRFCHEMI}.${CMEM}
+            cp ${WRFCHEMI} ${WRFCHEMI}_new
 #
 # wrffire
             rm -rf ${WRFFIRECHEMI}.${CMEM}
             cp ${WRFFIRECHEMI} ${WRFFIRECHEMI}.${CMEM}
+            cp ${WRFFIRECHEMI} ${WRFFIRECHEMI}_new
 #
 # wrfbio
             if [[ ${L_HH} -eq 00 || ${L_HH} -eq 06 || ${L_HH} -eq 12 || ${L_HH} -eq 18 ]]; then
                cp ${WRFBIOCHEMI} ${WRFBIOCHEMI}.${CMEM}
+               cp ${WRFBIOCHEMI} ${WRFBIOCHEMI}_new
             fi
-            let MEM=MEM+1
+#
+# INCLUDE ENSEMBLE MEAN EMISSIONS ADJUSTMENT FROM PREVIOUS CYCLE
+            if [[ ${DATE} -gt  ${FIRST_EMISS_INV_DATE} && ${L_ADD_EMISS} = "true" ]]; then
+#
+# Set up namelist input file for adding the prior emissions adjustments           
+               export NL_WRFCHEMI_PRIOR=wrfchemi_d${CR_DOMAIN}_prior_mean
+               export NL_WRFCHEMI_POST=wrfchemi_d${CR_DOMAIN}_post_mean
+               export NL_WRFCHEMI_OLD=${WRFCHEMI}.${CMEM}
+               export NL_WRFCHEMI_NEW=${WRFCHEMI}_new
+#           
+               export NL_WRFFIRECHEMI_PRIOR=wrffirechemi_d${CR_DOMAIN}_prior_mean
+               export NL_WRFFIRECHEMI_POST=wrffirechemi_d${CR_DOMAIN}_post_mean
+               export NL_WRFFIRECHEMI_OLD=${WRFFIRECHEMI}.${CMEM}
+               export NL_WRFFIRECHEMI_NEW=${WRFFIRECHEMI}_new
+
+               cp ${ADJUST_EMISS_DIR}/work/adjust_chem_emiss.exe ./.
+               rm -rf adjust_chem_emiss.nml
+               cat <<  EOF > adjust_chem_emiss.nml
+&adjust_chem_emiss
+fac=${EMISS_DAMP_CYCLE},
+facc=${EMISS_DAMP_INTRA_CYCLE},
+nx=${NNXP_CR},
+ny=${NNYP_CR},
+nz=${NNZP_CR},
+nz_chemi=${NZ_CHEMI},
+nz_firechemi=${NZ_FIRECHEMI},
+nchemi_emiss=${NCHEMI_EMISS},
+nfirechemi_emiss=${NFIRECHEMI_EMISS},
+wrfchemi_prior='${NL_WRFCHEMI_PRIOR}',
+wrfchemi_post='${NL_WRFCHEMI_POST}',
+wrfchemi_old='${NL_WRFCHEMI_OLD}',
+wrfchemi_new='${NL_WRFCHEMI_NEW}',
+wrffirechemi_prior='${NL_WRFFIRECHEMI_PRIOR}',
+wrffirechemi_post='${NL_WRFFIRECHEMI_POST}',
+wrffirechemi_old='${NL_WRFFIRECHEMI_OLD}',
+wrffirechemi_new='${NL_WRFFIRECHEMI_NEW}'
+/
+EOF
+               ./adjust_chem_emiss.exe > index_adjust_chem_emiss
+#
+               cp ${NL_WRFCHEMI_NEW} ${NL_WRFCHEMI_OLD}
+               cp ${NL_WRFFIRECHEMI_NEW} ${NL_WRFFIRECHEMI_OLD}
+	    fi   
+	    let MEM=MEM+1
          done
          if [[ ${NL_PERT_CHEM} == true ]]; then 
             cp ${WRFCHEMI} ${WRFCHEMI}_mean
@@ -2788,7 +2862,7 @@ EOF
             cp ${WRFFIRECHEMI} ${WRFFIRECHEMI}_sprd
             cp ${WRFFIRECHEMI} ${WRFFIRECHEMI}_frac
          fi
-         if [[ ${NL_PERT_FIRE} == true ]]; then 
+         if [[ ${NL_PERT_BIO} == true ]]; then 
             if [[ ${L_HH} -eq 00 || ${L_HH} -eq 06 || ${L_HH} -eq 12 || ${L_HH} -eq 18 ]]; then
                cp ${WRFBIOCHEMI} ${WRFBIOCHEMI}_mean
                cp ${WRFBIOCHEMI} ${WRFBIOCHEMI}_sprd
@@ -2848,37 +2922,6 @@ EOF
          ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
 #
          qsub -Wblock=true job.ksh
-#
-# ADD ENSEMBLE MEAN EMISSIONS ADJUSTMENT FROM PREVIOUS CYCLE
-         if ${ADD_EMISS}; then
-            rm -rf wrfchemi_d${CR_DOMAIN}_mean_incr
-            rm -rf wrfchemi_d${CR_DOMAIN}_sprd_incr
-            rm -rf wrffirechemi_d${CR_DOMAIN}_mean_incr
-            rm -rf wrffirechemi_d${CR_DOMAIN}_sprd_incr
-            rm -rf wrfbiochemi_d${CR_DOMAIN}_mean_incr
-            rm -rf wrfbiochemi_d${CR_DOMAIN}_sprd_incr
-#	    
-            if [[ ${DATE} -gt ${FIRST_FILTER_DATE} ]]; then
-               if ${NL_PERT_CHEM}; then
-                  cp ${RUN_DIR}/${PAST_DATE}/dart_filter/wrfchemi_d${CR_DOMAIN}_mean_incr ./         
-                  cp ${RUN_DIR}/${PAST_DATE}/dart_filter/wrfchemi_d${CR_DOMAIN}_sprd_incr ./         
-               fi
-               if ${NL_PERT_FIRE}; then
-                  cp ${RUN_DIR}/${PAST_DATE}/dart_filter/wrffirechemi_d${CR_DOMAIN}_mean_incr ./         
-                  cp ${RUN_DIR}/${PAST_DATE}/dart_filter/wrffirechemi_d${CR_DOMAIN}_sprd_incr ./         
-               fi
-               if ${NL_PERT_BIO}; then
-                  cp ${RUN_DIR}/${PAST_DATE}/dart_filter/wrfbiochemi_d${CR_DOMAIN}_mean_incr ./         
-                  cp ${RUN_DIR}/${PAST_DATE}/dart_filter/wrfbiochemi_d${CR_DOMAIN}_sprd_incr ./         
-               fi
-               cp ${PERT_CHEM_EMISS_DIR}/work/perturb_chem_emiss_ADD_PRIOR_INCRs.exe ./.
-# SERIAL VERSION
-               RANDOM=$$
-               export JOBRND=${RANDOM}_cr_emiss_pert
-               ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} perturb_chem_emiss_ADD_PRIOR_INCRs.exe SERIAL ${ACCOUNT}
-               qsub -Wblock=true job.ksh
-            fi
-         fi
 #
 # GET FINE GRID EMISSON FILES FOR THIS MEMBER
 #         export WRFCHEMI=wrfchemi_d${FR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00
@@ -6658,6 +6701,25 @@ EOF
       export LL_FILE_DATE=${LL_YY}-${LL_MM}-${LL_DD}_${LL_HH}:00:00
 #
 # Loop through members, link, copy background files, create input/output lists
+      let MEM=1
+      while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
+         export CMEM=e${MEM}
+         export KMEM=${MEM}
+         if [[ ${MEM} -lt 1000 ]]; then export KMEM=0${MEM}; fi
+         if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
+         if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
+#   
+# Copy emission input files
+         cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./.
+         cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./.
+         let MEM=${MEM}+1
+      done
+#
+# Calculate ensemble mean emissions prior
+      ncea -n ${NUM_MEMBERS},3,1 wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrfchemi_d${CR_DOMAIN}_prior_mean
+      ncea -n ${NUM_MEMBERS},3,1 wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrffirechemi_d${CR_DOMAIN}_prior_mean
+#
+# Rename the emissions dimensions
       rm -rf input_list.txt
       rm -rf output_list.txt
       touch input_list.txt
@@ -6669,19 +6731,8 @@ EOF
          if [[ ${MEM} -lt 1000 ]]; then export KMEM=0${MEM}; fi
          if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
          if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
-#   
-# Copy emission input files
-         if [[ ${LL_DATE} -le ${FIRST_EMISS_INV_DATE} || ${ADD_EMISS} = ".false." ]]; then
-            cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./.
-            cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./.
-            ncrename -d emissions_zdim_stag,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
-            ncrename -d emissions_zdim_stag,fire_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
-         else
-            cp ${BACKGND_FCST_DIR}/run_${CMEM}/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
-            cp ${BACKGND_FCST_DIR}/run_${CMEM}/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
-            ncrename -d emissions_zdim_stag,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
-            ncrename -d emissions_zdim_stag,fire_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
-         fi
+	 ncrename -d emissions_zdim_stag,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+         ncrename -d emissions_zdim_stag,fire_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
 #
 # Copy background input file
          cp ${BACKGND_FCST_DIR}/run_${CMEM}/wrfout_d${CR_DOMAIN}_${FILE_DATE} wrfinput_d${CR_DOMAIN}_${CMEM}
@@ -6694,9 +6745,8 @@ EOF
 # Add files to the DART input and output list
          echo wrfinput_d${CR_DOMAIN}_${CMEM} >> input_list.txt
          echo wrfinput_d${CR_DOMAIN}_${CMEM} >> output_list.txt
-#
          let MEM=${MEM}+1
-      done 
+      done
 #
 # Copy template files
       cp wrfinput_d${CR_DOMAIN}_e001 wrfinput_d${CR_DOMAIN}      
@@ -6791,6 +6841,10 @@ EOF
 #
          let MEM=${MEM}+1
       done 
+#
+# Calculate ensemble mean emissions posterior
+      ncea -n ${NUM_MEMBERS},3,1 wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrfchemi_d${CR_DOMAIN}_post_mean
+      ncea -n ${NUM_MEMBERS},3,1 wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrffirechemi_d${CR_DOMAIN}_post_mean
    fi
 #
 #########################################################################
@@ -6995,17 +7049,8 @@ EOF
             if [[ ${L_HH} -eq 00 || ${L_HH} -eq 06 || ${L_HH} -eq 12 || ${L_HH} -eq 18 ]]; then
                cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}
             fi
-#            cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}
-#            cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}
-            if [[ ${L_DATE} -eq ${START_DATE} ]]; then
-               cp ${DART_FILTER_DIR}/wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}
-               cp ${DART_FILTER_DIR}/wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}
-#              cp ${DART_FILTER_DIR}/wrk_dart_${CMEM}/wrfchemi_d${CR_DOMAIN} wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}
-#              cp ${DART_FILTER_DIR}/wrk_dart_${CMEM}/wrffirechemi_d${CR_DOMAIN} wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}
-            else
-               cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}
-               cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}
-            fi
+            cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}
+            cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}
             export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} +1 2>/dev/null)
          done
 #
@@ -7013,17 +7058,20 @@ EOF
          cp ${DART_FILTER_DIR}/wrfout_d${CR_DOMAIN}_${START_FILE_DATE}_filt.${CMEM} wrfinput_d${CR_DOMAIN}
          cp ${UPDATE_BC_DIR}/wrfbdy_d${CR_DOMAIN}_${START_FILE_DATE}_filt.${CMEM} wrfbdy_d${CR_DOMAIN}
 #
-# APM SKIP_DART_TEST
-#         cp ${WRFCHEM_CHEM_ICBC_DIR}/wrfinput_d${CR_DOMAIN}_${START_FILE_DATE}.${CMEM} wrfinput_d${CR_DOMAIN}
-#         cp ${WRFCHEM_CHEM_ICBC_DIR}/wrfbdy_d${CR_DOMAIN}_${START_FILE_DATE}.${CMEM} wrfbdy_d${CR_DOMAIN}
-#
 # Update the other emission files
-         if [[ ${ADD_EMISS} = ".true." ]]; then
+         if [[ ${L_ADD_EMISS} = "true" ]]; then
             cp wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE} wrfchemi_d${CR_DOMAIN}_prior
             cp wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE} wrfchemi_d${CR_DOMAIN}
             cp wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE} wrffirechemi_d${CR_DOMAIN}_prior
             cp wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE} wrffirechemi_d${CR_DOMAIN}
+#
+# APM: The emissions species to be adjusted are hard coded in 'adjust_chem_emiss.exe'.
+# The code needs to be modified if other species are to be adjusted.
+# The setup is for no intra-cycle damping of the emissions adjustment, i.e., the adjustment is same
+# at the end of the cycle as at the start of the cycle.
+#	    	    
             cp ${ADJUST_EMISS_DIR}/work/adjust_chem_emiss.exe ./.
+#
             export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${START_DATE} +1 2>/dev/null)
             while [[ ${L_DATE} -le ${END_DATE} ]]; do 
                export L_YY=$(echo $L_DATE | cut -c1-4)

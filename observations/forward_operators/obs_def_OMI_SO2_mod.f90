@@ -284,7 +284,7 @@ real(r8), dimension(ens_size) :: so2_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
 real(r8), dimension(ens_size) :: so2_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
 real(r8), dimension(ens_size) :: so2_temp, tmp_temp, qmr_temp, prs_sfc
 
-real(r8), allocatable, dimension(:)   :: thick, prs_omi, prs_omi_mem
+real(r8), allocatable, dimension(:)   :: thick, prs_omi, scat_wt_omi, prs_omi_mem
 real(r8), allocatable, dimension(:,:) :: so2_val, tmp_val, qmr_val
 logical  :: return_now,so2_return_now,tmp_return_now,qmr_return_now
 
@@ -316,8 +316,9 @@ kend_omi = kend(key)
 
 allocate(prs_omi(level_omi))
 allocate(prs_omi_mem(level_omi))
+allocate(scat_wt_omi(layer_omi))
 prs_omi(1:level_omi)=pressure(key,1:level_omi)*100.
-
+scat_wt_omi(1:layer_omi)=scat_wt(key,1:layer_omi)
 ! Get location infomation
 
 mloc = get_location(location)
@@ -602,7 +603,7 @@ do imem=1,ens_size
       kk=level_omi-k+1
       lnpr_mid=(log(prs_omi_mem(kk))+log(prs_omi_mem(kk-1)))/2.
       up_wt=log(prs_omi_mem(kk))-lnpr_mid
-      dw_wt=log(lnpr_mid)-log(prs_omi_mem(kk-1))
+      dw_wt=lnpr_mid-log(prs_omi_mem(kk-1))
       tl_wt=up_wt+dw_wt
       
       tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,kk))*tmp_val(imem,kk)
@@ -618,11 +619,11 @@ do imem=1,ens_size
    ! Process the vertical summation
 
    expct_val(imem)=0.0_r8
-   do k=1,layer_omi
+   do k=1,kend_omi
       kk=level_omi-k+1
       lnpr_mid=(log(prs_omi_mem(kk))+log(prs_omi_mem(kk-1)))/2.
       up_wt=log(prs_omi_mem(kk))-lnpr_mid
-      dw_wt=log(lnpr_mid)-log(prs_omi_mem(kk-1))
+      dw_wt=lnpr_mid-log(prs_omi_mem(kk-1))
       tl_wt=up_wt+dw_wt
 
       ! Convert from VMR to molar density (mol/m^3)
@@ -639,16 +640,24 @@ do imem=1,ens_size
       ! Get expected observation
 
       expct_val(imem) = expct_val(imem) + thick(kk) * so2_val_conv * &
-                        AvogN/msq2cmsq * scat_wt(key,kk) 
+                        AvogN/msq2cmsq * scat_wt_omi(kk) 
+
+write(string1, *) 'APM: imem, kk ',imem,kk
+call error_handler(E_MSG, routine, string1, source)
+write(string1, *) 'APM: key, exp_val, thick, so2_val, scat_wt ',key,expct_val(imem), &
+thick(kk),so2_val_conv,scat_wt(key,kk)
+call error_handler(E_MSG, routine, string1, source)
+
    enddo
 enddo
 !write(string1, *) 'APM: expct_val (all mems) ',key,expct_val(:)
-!call error_handler(E_MSG, routine, string1, source
+!call error_handler(E_MSG, routine, string1, source)
 
 ! Clean up and return
 deallocate(so2_val, tmp_val, qmr_val)
 deallocate(thick)
 deallocate(prs_omi, prs_omi_mem)
+deallocate(scat_wt_omi)
 
 end subroutine get_expected_omi_so2
 

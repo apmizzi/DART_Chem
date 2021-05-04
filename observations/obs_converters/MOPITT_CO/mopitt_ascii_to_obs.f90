@@ -132,11 +132,7 @@ real*8                          :: eps_tol=1.e-3,log10e
 real*8                          :: dofs, sdof, co_tot_col, co_tot_err
 real*8                          :: latitude, longitude, level
 real*8                          :: co_psurf, err, co_error, co_prior
-<<<<<<< HEAD
 real                            :: bin_beg_sec, bin_end_sec
-=======
-real                            :: bin_beg, bin_end
->>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
 real                            :: sec, lat, lon, nlevels
 real                            :: pi ,rad2deg, re, wt, corr_err, fac, fac_obs_error
 real                            :: ln_10, xg_sec_avg, co_log_max, co_log_min, co_min
@@ -164,11 +160,7 @@ character*129           :: qc_meta_data='MOPITT CO QC index'
 character*129           :: file_name='mopitt_obs_seq'
 character*2             :: chr_month, chr_day, chr_hour
 character*4             :: chr_year
-<<<<<<< HEAD
 character*129           :: filedir, filename, fileout, copy_meta_data, filen
-=======
-character*129           :: filedir, filename, copy_meta_data, filen
->>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
 character*129           :: transform_typ
 character*129           :: MOPITT_CO_retrieval_type
 !
@@ -198,16 +190,10 @@ double precision,allocatable,dimension(:,:)    :: rs_avg_k,rs_cov
 logical                 :: use_log_co
 logical                 :: use_cpsr_co_trunc
 !
-<<<<<<< HEAD
 namelist /create_mopitt_obs_nml/filedir,filename,fileout,year,month,day,hour, &
          bin_beg_sec, bin_end_sec ,MOPITT_CO_retrieval_type,fac_obs_error, &
          use_log_co,use_cpsr_co_trunc,cpsr_co_trunc_lim,mopitt_co_vloc, &
          lon_min,lon_max,lat_min,lat_max
-=======
-namelist /create_mopitt_obs_nml/filedir,filename,year,month,day,hour,bin_beg, bin_end, &
-         MOPITT_CO_retrieval_type,fac_obs_error,use_log_co,use_cpsr_co_trunc, &
-         cpsr_co_trunc_lim, mopitt_co_vloc,lon_min,lon_max,lat_min,lat_max
->>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
 !
 ! Set constants
 log10e=log10(exp(1.0))
@@ -372,10 +358,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
 !-------------------------------------------------------
   do while(ios == 0)
        ! Read MOPITT variables
-<<<<<<< HEAD
        index_qc = index_qc + 1
-=======
->>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
        read(fileid,*) mop_prs(1:nlvls)
        mop_prs(nlvlsp)=nprs(mop_dimp)
        read(fileid,*) x_r(1:nlvls)
@@ -386,7 +369,6 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
        read(fileid,*) cov_m(1:nlvls,1:nlvls)
        read(fileid,*) co_tot_col,co_tot_err
 !
-<<<<<<< HEAD
 !       print *, 'lon,lon_min,lon_max ',lon,lon_min,lon_max
 !       print *, 'lat,lat_min,lat_max ',lat,lat_min,lat_max
 !       print *, ' '
@@ -399,14 +381,6 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
        
        if(lon.ge.lon_min .and. lon.le.lon_max .and. &
        lat.ge.lat_min .and. lat.le.lat_max) then       
-=======
-       print *, 'lon,lon_min,lon_max ',lon,lon_min,lon_max
-       print *, 'lat,lat_min,lat_max ',lat,lat_min,lat_max
-       print *, ' '
-       if(lon.ge.lon_min .and. lon.le.lon_max .and. &
-       lat.ge.lat_min .and. lat.le.lat_max) then       
-          index_qc = index_qc + 1
->>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
           qc_mopitt(index_qc)=0
 !
 !-------------------------------------------------------
@@ -1207,22 +1181,8 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
-<<<<<<< HEAD
 
  call write_obs_seq(seq, trim(fileout))
-=======
- if  (bin_beg == 3.01) then
-    file_name=trim(file_name)//chr_year//chr_month//chr_day//'06'
- elseif (bin_beg == 9.01) then
-    file_name=trim(file_name)//chr_year//chr_month//chr_day//'12'
- elseif (bin_beg == 15.01) then
-    file_name=trim(file_name)//chr_year//chr_month//chr_day//'18'
- elseif (bin_beg == 21.01) then
-    file_name=trim(file_name)//chr_year//chr_month//chr_day//'24'
- endif !bin
-
- call write_obs_seq(seq, file_name)
->>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
 
 999 continue
  close(fileid)

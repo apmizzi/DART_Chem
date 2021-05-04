@@ -593,7 +593,7 @@ do imem=1,ens_size
    do k=1,trop_indxx
       lnpr_mid=(log(prs_tropomi_mem(k+1))+log(prs_tropomi_mem(k)))/2.
       up_wt=log(prs_tropomi_mem(k))-lnpr_mid
-      dw_wt=log(lnpr_mid)-log(prs_tropomi_mem(k+1))
+      dw_wt=lnpr_mid-log(prs_tropomi_mem(k+1))
       tl_wt=up_wt+dw_wt
       
       tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
@@ -612,7 +612,7 @@ do imem=1,ens_size
    do k=1,trop_indxx
       lnpr_mid=(log(prs_tropomi_mem(k+1))+log(prs_tropomi_mem(k)))/2.
       up_wt=log(prs_tropomi_mem(k))-lnpr_mid
-      dw_wt=log(lnpr_mid)-log(prs_tropomi_mem(k+1))
+      dw_wt=lnpr_mid-log(prs_tropomi_mem(k+1))
       tl_wt=up_wt+dw_wt
 
       ! Convert from VMR to molar density (mol/m^3)

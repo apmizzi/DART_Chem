@@ -113,7 +113,7 @@ program omi_no2_ascii_to_obs
 !
    real                            :: bin_beg_sec,bin_end_sec
    real                            :: lon_min,lon_max,lat_min,lat_max
-   real                            :: fac_obs_error,fac,fac_err
+   real                            :: fac_obs_error,fac_err
    real                            :: pi,rad2deg,re,level_crit
    real                            :: x_observ,y_observ,dofs
    real*8                          :: obs_err_var,level
@@ -166,7 +166,7 @@ program omi_no2_ascii_to_obs
    sum_reject=0
    sum_accept=0
    sum_total=0
-   fac_err=2.
+   fac_err=1.
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
@@ -201,9 +201,6 @@ program omi_no2_ascii_to_obs
       call set_copy_meta_data(seq, icopy, copy_meta_data)
    enddo
    call set_qc_meta_data(seq, 1, qc_meta_data)
-!
-! assign obs error scale factor
-   fac=fac_obs_error
 !
 !-------------------------------------------------------
 ! Read OMI NO2 data
@@ -256,7 +253,7 @@ program omi_no2_ascii_to_obs
       if(lon_obs.lt.0.) lon_obs=lon_obs+360.
       read(fileid,*,iostat=ios) nlay_obs,nlev_obs
       read(fileid,*,iostat=ios) amfstrat,amfstrat_clr,amfstrat_cld
-      read(fileid,*,iostat=ios) amftrop,amfstrat_clr,amftrop_cld
+      read(fileid,*,iostat=ios) amftrop,amftrop_clr,amftrop_cld
       read(fileid,*,iostat=ios) cld_frac,cld_prs,cld_rad_frac
       read(fileid,*,iostat=ios) col_amt,col_amt_err
       read(fileid,*,iostat=ios) col_amt_trop,col_amt_trop_err
@@ -297,6 +294,7 @@ program omi_no2_ascii_to_obs
 !
 !--------------------------------------------------------
 ! Find model NO2 profile corresponding to the observation
+! kend is the index for prs_trop      
 !--------------------------------------------------------
       reject=0
       call get_model_profile(prf_model,nz_model, &
@@ -311,28 +309,6 @@ program omi_no2_ascii_to_obs
       level=prs_loc
 !      print *, 'prf_model ',prf_model(:)
 !      print *, 'trop index, pressure (hPa) ',kend,prs_trop
-!      obs_sum=0.
-!      do k=1,kend
-!         obs_sum=obs_sum+prf_model(k)
-!      enddo
-!      print *, 'exp obs ',obs_sum
-!      stop
-!
-! Check for maximum localization height
-!      if(level.lt.level_crit  .or. col_amt_trop*amftrop.lt.0. .or. &
-!      col_amt_trop_err*amftrop.lt.0.) then
-!      if(level.lt.level_crit) then
-!         reject=1
-!         sum_reject=sum_reject+1
-!         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!         print *, trim(data_type), obs_id, i_min, j_min
-!         deallocate(scat_wt)
-!         deallocate(prs_obs) 
-!         deallocate(scat_wt_r8)
-!         deallocate(prs_obs_r8) 
-!         deallocate(prf_model) 
-!         cycle
-!      endif
 !      
 ! Process accepted observations
       print *, 'localization pressure level (hPa) ',prs_loc/100.
@@ -344,15 +320,15 @@ program omi_no2_ascii_to_obs
 ! Obs value is the tropospheric slant column
 ! scd = vcd * amf      
       obs_val(:)=col_amt_trop*amftrop
-      obs_err_var=(fac_err*col_amt_trop_err*amftrop)**2.
+      obs_err_var=(fac_obs_error*fac_err*col_amt_trop_err*amftrop)**2.
       omi_qc(:)=0
       obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
       call get_time(obs_time, seconds, days)
 !
-!      which_vert=-2      ! undefined
+      which_vert=-2      ! undefined
 !      which_vert=-1      ! surface
 !      which_vert=1       ! level
-      which_vert=2       ! pressure surface
+!      which_vert=2       ! pressure surface
 !
       obs_kind = OMI_NO2_COLUMN
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90) 
@@ -439,22 +415,6 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,prs_trop,k
    real,dimension(nlev_obs)        :: prs_obs
    real,dimension(nlay_obs)        :: locl_prf,locl_prf_sm
 !
-! apply vertical smoother
-!   wt_ctr=2.
-!   wt_end=1.
-!   locl_prf_sm(:)=0.
-!   do k=1,nlay_obs
-!      if(k.eq.1) then
-!         locl_prf_sm(k)=(wt_ctr*locl_prf(k)+wt_end*locl_prf(k+1))/(wt_ctr+wt_end)
-!         cycle
-!      elseif(k.eq.nlay_obs) then
-!         locl_prf_sm(k)=(wt_ctr*locl_prf(k-1)+wt_end*locl_prf(k))/(wt_ctr+wt_end)
-!         cycle
-!      else
-!         locl_prf_sm(k)=(wt_end*locl_prf(k-1)+wt_ctr*locl_prf(k)+ &
-!         wt_end*locl_prf(k+1))/(wt_ctr+2.*wt_end)
-!      endif
-!   enddo
     locl_prf_sm(:)=locl_prf(:)
 !
 ! locate troposphere index
@@ -462,7 +422,7 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,prs_trop,k
    kend=nlay_obs
    do k=1,nlay_obs
       if((prs_obs(k)+prs_obs(k+1))/2.lt.prs_trop) then
-         kend=k-1
+         kend=k
          exit
       endif
    enddo      

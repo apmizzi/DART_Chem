@@ -267,7 +267,7 @@ real(r8),            intent(out) :: expct_val(:)
 character(len=*), parameter :: routine = 'get_expected_tropomi_co'
 type(location_type) :: loc2
 
-integer :: layer_tropomi,level_tropomi
+integer :: layer_tropomi,level_tropomi,ierr
 integer :: layer_mdl,level_mdl
 integer :: k,kk,imem,kend_tropomi
 integer :: co_istatus(ens_size)
@@ -579,16 +579,16 @@ do imem=1,ens_size
    prs_tropomi_mem(:)=prs_tropomi(:)
    if (prs_sfc(imem).gt.prs_tropomi_mem(1)) then
       prs_tropomi_mem(1)=prs_sfc(imem)
-   endif   
+   endif
 
    ! Process the vertical summation
 
    expct_val(imem)=0.0_r8
    do k=1,kend_tropomi
-      kk=layer_tropomi-k+1
+      kk=level_tropomi-k+1
       lnpr_mid=(log(prs_tropomi_mem(kk))+log(prs_tropomi_mem(kk-1)))/2.
       up_wt=log(prs_tropomi_mem(kk))-lnpr_mid
-      dw_wt=log(lnpr_mid)-log(prs_tropomi_mem(kk-1))
+      dw_wt=lnpr_mid-log(prs_tropomi_mem(kk-1))
       tl_wt=up_wt+dw_wt
 
       ! Convert from VMR to molar density (mol/m^3)
@@ -607,6 +607,40 @@ do imem=1,ens_size
       expct_val(imem) = expct_val(imem) + co_val_conv * &
                         avg_kernel(key,kk)
    enddo
+!   if (expct_val(imem).lt.0.) then
+!      expct_val(imem)=0.0
+!      write(string1, *) 'APM: kend,level ',kend_tropomi,level_tropomi
+!      call error_handler(E_MSG, routine, string1, source)
+!      do k=1,kend_tropomi
+!         kk=level_tropomi-k+1
+!         write(string1, *) 'APM: co_val, ',kk,co_val(imem,kk)
+!         call error_handler(E_MSG, routine, string1, source)
+!         lnpr_mid=(log(prs_tropomi_mem(kk))+log(prs_tropomi_mem(kk-1)))/2.
+!         up_wt=log(prs_tropomi_mem(kk))-lnpr_mid
+!         dw_wt=lnpr_mid-log(prs_tropomi_mem(kk-1))
+!         tl_wt=up_wt+dw_wt
+!         write(string1, *) 'APM: kk,upwt,dwwt,tlwt ',kk,up_wt,dw_wt,tl_wt
+!         call error_handler(E_MSG, routine, string1, source)
+!
+!         ! Convert from VMR to molar density (mol/m^3)
+!         if(use_log_co) then
+!            co_val_conv = (dw_wt*exp(co_val(imem,kk))+up_wt*exp(co_val(imem,kk-1)))/tl_wt * &
+!                        (dw_wt*prs_tropomi_mem(kk)+up_wt*prs_tropomi_mem(kk-1)) / &
+!                        (Ru*(dw_wt*tmp_val(imem,kk)+up_wt*tmp_val(imem,kk-1)))
+!         else
+!            co_val_conv = (dw_wt*co_val(imem,kk)+up_wt*co_val(imem,kk-1))/tl_wt * &
+!                        (dw_wt*prs_tropomi_mem(kk)+up_wt*prs_tropomi_mem(kk-1)) / &
+!                        (Ru*(dw_wt*tmp_val(imem,kk)+up_wt*tmp_val(imem,kk-1)))
+!         endif
+! 
+!         ! Get expected observation
+!
+!         expct_val(imem) = expct_val(imem) + co_val_conv * &
+!                        avg_kernel(key,kk)
+!         write(string1, *) 'APM: expct_val,co_val,avg_ker ',expct_val(imem),co_val_conv,avg_kernel(key,kk)
+!         call error_handler(E_MSG, routine, string1, source)
+!      enddo
+!   endif         
 enddo
 !write(string1, *) 'APM: expct_val (all mems) ',key,expct_val(:)
 !call error_handler(E_MSG, routine, string1, source)

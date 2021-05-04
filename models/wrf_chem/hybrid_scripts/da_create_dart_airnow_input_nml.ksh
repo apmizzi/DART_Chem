@@ -33,6 +33,7 @@ cat > create_airnow_obs_nml.nl << EOF
    lat_mx=${NL_LAT_MX}
    lon_mn=${NL_LON_MN}
    lon_mx=${NL_LON_MX}
+   fac_obs_error= ${NL_FAC_OBS_ERROR}
    use_log_co=${NL_USE_LOG_CO}
    use_log_o3=${NL_USE_LOG_O3}
    use_log_nox=${NL_USE_LOG_NOX}

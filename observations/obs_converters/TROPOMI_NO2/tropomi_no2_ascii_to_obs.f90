@@ -113,7 +113,7 @@ program tropomi_no2_ascii_to_obs
 !
    real                            :: bin_beg_sec,bin_end_sec
    real                            :: lon_min,lon_max,lat_min,lat_max
-   real                            :: fac_obs_error,fac
+   real                            :: fac_obs_error,fac_err
    real                            :: pi,rad2deg,re,level_crit
    real                            :: x_observ,y_observ,dofs
    real                            :: prs_loc,obs_sum
@@ -165,6 +165,7 @@ program tropomi_no2_ascii_to_obs
    sum_reject=0
    sum_accept=0
    sum_total=0
+   fac_err=1.0
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
@@ -196,9 +197,6 @@ program tropomi_no2_ascii_to_obs
       call set_copy_meta_data(seq, icopy, copy_meta_data)
    enddo
    call set_qc_meta_data(seq, 1, qc_meta_data)
-!
-! assign obs error scale factor
-   fac=fac_obs_error
 !
 !-------------------------------------------------------
 ! Read TROPOMI NO2 data
@@ -340,7 +338,7 @@ program tropomi_no2_ascii_to_obs
 !
 ! Obs value is the tropospheric vertical column
       obs_val(:)=trop_sum*col_amt_trop_obs/(trop_sum+strat_sum)
-      obs_err_var=(trop_sum*col_amt_trop_err_obs/(trop_sum+strat_sum))**2.
+      obs_err_var=fac_obs_error**fac_err*(trop_sum*col_amt_trop_err_obs/(trop_sum+strat_sum))**2.
 !      print *, 'obs_val ',col_amt_trop_obs
 !      print *, 'obs_err ',col_amt_trop_err_obs
 
@@ -614,9 +612,13 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
 !
    prf_mdl(:)=-9999.
    kend=-9999
-!   print *, 'fld_mdl ',fld_mdl(:)
-!   print *, 'prs_mdl ',prs_mdl(:)
-!   print *, 'prs_obs ',prs_obs(:)
+   do k=1,nlev_obs-1
+      if((prs_obs(k)+prs_obs(k+1))/2..lt.prs_mdl(nz_mdl) .and. &
+      kend.eq.-9999) then
+         kend=k
+         exit
+      endif
+   enddo
    do k=1,nlev_obs
       if(prs_obs(k) .gt. prs_mdl(1)) then
          prf_mdl(k)=fld_mdl(1)
@@ -624,7 +626,6 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
       endif
       if(prs_obs(k) .lt. prs_mdl(nz_mdl)) then
          prf_mdl(k)=fld_mdl(nz_mdl)
-         if(kend.eq.-9999) kend=k-1
          cycle
       endif
       do kk=1,nz_mdl-1

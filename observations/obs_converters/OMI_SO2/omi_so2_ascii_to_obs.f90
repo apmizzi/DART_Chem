@@ -157,7 +157,7 @@ program omi_so2_ascii_to_obs
    pi=4.*atan(1.)
    rad2deg=360./(2.*pi)
    re=6371000.
-   fac_err=0.75
+   fac_err=1.00
    days_last=-9999.
    seconds_last=-9999.
    level_crit=50000.
@@ -198,9 +198,6 @@ program omi_so2_ascii_to_obs
       call set_copy_meta_data(seq, icopy, copy_meta_data)
    enddo
    call set_qc_meta_data(seq, 1, qc_meta_data)
-!
-! assign obs error scale factor
-   fac=fac_obs_error
 !
 !-------------------------------------------------------
 ! Read OMI SO2 data
@@ -296,6 +293,7 @@ program omi_so2_ascii_to_obs
 !
 !--------------------------------------------------------
 ! Find model SO2 profile corresponding to the observation
+! kend is the index for the top of the model
 !--------------------------------------------------------
       reject=0
       call get_model_profile(prf_model,nz_model, &
@@ -310,30 +308,33 @@ program omi_so2_ascii_to_obs
       pblh_fld(i_min,j_min),hgt_obs,kend,kpbl)
       level=prs_loc
       level=75000.
-!      obs_sum=0.
-!      do k=1,kend+1
-!          kk=nlay_obs-k+1      
-!          obs_sum=obs_sum+prf_model(kk)
-!      enddo
-!      print *, 'exp obs ',obs_sum
+      print *,'kend,nlay_obs ',kend,nlay_obs
 !
-! Check for maximum localization height
-!      if(level.lt.level_crit) then
-!         reject=1
-!         sum_reject=sum_reject+1
-!         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!         print *, trim(data_type), obs_id
-!         deallocate(scat_wt)
-!         deallocate(prs_obs) 
-!         deallocate(scat_wt_r8)
-!         deallocate(prs_obs_r8) 
-!         deallocate(prf_model) 
-!         deallocate(hgt_obs) 
-!         deallocate(layer_wt)
-!         deallocate(layer_wt_pbl)
-!         cycle
-!      endif
-!      
+! Check scattering weights
+      do k=1,nlay_obs
+         kk=nlay_obs-k+1
+         if(scat_wt(kk).ne.0) then
+            if(kend.le.k) then
+               reject=1
+               exit 
+            endif
+         endif
+      enddo
+      if(reject.eq.1) then
+         sum_reject=sum_reject+1
+         reject=0
+         deallocate(prs_obs) 
+         deallocate(scat_wt)
+         deallocate(prs_obs_r8) 
+         deallocate(scat_wt_r8)
+         deallocate(prf_model) 
+         deallocate(hgt_obs)
+         deallocate(layer_wt)
+         deallocate(layer_wt_pbl)
+         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
+         cycle   
+      endif
+!
 ! Process accepted observations
       print *, 'localization pressure level (hPa) ',level/100.,kend
       sum_accept=sum_accept+1
@@ -343,14 +344,14 @@ program omi_so2_ascii_to_obs
 !
 ! Adjust col_amt_pbl to remove the contribution above the top of the model
       obs_sum=0.
-      do k=1,kend+1
+      do k=1,kend
          kk=nlay_obs-k+1
          obs_sum=obs_sum+layer_wt(kk)*col_amt
       enddo
 !
 ! Obs value is the tropospheric slant column
       obs_val(:)=obs_sum*slnt_col_amt/col_amt
-      obs_err_var=(fac*fac_err*obs_sum*slnt_col_amt/col_amt)**2.
+      obs_err_var=(fac_obs_error*fac_err*obs_sum*slnt_col_amt/col_amt)**2.
       omi_qc(:)=0
 !
       obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
@@ -451,22 +452,6 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,pblh,hgt_o
    real,dimension(nlev_obs)      :: prs_obs,hgt_obs
    real,dimension(nlay_obs)      :: locl_prf,locl_prf_sm
 !
-! apply vertical smoother
-!   wt_ctr=2.
-!   wt_end=1.
-!   locl_prf_sm(:)=0.
-!   do k=1,nlay_obs
-!      if(k.eq.1) then
-!         locl_prf_sm(k)=(wt_ctr*locl_prf(k)+wt_end*locl_prf(k+1))/(wt_ctr+wt_end)
-!         cycle
-!      elseif(kk.eq.nlay_obs) then
-!         locl_prf_sm(k)=(wt_ctr*locl_prf(k-1)+wt_end*locl_prf(k))/(wt_ctr+wt_end)
-!         cycle
-!      else
-!         locl_prf_sm(k)=(wt_end*locl_prf(k-1)+wt_ctr*locl_prf(k)+ &
-!         wt_end*locl_prf(k+1))/(wt_ctr+2.*wt_end)
-!      endif
-!   enddo
     locl_prf_sm(:)=locl_prf
 !
 ! locate pbl index
@@ -933,6 +918,14 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
 !
    prf_mdl(:)=-9999.
    kend=-9999
+   do k=1,nlev_obs-1
+      kk=nlev_obs-k+1
+      if((prs_obs(kk)+prs_obs(kk-1))/2..lt.prs_mdl(1) .and. &
+      kend.eq.-9999) then
+         kend=k
+         exit
+      endif
+   enddo   
    do k=1,nlev_obs
       kk=nlev_obs-k+1
       if(prs_obs(kk) .gt. prs_mdl(1)) then
@@ -941,7 +934,6 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
       endif
       if(prs_obs(kk) .lt. prs_mdl(nz_mdl)) then
          prf_mdl(kk)=fld_mdl(nz_mdl)
-         if(kend.eq.-9999) kend=k
          cycle
       endif
       do ll=1,nz_mdl-1

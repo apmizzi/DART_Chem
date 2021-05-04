@@ -10,13 +10,17 @@
 #
 ############################################################################### 
 #
+export START_DATE=2018071418
+export END_DATE=2018071518
+#
 export START_DATE=2014071406
-export END_DATE=2014071806
+export END_DATE=2014071512
 #
 # Define EXPERIMENT path
-export DIR_NAME=real_FRAPPE_CONTROL_NASA
-#export DIR_NAME=real_FRAPPE_ALLCHEM_NASA
-#export DIR_NAME=real_FRAPPE_ALLCHEM_RELAX_NASA
+#export DIR_NAME=real_FRAPPE_CONTROL_RELAX_NASA
+export DIR_NAME=real_FRAPPE_ALLCHEM_RELAX_NASA
+#export DIR_NAME=real_FRAPPE_ALLCHEM_EMISS_ADJ_NASA
+#export DIR_NAME=real_COLO_ALLCHEM_RELAX_NASA
 #
 # Define FILTER path
 export DART_FILTER=dart_filter
@@ -24,8 +28,8 @@ export DART_FILTER=dart_filter
 export DELETE_FLG=true
 export DOMAIN=01
 export NUM_MEMBERS=10
-export CYCLE_PERIOD=12
-export FCST_PERIOD=12
+export CYCLE_PERIOD=6
+export FCST_PERIOD=6
 export ASIM_PERIOD=3
 export LBC_FREQ=3
 (( INTERVAL_SEC=${LBC_FREQ}*60*60 ))
@@ -196,7 +200,8 @@ export NL_TIME_TO_SKIP_HH=0
 export NL_TIME_TO_SKIP_MN=0
 export NL_TIME_TO_SKIP_SS=0
 export NL_MAX_NUM_BINS=1000
-export NL_PLEVEL='950,, 850., 700., 500., 400.'
+export NL_PLEVEL='750.'
+export NL_PLEVEL='950., 850., 750., 500., 400. 300., 100.'
 export NL_NREGIONS=1
 export NL_LONLIM1=0.
 export NL_LONLIM2=360.
@@ -481,7 +486,7 @@ export NL_SPECIAL_VERT_NORMALIZATION_LEVELS="20.0,20.0"
 export NL_SPECIAL_VERT_NORMALIZATION_SCALE_HEIGHTS="4.5,4.5"
 #
 rm -rf input.nml
-${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input.nml.ksh
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input_prs_levels.nml.ksh
 #
 ###############################################################################
 #
@@ -492,13 +497,14 @@ ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input.nml.ksh
 cd ${RUN_DIR}
 #
 ./obs_diag
+mv obs_diag_output.nc obs_diag_output_profile.nc
 #
 # Remove work/run files
 rm -rf advance_time
 rm -rf dart_log.nml
-#rm -rf dart_log.out
+rm -rf dart_log.out
 rm -rf file_list.txt
-rm -rf input.nml
+#rm -rf input.nml
 rm -rf LargeInnov.txt
 rm -rf obs_diag
 

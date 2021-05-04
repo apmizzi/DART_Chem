@@ -594,7 +594,7 @@ do imem=1,ens_size
    do k=1,layer_omi
       lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
       up_wt=log(prs_omi_mem(k))-lnpr_mid
-      dw_wt=log(lnpr_mid)-log(prs_omi_mem(k+1))
+      dw_wt=lnpr_mid-log(prs_omi_mem(k+1))
       tl_wt=up_wt+dw_wt
       
       tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
@@ -611,10 +611,20 @@ do imem=1,ens_size
 
    expct_val(imem)=0.0_r8
 !   do k=1,layer_omi
+!write(string1, *) 'APM: layer_omi ',layer_omi
+!call error_handler(E_MSG, routine, string1, source)
+!write(string1, *) 'APM: kend_omi ',kend_omi
+!call error_handler(E_MSG, routine, string1, source)
+!write(string1, *) 'APM: prs_omi ',prs_omi(1:level_omi)
+!call error_handler(E_MSG, routine, string1, source)
+!write(string1, *) 'APM: prior ',prior(key,1:layer_omi)
+!call error_handler(E_MSG, routine, string1, source)
+!write(string1, *) 'APM: avgk ',avg_kernel(key,1:layer_omi)
+!call error_handler(E_MSG, routine, string1, source)
    do k=1,kend_omi
       lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
       up_wt=log(prs_omi_mem(k))-lnpr_mid
-      dw_wt=log(lnpr_mid)-log(prs_omi_mem(k+1))
+      dw_wt=lnpr_mid-log(prs_omi_mem(k+1))
       tl_wt=up_wt+dw_wt
 
       ! Convert from VMR to molar density (mol/m^3)

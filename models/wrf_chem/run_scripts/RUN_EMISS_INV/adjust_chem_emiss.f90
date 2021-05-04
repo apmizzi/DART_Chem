@@ -5,34 +5,46 @@
 !
           program main
              implicit none
-             integer,parameter                         :: mchemi_emiss=2
-             integer,parameter                         :: mfirechemi_emiss=7
-
-             integer                                   :: nx,ny,nz,nz_chemi,nz_firechemi
-             integer                                   :: nchemi_emiss,nfirechemi_emiss
-             integer                                   :: i,j,k,emiss
-             integer                                   :: unit
-             real                                      :: fac,facc,delt
-             real,allocatable,dimension(:,:,:)         :: emiss_chemi_prior,emiss_chemi_post
-             real,allocatable,dimension(:,:,:)         :: emiss_chemi_old,emiss_chemi_new
-             real,allocatable,dimension(:,:,:)         :: emiss_firechemi_prior,emiss_firechemi_post
-             real,allocatable,dimension(:,:,:)         :: emiss_firechemi_old,emiss_firechemi_new
-             character(len=150)                        :: wrfchemi_prior,wrfchemi_post
-             character(len=150)                        :: wrfchemi_old,wrfchemi_new
-             character(len=150)                        :: wrffirechemi_prior,wrffirechemi_post
-             character(len=150)                        :: wrffirechemi_old,wrffirechemi_new
-             character(len=20),dimension(mchemi_emiss) :: chemi_emiss
-             character(len=20),dimension(mfirechemi_emiss) :: firechemi_emiss
-             namelist /adjust_chem_emiss/fac,facc,nx,ny,nz,nz_chemi,nz_firechemi,nchemi_emiss, &
-             nfirechemi_emiss,wrfchemi_prior,wrfchemi_post,wrfchemi_old,wrfchemi_new, &
-             wrffirechemi_prior,wrffirechemi_post,wrffirechemi_old,wrffirechemi_new
+             integer                                    :: nx,ny,nz,nz_chemi,nz_firechemi
+             integer                                    :: nchemi_emiss,nfirechemi_emiss
+             integer                                    :: i,j,k,emiss
+             integer                                    :: unit
+             real                                       :: fac,facc,delt
+             real,allocatable,dimension(:,:,:)          :: emiss_chemi_prior,emiss_chemi_post
+             real,allocatable,dimension(:,:,:)          :: emiss_chemi_old,emiss_chemi_new
+             real,allocatable,dimension(:,:,:)          :: emiss_firechemi_prior,emiss_firechemi_post
+             real,allocatable,dimension(:,:,:)          :: emiss_firechemi_old,emiss_firechemi_new
+             character(len=150)                         :: wrfchemi_prior,wrfchemi_post
+             character(len=150)                         :: wrfchemi_old,wrfchemi_new
+             character(len=150)                         :: wrffirechemi_prior,wrffirechemi_post
+             character(len=150)                         :: wrffirechemi_old,wrffirechemi_new
+             character(len=20),allocatable,dimension(:) :: chemi_spcs,chemi_emiss
+             character(len=20),allocatable,dimension(:) :: firechemi_spcs,firechemi_emiss
+             namelist /adjust_chem_emiss_dims/nx,ny,nz,nz_chemi,nz_firechemi,nchemi_emiss, &
+             nfirechemi_emiss
+             namelist /adjust_chem_emiss/fac,facc,chemi_spcs,firechemi_spcs,wrfchemi_prior, &
+             wrfchemi_post,wrfchemi_old,wrfchemi_new,wrffirechemi_prior,wrffirechemi_post, &
+             wrffirechemi_old,wrffirechemi_new
 !
 ! Read namelist
+             unit=20
+! Read dimensions
+             open(unit=unit,file='adjust_chem_emiss_dims.nml',form='formatted', &
+             status='old',action='read')
+             read(unit,adjust_chem_emiss_dims)
+             close(unit)
+!
+             allocate(chemi_spcs(nchemi_emiss))
+             allocate(firechemi_spcs(nfirechemi_emiss))
+             allocate(chemi_emiss(nchemi_emiss))
+             allocate(firechemi_emiss(nfirechemi_emiss))
+! Read data
              unit=20
              open(unit=unit,file='adjust_chem_emiss.nml',form='formatted', &
              status='old',action='read')
              read(unit,adjust_chem_emiss)
              close(unit)
+!
              print *, 'fac                     ',fac
              print *, 'facc                    ',facc
              print *, 'ny                      ',ny
@@ -41,6 +53,8 @@
              print *, 'nz_firechemi            ',nz_firechemi
              print *, 'nchemi_emiss            ',nchemi_emiss
              print *, 'nfirechemi_emiss        ',nfirechemi_emiss
+             print *, 'chemi_spcs              ',chemi_spcs
+             print *, 'firechemi_spcs          ',firechemi_spcs
              print *, 'wrfchemi_prior          ',trim(wrfchemi_prior)
              print *, 'wrfchemi_post           ',trim(wrfchemi_post)
              print *, 'wrfchemi_old            ',trim(wrfchemi_old)
@@ -49,10 +63,6 @@
              print *, 'wrffirechemi_post       ',trim(wrffirechemi_post)
              print *, 'wrffirechemi_old        ',trim(wrffirechemi_old)
              print *, 'wrffirechemi_new        ',trim(wrffirechemi_new)
-             if(nchemi_emiss.ne.mchemi_emiss .or. nfirechemi_emiss.ne.mfirechemi_emiss) then
-                print *,'APM: ERROR - Emissions dimension mismatch '
-                stop
-             endif
 !
 ! Allocate arrays
              allocate (emiss_chemi_prior(nx,ny,nz_chemi),emiss_chemi_post(nx,ny,nz_chemi))
@@ -70,15 +80,14 @@
 !             facc=0.
 !
              print *, 'APM Adjust chem emissions '
-             chemi_emiss(1)='E_CO'
-             chemi_emiss(2)='E_NO'
-             firechemi_emiss(1)='ebu_in_co'
-             firechemi_emiss(2)='ebu_in_no'
-             firechemi_emiss(3)='ebu_in_oc'
-             firechemi_emiss(4)='ebu_in_bc'
-             firechemi_emiss(5)='ebu_in_c2h4'
-             firechemi_emiss(6)='ebu_in_ch2o'
-             firechemi_emiss(7)='ebu_in_ch3oh'
+             do emiss=1,nchemi_emiss
+                chemi_emiss(emiss)=chemi_spcs(emiss)
+                print *, trim(chemi_emiss(emiss))
+             enddo
+             do emiss=1,nfirechemi_emiss
+                firechemi_emiss(emiss)=firechemi_spcs(emiss)
+                print *, trim(firechemi_emiss(emiss))
+             enddo
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -209,6 +218,8 @@
                 enddo
              enddo
 !
+             deallocate (chemi_spcs,chemi_emiss)             
+             deallocate (firechemi_spcs,firechemi_emiss)             
              deallocate (emiss_chemi_prior,emiss_chemi_post)
              deallocate (emiss_chemi_old,emiss_chemi_new)
              deallocate (emiss_firechemi_prior,emiss_firechemi_post)

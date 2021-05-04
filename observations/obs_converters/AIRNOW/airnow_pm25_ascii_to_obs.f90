@@ -107,7 +107,7 @@ program airnow_pm25_ascii_to_obs
       integer                      :: year_temp,month_temp,day_temp,hour_temp,minute_temp, &
                                       data_greg_sec_temp
       integer,dimension(indx_max)  :: year,month,day,hour,minute,data_greg_sec
-      real                         :: fac,lat_mn,lat_mx,lon_mn,lon_mx
+      real                         :: lat_mn,lat_mx,lon_mn,lon_mx
       real*8                       :: latitude,longitude,level
       real*8                       :: ob_err_var
       real                         :: lat_temp,lon_temp,obs_val_temp
@@ -127,11 +127,11 @@ program airnow_pm25_ascii_to_obs
       character(len=180)           :: file_in
       logical                      :: use_log_co,use_log_o3,use_log_nox,use_log_so2,use_log_pm10,use_log_pm25
 
-      real                         :: pi,err_fac,ran1,ran2,zfac
+      real                         :: pi,fac,fac_err,fac_obs_error,ran1,ran2,zfac
 
       namelist /create_airnow_obs_nml/beg_year,beg_mon,beg_day, &
       beg_hour,beg_min,beg_sec,end_year,end_mon,end_day,end_hour,end_min,end_sec, &
-      file_in,lat_mn,lat_mx,lon_mn,lon_mx,use_log_co,use_log_o3,use_log_nox, &
+      fac_obs_error,file_in,lat_mn,lat_mx,lon_mn,lon_mx,use_log_co,use_log_o3,use_log_nox, &
       use_log_so2,use_log_pm10,use_log_pm25
 
 !============================================================
@@ -140,7 +140,8 @@ program airnow_pm25_ascii_to_obs
 
       pi=4.*atan(1.0)
       fac=1.0
-      err_fac=0.3
+      fac_err=0.3
+      fac_obs_error=1.0
       obs_qc(1)=0.
 
       save_greg_sec=-9999                                                 
@@ -239,10 +240,10 @@ program airnow_pm25_ascii_to_obs
             minute(indx)=minute_temp
             data_greg_sec(indx)=data_greg_sec_temp
             obs_val(indx)=obs_val_temp*fac
-            obs_err(indx)=obs_val_temp*fac*err_fac
+            obs_err(indx)=obs_val_temp*fac*fac_err*fac_obs_error
             if (use_log_pm25) then
                obs_val(indx)=log(obs_val_temp*fac)
-               obs_err(indx)=err_fac
+               obs_err(indx)=fac_err*fac_obs_error
             endif
          endif
       enddo

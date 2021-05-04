@@ -157,8 +157,7 @@ program omi_o3_ascii_to_obs
    pi=4.*atan(1.)
    rad2deg=360./(2.*pi)
    re=6371000.
-   fac_err=0.25
-   fac_err=0.125
+   fac_err=1.0
    days_last=-9999.
    seconds_last=-9999.
    prs_trop=-9999.
@@ -200,9 +199,6 @@ program omi_o3_ascii_to_obs
       call set_copy_meta_data(seq, icopy, copy_meta_data)
    enddo
    call set_qc_meta_data(seq, 1, qc_meta_data)
-!
-! assign obs error scale factor
-   fac=fac_obs_error
 !
 !-------------------------------------------------------
 ! Read OMI O3 data
@@ -282,6 +278,7 @@ program omi_o3_ascii_to_obs
 !
 !--------------------------------------------------------
 ! Find model O3 profile corresponding to the observation
+! kend is the OMI index for the top of the model.      
 !--------------------------------------------------------
       reject=0
       call get_model_profile(prf_model,nz_model, &
@@ -289,52 +286,12 @@ program omi_o3_ascii_to_obs
       qmr_fld(i_min,j_min,:),o3_fld(i_min,j_min,:),psfc_fld(i_min,j_min), &
       nlev_obs,avgk_obs,prior_obs,kend)
 !      print *, 'exp_obs ',prf_model(1:nlay_obs)
-!      obs_sum=0.
-!      do k=1,kend
-!         obs_sum=obs_sum+prf_model(k)
-!      enddo
 !
-! Find the fraction of the OMI O3 total column that is within the WRF grid      
-!      omi_sum_fl=0.
-!      omi_sum_pr=0.
-!      do k=1,kend
-!         omi_sum_fl=omi_sum_fl + prior_obs(k)   
-!         omi_sum_pr=omi_sum_pr + prior_obs(k)
-!      end do
-!      do k=kend+1,nlay_obs
-!         omi_sum_fl=omi_sum_fl + prior_obs(k)   
-!      end do
-!      omi_frac=omi_sum_pr/omi_sum_fl
-!      print *,'obs ',col_amt_obs    
-!      print *,'scaled obs ',omi_frac*col_amt_obs    
-!      print *,'exp_obs ',obs_sum    
-! 
 !--------------------------------------------------------
 ! Find vertical location
 !--------------------------------------------------------
       call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_model,nlay_obs,kend)
-       level=prs_loc      
-!      do k=1,nz_model-1
-!         if(prs_fld(i_min,j_min,k).ge.prs_loc .and. &
-!            prs_fld(i_min,j_min,k+1).lt.prs_loc) then
-!            level=k+1
-!            exit
-!         endif
-!      enddo
-!
-! Check for maximum localization height
-!      if(level.lt.level_crit) then
-!         reject=1
-!         sum_reject=sum_reject+1
-!         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!         print *, trim(data_type), obs_id, i_min, j_min
-!         deallocate(prs_obs) 
-!         deallocate(avgk_obs,prior_obs) 
-!         deallocate(prs_obs_r8) 
-!         deallocate(avgk_obs_r8,prior_obs_r8) 
-!         deallocate(prf_model) 
-!         cycle
-!      endif
+       level=prs_loc
 !      
 ! Process accepted observations
 !      print *, 'localization pressure level (hPa) ',prs_fld(i_min,j_min,int(level))/100.
@@ -362,16 +319,16 @@ program omi_o3_ascii_to_obs
 !
 ! Obs value is the total vertical column      
       obs_val(:)=omi_frac*col_amt_obs
-      obs_err_var=(fac*fac_err*omi_frac*col_amt_obs)**2.
+      obs_err_var=(fac_obs_error*fac_err*omi_frac*col_amt_obs)**2.
       omi_qc(:)=0
       
       obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
       call get_time(obs_time, seconds, days)
 !
-!      which_vert=-2      ! undefined
+      which_vert=-2      ! undefined
 !      which_vert=-1      ! surface
 !      which_vert=1       ! level
-      which_vert=2       ! pressure surface
+!      which_vert=2       ! pressure surface
 !
       obs_kind = OMI_O3_COLUMN
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90) 
@@ -457,43 +414,17 @@ subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,kend)
    real,dimension(nlev_obs)        :: prs_obs
    real,dimension(nlay_obs)        :: locl_prf,locl_prf_sm
 !
-! apply vertical smoother
-!   wt_ctr=2.
-!   wt_end=1.
-!   locl_prf_sm(:)=0.
-!   do k=1,nlay_obs
-!      if(k.eq.1) then
-!         locl_prf_sm(k)=(wt_ctr*locl_prf(k)+wt_end*locl_prf(k+1))/(wt_ctr+wt_end)
-!         cycle
-!      elseif(k.eq.nlay_obs) then
-!         locl_prf_sm(k)=(wt_ctr*locl_prf(k-1)+wt_end*locl_prf(k))/(wt_ctr+wt_end)
-!         cycle
-!      else
-!         locl_prf_sm(k)=(wt_end*locl_prf(k-1)+wt_ctr*locl_prf(k)+ &
-!         wt_end*locl_prf(k+1))/(wt_ctr+2.*wt_end)
-!      endif
-!   enddo
     locl_prf_sm(:)=locl_prf(:)
-!
-! locate troposphere index
-! assumes vertical grid is bottom up   
-!   do k=1,nlay_obs
-!      if((prs_obs(k)+prs_obs(k+1))/2.lt.prs_trop) then
-!         kend=k-1
-!         exit
-!      endif
-!   enddo      
 !
 ! locate first miniumum above the lowest layer
    zmax=-1.e10
-   zmin=abs(locl_prf_sm(1))
-   kmin=1
+   zmin=1.e10
+   kmin=2
    kmax=0
    do k=2,kend
-      if(abs(locl_prf_sm(k)).le.zmin) then
+      if(abs(locl_prf_sm(k)).lt.zmin) then
          zmin=abs(locl_prf_sm(k))
          kmin=k
-         cycle
       else
          exit
       endif
@@ -983,7 +914,8 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
    do k=1,nlev_obs-1
       if((prs_obs(k)+prs_obs(k+1))/2..lt.prs_mdl(nz_mdl) .and. &
       kend.eq.-9999) then
-         kend=k-1
+         kend=k
+         exit
       endif
    enddo   
    do k=1,nlev_obs
@@ -993,7 +925,6 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
       endif
       if(prs_obs(k) .lt. prs_mdl(nz_mdl)) then
          prf_mdl(k)=fld_mdl(nz_mdl)
-         if(kend.eq.-9999) kend=k-1
          cycle
       endif
       do kk=1,nz_mdl-1

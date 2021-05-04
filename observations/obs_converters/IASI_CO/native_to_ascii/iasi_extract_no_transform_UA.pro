@@ -343,19 +343,11 @@ for k = 0L, nx do begin
 ;
    if debug eq 1 then begin
       print, 'obs_time ',obs_time[k]
-<<<<<<< HEAD
 ;      print, 'hr-mn-sc ',hr,min,scc
 ;      print, 'DFS: ',dfs, dofs_threshold_low, dofs_threshold_hi
 ;      print, 'ZAN: ',sza[k], sza_day
 ;      print, 'LAT: ',lat[k], day_lat_edge_1, day_lat_edge_2
 ;      print, 'LAT: ',lat[k], nit_lat_edge_1, nit_lat_edge_2
-=======
-      print, 'hr-mn-sc ',hr,min,scc
-      print, 'DFS: ',dfs, dofs_threshold_low, dofs_threshold_hi
-      print, 'ZAN: ',sza[k], sza_day
-      print, 'LAT: ',lat[k], day_lat_edge_1, day_lat_edge_2
-      print, 'LAT: ',lat[k], nit_lat_edge_1, nit_lat_edge_2
->>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
       print, 'SEC: ',obs_sec[k], bin_beg_sec, bin_end_sec
       print, 'SEC: ',tod_sec, bin_beg_sec, bin_end_sec
       print, 'LAT: ',lat[k], lat_min, lat_max
@@ -363,18 +355,10 @@ for k = 0L, nx do begin
       print, ' '
    endif
    if( $
-<<<<<<< HEAD
       ( dfs ge dofs_threshold_low ) && ( dfs le dofs_threshold_hi ) && $
       ((( sza[k] lt sza_day ) && ( lat[k] gt day_lat_edge_1 ) && ( lat[k] lt day_lat_edge_2 )) || $
       (( sza[k] ge sza_day ) && ( lat[k] gt nit_lat_edge_1 ) && ( lat[k] lt nit_lat_edge_2 ))) && $
       ( obs_sec[k] ge bin_beg_sec ) and (obs_sec[k] le bin_end_sec ) and $
-=======
-;      ( dfs ge dofs_threshold_low ) && ( dfs le dofs_threshold_hi ) && $
-      ((( sza[k] lt sza_day ) && ( lat[k] gt day_lat_edge_1 ) && ( lat[k] lt day_lat_edge_2 )) || $
-      (( sza[k] ge sza_day ) && ( lat[k] gt nit_lat_edge_1 ) && ( lat[k] lt nit_lat_edge_2 ))) && $
-      ( obs_sec[k] ge bin_beg_sec ) and (obs_sec[k] lt bin_end_sec ) and $
-      ( tod_sec ge bin_beg_sec ) && (tod_sec lt bin_end_sec ) && $
->>>>>>> 6c6f831315638c666e75cba54347b97b406f2757
       ( lat[k] ge lat_min ) && ( lat[k] le lat_max ) && $
       ( lon[k] ge lon_min ) && lon[k] le ( lon_max ) && $
       ( qstatus eq 0 )) then begin 

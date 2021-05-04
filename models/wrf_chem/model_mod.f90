@@ -3086,7 +3086,6 @@ else
             endif
          enddo
       endif
-
 !-----------------------------------------------------
 ! 1.zb MOPITT and IASI CO Retrieval (CO)
 
@@ -3127,9 +3126,13 @@ else
                      fld(1, e) = dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
                   endif
 !                  if(fld(1,e).eq.missing_r8) then
-!                     print *, 'fld,dx,dxm,dy,dym ',fld(1,e),dx,dxm,dy,dym
+!                  if(fld(1,e).lt.0. .and. fld(1,e).ne.missing_r8) then
+!                     print *, 'APM lower: k,fld,dx,dxm,dy,dym ',k(e),fld(1,e),dx,dxm,dy,dym
 !                     print *, 'x_ill,x_ilr,x_iul,x_iur ',x_ill(e),x_ilr(e),x_iul(e),x_iur(e)
 !                  endif
+                  if(fld(1,e).lt.0. .and. fld(1,e).ne.missing_r8) then
+                     fld(1,e)=missing_r8
+                  endif
                enddo
 
 ! Interpolation for the CO field at level k+1
@@ -3148,9 +3151,13 @@ else
                      fld(2,e) = dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
                   endif
 !                  if(fld(2,e).eq.missing_r8) then
-!                     print *, 'fld,dx,dxm,dy,dym ',fld(2,e),dx,dxm,dy,dym
+!                  if(fld(2,e).lt.0. .and. fld(2,e).ne.missing_r8) then
+!                     print *, 'APM upper: k.fld,dx,dxm,dy,dym ',k(e),fld(2,e),dx,dxm,dy,dym
 !                     print *, 'x_ill,x_ilr,x_iul,x_iur ',x_ill(e),x_ilr(e),x_iul(e),x_iur(e)
 !                  endif
+                  if(fld(2,e).lt.0. .and. fld(2,e).ne.missing_r8) then
+                     fld(2,e)=missing_r8
+                  endif
                enddo
             endif
          enddo
@@ -4534,7 +4541,43 @@ deallocate(v_h, v_p)
 deallocate(uniquek)
 
 end subroutine model_interpolate
+!
+!#######################################################################
+subroutine chem_interpolate(fld,dx,dy,dxm,dym,x_ill,x_ilr,x_iul,x_iur,missing_r8)
+  implicit none
+  real(r8)            :: fld,dx,dy,dxm,dym,x_ill,x_ilr,x_iul,x_iur,missing_r8
+!
+  ! APM: This subroutine is for interpolating positive definite fields only (the chemical fields)
+  if ((x_ill.ne.missing_r8 .and. x_ilr.ne.missing_r8 .and. &
+     x_iul.ne.missing_r8 .and. x_iur.ne.missing_r8) .or. &
+     (x_ill.gt.0. .and. x_ilr.gt.0. .and. x_iul.gt.0. .and. x_iur.gt.0.)) then
+        fld = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
+        return
+  elseif ((x_ill.eq.missing_r8 .and. x_ilr.ne.missing_r8 .and. &
+     x_iul.ne.missing_r8 .and. x_iur.ne.missing_r8) .or. &
+     (x_ill.le.0. .and. x_ilr.gt.0. .and. x_iul.gt.0. .and. x_iur.gt.0.)) then
+        fld = dym*( dxm*x_ilr + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
+        return
+  elseif ((x_ill.ne.missing_r8 .and. x_ilr.eq.missing_r8 .and. &
+     x_iul.ne.missing_r8 .and. x_iur.ne.missing_r8) .or. &
+     (x_ill.gt.0. .and. x_ilr.le.0. .and. x_iul.gt.0. .and. x_iur.gt.0.)) then
+        fld = dym*( dxm*x_ill + dx*x_ill ) + dy*( dxm*x_iul + dx*x_iur )
+        return
+  elseif ((x_ill.ne.missing_r8 .and. x_ilr.ne.missing_r8 .and. &
+     x_iul.eq.missing_r8 .and. x_iur.ne.missing_r8) .or. &
+     (x_ill.gt.0. .and. x_ilr.gt.0. .and. x_iul.le.0. .and. x_iur.gt.0.)) then
+        fld = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iur + dx*x_iur )
+        return
+  elseif ((x_ill.ne.missing_r8 .and. x_ilr.ne.missing_r8 .and. &
+     x_iul.ne.missing_r8 .and. x_iur.eq.missing_r8) .or. &
+     (x_ill.gt.0. .and. x_ilr.gt.0. .and. x_iul.gt.0. .and. x_iur.le.0.)) then
+        fld = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iul )
+        return
+  endif
+  fld=missing_r8
 
+end subroutine chem_interpolate          
+!
 !#######################################################################
 subroutine convert_vertical_obs(state_handle, num, locs, loc_qtys, loc_types, &
                                 which_vert, status)

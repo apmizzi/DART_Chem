@@ -77,6 +77,9 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 % Process satellite data
    for ifile=1:nfile
       file_in=char(file_list(ifile));
+      if(isempty(file_in))
+         continue
+      end
       indx=strfind(file_in,file_pre)-1;
       if(isempty(indx))
          continue
@@ -322,7 +325,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 %
 % APM: Need to get this info from model  
 	    [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
-	    xmdl_sw,4000.,cen_lon,truelat1,truelat2);
+	    xmdl_sw,delx,cen_lon,truelat1,truelat2);
             i_min = round(xi);
             j_min = round(xj);
             reject = 0;
@@ -886,7 +889,7 @@ function [jult]=convert_time(year,month,day,hour,minute,second)
 %
    for iyear=ref_year:year-1
       if((mod(int64(iyear),4)==0 & mod(int64(iyear), ...
-      100)~=0) || (mod(int64(iyear),100)==0 && mod(int64(iyear),400)==0))
+      100)~=0) || (mod(int64(iyear),400)==0))
          jult=jult+secs_leap_year;
       else
          jult=jult+secs_year;
@@ -894,7 +897,7 @@ function [jult]=convert_time(year,month,day,hour,minute,second)
    end
    for imon=1:month-1
       if(imon==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),100)==0 && mod(int64(year),400)==0)))
+      100)~=0) || (mod(int64(year),400)==0)))
          jult=jult+(days_per_mon(imon)+1)*24.*60.*60.;
       else
          jult=jult+days_per_mon(imon)*24.*60.*60.;
@@ -916,7 +919,7 @@ function [year,month,day,hour,minute,second]=invert_time(jult)
    secs_leap_year=366.*24.*60.*60.;
 %
    if((mod(int64(ref_year),4)==0 & mod(int64(ref_year), ...
-   100)~=0) || (mod(int64(ref_year),100)==0 && mod(int64(ref_year),400)==0))
+   100)~=0) || (mod(int64(ref_year),400)==0))
       secs_gone=secs_leap_year;
    else
       secs_gone=secs_year;
@@ -926,7 +929,7 @@ function [year,month,day,hour,minute,second]=invert_time(jult)
       jult=jult-secs_gone;
       year=year+1.;
       if((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),100)==0 && mod(int64(year),400)==0))
+      100)~=0) || (mod(int64(year),400)==0))
          secs_gone=secs_leap_year;
       else
          secs_gone=secs_year;
@@ -934,7 +937,7 @@ function [year,month,day,hour,minute,second]=invert_time(jult)
    end
    for imon=1:12
       if(imon==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),100)==0 && mod(int64(year),400)==0)))
+      100)~=0) || (mod(int64(year),400)==0)))
          secs_gone=(days_mon(imon)+1)*24.*60.*60.;
       else
          secs_gone=days_mon(imon)*24.*60.*60.;
@@ -978,7 +981,7 @@ function [secs_tai93,rc]=time_tai93(year,month,day,hour,minute,second)
 %
    for iyear=ref_year:year-1
       if((mod(int64(iyear),4)==0 & mod(int64(iyear), ...
-      100)~=0) || (mod(int64(iyear),100)==0 && mod(int64(iyear),400)==0))
+      100)~=0) || (mod(int64(iyear),400)==0))
          jult=jult+secs_leap_year;
       else
          jult=jult+secs_year;
@@ -986,7 +989,7 @@ function [secs_tai93,rc]=time_tai93(year,month,day,hour,minute,second)
    end
    for imon=1:month-1
       if(imon==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),100)==0 && mod(int64(year),400)==0)))
+      100)~=0) || (mod(int64(year),400)==0)))
          jult=jult+(days_per_mon(imon)+1)*24.*60.*60.;
       else
          jult=jult+days_per_mon(imon)*24.*60.*60.;
@@ -1018,7 +1021,7 @@ month,day,hour,minute,second);
    end
    if(day<=0)
       if(imon==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),100)==0 && mod(int64(year),400)==0)))
+      100)~=0) || (mod(int64(year),400)==0)))
          days_mon=days_per_month(month)+1;
       else
          days_mon=days_per_month(month);
@@ -1059,7 +1062,7 @@ month,day,hour,minute,second);
    end
    days_mon=days_per_month(month);
    if(int64(month)==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-   100)~=0) || (mod(int64(year),100)==0 & mod(int64(year),400)==0)))
+   100)~=0) || (mod(int64(year),400)==0)))
       days_mon=days_mon+1;
    end
    if(day>days_mon)

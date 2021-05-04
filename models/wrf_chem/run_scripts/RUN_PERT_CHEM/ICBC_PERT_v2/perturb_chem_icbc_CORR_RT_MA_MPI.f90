@@ -929,6 +929,7 @@ character(len=*), parameter :: revdate  = ''
 !
 ! get variables identifiers
              rc = nf_inq_varid(f_id,trim(name),v_id)
+             print *, rc,f_id,' ',trim(name),' ',v_id
 !             print *, v_id
              if(rc.ne.0) then
                 print *, 'nf_inq_varid error ', v_id

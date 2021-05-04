@@ -6,34 +6,41 @@
 
 #########################################################################
 #
-# Purpose: Script to create DART/WRF input.nml for 
-# tempo_ascii_to_obs_seq fortran format conversion 
+# Purpose: Script to create DART/WRF input.nmlfor Ave's 
+# iasi_ascii_to_obs_seq fortran format conversion 
 #
 #########################################################################
 #
 # CREATE DART/WRF NAMELIST FILE
+rm -f create_modis_obs_nml.nl
+touch create_modis_obs_nml.nl
+cat > create_modis_obs_nml.nl << EOF
+&create_modis_obs_nml
+   beg_year=${BIN_BEG_YR}
+   beg_mon=${BIN_BEG_MM}
+   beg_day=${BIN_BEG_DD}
+   beg_hour=${BIN_BEG_HH}
+   beg_min=${BIN_BEG_MN}
+   beg_sec=${BIN_BEG_SS}
+   end_year=${BIN_END_YR}
+   end_mon=${BIN_END_MM}
+   end_day=${BIN_END_DD}
+   end_hour=${BIN_END_HH}
+   end_min=${BIN_END_MN}
+   end_sec=${BIN_END_SS}
+   file_in=${NL_FILENAME}
+   lat_mn=${NL_LAT_MN}
+   lat_mx=${NL_LAT_MX}
+   lon_mn=${NL_LON_MN}
+   lon_mx=${NL_LON_MX}
+   fac_obs_error= ${NL_FAC_OBS_ERROR}
+   use_log_aod=${NL_USE_LOG_AOD}
+/
+EOF
+#
 rm -f input.nml
 touch input.nml
 cat > input.nml << EOF
-&create_tempo_obs_nml
-   filedir                     = ${NL_FILEDIR}
-   filename                    = ${NL_FILENAME}
-   fileout                     = ${NL_FILEOUT}
-   bin_beg_sec                 = ${NL_BIN_BEG_SEC}
-   bin_end_sec                 = ${NL_BIN_END_SEC}
-   fac_obs_error               = ${NL_FAC_OBS_ERROR}
-   use_log_o3                  = ${NL_USE_LOG_O3}
-   use_log_no2                 = ${NL_USE_LOG_NO2}
-   lon_min                     = ${NNL_MIN_LON}
-   lon_max                     = ${NNL_MAX_LON}
-   lat_min                     = ${NNL_MIN_LAT}
-   lat_max                     = ${NNL_MAX_LAT}
-   path_model                  = ${NL_PATH_MODEL}
-   file_model                  = ${NL_FILE_MODEL}
-   nx_model                    = ${NL_NX_MODEL}
-   ny_model                    = ${NL_NY_MODEL}
-   nz_model                    = ${NL_NZ_MODEL}
-/
 &obs_sequence_nml
    write_binary_obs_sequence   = .false.
 /
@@ -58,21 +65,12 @@ cat > input.nml << EOF
    input_files                 = '../../observations/forward_operators/obs_def_reanalysis_bufr_mod.f90',
                                  '../../observations/forward_operators/obs_def_gps_mod.f90',
                                  '../../observations/forward_operators/obs_def_eval_mod.f90'
+
 /
 &merge_obs_seq_nml
    num_input_files             = 2,
    filename_seq                = 'obs_seq2008022206',obs_seq2008022212',
    filename_out                = 'obs_seq_ncep_2008022212'
 /
-&obs_def_TEMPO_O3_nml
-   use_log_o3                  = ${NL_USE_LOG_O3:-.false.},
-   nlayer_model                = ${NL_NLAYER_MODEL:-36},
-   nlayer_tempo_o3             = ${NL_NLAYER_TEMPO_O3:-14},
-/
-&obs_def_TEMPO_NO2_nml
-   use_log_no2                 = ${NL_USE_LOG_NO2:-.false.},
-   nlayer_model                = ${NL_NLAYER_MODEL:-36},
-   nlayer_tempo_no2            = ${NL_NLAYER_TEMPO_NO2:-14},
-/ 
 EOF
 

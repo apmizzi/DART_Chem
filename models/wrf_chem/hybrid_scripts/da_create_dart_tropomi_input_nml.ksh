@@ -34,8 +34,8 @@ cat > input.nml << EOF
    file_model                  = ${NL_FILE_MODEL}
    nx_model                    = ${NL_NX_MODEL}
    ny_model                    = ${NL_NY_MODEL}
-   nz_model                    = ${NL_NZ_MODEL}/
-
+   nz_model                    = ${NL_NZ_MODEL}
+/
 &obs_sequence_nml
    write_binary_obs_sequence   = .false.
 /

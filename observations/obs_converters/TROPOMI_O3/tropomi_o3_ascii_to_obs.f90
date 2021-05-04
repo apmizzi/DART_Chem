@@ -113,7 +113,7 @@ program tropomi_o3_ascii_to_obs
 !
    real                            :: bin_beg_sec,bin_end_sec
    real                            :: lon_min,lon_max,lat_min,lat_max
-   real                            :: fac_obs_error,fac
+   real                            :: fac_obs_error,fac_err
    real                            :: pi,rad2deg,re,level_crit
    real                            :: x_observ,y_observ,dofs
    real                            :: prs_loc,obs_sum
@@ -162,6 +162,7 @@ program tropomi_o3_ascii_to_obs
    sum_reject=0
    sum_accept=0
    sum_total=0
+   fac_err=1.0e4
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
@@ -193,9 +194,6 @@ program tropomi_o3_ascii_to_obs
       call set_copy_meta_data(seq, icopy, copy_meta_data)
    enddo
    call set_qc_meta_data(seq, 1, qc_meta_data)
-!
-! assign obs error scale factor
-   fac=fac_obs_error
 !
 !-------------------------------------------------------
 ! Read TROPOMI O3 data
@@ -330,16 +328,15 @@ program tropomi_o3_ascii_to_obs
 ! Obs value is the tropospheric vertical column
 !
       obs_val(:)=col_amt_obs*trop_sum/(strat_sum+trop_sum)
-      obs_err_var=(col_amt_err_obs*trop_sum/(strat_sum+trop_sum))**2.
-
+      obs_err_var=fac_obs_error*fac_err*(col_amt_err_obs*trop_sum/(strat_sum+trop_sum))**2.
       tropomi_qc(:)=0
       obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
       call get_time(obs_time, seconds, days)
 !
-!      which_vert=-2      ! undefined
+      which_vert=-2      ! undefined
 !      which_vert=-1      ! surface
 !      which_vert=1       ! level
-      which_vert=2       ! pressure surface
+!      which_vert=2       ! pressure surface
 !
       obs_kind = TROPOMI_O3_COLUMN
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90)
@@ -886,6 +883,13 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
 !
    prf_mdl(:)=-9999.
    kend=-9999
+   do k=1,nlev_obs-1
+      if((prs_obs(k)+prs_obs(k+1))/2..lt.prs_mdl(nz_mdl) .and. &
+      kend.eq.-9999) then
+         kend=k
+         exit
+      endif
+   enddo
    do k=1,nlev_obs
       if(prs_obs(k) .gt. prs_mdl(1)) then
          prf_mdl(k)=fld_mdl(1)

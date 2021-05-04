@@ -1,4 +1,4 @@
-function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,cwss_mn,cwyr_mx,cwmn_mx,cwdy_mx,cwhh_mx,cwmm_mx,cwss_mx,clon_min,clon_max,clat_min,clat_max)
+function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,cwss_mn,cwyr_mx,cwmn_mx,cwdy_mx,cwhh_mx,cwmm_mx,cwss_mx,path_mdl,file_mdl,cnx_mdl,cny_mdl)
 %
 % Get file list and number of files
    wyr_mn=str2double(cwyr_mn);
@@ -13,10 +13,8 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    whh_mx=str2double(cwhh_mx);
    wmm_mx=str2double(cwmm_mx);
    wss_mx=str2double(cwss_mx);
-   lon_min=str2double(clon_min);
-   lon_max=str2double(clon_max);
-   lat_min=str2double(clat_min);
-   lat_max=str2double(clat_max);
+   nx_mdl=str2double(cnx_mdl);
+   ny_mdl=str2double(cny_mdl);
 %
 % Get file list and number of files
    command=strcat('rm'," ",'-rf'," ",fileout);
@@ -26,21 +24,22 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    command=strcat('ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
-   file_list=squeeze(file_list_b);   
+   file_list=squeeze(file_list_b);
    nfile=size(file_list);
 %
 % Constants
    Ru=8.316;
    Rd=286.9;
    eps=0.61;
-   molec_wt_o3=.0480;
+   molec_wt_no2=.0480;
    molec_wt_no2=.0460;
    molec_wt_so2=.0641;
    AvogN=6.02214e23;
    msq2cmsq=1.e4;
    P_std=1013.25;
    grav=9.8;
-%
+   cone_fac=.715567;   
+% 
 % Convert DU to moles/m^2
    du2molpm2=4.4615e-4;
 %
@@ -52,27 +51,53 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 % Print input data
    fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
    fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
-   fprintf('domain bounds %d %d %d %d \n',lat_min,lat_max,lon_min,lon_max)
 %
+% Read model grid
+   lon_mdl=ncread(strcat(path_mdl,'/',file_mdl),'XLONG');
+   lat_mdl=ncread(strcat(path_mdl,'/',file_mdl),'XLAT');
+   delx=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','DX');  
+   cen_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LAT');  
+   cen_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LON');  
+   if(cen_lon<0)
+      cen_lon=cen_lon+360.;
+   end
+   truelat1=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','TRUELAT1');  
+   truelat2=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','TRUELAT2');  
+   moad_cen_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','MOAD_CEN_LAT');  
+   stand_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','STAND_LON');  
+   pole_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','POLE_LAT');  
+   pole_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','POLE_LON');
+%
+% Process satellite data
    for ifile=1:nfile
       file_in=char(file_list(ifile));
-      indx=strfind(file_in,file_pre)-1;
-      if(isempty(indx))
+      if(isempty(file_in))
          continue
       end
-      file_str_yy=str2double(file_in(indx+18:indx+21));
-      file_str_mm=str2double(file_in(indx+22:indx+23));
-      file_str_dd=str2double(file_in(indx+24:indx+25));
-      file_str_hh=str2double(file_in(indx+27:indx+28));
-      file_str_mn=str2double(file_in(indx+29:indx+30));
-      file_str_ss=str2double(file_in(indx+31:indx+32));
-      file_str_secs=file_str_hh*60.*60. + file_str_mm*60. + file_str_ss;
+      time_start=ncreadatt(file_in,'/','time_coverage_start');
+      time_end=ncreadatt(file_in,'/','time_coverage_end');
+      file_str_yy=str2double(time_start(1:4));
+      file_str_mm=str2double(time_start(6:7));
+      file_str_dd=str2double(time_start(9:10));
+      file_str_hh=str2double(time_start(12:13));
+      file_str_mn=str2double(time_start(15:16));
+      file_str_ss=str2double(time_start(18:19));
+      file_end_yy=str2double(time_end(1:4));
+      file_end_mm=str2double(time_end(6:7));
+      file_end_dd=str2double(time_end(9:10));
+      file_end_hh=str2double(time_end(12:13));
+      file_end_mn=str2double(time_end(15:16));
+      file_end_ss=str2double(time_end(18:19));
+      file_str_secs=file_str_hh*3600 + file_str_mn*60 + file_str_ss;
+      file_end_secs=file_end_hh*3600 + file_end_mn*60 + file_end_ss;
       fprintf('%d %s \n',ifile,file_in);
-      fprintf('%d %d %d \n',day_secs_beg,file_str_secs,day_secs_end);
+      fprintf('file str %d cycle end %d \n',file_str_secs,day_secs_end);
+      fprintf('file end %d cycle str %d \n',file_end_secs,day_secs_beg);
 %       
-      if(file_str_secs<day_secs_beg & file_str_secs>day_secs_end)
+      if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
          continue
       end
+      fprintf('READ TEMPO DATA \n')
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -80,135 +105,207 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Read TEMPO NO2 data
-% dimensions
-      fidd=netcdf.open(file_in,'NC_NOWRITE');  
-      [dimname,mirror_step]=netcdf.inqDim(fidd,0);
-      [dimname,xtrack]=netcdf.inqDim(fidd,1);
-      [dimname,layer]=netcdf.inqDim(fidd,3);
+% get dimensions
+      wfid=netcdf.open(file_in,'NC_NOWRITE');
+      [name,nstep]=netcdf.inqDim(wfid,0);
+      [name,ntrk]=netcdf.inqDim(wfid,1);
+      [name,crnr]=netcdf.inqDim(wfid,2);
+      [name,layer]=netcdf.inqDim(wfid,3);
       level=layer+1;
-% latitude(xtrack,mirror_step) (deg)
+      netcdf.close(wfid);
+%
+% lat (ntrk,nstep)
       field='/geolocation/latitude';
       lat=ncread(file_in,field);
-% longitude(xtrack,mirror_step) (deg)
+%
+% lon (ntrk,nstep)
       field='/geolocation/longitude';
       lon=ncread(file_in,field);
-      for i=1:xtrack
-         for j=1:mirror_step
-            if(lon(i,j)<0.)
-      	       lon(i,j)=lon(i,j)+360.;
-            end
-         end
-      end
-% zenang(xtrack,mirror_step) (deg)
+%
+% zenang (ntrk,nstep)
       field='/geolocation/solar_zenith_angle';
       zenang=ncread(file_in,field);
-% time(mirror_step) (secs since 2000-01-01T12:00:00 UTC)
+%
+% time_utc (nstep) (seconds since 2001-01-01T12:00:00Z)
       field='/geolocation/time';
-      time=ncread(file_in,field);
-% data_qual_flg(xtrack,mirror_step) (hPa)
+      time_utc=ncread(file_in,field);
+%
+% qa_value (ntrk,nstep)
       field='/product/main_data_quality_flag';
-      data_qual_flg=ncread(file_in,field);
-% col_amt_strat(xtrack,mirror_step) (molec/cm2)
-      field='/product/vertical_column_stratosphere';
-      col_amt_strat=ncread(file_in,field);
-% col_amt_trop(xtrack,mirror_step) (molec/cm2)
+      qa_value=ncread(file_in,field);
+%
+% no2_vert_col_trop (ntrk,nstep)
       field='/product/vertical_column_troposphere';
-      col_amt_trop=ncread(file_in,field);
-% amf_strat(xtrack,mirror_step)
-      field='/support_data/amf_stratosphere';
-      amf_strat=ncread(file_in,field);
-% amf_total(xtrack,mirror_step)
+      no2_vert_col_trop=ncread(file_in,field);
+%
+% amf_total (ntrk,nstep)
       field='/support_data/amf_total';
       amf_total=ncread(file_in,field);
-% amf_trop(xtrack,mirror_step) (molec/cm2)
+%
+% amf_total_err (ntrk,nstep)
+      field='/support_data/amf_total_uncertainty';
+      amf_total_err=ncread(file_in,field);
+%
+% amf_trop (ntrk,nstep)
       field='/support_data/amf_troposphere';
       amf_trop=ncread(file_in,field);
-% slnt_col_amt(xtrack,mirror_step)
-      field='/support_data/slant_column';
-      slnt_col_amt=ncread(file_in,field);
-% no2_prof(layer,xtrack,mirror_step)
-      field='/support_data/gas_profile';
-      no2_prof=ncread(file_in,field);
-% scat_wts(layer,xtrack,mirror_step)
+%
+% no2_slnt_col (ntrk,nstep)
+      field='/support_data/fitted_slant_column';
+      no2_slnt_col=ncread(file_in,field);
+%
+% no2_slnt_col_err (ntrk,nstep)
+      field='/support_data/fitted_slant_column_uncertainty';
+      no2_slnt_col_err=ncread(file_in,field);
+%
+% scat_wts (layer,ntrk,nstep)
       field='/support_data/scattering_weights';
       scat_wts=ncread(file_in,field);
-% prs_sfc(xtrack,mirror_step) (hPa)
+%
+% prs_sfc (ntrk,nstep)
       field='/support_data/surface_pressure';
       prs_sfc=ncread(file_in,field);
-      Eta_A=ncreadatt(file_in,field,'Eta_A');  
+      Eta_A=ncreadatt(file_in,field,'Eta_A');
       Eta_B=ncreadatt(file_in,field,'Eta_B');
-% prs_trop(xtrack,mirror_step) (hPa)
+      for i=1:ntrk;
+         for j=1:nstep;
+            for k=1:level;
+               prs_lev(k,i,j)=Eta_A(k)+(Eta_B(k)*prs_sfc(i,j));
+            end
+            for k=1:layer;
+               prs_lay(k,i,j)=(prs_lev(k,i,j)+prs_lev(k+1,i,j))/2.;
+            end
+	 end
+      end
+%
+% prs_trop (ntrk,nstep)
       field='/support_data/tropopause_pressure';
       prs_trop=ncread(file_in,field);
-% col_amt_total(xtrack,mirror_step) (molec/cm2)
-      field='/support_data/vertical_column_total';
-      col_amt_total=ncread(file_in,field);
-% col_amt_total_err(xtrack,mirror_step) (molec/cm2)
-      field='/support_data/vertical_column_total_uncertainty';
-      col_amt_total_err=ncread(file_in,field);
 %
-% Define TEMPO vertical pressure grid (hPa) (bottom to top)
-      for ipxl=1:xtrack
-         for ilin=1:mirror_step
-            prs_lev(1,ipxl,ilin)=Eta_A(1)+Eta_B(1)* ...
-	    prs_sfc(ipxl,ilin);
-            for ilv=2:level
-               prs_lev(ilv,ipxl,ilin)=Eta_A(ilv)+Eta_B(ilv)* ...
-               prs_sfc(ipxl,ilin);
-               prs_lay(ilv,ipxl,ilin)=(prs_lev(ilv-1,ipxl,ilin)+ ...
-               prs_lev(ilv,ipxl,ilin))/2.;
-            end
-         end
-      end
+% no2_vert_col_total (ntrk,nstep)
+      field='/support_data/vertical_column_total';
+      no2_vert_col_total=ncread(file_in,field);
+%
+% no2_vert_col_total_err (ntrk,nstep)
+      field='/support_data/vertical_column_total_uncertainty';
+      no2_vert_col_total_err=ncread(file_in,field);
 %
 % Loop through TEMPO data
       windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
       windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
       icnt=0;
-      for ilin=1:mirror_step
-         jult=time(ilin);
-         tempodate=time(ilin);
-         [yyyy_tempo,mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo]=invert_time(jult);
+      for istep=1:nstep
+	  [yyyy_tempo,mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo]=invert_time(time_utc(istep));
+%         if(int32(hh_tempo)>23 | int32(mm_tempo)>59 | ...
+%         int32(ss_tempo)>59)
+%            [yyyy_tempo,mn_tempo,dy_tempo,hh_tempo, ...
+%            mm_tempo,ss_tempo]=incr_time(yyyy_tempo, ...
+%      	 mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo);
+%         end
+%         fprintf('obs date/time %d %d %d %d %d %d \n',yyyy_tempo, ...
+%         mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo)
+         tempodate=single(convert_time(yyyy_tempo,mn_tempo, ...
+         dy_tempo,hh_tempo,mm_tempo,ss_tempo));
+%         fprintf('windate_min %d \n',windate_min)
+%         fprintf('tempo_dat %d \n',tempodate)
+%         fprintf('windate_max %d \n',windate_max)
 %
 % Check time
-%         fprintf('%d %d %d \n',windate_min,tempodate,windate_max);
          if(tempodate<windate_min | tempodate>windate_max)
             continue
          end
+
+	 for ixtrk=1:ntrk
 %
 % QA/AC
-% The clear sky and cloud height < 5000 m may be part of the retrieval algorithm
-% quality control.  Could find no fields indicating cloud coverage or height
-%
-         for ipxl=1:xtrack
-            if(isnan(col_amt_total(ipxl,ilin)) | col_amt_total(ipxl,ilin)<=0)
-	      continue,
-            end
-%
-% Check domain
-            if(lat(ipxl,ilin)<lat_min | lat(ipxl,ilin)>lat_max | ...
-	    lon(ipxl,ilin)<lon_min | lon(ipxl,ilin)>lon_max)
+%	    if(qa_value(ixtrk,istep)~=0 | zenang(ixtrk,istep)>=80.0)
+	    if(zenang(ixtrk,istep)>=80.0)
+               continue
+	    end
+            if(isnan(no2_vert_col_trop(ixtrk,istep)) | no2_vert_col_trop(ixtrk,istep)<=0)
                continue
             end
 %
+% Check domain
+% Input grid needs to be in degrees
+% X coordinate is [0 to 360]
+%		 
+	    x_obser=lon(ixtrk,istep);
+            y_obser=lat(ixtrk,istep);
+            if(x_obser<0.)
+	       x_obser=360.+x_obser;
+            end
+%
+	    xmdl_sw=lon_mdl(1,1);
+	    if(xmdl_sw<0.)
+	       xmdl_sw=xmdl_sw+360.;
+            end
+%
+% APM: Need to get this info from model
+	    [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
+	    xmdl_sw,delx,cen_lon,truelat1,truelat2);
+            i_min = round(xi);
+            j_min = round(xj);
+            reject = 0;
+%
+% Check lower bounds
+            if(i_min<1 & round(xi)==0)
+	       i_min=1;
+            elseif(i_min<1 & fix(xi)<0)
+   	       i_min=-9999;
+               j_min=-9999;
+               reject=1;
+            end
+            if(j_min<1 & round(xj)==0)
+               j_min=1;
+            elseif (j_min<1 & fix(xj)<0)
+               i_min=-9999;
+               j_min=-9999;
+               reject=1;
+            end
+%
+% Check upper bounds
+            if(i_min>nx_mdl & fix(xi)==nx_mdl)
+               i_min=nx_mdl;
+            elseif (i_min>nx_mdl & fix(xi)>nx_mdl)
+               i_min=-9999;
+               j_min=-9999;
+               reject=1;
+            end
+            if(j_min>ny_mdl & fix(xj)==ny_mdl)
+	       j_min=ny_mdl;
+            elseif (j_min>ny_mdl & fix(xj)>ny_mdl)
+               i_min=-9999;
+               j_min=-9999;
+               reject=1;
+            end
+            if(reject==1)
+	       continue
+	    end
+	    if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
+	       continue
+	    end
+%
 % Save data to ascii file
-            icnt=icnt+1;
-            fprintf(fid,'TEMPO_NO2_Obs: %d \n',icnt);
+	    icnt=icnt+1;
+            fprintf(fid,'TEMPO_NO2_Obs: %d %d %d \n',icnt,i_min,j_min);
             fprintf(fid,'%d %d %d %d %d %d \n',yyyy_tempo, ...
-	    mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo);
-            fprintf(fid,'%14.8f %14.8f \n',lat(ipxl,ilin),lon(ipxl,ilin));
+            mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo);
+            fprintf(fid,'%14.8f %14.8f \n',lat(ixtrk,istep),lon(ixtrk,istep));
             fprintf(fid,'%d %d \n',layer,level);
- 	    fprintf(fid,'%14.8g ',prs_lev(1:level));
+            fprintf(fid,'%14.8g ',prs_lev(1:level,ixtrk,istep));
             fprintf(fid,'\n');
-            fprintf(fid,'%14.8g ',scat_wts(1:layer,ipxl,ilin));
+            fprintf(fid,'%14.8g ',scat_wts(1:layer,ixtrk,istep));
             fprintf(fid,'\n');
-            fprintf(fid,'%14.8g \n',prs_trop(ipxl,ilin));
-            fprintf(fid,'%14.8g \n',col_amt_total(ipxl,ilin));
-            fprintf(fid,'%14.8g \n',col_amt_total_err(ipxl,ilin));
-            fprintf(fid,'%14.8g \n',col_amt_trop(ipxl,ilin));
-            fprintf(fid,'%14.8g \n',amf_total(ipxl,ilin));
-            fprintf(fid,'%14.8g \n',amf_trop(ipxl,ilin));
+            fprintf(fid,'%14.8g %14.8g \n',no2_vert_col_total(ixtrk,istep), ...
+            no2_vert_col_total_err(ixtrk,istep));
+            fprintf(fid,'%14.8g %14.8g \n',no2_slnt_col(ixtrk,istep), ...
+            no2_slnt_col_err(ixtrk,istep));
+            fprintf(fid,'%14.8g %14.8g \n',amf_total(ixtrk,istep), ...
+            amf_total_err(ixtrk,istep));
+            fprintf(fid,'%14.8g \n',amf_trop(ixtrk,istep));
+            fprintf(fid,'%14.8g \n',no2_vert_col_trop(ixtrk,istep));
+            fprintf(fid,'%d \n',prs_trop(ixtrk,istep));         
          end
       end
    end
@@ -691,7 +788,7 @@ function [jult]=convert_time(year,month,day,hour,minute,second)
    ref_year=2000;
    ref_month=1;
    ref_day=1;
-   ref_hour=12;
+   ref_hour=0;
    ref_minute=0;
    ref_second=0;
    secs_year=365.*24.*60.*60.;
@@ -704,43 +801,13 @@ function [jult]=convert_time(year,month,day,hour,minute,second)
       return
    end
    if(ref_year>year)
-      'APM: ERROR - year must greater than or equal to 2010'
+      'APM: ERROR - year must greater than or equal to 2000'
       return
    end
 %
-% Count secs for reference year
-   for imon=ref_month:12
-      ndays=days_per_mon(imon);
-      if(imon==2 & ((mod(int64(ref_year),4)==0 & mod(int64(ref_year), ...
-      100)~=0) || (mod(int64(ref_year),100)==0 && mod(int64(ref_year),400)==0)))
-         ndays=days_per_mon(imon)+1;
-      end
-      dy_str=1;
-      if(imon==ref_month)
-         dy_str=ref_day;
-      end
-      for iday=dy_str:ndays
-         hh_str=0;
-         mm_str=0;
-         ss_str=0;
-         if(imon==ref_month & iday==ref_day)
-	   hh_str=ref_hour;
-           mm_str=ref_minute;
-           ss_str=ref_second;
-         end
-         for ihh=hh_str:23
-	    for imm=mm_str:59
-	       for iss=ss_str:59
-	          jult=jult+1;
-               end
-            end
-         end
-      end
-   end
-%
-   for iyear=ref_year+1:year-1
+   for iyear=ref_year:year-1
       if((mod(int64(iyear),4)==0 & mod(int64(iyear), ...
-      100)~=0) || (mod(int64(iyear),100)==0 && mod(int64(iyear),400)==0))
+      100)~=0) || (mod(int64(iyear),400)==0))
          jult=jult+secs_leap_year;
       else
          jult=jult+secs_year;
@@ -748,7 +815,7 @@ function [jult]=convert_time(year,month,day,hour,minute,second)
    end
    for imon=1:month-1
       if(imon==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),100)==0 && mod(int64(year),400)==0)))
+      100)~=0) || (mod(int64(year),400)==0)))
          jult=jult+(days_per_mon(imon)+1)*24.*60.*60.;
       else
          jult=jult+days_per_mon(imon)*24.*60.*60.;
@@ -756,101 +823,68 @@ function [jult]=convert_time(year,month,day,hour,minute,second)
    end
    jult=jult+(day-1)*24.*60.*60.;
    jult=jult+hour*60.*60.+minute*60.+second;
+%
+% TEMPO ref_hour=12
+   jult=jult-12*60*60.;
 end
 %
 function [year,month,day,hour,minute,second]=invert_time(jult)
-   days_per_mon=[31 28 31 30 31 30 31 31 30 31 30 31]; 
-   ref_year=2010;
+   days_mon=[31 28 31 30 31 30 31 31 30 31 30 31]; 
+   ref_year=2000;
    ref_month=1;
    ref_day=1;
-   ref_hour=12;
+   ref_hour=0;
    ref_minute=0;
    ref_second=0;
    secs_year=365.*24.*60.*60.;
    secs_leap_year=366.*24.*60.*60.;
 %
-% Count secs_gone for reference year
-   secs_gone=0;
-   for imon=ref_month:12
-      ndays=days_per_mon(imon);
-      if(imon==2 & ((mod(int64(ref_year),4)==0 & mod(int64(ref_year), ...
-      100)~=0) || (mod(int64(ref_year),100)==0 && mod(int64(ref_year),400)==0)))
-         ndays=days_per_mon(imon)+1;
-      end
-      dy_str=1;
-      if(imon==ref_month)
-         dy_str=ref_day;
-      end
-      for iday=dy_str:ndays
-         hh_str=0;
-         mm_str=0;
-         ss_str=0;
-         if(imon==ref_month & iday==ref_day)
-	   hh_str=ref_hour;
-           mm_str=ref_minute;
-           ss_str=ref_second;
-         end
-         for ihh=hh_str:23
-	    for imm=mm_str:59
-	       for iss=ss_str:59
-	          secs_gone=secs_gone+1;
-               end
-            end
-         end
-      end
+   if((mod(int64(ref_year),4)==0 & mod(int64(ref_year), ...
+   100)~=0) || (mod(int64(ref_year),400)==0))
+      secs_gone=secs_leap_year;
+   else
+      secs_gone=secs_year;
    end
-%
    year=ref_year;
    while (jult>secs_gone)
       jult=jult-secs_gone;
       year=year+1.;
       if((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),100)==0 && mod(int64(year),400)==0))
+      100)~=0) || (mod(int64(year),400)==0))
          secs_gone=secs_leap_year;
       else
          secs_gone=secs_year;
       end
    end
-   mn_str=1;
-   if(year==ref_year)
-      mn_str=ref_month;
-   end
-   for imon=mn_str:12
-      ndays=days_per_mon(imon);
+   yeart=year;
+   for imon=1:12
       if(imon==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),100)==0 && mod(int64(year),400)==0)))
-         ndays=days_per_mon(imon)+1;
+      100)~=0) || (mod(int64(year),400)==0)))
+         secs_gone=(days_mon(imon)+1)*24.*60.*60.;
+      else
+         secs_gone=days_mon(imon)*24.*60.*60.;
       end
-      dy_str=1;
-      if(year==ref_year & imon==ref_month)
-         dy_str=ref_day;
-      end
-      for idy=dy_str:ndays
-         hh_str=0;
-         mm_str=0;
-         ss_str=0;
-         if(year==ref_year & imon==ref_month & iday==ref_day)
-            hh_str=ref_hour;
-            mm_str=ref_minute;
-            ss_str=ref_second;
-         end
-         for ihh=hh_str:23
-            for imm=mm_str:59
-	       for iss=ss_str:59
-	          jult=jult-1;
-                  if(jult==0)
-		     second=iss;
-		     minute=imm;
-		     hour=ihh;
-		     day=idy;
-                     month=imon;
-                     return
-                  end
-               end 
-            end
-         end
+      if(jult>=secs_gone) 
+	 jult=jult-secs_gone;
+      else
+	 month=imon;
+         break
       end
    end
+   montht=month;
+   day=floor(jult/24./60./60.)+1;
+   dayt=day;
+   jult=jult-(day-1)*24.*60.*60.;
+   hour=floor(jult/60./60.);
+   hourt=hour;
+   jult=jult-hour*60.*60.;
+   minute=floor(jult/60.);
+   minutet=minute;
+   second=jult-minute*60.;
+   secondt=second;
+   hourt=hourt+12;
+   [year,month,day,hour,minute,second]=incr_time(yeart, ...
+   montht,dayt,hourt,minutet,secondt);
 end
 %
 function [secs_tai93,rc]=time_tai93(year,month,day,hour,minute,second)
@@ -877,7 +911,7 @@ function [secs_tai93,rc]=time_tai93(year,month,day,hour,minute,second)
 %
    for iyear=ref_year:year-1
       if((mod(int64(iyear),4)==0 & mod(int64(iyear), ...
-      100)~=0) || (mod(int64(iyear),100)==0 && mod(int64(iyear),400)==0))
+      100)~=0) || (mod(int64(iyear),400)==0))
          jult=jult+secs_leap_year;
       else
          jult=jult+secs_year;
@@ -885,7 +919,7 @@ function [secs_tai93,rc]=time_tai93(year,month,day,hour,minute,second)
    end
    for imon=1:month-1
       if(imon==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),100)==0 && mod(int64(year),400)==0)))
+      100)~=0) || (mod(int64(year),400)==0)))
          jult=jult+(days_per_mon(imon)+1)*24.*60.*60.;
       else
          jult=jult+days_per_mon(imon)*24.*60.*60.;
@@ -917,7 +951,7 @@ month,day,hour,minute,second);
    end
    if(day<=0)
       if(imon==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),100)==0 && mod(int64(year),400)==0)))
+      100)~=0) || (mod(int64(year),400)==0)))
          days_mon=days_per_month(month)+1;
       else
          days_mon=days_per_month(month);
@@ -950,7 +984,7 @@ month,day,hour,minute,second);
    end
    if(hour>23)
       if(hour>47)
-         fprintf('APM: Error hourss too large %d \n',int64(hour))
+         fprintf('APM: Error hours too large %d \n',int64(hour))
          return
       end
       hour=hour-24;
@@ -958,7 +992,7 @@ month,day,hour,minute,second);
    end
    days_mon=days_per_month(month);
    if(int64(month)==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-   100)~=0) || (mod(int64(year),100)==0 & mod(int64(year),400)==0)))
+   100)~=0) || (mod(int64(year),400)==0)))
       days_mon=days_mon+1;
    end
    if(day>days_mon)
@@ -984,6 +1018,70 @@ month,day,hour,minute,second);
    mm=minute;
    ss=second;
 end
-
-
-
+%
+   function [xi,xj]=w3fb13(alat,elon,alat1,elon1, ...
+   dx,elonv,alatan1,alatan2)
+%
+   rerth=6.3712e6;
+   pi=3.14159;
+%
+   if(alatan1>0)
+      h=1;
+   else
+      h=-1;
+   end
+%
+   radpd=pi/180.;
+   rebydx=rerth/dx;
+   alatn1=alatan1*radpd;
+   alatn2=alatan2*radpd;
+   if(alatan1==alatan2)
+      an=h*sin(alatn1);
+   else
+      an=log(cos(alatn1)/cos(alatn2))/ ...
+      log(tan(((h*pi/2.)-alatn1)/2.)/tan(((h*pi/2.)-alatn2)/2.));
+   end
+   cosltn=cos(alatn2);
+%
+   elon1l=elon1;
+   if(elon1-elonv>180)
+      elon1l=elon1-360;
+   end
+   if(elon1-elonv<-180)
+      elon1l=elon1+360;
+   end
+%
+   elonl=elon;
+   if(elon-elonv>180)
+      elonl=elon-360;
+   end
+   if(elon-elonv<-180)
+      elonl=elon+360;
+   end
+%
+   elonvr=elonv*radpd;
+%
+   ala1=alat1*radpd;
+   psi=(rebydx*cosltn)/(an*(tan((pi/4.)-(h*alatn2/2.))^an));
+   rmll=psi*(tan((pi/4.)-(h*ala1/2.))^an);
+%
+   elo1=elon1l*radpd;
+   arg=an*(elo1-elonvr);
+   polei=1.-h*rmll*sin(arg);
+   polej=1+rmll*cos(arg);
+%
+   ala=alat*radpd;
+%
+   rm=psi*(tan((pi/4.)-(h*ala/2.))^an);
+   elo=elonl*radpd;
+   arg=an*(elo-elonvr);
+   xi=polei+h*rm*sin(arg);
+   xj=polej-rm*cos(arg);
+%
+   if(round(xi)<1)
+      xi=xi-1;
+   end
+   if(round(xj)<1)
+      xj=xj-1;
+   end
+end

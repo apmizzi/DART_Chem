@@ -34,18 +34,20 @@ program modis_ascii_to_obs
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-   use         types_mod, only : r8, PI, DEG2RAD
-   use     utilities_mod, only : initialize_utilities, finalize_utilities, &
-                              open_file, close_file
-   use  time_manager_mod, only : time_type, set_calendar_type, set_date, &
-                              operator(>=), increment_time, get_time, &
-                              operator(-), GREGORIAN, operator(+), print_date
-   use      location_mod, only : VERTISUNDEF
-   use  obs_sequence_mod, only : obs_sequence_type, obs_type, read_obs_seq, &
-                              static_init_obs_sequence, init_obs, write_obs_seq, & 
-                              init_obs_sequence, get_num_obs, & 
-                              set_copy_meta_data, set_qc_meta_data
-   use      obs_kind_mod, only : MODIS_AOD_RETRIEVAL
+   use types_mod, only : r8, PI, DEG2RAD
+   use utilities_mod, only : initialize_utilities, finalize_utilities, &
+       open_file, close_file, find_namelist_in_file, &
+       check_namelist_read
+
+   use time_manager_mod, only : time_type, set_calendar_type, set_date, &
+       operator(>=), increment_time, get_time, &
+       operator(-), GREGORIAN, operator(+), print_date
+   use location_mod, only : VERTISUNDEF
+   use obs_sequence_mod, only : obs_sequence_type, obs_type, read_obs_seq, &
+       static_init_obs_sequence, init_obs, write_obs_seq, & 
+       init_obs_sequence, get_num_obs, & 
+       set_copy_meta_data, set_qc_meta_data
+   use obs_kind_mod, only : MODIS_AOD_RETRIEVAL
 
    implicit none
 
@@ -69,15 +71,31 @@ program modis_ascii_to_obs
 
    real(r8) :: aod, aoderr, qc
    real(r8) :: lat, lon, vert
-   real(r8) :: err_fac
 
    type(obs_sequence_type) :: obs_seq
    type(obs_type)          :: obs, prev_obs
    type(time_type)         :: comp_day0, time_obs, prev_time
-
+!
+   integer                 :: beg_year,beg_mon,beg_day,beg_hour,beg_min,beg_sec 
+   integer                 :: end_year,end_mon,end_day,end_hour,end_min,end_sec
+   integer                 :: io
+   real                    :: fac,fac_err,fac_obs_error
+   real                    :: lat_mn,lat_mx,lon_mn,lon_mx
+   character(len=180)      :: file_in
+   logical                 :: use_log_aod
+!
+   namelist /create_modis_obs_nml/beg_year,beg_mon,beg_day, &
+   beg_hour,beg_min,beg_sec,end_year,end_mon,end_day,end_hour,end_min,end_sec, &
+   fac_obs_error,file_in,lat_mn,lat_mx,lon_mn,lon_mx,use_log_aod
+   
 ! start of executable code
    call initialize_utilities('modis_ascii_to_obs')
 
+! initialize some namelist variables
+   fac=1.0
+   fac_err=1.0
+   fac_obs_error=1.0
+   
 ! time setup
    call set_calendar_type(GREGORIAN)
 
@@ -86,6 +104,30 @@ program modis_ascii_to_obs
 !! put the reference date into DART format
 !comp_day0 = set_date(1970, 1, 1, 0, 0, 0)
 
+! open and read namelist
+! Read the namelist entry
+   call find_namelist_in_file("create_modis_obs_nml.nl", "create_modis_obs_nml", iunit)
+   read(iunit, nml = create_modis_obs_nml, iostat = io)
+   call check_namelist_read(iunit, io, "create_modis_obs_nml")
+
+!   print *, 'beg_year        ',beg_year
+!   print *, 'beg_mon         ',beg_mon
+!   print *, 'beg_day         ',beg_day
+!   print *, 'beg_hour        ',beg_hour
+!   print *, 'beg_min         ',beg_min
+!   print *, 'beg_sec         ',beg_sec
+!   print *, 'end_year        ',end_year
+!   print *, 'end_mon         ',end_mon
+!   print *, 'end_day         ',end_day
+!   print *, 'end_min         ',end_min
+!   print *, 'end_sec         ',end_sec
+!   print *, 'file_in         ',trim(file_in)
+!   print *, 'lat_mn          ',lat_mn
+!   print *, 'lat_mx          ',lat_mx
+!   print *, 'lon_mn          ',lon_mn
+!   print *, 'lon_mx          ',lon_mx
+!   print *, ' '
+   
 ! open input modis_ascii file
 
    iunit = open_file(modis_ascii_input_file, 'formatted', 'read')
@@ -97,9 +139,6 @@ program modis_ascii_to_obs
    max_obs    = 10000000
    num_copies = 1
    num_qc     = 1
-   err_fac    = 1.
-   err_fac    = 1.50
-   err_fac    = 1.750
 
 ! call the initialization code, and initialize two empty observation types
    call static_init_obs_sequence()
@@ -168,7 +207,7 @@ program modis_ascii_to_obs
       if(lon.lt.0.) lon=lon+360.
 !
 ! APM: adjust obs error for tuning purposes
-      aoderr = aoderr * err_fac
+      aoderr = aoderr * fac_obs_error
 !
 ! temp correction (July 1 comes in as July 0)
       if(month.eq.7 .and. day.eq.0) then

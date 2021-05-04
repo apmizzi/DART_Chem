@@ -25,7 +25,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    command=strcat('ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
-   file_list=squeeze(file_list_b)   
+   file_list=squeeze(file_list_b);
    nfile=size(file_list);
 %
 % Constants
@@ -53,7 +53,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 % Print input data
    fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
    fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
-   fprintf('domain bounds %d %d %d %d \n',lat_min,lat_max,lon_min,lon_max)
+%   fprintf('domain bounds %d %d %d %d \n',lat_min,lat_max,lon_min,lon_max)
 %
    for ifile=1:nfile
       file_in=char(file_list(ifile));
@@ -63,20 +63,19 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       end
       file_hh=00;
       file_mm=00;
-      file_secs_str=file_hh*60.*60. + file_mm*60.;
+      file_str_secs=file_hh*60.*60. + file_mm*60.;
       file_hh=23;
       file_mm=59;
-      file_secs_end=file_hh*60.*60. + file_mm*60. + 59.;
+      file_end_secs=file_hh*60.*60. + file_mm*60. + 59.;
 
       fprintf('%d %s \n',ifile,file_in);
-      fprintf('%d %d %d \n',day_secs_beg,file_secs_str,day_secs_end);
-      fprintf('%d %d %d \n',day_secs_beg,file_secs_end,day_secs_end);
+      fprintf('file str %d cycle end %d \n',file_str_secs,day_secs_end);
+      fprintf('file_end %d cycle str %d \n',file_end_secs,day_secs_beg);
 %       
-%      if((file_secs_str<day_secs_beg | file_secs>day_secs_end)
-%         continue
-%      end
-%      fprintf('%d %s \n',ifile,file_in)
-%      fprintf('%d %d %d \n',day_secs_beg,file_secs,day_secs_end)
+      if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
+         continue
+      end
+      fprintf('READ MOPITT DATA \n')
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -213,6 +212,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
 %
 % Check time
          if(mopdate<windate_min | mopdate>windate_max)
+%            fprintf('OUTSIDE DATE RANGE \n')
             continue
          end
 %

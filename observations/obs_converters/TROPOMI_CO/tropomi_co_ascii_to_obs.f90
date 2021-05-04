@@ -113,7 +113,7 @@ program tropomi_co_ascii_to_obs
 !
    real                            :: bin_beg_sec,bin_end_sec
    real                            :: lon_min,lon_max,lat_min,lat_max
-   real                            :: fac_obs_error,fac
+   real                            :: fac_obs_error,fac_err
    real                            :: pi,rad2deg,re,level_crit
    real                            :: x_observ,y_observ,dofs
    real                            :: prs_loc,obs_sum
@@ -158,6 +158,7 @@ program tropomi_co_ascii_to_obs
    re=6371000.
    days_last=-9999.
    seconds_last=-9999.
+   fac_err=1.0
    level_crit=500.
    sum_reject=0
    sum_accept=0
@@ -193,9 +194,6 @@ program tropomi_co_ascii_to_obs
       call set_copy_meta_data(seq, icopy, copy_meta_data)
    enddo
    call set_qc_meta_data(seq, 1, qc_meta_data)
-!
-! assign obs error scale factor
-   fac=fac_obs_error
 !
 !-------------------------------------------------------
 ! Read TROPOMI CO data
@@ -271,22 +269,22 @@ program tropomi_co_ascii_to_obs
 !      print *, 'prs_obs ',prs_obs(1:nlev_obs)
 !      print *, 'prs_mdl ',prs_fld(i_min,j_min,1:nz_model)
 !
-!
 !--------------------------------------------------------
 ! Find model NO2 profile corresponding to the observation
+! kend is the TROPOMI index for the top of the model
 !--------------------------------------------------------
       reject=0
       call get_model_profile(prf_locl,prf_full,nz_model, &
       prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
       qmr_fld(i_min,j_min,:),co_fld(i_min,j_min,:), &
       nlev_obs,avgk_obs,kend)
-!      print *, 'kend, prs ',kend,prs_obs(nlay_obs-kend+1)
+!
 !      obs_sum=0.
 !      do k=1,kend
 !         kk=nlay_obs-k+1
 !         obs_sum=obs_sum+prf_full(kk)
 !      enddo
-!      print *, 'exp_obs ',obs_sum
+!      print *, 'kend, prs ',kend,prs_obs(nlay_obs-kend+1)
 !
 !--------------------------------------------------------
 ! Find vertical location
@@ -295,21 +293,6 @@ program tropomi_co_ascii_to_obs
       call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_locl,nlay_obs,kend)
       level=prs_loc
 !
-! Check for maximum localization height
-!      if(level/100..lt.level_crit) then
-!         reject=1
-!         sum_reject=sum_reject+1
-!         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!!         print *, trim(data_type), obs_id
-!         deallocate(prs_obs) 
-!         deallocate(avgk_obs)
-!         deallocate(prs_obs_r8) 
-!         deallocate(avgk_obs_r8)
-!         deallocate(prf_locl) 
-!         deallocate(prf_full) 
-!         cycle
-!      endif
-!      
 ! Process accepted observations
       print *, 'localization pressure level (hPa) ',level/100.
 !      print *, 'model top index ',kend
@@ -333,7 +316,9 @@ program tropomi_co_ascii_to_obs
 ! Obs value is the tropospheric vertical column
 !
       obs_val(:)=col_amt_obs*trop_sum/(strat_sum+trop_sum)
-      obs_err_var=(col_amt_err_obs*trop_sum/(strat_sum+trop_sum))**2.
+      obs_err_var=fac_obs_error*fac_err*(col_amt_err_obs*trop_sum/(strat_sum+trop_sum))**2.
+      print *, ' '
+!      print *, 'mdl_val ',obs_sum
 !      print *, 'obs_val ',col_amt_obs*trop_sum/(strat_sum+trop_sum)
 !      print *, 'obs_err ',col_amt_err_obs*trop_sum/(strat_sum+trop_sum)
 !
@@ -341,10 +326,10 @@ program tropomi_co_ascii_to_obs
       obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
       call get_time(obs_time, seconds, days)
 !
-!      which_vert=-2      ! undefined
+      which_vert=-2      ! undefined
 !      which_vert=-1      ! surface
 !      which_vert=1       ! level
-      which_vert=2       ! pressure surface
+!      which_vert=2       ! pressure surface
 !
       obs_kind = TROPOMI_CO_COLUMN
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90) 
@@ -889,6 +874,14 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
 !
    prf_mdl(:)=-9999.
    kend=-9999
+   do k=1,nlev_obs-1
+      kk=nlev_obs-k+1
+      if((prs_obs(kk)+prs_obs(kk-1))/2..lt.prs_mdl(nz_mdl) .and. &
+      kend.eq.-9999) then
+         kend=k
+         exit
+      endif
+   enddo   
    do k=1,nlev_obs
       kk=nlev_obs-k+1
       if(prs_obs(kk) .gt. prs_mdl(1)) then
@@ -897,7 +890,6 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
       endif
       if(prs_obs(kk) .lt. prs_mdl(nz_mdl)) then
          prf_mdl(kk)=fld_mdl(nz_mdl)
-         if(kend.eq.-9999) kend=k-1
          cycle
       endif
       do ll=1,nz_mdl-1
