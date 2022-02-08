@@ -35,6 +35,7 @@ character(len=*), parameter :: revdate  = ''
              integer                                     :: ngrid_corr,nbff
              integer                                     :: ii_str,ii_end,ii_npt,ii_sft
              integer                                     :: jj_str,jj_end,jj_npt,jj_sft
+             integer                                     :: date
              real                                        :: pi,grav,u_ran_1,u_ran_2,nnum_mem
              real                                        :: sprd_chem,zdist,zfac,tfac
              real                                        :: grid_length,vcov
@@ -77,7 +78,7 @@ character(len=*), parameter :: revdate  = ''
              integer,dimension(nbdy_exts)                :: bdy_dims=(/139,139,179,179,139,139,179,179/)
              character(len=150),allocatable,dimension(:) :: ch_chem_spc
              logical                                     :: sw_corr_tm,sw_seed
-             namelist /perturb_chem_icbc_corr_nml/nx,ny,nz,nchem_spcs,pert_path_old,pert_path_new,nnum_mem, &
+             namelist /perturb_chem_icbc_corr_nml/date,nx,ny,nz,nchem_spcs,pert_path_old,pert_path_new,nnum_mem, &
              wrfinput_fld_new,wrfinput_err_new,wrfbdy_fld_new,sprd_chem,corr_lngth_hz,corr_lngth_vt, &
              corr_lngth_tm,corr_tm_delt,sw_corr_tm,sw_seed
              namelist /perturb_chem_icbc_spcs_nml/ch_chem_spc
@@ -102,6 +103,7 @@ character(len=*), parameter :: revdate  = ''
              read(unit,perturb_chem_icbc_corr_nml)
              close(unit)
              if(rank.eq.0) then   
+                print *, 'date               ',date
                 print *, 'nx                 ',nx
                 print *, 'ny                 ',ny
                 print *, 'nz                 ',nz
@@ -201,8 +203,9 @@ character(len=*), parameter :: revdate  = ''
                 call mpi_finalize(ierr)
                 stop
              endif
-             if(sw_seed) call init_random_seed()
+!             if(sw_seed) call init_random_seed()
              if(rank.ne.0) then
+             if(sw_seed) call init_const_random_seed(rank,date)
 !
 ! Stop excess processes
                 if(rank.gt.num_mem) then
@@ -1096,6 +1099,45 @@ character(len=*), parameter :: revdate  = ''
              end if
              call random_seed(put=aseed)
           end subroutine init_random_seed
+!
+          subroutine init_const_random_seed(rank,date)
+             implicit none
+             integer                          :: rank,date,primes_dim
+             integer                          :: n,at,found,i,str
+             integer,allocatable,dimension(:) :: primes,aseed
+             logical                          :: is_prime
+!
+             call random_seed(size=n)
+             primes_dim=rank*n
+             allocate (aseed(n))
+             allocate (primes(primes_dim))
+             primes(1)=2
+             at=2
+             found=1
+             do
+                is_prime=.true.
+                do i=1,found
+                   if(mod(at,primes(i)).eq.0) then
+                      is_prime=.false.
+                      exit
+                   endif
+                enddo
+                if(is_prime) then
+                   found=found+1
+                   primes(found)=at
+                endif
+                at=at+1
+                if(found.eq.primes_dim) then
+                   exit
+                endif
+             enddo
+             str=(rank-1)*n+1
+             do i=str,primes_dim
+                aseed(i-str+1)=date*primes(i)
+             enddo
+             call random_seed(put=aseed)
+             deallocate(aseed,primes)
+           end subroutine init_const_random_seed
 !
           subroutine apm_pack(A_pck,A_unpck,nx,ny,nz,nl)
              implicit none

@@ -48,8 +48,8 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
    du2molpm2=4.4615e-4;
 %
 % Convert DU to molecules/m^2
-%
    du2molcpm2=2.6867e20;
+%
    day_secs_beg=whh_mn*60.*60. + wmm_mn*60. + wss_mn;
    day_secs_end=whh_mx*60.*60. + wmm_mx*60. + wss_mx;
 %

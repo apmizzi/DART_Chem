@@ -106,7 +106,7 @@
       integer :: vid
       real    :: model_x, model_y, model_dx
       real, allocatable  :: x1d(:), y1d(:)
-      character(len=200) :: filenm
+      character(len=128) :: filenm
       character(len=32)  :: spcnam
       logical            :: found
       logical            :: monotonic_moz_x
@@ -641,7 +641,7 @@
       end subroutine hinterp_mozart_ps
 
       subroutine bc_interpolate4d( ndx, wrfxs, wrfxe, wrfys, wrfye, &
-                                   ps_wrf, znu, p_top, nx, ny, &
+                                   ps_wrf, znu, C3H, C4H, p_top, nx, ny, &
                                    nz, nw )
 !---------------------------------------------------------------
 !     interpolate four-dimensional field ... 
@@ -653,14 +653,14 @@
 !     input arguments
 !---------------------------------------------------------------
       integer, intent(in)      :: ndx
-      integer, intent(in)      :: nx, ny, nz, nw          ! dimensions
-      real, intent(in)         :: p_top                   ! wrf top reference pressure (Pa)
-      real, intent(in)         :: ps_wrf(nx,ny)           ! wrf surface pressure (Pa)
-      real, intent(in)         :: znu(nz)                 ! sigma coordinates
-      real, intent(out)        :: wrfxs(ny,nz,nw)         ! wrfchem vmr(ppm)
-      real, intent(out)        :: wrfxe(ny,nz,nw)         ! wrfchem vmr(ppm)
-      real, intent(out)        :: wrfys(nx,nz,nw)         ! wrfchem vmr(ppm)
-      real, intent(out)        :: wrfye(nx,nz,nw)         ! wrfchem vmr(ppm)
+      integer, intent(in)      :: nx, ny, nz, nw            ! dimensions
+      real, intent(in)         :: p_top                     ! wrf top reference pressure (Pa)
+      real, intent(in)         :: ps_wrf(nx,ny)             ! wrf surface pressure (Pa)
+      real, intent(in)         :: znu(nz), C3H(nz), C4H(nz) ! sigma coordinates and hybrid pressure terms
+      real, intent(out)        :: wrfxs(ny,nz,nw)           ! wrfchem vmr(ppm)
+      real, intent(out)        :: wrfxe(ny,nz,nw)           ! wrfchem vmr(ppm)
+      real, intent(out)        :: wrfys(nx,nz,nw)           ! wrfchem vmr(ppm)
+      real, intent(out)        :: wrfye(nx,nz,nw)           ! wrfchem vmr(ppm)
 
 !---------------------------------------------------------------
 !     local variables
@@ -711,7 +711,8 @@
                  + mozval(ix(1,j,1),jy(1,j,0),:)*ax(1,j,0)*by(1,j,1) &
                  + mozval(ix(1,j,1),jy(1,j,1),:)*ax(1,j,0)*by(1,j,0)
           p_moz(:) = ps_mozi(1,j)*hybm(:) + ps0*hyam(:)
-          p_wrf(:) = ps_wrf(1,j)*znu(nz:1:-1) + (1. - znu(nz:1:-1))*p_top
+          !p_wrf(:) = ps_wrf(1,j)*znu(nz:1:-1) + (1. - znu(nz:1:-1))*p_top
+          p_wrf(:) = ps_wrf(1,j)*C3H(nz:1:-1) + (1. - C3H(nz:1:-1))*p_top+C4H(nz:1:-1)
           call vinterp( p_moz, p_wrf, wrk, wrk1, nz, nlev )
           do n = 1,nw
             wrfxs(j,:,n) = wrk1(nz:1:-1)
@@ -726,7 +727,8 @@
                  + mozval(ix(nx,j,1),jy(nx,j,0),:)*ax(nx,j,0)*by(nx,j,1) &
                  + mozval(ix(nx,j,1),jy(nx,j,1),:)*ax(nx,j,0)*by(nx,j,0)
           p_moz(:) = ps_mozi(nx,j)*hybm(:) + ps0*hyam(:)
-          p_wrf(:) = ps_wrf(nx,j)*znu(nz:1:-1) + (1. - znu(nz:1:-1))*p_top
+          !p_wrf(:) = ps_wrf(nx,j)*znu(nz:1:-1) + (1. - znu(nz:1:-1))*p_top
+          p_wrf(:) = ps_wrf(nx,j)*C3H(nz:1:-1) + (1. - C3H(nz:1:-1))*p_top+C4H(nz:1:-1)
           call vinterp( p_moz, p_wrf, wrk, wrk1, nz, nlev )
           do n = 1,nw
             wrfxe(j,:,n) = wrk1(nz:1:-1)
@@ -741,7 +743,8 @@
                  + mozval(ix(i,ny,1),jy(i,ny,0),:)*ax(i,ny,0)*by(i,ny,1) &
                  + mozval(ix(i,ny,1),jy(i,ny,1),:)*ax(i,ny,0)*by(i,ny,0)
           p_moz(:) = ps_mozi(i,ny)*hybm(:) + ps0*hyam(:)
-          p_wrf(:) = ps_wrf(i,ny)*znu(nz:1:-1) + (1. - znu(nz:1:-1))*p_top
+          !p_wrf(:) = ps_wrf(i,ny)*znu(nz:1:-1) + (1. - znu(nz:1:-1))*p_top
+          p_wrf(:) = ps_wrf(i,ny)*C3H(nz:1:-1) + (1. - C3H(nz:1:-1))*p_top+C4H(nz:1:-1)
           call vinterp( p_moz, p_wrf, wrk, wrk1, nz, nlev )
           do n = 1,nw
             wrfye(i,:,n) = wrk1(nz:1:-1)
@@ -756,7 +759,8 @@
                  + mozval(ix(i,1,1),jy(i,1,0),:)*ax(i,1,0)*by(i,1,1) &
                  + mozval(ix(i,1,1),jy(i,1,1),:)*ax(i,1,0)*by(i,1,0)
           p_moz(:) = ps_mozi(i,1)*hybm(:) + ps0*hyam(:)
-          p_wrf(:) = ps_wrf(i,1)*znu(nz:1:-1) + (1. - znu(nz:1:-1))*p_top
+          !p_wrf(:) = ps_wrf(i,1)*znu(nz:1:-1) + (1. - znu(nz:1:-1))*p_top
+          p_wrf(:) = ps_wrf(i,1)*C3H(nz:1:-1) + (1. - C3H(nz:1:-1))*p_top+C4H(nz:1:-1)
           call vinterp( p_moz, p_wrf, wrk, wrk1, nz, nlev )
           do n = 1,nw
             wrfys(i,:,n) = wrk1(nz:1:-1)
@@ -780,7 +784,7 @@
 
       end subroutine bc_interpolate4d
 
-      subroutine ic_interpolate4d( ndx, conc, ps_wrf, znu, p_top, &
+      subroutine ic_interpolate4d( ndx, conc, ps_wrf, znu, C3H, C4H, p_top, &
                                    nx, ny, nz )
 !---------------------------------------------------------------
 !     interpolate four-dimensional field ... 
@@ -792,11 +796,11 @@
 !     input arguments
 !---------------------------------------------------------------
       integer, intent(in)      :: ndx
-      integer, intent(in)      :: nx, ny, nz              ! dimensions
-      real, intent(in)         :: p_top                   ! wrf top reference pressure (Pa)
-      real, intent(in)         :: ps_wrf(nx,ny)           ! wrf surface pressure (Pa)
-      real, intent(in)         :: znu(nz)                 ! sigma coordinates
-      real, intent(out)        :: conc(nx,ny,nz)          ! wrfchem vmr(ppm)
+      integer, intent(in)      :: nx, ny, nz                ! dimensions
+      real, intent(in)         :: p_top                     ! wrf top reference pressure (Pa)
+      real, intent(in)         :: ps_wrf(nx,ny)             ! wrf surface pressure (Pa)
+      real, intent(in)         :: znu(nz), C3H(nz), C4H(nz) ! sigma coordinates and hybrid pressure terms
+      real, intent(out)        :: conc(nx,ny,nz)            ! wrfchem vmr(ppm)
 
 !---------------------------------------------------------------
 !     local variables
@@ -845,7 +849,8 @@
                     + mozval(ix(i,j,1),jy(i,j,0),:)*ax(i,j,0)*by(i,j,1) &
                     + mozval(ix(i,j,1),jy(i,j,1),:)*ax(i,j,0)*by(i,j,0)
             p_moz(:) = ps_mozi(i,j)*hybm(:) + ps0*hyam(:)
-            p_wrf(:) = ps_wrf(i,j)*znu(nz:1:-1) + (1. - znu(nz:1:-1))*p_top
+           ! p_wrf(:) = ps_wrf(i,j)*znu(nz:1:-1) + (1. - znu(nz:1:-1))*p_top
+            p_wrf(:) = ps_wrf(i,j)*C3H(nz:1:-1) + (1. - C3H(nz:1:-1))*p_top+C4H(nz:1:-1)
             call vinterp( p_moz, p_wrf, wrk, wrk1, nz, nlev )
             conc(i,j,:) = wrk1(nz:1:-1)
             if( trim(wrf2mz_map(ndx)%wrf_name) == trim(dbg_species) ) then

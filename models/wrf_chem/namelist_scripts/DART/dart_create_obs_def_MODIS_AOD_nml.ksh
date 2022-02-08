@@ -31,6 +31,8 @@ touch input.nml_temp
 cat > input.nml_temp << EOF
  &obs_def_MODIS_AOD_nml
    use_log_aod   = ${NL_USE_LOG_AOD:-.false.},
+   ptop          = ${NL_P_TOP_REQUESTED:-1000.},
+   mdl_nlay      = ${NNZP_CR:-36}
 / 
 EOF
 #

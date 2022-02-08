@@ -13,7 +13,7 @@
 !     parameters
 !-----------------------------------------------------------------
       integer, parameter :: specmax = 500
-      integer, parameter :: maxsize = 200
+      integer, parameter :: maxsize = 100
       integer, parameter :: kin = 15
 
 !-----------------------------------------------------------------
@@ -30,8 +30,7 @@
       character(len=maxsize) :: fnb_wrf, fni_wrf
       character(len=maxsize) :: fn_moz
       character(len=3)       :: numa
-      !ggp increase to 384
-      character(len=384)     :: spc_map(specmax)
+      character(len=164)     :: spc_map(specmax)
 
       namelist /control/ dir_moz, dir_wrf, init_cond_file_prefix, bdy_cond_file_prefix, fn_moz, &
                          do_bc, do_ic, spc_map, moz_var_suffix, met_file_prefix, &
@@ -42,7 +41,7 @@
 !     wrf variables 
 !-----------------------------------------------------------------
       real :: p_top
-      real, allocatable :: znu(:)
+      real, allocatable :: znu(:),C3H(:),C4H(:)
       real, allocatable :: xlon(:,:)
       real, allocatable :: xlat(:,:)
 
@@ -151,12 +150,27 @@
         write(*,*) 'main_bc_wrfchem: failed to allocate znu; error = ',astat
         stop
       end if
+      allocate( C3H(nz),stat=astat )
+      if( astat /= 0 ) then
+        write(*,*) 'main_bc_wrfchem: failed to allocate C3H; error = ',astat
+        stop
+      end if
+      allocate( C4H(nz),stat=astat )
+      if( astat /= 0 ) then
+        write(*,*) 'main_bc_wrfchem: failed to allocate C4H; error = ',astat
+        stop
+      end if
+      
       if( do_ic ) then
         call wrfchem_readscalar( 'P_TOP', p_top )
         call wrfchem_read2d( 'ZNU', znu )
+        call wrfchem_read2d( 'C3H', C3H )
+        call wrfchem_read2d( 'C4H', C4H )
       else
         call wrfchem_readscalar( 'P_TOP', p_top, trim(fni) )
         call wrfchem_read2d( 'ZNU', znu, trim(fni) )
+        call wrfchem_read2d( 'C3H', C3H, trim(fni) )
+        call wrfchem_read2d( 'C4H', C4H, trim(fni) )
       endif
       write(*,*) 'main_bc_wrfchem: read p_top'
       write(*,*) 'main_bc_wrfchem: read eta values on half (mass) levels'
@@ -252,7 +266,7 @@ species_loop : &
 !-----------------------------------------------------------------
           if( do_ic .and. it == 1 ) then
             write(*,*) 'main: setting initial condition for ',trim(wrf2mz_map(ns)%wrf_name)
-            call ic_interpolate4d( ns, spc_ic, ps_wrf, znu, p_top, &
+            call ic_interpolate4d( ns, spc_ic, ps_wrf, znu, C3H, C4H, p_top, &
                                    nx, ny, nz )
             call wrfchem_ic_write4d( ns, spc_ic, it )
           end if
@@ -260,7 +274,7 @@ has_bndy_cnd : &
           if( do_bc ) then
             write(*,*) 'main: setting boundary condition for ',trim(wrf2mz_map(ns)%wrf_name)
             call bc_interpolate4d( ns, bcxs, bcxe, bcys, bcye, &
-                                   ps_wrf, znu, p_top, nx, ny, &
+                                   ps_wrf, znu, C3H, C4H, p_top, nx, ny, &
                                    nz, nw )
 !-----------------------------------------------------------------
 !      tendency
@@ -298,7 +312,7 @@ has_bndy_cnd : &
       if( do_ic ) then
         deallocate( spc_ic )
       end if
-      deallocate( znu, xlon, xlat, bcxs, bcxe, bcys, bcye,    &
+      deallocate( znu, C3H, C4H, xlon, xlat, bcxs, bcxe, bcys, bcye,    &
                   bcxso, bcxeo, bcyso, bcyeo, &
                   btxs, btxe, btys, btye, &
                   txs, txe, tys, tye )

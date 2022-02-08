@@ -267,7 +267,7 @@ hour, window, lon_min, lon_max, lat_min, lat_max
                   cld_qa eq cld_qa_crit ) then begin
 ;
 ; AOD uncertainty assignment
-                     if (aod le 0.2) then begin
+                     if (aod lt 0.2) then begin
                         aoderr = 0.1;
                      endif
                      if (aod ge 0.2 && aod le 1.4) then begin

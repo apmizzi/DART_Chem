@@ -102,60 +102,6 @@
              do emiss=1,nchemi_emiss
                 emiss_chemi_prior(:,:,:)=0.
                 emiss_chemi_post(:,:,:)=0.
-                emiss_chemi_new(:,:,:)=0.
-                call get_WRFCHEM_emiss_data(wrfchemi_prior,chemi_emiss(emiss), &
-                emiss_chemi_prior,nx,ny,nz_chemi)
-                call get_WRFCHEM_emiss_data(wrfchemi_post,chemi_emiss(emiss), &
-                emiss_chemi_post,nx,ny,nz_chemi)
-                emiss_chemi_old(:,:,:)=emiss_chemi_prior(:,:,:)
-                do i=1,nx
-                   do j=1,ny
-                      do k=1,nz_chemi
-                         emiss_chemi_new(i,j,k)=emiss_chemi_old(i,j,k)+ &
-                         fac*(emiss_chemi_post(i,j,k)-emiss_chemi_prior(i,j,k))
-                      enddo
-                   enddo  
-                   call put_WRFCHEM_emiss_data(wrfchemi_post,chemi_emiss(emiss), &
-                   emiss_chemi_new,nx,ny,nz_chemi)
-                enddo
-             enddo
-!
-! Loop through wrffirechemi emissions to update 
-             do emiss=1,nfirechemi_emiss
-                emiss_firechemi_prior(:,:,:)=0.
-                emiss_firechemi_post(:,:,:)=0.
-                emiss_firechemi_new(:,:,:)=0.
-                call get_WRFCHEM_emiss_data(wrffirechemi_prior,firechemi_emiss(emiss), &
-                emiss_firechemi_prior,nx,ny,nz_firechemi)
-                call get_WRFCHEM_emiss_data(wrffirechemi_post,firechemi_emiss(emiss), &
-                emiss_firechemi_post,nx,ny,nz_firechemi)
-                emiss_firechemi_old(:,:,:)=emiss_firechemi_prior(:,:,:)
-                do i=1,nx
-                   do j=1,ny
-                      do k=1,nz_firechemi
-                         emiss_firechemi_new(i,j,k)=emiss_firechemi_old(i,j,k)+ &
-                         fac*(emiss_firechemi_post(i,j,k)-emiss_firechemi_prior(i,j,k))
-                      enddo
-                   enddo  
-                   call put_WRFCHEM_emiss_data(wrffirechemi_post,firechemi_emiss(emiss), &
-                   emiss_firechemi_new,nx,ny,nz_firechemi)
-                enddo
-             enddo
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-! ADJUST INTRA-CYCLE TIME EMISSIONS (This block applies the damped 
-! DART-based adjustment to the intra-cycle time emissions files
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-! ( _prior and _post are the cycle-time DART-adjusted files )
-! ( _old and _new are the forecast-time files that are to be adjusted)
-!
-! Loop through wrfchemi emissions to update 
-             do emiss=1,nchemi_emiss
-                emiss_chemi_prior(:,:,:)=0.
-                emiss_chemi_post(:,:,:)=0.
                 emiss_chemi_old(:,:,:)=0.
                 emiss_chemi_new(:,:,:)=0.
                 call get_WRFCHEM_emiss_data(wrfchemi_prior,chemi_emiss(emiss), &
@@ -169,15 +115,13 @@
                       do k=1,nz_chemi
                          if(emiss_chemi_prior(i,j,k).ne.0.) then
                             emiss_chemi_new(i,j,k)=emiss_chemi_old(i,j,k)* &
-                            (1.+facc*((emiss_chemi_post(i,j,k)-emiss_chemi_prior(i,j,k))/ &
-                            emiss_chemi_prior(i,j,k)))
-!                            if(emiss_chemi_new(i,j,k).lt.0.) emiss_chemi_new(i,j,k)=0.
+                            fac*emiss_chemi_post(i,j,k)/emiss_chemi_prior(i,j,k)
                          else
-                            delt=emiss_chemi_post(i,j,k)-emiss_chemi_prior(i,j,k)
-                            emiss_chemi_new(i,j,k)=emiss_chemi_old(i,j,k)+facc*delt
-!                            if(emiss_chemi_new(i,j,k).lt.0.) emiss_chemi_new(i,j,k)=0.
-!                            print *, 'APM: EMISS ADJUST - tendency method ',chemi_emiss(emiss)
+!                            emiss_chemi_new(i,j,k)=emiss_chemi_old(i,j,k)+fac* &
+!                            (emiss_chemi_post(i,j,k)-emiss_chemi_prior(i,j,k))
+                            emiss_chemi_new(i,j,k)=emiss_chemi_old(i,j,k)
                          endif
+                         if(emiss_chemi_new(i,j,k).lt.0) emiss_chemi_new(i,j,k)=0.
                       enddo
                    enddo  
                    call put_WRFCHEM_emiss_data(wrfchemi_new,chemi_emiss(emiss), &
@@ -195,28 +139,101 @@
                 emiss_firechemi_prior,nx,ny,nz_firechemi)
                 call get_WRFCHEM_emiss_data(wrffirechemi_post,firechemi_emiss(emiss), &
                 emiss_firechemi_post,nx,ny,nz_firechemi)
-                call get_WRFCHEM_emiss_data(wrffirechemi_old,firechemi_emiss(emiss), &
-                emiss_firechemi_old,nx,ny,nz_firechemi)
+                emiss_firechemi_old(:,:,:)=emiss_firechemi_prior(:,:,:)
                 do i=1,nx
                    do j=1,ny
                       do k=1,nz_firechemi
                          if(emiss_firechemi_prior(i,j,k).ne.0.) then
                             emiss_firechemi_new(i,j,k)=emiss_firechemi_old(i,j,k)* &
-                            (1.+facc*((emiss_firechemi_post(i,j,k)-emiss_firechemi_prior(i,j,k))/ &
-                            emiss_firechemi_prior(i,j,k)))
-!                            if(emiss_firechemi_new(i,j,k).lt.0.) emiss_firechemi_new(i,j,k)=0.
+                            fac*emiss_firechemi_post(i,j,k)/emiss_firechemi_prior(i,j,k)
                          else
-                            delt=emiss_firechemi_post(i,j,k)-emiss_firechemi_prior(i,j,k)
-                            emiss_firechemi_new(i,j,k)=emiss_firechemi_old(i,j,k)+facc*delt
-!                            if(emiss_firechemi_new(i,j,k).lt.0.) emiss_firechemi_new(i,j,k)=0.
-!                            print *, 'APM: EMISS ADJUST - tendency method ',firechemi_emiss(emiss)
+!                            emiss_firechemi_new(i,j,k)=emiss_firechemi_old(i,j,k)+fac* &
+!                            (emiss_firechemi_post(i,j,k)-emiss_firechemi_prior(i,j,k))
+                            emiss_firechemi_new(i,j,k)=emiss_firechemi_old(i,j,k)
                          endif
+                         if(emiss_firechemi_new(i,j,k).lt.0) emiss_firechemi_new(i,j,k)=0.
                       enddo
                    enddo  
                    call put_WRFCHEM_emiss_data(wrffirechemi_new,firechemi_emiss(emiss), &
                    emiss_firechemi_new,nx,ny,nz_firechemi)
                 enddo
              enddo
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! ADJUST INTRA-CYCLE TIME EMISSIONS (This block applies the damped 
+! DART-based adjustment to the intra-cycle time emissions files
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! ( _prior and _post are the cycle-time DART-adjusted files )
+! ( _old and _new are the forecast-time files that are to be adjusted)
+!
+! Loop through wrfchemi emissions to update 
+!             do emiss=1,nchemi_emiss
+!                emiss_chemi_prior(:,:,:)=0.
+!                emiss_chemi_post(:,:,:)=0.
+!                emiss_chemi_old(:,:,:)=0.
+!                emiss_chemi_new(:,:,:)=0.
+!                call get_WRFCHEM_emiss_data(wrfchemi_prior,chemi_emiss(emiss), &
+!                emiss_chemi_prior,nx,ny,nz_chemi)
+!                call get_WRFCHEM_emiss_data(wrfchemi_post,chemi_emiss(emiss), &
+!                emiss_chemi_post,nx,ny,nz_chemi)
+!                call get_WRFCHEM_emiss_data(wrfchemi_old,chemi_emiss(emiss), &
+!                emiss_chemi_old,nx,ny,nz_chemi)
+!                do i=1,nx
+!                   do j=1,ny
+!                      do k=1,nz_chemi
+!                         if(emiss_chemi_prior(i,j,k).ne.0.) then
+!                            emiss_chemi_new(i,j,k)=emiss_chemi_old(i,j,k)* &
+!                            (1.+facc*((emiss_chemi_post(i,j,k)-emiss_chemi_prior(i,j,k))/ &
+!                            emiss_chemi_prior(i,j,k)))
+!!                            if(emiss_chemi_new(i,j,k).lt.0.) emiss_chemi_new(i,j,k)=0.
+!                         else
+!                            delt=emiss_chemi_post(i,j,k)-emiss_chemi_prior(i,j,k)
+!                            emiss_chemi_new(i,j,k)=emiss_chemi_old(i,j,k)+facc*delt
+!!                            if(emiss_chemi_new(i,j,k).lt.0.) emiss_chemi_new(i,j,k)=0.
+!!                            print *, 'APM: EMISS ADJUST - tendency method ',chemi_emiss(emiss)
+!                         endif
+!                      enddo
+!                   enddo  
+!                   call put_WRFCHEM_emiss_data(wrfchemi_new,chemi_emiss(emiss), &
+!                   emiss_chemi_new,nx,ny,nz_chemi)
+!                enddo
+!             enddo
+!!
+!! Loop through wrffirechemi emissions to update 
+!             do emiss=1,nfirechemi_emiss
+!                emiss_firechemi_prior(:,:,:)=0.
+!                emiss_firechemi_post(:,:,:)=0.
+!                emiss_firechemi_old(:,:,:)=0.
+!                emiss_firechemi_new(:,:,:)=0.
+!                call get_WRFCHEM_emiss_data(wrffirechemi_prior,firechemi_emiss(emiss), &
+!                emiss_firechemi_prior,nx,ny,nz_firechemi)
+!                call get_WRFCHEM_emiss_data(wrffirechemi_post,firechemi_emiss(emiss), &
+!                emiss_firechemi_post,nx,ny,nz_firechemi)
+!                call get_WRFCHEM_emiss_data(wrffirechemi_old,firechemi_emiss(emiss), &
+!                emiss_firechemi_old,nx,ny,nz_firechemi)
+!                do i=1,nx
+!                   do j=1,ny
+!                      do k=1,nz_firechemi
+!                         if(emiss_firechemi_prior(i,j,k).ne.0.) then
+!                            emiss_firechemi_new(i,j,k)=emiss_firechemi_old(i,j,k)* &
+!                            (1.+facc*((emiss_firechemi_post(i,j,k)-emiss_firechemi_prior(i,j,k))/ &
+!                            emiss_firechemi_prior(i,j,k)))
+!!                            if(emiss_firechemi_new(i,j,k).lt.0.) emiss_firechemi_new(i,j,k)=0.
+!                         else
+!                            delt=emiss_firechemi_post(i,j,k)-emiss_firechemi_prior(i,j,k)
+!                            emiss_firechemi_new(i,j,k)=emiss_firechemi_old(i,j,k)+facc*delt
+!!                            if(emiss_firechemi_new(i,j,k).lt.0.) emiss_firechemi_new(i,j,k)=0.
+!!                            print *, 'APM: EMISS ADJUST - tendency method ',firechemi_emiss(emiss)
+!                         endif
+!                      enddo
+!                   enddo  
+!                   call put_WRFCHEM_emiss_data(wrffirechemi_new,firechemi_emiss(emiss), &
+!                   emiss_firechemi_new,nx,ny,nz_firechemi)
+!                enddo 
+!            enddo
 !
              deallocate (chemi_spcs,chemi_emiss)             
              deallocate (firechemi_spcs,firechemi_emiss)             

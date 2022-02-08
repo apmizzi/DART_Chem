@@ -34,6 +34,7 @@ character(len=*), parameter :: revdate  = ''
              integer                                  :: ngrid_corr
              integer                                  :: ii_str,ii_end,ii_npt,ii_sft
              integer                                  :: jj_str,jj_end,jj_npt,jj_sft
+             integer                                  :: date
              real                                     :: pi,grav,u_ran_1,u_ran_2,nnum_mem
              real                                     :: sprd_chem,sprd_fire,sprd_biog
              real                                     :: zdist,zfac,tmp,zmin
@@ -58,6 +59,7 @@ character(len=*), parameter :: revdate  = ''
              real,allocatable,dimension(:,:)          :: chem_data2d
              real,allocatable,dimension(:,:,:)        :: chem_data3d
              real,allocatable,dimension(:,:,:,:)      :: chem_data3d_sav
+             real,allocatable,dimension(:,:,:)        :: chem_data3d_sum
              real,allocatable,dimension(:,:,:)        :: chem_data3d_mean
              real,allocatable,dimension(:,:,:)        :: chem_data3d_sprd
              real,allocatable,dimension(:,:,:)        :: chem_data3d_frac
@@ -77,7 +79,7 @@ character(len=*), parameter :: revdate  = ''
              character(len=150),allocatable,dimension(:) :: ch_fire_spc 
              character(len=150),allocatable,dimension(:) :: ch_biog_spc 
              logical                                  :: sw_corr_tm,sw_seed,sw_chem,sw_fire,sw_biog
-             namelist /perturb_chem_emiss_corr_nml/nx,ny,nz,nz_chem,nchem_spcs,nfire_spcs,nbiog_spcs, &
+             namelist /perturb_chem_emiss_corr_nml/date,nx,ny,nz,nz_chem,nchem_spcs,nfire_spcs,nbiog_spcs, &
              pert_path_pr,pert_path_po,nnum_mem,wrfchemi,wrffirechemi,wrfbiogchemi,sprd_chem,sprd_fire,sprd_biog, &
              sw_corr_tm,sw_seed,sw_chem,sw_fire,sw_biog,corr_lngth_hz,corr_lngth_vt,corr_lngth_tm,corr_tm_delt
              namelist /perturb_chem_emiss_spec_nml/ch_chem_spc,ch_fire_spc,ch_biog_spc
@@ -102,6 +104,7 @@ character(len=*), parameter :: revdate  = ''
              read(unit,perturb_chem_emiss_corr_nml)
              close(unit)
              if(rank.eq.0) then
+                print *, 'date               ',date
                 print *, 'nx                 ',nx
                 print *, 'ny                 ',ny
                 print *, 'nz                 ',nz
@@ -304,8 +307,9 @@ character(len=*), parameter :: revdate  = ''
              endif
 !
 ! Reset the random numer seed on all processes
-             if(sw_seed) call init_random_seed()
+!             if(sw_seed) call init_random_seed()
              if(rank.ne.0) then
+             if(sw_seed) call init_const_random_seed(rank,date)
 !
 ! Stop excess processes
                 if(rank.gt.num_mem) then
@@ -823,10 +827,13 @@ character(len=*), parameter :: revdate  = ''
                    close(unitb)
 !
 ! Perturb the members (emission units are moles km-2 hr-1)
+! Recentering after temporal correlations
                    allocate(chem_data3d(nx,ny,nz_chem))
                    do isp=1,nchem_spcs
                       print *, 'perturb the chemi EMISSs ',trim(ch_chem_spc(isp))
                       allocate(chem_data3d_sav(nx,ny,nz_chem,num_mem))
+                      allocate(chem_data3d_sum(nx,ny,nz_chem))
+                      chem_data3d_sum(:,:,:)=0.  
                       do imem=1,num_mem
                          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
                          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
@@ -836,13 +843,30 @@ character(len=*), parameter :: revdate  = ''
                          do i=1,nx
                             do j=1,ny
                                do k=1,nz_chem
-                                  chem_data3d(i,j,k)=chem_data3d(i,j,k)*exp(chem_fac_end(i,j,k,imem))
+                                  chem_data3d_sav(i,j,k,imem)=chem_data3d(i,j,k)*exp(chem_fac_end(i,j,k,imem))
+                                  chem_data3d_sum(i,j,k)=chem_data3d_sum(i,j,k)+(chem_data3d_sav(i,j,k,imem)- &
+                                  chem_data3d(i,j,k))
                                enddo
                             enddo
-                         enddo 
-                         chem_data3d_sav(:,:,:,imem)=chem_data3d(:,:,:)
+                         enddo
+                      enddo                       ! members loop
+                      chem_data3d_sum(:,:,:)=chem_data3d_sum(:,:,:)/real(num_mem)
+                      do imem=1,num_mem                      
+                         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+                         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+                         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+                         wrfchem_file=trim(wrfchemi)//trim(cmem)
+                         do i=1,nx
+                            do j=1,ny
+                               do k=1,nz_chem
+                                  chem_data3d_sav(i,j,k,imem)=chem_data3d_sav(i,j,k,imem)-chem_data3d_sum(i,j,k)
+                                  if(chem_data3d_sav(i,j,k,imem).lt.0.) chem_data3d_sav(i,j,k,imem)=0.
+                                  chem_data3d(i,j,k)=chem_data3d_sav(i,j,k,imem)
+                               enddo
+                            enddo
+                         enddo
                          call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d,nx,ny,nz_chem)
-                      enddo                             ! members loop
+                      enddo
 !
 ! Calculate mean and variance
                       print *, 'calculate mean and variance ',trim(ch_chem_spc(isp))
@@ -866,12 +890,17 @@ character(len=*), parameter :: revdate  = ''
                       print *, 'save mean and variance ',trim(ch_chem_spc(isp))
                       deallocate(mems,pers)                   
                       wrfchem_file=trim(wrfchemi)//'_mean'
+                      print *, 'put the mean ',trim(wrfchem_file)
                       call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_mean,nx,ny,nz_chem)
                       wrfchem_file=trim(wrfchemi)//'_sprd'
+                      print *, 'put the spread ',trim(wrfchem_file)
                       call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_sprd,nx,ny,nz_chem)
                       wrfchem_file=trim(wrfchemi)//'_frac'
+                      print *, 'put the fraction ',trim(wrfchem_file)
                       call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_frac,nx,ny,nz_chem)
+                      print *, 'finished ',trim(wrfchem_file)
                       deallocate(chem_data3d_sav)
+                      deallocate(chem_data3d_sum)
                       deallocate(chem_data3d_mean)
                       deallocate(chem_data3d_sprd)
                       deallocate(chem_data3d_frac)
@@ -880,6 +909,8 @@ character(len=*), parameter :: revdate  = ''
                    deallocate(chem_fac_old)
                    deallocate(chem_fac_new)
                 endif
+!
+                print *, 'at sw_fire check '
                 if(sw_fire) then 
                    allocate(tmp_arry(nx*ny*nz_fire))
                    if(sw_corr_tm) then
@@ -949,10 +980,13 @@ character(len=*), parameter :: revdate  = ''
                    close(unitb)
 !
 ! Perturb the members
+! Recentering after temporal correlations                   
                    allocate(chem_data3d(nx,ny,nz_fire))
                    do isp=1,nfire_spcs
                       print *, 'perturb the fire EMISSs ',trim(ch_fire_spc(isp))
                       allocate(chem_data3d_sav(nx,ny,nz_fire,num_mem))
+                      allocate(chem_data3d_sum(nx,ny,nz_fire))
+                      chem_data3d_sum(:,:,:)=0.
                       do imem=1,num_mem
                          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
                          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
@@ -962,13 +996,29 @@ character(len=*), parameter :: revdate  = ''
                          do i=1,nx
                             do j=1,ny
                                do k=1,nz_fire
-                                  tmp=chem_data3d(i,j,k)
-                                  chem_data3d(i,j,k)=chem_data3d(i,j,k)*exp(fire_fac_old(i,j,k,imem))
+                                  chem_data3d_sav(i,j,k,imem)=chem_data3d(i,j,k)*exp(fire_fac_old(i,j,k,imem))
+                                  chem_data3d_sum(i,j,k)=chem_data3d_sum(i,j,k)+(chem_data3d_sav(i,j,k,imem)- &
+                                  chem_data3d(i,j,k))
                                enddo
                             enddo
                          enddo 
+                      enddo                       ! members loop
+                      chem_data3d_sum(:,:,:)=chem_data3d_sum(:,:,:)/real(num_mem)
+                      do imem=1,num_mem                      
+                         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+                         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+                         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+                         wrfchem_file=trim(wrfchemi)//trim(cmem)
+                         do i=1,nx
+                            do j=1,ny
+                               do k=1,nz_fire
+                                  chem_data3d_sav(i,j,k,imem)=chem_data3d_sav(i,j,k,imem)-chem_data3d_sum(i,j,k)
+                                  if(chem_data3d_sav(i,j,k,imem).lt.0.) chem_data3d_sav(i,j,k,imem)=0.
+                                  chem_data3d(i,j,k)=chem_data3d_sav(i,j,k,imem)
+                               enddo
+                            enddo
+                         enddo
                          call put_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),chem_data3d,nx,ny,nz_fire)
-                         chem_data3d_sav(:,:,:,imem)=chem_data3d(:,:,:)
                       enddo
 !
 ! Calculate mean and variance
@@ -997,6 +1047,7 @@ character(len=*), parameter :: revdate  = ''
                       wrffire_file=trim(wrffirechemi)//'_frac'
                       call put_WRFCHEM_emiss_data(wrffire_file,ch_chem_spc(isp),chem_data3d_frac,nx,ny,nz_fire)
                       deallocate(chem_data3d_sav)
+                      deallocate(chem_data3d_sum)
                       deallocate(chem_data3d_mean)
                       deallocate(chem_data3d_sprd)
                       deallocate(chem_data3d_frac)
@@ -1005,6 +1056,7 @@ character(len=*), parameter :: revdate  = ''
                    deallocate(fire_fac_old)
                    deallocate(fire_fac_new)
                 endif
+!
                 if(sw_biog) then 
                    allocate(tmp_arry(nx*ny*nz_biog))
                    if(sw_corr_tm) then
@@ -1074,10 +1126,13 @@ character(len=*), parameter :: revdate  = ''
                    close(unitb)
 !
 ! Perturb the members
+! Recentering after temporal correlations                   
                    allocate(chem_data3d(nx,ny,nz_biog))
                    do isp=1,nbiog_spcs
                       print *, 'perturb the biog EMISSs ',trim(ch_biog_spc(isp))
                       allocate(chem_data3d_sav(nx,ny,nz_biog,num_mem))
+                      allocate(chem_data3d_sum(nx,ny,nz_biog))
+                      chem_data3d_sum(:,:,:)=0.
                       do imem=1,num_mem
                          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
                          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
@@ -1087,14 +1142,32 @@ character(len=*), parameter :: revdate  = ''
                          do i=1,nx
                             do j=1,ny
                                do k=1,nz_biog
-                                  tmp=chem_data3d(i,j,k)
-                                  chem_data3d(i,j,k)=chem_data3d(i,j,k)*exp(biog_fac_old(i,j,k,imem))
+                                  chem_data3d_sav(i,j,k,imem)=chem_data3d(i,j,k)*exp(biog_fac_old(i,j,k,imem))
+                                  chem_data3d_sum(i,j,k)=chem_data3d_sum(i,j,k)+(chem_data3d_sav(i,j,k,imem)- &
+                                  chem_data3d(i,j,k))                                  
                                enddo
                             enddo
-                         enddo 
+                         enddo
+                      enddo                          ! members loop
+                      chem_data3d_sum(:,:,:)=chem_data3d_sum(:,:,:)/real(num_mem)
+                      do imem=1,num_mem                      
+                         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+                         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+                         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+                         wrfchem_file=trim(wrfchemi)//trim(cmem)
+                         do i=1,nx
+                            do j=1,ny
+                               do k=1,nz_biog
+                                  chem_data3d_sav(i,j,k,imem)=chem_data3d_sav(i,j,k,imem)-chem_data3d_sum(i,j,k)
+                                  if(chem_data3d_sav(i,j,k,imem).lt.0.) chem_data3d_sav(i,j,k,imem)=0.
+                                  chem_data3d(i,j,k)=chem_data3d_sav(i,j,k,imem)
+                               enddo
+                            enddo
+                         enddo
                          call put_WRFCHEM_emiss_data(wrfchem_file,ch_biog_spc(isp),chem_data3d,nx,ny,nz_biog)
-                         chem_data3d_sav(:,:,:,imem)=chem_data3d(:,:,:)
                       enddo
+!
+! Calculate mean and variance                   
                       allocate(mems(num_mem),pers(num_mem))
                       allocate(chem_data3d_mean(nx,ny,nz_biog))
                       allocate(chem_data3d_sprd(nx,ny,nz_biog))
@@ -1120,6 +1193,7 @@ character(len=*), parameter :: revdate  = ''
                       wrfbiog_file=trim(wrfbiogchemi)//'_frac'
                       call put_WRFCHEM_emiss_data(wrfbiog_file,ch_chem_spc(isp),chem_data3d_frac,nx,ny,nz_biog)
                       deallocate(chem_data3d_sav)
+                      deallocate(chem_data3d_sum)
                       deallocate(chem_data3d_mean)
                       deallocate(chem_data3d_sprd)
                       deallocate(chem_data3d_frac)
@@ -1628,6 +1702,45 @@ character(len=*), parameter :: revdate  = ''
              call random_seed(put=aseed)
     
           end subroutine init_random_seed
+!
+          subroutine init_const_random_seed(rank,date)
+             implicit none
+             integer                          :: rank,date,primes_dim
+             integer                          :: n,at,found,i,str
+             integer,allocatable,dimension(:) :: primes,aseed
+             logical                          :: is_prime
+!             
+             call random_seed(size=n)
+             primes_dim=rank*n
+             allocate (aseed(n))
+             allocate (primes(primes_dim))
+             primes(1)=2
+             at=2
+             found=1
+             do
+                is_prime=.true.
+                do i=1,found
+                   if(mod(at,primes(i)).eq.0) then
+                      is_prime=.false.
+                      exit
+                   endif
+                enddo
+                if(is_prime) then
+                   found=found+1
+                   primes(found)=at
+                endif
+                at=at+1
+                if(found.eq.primes_dim) then
+                   exit
+                endif
+             enddo
+             str=(rank-1)*n+1
+             do i=str,primes_dim
+                aseed(i-str+1)=date*primes(i)
+             enddo
+             call random_seed(put=aseed)
+             deallocate(aseed,primes)
+           end subroutine init_const_random_seed
 !
           subroutine apm_pack(A_pck,A_unpck,nx,ny,nz,nl)
              implicit none

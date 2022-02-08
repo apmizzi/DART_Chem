@@ -10,17 +10,21 @@
 #
 ############################################################################### 
 #
-export START_DATE=2018071418
-export END_DATE=2018071518
-#
 export START_DATE=2014071406
-export END_DATE=2014071512
+export END_DATE=2014071418
+#
+export START_DATE=2020071006
+export END_DATE=2020071300
 #
 # Define EXPERIMENT path
-#export DIR_NAME=real_FRAPPE_CONTROL_RELAX_NASA
-export DIR_NAME=real_FRAPPE_ALLCHEM_RELAX_NASA
-#export DIR_NAME=real_FRAPPE_ALLCHEM_EMISS_ADJ_NASA
-#export DIR_NAME=real_COLO_ALLCHEM_RELAX_NASA
+#
+#export DIR_NAME=real_FRAPPE_CONTROL_NASA_v4
+#export DIR_NAME=real_FRAPPE_ALLCHEM_NASA_v4
+#export DIR_NAME=real_FRAPPE_EMISADJ_NASA_v4
+#
+export DIR_NAME=real_FIREX_CONTROL_NASA_v4
+export DIR_NAME=real_FIREX_ALLCHEM_NASA_v4
+export DIR_NAME=real_FIREX_EMISADJ_NASA_v4
 #
 # Define FILTER path
 export DART_FILTER=dart_filter
@@ -202,6 +206,7 @@ export NL_TIME_TO_SKIP_SS=0
 export NL_MAX_NUM_BINS=1000
 export NL_PLEVEL='750.'
 export NL_PLEVEL='950., 850., 750., 500., 400. 300., 100.'
+export NL_PLEVEL='950., 850.'
 export NL_NREGIONS=1
 export NL_LONLIM1=0.
 export NL_LONLIM2=360.
@@ -429,6 +434,8 @@ export NL_PRINT_TABLE=.false.
                        '${DART_DIR}/obs_def/obs_def_IASI_CO_mod.f90',
                        '${DART_DIR}/obs_def/obs_def_IASI_O3_mod.f90',
                        '${DART_DIR}/obs_def/obs_def_OMI_NO2_mod.f90',
+                       '${DART_DIR}/obs_def/obs_def_TROPOMI_NO2_mod.f90',
+                       '${DART_DIR}/obs_def/obs_def_TROPOMI_CO_mod.f90',
                        '${DART_DIR}/obs_def/obs_def_MOPITT_CO_mod.f90',
                        '${DART_DIR}/obs_def/obs_def_MODIS_AOD_mod.f90'"
 #
@@ -444,19 +451,20 @@ export NL_PRINT_TABLE=.false.
                                       'AIRCRAFT_TEMPERATURE',
                                       'SAT_U_WIND_COMPONENT',
                                       'SAT_V_WIND_COMPONENT',
-                                      'MOPITT_CO_RETRIEVAL'"
-#                                      'AIRNOW_CO'"
-#                                      'OMI_NO2_COLUMN'"
-#                                      'AIRNOW_O3'"
-#                                      'IASI_CO_RETRIEVAL',
-#                                      'IASI_O3_RETRIEVAL',
-#                                      'MODIS_AOD_RETRIEVAL',
-   export NL_EVALUATE_THESE_OBS_TYPES="'MODIS_AOD_RETRIEVAL'"
-#                                      'IASI_CO_RETRIEVAL',
-#                                      'AIRNOW_O3'"
-#                                      'AIRNOW_CO',
-#                                      'MODIS_AOD_RETRIEVAL'"
-
+                                      'MOPITT_CO_RETRIEVAL',
+                                      'AIRNOW_CO',
+                                      'AIRNOW_O3',
+                                      'AIRNOW_NO2',
+                                      'AIRNOW_SO2',
+                                      'AIRNOW_PM10',
+                                      'AIRNOW_PM25',
+                                      'OMI_NO2_COLUMN',
+                                      'TROPOMI_NO2_COLUMN',
+                                      'AIRNOW_O3',
+                                      'IASI_CO_RETRIEVAL',
+                                      'IASI_O3_RETRIEVAL',
+                                      'MODIS_AOD_RETRIEVAL'"
+   export NL_EVALUATE_THESE_OBS_TYPES="' '"
 #
 # &replace_wrf_fields_nml
    export NL_FIELDNAMES="'SNOWC',

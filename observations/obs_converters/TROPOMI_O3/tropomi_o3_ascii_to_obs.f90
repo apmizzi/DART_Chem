@@ -312,23 +312,25 @@ program tropomi_o3_ascii_to_obs
       sum_accept=sum_accept+1
 !
 ! Adjust col_amt_obs to remove contribution above the top of the model
-      trop_sum=0.
-      strat_sum=0.
-      do k=1,kend
-         trop_sum=trop_sum+prf_full(k)
-      enddo
-      do k=kend+1,nlay_obs
-         strat_sum=strat_sum+prf_full(k)
-      enddo
-      print *,'exp obs ',trop_sum
+!      trop_sum=0.
+!      strat_sum=0.
+!      do k=1,kend
+!         trop_sum=trop_sum+prf_full(k)
+!      enddo
+!      do k=kend+1,nlay_obs
+!         strat_sum=strat_sum+prf_full(k)
+!      enddo
+!      print *,'exp obs ',trop_sum
 !
 ! Set data for writing obs_sequence file
       qc_count=qc_count+1
 !
 ! Obs value is the tropospheric vertical column
 !
-      obs_val(:)=col_amt_obs*trop_sum/(strat_sum+trop_sum)
-      obs_err_var=fac_obs_error*fac_err*(col_amt_err_obs*trop_sum/(strat_sum+trop_sum))**2.
+      obs_val(:)=col_amt_obs
+      obs_err_var=(fac_obs_error*fac_err*col_amt_err_obs)**2.
+!      obs_val(:)=col_amt_obs*trop_sum/(strat_sum+trop_sum)
+!      obs_err_var=fac_obs_error*fac_err*(col_amt_err_obs*trop_sum/(strat_sum+trop_sum))**2.
       tropomi_qc(:)=0
       obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
       call get_time(obs_time, seconds, days)

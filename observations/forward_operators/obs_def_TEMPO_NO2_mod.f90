@@ -262,383 +262,303 @@ end subroutine interactive_tempo_no2
 
 subroutine get_expected_tempo_no2(state_handle, ens_size, location, key, expct_val, istatus)
 
-type(ensemble_type), intent(in)  :: state_handle
-type(location_type), intent(in)  :: location
-integer,             intent(in)  :: ens_size
-integer,             intent(in)  :: key
-integer,             intent(out) :: istatus(:)
-real(r8),            intent(out) :: expct_val(:)
+   type(ensemble_type), intent(in)  :: state_handle
+   type(location_type), intent(in)  :: location
+   integer,             intent(in)  :: ens_size
+   integer,             intent(in)  :: key
+   integer,             intent(out) :: istatus(:)
+   real(r8),            intent(out) :: expct_val(:)
 
-character(len=*), parameter :: routine = 'get_expected_tempo_no2'
-type(location_type) :: loc2
+   character(len=*), parameter :: routine = 'get_expected_tempo_no2'
+   type(location_type) :: loc2
 
-integer :: layer_tempo,level_tempo
-integer :: layer_mdl,level_mdl
-integer :: k,imem,trop_indxx
-integer :: no2_istatus(ens_size)
-integer, dimension(ens_size) :: tmp_istatus, qmr_istatus, prs_istatus
+   integer :: layer_tempo,level_tempo
+   integer :: layer_mdl,level_mdl
+   integer :: k,imem,kend_tempo
+   integer :: interp_new
+   integer, dimension(ens_size) :: zstatus
 
-real(r8) :: eps, AvogN, Rd, Ru, grav, msq2cmsq
-real(r8) :: no2_min
-real(r8) :: level
-real(r8) :: tmp_vir_k, tmp_vir_kp
-real(r8) :: mloc(3)
-real(r8) :: no2_val_conv
-real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
-real(r8), dimension(ens_size) :: no2_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
-real(r8), dimension(ens_size) :: no2_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
-real(r8), dimension(ens_size) :: no2_temp, tmp_temp, qmr_temp, prs_sfc
+   real(r8) :: eps, AvogN, Rd, Ru, Cp, grav, msq2cmsq
+   real(r8) :: missing,no2_min,tmp_max
+   real(r8) :: level,del_prs
+   real(r8) :: tmp_vir_k, tmp_vir_kp
+   real(r8) :: mloc(3)
+   real(r8) :: no2_val_conv
+   real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
+   real(r8), dimension(ens_size) :: no2_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
+   real(r8), dimension(ens_size) :: no2_mdl_1p, tmp_mdl_1p, qmr_mdl_1p, prs_mdl_1p
+   real(r8), dimension(ens_size) :: no2_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
+   real(r8), dimension(ens_size) :: no2_mdl_nm, tmp_mdl_nm, qmr_mdl_nm, prs_mdl_nm
+   real(r8), dimension(ens_size) :: no2_temp, tmp_temp, qmr_temp, prs_sfc
 
-real(r8), allocatable, dimension(:)   :: thick, prs_tempo, prs_tempo_mem
-real(r8), allocatable, dimension(:,:) :: no2_val, tmp_val, qmr_val
-logical  :: return_now,no2_return_now,tmp_return_now,qmr_return_now
+   real(r8), allocatable, dimension(:)   :: thick, prs_tempo, prs_tempo_mem
+   real(r8), allocatable, dimension(:,:) :: no2_val, tmp_val, qmr_val
+   logical  :: return_now,no2_return_now,tmp_return_now,qmr_return_now
 
-if ( .not. module_initialized ) call initialize_module
+   if ( .not. module_initialized ) call initialize_module
 
-eps    =  0.61_r8
-Rd     = 286.9_r8
-Ru     = 8.316_r8
-grav   =   9.8_r8
-no2_min = 1.e-6_r8
-msq2cmsq = 1.e4_r8
-AvogN = 6.02214e23_r8
+   eps      =  0.61_r8
+   Rd       = 287.05_r8     ! J/kg
+   Ru       = 8.316_r8      ! J/kg
+   Cp       = 1006.0        ! J/kg/K
+   grav     =   9.8_r8
+   no2_min  = 1.e-6_r8
+   msq2cmsq = 1.e4_r8
+   AvogN    = 6.02214e23_r8
+   missing  = -888888_r8
+   tmp_max  = 600.
+   del_prs  = 5000.
 
-if(use_log_no2) then
-   no2_min = log(no2_min)
-endif
+   if(use_log_no2) then
+      no2_min = log(no2_min)
+   endif
 
 ! Assign vertical grid information
 
-layer_tempo = nlayer(key)
-level_tempo = nlayer(key)+1
-trop_indxx = trop_indx(key)
-layer_mdl=nlayer_model
-level_mdl=nlayer_model+1
-!write(string1, *) 'APM: layer_omi ',key,layer_omi
-!call error_handler(E_MSG, routine, string1, source)
-!write(string1, *) 'APM: layer_mdl ',key,layer_mdl
-!call error_handler(E_MSG, routine, string1, source)
+   layer_tempo = nlayer(key)
+   level_tempo = nlayer(key)+1
+   kend_tempo  = trop_indx(key)
+   layer_mdl = nlayer_model
+   level_mdl = nlayer_model+1
 
-allocate(prs_tempo(level_tempo))
-allocate(prs_tempo_mem(level_tempo))
-prs_tempo(1:level_tempo)=pressure(key,1:level_tempo)
+   allocate(prs_tempo(level_tempo))
+   allocate(prs_tempo_mem(level_tempo))
+   prs_tempo(1:level_tempo)=pressure(key,1:level_tempo)
 
 ! Get location infomation
 
-mloc = get_location(location)
+   mloc = get_location(location)
 
-if (    mloc(2) >  90.0_r8) then
-        mloc(2) =  90.0_r8
-elseif (mloc(2) < -90.0_r8) then
-        mloc(2) = -90.0_r8
-endif
+   if (mloc(2) >  90.0_r8) then
+      mloc(2) =  90.0_r8
+   elseif (mloc(2) < -90.0_r8) then
+      mloc(2) = -90.0_r8
+   endif
 
 ! You could set a unique error code for each condition and then just return
 ! without having to issue a warning message. The error codes would then
 ! show up in the report from 'output_forward_op_errors'
 
-istatus(:) = 0  ! set this once at the beginning
+   istatus(:) = 0  ! set this once at the beginning
+   return_now=.false.
 
 ! pressure at model surface (Pa)
 
-level=0.0_r8
-loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
-istatus(:) = 0
-prs_istatus(:) = 0
-return_now=.false.
+   zstatus=0
+   level=0.0_r8
+   loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
+   call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus) 
 
-call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, prs_istatus) 
-if(any(prs_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL prs_sfc is bad ',key
-   call error_handler(E_MSG, routine, string1, source)
-endif
-call track_status(ens_size, prs_istatus, prs_sfc, istatus, return_now)
-if(return_now) return
-if(return_now) return
-!write(string1, *) 'APM: prs_sfc ',key,prs_sfc(1)
-!call error_handler(E_MSG, routine, string1, source)
+   no2_mdl_1(:)=missing_r8
+   tmp_mdl_1(:)=missing_r8
+   qmr_mdl_1(:)=missing_r8
+   prs_mdl_1(:)=missing_r8
 
-! nitrogen dioxide at first model layer (ppmv)
+   do k=1,layer_mdl
+      level=real(k)
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_mdl_1, zstatus) 
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_1, &
+      zstatus) 
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, &
+      zstatus) 
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, &
+      zstatus) 
+!
+      interp_new=0
+      do imem=1,ens_size
+         if(no2_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
+         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
+            interp_new=1
+            exit
+         endif
+      enddo
+      if(interp_new.eq.0) then
+         exit
+      endif    
+   enddo
 
-level = 1.0_r8
-loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-istatus(:) = 0
-no2_istatus(:) = 0
-return_now=.false.
-call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_mdl_1, no2_istatus) 
-if(any(no2_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL no2_mdl_1 is bad ',key
-   call error_handler(E_MSG, routine, string1, source)
-endif
-call track_status(ens_size, no2_istatus, no2_mdl_1, istatus, return_now)
-if(return_now) return
-!write(string1, *) 'APM: no2_mdl_1 ',key,no2_mdl_1(1)
-!call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *)'APM: no2 lower bound ',no2_mdl_1
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *)'APM: tmp lower bound ',tmp_mdl_1
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *)'APM: qmr lower bound ',qmr_mdl_1
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *)'APM: prs lower bound ',prs_mdl_1
+!   call error_handler(E_MSG, routine, string1, source)
 
-! temperature at first model layer (K)
+   no2_mdl_n(:)=missing_r8
+   tmp_mdl_n(:)=missing_r8
+   qmr_mdl_n(:)=missing_r8
+   prs_mdl_n(:)=missing_r8
 
-level=1.0_r8
-loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-istatus(:) = 0
-tmp_istatus(:) = 0
-return_now=.false.
-call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_1, tmp_istatus) 
-if(any(tmp_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL tmp_mdl_1 is bad ',key
-   call error_handler(E_MSG, routine, string1, source)
-endif
-call track_status(ens_size, tmp_istatus, tmp_mdl_1, istatus, return_now)
-if(return_now) return
-!write(string1, *) 'APM: tmp_mdl_1 ',key,tmp_mdl_1(1)
-!call error_handler(E_MSG, routine, string1, source
-! vapor mixing ratio at first model layer (Kg/Kg)
-
-level=1.0_r8
-loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-istatus(:) = 0
-qmr_istatus(:) = 0
-return_now=.false.
-call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, qmr_istatus) 
-if(any(qmr_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL qmr_mdl_1 is bad ',key
-   call error_handler(E_MSG, routine, string1, source)
-endif
-call track_status(ens_size, qmr_istatus, qmr_mdl_1, istatus, return_now)
-if(return_now) return
-!write(string1, *) 'APM: qmr_mdl_1 ',key,qmr_mdl_1(1)
-!call error_handler(E_MSG, routine, string1, source)
-
-! pressure at first model layer (Pa)
-
-level=1.0_r8
-loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-istatus(:) = 0
-prs_istatus(:) = 0
-return_now=.false.
-call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, prs_istatus) 
-if(any(prs_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL prs_mdl_1 is bad ',key
-   call error_handler(E_MSG, routine, string1, source)
-endif
-call track_status(ens_size, prs_istatus, prs_mdl_1, istatus, return_now)
-if(return_now) return
-!write(string1, *) 'APM: prs_mdl_1 ',key,prs_mdl_1(1)
-!call error_handler(E_MSG, routine, string1, source)
-
-! ozone at last model layer (ppmv)
-
-level=real(layer_mdl-1)
-loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-istatus(:) = 0
-no2_istatus(:) = 0
-return_now=.false.
-call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_mdl_n, no2_istatus) 
-if(any(no2_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL no2_mdl_n is bad ',key
-   call error_handler(E_MSG, routine, string1, source)
-endif
-call track_status(ens_size, no2_istatus, no2_mdl_n, istatus, return_now)
-if(return_now) return
-!write(string1, *) 'APM: no2_mdl_n ',key,no2_mdl_n(1)
-!call error_handler(E_MSG, routine, string1, source)
-
-! temperature at last layer (K)
-
-level=real(layer_mdl-1)
-loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-istatus(:) = 0
-tmp_istatus(:) = 0
-return_now=.false.
-call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_n, tmp_istatus) 
-if(any(tmp_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL tmp_mdl_n is bad ',key
-   call error_handler(E_MSG, routine, string1, source)
-endif
-call track_status(ens_size, tmp_istatus, tmp_mdl_n, istatus, return_now)
-if(return_now) return
-!write(string1, *) 'APM: tmp_mdl_n ',key,tmp_mdl_n(1)
-!call error_handler(E_MSG, routine, string1, source)
-
-! vapor mixing ratio at last model layer (Kg/Kg)
-
-level=real(layer_mdl-1)
-loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-istatus(:) = 0
-qmr_istatus(:) = 0
-return_now=.false.
-call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, qmr_istatus) 
-if(any(qmr_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL qmr_mdl_n is bad ',key
-   call error_handler(E_MSG, routine, string1, source)
-endif
-call track_status(ens_size, qmr_istatus, qmr_mdl_n, istatus, return_now)
-if(return_now) return
-!write(string1, *) 'APM: qmr_mdl_n ',key,qmr_mdl_n(1)
-!call error_handler(E_MSG, routine, string1, source)
-
-! pressure at last model layer (Pa)
-
-level=real(layer_mdl-1)
-loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-istatus(:) = 0
-prs_istatus(:) = 0
-return_now=.false.
-call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, &
-prs_mdl_n, prs_istatus) 
-if(any(prs_istatus /= 0)) then
-   write(string1, *)'APM NOTICE: MDL prs_mdl_n is bad ',key
-   call error_handler(E_MSG, routine, string1, source)
-endif
-call track_status(ens_size, prs_istatus, prs_mdl_n, istatus, return_now)
-if(return_now) return
-!write(string1, *) 'APM: prs_mdl_n ',key,prs_mdl_n(1)
-!call error_handler(E_MSG, routine, string1, source)
-
-! Get profiles at TEMPO levels
-
-allocate( no2_val(ens_size,level_tempo))
-allocate(tmp_val(ens_size,level_tempo))
-allocate(qmr_val(ens_size,level_tempo))
-
-do k=1,level_tempo
-   no2_istatus(:) = 0
-   tmp_istatus(:) = 0
-   qmr_istatus(:) = 0
-
-   loc2 = set_location(mloc(1), mloc(2), prs_tempo(k), VERTISPRESSURE)
-
-   ! taking a different approach here ... interpolate all the required pieces
-   ! for this level and then account for known special cases before determining
-   ! if there is an error or not
-   call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_temp, no2_istatus)  
-   call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_temp, tmp_istatus)  
-   call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_temp, qmr_istatus)  
-
-   ! Correcting for expected failures near the surface
-   where(prs_tempo(k).ge.prs_mdl_1)
-      no2_istatus = 0
-      tmp_istatus = 0
-      qmr_istatus = 0
-      no2_temp    = no2_mdl_1
-      tmp_temp    = tmp_mdl_1
-      qmr_temp    = qmr_mdl_1
-   endwhere
-
-   ! Correcting for expected failures near the top
-   where(prs_tempo(k).le.prs_mdl_n) 
-      no2_istatus = 0
-      tmp_istatus = 0
-      qmr_istatus = 0
-      no2_temp    = no2_mdl_n
-      tmp_temp    = tmp_mdl_n
-      qmr_temp    = qmr_mdl_n
-   endwhere
-
-   ! Report all issue before returning (when E_MSG is being used)
-   no2_return_now=.false.
-   if(any(no2_istatus /= 0)) then
-      write(string1,*) &
-      'APM NOTICE: model NO2 obs value on TEMPO grid has a bad value '
-      call error_handler(E_MSG, routine, string1, source)
-      call track_status(ens_size, no2_istatus, no2_temp, istatus, return_now)
-   endif
+   do k=layer_mdl,1,-1
+      level=real(k)
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_mdl_n, zstatus) ! ppmv
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_n, zstatus) ! K 
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, zstatus) ! kg / kg 
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, zstatus) ! Pa
+!
+      interp_new=0
+      do imem=1,ens_size
+         if(no2_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
+         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
+            interp_new=1
+            exit
+         endif
+      enddo
+      if(interp_new.eq.0) then
+         exit
+      endif    
+   enddo
    
-   tmp_return_now=.false.
-   if(any(tmp_istatus/=0)) then
-      write(string1, *) &
-      'APM NOTICE: model TMP obs value on TEMPO grid has a bad value'
-      call error_handler(E_MSG, routine, string1, source)
-      call track_status(ens_size, tmp_istatus, tmp_temp, istatus, return_now)
-   endif
-  
-   qmr_return_now=.false.
-   if(any(qmr_istatus/=0)) then
-      write(string1, *) &
-      'APM NOTICE: model QMR obs value on TEMPO grid has a bad value '
-      call error_handler(E_MSG, routine, string1, source)
-      call track_status(ens_size, qmr_istatus, qmr_temp, istatus, return_now)
-   endif
-   if(no2_return_now .or. tmp_return_now .or. qmr_return_now) return
+!   write(string1, *)'APM: no2 upper bound ',no2_mdl_n
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *)'APM: tmp upper bound ',tmp_mdl_n
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *)'APM: qmr upper bound ',qmr_mdl_n
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *)'APM: prs upper bound ',prs_mdl_n
+!   call error_handler(E_MSG, routine, string1, source)
 
-   no2_val(:,k) = no2_temp(:)  
-   tmp_val(:,k) = tmp_temp(:)  
-   qmr_val(:,k) = qmr_temp(:)
+! Get profiles at TEMPO pressure levels
 
-   ! Convert units for no2 from ppmv
-   no2_val(:,k) = no2_val(:,k) * 1.e-6_r8
+   allocate(no2_val(ens_size,level_tempo))
+   allocate(tmp_val(ens_size,level_tempo))
+   allocate(qmr_val(ens_size,level_tempo))
 
-enddo
-!write(string1, *) 'APM: no2_val mem=1 ',key,no2_val(1,:)
-!call error_handler(E_MSG, routine, string1, source)
-!write(string1, *) 'APM: tmp_val mem=1 ',key,tmp_val(1,:)
-!call error_handler(E_MSG, routine, string1, source)
-!write(string1, *) 'APM: qmr_val mem=1 ',key,qmr_val(1,:)
-!call error_handler(E_MSG, routine, string1, source)
+   do k=1,level_tempo
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), prs_tempo(k), VERTISPRESSURE)
+      call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_val(:,k), zstatus)  
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_val(:,k), zstatus)  
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_val(:,k), zstatus)  
+!
+! Correcting for expected failures near the surface
+      do imem=1,ens_size
+         if (prs_tempo(k).ge.prs_mdl_1(imem)) then
+            no2_val(imem,k) = no2_mdl_1(imem)
+            tmp_val(imem,k) = tmp_mdl_1(imem)
+            qmr_val(imem,k) = qmr_mdl_1(imem)
+            cycle
+         endif
 
-expct_val(:)=0.0
-allocate(thick(layer_tempo))
-do imem=1,ens_size
-
-   ! Adjust the TEMPO pressure for WRF-Chem lower/upper boudary pressure
-   ! (TEMPO NO2 vertical grid is bottom to top)
-
-   prs_tempo_mem(:)=prs_tempo(:)
-   if (prs_sfc(imem).gt.prs_tempo_mem(1)) then
-      prs_tempo_mem(1)=prs_sfc(imem)
-   endif   
-
-   ! Calculate the thicknesses
-
-   thick(:)=0.
-   do k=1,trop_indxx
-      lnpr_mid=(log(prs_tempo_mem(k+1))+log(prs_tempo_mem(k)))/2.
-      up_wt=log(prs_tempo_mem(k))-lnpr_mid
-      dw_wt=log(lnpr_mid)-log(prs_tempo_mem(k+1))
-      tl_wt=up_wt+dw_wt
-      
-      tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
-      tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
-      thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
-                   log(prs_tempo_mem(k)/prs_tempo_mem(k+1))
-   enddo
-
-!   if(imem.eq.1) then
-!      write(string1, *) 'APM: thick mem=1 ',key,thick(:)
+! Correcting for expected failures near the top
+         if (prs_tempo(k).le.prs_mdl_n(imem)) then
+            no2_val(imem,k) = no2_mdl_n(imem)
+            tmp_val(imem,k) = tmp_mdl_n(imem)
+            qmr_val(imem,k) = qmr_mdl_n(imem)
+            cycle
+         endif
+      enddo
+!
+!      write(string1, *)'APM: no2 ',k,no2_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
-!   endif
-   ! Process the vertical summation
-
-   expct_val(imem)=0.0_r8
-   do k=1,trop_indxx
-      lnpr_mid=(log(prs_tempo_mem(k+1))+log(prs_tempo_mem(k)))/2.
-      up_wt=log(prs_tempo_mem(k))-lnpr_mid
-      dw_wt=log(lnpr_mid)-log(prs_tempo_mem(k+1))
-      tl_wt=up_wt+dw_wt
-
-      ! Convert from VMR to molar density (mol/m^3)
-      if(use_log_no2) then
-         no2_val_conv = (dw_wt*exp(no2_val(imem,k))+up_wt*exp(no2_val(imem,k+1)))/tl_wt * &
-                        (dw_wt*prs_tempo_mem(k)+up_wt*prs_tempo_mem(k+1)) / &
-                        (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
-      else
-         no2_val_conv = (dw_wt*no2_val(imem,k)+up_wt*no2_val(imem,k+1))/tl_wt * &
-                        (dw_wt*prs_tempo_mem(k)+up_wt*prs_tempo_mem(k+1)) / &
-                        (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
-      endif
- 
-      ! Get expected observation
-
-      expct_val(imem) = expct_val(imem) + thick(k) * no2_val_conv * &
-                        AvogN / msq2cmsq * scat_wts(key,k)
+!      write(string1, *)'APM: tmp ',k,tmp_val(1,k)
+!      call error_handler(E_MSG, routine, string1, source)
+!      write(string1, *)'APM: qmr ',k,qmr_val(1,k)
+!      call error_handler(E_MSG, routine, string1, source)
+!
+! Check data for missing values      
+      do imem=1,ens_size
+         if(no2_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
+         qmr_val(imem,k).eq.missing_r8) then
+            zstatus(:)=20
+            expct_val(:)=missing_r8
+            write(string1, *) &
+            'APM: Input data has missing values '
+            call error_handler(E_MSG, routine, string1, source)
+            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+            return
+         endif
+      enddo
+!      
+! Convert units for no2 from ppmv
+      no2_val(:,k) = no2_val(:,k) * 1.e-6_r8
    enddo
-enddo
-!write(string1, *) 'APM: expct_val (all mems) ',key,expct_val(:)
-!call error_handler(E_MSG, routine, string1, source)
+
+   istatus(:)=0.
+   zstatus(:)=0.
+   expct_val(:)=0.0
+   allocate(thick(layer_tempo))
+!
+   do imem=1,ens_size
+! Adjust the TEMPO pressure for WRF-Chem lower/upper boudary pressure
+! (TEMPO NO2 vertical grid is bottom to top)
+      prs_tempo_mem(:)=prs_tempo(:)
+      if (prs_sfc(imem).gt.prs_tempo_mem(1)) then
+         prs_tempo_mem(1)=prs_sfc(imem)
+      endif   
+
+! Calculate the thicknesses
+
+      do k=1,kend_tempo
+         lnpr_mid=(log(prs_tempo_mem(k+1))+log(prs_tempo_mem(k)))/2.
+         up_wt=log(prs_tempo_mem(k))-lnpr_mid
+         dw_wt=log(lnpr_mid)-log(prs_tempo_mem(k+1))
+         tl_wt=up_wt+dw_wt
+      
+         tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
+         tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
+         thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
+                   log(prs_tempo_mem(k)/prs_tempo_mem(k+1))
+      enddo
+
+! Process the vertical summation
+
+      do k=1,kend_tempo
+         lnpr_mid=(log(prs_tempo_mem(k+1))+log(prs_tempo_mem(k)))/2.
+         up_wt=log(prs_tempo_mem(k))-lnpr_mid
+         dw_wt=log(lnpr_mid)-log(prs_tempo_mem(k+1))
+         tl_wt=up_wt+dw_wt
+
+! Convert from VMR to molar density (mol/m^3)
+         if(use_log_no2) then
+            no2_val_conv = (dw_wt*exp(no2_val(imem,k))+up_wt*exp(no2_val(imem,k+1)))/tl_wt * &
+            (dw_wt*prs_tempo_mem(k)+up_wt*prs_tempo_mem(k+1)) / &
+            (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
+         else
+            no2_val_conv = (dw_wt*no2_val(imem,k)+up_wt*no2_val(imem,k+1))/tl_wt * &
+            (dw_wt*prs_tempo_mem(k)+up_wt*prs_tempo_mem(k+1)) / &
+            (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
+         endif
+ 
+! Get expected observation
+
+         expct_val(imem) = expct_val(imem) + thick(k) * no2_val_conv * &
+         AvogN / msq2cmsq * scat_wts(key,k)
+!         write(string1, *) 'APM: key,k,imem,expc_val,thick,no2_conv,scwt ', &
+!         key,k,imem,expct_val(imem),thick(k),no2_val_conv,scat_wts(key,k)
+!         call error_handler(E_MSG, routine, string1, source)
+      enddo
+
+      if(expct_val(imem).lt.0) then
+         zstatus(imem)=20
+         expct_val(:)=missing_r8
+         write(string1, *) &
+         'APM NOTICE: TROPOMI NO2 expected value is negative '
+         call error_handler(E_MSG, routine, string1, source)
+         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         return
+      endif
+   enddo
 
 ! Clean up and return
-deallocate(no2_val, tmp_val, qmr_val)
-deallocate(thick)
-deallocate(prs_tempo, prs_tempo_mem)
+   deallocate(no2_val, tmp_val, qmr_val)
+   deallocate(thick)
+   deallocate(prs_tempo, prs_tempo_mem)
 
 end subroutine get_expected_tempo_no2
 

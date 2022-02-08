@@ -27,18 +27,21 @@ export TASKS=$5
 export EXECUTE=$6
 export TYPE=$7
 export ACCOUNT=$8
+let NPROC=${NODES}*${TASKS}
 #
 if [[ ${TYPE} == PARALLEL ]]; then
    rm -rf job.ksh
    touch job.ksh
    cat << EOF > job.ksh
 #!/bin/ksh -aeux
+#PBS -W group_list=${ACCOUNT}
 #PBS -N ${JOBID}
 #PBS -l walltime=${TIME_LIMIT}
 #PBS -q ${CLASS}
 #PBS -j oe
 #PBS -l select=${NODES}:ncpus=${TASKS}:mpiprocs=${TASKS}:model=ivy
-mpiexec_mpt ./${EXECUTE}  > index.html 2>&1 
+#PBS -l site=needed=/home1+/nobackupp11
+/u/scicon/tools/bin/several_tries mpiexec -np ${NPROC} ./${EXECUTE}  > index.html 2>&1 
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
 if [[ -f FAILED ]]; then rm -rf FAILED; fi          
@@ -60,6 +63,7 @@ elif [[ ${TYPE} == SERIAL ]]; then
 #PBS -q ${CLASS}
 #PBS -j oe
 #PBS -l select=${NODES}:ncpus=1:model=ivy
+#PBS -l site=needed=/home1+/nobackupp11
 ./${EXECUTE}  > index.html 2>&1 
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     

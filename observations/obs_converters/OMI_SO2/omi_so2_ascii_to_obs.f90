@@ -343,15 +343,17 @@ program omi_so2_ascii_to_obs
       qc_count=qc_count+1
 !
 ! Adjust col_amt_pbl to remove the contribution above the top of the model
-      obs_sum=0.
-      do k=1,kend
-         kk=nlay_obs-k+1
-         obs_sum=obs_sum+layer_wt(kk)*col_amt
-      enddo
+!      obs_sum=0.
+!      do k=1,kend
+!         kk=nlay_obs-k+1
+!         obs_sum=obs_sum+layer_wt(kk)*col_amt
+!      enddo
 !
 ! Obs value is the tropospheric slant column
-      obs_val(:)=obs_sum*slnt_col_amt/col_amt
-      obs_err_var=(fac_obs_error*fac_err*obs_sum*slnt_col_amt/col_amt)**2.
+      obs_val(:)=slnt_col_amt/col_amt
+      obs_err_var=(fac_obs_error*fac_err*slnt_col_amt/col_amt)**2.
+!      obs_val(:)=obs_sum*slnt_col_amt/col_amt
+!      obs_err_var=(fac_obs_error*fac_err*obs_sum*slnt_col_amt/col_amt)**2.
       omi_qc(:)=0
 !
       obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)

@@ -350,22 +350,24 @@ program tropomi_so2_ascii_to_obs
       sum_accept=sum_accept+1
 !
 ! Adjust col_amt_obs to remove contribution above the top of the model
-      trop_sum=0.
-      strat_sum=0.
-      do k=1,kend
-         trop_sum=trop_sum+prf_full(k)
-      enddo
-      do k=kend+1,nlay_obs
-         strat_sum=strat_sum+prf_full(k)
-      enddo
+!      trop_sum=0.
+!      strat_sum=0.
+!      do k=1,kend
+!         trop_sum=trop_sum+prf_full(k)
+!      enddo
+!      do k=kend+1,nlay_obs
+!         strat_sum=strat_sum+prf_full(k)
+!      enddo
 !
 ! Set data for writing obs_sequence file
       qc_count=qc_count+1
 !
 ! Obs value is the tropospheric vertical column
 !
-      obs_val(:)=col_amt_obs*trop_sum/(strat_sum+trop_sum)
-      obs_err_var=fac_obs_error*fac_err*(col_amt_obs_err*trop_sum/(strat_sum+trop_sum))**2.
+      obs_val(:)=col_amt_obs
+      obs_err_var=(fac_obs_error*fac_err*col_amt_obs_err)**2.
+!      obs_val(:)=col_amt_obs*trop_sum/(strat_sum+trop_sum)
+!      obs_err_var=fac_obs_error*fac_err*(col_amt_obs_err*trop_sum/(strat_sum+trop_sum))**2.
 !      print *, 'obs_val ',col_amt_obs*trop_sum/(strat_sum+trop_sum)
 !      print *, 'obs_err ',col_amt_obs_err*trop_sum/(strat_sum+trop_sum)
       

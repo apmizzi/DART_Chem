@@ -1,4 +1,4 @@
-#!/bin/ksh -x
+#!/bin/ksh -x 
 #
 # DART software - Copyright UCAR. This open source software is provided
 # by UCAR, "as is", without charge, subject to all terms of use at
@@ -6,14 +6,118 @@
 
 #########################################################################
 #
-# Purpose: Script to create WRF Namelist 
+# Purpose: Script to create WRFDA Namelist 
 
 #########################################################################
 #
-# CREATE WRF NAMELIST FILE
+# CREATE WRFDA NAMELIST FILE
 rm -f namelist.input
 touch namelist.input
 cat > namelist.input << EOF
+&wrfvar1
+print_detail_grad                   = ${NL_PRINT_DETAIL_GRAD},
+var4d                               = ${NL_VAR4D},
+multi_inc                           = ${NL_MULTI_INC},
+/
+&wrfvar2
+/
+&wrfvar3
+ob_format                           = ${NL_OB_FORMAT},
+/
+&wrfvar4
+use_synopobs                        = ${NL_USE_SYNOPOBS},
+use_shipsobs                        = ${NL_USE_SHIPOBS},
+use_metarobs                        = ${NL_USE_METAROBS},
+use_soundobs                        = ${NL_USE_SOUNDOBS},
+use_pilotobs                        = ${NL_USE_PILOTOBS},
+use_airepobs                        = ${NL_USE_AIREOBS},
+use_geoamvobs                       = ${NL_USE_GEOAMVOBS},
+use_polaramvobs                     = ${NL_USE_POLARAMVOBS},
+use_bogusobs                        = ${NL_USE_BOGUSOBS},
+use_buoyobs                         = ${NL_USE_BUOYOBS},
+use_profilerobs                     = ${NL_USE_PROFILEROBS},
+use_satemobs                        = ${NL_USE_SATEMOBS},
+use_gpspwobs                        = ${NL_USE_GPSPWOBS},
+use_gpsrefobs                       = ${NL_USE_GPSREFOBS},
+use_ssmisobs                        = ${NL_USE_SSMIRETRIEVALOBS},
+use_qscatobs                        = ${NL_USE_QSCATOBS},
+use_airsretobs                      = ${NL_USE_AIRSRETOBS},
+/
+&wrfvar5
+check_max_iv                        = ${NL_CHECK_MAX_IV},
+put_rand_seed                       = ${NL_PUT_RAND_SEED},
+/
+&wrfvar6
+ntmax                               = ${NL_NTMAX},
+/
+&wrfvar7
+je_factor                           = ${NL_JE_FACTOR},
+cv_options                          = ${NL_CV_OPTIONS},
+as1                                 = ${NL_AS1},
+as2                                 = ${NL_AS2},
+as3                                 = ${NL_AS3},
+as4                                 = ${NL_AS4},
+as5                                 = ${NL_AS5},
+/
+&wrfvar8
+/
+&wrfvar9
+/
+trace_use                           = ${NL_TRACE_USE:-true},
+/
+&wrfvar10
+/
+&wrfvar11
+cv_options_hum                      = ${NL_CV_OPTIONS_HUM},
+check_rh                            = ${NL_CHECK_RH},
+seed_array1                         = ${NL_SEED_ARRAY1},
+seed_array2                         = ${NL_SEED_ARRAY2},
+calculate_cg_cost_fn                = ${NL_CALCULATE_CG_COST_FN},
+lat_stats_option                    = ${NL_LAT_STATS_OPTION},
+/
+&wrfvar12
+/
+&wrfvar13
+/
+&wrfvar14
+/
+&wrfvar15
+num_pseudo                          = ${NL_NUM_PSEUDO},
+pseudo_x                            = ${NL_PSEUDO_X},
+pseudo_y                            = ${NL_PSEUDO_Y},
+pseudo_z                            = ${NL_PSEUDO_Z},
+pseudo_err                          = ${NL_PSEUDO_ERR},
+pseudo_val                          = ${NL_PSEUDO_VAL}
+/
+&wrfvar16
+ensdim_alpha                        = ${NL_ENSDIM_ALPHA},
+alphacv_method                      = ${NL_ALPHACV_METHOD},
+alpha_corr_type                     = ${NL_ALPHA_CORR_TYPE},
+alpha_corr_scale                    = ${NL_ALPHA_CORR_SCALE},
+alpha_std_dev                       = ${NL_ALPHA_STD_DEV},
+alpha_vertloc_opt                   = ${NL_ALPHA_VERTLOC_OPT},
+/
+&wrfvar17
+analysis_type                       = ${NL_ANALYSIS_TYPE},
+/
+&wrfvar18
+analysis_date                       = ${NL_ANALYSIS_DATE},
+/
+&wrfvar19
+pseudo_var                          = ${NL_PSEUDO_VAR},
+/
+&wrfvar20
+/
+&wrfvar21
+time_window_min                     = ${NL_TIME_WINDOW_MIN},
+/
+&wrfvar22
+time_window_max                     = ${NL_TIME_WINDOW_MAX},
+/
+&wrfvar23
+jcdfi_use                           = ${NL_JCDFI_USE},
+jcdfi_io                            = ${NL_JCDFI_IO},
+/
 &time_control
 run_days                            = ${NL_RUN_DAYS},
 run_hours                           = ${NL_RUN_HOURS},
@@ -136,8 +240,8 @@ ifsnow                              = ${NL_IFSNOW},
 icloud                              = ${NL_ICLOUD},
 surface_input_source                = ${NL_SURFACE_INPUT_SOURCE},
 num_soil_layers                     = ${NL_NUM_SOIL_LAYERS},
-num_land_cat                        = ${NL_NUM_LAND_CAT},
 mp_zero_out                         = ${NL_MP_ZERO_OUT},
+num_land_cat                        = ${NL_NUM_LAND_CAT},
 sf_urban_physics                    = ${NL_SF_URBAN_PHYSICS},
 maxiens                             = ${NL_MAXIENS},
 maxens                              = ${NL_MAXENS},

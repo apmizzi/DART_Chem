@@ -106,7 +106,7 @@ program tropomi_no2_ascii_to_obs
    integer                         :: nx_model,ny_model,nz_model
    integer                         :: reject,k,kk,kend
    integer                         :: i_min,j_min
-   integer                         :: sum_reject,sum_accept,sum_total
+   integer                         :: sum_reject,sum_accept,sum_total,num_thin
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
@@ -166,6 +166,7 @@ program tropomi_no2_ascii_to_obs
    sum_accept=0
    sum_total=0
    fac_err=1.0
+   num_thin=1
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
@@ -294,51 +295,33 @@ program tropomi_no2_ascii_to_obs
 !
       trop_indx_sp=0      
       if(kend.lt.trop_indx) then
-         trop_indx_sp=trop_indx
-         trop_indx=kend
+         trop_indx_sp=kend
       endif
-      call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_locl,nlay_obs,kend,trop_indx)
+      call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_locl,nlay_obs,kend,trop_indx_sp)
       level=prs_loc
 !
-! Check for maximum localization height
-!      if(level/100..lt.level_crit) then
-!         reject=1
-!         sum_reject=sum_reject+1
-!         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!         print *, trim(data_type), obs_id
-!         deallocate(prs_obs) 
-!         deallocate(avgk_obs)
-!         deallocate(prs_obs_r8) 
-!         deallocate(avgk_obs_r8)
-!         deallocate(prf_locl) 
-!         deallocate(prf_full) 
-!         cycle
-!      endif
-!
 ! Process accepted observations
-      print *, 'localization pressure level (hPa) ',level/100.
+!      print *, 'localization pressure level (hPa) ',level/100.
       sum_accept=sum_accept+1
-!
-! Adjust col_amt_obs to remove contribution above the top of the model         
-      trop_sum=0.
-      strat_sum=0.
-      do k=1,kend
-         trop_sum=trop_sum+prf_full(k)
-      enddo
-      do k=kend+1,trop_indx_sp
-         strat_sum=strat_sum+prf_full(k)
-      enddo
-!      do k=1,trop_indx
-!         obs_sum=obs_sum+prf_full(k)
-!      enddo
-!      print *, 'exp_obs ',obs_sum
+      if(sum_accept.ne.sum_accept/num_thin*num_thin) then
+         deallocate(prs_obs) 
+         deallocate(avgk_obs)
+         deallocate(prs_obs_r8) 
+         deallocate(avgk_obs_r8)
+         deallocate(prf_locl) 
+         deallocate(prf_full) 
+         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
+         cycle
+      endif
 !
 ! Set data for writing obs_sequence file
       qc_count=qc_count+1
 !
 ! Obs value is the tropospheric vertical column
-      obs_val(:)=trop_sum*col_amt_trop_obs/(trop_sum+strat_sum)
-      obs_err_var=fac_obs_error**fac_err*(trop_sum*col_amt_trop_err_obs/(trop_sum+strat_sum))**2.
+      obs_val(:)=col_amt_trop_obs
+      obs_err_var=(fac_obs_error*fac_err*col_amt_trop_err_obs)**2.
+!      obs_val(:)=trop_sum*col_amt_trop_obs/(trop_sum+strat_sum)
+!      obs_err_var=fac_obs_error**fac_err*(trop_sum*col_amt_trop_err_obs/(trop_sum+strat_sum))**2.
 !      print *, 'obs_val ',col_amt_trop_obs
 !      print *, 'obs_err ',col_amt_trop_err_obs
 
@@ -389,7 +372,7 @@ program tropomi_no2_ascii_to_obs
       deallocate(prf_locl) 
       deallocate(prf_full) 
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-      print *, 'sum_accept ',sum_accept
+!      print *, 'sum_accept ',sum_accept
    enddo   
 !
 !----------------------------------------------------------------------

@@ -11,9 +11,9 @@ touch input.nml_temp
 cat > input.nml_temp << EOF
  &obs_def_IASI_CO_nml
    IASI_CO_retrieval_type   = ${NL_IASI_CO_RETRIEVAL_TYPE:-'RAWR'},
-   use_log_co   = ${NL_USE_LOG_CO:-.false.},
-   nlayer_model    = ${NL_NLAYER_MODEL:-36},
-   nlayer_iasi_co   = ${NL_NLAYER_IASI_CO:-19},
+   use_log_co    = ${NL_USE_LOG_CO:-.false.},
+   nlayer_model  = ${NL_NLAYER_MODEL:-36},
+   nlayer_iasi   = ${NL_NLAYER_IASI_CO:-19},
 / 
 EOF
 #

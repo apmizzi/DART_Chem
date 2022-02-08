@@ -121,7 +121,7 @@
       integer :: vid
       real    :: model_x, model_y, model_dx
       real, allocatable  :: x1d(:), y1d(:)
-      character(len=128) :: filenm
+      character(len=180) :: filenm
       character(len=32)  :: spcnam
       logical            :: found
       logical            :: monotonic_moz_x
@@ -425,7 +425,7 @@
       integer :: i, n
       integer :: nfile
       integer :: status
-      character(len=128) :: filenm
+      character(len=180) :: filenm
       logical :: found
 
       write(*,*) ' '

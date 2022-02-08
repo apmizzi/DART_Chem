@@ -116,8 +116,8 @@ use default_model_mod,   only : adv_1step, nc_write_model_vars, &
 use state_structure_mod, only : add_domain, get_model_variable_indices, &
                                 state_structure_info, &
                                 get_index_start, get_index_end, &
-                                get_dart_vector_index
-
+                                get_dart_vector_index, get_varid_from_kind, &
+                                get_io_clamping_minval
 ! FIXME:
 ! the kinds QTY_CLOUD_LIQUID_WATER should be QTY_CLOUDWATER_MIXING_RATIO, 
 ! and kind QTY_CLOUD_ICE should be QTY_ICE_MIXING_RATIO, but for backwards
@@ -1198,7 +1198,8 @@ model_dt = nint(wrf%dom(1)%dt)
 ! The integer arithmetic does its magic.
 assim_dt = (assimilation_period_seconds / model_dt) * model_dt
 
-shortest_time_between_assimilations = set_time(assim_dt)
+!shortest_time_between_assimilations = set_time(assim_dt)
+shortest_time_between_assimilations = set_time(assimilation_period_seconds)
 
 end function shortest_time_between_assimilations
 
@@ -1661,6 +1662,7 @@ else
    enddo
 
    allocate(uniquek(count))
+   uniquek(:) = -1
  
    uk = 1
    do e = 1, ens_size
@@ -1976,6 +1978,8 @@ else
 
 ! In terms of perturbation potential temperature
                   a1 = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
+!                  call apm_interpolate(a1(:), obs_kind, ens_size, k, uk, uniquek, &
+!                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
 
                   pres1 = model_pressure_t_distrib(ll(1), ll(2), uniquek(uk), id, state_handle, ens_size)
                   pres2 = model_pressure_t_distrib(lr(1), lr(2), uniquek(uk), id, state_handle, ens_size)
@@ -1983,7 +1987,10 @@ else
                   pres4 = model_pressure_t_distrib(ur(1), ur(2), uniquek(uk), id, state_handle, ens_size)
 
 ! Pressure at location
+
                   pres = dym*( dxm*pres1 + dx*pres2 ) + dy*( dxm*pres3 + dx*pres4 )
+!                  call apm_interpolate(pres(:), obs_kind, ens_size, k, uk, uniquek, &
+!                  count, dx, dy, dxm, dym, pres1, pres2, pres3, pres4, domain_id(id))
 
                   do e = 1, ens_size
                      if ( k(e) == uniquek(uk) ) then
@@ -2005,6 +2012,8 @@ else
 
 ! In terms of perturbation potential temperature
                   a1 = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
+!                  call apm_interpolate(a1(:), obs_kind, ens_size, k, uk, uniquek, &
+!                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
 
                   pres1 = model_pressure_t_distrib(ll(1), ll(2), uniquek(uk)+1, id, state_handle, ens_size)
                   pres2 = model_pressure_t_distrib(lr(1), lr(2), uniquek(uk)+1, id, state_handle, ens_size)
@@ -2013,6 +2022,8 @@ else
 
 ! Pressure at location
                   pres = dym*( dxm*pres1 + dx*pres2 ) + dy*( dxm*pres3 + dx*pres4 )
+!                  call apm_interpolate(pres(:), obs_kind, ens_size, k, uk, uniquek, &
+!                  count, dx, dy, dxm, dym, pres1, pres2, pres3, pres4, domain_id(id))
 
                   do e = 1, ens_size
                      if ( k(e) == uniquek(uk) ) then
@@ -2020,7 +2031,6 @@ else
                      fld(2, e) = (ts0 + a1(e))*(pres(e)/ps0)**kappa
                      endif
                   enddo
-                  
 
                endif
             enddo
@@ -2175,6 +2185,7 @@ else
       enddo
    
       allocate(uniquek(count))
+      uniquek(:) = -1
     
       uk = 1
       do e = 1, ens_size
@@ -2332,6 +2343,9 @@ else
                      fld(1, e) = dym*( dxm*pres1(e) + dx*pres2(e) ) + dy*( dxm*pres3(e) + dx*pres4(e) )
                   endif
                enddo
+!               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+!               count, dx, dy, dxm, dym, pres1, pres2, pres3, pres4, domain_id(id))
+
    
 ! Interpolation for the P field at level k+1
                pres1 = model_pressure_t_distrib(ll(1), ll(2), uniquek(uk)+1, id, state_handle, ens_size)
@@ -2344,6 +2358,8 @@ else
                      fld(2, e) = dym*( dxm*pres1(e) + dx*pres2(e) ) + dy*( dxm*pres3(e) + dx*pres4(e) )
                   endif
                enddo
+!               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+!               count, dx, dy, dxm, dym, pres1, pres2, pres3, pres4, domain_id(id))
             endif
          enddo
 
@@ -2913,6 +2929,9 @@ else
          enddo
       
          allocate(uniquek(count))
+         uniquek(:) = -1
+
+         
          uk = 1
          do e = 1, ens_size
             if ( all(uniquek /= k(e)) ) then
@@ -3025,1406 +3044,1114 @@ else
                             dx*real(wrf%dom(id)%land(lr(1), lr(2))) ) + &
                       dy*( dxm*real(wrf%dom(id)%land(ul(1), ul(2))) + &
                             dx*real(wrf%dom(id)%land(ur(1), ur(2))) )
-
       endif
 
 ! KRF Add in all of Mizzi's fields. Need to modify to be manhattan compliant.
 ! APM/AFAJ ++
+!      
 !-----------------------------------------------------
-! 1.za IASI O3 Retrieval (O3)
-
+! 1.za OZONE INTERPOLATION (O3)
    else if( obs_kind == QTY_O3 ) then
       if ( wrf%dom(id)%type_o3 >= 0 ) then
-         do uk = 1, count
-! Check to make sure retrieved integer gridpoints are in valid range
-            if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_o3 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_o3 ) .and. &
-               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_o3 ) ) then
-
-               call getCorners(i, j, id, wrf%dom(id)%type_o3, ll, ul, lr, ur, rc )
-               if ( rc .ne. 0 ) then
-                  print*, 'model_mod.f90 :: model_interpolate :: getCorners O3 rc = ', rc
-                  call abort
-               endif
-
-! Interpolation for the O3 field at level k
-               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_o3)
-               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_o3)
-               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_o3)
-               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_o3)
-
-               x_ill = get_state(ill, state_handle)
-               x_iul = get_state(iul, state_handle)
-               x_ilr = get_state(ilr, state_handle)
-               x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1, e) = dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
-! hard wired for IASI
-! Interpolation for the O3 field at level k+1
-               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_o3)
-               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_o3)
-               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_o3)
-               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_o3)
-
-               x_ill = get_state(ill, state_handle)
-               x_iul = get_state(iul, state_handle)
-               x_ilr = get_state(ilr, state_handle)
-               x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) .and. k(e) < 33 ) then
-                    fld(2,e) = dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  else
-                    fld(2,e) = fld(1,e)
-                  endif
-               enddo
+         if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_o3 ) .and. &
+         boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_o3 ) .and. &
+         boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_o3 ) ) then
+            call getCorners(i, j, id, wrf%dom(id)%type_o3, ll, ul, lr, ur, rc )
+            if ( rc .ne. 0 ) then
+               print*, 'model_mod.f90 :: model_interpolate :: getCorners O3 rc = ', rc
+               call exit_all(-77)
             endif
+         endif
+         do uk = 1, count
+!
+! Interpolation for the O3 field at level k
+            ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_o3)
+            iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_o3)
+            ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_o3)
+            iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_o3)
+            x_ill = get_state(ill, state_handle)
+            x_iul = get_state(iul, state_handle)
+            x_ilr = get_state(ilr, state_handle)
+            x_iur = get_state(iur, state_handle)
+            call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+            count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the O3 field at level k+1
+            ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_o3)
+            iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_o3)
+            ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_o3)
+            iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_o3)
+            x_ill = get_state(ill, state_handle)
+            x_iul = get_state(iul, state_handle)
+            x_ilr = get_state(ilr, state_handle)
+            x_iur = get_state(iur, state_handle)
+            call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+            count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
          enddo
       endif
+!
 !-----------------------------------------------------
-! 1.zb MOPITT and IASI CO Retrieval (CO)
-
+! 2.zb CARBON MONOXIDE (CO)
    else if( obs_kind == QTY_CO ) then
       if ( wrf%dom(id)%type_co >= 0 ) then
-! APM: MOPITT CHECK
-!         print *, 'APM i,j,k : ',i,j,k 
-!         print *, "APM:i ",boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_co) 
-!         print *, "APM:j ",boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_co) 
-!         print *, "APM:k ",boundsCheck( k, .false.,                id, dim=3, type=wrf%dom(id)%type_co)     
-
-         do uk = 1, count
-! Check to make sure retrieved integer gridpoints are in valid range
-            if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_co ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_co ) .and. &
-               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_co ) ) then
-
-               call getCorners(i, j, id, wrf%dom(id)%type_co, ll, ul, lr, ur, rc )
-
-               if ( rc .ne. 0 ) then
-                  print*, 'model_mod.f90 :: model_interpolate :: getCorners CO rc = ', rc
-                  call abort
-               endif
-
-! Interpolation for the CO field at level k
-               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_co)
-               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_co)
-               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_co)
-               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_co)
-
-               x_ill = get_state(ill, state_handle)
-               x_iul = get_state(iul, state_handle)
-               x_ilr = get_state(ilr, state_handle)
-               x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1, e) = dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-!                  if(fld(1,e).eq.missing_r8) then
-!                  if(fld(1,e).lt.0. .and. fld(1,e).ne.missing_r8) then
-!                     print *, 'APM lower: k,fld,dx,dxm,dy,dym ',k(e),fld(1,e),dx,dxm,dy,dym
-!                     print *, 'x_ill,x_ilr,x_iul,x_iur ',x_ill(e),x_ilr(e),x_iul(e),x_iur(e)
-!                  endif
-                  if(fld(1,e).lt.0. .and. fld(1,e).ne.missing_r8) then
-                     fld(1,e)=missing_r8
-                  endif
-               enddo
-
-! Interpolation for the CO field at level k+1
-               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_co)
-               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_co)
-               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_co)
-               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_co)
-
-               x_ill = get_state(ill, state_handle)
-               x_iul = get_state(iul, state_handle)
-               x_ilr = get_state(ilr, state_handle)
-               x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) = dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-!                  if(fld(2,e).eq.missing_r8) then
-!                  if(fld(2,e).lt.0. .and. fld(2,e).ne.missing_r8) then
-!                     print *, 'APM upper: k.fld,dx,dxm,dy,dym ',k(e),fld(2,e),dx,dxm,dy,dym
-!                     print *, 'x_ill,x_ilr,x_iul,x_iur ',x_ill(e),x_ilr(e),x_iul(e),x_iur(e)
-!                  endif
-                  if(fld(2,e).lt.0. .and. fld(2,e).ne.missing_r8) then
-                     fld(2,e)=missing_r8
-                  endif
-               enddo
+         if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_co ) .and. &
+         boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_co ) .and. &
+         boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_co ) ) then
+            call getCorners(i, j, id, wrf%dom(id)%type_co, ll, ul, lr, ur, rc )
+            if ( rc .ne. 0 ) then
+               print*, 'model_mod.f90 :: model_interpolate :: getCorners CO rc = ', rc
+               call exit_all(-77)
             endif
+         endif
+         do uk = 1, count
+!            
+! Interpolation for the CO field at level k
+            ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_co)
+            iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_co)
+            ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_co)
+            iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_co)
+            x_ill = get_state(ill, state_handle)
+            x_iul = get_state(iul, state_handle)
+            x_ilr = get_state(ilr, state_handle)
+            x_iur = get_state(iur, state_handle)
+            call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+            count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the CO field at level k+1
+            ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_co)
+            iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_co)
+            ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_co)
+            iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_co)
+            x_ill = get_state(ill, state_handle)
+            x_iul = get_state(iul, state_handle)
+            x_ilr = get_state(ilr, state_handle)
+            x_iur = get_state(iur, state_handle)
+            call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+            count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
          enddo
       endif
 !
 !-----------------------------------------------------
-! 1.zc Aerosol Optical Depth (TAUAER1, TAUAER2, TAUAER3, TAUAER4)
-!      added by AFAJ Ave Arellano for AOD assimilation
-!      currently we do not have AOD that exactly match the wavelength
-!      of MODIS 550nm. we will use instead the TAU at 400 and 600 nm 
-!      1) get the total AOD for TAUAER2 and TAUAER3 (vertical integral)
-!      2) calculate ang=log(tau300/tau999)/log(999/300)
-!      3) tau550=tau400*( (0.4/0.55)^ang)
-!      FOR NOW, USE TAUAER3 (600nm) APPROXIMATING 550nm
-!      SINCE IT REQUIRES THE INTERACTION BETWEEN 4 TAU FIELDS
-
-   else if( obs_kind == QTY_AOD ) then
-      if ( wrf%dom(id)%type_tauaer1 >= 0 .and. wrf%dom(id)%type_tauaer2 >= 0 .and. &
-         wrf%dom(id)%type_tauaer3 >= 0 .and. wrf%dom(id)%type_tauaer4 >= 0) then
+! 3.zc TAUAER1; TAUAER2; TAUAER3; TAUAER4
+   else if( obs_kind == QTY_TAUAER1 .or. obs_kind == QTY_TAUAER2 .or. &
+   obs_kind == QTY_TAUAER3 .or. obs_kind == QTY_TAUAER4 ) then
 !
-         zk_aod = 32 !wrf%dom(id)%bt ! KRF hard coded wrf levels - can this be changed to uniquek loop?
-         aod5(:) = 0.0_r8
-!
-! Vertical integration loop
-         do kaod = 1, zk_aod
-!
-! Interpolation for the TAUAER1 field
-            aod1(:) = 0.0_r8
-            aod2(:) = 0.0_r8
-            aod3(:) = 0.0_r8
-            aod4(:) = 0.0_r8
+! TAUAER1
+      if( obs_kind == QTY_TAUAER1) then               
+         if ( wrf%dom(id)%type_tauaer1 >= 0 ) then
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_tauaer1 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_tauaer1 ) .and. &
-               boundsCheck( kaod, .false.,             id, dim=3, type=wrf%dom(id)%type_tauaer1 ) ) then
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_tauaer1 ) .and. &
+            boundsCheck( kaod, .false.,             id, dim=3, type=wrf%dom(id)%type_tauaer1 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_tauaer1, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
-                  print*, 'APM model_mod.f90 :: model_interpolate :: getCorners TAUAER1 rc = ', rc
-                  call abort
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners TAUAER1 rc = ', rc
+                  call exit_all(-77)
                endif
-!               write(*,*) 'APM kaod, zk_aod ',kaod, zk_aod
-               ill = get_dart_vector_index(ll(1), ll(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer1)
-               iul = get_dart_vector_index(ul(1), ul(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer1)
-               ilr = get_dart_vector_index(lr(1), lr(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer1)
-               iur = get_dart_vector_index(ur(1), ur(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer1)
-
+            endif
+            do uk = 1, count
+!
+! Interpolation at level k
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer1)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer1)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer1)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer1)
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               aod1(:) = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
-            else
-               write(*,*) 'APM TAUER1 Failed bounds check: kaod,zk_aod',kaod,zk_aod
-            endif
-
-! Interpolation for the TAUAER2 field
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation at level k+1
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer1)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer1)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer1)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer1)
+               x_ill = get_state(ill, state_handle)
+               x_iul = get_state(iul, state_handle)
+               x_ilr = get_state(ilr, state_handle)
+               x_iur = get_state(iur, state_handle)
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
+         endif
+      endif
+!
+! TAUAER2
+      if( obs_kind == QTY_TAUAER2) then
+         if ( wrf%dom(id)%type_tauaer2 >= 0 ) then
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_tauaer2 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_tauaer2 ) .and. &
-               boundsCheck( kaod, .false.,             id, dim=3, type=wrf%dom(id)%type_tauaer2 ) ) then
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_tauaer2 ) .and. &
+            boundsCheck( kaod, .false.,             id, dim=3, type=wrf%dom(id)%type_tauaer2 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_tauaer2, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
-                  print*, 'APM model_mod.f90 :: model_interpolate :: getCorners TAUAER2 rc = ', rc
-                  call abort
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners TAUAER2 rc = ', rc
+                  call exit_all(-77)
                endif
-               ill = get_dart_vector_index(ll(1), ll(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer2)
-               iul = get_dart_vector_index(ul(1), ul(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer2)
-               ilr = get_dart_vector_index(lr(1), lr(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer2)
-               iur = get_dart_vector_index(ur(1), ur(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer2)
- 
+            endif
+            do uk = 1, count
+!
+! Interpolation at level k
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer2)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer2)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer2)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer2)
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               aod2(:) = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
-            else
-               write(*,*) 'APM TAUER2 Failed bounds check: kaod,zk_aod',kaod,zk_aod
-            endif
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
 !
-! Interpolation for the TAUAER3 field
+! Interpolation at level k+1
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer2)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer2)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer2)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer2)
+               x_ill = get_state(ill, state_handle)
+               x_iul = get_state(iul, state_handle)
+               x_ilr = get_state(ilr, state_handle)
+               x_iur = get_state(iur, state_handle)
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
+         endif
+      endif
+!
+! TAUAER3
+      if( obs_kind == QTY_TAUAER3) then
+         if ( wrf%dom(id)%type_tauaer3 >= 0 ) then
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_tauaer3 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_tauaer3 ) .and. &
-               boundsCheck( kaod, .false.,             id, dim=3, type=wrf%dom(id)%type_tauaer3 ) ) then
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_tauaer3 ) .and. &
+            boundsCheck( kaod, .false.,             id, dim=3, type=wrf%dom(id)%type_tauaer3 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_tauaer3, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
-                  print*, 'APM model_mod.f90 :: model_interpolate :: getCorners TAUAER3 rc = ', rc
-                  call abort
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners TAUAER3 rc = ', rc
+                  call exit_all(-77)
                endif
-               ill = get_dart_vector_index(ll(1), ll(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer3)
-               iul = get_dart_vector_index(ul(1), ul(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer3)
-               ilr = get_dart_vector_index(lr(1), lr(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer3)
-               iur = get_dart_vector_index(ur(1), ur(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer3)
-
+            endif
+            do uk = 1, count
+!
+! Interpolation at level k
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer3)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer3)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer3)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer3)
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               aod3(:) = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
-            else
-               write(*,*) 'APM TAUER3 Failed bounds check: kaod,zk_aod',kaod,zk_aod
-            endif
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
 !
-! Interpolation for the TAUAER4 field
+! Interpolation at level k+1
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer3)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer3)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer3)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer3)
+               x_ill = get_state(ill, state_handle)
+               x_iul = get_state(iul, state_handle)
+               x_ilr = get_state(ilr, state_handle)
+               x_iur = get_state(iur, state_handle)
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
+         endif
+      endif
+!
+! TAUAER4
+      if( obs_kind == QTY_TAUAER4) then
+         if ( wrf%dom(id)%type_tauaer4 >= 0 ) then
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_tauaer4 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_tauaer4 ) .and. &
-               boundsCheck( kaod, .false.,             id, dim=3, type=wrf%dom(id)%type_tauaer4 ) ) then
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_tauaer4 ) .and. &
+            boundsCheck( kaod, .false.,             id, dim=3, type=wrf%dom(id)%type_tauaer4 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_tauaer4, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
-                  print*, 'APM model_mod.f90 :: model_interpolate :: getCorners TAUAER4 rc = ', rc
-                  call abort
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners TAUAER4 rc = ', rc
+                  call exit_all(-77)
                endif
-               ill = get_dart_vector_index(ll(1), ll(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer4)
-               iul = get_dart_vector_index(ul(1), ul(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer4)
-               ilr = get_dart_vector_index(lr(1), lr(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer4)
-               iur = get_dart_vector_index(ur(1), ur(2), kaod, domain_id(id),wrf%dom(id)%type_tauaer4)
-
+            endif
+            do uk = 1, count
+!
+! Interpolation at level k
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer4)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer4)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer4)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_tauaer4)
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               aod4(:) =  dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
-            else
-               write(*,*) 'APM TAUER4 Failed bounds check: kaod,zk_aod',kaod,zk_aod
-            endif
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
 !
-            do e = 1, ens_size
-               if ( (aod1(e) > 0.0_r8) .and. (aod4(e) > 0.0_r8) ) then
-                  ang(e) = log(aod1(e)/aod4(e))/1.2030
-                  aod5(e) = aod5(e) + aod2(e)*((0.7273)**ang(e))
-               else
-                  write(*,*) 'APM AOD conversion failed',aod1,aod2,aod3,aod4 
-               end if
+! Interpolation at level k+1
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer4)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer4)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer4)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer4)
+               x_ill = get_state(ill, state_handle)
+               x_iul = get_state(iul, state_handle)
+               x_ilr = get_state(ilr, state_handle)
+               x_iur = get_state(iur, state_handle)
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
             enddo
-         enddo
-         fld(1,:) = aod5
+         endif
       endif
 !
 !-----------------------------------------------------
-! 1.zd OMI NO2 Retrieval (NO2)
-
+! 4.zd NITROGEN DIOXIDE (NO2)
    else if( obs_kind == QTY_NO2 ) then
-
       if ( wrf%dom(id)%type_no2 >= 0 ) then
-! APM: OMI CHECK
-!         print *, 'APM i,j,k : ',i,j,k
-!         print *, "APM:i ",boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_no2)
-!         print *, "APM:j ",boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_no2)
-!         print *, "APM:k ",boundsCheck( k, .false.,                id, dim=3, type=wrf%dom(id)%type_no2)
-
-         do uk = 1, count
-! Check to make sure retrieved integer gridpoints are in valid range
-            if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_no2 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_no2 ) .and. &
-               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_no2 ) ) then
-
-               call getCorners(i, j, id, wrf%dom(id)%type_no2, ll, ul, lr, ur, rc )
-
-               if ( rc .ne. 0 ) then
-                  print*, 'model_mod.f90 :: model_interpolate :: getCorners NO2 rc = ', rc
-                  call abort
-               endif
-
-! Interpolation for the NO2 field at level k
-               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_no2)
-               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_no2)
-               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_no2)
-               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_no2)
-
-               x_ill = get_state(ill, state_handle)
-               x_iul = get_state(iul, state_handle)
-               x_ilr = get_state(ilr, state_handle)
-               x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1, e) = dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
-! Interpolation for the NO2 field at level k+1
-               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
-               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
-               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
-               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
-
-               x_ill = get_state(ill, state_handle)
-               x_iul = get_state(iul, state_handle)
-               x_ilr = get_state(ilr, state_handle)
-               x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) = dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
+         if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_no2 ) .and. &
+         boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_no2 ) .and. &
+         boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_no2 ) ) then
+            call getCorners(i, j, id, wrf%dom(id)%type_no2, ll, ul, lr, ur, rc )
+            if ( rc .ne. 0 ) then
+               print*, 'model_mod.f90 :: model_interpolate :: getCorners NO2 rc = ', rc
+               call exit_all (-77)
             endif
+         endif
+         do uk = 1, count
+!
+! Interpolation for the NO2 field at level k
+            ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_no2)
+            iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_no2)
+            ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_no2)
+            iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_no2)
+            x_ill = get_state(ill, state_handle)
+            x_iul = get_state(iul, state_handle)
+            x_ilr = get_state(ilr, state_handle)
+            x_iur = get_state(iur, state_handle)
+            call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+            count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the NO2 field at level k+1
+            ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
+            iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
+            ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
+            iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
+            x_ill = get_state(ill, state_handle)
+            x_iul = get_state(iul, state_handle)
+            x_ilr = get_state(ilr, state_handle)
+            x_iur = get_state(iur, state_handle)
+            call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+            count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))               
          enddo
       endif
 !
-!1.zd SO2
-   elseif ( obs_kind == QTY_SO2 ) then
-
-      if ( wrf%dom(id)%type_so2 >= 0 ) then
-
-         do uk = 1, count
-! Check to make sure retrieved integer gridpoints are in valid range
+!-----------------------------------------------------
+!5.ze SULFUR DIOXIDE (SO2); SULFATE (SO4)
+   elseif ( obs_kind == QTY_SO2 .or. obs_kind == QTY_SO4 ) then
+!
+! SO2 
+      if( obs_kind == QTY_SO2) then               
+         if ( wrf%dom(id)%type_so2 >= 0 ) then
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_so2 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_so2 ) .and. &
-               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_so2 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_so2 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_so2 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_so2, ll, ul, lr, ur, rc )
-            
                if ( rc .ne. 0 ) then
                   print*, 'model_mod.f90 :: model_interpolate :: getCorners SO2 rc = ', rc
-                  call abort
+                  call exit_all(-77)
                endif
- 
+            endif 
+            do uk = 1, count
+!
 ! Interpolation for the SO2 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so2)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so2)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so2)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so2)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
 ! Interpolation for the SO2 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so2)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so2)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so2)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so2)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
+         endif
       endif
 !
-!1.zd BC1
-   elseif ( obs_kind == QTY_BC1 ) then
-
-      if ( wrf%dom(id)%type_bc1 >= 0 ) then
-         do uk = 1, count
+! SO4
+      if( obs_kind == QTY_SO4) then               
+         if ( wrf%dom(id)%type_so4 >= 0 ) then
+            if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_so4 ) .and. &
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_so4 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_so4 ) ) then
+               call getCorners(i, j, id, wrf%dom(id)%type_so4, ll, ul, lr, ur, rc )
+               if ( rc .ne. 0 ) then
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners SO4 rc = ', rc
+                  call exit_all(-77)
+               endif
+            endif 
+            do uk = 1, count
+!
+! Interpolation for the SO4 field at level k
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so4)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so4)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so4)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so4)
+               x_ill = get_state(ill, state_handle)
+               x_iul = get_state(iul, state_handle)
+               x_ilr = get_state(ilr, state_handle)
+               x_iur = get_state(iur, state_handle)
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the SO4 field at level k+1
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so4)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so4)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so4)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so4)
+               x_ill = get_state(ill, state_handle)
+               x_iul = get_state(iul, state_handle)
+               x_ilr = get_state(ilr, state_handle)
+               x_iur = get_state(iur, state_handle)
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
+         endif
+      endif
+!
+!-----------------------------------------------------
+!6.zf BC1; BC2
+   elseif ( obs_kind == QTY_BC1 .or. obs_kind == QTY_BC2 ) then
+!
+! BC1
+      if( obs_kind == QTY_BC1) then               
+         if ( wrf%dom(id)%type_bc1 >= 0 ) then
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_bc1 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_bc1 ) .and. &
-               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_bc1 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_bc1 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_bc1 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_bc1, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
                   print*, 'model_mod.f90 :: model_interpolate :: getCorners BC1 rc = ', rc
-                  call abort
+                  call exit_all(-77)
                endif
-
+            endif
+            do uk = 1, count
+!
 ! Interpolation for the BC1 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc1)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc1)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc1)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc1)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
 ! Interpolation for the BC1 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc1)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc1)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc1)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc1)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
+         endif      
       endif
-
-!1.zd BC2
-   elseif ( obs_kind == QTY_BC2 ) then
-
-! This is for 3D field 
-
-      if ( wrf%dom(id)%type_bc2 >= 0 ) then
-         do uk = 1, count
+!
+! BC2      
+      if( obs_kind == QTY_BC2) then               
+         if ( wrf%dom(id)%type_bc2 >= 0 ) then
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_bc2 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_bc2 ) .and. &
-               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_bc2 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_bc2 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_bc2 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_bc2, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
                   print*, 'model_mod.f90 :: model_interpolate :: getCorners BC2 rc = ', rc
-                  call abort
+                  call exit_all(-77)
                endif
-
+            endif
+            do uk = 1, count
+!
 ! Interpolation for the BC2 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc2)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc2)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc2)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_bc2)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
 ! Interpolation for the BC2 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc2)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc2)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc2)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc2)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
+         endif
       endif
-
-!1.zd OC1
-   elseif ( obs_kind == QTY_OC1 ) then
-
-      if ( wrf%dom(id)%type_oc1 >= 0 ) then
-         do uk = 1, count
+!
+!-----------------------------------------------------
+!7.zg OC1; OC2
+   elseif ( obs_kind == QTY_OC1 .or. obs_kind == QTY_OC2 ) then
+!
+! OC1
+      if( obs_kind == QTY_OC1) then               
+         if ( wrf%dom(id)%type_oc1 >= 0 ) then
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_oc1 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_oc1 ) .and. &
-               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_oc1 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_oc1 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_oc1 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_oc1, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
                   print*, 'model_mod.f90 :: model_interpolate :: getCorners OC1 rc = ', rc
-                  call abort
+                  call exit_all(-77)
                endif
-
+            endif
+            do uk = 1, count
+!
 ! Interpolation for the OC1 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc1)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc1)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc1)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc1)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
 ! Interpolation for the OC1 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc1)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc1)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc1)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc1)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
+         endif
       endif
-
-!1.zd OC2
-   elseif ( obs_kind == QTY_OC2 ) then
-
-      if ( wrf%dom(id)%type_oc2 >= 0 ) then
-         do uk = 1, count
+!
+! OC2      
+      if( obs_kind == QTY_OC2) then               
+         if ( wrf%dom(id)%type_oc2 >= 0 ) then
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_oc2 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_oc2 ) .and. &
-               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_oc2 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_oc2 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_oc2 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_oc2, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
                   print*, 'model_mod.f90 :: model_interpolate :: getCorners OC2 rc = ', rc
-                  call abort
+                  call exit_all(-77)
                endif
-
+            endif
+            do uk = 1, count
+!
 ! Interpolation for the OC2 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc2)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc2)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc2)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_oc2)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
 ! Interpolation for the OC2 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc2)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc2)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc2)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc2)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
+         endif
       endif
-
-!1.zd dust1~dust5
-   elseif ( obs_kind == QTY_DST01 ) then
-      if ( wrf%dom(id)%type_dst01 >= 0 ) then
-
-         do uk = 1, count
+!
+!-----------------------------------------------------
+!8.zh DUST1; DUST2; DUST3; DUST4; DUST5
+   elseif ( obs_kind == QTY_DST01 .or. obs_kind == QTY_DST02 .or. obs_kind == QTY_DST03 .or. &
+   obs_kind == QTY_DST04 .or. obs_kind == QTY_DST05 ) then
+!
+! DUST1      
+      if( obs_kind == QTY_DST01) then               
+         if ( wrf%dom(id)%type_dst01 >= 0 ) then
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_dst01 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_dst01 ) .and. &
-               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_dst01 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_dst01 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_dst01 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_dst01, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
                   print*, 'model_mod.f90 :: model_interpolate :: getCorners DST01 rc = ', rc
-                  call abort
+                  call exit_all(-77)
                endif
-
+            endif
+            do uk = 1, count
+!
 ! Interpolation for the DST01 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst01)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst01)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst01)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst01)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
 ! Interpolation for the DST01 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst01)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst01)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst01)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst01)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
+         endif
       endif
-
-   elseif ( obs_kind == QTY_DST02 ) then
-
-      if ( wrf%dom(id)%type_dst02 >= 0 ) then
-         do uk = 1, count
+!
+! DUST2      
+      if( obs_kind == QTY_DST02) then               
+         if ( wrf%dom(id)%type_dst02 >= 0 ) then
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_dst02 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_dst02 ) .and. &
-               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_dst02 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_dst02 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_dst02 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_dst02, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
                   print*, 'model_mod.f90 :: model_interpolate :: getCorners DST02 rc = ', rc
-                  call abort
+                  call exit_all(-77)
                endif
-
+            endif
+            do uk = 1, count
+!
 ! Interpolation for the DST02 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst02)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst02)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst02)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst02)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-         
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
 ! Interpolation for the DST02 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst02)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst02)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst02)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst02)
-    
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
+         endif
       endif
-
-   elseif ( obs_kind == QTY_DST03 ) then
-
-      if ( wrf%dom(id)%type_dst03 >= 0 ) then
-         do uk = 1, count
+!
+! DUST3      
+      if( obs_kind == QTY_DST03) then               
+         if ( wrf%dom(id)%type_dst03 >= 0 ) then
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_dst03 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_dst03 ) .and. &
-               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_dst03 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_dst03 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_dst03 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_dst03, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
                   print*, 'model_mod.f90 :: model_interpolate :: getCorners DST03 rc = ', rc
-                  call abort
+                  call exit_all(-77)
                endif
-
+            endif
+            do uk = 1, count
+!
 ! Interpolation for the DST03 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst03)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst03)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst03)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst03)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-         
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
-! Interpolation for the DST01 field at level k+1
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the DST03 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst03)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst03)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst03)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst03)
-    
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
+         endif
       endif
-
-   elseif ( obs_kind == QTY_DST04 ) then
-
+!
+! DUST4
+      if( obs_kind == QTY_DST04) then               
          if ( wrf%dom(id)%type_dst04 >= 0 ) then
-
-          do uk = 1, count
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_dst04 ) .and. &
-                 boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_dst04 ) .and. &
-                 boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_dst04 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_dst04 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_dst04 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_dst04, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
-                    print*, 'model_mod.f90 :: model_interpolate :: getCorners DST04 rc = ', rc
-                    call abort
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners DST04 rc = ', rc
+                  call exit_all(-77)
                endif
-
-           ! Interpolation for the DST04 field at level k
+            endif
+            do uk = 1, count
+!
+! Interpolation for the DST04 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst04)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst04)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst04)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst04)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-          
-         
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
-           ! Interpolation for the DST04 field at level k+1
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the DST04 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst04)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst04)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst04)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst04)
-    
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
          endif
-
-   elseif ( obs_kind == QTY_DST05 ) then
-
+      endif
+!
+! DUST5
+      if( obs_kind == QTY_DST05) then               
          if ( wrf%dom(id)%type_dst05 >= 0 ) then
-
-          do uk = 1, count
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_dst05 ) .and. &
-                 boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_dst05 ) .and. &
-                 boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_dst05 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_dst05 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_dst05 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_dst05, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
-                    print*, 'model_mod.f90 :: model_interpolate :: getCorners DST05 rc = ', rc
-                    call abort
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners DST05 rc = ', rc
+                  call exit_all(-77)
                endif
-
-           ! Interpolation for the DST05 field at level k
+            endif
+            do uk = 1, count
+!
+! Interpolation for the DST05 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst05)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst05)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst05)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_dst05)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
-           ! Interpolation for the DST05 field at level k+1
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the DST05 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst05)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst05)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst05)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst05)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
          endif
-
-!1.zd sea salt 1~4
-   elseif ( obs_kind == QTY_SSLT01 ) then
-
+      endif
+!
+!-----------------------------------------------------
+!9.zi SSLT01; SSLT02; SSLT03; SSLT04
+   elseif ( obs_kind == QTY_SSLT01 .or. obs_kind == QTY_SSLT02 .or. &
+   obs_kind == QTY_SSLT03 .or. obs_kind == QTY_SSLT04 ) then
+!
+! SSLT01
+      if( obs_kind == QTY_SSLT01) then               
          if ( wrf%dom(id)%type_sslt01 >= 0 ) then
-
-          do uk = 1, count
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_sslt01 ) .and. &
-                 boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_sslt01 ) .and. &
-                 boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_sslt01 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_sslt01 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_sslt01 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_sslt01, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
-                    print*, 'model_mod.f90 :: model_interpolate :: getCorners SSLT01 rc = ', rc
-                    call abort
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners SSLT01 rc = ', rc
+                  call exit_all(-77)
                endif
-
-           ! Interpolation for the SSLT01 field at level k
+            endif
+            do uk = 1, count
+!
+! Interpolation for the SSLT01 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt01)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt01)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt01)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt01)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
-           ! Interpolation for the SSLT01 field at level k+1
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the SSLT01 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt01)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt01)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt01)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt01)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
          endif
-
-   elseif ( obs_kind == QTY_SSLT02 ) then
-
+      endif
+!
+! SSLT02
+      if( obs_kind == QTY_SSLT02) then               
          if ( wrf%dom(id)%type_sslt02 >= 0 ) then
-
-          do uk = 1, count
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_sslt02 ) .and. &
-                 boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_sslt02 ) .and. &
-                 boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_sslt02 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_sslt02 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_sslt02 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_sslt02, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
-                    print*, 'model_mod.f90 :: model_interpolate :: getCorners SSLT02 rc = ', rc
-                    call abort
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners SSLT02 rc = ', rc
+                  call exit_all(-77)
                endif
-
-           ! Interpolation for the SSLT02 field at level k
+            endif
+            do uk = 1, count
+!
+! Interpolation for the SSLT02 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt02)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt02)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt02)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt02)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
-           ! Interpolation for the SSLT02 field at level k+1
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the SSLT02 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt02)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt02)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt02)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt02)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
          endif
-
-   elseif ( obs_kind == QTY_SSLT03 ) then
-
+      endif
+!
+! SSLT03
+      if( obs_kind == QTY_SSLT03) then               
          if ( wrf%dom(id)%type_sslt03 >= 0 ) then
-
-          do uk = 1, count
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_sslt03 ) .and. &
-                 boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_sslt03 ) .and. &
-                 boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_sslt03 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_sslt03 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_sslt03 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_sslt03, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
-                    print*, 'model_mod.f90 :: model_interpolate :: getCorners SSLT03 rc = ', rc
-                    call abort
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners SSLT03 rc = ', rc
+                  call exit_all(-77)
                endif
-
-           ! Interpolation for the SSLT03 field at level k
+            endif
+            do uk = 1, count
+!
+! Interpolation for the SSLT03 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt03)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt03)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt03)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt03)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
-           ! Interpolation for the SSLT03 field at level k+1
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the SSLT03 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt03)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt03)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt03)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt03)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
          endif
-
-   elseif ( obs_kind == QTY_SSLT04 ) then
-
+      endif
+!
+! SSLT04
+      if( obs_kind == QTY_SSLT04) then               
          if ( wrf%dom(id)%type_sslt04 >= 0 ) then
-
-          do uk = 1, count
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_sslt04 ) .and. &
-                 boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_sslt04 ) .and. &
-                 boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_sslt04 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_sslt04 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_sslt04 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_sslt04, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
-                    print*, 'model_mod.f90 :: model_interpolate :: getCorners SSLT04 rc = ', rc
-                    call abort
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners SSLT04 rc = ', rc
+                  call exit_all(-77)
                endif
-
-           ! Interpolation for the SSLT04 field at level k
+            endif
+            do uk = 1, count
+!
+! Interpolation for the SSLT04 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt04)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt04)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt04)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_sslt04)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
-           ! Interpolation for the SSLT04 field at level k+1
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the SSLT04 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt04)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt04)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt04)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt04)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
          endif
-
-!1.zd sulfate
-   elseif ( obs_kind == QTY_SO4 ) then
-
-         if ( wrf%dom(id)%type_so4 >= 0 ) then
-
-          do uk = 1, count
-            if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_so4 ) .and. &
-                 boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_so4 ) .and. &
-                 boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_so4 ) ) then
-
-               call getCorners(i, j, id, wrf%dom(id)%type_so4, ll, ul, lr, ur, rc )
-               if ( rc .ne. 0 ) then
-                    print*, 'model_mod.f90 :: model_interpolate :: getCorners SO4 rc = ', rc
-                    call abort
-               endif
-
-           ! Interpolation for the SO4 field at level k
-               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so4)
-               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so4)
-               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so4)
-               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_so4)
-
-               x_ill = get_state(ill, state_handle)
-               x_iul = get_state(iul, state_handle)
-               x_ilr = get_state(ilr, state_handle)
-               x_iur = get_state(iur, state_handle)
-
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
-           ! Interpolation for the SO4 field at level k+1
-               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so4)
-               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so4)
-               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so4)
-               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so4)
-
-               x_ill = get_state(ill, state_handle)
-               x_iul = get_state(iul, state_handle)
-               x_ilr = get_state(ilr, state_handle)
-               x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
-         endif
-
-!1.zd PM25
-   elseif ( obs_kind == QTY_PM25 ) then
-
+      endif
+!
+!-----------------------------------------------------
+!10.zj PM25; PM10
+   elseif ( obs_kind == QTY_PM25 .or. obs_kind == QTY_PM10 ) then
+!
+! PM25
+      if( obs_kind == QTY_PM25) then               
          if ( wrf%dom(id)%type_pm25 >= 0 ) then
-
-          do uk = 1, count
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_pm25 ) .and. &
-                 boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_pm25 ) .and. &
-                 boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_pm25 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_pm25 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_pm25 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_pm25, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
-                    print*, 'model_mod.f90 :: model_interpolate :: getCorners PM25 rc = ', rc
-                    call abort
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners PM25 rc = ', rc
+                  call exit_all(-77)
                endif
-
-           ! Interpolation for the PM25 field at level k
+            endif
+            do uk = 1, count
+!            
+! Interpolation for the PM25 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm25)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm25)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm25)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm25)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
-           ! Interpolation for the PM25 field at level k+1
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the PM25 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm25)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm25)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm25)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm25)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
          endif
-
-!1.zd PM10
-   elseif ( obs_kind == QTY_PM10 ) then
-
+      endif
+!
+! PM10
+      if( obs_kind == QTY_PM10) then               
          if ( wrf%dom(id)%type_pm10 >= 0 ) then
-
-
-          do uk = 1, count
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_pm10 ) .and. &
-                 boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_pm10 ) .and. &
-                 boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_pm10 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_pm10 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_pm10 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_pm10, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
-                    print*, 'model_mod.f90 :: model_interpolate :: getCorners PM10 rc = ', rc
-                    call abort
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners PM10 rc = ', rc
+                  call exit_all(-77)
                endif
-
-           ! Interpolation for the PM10 field at level k
+            endif
+            do uk = 1, count
+!            
+! Interpolation for the PM10 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm10)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm10)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm10)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_pm10)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
-           ! Interpolation for the PM10 field at level k+1
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the PM10 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm10)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm10)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm10)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm10)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
          endif
-
-!1.ze P25
-   elseif ( obs_kind == QTY_P25 ) then
-
+      endif
+!
+!-----------------------------------------------------
+!11.zk P25; P10
+   elseif ( obs_kind == QTY_P25 .or. obs_kind == QTY_P10 ) then
+!
+! P25
+      if( obs_kind == QTY_P25) then               
          if ( wrf%dom(id)%type_p25 >= 0 ) then
-
-
-          do uk = 1, count
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_p25 ) .and. &
-                 boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_p25 ) .and. &
-                 boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_p25 ) ) then
-
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_p25 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_p25 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_p25, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
-                    print*, 'model_mod.f90 :: model_interpolate :: getCorners P25 rc = ', rc
-                    call abort
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners P25 rc = ', rc
+                  call exit_all(-77)
                endif
-
-           ! Interpolation for the PM10 field at level k
+            endif
+            do uk = 1, count
+!            
+! Interpolation for the P25 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p25)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p25)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p25)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p25)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
-           ! Interpolation for the P25 field at level k+1
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the P25 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p25)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p25)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p25)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p25)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
          endif
-
-!1.zf P10
-   elseif ( obs_kind == QTY_P10 ) then
-
-      if ( wrf%dom(id)%type_p10 >= 0 ) then
-         do uk = 1, count
+      endif
+!
+! P10
+      if( obs_kind == QTY_P10) then               
+         if ( wrf%dom(id)%type_p10 >= 0 ) then
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_p10 ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_p10 ) .and. &
-               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_p10 ) ) then
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_p10 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_p10 ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_p10, ll, ul, lr, ur, rc )
                if ( rc .ne. 0 ) then
                   print*, 'model_mod.f90 :: model_interpolate :: getCorners P10 rc = ', rc
-                  call abort
+                  call exit_all(-77)
                endif
-
-! Interpolation for the PM10 field at level k
+            endif
+            do uk = 1, count
+!            
+! Interpolation for the P10 field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p10)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p10)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p10)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_p10)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
 ! Interpolation for the P10 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p10)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p10)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p10)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p10)
-
                x_ill = get_state(ill, state_handle)
                x_iul = get_state(iul, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) =  dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+            enddo
+         endif
       endif
-
-! 1.zd E_CO Retrieval (E_CO)
-
-   else if( obs_kind == QTY_CO  ) then
-
-      if ( wrf%dom(id)%type_e_co >= 0 ) then
-
-         do uk = 1, count
-! Check to make sure retrieved integer gridpoints are in valid range
-            if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_e_co ) .and. &
-               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_e_co ) .and. &
-               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_e_co ) ) then
-
-               call getCorners(i, j, id, wrf%dom(id)%type_e_co, ll, ul, lr, ur, rc )
-
-               if ( rc .ne. 0 ) then
-                  print*, 'model_mod.f90 :: model_interpolate :: getCorners E_CO rc = ', rc
-                  call abort
-               endif
-
-! Interpolation for the E_CO field at level k
-               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_e_co)
-               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_e_co)
-               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_e_co)
-               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_e_co)
-
-               x_ill = get_state(ill, state_handle)
-               x_iul = get_state(iul, state_handle)
-               x_ilr = get_state(ilr, state_handle)
-               x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1, e) = dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-
-! Interpolation for the E_CO field at level k+1
-               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_e_co)
-               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_e_co)
-               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_e_co)
-               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_e_co)
-
-               x_ill = get_state(ill, state_handle)
-               x_iul = get_state(iul, state_handle)
-               x_ilr = get_state(ilr, state_handle)
-               x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(2,e) = dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
-            endif
-         enddo
-      endif
-         
 ! APM/CQM ---
-
 ! KRF End adding Mizzi's fields
+!
    !-----------------------------------------------------
    ! If obs_kind is not negative (for identity obs), or if it is not one of the above 15
    !   explicitly checked-for kinds, then set error istatus and missing_r8.
@@ -4543,6 +4270,185 @@ deallocate(uniquek)
 end subroutine model_interpolate
 !
 !#######################################################################
+!
+subroutine apm_interpolate(fld_intrp, obs_kind, ens_size, kval, kndx, uniquek, &
+   count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, dom_id)
+   integer, intent(in)          :: obs_kind
+   integer, intent(in)          :: count
+   integer, intent(in)          :: ens_size
+   integer, intent(in)          :: kndx
+   integer, intent(in)          :: dom_id
+   integer, intent(in)          :: kval(ens_size)
+   integer, intent(in)          :: uniquek(count)
+   real(r8), intent(in)         :: dx,dy,dxm,dym
+   real(r8), intent(inout)      :: x_ill(ens_size),x_iul(ens_size),x_ilr(ens_size),x_iur(ens_size)
+   real(r8), intent(out)        :: fld_intrp(ens_size)
+   integer                      :: e
+   integer                      :: var_id
+   real(r8)                     :: ddx,ddy,ddxm,ddym
+   real(r8)                     :: xx_ill,xx_iul,xx_ilr,xx_iur
+   real(r8)                     :: minval
+!
+! APM: subroutine to remove negative (or any other unwanted) values from
+! the interpolation algorithm. Currently the unwanted values are replaced
+! with zero values.
+!
+!   var_id=get_varid_from_kind(dom_id,obs_kind)
+!   minval=get_io_clamping_minval(dom_id,var_id)
+   
+   where(x_ill.lt.0. .and. x_ill.ne.missing_r8)
+      x_ill=missing_r8
+   endwhere
+!
+   where(x_iul.lt.0. .and. x_iul.ne.missing_r8)
+      x_iul=missing_r8
+   endwhere
+!
+   where(x_ilr.lt.0. .and. x_ilr.ne.missing_r8)
+      x_ilr=missing_r8
+   endwhere
+!
+   where(x_iur.lt.0. .and. x_iur.ne.missing_r8)
+      x_iur=missing_r8
+   endwhere
+!
+!   if(any(x_ill.lt.0.) .or. any(x_iul.lt.0.) .or. any(x_ilr.lt.0.) .or. any(x_iur.lt.0.)) then
+!      print *,'APM: x_ill, x_iul, x_ilr, x_iur ',x_ill,x_iul,x_ilr,x_iur
+!   endif
+!
+   ddx=dx   
+   ddy=dy   
+   ddxm=dxm   
+   ddym=dym
+!
+   do e = 1, ens_size
+      xx_ill=x_ill(e)
+      xx_ilr=x_ilr(e)
+      xx_iul=x_iul(e)
+      xx_iur=x_iur(e)
+!
+! none missing
+      if(xx_ill/=missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul/=missing_r8 &
+      .and. xx_iur/=missing_r8) then
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+!
+! one missing point
+      elseif(xx_ill==missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul/=missing_r8 &
+      .and. xx_iur/=missing_r8) then
+         xx_ill=xx_ilr
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+      elseif(xx_ill/=missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul/=missing_r8 &
+      .and. xx_iur/=missing_r8) then
+         xx_ilr=xx_ill
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+      elseif(xx_ill/=missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul==missing_r8 &
+      .and. xx_iur/=missing_r8) then
+         xx_iul=xx_iur
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+      elseif(xx_ill/=missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul/=missing_r8 &
+      .and. xx_iur==missing_r8) then
+         xx_iur=xx_iul
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+!
+! two missing points
+      elseif(xx_ill==missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul/=missing_r8 &
+      .and. xx_iur/=missing_r8) then
+         xx_ill=xx_iul
+         xx_ilr=xx_iur   
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+      elseif(xx_ill/=missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul==missing_r8 &
+      .and. xx_iur==missing_r8) then
+         xx_iul=xx_ill   
+         xx_iur=xx_ilr   
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+      elseif(xx_ill==missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul==missing_r8 &
+      .and. xx_iur/=missing_r8) then
+         xx_ill=xx_ilr   
+         xx_iul=xx_iur   
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+      elseif(xx_ill/=missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul/=missing_r8 &
+      .and. xx_iur==missing_r8) then
+         xx_ilr=xx_ill   
+         xx_iur=xx_iul
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+      elseif(xx_ill==missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul/=missing_r8 &
+      .and. xx_iur==missing_r8) then
+         xx_ill=xx_ilr   
+         xx_iur=xx_iul   
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+      elseif(xx_ill/=missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul==missing_r8 &
+      .and. xx_iur/=missing_r8) then
+         xx_ilr=xx_ill   
+         xx_iul=xx_iur   
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+!
+! three missing points
+      elseif(xx_ill==missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul==missing_r8 &
+      .and. xx_iur/=missing_r8) then
+         xx_ill=xx_iur
+         xx_ilr=xx_iur
+         xx_iul=xx_iur
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+      elseif(xx_ill/=missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul==missing_r8 &
+      .and. xx_iur==missing_r8) then
+         xx_ilr=xx_ill
+         xx_iul=xx_ill
+         xx_iur=xx_ill
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+      elseif(xx_ill==missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul==missing_r8 &
+      .and. xx_iur==missing_r8) then
+         xx_ill=xx_ilr
+         xx_iul=xx_ilr
+         xx_iur=xx_ilr
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+      elseif(xx_ill==missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul/=missing_r8 &
+      .and. xx_iur==missing_r8) then
+         xx_ill=xx_iul
+         xx_ilr=xx_iul
+         xx_iur=xx_iul
+         if (kval(e) == uniquek(kndx)) then
+            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         endif
+!
+! four missing
+      elseif(xx_ill==missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul==missing_r8 &
+      .and. xx_iur==missing_r8) then
+         fld_intrp(e)=missing_r8
+      endif
+   enddo
+!                  
+end subroutine apm_interpolate
+!
+!#######################################################################
+!
 subroutine chem_interpolate(fld,dx,dy,dxm,dym,x_ill,x_ilr,x_iul,x_iur,missing_r8)
   implicit none
   real(r8)            :: fld,dx,dy,dxm,dym,x_ill,x_ilr,x_iul,x_iur,missing_r8

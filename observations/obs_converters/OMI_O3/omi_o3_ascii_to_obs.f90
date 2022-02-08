@@ -303,23 +303,25 @@ program omi_o3_ascii_to_obs
 ! partial column      
 !
 ! Find the fraction of the OMI O3 total column that is within the WRF grid      
-      omi_sum_fl=0.
-      omi_sum_pr=0.
-      do k=1,kend
-         omi_sum_fl=omi_sum_fl + prior_obs(k)   
-         omi_sum_pr=omi_sum_pr + prior_obs(k)
-      end do
-      do k=kend+1,nlay_obs
-         omi_sum_fl=omi_sum_fl + prior_obs(k)   
-      end do
-      omi_frac=omi_sum_pr/omi_sum_fl
+!      omi_sum_fl=0.
+!      omi_sum_pr=0.
+!      do k=1,kend
+!         omi_sum_fl=omi_sum_fl + prior_obs(k)   
+!         omi_sum_pr=omi_sum_pr + prior_obs(k)
+!      end do
+!      do k=kend+1,nlay_obs
+!         omi_sum_fl=omi_sum_fl + prior_obs(k)   
+!      end do
+!      omi_frac=omi_sum_pr/omi_sum_fl
 !
 ! Set data for writing obs_sequence file
       qc_count=qc_count+1
 !
 ! Obs value is the total vertical column      
-      obs_val(:)=omi_frac*col_amt_obs
-      obs_err_var=(fac_obs_error*fac_err*omi_frac*col_amt_obs)**2.
+      obs_val(:)=col_amt_obs
+      obs_err_var=(fac_obs_error*fac_err*col_amt_obs)**2.
+!      obs_val(:)=omi_frac*col_amt_obs
+!      obs_err_var=(fac_obs_error*fac_err*omi_frac*col_amt_obs)**2.
       omi_qc(:)=0
       
       obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)

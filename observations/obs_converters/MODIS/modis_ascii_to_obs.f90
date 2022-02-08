@@ -214,7 +214,6 @@ program modis_ascii_to_obs
          day = day + 1
       endif
 ! play with the error for now
-      aoderr = aoderr
       if (debug) print *, 'next observation located at lat, lon = ', lat, lon
       if (rcio /= 0) then 
          if (debug) print *, 'got bad read code getting rest of aod obs, rcio = ', rcio

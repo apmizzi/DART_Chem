@@ -54,60 +54,60 @@
 ! BEGIN DART PREPROCESS MODULE CODE
 module obs_def_IASI_CO_mod
 
-use        types_mod, only : r8, missing_r8
-use    utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &
+   use        types_mod, only : r8, missing_r8
+   use    utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &
                              nmlfileunit, check_namelist_read, &
                              find_namelist_in_file, do_nml_file, do_nml_term, &
                              ascii_file_format
-use     location_mod, only : location_type, set_location, get_location, VERTISPRESSURE, VERTISLEVEL, VERTISSURFACE, VERTISUNDEF
+   use     location_mod, only : location_type, set_location, get_location, VERTISPRESSURE, VERTISLEVEL, VERTISSURFACE, VERTISUNDEF
 
-use  assim_model_mod, only : interpolate
-use    obs_kind_mod, only  : QTY_CO, QTY_SURFACE_PRESSURE, QTY_PRESSURE, QTY_LANDMASK
-use ensemble_manager_mod,  only : ensemble_type
-use obs_def_utilities_mod, only : track_status
+   use  assim_model_mod, only : interpolate
+   use    obs_kind_mod, only  : QTY_CO, QTY_SURFACE_PRESSURE, QTY_PRESSURE, QTY_LANDMASK
+   use ensemble_manager_mod,  only : ensemble_type
+   use obs_def_utilities_mod, only : track_status
 
-implicit none
-private
+   implicit none
+   private
 
-public :: write_iasi_co, &
+   public :: write_iasi_co, &
           read_iasi_co, &
           interactive_iasi_co, &
           get_expected_iasi_co, &
           set_obs_def_iasi_co
 
 ! Storage for the special information required for observations of this type
-integer, parameter               :: MAX_IASI_CO_OBS = 10000000
-integer, parameter               :: IASI_DIM = 19
-integer, parameter               :: IASI_DIMP = 20
-integer                          :: num_iasi_co_obs = 0
-integer                          :: nlayer_model, nlayer_iasi_co
+   integer, parameter               :: MAX_IASI_CO_OBS = 10000000
+   integer, parameter               :: IASI_DIM = 19
+   integer, parameter               :: IASI_DIMP = 20
+   integer                          :: num_iasi_co_obs = 0
+   integer                          :: nlayer_model, nlayer_iasi
 !
-real(r8), allocatable, dimension(:,:) :: avg_kernel
-real(r8), allocatable, dimension(:,:) :: pressure
-real(r8), allocatable, dimension(:) :: iasi_prior
-real(r8), allocatable, dimension(:) :: iasi_psurf
-integer,  allocatable, dimension(:) :: iasi_nlevels
-integer,  allocatable, dimension(:) :: iasi_nlevelsp
+   real(r8), allocatable, dimension(:,:) :: avg_kernel
+   real(r8), allocatable, dimension(:,:) :: pressure
+   real(r8), allocatable, dimension(:) :: iasi_prior
+   real(r8), allocatable, dimension(:) :: iasi_psurf
+   integer,  allocatable, dimension(:) :: iasi_nlayers
+   integer,  allocatable, dimension(:) :: iasi_nlevels
 
 ! version controlled file description for error handling, do not edit
-character(len=*), parameter :: source   = 'obs_def_IASI_CO_mod.f90'
-character(len=*), parameter :: revision = ''
-character(len=*), parameter :: revdate  = ''
+   character(len=*), parameter :: source   = 'obs_def_IASI_CO_mod.f90'
+   character(len=*), parameter :: revision = ''
+   character(len=*), parameter :: revdate  = ''
 
-character(len=512) :: string1, string2
+   character(len=512) :: string1, string2
 
-logical, save :: module_initialized = .false.
-integer  :: counts1 = 0
+   logical, save :: module_initialized = .false.
+   integer  :: counts1 = 0
 
-character(len=129)  :: IASI_CO_retrieval_type
-logical             :: use_log_co
+   character(len=129)  :: IASI_CO_retrieval_type
+   logical             :: use_log_co
 !
 ! IASI_CO_retrieval_type:
 !     RAWR - retrievals in format from supplier
 !     RETR - retrievals in retrieval (ppbv) format
 !     QOR  - quasi-optimal retrievals
 !     CPSR - compact phase space retrievals
-    namelist /obs_def_IASI_CO_nml/ IASI_CO_retrieval_type, use_log_co, nlayer_model, nlayer_iasi_co
+   namelist /obs_def_IASI_CO_nml/ IASI_CO_retrieval_type, use_log_co, nlayer_model, nlayer_iasi
 
 contains
 
@@ -115,31 +115,32 @@ contains
 
 subroutine initialize_module
 
-integer :: iunit, rc
+   integer :: iunit, rc
 
 ! Prevent multiple calls from executing this code more than once.
-if (module_initialized) return
+   if (module_initialized) return
 
-call register_module(source, revision, revdate)
-module_initialized = .true.
+   call register_module(source, revision, revdate)
+   module_initialized = .true.
 
-allocate (avg_kernel(   MAX_IASI_CO_OBS,IASI_DIM))
-allocate (pressure(     MAX_IASI_CO_OBS,IASI_DIMP))
-allocate (iasi_prior(   MAX_IASI_CO_OBS))
-allocate (iasi_psurf(   MAX_IASI_CO_OBS))
-allocate (iasi_nlevels( MAX_IASI_CO_OBS))
-allocate (iasi_nlevelsp(MAX_IASI_CO_OBS))
+   allocate (avg_kernel(   MAX_IASI_CO_OBS,IASI_DIM))
+   allocate (pressure(     MAX_IASI_CO_OBS,IASI_DIMP))
+   allocate (iasi_prior(   MAX_IASI_CO_OBS))
+   allocate (iasi_psurf(   MAX_IASI_CO_OBS))
+   allocate (iasi_nlayers( MAX_IASI_CO_OBS))
+   allocate (iasi_nlevels(MAX_IASI_CO_OBS))
 
 ! Read the namelist entry.
-IASI_CO_retrieval_type='RAWR'
-use_log_co=.false.
-call find_namelist_in_file("input.nml", "obs_def_IASI_CO_nml", iunit)
-read(iunit, nml = obs_def_IASI_CO_nml, iostat = rc)
-call check_namelist_read(iunit, rc, "obs_def_IASI_CO_nml")
+   IASI_CO_retrieval_type='RAWR'
+   use_log_co=.false.
+   call find_namelist_in_file("input.nml", "obs_def_IASI_CO_nml", iunit)
+   read(iunit, nml = obs_def_IASI_CO_nml, iostat = rc)
+   call check_namelist_read(iunit, rc, "obs_def_IASI_CO_nml")
 
 ! Record the namelist values used for the run ... 
-if (do_nml_file()) write(nmlfileunit, nml=obs_def_IASI_CO_nml)
-if (do_nml_term()) write(     *     , nml=obs_def_IASI_CO_nml)
+   if (do_nml_file()) write(nmlfileunit, nml=obs_def_IASI_CO_nml)
+   if (do_nml_term()) write(     *     , nml=obs_def_IASI_CO_nml)
+!
 end subroutine initialize_module
 !
 subroutine read_iasi_co(key, ifile, fform)
@@ -152,8 +153,8 @@ character(len=*), intent(in), optional :: fform
 
 character(len=32)              :: fileformat
 
+integer                        :: iasi_nlayers_1
 integer                        :: iasi_nlevels_1
-integer                        :: iasi_nlevelsp_1
 real(r8)                       :: iasi_prior_1
 real(r8)                       :: iasi_psurf_1
 real(r8), dimension(IASI_DIM)  :: avg_kernels_1
@@ -172,27 +173,27 @@ avg_kernels_1(:) = 0.0_r8
 pressure_1(:) = 0.0_r8
 SELECT CASE (fileformat)
    CASE ("unf", "UNF", "unformatted", "UNFORMATTED")
-   iasi_nlevels_1 = read_iasi_nlevels(ifile, fileformat)
-   iasi_nlevelsp_1 = iasi_nlevels_1+1
+   iasi_nlayers_1 = read_iasi_nlayers(ifile, fileformat)
+   iasi_nlevels_1 = iasi_nlayers_1+1
    iasi_prior_1 = read_iasi_prior(ifile, fileformat)
    iasi_psurf_1 = read_iasi_psurf(ifile, fileformat)
-   avg_kernels_1(:) = read_iasi_avg_kernels(ifile, iasi_nlevels_1, fileformat)
-   pressure_1(:) = read_iasi_pressure(ifile, iasi_nlevelsp_1, fileformat)
+   avg_kernels_1(:) = read_iasi_avg_kernels(ifile, iasi_nlayers_1, fileformat)
+   pressure_1(:) = read_iasi_pressure(ifile, iasi_nlevels_1, fileformat)
    read(ifile) keyin
    CASE DEFAULT
-   iasi_nlevels_1 = read_iasi_nlevels(ifile, fileformat)
-   iasi_nlevelsp_1 = iasi_nlevels_1+1
+   iasi_nlayers_1 = read_iasi_nlayers(ifile, fileformat)
+   iasi_nlevels_1 = iasi_nlayers_1+1
    iasi_prior_1 = read_iasi_prior(ifile, fileformat)
    iasi_psurf_1 = read_iasi_psurf(ifile, fileformat)
-   avg_kernels_1(:) = read_iasi_avg_kernels(ifile, iasi_nlevels_1, fileformat)
-   pressure_1(:) = read_iasi_pressure(ifile, iasi_nlevelsp_1, fileformat)
+   avg_kernels_1(:) = read_iasi_avg_kernels(ifile, iasi_nlayers_1, fileformat)
+   pressure_1(:) = read_iasi_pressure(ifile, iasi_nlevels_1, fileformat)
    read(ifile, *) keyin
 END SELECT
 
 counts1 = counts1 + 1
 key = counts1
 call set_obs_def_iasi_co(key, avg_kernels_1, pressure_1, iasi_prior_1, iasi_psurf_1, &
-                           iasi_nlevels_1, iasi_nlevelsp_1)
+                           iasi_nlayers_1, iasi_nlevels_1)
 end subroutine read_iasi_co
 !
 subroutine write_iasi_co(key, ifile, fform)
@@ -213,22 +214,22 @@ if(present(fform)) fileformat = trim(adjustl(fform))
 ! Philosophy, read ALL information about this special obs_type at once???
 ! For now, this means you can only read ONCE (that's all we're doing 3 June 05)
 ! Toggle the flag to control this reading
-avg_kernels_temp=avg_kernel(key,:)
-pressure_temp=pressure(key,:)
+avg_kernels_temp(:)=avg_kernel(key,:)
+pressure_temp(:)=pressure(key,:)
 SELECT CASE (fileformat)
    CASE ("unf", "UNF", "unformatted", "UNFORMATTED")
-   call write_iasi_nlevels(ifile, iasi_nlevels(key), fileformat)
+   call write_iasi_nlayers(ifile, iasi_nlayers(key), fileformat)
    call write_iasi_prior(ifile, iasi_prior(key), fileformat)
    call write_iasi_psurf(ifile, iasi_psurf(key), fileformat)
-   call write_iasi_avg_kernels(ifile, avg_kernels_temp, iasi_nlevels(key), fileformat)
-   call write_iasi_pressure(ifile, pressure_temp, iasi_nlevelsp(key), fileformat)
+   call write_iasi_avg_kernels(ifile, avg_kernels_temp, iasi_nlayers(key), fileformat)
+   call write_iasi_pressure(ifile, pressure_temp, iasi_nlevels(key), fileformat)
    write(ifile) key
    CASE DEFAULT
-   call write_iasi_nlevels(ifile, iasi_nlevels(key), fileformat)
+   call write_iasi_nlayers(ifile, iasi_nlayers(key), fileformat)
    call write_iasi_prior(ifile, iasi_prior(key), fileformat)
    call write_iasi_psurf(ifile, iasi_psurf(key), fileformat)
-   call write_iasi_avg_kernels(ifile, avg_kernels_temp, iasi_nlevels(key), fileformat)
-   call write_iasi_pressure(ifile, pressure_temp, iasi_nlevelsp(key), fileformat)
+   call write_iasi_avg_kernels(ifile, avg_kernels_temp, iasi_nlayers(key), fileformat)
+   call write_iasi_pressure(ifile, pressure_temp, iasi_nlevels(key), fileformat)
    write(ifile, *) key
 END SELECT 
 end subroutine write_iasi_co
@@ -276,36 +277,44 @@ subroutine get_expected_iasi_co(state_handle, ens_size, location, key, val, ista
    real(r8),            intent(out) :: val(ens_size)
    integer,             intent(out) :: istatus(ens_size)
 !
-   integer,parameter   :: wrf_nlev=32
-   integer             :: i, kstr, ilev, icnt
    type(location_type) :: loc2
-   real(r8)            :: mloc(3), prs_wrf(wrf_nlev)
-   real(r8)            :: obs_val(ens_size), co_min, co_min_log, level, missing
-   real(r8)            :: prs_wrf_sfc(ens_size), co_wrf_sfc(ens_size)
-   real(r8)            :: prs_wrf_1(ens_size), prs_wrf_2(ens_size), co_wrf_1(ens_size), co_wrf_2(ens_size), prs_wrf_nlev(ens_size)
-   real(r8)            :: prs_iasi_sfc, prs_iasi
-   integer             :: nlevels,nlevelsp
 
-   real(r8)            :: vert_mode_filt(ens_size)
+   integer             :: i, k, imem, kstr
+   integer             :: interp_new
+   integer             :: zstatus(ens_size)
+   integer             :: layer_iasi,level_iasi
+   integer             :: layer_mdl,level_mdl
+
+   real(r8)            :: prs_iasi_sfc
+   real(r8)            :: co_min, co_min_log, level
+   real(r8)            :: mloc(3)
+   real(r8),dimension(ens_size)  :: prs_mdl_sfc
+   real(r8),dimension(ens_size)  :: prs_mdl_1, co_mdl_1
+   real(r8),dimension(ens_size)  :: prs_mdl_n, co_mdl_n
+   real(r8),dimension(:),allocatable   :: prs_iasi
+   real(r8),dimension(:,:),allocatable :: co_val
 
    character(len=*), parameter :: routine = 'get_expected_iasi_co'
-
    logical :: return_now
-   integer :: sfcp_istatus(ens_size)
-   integer :: plev1_istatus(ens_size)
-   integer :: plev2_istatus(ens_size)
-   integer :: co_istatus(ens_size)
-   integer :: obsval_istatus(ens_size)
 !
 ! Initialize DART
+   istatus(:) = 0
    if ( .not. module_initialized ) call initialize_module
 !
 ! Initialize variables (IASI is ppbv; WRF CO is ppmv)
    co_min      = 1.e-2
    co_min_log  = log(co_min)
-   missing     = -888888.0_r8
-   nlevels     = iasi_nlevels(key)
-   nlevelsp    = iasi_nlevelsp(key)
+
+   layer_iasi = iasi_nlayers(key)
+   level_iasi = iasi_nlevels(key)
+   layer_mdl = nlayer_model
+   level_mdl = layer_mdl+1
+
+   allocate(prs_iasi(layer_iasi))
+   do k=1,layer_iasi
+      prs_iasi(k)=(pressure(key,k)+pressure(key,k+1))/2.
+   enddo
+   
    if ( use_log_co ) then
       co_min=co_min_log
    endif
@@ -317,127 +326,169 @@ subroutine get_expected_iasi_co(state_handle, ens_size, location, key, val, ista
    elseif (mloc(2)<-90.0_r8) then
       mloc(2)=-90.0_r8
    endif
-   prs_iasi=mloc(3)
 !
-! IASI surface pressure
-   prs_iasi_sfc = iasi_psurf(key)
-!
-! WRF surface pressure
+! pressure at model surface (Pa)
    level=0.0_r8
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
-   istatus(:)=0
-   sfcp_istatus(:)=0
-   call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_wrf_sfc, sfcp_istatus)
-   if(any(sfcp_istatus/=0)) then
-      write(string1, *)'APM NOTICE: WRF prs_wrf_sfc is bad '
-      call error_handler(E_MSG,'set_obs_def_iasi_co',string1,source,revision,revdate)
-   endif
-   call track_status(ens_size, sfcp_istatus, prs_wrf_sfc, istatus, return_now)
-   if(return_now) return
+   zstatus(:)=0
+   call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_mdl_sfc, zstatus)
+
+   co_mdl_1(:)=missing_r8
+   prs_mdl_1(:)=missing_r8
+
+   do k=1,layer_mdl
+      level=real(k)
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_CO, co_mdl_1, zstatus) ! ppmv 
+      zstatus=0
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
 !
-! WRF pressure first level
-   level=1.0_r8
-   loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-   istatus(:) = 0
-   plev1_istatus(:)=0
-   call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_wrf_1, plev1_istatus)
-   if(any(plev1_istatus/=0)) then
-      write(string1, *)'APM NOTICE: WRF prs_wrf_1 is bad '
-      call error_handler(E_MSG,'set_obs_def_iasi_co',string1,source,revision,revdate)
-   endif
-   call track_status(ens_size, plev1_istatus, prs_wrf_1, istatus, return_now)
-   if(return_now) return
+      interp_new=0
+      do imem=1,ens_size
+         if(co_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
+            interp_new=1
+            exit
+         endif
+      enddo
+      if(interp_new.eq.0) then
+         exit
+      endif    
+   enddo
+
+!   write(string1, *)'APM: co lower bound ',co_mdl_1
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *)'APM: prs lower bound ',prs_mdl_1
+!   call error_handler(E_MSG, routine, string1, source)
+
+   co_mdl_n(:)=missing_r8
+   prs_mdl_n(:)=missing_r8
+
+   do k=layer_mdl,1,-1
+      level=real(k)
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)  
+      call interpolate(state_handle, ens_size, loc2, QTY_CO, co_mdl_n, zstatus) ! ppmv
+      zstatus=0
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, zstatus) ! Pa
 !
-! WRF pressure second level
-   level=2.0_r8
-   loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-   istatus(:) = 0
-   plev2_istatus(:)=0
-   call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_wrf_2, plev2_istatus)
-   if(any(plev2_istatus/=0)) then
-      write(string1, *)'APM NOTICE: WRF prs_wrf_2 is bad '
-      call error_handler(E_MSG,'set_obs_def_iasi_co',string1,source,revision,revdate)
-   endif
-   call track_status(ens_size, plev2_istatus, prs_wrf_2, istatus, return_now)
-   if(return_now) return
+      interp_new=0
+      do imem=1,ens_size
+         if(co_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
+            interp_new=1
+            exit
+         endif
+      enddo
+      if(interp_new.eq.0) then
+         exit
+      endif    
+   enddo
+
+!   write(string1, *)'APM: co upper bound ',co_mdl_n
+!   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *)'APM: prs upper bound ',prs_mdl_n
+!   call error_handler(E_MSG, routine, string1, source)
+
+! Get profiles at IASI pressure levels
+    if (prs_mdl_sfc(imem).gt.iasi_psurf(key)) then
+       prs_iasi(1)=(prs_mdl_sfc(imem)+pressure(key,2))/2.
+    endif   
 !
-! WRF carbon monoxide at first level
-   level=1.0_r8
-   loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-   istatus(:)=0
-   co_istatus(:)=0
-   call interpolate(state_handle, ens_size, loc2, QTY_CO, co_wrf_1, co_istatus) 
-   if(any(co_istatus/=0)) then
-      write(string1, *)'APM NOTICE: WRF co_wrf_1 is bad '
-      call error_handler(E_MSG,'set_obs_def_iasi_co',string1,source,revision,revdate)
-   endif
-   call track_status(ens_size, co_istatus, co_wrf_1, istatus, return_now)
-   if(return_now) return
-   co_wrf_sfc=co_wrf_1
+   allocate(co_val(ens_size,layer_iasi))
+   do k=1,layer_iasi
+      zstatus=0
+      loc2 = set_location(mloc(1), mloc(2), prs_iasi(k), VERTISPRESSURE)
+      call interpolate(state_handle, ens_size, loc2, QTY_CO, co_val(:,k), zstatus)  
+!
+! Correcting for expected failures near the surface
+      do imem=1,ens_size
+         if (prs_iasi(k).ge.prs_mdl_1(imem)) then
+            co_val(imem,k) = co_mdl_1(imem)
+            cycle
+         endif
+
+! Correcting for expected failures near the top
+         if (prs_iasi(k).le.prs_mdl_n(imem)) then
+            co_val(imem,k) = co_mdl_n(imem)
+            cycle
+         endif
+      enddo
+!
+      write(string1, *)'APM: co ',k,co_val(1,k)
+      call error_handler(E_MSG, routine, string1, source)
+!
+! Check data for missing values      
+      do imem=1,ens_size
+         if(co_val(imem,k).eq.missing_r8) then
+            zstatus(:)=20
+            val(:)=missing_r8
+            write(string1, *) &
+            'APM: Input data has missing values '
+            call error_handler(E_MSG, routine, string1, source)
+            call track_status(ens_size, zstatus, val, istatus, return_now)
+            return
+         endif
+!
+! Convert units for co to ppbv for IASI
+         if(use_log_co) then
+            co_val(imem,k) = log(exp(co_val(imem,k)) * 1.e3_r8)
+         else
+            co_val(imem,k) = co_val(imem,k) * 1.e3_r8
+         endif
+      enddo
+   enddo
 !
 ! Apply IASI Averaging kernel A and IASI Prior (I-A)xa
 ! x = Axm + (I-A)xa , where x is a 19 element vector 
 !
-! loop through IASI levels
+! loop through IASI layers
    val(:) = 0.0_r8
-   do ilev = 1, nlevels
-      if (ilev.eq.1) then
-         prs_iasi=(prs_iasi_sfc+pressure(key,ilev))/2.
-         loc2 = set_location(mloc(1),mloc(2),prs_iasi, VERTISPRESSURE)
-      else
-         prs_iasi=(pressure(key,ilev-1)+pressure(key,ilev))/2.
-         loc2 = set_location(mloc(1),mloc(2),prs_iasi, VERTISPRESSURE)
-      endif
-!
-      istatus(:)=0
-      obsval_istatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_CO, obs_val, obsval_istatus)
-      where(prs_iasi.ge.prs_wrf_1)
-         obs_val = co_wrf_1
-         istatus=0
-         obsval_istatus=0
-      endwhere
-      if(any(obsval_istatus/=0)) then 
-         write(string1, *)'APM NOTICE: WRF obs_val is bad ',prs_iasi
-         call error_handler(E_MSG,'set_obs_def_iasi_co',string1,source,revision,revdate)
-      endif
-      call track_status(ens_size, obsval_istatus, obs_val, istatus, return_now)
-      if (return_now) return
-!
-! check for lower bound
-      if(any(obs_val.lt.co_min)) then
-         write(string1, *)'APM: NOTICE resetting minimum IASI CO value '
-         call error_handler(E_MSG,'set_obs_def_iasi_co',string1,source,revision,revdate)
-      end if
-      where(obs_val.lt.co_min )
-         obs_val = co_min
-      endwhere
-!
-! apply averaging kernel
-      if( use_log_co ) then
-         val = val + avg_kernel(key,ilev) * exp(obs_val) * 1.e3  
-      else
-         val = val + avg_kernel(key,ilev) * obs_val * 1.e3  
-      endif
-   enddo
+   do imem=1,ens_size
+      do k=1,layer_iasi
+         if( use_log_co ) then
+            val(imem) = val(imem) + avg_kernel(key,k) * exp(co_val(imem,k))  
+         else
+            val(imem) = val(imem) + avg_kernel(key,k) * co_val(imem,k)
+            if(imem.eq.1) then
+               write(string1, *) 'APM: imem,k,val,avgk,co_val ',imem,k,val(imem), &
+               avg_kernel(key,k),co_val(imem,k)
+               call error_handler(E_MSG, routine, string1, source)
+            endif
+         endif         
+      enddo
 !
 ! NOTE: For the following the iasi_prior is zero due to the QOR subtraction
-   if (trim(IASI_CO_retrieval_type).eq.'RAWR' .or. trim(IASI_CO_retrieval_type).eq.'QOR' &
-   .or. trim(IASI_CO_retrieval_type).eq.'CPSR') then
-      val = val + iasi_prior(key)
-   elseif (trim(IASI_CO_retrieval_type).eq.'RETR') then
-      val = val + iasi_prior(key)
-   endif
+      if (trim(IASI_CO_retrieval_type).eq.'RAWR' .or. trim(IASI_CO_retrieval_type).eq.'QOR' &
+      .or. trim(IASI_CO_retrieval_type).eq.'CPSR') then
+         val(imem) = val(imem) + iasi_prior(key)
+      elseif (trim(IASI_CO_retrieval_type).eq.'RETR') then
+         val(imem) = val(imem) + iasi_prior(key)
+      endif
+
+      if(val(imem).lt.0) then
+         zstatus(imem)=20
+         val(:)=missing_r8
+         write(string1, *) &
+         'APM NOTICE: IASI CO expected value is negative '
+         call error_handler(E_MSG, routine, string1, source)
+         call track_status(ens_size, zstatus, val, istatus, return_now)
+         return
+      endif
+   enddo
+
+! Clean up and return
+   deallocate(co_val)
+   deallocate(prs_iasi)
 !
 end subroutine get_expected_iasi_co
 !
-subroutine set_obs_def_iasi_co(key, co_avgker, co_press, co_prior, co_psurf, co_nlevels, co_nlevelsp)
+subroutine set_obs_def_iasi_co(key, co_avgker, co_press, co_prior, co_psurf, co_nlayers, co_nlevels)
 !----------------------------------------------------------------------
-! subroutine set_obs_def_iasi_co(key, co_avgker, co_press, co_prior, co_psurf, co_nlevels, co_nlevelsp)
+! subroutine set_obs_def_iasi_co(key, co_avgker, co_press, co_prior, co_psurf, co_nlayers, co_nlevels)
 
 ! Allows passing of obs_def special information 
 
-integer,                 intent(in) :: key, co_nlevels, co_nlevelsp
+integer,                 intent(in) :: key, co_nlayers, co_nlevels
 real(r8), dimension(IASI_DIM),  intent(in) :: co_avgker
 real(r8), dimension(IASI_DIMP), intent(in) :: co_press
 real(r8),                intent(in) :: co_prior
@@ -453,12 +504,12 @@ if(num_iasi_co_obs >= MAX_IASI_CO_OBS) then
    call error_handler(E_ERR,routine,string1,source,revision,revdate,text2=string2)
 endif
 
-avg_kernel(   key,1:co_nlevels)  = co_avgker(1:co_nlevels)
-pressure(     key,1:co_nlevelsp) = co_press(1:co_nlevelsp)
+avg_kernel(   key,1:co_nlayers)  = co_avgker(1:co_nlayers)
+pressure(     key,1:co_nlevels) = co_press(1:co_nlevels)
 iasi_prior(   key)   = co_prior
 iasi_psurf(   key)   = co_psurf
-iasi_nlevels( key)   = co_nlevels
-iasi_nlevelsp(key)   = co_nlevelsp
+iasi_nlayers(key)    = co_nlayers
+iasi_nlevels(key)    = co_nlevels
 
 end subroutine set_obs_def_iasi_co
 !
@@ -479,6 +530,23 @@ SELECT CASE (fileformat)
 END SELECT
 end function read_iasi_prior
 !
+function read_iasi_nlayers(ifile, fform)
+integer,          intent(in)           :: ifile
+character(len=*), intent(in), optional :: fform
+integer                                :: read_iasi_nlayers
+
+character(len=32)  :: fileformat
+if ( .not. module_initialized ) call initialize_module
+fileformat = "ascii"    ! supply default
+if(present(fform)) fileformat = trim(adjustl(fform))
+SELECT CASE (fileformat)
+   CASE("unf", "UNF", "unformatted", "UNFORMATTED")
+      read(ifile) read_iasi_nlayers
+   CASE DEFAULT
+      read(ifile, *) read_iasi_nlayers
+END SELECT
+end function read_iasi_nlayers
+!
 function read_iasi_nlevels(ifile, fform)
 integer,          intent(in)           :: ifile
 character(len=*), intent(in), optional :: fform
@@ -495,23 +563,6 @@ SELECT CASE (fileformat)
       read(ifile, *) read_iasi_nlevels
 END SELECT
 end function read_iasi_nlevels
-!
-function read_iasi_nlevelsp(ifile, fform)
-integer,          intent(in)           :: ifile
-character(len=*), intent(in), optional :: fform
-integer                                :: read_iasi_nlevelsp
-
-character(len=32)  :: fileformat
-if ( .not. module_initialized ) call initialize_module
-fileformat = "ascii"    ! supply default
-if(present(fform)) fileformat = trim(adjustl(fform))
-SELECT CASE (fileformat)
-   CASE("unf", "UNF", "unformatted", "UNFORMATTED")
-      read(ifile) read_iasi_nlevelsp
-   CASE DEFAULT
-      read(ifile, *) read_iasi_nlevelsp
-END SELECT
-end function read_iasi_nlevelsp
 !
 subroutine write_iasi_prior(ifile, iasi_prior_temp, fform)
 integer,          intent(in) :: ifile
@@ -530,6 +581,22 @@ SELECT CASE (fileformat)
 END SELECT
 end subroutine write_iasi_prior
 !
+subroutine write_iasi_nlayers(ifile, iasi_nlayers_temp, fform)
+integer,          intent(in) :: ifile
+integer,          intent(in) :: iasi_nlayers_temp
+character(len=*), intent(in) :: fform
+
+character(len=32)  :: fileformat
+if ( .not. module_initialized ) call initialize_module
+fileformat = trim(adjustl(fform))
+SELECT CASE (fileformat)
+   CASE("unf", "UNF", "unformatted", "UNFORMATTED")
+      write(ifile) iasi_nlayers_temp
+   CASE DEFAULT
+      write(ifile, *) iasi_nlayers_temp
+END SELECT
+end subroutine write_iasi_nlayers
+!
 subroutine write_iasi_nlevels(ifile, iasi_nlevels_temp, fform)
 integer,          intent(in) :: ifile
 integer,          intent(in) :: iasi_nlevels_temp
@@ -545,22 +612,6 @@ SELECT CASE (fileformat)
       write(ifile, *) iasi_nlevels_temp
 END SELECT
 end subroutine write_iasi_nlevels
-!
-subroutine write_iasi_nlevelsp(ifile, iasi_nlevelsp_temp, fform)
-integer,          intent(in) :: ifile
-integer,          intent(in) :: iasi_nlevelsp_temp
-character(len=*), intent(in) :: fform
-
-character(len=32)  :: fileformat
-if ( .not. module_initialized ) call initialize_module
-fileformat = trim(adjustl(fform))
-SELECT CASE (fileformat)
-   CASE("unf", "UNF", "unformatted", "UNFORMATTED")
-      write(ifile) iasi_nlevelsp_temp
-   CASE DEFAULT
-      write(ifile, *) iasi_nlevelsp_temp
-END SELECT
-end subroutine write_iasi_nlevelsp
 !
 function read_iasi_psurf(ifile, fform)
 integer,          intent(in)           :: ifile
@@ -595,8 +646,8 @@ SELECT CASE (fileformat)
 END SELECT
 end subroutine write_iasi_psurf
 !
-function read_iasi_avg_kernels(ifile, nlevels, fform)
-integer,          intent(in)           :: ifile, nlevels
+function read_iasi_avg_kernels(ifile, nlayers, fform)
+integer,          intent(in)           :: ifile, nlayers
 character(len=*), intent(in), optional :: fform
 real(r8), dimension(IASI_DIM)           :: read_iasi_avg_kernels
 
@@ -607,14 +658,14 @@ fileformat = "ascii"    ! supply default
 if(present(fform)) fileformat = trim(adjustl(fform))
 SELECT CASE (fileformat)
    CASE("unf", "UNF", "unformatted", "UNFORMATTED")
-      read(ifile) read_iasi_avg_kernels(1:nlevels)
+      read(ifile) read_iasi_avg_kernels(1:nlayers)
    CASE DEFAULT
-      read(ifile, *) read_iasi_avg_kernels(1:nlevels)
+      read(ifile, *) read_iasi_avg_kernels(1:nlayers)
 END SELECT
 end function read_iasi_avg_kernels
 !
-subroutine write_iasi_avg_kernels(ifile, avg_kernels_temp, nlevels_temp, fform)
-integer,                 intent(in) :: ifile, nlevels_temp
+subroutine write_iasi_avg_kernels(ifile, avg_kernels_temp, nlayers_temp, fform)
+integer,                 intent(in) :: ifile, nlayers_temp
 real(r8), dimension(:), intent(in) :: avg_kernels_temp
 character(len=*),        intent(in) :: fform
 
@@ -623,14 +674,14 @@ if ( .not. module_initialized ) call initialize_module
 fileformat = trim(adjustl(fform))
 SELECT CASE (fileformat)
    CASE("unf", "UNF", "unformatted", "UNFORMATTED")
-      write(ifile) avg_kernels_temp(1:nlevels_temp)
+      write(ifile) avg_kernels_temp(1:nlayers_temp)
    CASE DEFAULT
-      write(ifile, *) avg_kernels_temp(1:nlevels_temp)
+      write(ifile, *) avg_kernels_temp(1:nlayers_temp)
 END SELECT
 end subroutine write_iasi_avg_kernels
 !
-function read_iasi_pressure(ifile, nlevelsp, fform)
-integer,          intent(in)           :: ifile, nlevelsp
+function read_iasi_pressure(ifile, nlevels, fform)
+integer,          intent(in)           :: ifile, nlevels
 character(len=*), intent(in), optional :: fform
 real(r8), dimension(IASI_DIMP)         :: read_iasi_pressure
 
@@ -641,14 +692,14 @@ fileformat = "ascii"    ! supply default
 if(present(fform)) fileformat = trim(adjustl(fform))
 SELECT CASE (fileformat)
    CASE("unf", "UNF", "unformatted", "UNFORMATTED")
-      read(ifile) read_iasi_pressure(1:nlevelsp)
+      read(ifile) read_iasi_pressure(1:nlevels)
    CASE DEFAULT
-      read(ifile, *) read_iasi_pressure(1:nlevelsp)
+      read(ifile, *) read_iasi_pressure(1:nlevels)
 END SELECT
 end function read_iasi_pressure
 !
-subroutine write_iasi_pressure(ifile, pressure_temp, nlevelsp_temp, fform)
-integer,                 intent(in) :: ifile, nlevelsp_temp
+subroutine write_iasi_pressure(ifile, pressure_temp, nlevels_temp, fform)
+integer,                 intent(in) :: ifile, nlevels_temp
 real(r8), dimension(IASI_DIMP), intent(in)  :: pressure_temp
 character(len=32),       intent(in) :: fform
 
@@ -657,9 +708,9 @@ if ( .not. module_initialized ) call initialize_module
 fileformat = trim(adjustl(fform))
 SELECT CASE (fileformat)
    CASE("unf", "UNF", "unformatted", "UNFORMATTED")
-      write(ifile) pressure_temp(1:nlevelsp_temp)
+      write(ifile) pressure_temp(1:nlevels_temp)
    CASE DEFAULT
-      write(ifile, *) pressure_temp(1:nlevelsp_temp)
+      write(ifile, *) pressure_temp(1:nlevels_temp)
 END SELECT
 end subroutine write_iasi_pressure
 !

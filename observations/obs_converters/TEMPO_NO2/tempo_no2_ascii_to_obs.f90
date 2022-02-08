@@ -170,7 +170,7 @@ program tempo_no2_ascii_to_obs
    sum_accept=0
    sum_total=0
    fac_err=0.3
-   num_thin=100
+   num_thin=1
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
