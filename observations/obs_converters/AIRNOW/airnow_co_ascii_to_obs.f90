@@ -92,6 +92,7 @@ program airnow_co_ascii_to_obs
       integer,parameter            :: num_copies=1
       integer,parameter            :: num_qc=1
       integer,parameter            :: fileid=88
+      integer,parameter            :: maxkinds=20
       integer                      :: icopy,iunit,io,indx,ierr,nndx
       integer                      :: year0, month0, day0, hour0, min0, sec0
       integer                      :: year1, month1, day1, hour1, min1, sec1
@@ -129,11 +130,19 @@ program airnow_co_ascii_to_obs
       logical                      :: use_log_co,use_log_o3,use_log_nox,use_log_so2,use_log_pm10,use_log_pm25
 
       real                         :: pi,fac,fac_err,fac_obs_error,ran1,ran2,zfac
-
+!
+      real                         :: correction_old      
+      integer                      :: iobs,nobs
+      character(len=150),dimension(maxkinds) :: obs_list
+      character(len=150)           :: correction_filename,path_filein
+      logical                      :: does_file_exist
+!
       namelist /create_airnow_obs_nml/beg_year,beg_mon,beg_day, &
       beg_hour,beg_min,beg_sec,end_year,end_mon,end_day,end_hour,end_min,end_sec, &
       fac_obs_error,file_in,lat_mn,lat_mx,lon_mn,lon_mx,use_log_co,use_log_o3,use_log_nox, &
       use_log_so2,use_log_pm10,use_log_pm25
+!
+      namelist /bias_correct_nml/path_filein,does_file_exist,correction_filename,nobs,obs_list
 
 !============================================================
 !obs sequence extra variables
@@ -176,7 +185,7 @@ program airnow_co_ascii_to_obs
       call find_namelist_in_file("create_airnow_obs_nml.nl", "create_airnow_obs_nml", iunit)
       read(iunit, nml = create_airnow_obs_nml, iostat = io)
       call check_namelist_read(iunit, io, "create_airnow_obs_nml")
-
+!
       min0=0
       sec0=0
       print *, 'beg_year        ',beg_year
@@ -196,6 +205,27 @@ program airnow_co_ascii_to_obs
       print *, 'lon_mn          ',lon_mn
       print *, 'lon_mx          ',lon_mx
       print *, ' '
+!
+! Read the namelist entry
+      call find_namelist_in_file("bias_correct_nml", "bias_correct_nml", iunit)
+      read(iunit, nml = bias_correct_nml, iostat = io)
+      call check_namelist_read(iunit, io, "bias_correct_nml")
+!
+! Determine bias correction
+      correction_old=0.
+      if(does_file_exist) then
+         iunit=101
+         open(unit=iunit,file=trim(correction_filename),form='unformatted', &
+         status='old',action='READ')
+         rewind(iunit)
+         do iobs=1,nobs
+            read(iunit) correction_old
+            if(trim(obs_list(iobs)).eq.'AIRNOW_CO') then
+               exit
+            endif
+         enddo
+         close(iunit)
+      endif
 !
 ! Fix leap year number of days
       days_in_month(2)=28
@@ -240,8 +270,8 @@ program airnow_co_ascii_to_obs
             hour(indx)=hour_temp
             minute(indx)=minute_temp
             data_greg_sec(indx)=data_greg_sec_temp
-            obs_val(indx)=obs_val_temp*fac
-            obs_err(indx)=obs_val_temp*fac*fac_err*fac_obs_error
+            obs_val(indx)=obs_val_temp*fac - correction_old
+            obs_err(indx)=(obs_val_temp*fac - correction_old)*fac_err*fac_obs_error
             if (use_log_co) then
                obs_val(indx)=log(obs_val_temp*fac)
                obs_err(indx)=fac_err*fac_obs_error

@@ -283,7 +283,7 @@ subroutine get_expected_tropomi_no2(state_handle, ens_size, location, key, expct
    real(r8) :: level,del_prs
    real(r8) :: tmp_vir_k, tmp_vir_kp
    real(r8) :: mloc(3)
-   real(r8) :: no2_val_conv
+   real(r8) :: no2_val_conv,amf
    real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
    real(r8), dimension(ens_size) :: no2_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
    real(r8), dimension(ens_size) :: no2_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
@@ -318,6 +318,7 @@ subroutine get_expected_tropomi_no2(state_handle, ens_size, location, key, expct
    kend_tropomi  = trop_indx(key)
    layer_mdl = nlayer_model
    level_mdl = nlayer_model+1
+   amf       = amf_trop(key)
    
    allocate(prs_tropomi(level_tropomi))
    allocate(prs_tropomi_mem(level_tropomi))
@@ -531,7 +532,7 @@ subroutine get_expected_tropomi_no2(state_handle, ens_size, location, key, expct
 ! Get expected observation
 
          expct_val(imem) = expct_val(imem) + thick(k) * no2_val_conv * &
-         avg_kernel(key,k)
+         avg_kernel(key,k) * amf
       enddo
 
       if(expct_val(imem).lt.0) then

@@ -376,8 +376,12 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
          for ipxl=1:pixel
 %
 % QA/AC
+            if((ipxl>=1 & ipxl<=5) | (ipxl>=56 & ipxl<=60))
+	       continue
+	    end
+%
 	    if(bitand(vcd_flg(ipxl,ilin),1)~=0 | xtrk_flg(ipxl,ilin)~=0 | ...
-	    zenang(ipxl,ilin)>=85.)
+	    xtrk_flg(ipxl,ilin)~=255 | zenang(ipxl,ilin)>=80.)
                continue
 	    end
 %

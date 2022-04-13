@@ -318,8 +318,10 @@ program tropomi_no2_ascii_to_obs
       qc_count=qc_count+1
 !
 ! Obs value is the tropospheric vertical column
-      obs_val(:)=col_amt_trop_obs
-      obs_err_var=(fac_obs_error*fac_err*col_amt_trop_err_obs)**2.
+! Convert the obs value to tropospheric slant column
+!      
+      obs_val(:)=col_amt_trop_obs * amf_trop_obs
+      obs_err_var=(fac_obs_error*fac_err*col_amt_trop_err_obs * amf_trop_obs)**2.
 !      obs_val(:)=trop_sum*col_amt_trop_obs/(trop_sum+strat_sum)
 !      obs_err_var=fac_obs_error**fac_err*(trop_sum*col_amt_trop_err_obs/(trop_sum+strat_sum))**2.
 !      print *, 'obs_val ',col_amt_trop_obs

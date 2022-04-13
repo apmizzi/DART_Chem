@@ -137,12 +137,13 @@ LIBS = -L$(NETCDF)/lib -lnetcdff -lnetcdf \
        -L${MKLROOT} -lmkl_rt -lmkl_lapack95_lp64 -lmkl_blas95_lp64 -lm -lpthread
 FFLAGS = -O3 -mcmodel=medium -shared-intel $(INCS)
 
-LDFLAGS = $(FFLAGS) $(LIBS)
-
-# for development or debugging, use this instead:
 #FFLAGS = -g -C -check noarg_temp_created -fpe0 \
 #         -fp-model precise  -ftrapuv -traceback \
 #         -warn declarations,uncalled,unused $(INCS)
+
+LDFLAGS = $(FFLAGS) $(LIBS)
+
+# for development or debugging, use this instead:
 #
 # for speed on yellowstone (verify against a run with with -O and -fp-model precise
 #        that the numerical differences aren't too large to be acceptable):

@@ -238,6 +238,16 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       col_amt_total_err=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
+% col_amt_summed_total(pixel,scanline) (mol m-2)
+      field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/nitrogendioxide_summed_total_column';
+      col_amt_summed_total=double(ncread(file_in,field));
+      units=ncreadatt(file_in,field,'units');
+      long_name=ncreadatt(file_in,field,'long_name');   
+% col_amt_summed_total_err(pixel,scanline) (mol m-2)
+      field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/nitrogendioxide_summed_total_column_precision';
+      col_amt_summed_total_err=double(ncread(file_in,field));
+      units=ncreadatt(file_in,field,'units');
+      long_name=ncreadatt(file_in,field,'long_name');   
 % slnt_col_amt(pixel,scanline) (mol m-2)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/nitrogendioxide_slant_column_density';
       slnt_col_amt=double(ncread(file_in,field));
@@ -279,7 +289,17 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
       units=ncreadatt(file_in,field,'units');
       standard_name=ncreadatt(file_in,field,'standard_name');
       long_name=ncreadatt(file_in,field,'long_name');   
-%      fprintf('BEGIN DATA PROCESSING \n')
+      fprintf('BEGIN DATA PROCESSING \n')
+%
+%      idxx=fix(pixel/2);
+%      jdxx=fix(scanline/2);
+%      fprintf('col_amt_trop %d, col_amt_strat %d \n',col_amt_trop(idxx,jdxx),col_amt_strat(idxx,jdxx))
+%      fprintf('slnt_col_trop %d, slnt_co_strat %d \n',col_amt_trop(idxx,jdxx)*amf_trop(idxx,jdxx),col_amt_strat(idxx,jdxx)*amf_strat(idxx,jdxx))
+%      fprintf('col_amt_total %d, col_amt_summed_total %d \n',col_amt_total(idxx,jdxx),col_amt_summed_total(idxx,jdxx))
+%      fprintf('amf_trop %d, amf_strat %d, amf_total %d \n',amf_trop(idxx,jdxx),amf_strat(idxx,jdxx),amf_total(idxx,jdxx))
+%      fprintf('slnt_col_amt %d, vert_col_amt %d \n',slnt_col_amt(idxx,jdxx),slnt_col_amt(idxx,jdxx)/amf_total(idxx,jdxx))
+%      fprintf('slnt_summed_col_amt %d \n',col_amt_trop(idxx,jdxx)*amf_trop(idxx,jdxx)+col_amt_strat(idxx,jdxx)*amf_strat(idxx,jdxx))
+%      return
 %
 % Define TROPOMI vertical pressure grid (hPa) (top to bottom)
          for ipxl=1:pixel
@@ -346,7 +366,7 @@ function main (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,c
          for ipxl=1:pixel
 %
 % QA/AC
-	    if(qa_value(ipxl,ilin)<0.50 | zenang(ipxl,ilin)>=80.0)
+	    if(qa_value(ipxl,ilin)<0.50 | zenang(ipxl,ilin)>=80.0 | cld_rad_frac(ipxl,ilin) >=.5)
                continue
 	    end
             if(isnan(col_amt_trop(ipxl,ilin)) | col_amt_trop(ipxl,ilin)<=0)

@@ -86,6 +86,7 @@ program tropomi_co_ascii_to_obs
 !
    integer,parameter               :: num_copies=1, num_qc=1
    integer,parameter               :: max_num_obs=1000000
+   integer,parameter               :: maxkinds=20
    type(obs_sequence_type)         :: seq
    type(obs_type)                  :: obs
    type(obs_type)                  :: obs_old
@@ -147,10 +148,18 @@ program tropomi_co_ascii_to_obs
    real,allocatable,dimension(:,:,:)   :: tmp_prt,tmp_fld,vtmp_fld
    real,allocatable,dimension(:,:,:)   :: co_fld,qmr_fld
 !
+      real                         :: correction_old      
+      integer                      :: iobs,nobs
+      character(len=150),dimension(maxkinds) :: obs_list
+      character(len=150)           :: correction_filename,path_filein
+      logical                      :: does_file_exist
+!
    namelist /create_tropomi_obs_nml/filedir,filename,fileout, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
    lon_min,lon_max,lat_min,lat_max, &
    path_model,file_model,nx_model,ny_model,nz_model
+!
+   namelist /bias_correct_nml/path_filein,does_file_exist,correction_filename,nobs,obs_list
 !
 ! Set constants
    pi=4.*atan(1.)
@@ -178,6 +187,27 @@ program tropomi_co_ascii_to_obs
 ! Record the namelist values used for the run ...
    call error_handler(E_MSG,'init_create_tropomi_obs','create_tropomi_obs_nml values are',' ',' ',' ')
    write(     *     , nml=create_tropomi_obs_nml)
+!
+! Read the namelist entry
+      call find_namelist_in_file("bias_correct_nml", "bias_correct_nml", iunit)
+      read(iunit, nml = bias_correct_nml, iostat = io)
+      call check_namelist_read(iunit, io, "bias_correct_nml")
+!
+! Determine bias correction
+      correction_old=0.
+      if(does_file_exist) then
+         iunit=101
+         open(unit=iunit,file=trim(correction_filename),form='unformatted', &
+         status='old',action='READ')
+         rewind(iunit)
+         do iobs=1,nobs
+            read(iunit) correction_old
+            if(trim(obs_list(iobs)).eq.'TROPOMI_CO_COL') then
+               exit
+            endif
+         enddo
+         close(iunit)
+      endif
 !
 ! Initialize an obs_sequence structure
    call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)
@@ -316,7 +346,7 @@ program tropomi_co_ascii_to_obs
 ! Obs value is the tropospheric vertical column
 !
 ! No tropospheric adjustment
-      obs_val(:)=col_amt_obs
+      obs_val(:)=col_amt_obs + correction_old
       obs_err_var=(fac_obs_error*fac_err*col_amt_err_obs)**2.
 !
 ! Use tropospheric adjustment

@@ -102,6 +102,7 @@ integer                 :: obs_key
 !
 integer,parameter       :: fileid=88
 integer,parameter       :: max_num_obs=1000000
+integer,parameter       :: maxkinds=20
 integer,parameter       :: mop_dim=10, mop_dimm=9, mop_dimp=11
 integer,parameter       :: num_copies=1, num_qc=1
 integer,parameter       :: lwrk=5*mop_dim
@@ -210,10 +211,18 @@ double precision,allocatable,dimension(:,:)    :: rs_avg_k,rs_cov
 logical                 :: use_log_co
 logical                 :: use_cpsr_co_trunc
 !
+real                         :: correction_old      
+integer                      :: iobs,nobs
+character(len=150),dimension(maxkinds) :: obs_list
+character(len=150)           :: correction_filename, path_filein
+logical                      :: does_file_exist
+!
 namelist /create_mopitt_obs_nml/filedir,filename,fileout,year,month,day,hour, &
          bin_beg_sec, bin_end_sec,MOPITT_CO_retrieval_type,fac_obs_error, &
          use_log_co,use_cpsr_co_trunc,cpsr_co_trunc_lim,mopitt_co_vloc, &
          lon_min,lon_max,lat_min,lat_max
+!
+namelist /bias_correct_nml/path_filein,does_file_exist,correction_filename,nobs,obs_list
 !
 ! Set constants
 log10e=log10(exp(1.0))
@@ -253,6 +262,11 @@ call check_namelist_read(iunit, io, "create_mopitt_obs_nml")
 ! Record the namelist values used for the run ...
 call error_handler(E_MSG,'init_create_mopitt_obs','create_mopitt_obs_nml values are',' ',' ',' ')
 write(     *     , nml=create_mopitt_obs_nml)
+!
+! Read the namelist entry
+call find_namelist_in_file("bias_correct_nml", "bias_correct_nml", iunit)
+read(iunit, nml = bias_correct_nml, iostat = io)
+call check_namelist_read(iunit, io, "bias_correct_nml")
 !
 ! Initialize an obs_sequence structure
 call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)
@@ -1203,13 +1217,66 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
               level=(xg_prs(i,j,k+kstr-1)+xg_prs(i,j,k+kstr))/2*100.
               which_vert=2          ! pressure surface
            endif
+!
+! Determine bias correction
+           correction_old=0.
+           if(does_file_exist) then
+              iunit=101
+              open(unit=iunit,file=trim(correction_filename),form='unformatted', &
+              status='old',action='READ')
+              rewind(iunit)
+              do iobs=1,nobs
+                 read(iunit) correction_old
+                 if (trim(obs_list(iobs)).eq.'MOPITT_CO_1' .and. level/100..ge. &
+                 (xg_prs(i,j,kstr)+nprs(1))/2.) then
+                    exit
+                 elseif (trim(obs_list(iobs)).eq.'MOPITT_CO_2' .and. level/100..lt. &
+                 (xg_prs(i,j,kstr)+nprs(1))/2. .and. level/100..ge.(nprs(1)+ &
+                 nprs(2))/2.) then
+                    exit
+                 elseif (trim(obs_list(iobs)).eq.'MOPITT_CO_3' .and. level/100..lt. &
+                 (nprs(1)+nprs(2))/2. .and. level/100..ge.(nprs(2)+ &
+                 nprs(3))/2.) then
+                    exit
+                 elseif (trim(obs_list(iobs)).eq.'MOPITT_CO_4' .and. level/100..lt. &
+                 (nprs(2)+nprs(3))/2. .and. level/100..ge.(nprs(3)+ &
+                 nprs(4))/2.) then
+                    exit
+                 elseif (trim(obs_list(iobs)).eq.'MOPITT_CO_5' .and. level/100..lt. &
+                 (nprs(3)+nprs(4))/2. .and. level/100..ge.(nprs(4)+ &
+                 nprs(5))/2.) then
+                    exit
+                 elseif (trim(obs_list(iobs)).eq.'MOPITT_CO_6' .and. level/100..lt. &
+                 (nprs(4)+nprs(5))/2. .and. level/100..ge.(nprs(5)+ &
+                 nprs(6))/2.) then
+                    exit
+                 elseif (trim(obs_list(iobs)).eq.'MOPITT_CO_7' .and. level/100..lt. &
+                 (nprs(5)+nprs(6))/2. .and. level/100..ge.(nprs(6)+ &
+                 nprs(7))/2.) then
+                    exit
+                 elseif (trim(obs_list(iobs)).eq.'MOPITT_CO_8' .and. level/100..lt. &
+                 (nprs(6)+nprs(7))/2. .and. level/100..ge.(nprs(7)+ &
+                 nprs(8))/2.) then
+                    exit
+                 elseif (trim(obs_list(iobs)).eq.'MOPITT_CO_9' .and. level/100..lt. &
+                 (nprs(7)+nprs(8))/2. .and. level/100..ge.(nprs(8)+ &
+                 nprs(9))/2.) then
+                    exit
+                 elseif (trim(obs_list(iobs)).eq.'MOPITT_CO_10' .and. level/100..lt. &
+                 (nprs(8)+nprs(9))/2.) then
+                    exit                    
+                 endif
+              enddo
+              close(iunit)
+           endif
+!
            obs_kind = MOPITT_CO_RETRIEVAL
            obs_location=set_location(longitude, latitude, level, which_vert)
            co_psurf=xg_prs(i,j,kstr)*100.
            co_avgker(1:xg_nlvls(i,j))=avgker(k,1:xg_nlvls(i,j))
            co_press(1:xg_nlvls(i,j)+1)=xg_prs(i,j,kstr:mop_dimp)*100.
            co_prior=xapr(k)
-           co_vmr(1)=xcomp(k)
+           co_vmr(1)=xcomp(k) + correction_old
            err = xcomperr(k)
            co_error=err*err
 !

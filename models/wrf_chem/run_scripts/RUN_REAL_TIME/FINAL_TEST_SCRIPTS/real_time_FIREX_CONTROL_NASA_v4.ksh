@@ -31,10 +31,10 @@ export FIRST_DART_INFLATE_DATE=2020071006
 export FIRST_EMISS_INV_DATE=2020071006
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2020071218
+export CYCLE_STR_DATE=2020071418
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2020071300
+export CYCLE_END_DATE=2020071600
 #export CYCLE_END_DATE=${CYCLE_STR_DATE}
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
@@ -3157,7 +3157,7 @@ EOF
       ./mopitt_v8_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
-      if [[! -s ${NL_MOP_OUTFILE} ]]; then
+      if [[ ! -s ${NL_MOP_OUTFILE} ]]; then
          touch NO_MOPITT_CO_${DATE}
       fi
    fi

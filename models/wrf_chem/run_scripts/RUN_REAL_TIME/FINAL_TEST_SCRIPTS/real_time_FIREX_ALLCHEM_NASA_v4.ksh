@@ -31,10 +31,10 @@ export FIRST_DART_INFLATE_DATE=2020071006
 export FIRST_EMISS_INV_DATE=2020071006
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2020071012
+export CYCLE_STR_DATE=2020071412
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2020071300
+export CYCLE_END_DATE=2020071600
 #export CYCLE_END_DATE=${CYCLE_STR_DATE}
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
@@ -153,14 +153,14 @@ fi
 #
 # Run WRF-Chem for failed forecasts (will not work with adaptive time step)
 export RUN_SPECIAL_FORECAST=false
-export NUM_SPECIAL_FORECAST=0
+export NUM_SPECIAL_FORECAST=1
 export SPECIAL_FORECAST_FAC=1./4.
 export SPECIAL_FORECAST_FAC=1./8.
 export SPECIAL_FORECAST_FAC=2./3.
 export SPECIAL_FORECAST_FAC=1./2.
 export SPECIAL_FORECAST_FAC=1.
 #
-export SPECIAL_FORECAST_MEM[1]=7
+export SPECIAL_FORECAST_MEM[1]=9
 export SPECIAL_FORECAST_MEM[2]=2
 export SPECIAL_FORECAST_MEM[3]=3
 export SPECIAL_FORECAST_MEM[4]=4
@@ -370,42 +370,42 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # SELECT COMPONENT RUN OPTIONS:
    if [[ ${RUN_SPECIAL_FORECAST} = "false" ]]; then
       export RUN_GEOGRID=false
-      export RUN_UNGRIB=false
-      export RUN_METGRID=false
-      export RUN_REAL=false
-      export RUN_PERT_WRFCHEM_MET_IC=false
-      export RUN_PERT_WRFCHEM_MET_BC=false
-      export RUN_EXO_COLDENS=false
-      export RUN_SEASON_WES=false
-      export RUN_WRFCHEM_BIO=false
-      export RUN_WRFCHEM_FIRE=false
-      export RUN_WRFCHEM_CHEMI=false
-      export RUN_PERT_WRFCHEM_CHEM_ICBC=false
-      export RUN_PERT_WRFCHEM_CHEM_EMISS=false
-      export RUN_MOPITT_CO_OBS=false
+      export RUN_UNGRIB=true
+      export RUN_METGRID=true
+      export RUN_REAL=true
+      export RUN_PERT_WRFCHEM_MET_IC=true
+      export RUN_PERT_WRFCHEM_MET_BC=true
+      export RUN_EXO_COLDENS=true
+      export RUN_SEASON_WES=true
+      export RUN_WRFCHEM_BIO=true
+      export RUN_WRFCHEM_FIRE=true
+      export RUN_WRFCHEM_CHEMI=true
+      export RUN_PERT_WRFCHEM_CHEM_ICBC=true
+      export RUN_PERT_WRFCHEM_CHEM_EMISS=true
+      export RUN_MOPITT_CO_OBS=true
       export RUN_IASI_CO_OBS=false
       export RUN_IASI_O3_OBS=false
       export RUN_OMI_O3_OBS=false
       export RUN_OMI_NO2_OBS=false
       export RUN_OMI_SO2_OBS=false
-      export RUN_TROPOMI_CO_OBS=false
+      export RUN_TROPOMI_CO_OBS=true
       export RUN_TROPOMI_O3_OBS=false
-      export RUN_TROPOMI_NO2_OBS=false
+      export RUN_TROPOMI_NO2_OBS=true
       export RUN_TROPOMI_SO2_OBS=false
       export RUN_TEMPO_O3_OBS=false
-      export RUN_TEMPO_NO2_OBS=false
-      export RUN_AIRNOW_O3_OBS=false
-      export RUN_AIRNOW_CO_OBS=false
-      export RUN_AIRNOW_NO2_OBS=false
-      export RUN_AIRNOW_SO2_OBS=false
-      export RUN_AIRNOW_PM10_OBS=false
-      export RUN_AIRNOW_PM25_OBS=false
+      export RUN_TEMPO_NO2_OBS=true
+      export RUN_AIRNOW_O3_OBS=true
+      export RUN_AIRNOW_CO_OBS=true
+      export RUN_AIRNOW_NO2_OBS=true
+      export RUN_AIRNOW_SO2_OBS=true
+      export RUN_AIRNOW_PM10_OBS=true
+      export RUN_AIRNOW_PM25_OBS=true
       export RUN_PANDA_CO_OBS=false
       export RUN_PANDA_O3_OBS=false
       export RUN_PANDA_PM25_OBS=false
-      export RUN_MODIS_AOD_OBS=false
-      export RUN_MET_OBS=false
-      export RUN_COMBINE_OBS=false
+      export RUN_MODIS_AOD_OBS=true
+      export RUN_MET_OBS=true
+      export RUN_COMBINE_OBS=true
 #
       if [[ ${DATE} -eq ${INITIAL_DATE}  ]]; then
          export RUN_PREPROCESS_OBS=false
@@ -420,9 +420,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_ENSMEAN_CYCLE_FR=false
          export RUN_ENSEMBLE_MEAN_OUTPUT=true
       else
-         export RUN_PREPROCESS_OBS=false
+         export RUN_PREPROCESS_OBS=true
          export RUN_WRFCHEM_INITIAL=false
-         export RUN_LOCALIZATION=false
+         export RUN_LOCALIZATION=true
          export RUN_DART_FILTER=true
          export RUN_UPDATE_BC=true
          export RUN_ENSEMBLE_MEAN_INPUT=true
@@ -3157,7 +3157,7 @@ EOF
       ./mopitt_v8_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
-      if [[! -s ${NL_MOP_OUTFILE} ]]; then
+      if [[ ! -s ${NL_MOP_OUTFILE} ]]; then
          touch NO_MOPITT_CO_${DATE}
       fi
    fi

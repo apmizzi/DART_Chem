@@ -11,20 +11,24 @@
 ############################################################################### 
 #
 export START_DATE=2014071406
-export END_DATE=2014071418
+export END_DATE=2014071712
 #
 export START_DATE=2020071006
-export END_DATE=2020071300
+export END_DATE=2020071200
 #
 # Define EXPERIMENT path
 #
-#export DIR_NAME=real_FRAPPE_CONTROL_NASA_v4
-#export DIR_NAME=real_FRAPPE_ALLCHEM_NASA_v4
-#export DIR_NAME=real_FRAPPE_EMISADJ_NASA_v4
+export DIR_NAME=real_FRAPPE_CONTROL_NASA_v4
+export DIR_NAME=real_FRAPPE_ALLCHEM_NASA_v4
+export DIR_NAME=real_FRAPPE_EMISADJ_NASA_v4
 #
 export DIR_NAME=real_FIREX_CONTROL_NASA_v4
-export DIR_NAME=real_FIREX_ALLCHEM_NASA_v4
-export DIR_NAME=real_FIREX_EMISADJ_NASA_v4
+export DIR_NAME=real_FIREX_AIRNOW_O3_v4
+export DIR_NAME=real_FIREX_TROPOMI_NO2_v4
+export DIR_NAME=real_FIREX_MOPITT_CO_v4
+#export DIR_NAME=real_FIREX_TROPOMI_CO_v4
+#export DIR_NAME=real_FIREX_ALLCHEM_NASA_v4
+#export DIR_NAME=real_FIREX_EMISADJ_NASA_v4
 #
 # Define FILTER path
 export DART_FILTER=dart_filter
