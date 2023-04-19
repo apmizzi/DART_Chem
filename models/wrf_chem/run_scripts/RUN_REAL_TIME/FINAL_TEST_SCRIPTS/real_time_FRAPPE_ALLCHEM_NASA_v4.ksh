@@ -25,16 +25,17 @@
 #
 #########################################################################
 #
-export INITIAL_DATE=2014071400
-export FIRST_FILTER_DATE=2014071406
-export FIRST_DART_INFLATE_DATE=2014071406
-export FIRST_EMISS_INV_DATE=2014071406
+export INITIAL_DATE=2014071500
+export FIRST_FILTER_DATE=2014071506
+export FIRST_DART_INFLATE_DATE=2014071506
+export FIRST_EMISS_INV_DATE=2014071506
+export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'      
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014071906
+export CYCLE_STR_DATE=2014072500
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014071906
+export CYCLE_END_DATE=2014072500
 #export CYCLE_END_DATE=${CYCLE_STR_DATE}
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
@@ -42,7 +43,7 @@ export NL_FAC_OBS_ERROR_MOPITT_CO=0.50
 export NL_FAC_OBS_ERROR_MODIS_AOD=1.20
 export NL_FAC_OBS_ERROR_IASI_CO=1.00
 export NL_FAC_OBS_ERROR_IASI_O3=1.00
-export NL_FAC_OBS_ERROR_OMI_O3=0.10
+export NL_FAC_OBS_ERROR_OMI_O3=0.05
 export NL_FAC_OBS_ERROR_OMI_NO2=0.90
 export NL_FAC_OBS_ERROR_OMI_SO2=0.85
 export NL_FAC_OBS_ERROR_TROPOMI_CO=1.00
@@ -51,6 +52,7 @@ export NL_FAC_OBS_ERROR_TROPOMI_NO2=1.00
 export NL_FAC_OBS_ERROR_TROPOMI_SO2=1.40
 export NL_FAC_OBS_ERROR_TEMPO_O3=1.00
 export NL_FAC_OBS_ERROR_TEMPO_NO2=1.00
+export NL_FAC_OBS_ERROR_MEXICO_AQS_CO=1.00
 export NL_FAC_OBS_ERROR_AIRNOW_CO=1.00
 export NL_FAC_OBS_ERROR_AIRNOW_O3=1.00
 export NL_FAC_OBS_ERROR_AIRNOW_NO2=2.00
@@ -59,6 +61,27 @@ export NL_FAC_OBS_ERROR_AIRNOW_PM10=1.00
 export NL_FAC_OBS_ERROR_AIRNOW_PM25=1.00
 export RETRIEVAL_TYPE_MOPITT=RAWR
 export RETRIEVAL_TYPE_IASI=RAWR
+#
+# Observation retension frequemcy
+export NL_MOPITT_CO_RETEN_FREQ=1
+export NL_IASI_CO_RETEN_FREQ=1
+export NL_IASI_O3_RETEN_FREQ=1
+export NL_MODIS_AOD_RETEN_FREQ=1
+export NL_OMI_O3_RETEN_FREQ=1
+export NL_OMI_NO2_RETEN_FREQ=1
+export NL_OMI_SO2_RETEN_FREQ=1
+export NL_TROPOMI_CO_RETEN_FREQ=2
+export NL_TROPOMI_O3_RETEN_FREQ=2
+export NL_TROPOMI_NO2_RETEN_FREQ=2
+export NL_TROPOMI_SO2_RETEN_FREQ=2
+export NL_TEMPO_O3_RETEN_FREQ=4
+export NL_TEMPO_NO2_RETEN_FREQ=4
+export NL_AIRNOW_CO_RETEN_FREQ=1
+export NL_AIRNOW_O3_RETEN_FREQ=1
+export NL_AIRNOW_NO2_RETEN_FREQ=1
+export NL_AIRNOW_SO2_RETEN_FREQ=1
+export NL_AIRNOW_PM10_RETEN_FREQ=1
+export NL_AIRNOW_PM25_RETEN_FREQ=1
 #
 # NOTE: the BC temporal adjustment is setup for 6-hr cycling (BCs at 3hr and 6hr).
 # km
@@ -76,10 +99,14 @@ if [[ ${USE_LOG} == true ]]; then
    export CO_MAX=NULL
    export O3_MIN=NULL
    export O3_MAX=NULL
+   export NO_MIN=NULL
+   export NO_MAX=NULL
    export NO2_MIN=NULL
    export NO2_MAX=NULL
    export SO2_MIN=NULL
    export SO2_MAX=NULL
+   export SO4_MIN=NULL
+   export SO4_MAX=NULL
    export PM10_MIN=NULL
    export PM10_MAX=NULL
    export PM25_MIN=NULL
@@ -95,12 +122,16 @@ if [[ ${USE_LOG} == true ]]; then
 else
    export CO_MIN=1.e-4
    export CO_MAX=NULL
-   export O3_MIN=0.
+   export O3_MIN=1.e-4
    export O3_MAX=NULL
-   export NO2_MIN=0.
+   export NO_MIN=1.e-5
+   export NO_MAX=NULL
+   export NO2_MIN=1.e-5
    export NO2_MAX=NULL
-   export SO2_MIN=0.
+   export SO2_MIN=1.e-5
    export SO2_MAX=NULL
+   export SO4_MIN=1.e-5
+   export SO4_MAX=NULL
    export PM10_MIN=0.
    export PM10_MAX=NULL
    export PM25_MIN=0.
@@ -151,18 +182,21 @@ if [[ ${RUN_FINE_SCALE_RESTART} = "true" ]]; then
    export RUN_FINE_SCALE=true
 fi
 #
-# Run WRF-Chem for failed forecasts
+# Switch to process filter output without calling filter
+export SKIP_FILTER=false
+#
+# Run WRF-Chem for failed forecasts (will not work with adaptive time step)
 export RUN_SPECIAL_FORECAST=false
-export NUM_SPECIAL_FORECAST=5
+export NUM_SPECIAL_FORECAST=0
 export SPECIAL_FORECAST_FAC=1./2.
 export SPECIAL_FORECAST_FAC=2./3.
 export SPECIAL_FORECAST_FAC=1.
 #
-export SPECIAL_FORECAST_MEM[1]=2
-export SPECIAL_FORECAST_MEM[2]=6
-export SPECIAL_FORECAST_MEM[3]=7
-export SPECIAL_FORECAST_MEM[4]=9
-export SPECIAL_FORECAST_MEM[5]=10
+export SPECIAL_FORECAST_MEM[1]=1
+export SPECIAL_FORECAST_MEM[2]=2
+export SPECIAL_FORECAST_MEM[3]=3
+export SPECIAL_FORECAST_MEM[4]=4
+export SPECIAL_FORECAST_MEM[5]=5
 export SPECIAL_FORECAST_MEM[6]=6
 export SPECIAL_FORECAST_MEM[7]=7
 export SPECIAL_FORECAST_MEM[8]=8
@@ -207,7 +241,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    (( HISTORY_INTERVAL_MIN = ${HISTORY_INTERVAL_HR} * 60 ))
    export START_IASI_O3_DATA=2014060100
    export END_IASI_O3_DATA=2014073118
-   export NL_DEBUG_LEVEL=200
+   export NL_DEBUG_LEVEL=100
 #
 # CODE VERSIONS:
    export WPS_VER=WPSv4.3.1_dmpar
@@ -239,6 +273,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export WES_COLDENS_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_WES_COLDENS
    export MEGAN_BIO_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_MEGAN_BIO
    export FINN_FIRE_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_FINN_FIRE
+   export BIAS_CORR_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_BIAS_CORR
    export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_REAL_TIME_DATA
    export MOZBC_DATA_DIR=${EXPERIMENT_DATA_DIR}/mozart_forecasts
    export EXPERIMENT_STATIC_FILES=${EXPERIMENT_DATA_DIR}/static_files
@@ -259,6 +294,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export EXPERIMENT_TROPOMI_SO2_DIR=${EXPERIMENT_DATA_DIR}/tropomi_so2_nc_data
    export EXPERIMENT_TEMPO_O3_DIR=${EXPERIMENT_DATA_DIR}/tempo_o3_nc_data
    export EXPERIMENT_TEMPO_NO2_DIR=${EXPERIMENT_DATA_DIR}/tempo_no2_nc_data
+   export EXPERIMENT_MEXICO_AQS_DIR=/nobackupp11/amizzi/INPUT_DATA/MEXICO_REAL_TIME_DATA/aqsmex_cvs_data
    export EXPERIMENT_AIRNOW_DIR=${EXPERIMENT_DATA_DIR}/airnow_csv_data
    export EXPERIMENT_MODIS_AOD_DIR=${EXPERIMENT_DATA_DIR}/modis_aod_hdf_data
    export EXPERIMENT_GFS_DIR=${EXPERIMENT_DATA_DIR}/gfs_forecasts
@@ -367,41 +403,60 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_PERT_WRFCHEM_MET_BC=false
       export RUN_EXO_COLDENS=false
       export RUN_SEASON_WES=false
-      export RUN_WRFCHEM_BIO=true
-      export RUN_WRFCHEM_FIRE=true
-      export RUN_WRFCHEM_CHEMI=true
-      export RUN_PERT_WRFCHEM_CHEM_ICBC=true
-      export RUN_PERT_WRFCHEM_CHEM_EMISS=true
-      export RUN_MOPITT_CO_OBS=true
-      export RUN_IASI_CO_OBS=true
-      export RUN_IASI_O3_OBS=false
-      export RUN_OMI_O3_OBS=false
-      export RUN_OMI_NO2_OBS=true
+      export RUN_WRFCHEM_BIO=false
+      export RUN_WRFCHEM_FIRE=false
+      export RUN_WRFCHEM_CHEMI=false
+      export RUN_PERT_WRFCHEM_CHEM_ICBC=false
+      export RUN_PERT_WRFCHEM_CHEM_EMISS=false
+      export RUN_MOPITT_CO_TOTAL_COL_OBS=false
+      export RUN_MOPITT_CO_PROFILE_OBS=false
+      export RUN_MOPITT_CO_CPSR_OBS=false
+      export RUN_IASI_CO_TOTAL_COL_OBS=false
+      export RUN_IASI_CO_PROFILE_OBS=false
+      export RUN_IASI_CO_CPSR_OBS=false
+      export RUN_IASI_O3_PROFILE_OBS=false
+      export RUN_IASI_O3_CPSR_OBS=false
+      export RUN_MODIS_AOD_TOTAL_COL_OBS=false
+      export RUN_OMI_O3_TOTAL_COL_OBS=false
+      export RUN_OMI_O3_TROP_COL_OBS=false
+      export RUN_OMI_O3_PROFILE_OBS=false
+      export RUN_OMI_O3_CPSR_OBS=false
+      export RUN_OMI_NO2_TOTAL_COL_OBS=false
+      export RUN_OMI_NO2_TROP_COL_OBS=false
       export RUN_OMI_SO2_OBS=false
-      export RUN_TROPOMI_CO_OBS=false
-      export RUN_TROPOMI_O3_OBS=false
-      export RUN_TROPOMI_NO2_OBS=false
+      export RUN_TROPOMI_CO_TOTAL_COL_OBS=false
+      export RUN_TROPOMI_O3_TOTAL_COL_OBS=false
+      export RUN_TROPOMI_O3_TROP_COL_OBS=false
+      export RUN_TROPOMI_O3_PROFILE_OBS=false
+      export RUN_TROPOMI_O3_CPSR_OBS=false
+      export RUN_TROPOMI_NO2_TOTAL_COL_OBS=false
+      export RUN_TROPOMI_NO2_TROP_COL_OBS=false
       export RUN_TROPOMI_SO2_OBS=false
-      export RUN_TEMPO_O3_OBS=false
-      export RUN_TEMPO_NO2_OBS=false
-      export RUN_AIRNOW_O3_OBS=true
-      export RUN_AIRNOW_CO_OBS=true
-      export RUN_AIRNOW_NO2_OBS=true
-      export RUN_AIRNOW_SO2_OBS=true
-      export RUN_AIRNOW_PM10_OBS=true
-      export RUN_AIRNOW_PM25_OBS=true
+      export RUN_TEMPO_O3_TOTAL_COL_OBS=false
+      export RUN_TEMPO_O3_TROP_COL_OBS=false
+      export RUN_TEMPO_O3_PROFILE_OBS=false
+      export RUN_TEMPO_O3_CPSR_OBS=false
+      export RUN_TEMPO_NO2_TOTAL_COL_OBS=false
+      export RUN_TEMPO_NO2_TROP_COL_OBS=false
+      export RUN_MEXICO_AQS_CO_OBS=true
+      export RUN_AIRNOW_O3_OBS=false
+      export RUN_AIRNOW_CO_OBS=false
+      export RUN_AIRNOW_NO2_OBS=false
+      export RUN_AIRNOW_SO2_OBS=false
+      export RUN_AIRNOW_PM10_OBS=false
+      export RUN_AIRNOW_PM25_OBS=false
       export RUN_PANDA_CO_OBS=false
       export RUN_PANDA_O3_OBS=false
       export RUN_PANDA_PM25_OBS=false
-      export RUN_MODIS_AOD_OBS=true
-      export RUN_MET_OBS=true
-      export RUN_COMBINE_OBS=true
+      export RUN_MET_OBS=false
+      export RUN_COMBINE_OBS=false
 #
       if [[ ${DATE} -eq ${INITIAL_DATE}  ]]; then
          export RUN_PREPROCESS_OBS=false
          export RUN_WRFCHEM_INITIAL=true
          export RUN_LOCALIZATION=false
          export RUN_DART_FILTER=false
+         export RUN_BIAS_CORRECTION=false
          export RUN_UPDATE_BC=false
          export RUN_ENSEMBLE_MEAN_INPUT=true
          export RUN_WRFCHEM_CYCLE_CR=false
@@ -414,6 +469,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_WRFCHEM_INITIAL=false
          export RUN_LOCALIZATION=true
          export RUN_DART_FILTER=true
+         export RUN_BIAS_CORRECTION=false
          export RUN_UPDATE_BC=true
          export RUN_ENSEMBLE_MEAN_INPUT=true
          export RUN_WRFCHEM_CYCLE_CR=true
@@ -436,18 +492,35 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_WRFCHEM_CHEMI=false
       export RUN_PERT_WRFCHEM_CHEM_ICBC=false
       export RUN_PERT_WRFCHEM_CHEM_EMISS=false
-      export RUN_MOPITT_CO_OBS=false
-      export RUN_IASI_CO_OBS=false
-      export RUN_IASI_O3_OBS=false
-      export RUN_OMI_O3_OBS=false
-      export RUN_OMI_NO2_OBS=false
+      export RUN_MOPITT_CO_TOTAL_COL_OBS=false
+      export RUN_MOPITT_CO_PROFILE_OBS=false
+      export RUN_MOPITT_CO_CPSR_OBS=false
+      export RUN_IASI_CO_TOTAL_COL_OBS=false
+      export RUN_IASI_CO_PROFILE_OBS=false
+      export RUN_IASI_CO_CPSR_OBS=false
+      export RUN_IASI_O3_PROFILE_OBS=false
+      export RUN_IASI_O3_CPSR_OBS=false
+      export RUN_OMI_O3_TOTAL_COL_OBS=false
+      export RUN_OMI_O3_TROP_COL_OBS=false
+      export RUN_OMI_O3_PROFILE_OBS=false
+      export RUN_OMI_O3_CPSR_OBS=false
+      export RUN_OMI_NO2_TOTAL_COL_OBS=false
+      export RUN_OMI_NO2_TROP_COL_OBS=false
       export RUN_OMI_SO2_OBS=false
-      export RUN_TROPOMI_CO_OBS=false
-      export RUN_TROPOMI_O3_OBS=false
-      export RUN_TROPOMI_NO2_OBS=false
+      export RUN_TROPOMI_CO_TOTAL_COL_OBS=false
+      export RUN_TROPOMI_O3_TOTAL_COL_OBS=false
+      export RUN_TROPOMI_O3_TROP_COL_OBS=false
+      export RUN_TROPOMI_O3_PROFILE_OBS=false
+      export RUN_TROPOMI_O3_CPSR_OBS=false
+      export RUN_TROPOMI_NO2_TOTAL_COL_OBS=false
+      export RUN_TROPOMI_NO2_TROP_COL_OBS=false
       export RUN_TROPOMI_SO2_OBS=false
-      export RUN_TEMPO_O3_OBS=false
-      export RUN_TEMPO_NO2_OBS=false
+      export RUN_TEMPO_O3_TOTAL_COL_OBS=false
+      export RUN_TEMPO_O3_TROP_COL_OBS=false
+      export RUN_TEMPO_O3_PROFILE_OBS=false
+      export RUN_TEMPO_O3_CPSR_OBS=false
+      export RUN_TEMPO_NO2_TOTAL_COL_OBS=false
+      export RUN_TEMPO_NO2_TROP_COL_OBS=false
       export RUN_AIRNOW_O3_OBS=false
       export RUN_AIRNOW_CO_OBS=false
       export RUN_AIRNOW_NO2_OBS=false
@@ -457,7 +530,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_PANDA_CO_OBS=false
       export RUN_PANDA_O3_OBS=false
       export RUN_PANDA_PM25_OBS=false
-      export RUN_MODIS_AOD_OBS=false
+      export RUN_MODIS_AOD_TOTAL_COL_OBS=false
       export RUN_MET_OBS=false
       export RUN_COMBINE_OBS=false
 #
@@ -466,6 +539,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_WRFCHEM_INITIAL=true
          export RUN_LOCALIZATION=false
          export RUN_DART_FILTER=false
+         export RUN_BIAS_CORRECTION=false
          export RUN_UPDATE_BC=false
          export RUN_ENSEMBLE_MEAN_INPUT=true
          export RUN_WRFCHEM_CYCLE_CR=false
@@ -478,6 +552,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_WRFCHEM_INITIAL=false
          export RUN_LOCALIZATION=false
          export RUN_DART_FILTER=false
+         export RUN_BIAS_CORRECTION=false
          export RUN_UPDATE_BC=false
          export RUN_ENSEMBLE_MEAN_INPUT=true
          export RUN_WRFCHEM_CYCLE_CR=true
@@ -501,18 +576,35 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_WRFCHEM_CHEMI=false
       export RUN_PERT_WRFCHEM_CHEM_ICBC=false
       export RUN_PERT_WRFCHEM_CHEM_EMISS=false
-      export RUN_MOPITT_CO_OBS=false
-      export RUN_IASI_CO_OBS=false
-      export RUN_IASI_O3_OBS=false
-      export RUN_OMI_O3_OBS=false
-      export RUN_OMI_NO2_OBS=false
+      export RUN_MOPITT_CO_TOTAL_COL_OBS=true
+      export RUN_MOPITT_CO_PROFILE_OBS=true
+      export RUN_MOPITT_CO_CPSR_OBS=true
+      export RUN_IASI_CO_TOTAL_COL_OBS=false
+      export RUN_IASI_CO_PROFILE_OBS=false
+      export RUN_IASI_CO_CPSR_OBS=false
+      export RUN_IASI_O3_PROFILE_OBS=false
+      export RUN_IASI_O3_CPSR_OBS=false
+      export RUN_OMI_O3_TOTAL_COL_OBS=false
+      export RUN_OMI_O3_TROP_COL_OBS=false
+      export RUN_OMI_O3_PROFILE_OBS=false
+      export RUN_OMI_O3_CPSR_OBS=false
+      export RUN_OMI_NO2_TOTAL_COL_OBS=false
+      export RUN_OMI_NO2_TROP_COL_OBS=false
       export RUN_OMI_SO2_OBS=false
-      export RUN_TROPOMI_CO_OBS=false
-      export RUN_TROPOMI_O3_OBS=false
-      export RUN_TROPOMI_NO2_OBS=false
+      export RUN_TROPOMI_CO_TOTAL_COL_OBS=false
+      export RUN_TROPOMI_O3_TOTAL_COL_OBS=false
+      export RUN_TROPOMI_O3_TROP_COL_OBS=false
+      export RUN_TROPOMI_O3_PROFILE_OBS=false
+      export RUN_TROPOMI_O3_CPSR_OBS=false
+      export RUN_TROPOMI_NO2_TOTAL_COL_OBS=false
+      export RUN_TROPOMI_NO2_TROP_COL_OBS=false
       export RUN_TROPOMI_SO2_OBS=false
-      export RUN_TEMPO_O3_OBS=false
-      export RUN_TEMPO_NO2_OBS=false
+      export RUN_TEMPO_O3_TOTAL_COL_OBS=false
+      export RUN_TEMPO_O3_TROP_COL_OBS=false
+      export RUN_TEMPO_O3_PROFILE_OBS=false
+      export RUN_TEMPO_O3_CPSR_OBS=false
+      export RUN_TEMPO_NO2_TOTAL_COL_OBS=false
+      export RUN_TEMPO_NO2_TROP_COL_OBS=false
       export RUN_AIRNOW_O3_OBS=false
       export RUN_AIRNOW_CO_OBS=false
       export RUN_AIRNOW_NO2_OBS=false
@@ -522,13 +614,14 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_PANDA_CO_OBS=false
       export RUN_PANDA_O3_OBS=false
       export RUN_PANDA_PM25_OBS=false
-      export RUN_MODIS_AOD_OBS=false
+      export RUN_MODIS_AOD_TOTAL_COL_OBS=false
       export RUN_MET_OBS=false
       export RUN_COMBINE_OBS=false
       export RUN_PREPROCESS_OBS=false
       export RUN_WRFCHEM_INITIAL=false
       export RUN_LOCALIZATION=false
       export RUN_DART_FILTER=false
+      export RUN_BIAS_CORRECTION=false
       export RUN_UPDATE_BC=false
       export RUN_ENSEMBLE_MEAN_INPUT=false
       export RUN_WRFCHEM_CYCLE_CR=false
@@ -600,17 +693,17 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export PROJ_NUMBER=P93300612
    export ACCOUNT=s2467
    export DEBUG_JOB_CLASS=debug
-   export DEBUG_TIME_LIMIT=02:00:00
-   export DEBUG_NODES=8
-   export DEBUG_TASKS=8
+   export DEBUG_TIME_LIMIT=01:59:00
+   export DEBUG_NODES=2
+   export DEBUG_TASKS=16
    export GENERAL_JOB_CLASS=normal
    export GENERAL_TIME_LIMIT=00:40:00
    export GENERAL_NODES=1
-   export GENERAL_TASKS=8
+   export GENERAL_TASKS=16
    export WRFDA_JOB_CLASS=normal
    export WRFDA_TIME_LIMIT=00:05:00
    export WRFDA_NODES=1
-   export WRFDA_TASKS=8
+   export WRFDA_TASKS=16
    export SINGLE_JOB_CLASS=normal
    export SINGLE_TIME_LIMIT=00:10:00
    export SINGLE_NODES=1
@@ -620,19 +713,29 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export BIO_NODES=1
    export BIO_TASKS=1
    export FILTER_JOB_CLASS=normal
-   export FILTER_TIME_LIMIT=03:00:00
-%   export FILTER_JOB_CLASS=devel
-%   export FILTER_TIME_LIMIT=01:00:00
-   export FILTER_NODES=8
-   export FILTER_TASKS=8
+   export FILTER_TIME_LIMIT=07:30:00
+   export FILTER_NODES=6
+   export FILTER_TASKS=16
+#   export FILTER_JOB_CLASS=devel
+#   export FILTER_TIME_LIMIT=01:59:00
+#   export FILTER_NODES=6
+#   export FILTER_TASKS=16
    export WRFCHEM_JOB_CLASS=normal
-   export WRFCHEM_TIME_LIMIT=02:00:00
-   export WRFCHEM_NODES=8
-   export WRFCHEM_TASKS=8
+   export WRFCHEM_TIME_LIMIT=04:00:00
+   export WRFCHEM_NODES=2
+   export WRFCHEM_TASKS=16
+#   export WRFCHEM_JOB_CLASS=devel
+#   export WRFCHEM_TIME_LIMIT=01:59:00
+#   export WRFCHEM_NODES=2
+#   export WRFCHEM_TASKS=16
    export PERT_JOB_CLASS=normal
    export PERT_TIME_LIMIT=02:30:00
    export PERT_NODES=1
    (( PERT_TASKS=${NUM_MEMBERS}+1 ))
+#   export PERT_JOB_CLASS=devel
+#   export PERT_TIME_LIMIT=01:59:00
+#   export PERT_NODES=1
+#   (( PERT_TASKS=${NUM_MEMBERS}+1 ))
 #
 # RUN DIRECTORIES
    export GEOGRID_DIR=${RUN_DIR}/geogrid
@@ -651,18 +754,35 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export WRFCHEM_CYCLE_FR_DIR=${RUN_DIR}/${DATE}/wrfchem_cycle_fr
    export WRFCHEM_LAST_CYCLE_CR_DIR=${RUN_DIR}/${PAST_DATE}/wrfchem_cycle_cr
    export PREPBUFR_MET_OBS_DIR=${RUN_DIR}/${DATE}/prepbufr_met_obs
-   export MOPITT_CO_OBS_DIR=${RUN_DIR}/${DATE}/mopitt_co_obs
-   export IASI_CO_OBS_DIR=${RUN_DIR}/${DATE}/iasi_co_obs
-   export IASI_O3_OBS_DIR=${RUN_DIR}/${DATE}/iasi_o3_obs
-   export OMI_O3_OBS_DIR=${RUN_DIR}/${DATE}/omi_o3_obs
-   export OMI_NO2_OBS_DIR=${RUN_DIR}/${DATE}/omi_no2_obs
+   export MOPITT_CO_TOTAL_COL_OBS_DIR=${RUN_DIR}/${DATE}/mopitt_co_total_col_obs
+   export MOPITT_CO_PROFILE_OBS_DIR=${RUN_DIR}/${DATE}/mopitt_co_profile_obs
+   export MOPITT_CO_CPSR_OBS_DIR=${RUN_DIR}/${DATE}/mopitt_co_cpsr_obs
+   export IASI_CO_TOTAL_COL_OBS_DIR=${RUN_DIR}/${DATE}/iasi_co_total_col_obs
+   export IASI_CO_PROFILE_OBS_DIR=${RUN_DIR}/${DATE}/iasi_co_profile_obs
+   export IASI_CO_CPSR_OBS_DIR=${RUN_DIR}/${DATE}/iasi_co_cpsr_obs
+   export IASI_O3_PROFILE_OBS_DIR=${RUN_DIR}/${DATE}/iasi_o3_profile_obs
+   export IASI_O3_CPSR_OBS_DIR=${RUN_DIR}/${DATE}/iasi_o3_cpsr_obs
+   export OMI_O3_TOTAL_COL_OBS_DIR=${RUN_DIR}/${DATE}/omi_o3_total_col_obs
+   export OMI_O3_TROP_COL_OBS_DIR=${RUN_DIR}/${DATE}/omi_o3_trop_col_obs
+   export OMI_O3_PROFILE_OBS_DIR=${RUN_DIR}/${DATE}/omi_o3_profile_obs
+   export OMI_O3_CPSR_OBS_DIR=${RUN_DIR}/${DATE}/omi_o3_cpsr_obs
+   export OMI_NO2_TOTAL_COL_OBS_DIR=${RUN_DIR}/${DATE}/omi_no2_total_col_obs
+   export OMI_NO2_TROP_COL_OBS_DIR=${RUN_DIR}/${DATE}/omi_no2_trop_col_obs
    export OMI_SO2_OBS_DIR=${RUN_DIR}/${DATE}/omi_so2_obs
-   export TROPOMI_CO_OBS_DIR=${RUN_DIR}/${DATE}/tropomi_co_obs
-   export TROPOMI_O3_OBS_DIR=${RUN_DIR}/${DATE}/tropomi_o3_obs
-   export TROPOMI_NO2_OBS_DIR=${RUN_DIR}/${DATE}/tropomi_no2_obs
+   export TROPOMI_CO_TOTAL_COL_OBS_DIR=${RUN_DIR}/${DATE}/tropomi_co_total_col_obs
+   export TROPOMI_O3_TOTAL_COL_OBS_DIR=${RUN_DIR}/${DATE}/tropomi_o3_total_col_obs
+   export TROPOMI_O3_TROP_COL_OBS_DIR=${RUN_DIR}/${DATE}/tropomi_o3_trop_col_obs
+   export TROPOMI_O3_PROFILE_OBS_DIR=${RUN_DIR}/${DATE}/tropomi_o3_profile_obs
+   export TROPOMI_O3_CPSR_OBS_DIR=${RUN_DIR}/${DATE}/tropomi_o3_cpsr_obs
+   export TROPOMI_NO2_TOTAL_COL_OBS_DIR=${RUN_DIR}/${DATE}/tropomi_no2_total_col_obs
+   export TROPOMI_NO2_TROP_COL_OBS_DIR=${RUN_DIR}/${DATE}/tropomi_no2_trop_col_obs
    export TROPOMI_SO2_OBS_DIR=${RUN_DIR}/${DATE}/tropomi_so2_obs
-   export TEMPO_O3_OBS_DIR=${RUN_DIR}/${DATE}/tempo_o3_obs
-   export TEMPO_NO2_OBS_DIR=${RUN_DIR}/${DATE}/tempo_no2_obs
+   export TEMPO_O3_TOTAL_COL_OBS_DIR=${RUN_DIR}/${DATE}/tempo_o3_total_col_obs
+   export TEMPO_O3_TROP_COL_OBS_DIR=${RUN_DIR}/${DATE}/tempo_o3_trop_col_obs
+   export TEMPO_O3_PROFILE_OBS_DIR=${RUN_DIR}/${DATE}/tempo_o3_profile_obs
+   export TEMPO_O3_CPSR_OBS_DIR=${RUN_DIR}/${DATE}/tempo_o3_cpsr_obs
+   export TEMPO_NO2_TOTAL_COL_OBS_DIR=${RUN_DIR}/${DATE}/tempo_no2_total_col_obs
+   export TEMPO_NO2_TROP_COL_OBS_DIR=${RUN_DIR}/${DATE}/tempo_no2_trop_col_obs
    export AIRNOW_CO_OBS_DIR=${RUN_DIR}/${DATE}/airnow_co_obs
    export AIRNOW_O3_OBS_DIR=${RUN_DIR}/${DATE}/airnow_o3_obs
    export AIRNOW_NO2_OBS_DIR=${RUN_DIR}/${DATE}/airnow_no2_obs
@@ -672,7 +792,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export PANDA_CO_OBS_DIR=${RUN_DIR}/${DATE}/panda_co_obs
    export PANDA_O3_OBS_DIR=${RUN_DIR}/${DATE}/panda_o3_obs
    export PANDA_PM25_OBS_DIR=${RUN_DIR}/${DATE}/panda_pm25_obs
-   export MODIS_AOD_OBS_DIR=${RUN_DIR}/${DATE}/modis_aod_obs
+   export MODIS_AOD_TOTAL_COL_OBS_DIR=${RUN_DIR}/${DATE}/modis_aod_total_col_obs
    export COMBINE_OBS_DIR=${RUN_DIR}/${DATE}/combine_obs
    export PREPROCESS_OBS_DIR=${RUN_DIR}/${DATE}/preprocess_obs
    export WRFCHEM_CHEM_ICBC_DIR=${RUN_DIR}/${DATE}/wrfchem_chem_icbc
@@ -722,18 +842,35 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # Forward operator parameters
    export NL_NLAYER_MODEL=${NNZP_CR}
-   export NL_NLAYER_MOPITT_CO=10
-   export NL_NLAYER_IASI_CO=19
-   export NL_NLAYER_IASI_O3=41
-   export NL_NLAYER_OMI_O3=15
-   export NL_NLAYER_OMI_NO2=40
+   export NL_NLAYER_MOPITT_CO_TOTAL_COL=10
+   export NL_NLAYER_MOPITT_CO_PROFILE=10
+   export NL_NLAYER_MOPITT_CO_CPSR=10
+   export NL_NLAYER_IASI_CO_TOTAL_COL=19
+   export NL_NLAYER_IASI_CO_PROFILE=19
+   export NL_NLAYER_IASI_CO_CPSR=19
+   export NL_NLAYER_IASI_O3_PROFILE=41
+   export NL_NLAYER_IASI_O3_CPSR=41
+   export NL_NLAYER_OMI_O3_TOTAL_COL=11
+   export NL_NLAYER_OMI_O3_TROP_COL=11
+   export NL_NLAYER_OMI_O3_PROFILE=18
+   export NL_NLAYER_OMI_O3_CPSR=18
+   export NL_NLAYER_OMI_NO2_TOTAL_COL=40
+   export NL_NLAYER_OMI_NO2_TROP_COL=40
    export NL_NLAYER_OMI_SO2=75
-   export NL_NLAYER_TROPOMI_CO=55
-   export NL_NLAYER_TROPOMI_O3=20
-   export NL_NLAYER_TROPOMI_NO2=40
+   export NL_NLAYER_TROPOMI_CO_TOTAL_COL=55
+   export NL_NLAYER_TROPOMI_O3_TOTAL_COL=20
+   export NL_NLAYER_TROPOMI_O3_TROP_COL=20
+   export NL_NLAYER_TROPOMI_O3_PROFILE=20
+   export NL_NLAYER_TROPOMI_O3_CPSR=20
+   export NL_NLAYER_TROPOMI_NO2_TOTAL_COL=40
+   export NL_NLAYER_TROPOMI_NO2_TROP_COL=40
    export NL_NLAYER_TROPOMI_SO2=40
-   export NL_NLAYER_TEMPO_O3=50
-   export NL_NLAYER_TEMPO_NO2=50
+   export NL_NLAYER_TEMPO_O3_TOTAL_COL=50
+   export NL_NLAYER_TEMPO_O3_TROP_COL=50
+   export NL_NLAYER_TEMPO_O3_PROFILE=50
+   export NL_NLAYER_TEMPO_O3_CPSR=50
+   export NL_NLAYER_TEMPO_NO2_TOTAL_COL=50
+   export NL_NLAYER_TEMPO_NO2_TROP_COL=50
 #
 # PERT CHEM PARAMETERS
    export SPREAD_FAC=0.30
@@ -1164,9 +1301,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # &assim_tools_nml
    export NL_CUTOFF=0.1
-   export NL_SPECIAL_LOCALIZATION_OBS_TYPES="'MOPITT_CO_RETRIEVAL','IASI_CO_RETRIEVAL','IASI_CO_COLUMN','TROPOMI_CO_COLUMN','AIRNOW_CO','IASI_O3_RETRIEVAL','OMI_O3_COLUMN','TROPOMI_O3_COLUMN','TEMPO_O3_COLUMN','AIRNOW_O3','OMI_NO2_COLUMN','TROPOMI_NO2_COLUMN','TEMPO_NO2_COLUMN','AIRNOW_NO2','OMI_SO2_COLUMN','TROPOMI_SO2_COLUMN','AIRNOW_SO2','MODIS_AOD_RETRIEVAL','AIRNOW_PM10','AIRNOW_PM25','LAND_SFC_U_WIND_COMPONENT','LAND_SFC_V_WIND_COMPONENT','LAND_SFC_SPECIFIC_HUMIDITY'"
+   export NL_SPECIAL_LOCALIZATION_OBS_TYPES="'MOPITT_CO_TOTAL_COL','MOPITT_CO_PROFILE','MOPITT_CO_CPSR','IASI_CO_TOTAL_COL','IASI_CO_PROFILE','IASI_CO_CPSR','TROPOMI_CO_TOTAL_COL','AIRNOW_CO','IASI_O3_PROFILE','IASI_O3_CPSR','OMI_O3_TOTAL_COL','OMI_O3_TROP_COL','OMI_O3_PROFILE','OMI_O3_CPSR','TROPOMI_O3_TOTAL_COL','TROPOMI_O3_TROP_COL','TROPOMI_O3_PROFILE','TROPOMI_O3_CPSR','TEMPO_O3_TOTAL_COL','TEMPO_O3_TROP_COL','TEMPO_O3_PROFILE','TEMPO_O3_CPSR','AIRNOW_O3','OMI_NO2_TOTAL_COL','OMI_NO2_TROP_COL','TROPOMI_NO2_TOTAL_COL','TROPOMI_NO2_TROP_COL','TEMPO_NO2_TOTAL_COL','TEMPO_NO2_TROP_COL','AIRNOW_NO2','OMI_SO2_COL','TROPOMI_SO2_COL','AIRNOW_SO2','MODIS_AOD_TOTAL_COL','AIRNOW_PM10','AIRNOW_PM25','LAND_SFC_U_WIND_COMPONENT','LAND_SFC_V_WIND_COMPONENT','LAND_SFC_SPECIFIC_HUMIDITY'"
    export NL_SAMPLING_ERROR_CORRECTION=.true.
-   export NL_SPECIAL_LOCALIZATION_CUTOFFS=0.1,0.1,0.1,0.1,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.1,0.1,0.1,0.05,0.05,0.05
+   export NL_SPECIAL_LOCALIZATION_CUTOFFS=0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.1,0.1,0.1,0.05,0.05,0.05,0.05,0.05,0.05
    export NL_ADAPTIVE_LOCALIZATION_THRESHOLD=2000
 #
 # &ensemble_manager_nml
@@ -1274,9 +1411,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
           'QICE',  '0.0','NULL','CLAMP',
           'co',    '${CO_MIN}','${CO_MAX}','CLAMP',
           'o3',    '${O3_MIN}','${O3_MAX}','CLAMP',
-          'no',    '0.0','NULL','CLAMP',
-          'no2',   '0.0','NULL','CLAMP',
-          'sulf',  '0.0','NULL','CLAMP',
+          'no',    '${NO_MIN}','${NO_MAX}','CLAMP',
+          'no2',   '${NO2_MIN}','${NO2_MAX}','CLAMP',
+          'so2',   '${SO2_MIN}','${SO2_MAX}','CLAMP',
+          'sulf',  '${SO4_MIN}','${SO4_MAX}','CLAMP',
           'hno3',  '0.0','NULL','CLAMP',
           'hno4',  '0.0','NULL','CLAMP',
           'n2o5',  '0.0','NULL','CLAMP',
@@ -1388,23 +1526,40 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
                     '${DART_DIR}/observations/forward_operators/obs_def_AIRNOW_PM10_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_AIRNOW_PM25_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_PANDA_OBS_mod.f90',
-                    '${DART_DIR}/observations/forward_operators/obs_def_IASI_CO_mod.f90',
-                    '${DART_DIR}/observations/forward_operators/obs_def_IASI_CO_COL_mod.f90',
-                    '${DART_DIR}/observations/forward_operators/obs_def_IASI_O3_mod.f90',
-                    '${DART_DIR}/observations/forward_operators/obs_def_OMI_O3_mod.f90',
-                    '${DART_DIR}/observations/forward_operators/obs_def_OMI_NO2_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_MOPITT_CO_TOTAL_COL_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_MOPITT_CO_PROFILE_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_MOPITT_V5_CO_PROFILE_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_MOPITT_CO_CPSR_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_IASI_CO_TOTAL_COL_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_IASI_CO_PROFILE_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_IASI_CO_CPSR_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_IASI_O3_PROFILE_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_IASI_O3_CPSR_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_MODIS_AOD_TOTAL_COL_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_OMI_O3_TOTAL_COL_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_OMI_O3_TROP_COL_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_OMI_O3_PROFILE_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_OMI_O3_CPSR_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_OMI_NO2_TOTAL_COL_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_OMI_NO2_TROP_COL_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_OMI_SO2_mod.f90',
-                    '${DART_DIR}/observations/forward_operators/obs_def_TROPOMI_CO_mod.f90',
-                    '${DART_DIR}/observations/forward_operators/obs_def_TROPOMI_O3_mod.f90',
-                    '${DART_DIR}/observations/forward_operators/obs_def_TROPOMI_NO2_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_TROPOMI_CO_TOTAL_COL_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_TROPOMI_O3_TOTAL_COL_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_TROPOMI_O3_TROP_COL_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_TROPOMI_O3_PROFILE_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_TROPOMI_O3_CPSR_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_TROPOMI_NO2_TOTAL_COL_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_TROPOMI_NO2_TROP_COL_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_TROPOMI_SO2_mod.f90',
-                    '${DART_DIR}/observations/forward_operators/obs_def_TEMPO_O3_mod.f90',
-                    '${DART_DIR}/observations/forward_operators/obs_def_TEMPO_NO2_mod.f90',
-                    '${DART_DIR}/observations/forward_operators/obs_def_MOPITT_CO_mod.f90',
-                    '${DART_DIR}/observations/forward_operators/obs_def_MODIS_AOD_mod.f90'"
+                    '${DART_DIR}/observations/forward_operators/obs_def_TEMPO_O3_TOTAL_COL_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_TEMPO_O3_TROP_COL_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_TEMPO_O3_PROFILE_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_TEMPO_O3_CPSR_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_TEMPO_NO2_TOTAL_COL_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_TEMPO_NO2_TROP_COL_mod.f90'"
 #
 # &obs_kind_nml
-   export NL_EVALUATE_THESE_OBS_TYPES="'AIRNOW_O3'",
+   export NL_EVALUATE_THESE_OBS_TYPES=" ",
 #
    export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'RADIOSONDE_U_WIND_COMPONENT',
@@ -1429,15 +1584,18 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
                                    'LAND_SFC_ALTIMETER',
                                    'SAT_U_WIND_COMPONENT',
                                    'SAT_V_WIND_COMPONENT',
-                                   'MOPITT_CO_RETRIEVAL',
-                                   'IASI_CO_RETRIEVAL',
-                                   'OMI_NO2_COLUMN',
+                                   'MOPITT_CO_PROFILE',
+                                   'IASI_CO_PROFILE',
+                                   'IASI_O3_PROFILE',
+                                   'OMI_NO2_TROP_COL',
+                                   'OMI_O3_PROFILE',
                                    'AIRNOW_CO',
+                                   'AIRNOW_O3',
                                    'AIRNOW_NO2',
                                    'AIRNOW_SO2',
                                    'AIRNOW_PM10',
                                    'AIRNOW_PM25',
-                                   'MODIS_AOD_RETRIEVAL'"
+                                   'MODIS_AOD_TOTAL_COL'"
 #
 # &replace_wrf_fields_nml
    export NL_FIELDNAMES="'SNOWC',
@@ -1460,11 +1618,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_VERT_NORMALIZATION_HEIGHT=10000.0
    export NL_VERT_NORMALIZATION_LEVELS=20.0
    export NL_VERT_NORMALIZATION_SCALE_HEIGHT=1.5
-   export NL_SPECIAL_VERT_NORMALIZATION_OBS_TYPES="'MOPITT_CO_RETRIEVAL','IASI_CO_RETRIEVAL','IASI_CO_COLUMN','TROPOMI_CO_COLUMN','AIRNOW_CO','IASI_O3_RETRIEVAL','OMI_O3_COLUMN','TROPOMI_O3_COLUMN','TEMPO_O3_COLUMN','AIRNOW_O3','OMI_NO2_COLUMN','TROPOMI_NO2_COLUMN','TEMPO_NO2_COLUMN','AIRNOW_NO2','OMI_SO2_COLUMN','TROPOMI_SO2_COLUMN','AIRNOW_SO2','MODIS_AOD_RETRIEVAL','AIRNOW_PM10','AIRNOW_PM25','LAND_SFC_U_WIND_COMPONENT','LAND_SFC_V_WIND_COMPONENT','LAND_SFC_SPECIFIC_HUMIDITY'"
-   export NL_SPECIAL_VERT_NORMALIZATION_PRESSURES="100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0"
-   export NL_SPECIAL_VERT_NORMALIZATION_HEIGHTS="10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0"
-   export NL_SPECIAL_VERT_NORMALIZATION_LEVELS="20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0"
-   export NL_SPECIAL_VERT_NORMALIZATION_SCALE_HEIGHTS="1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5"
+   export NL_SPECIAL_VERT_NORMALIZATION_OBS_TYPES="'MOPITT_CO_TOTAL_COL','MOPITT_CO_PROFILE','MOPITT_CO_CPSR','IASI_CO_TOTAL_COL','IASI_CO_PROFILE','IASI_CO_CPSR','TROPOMI_CO_TOTAL_COL','AIRNOW_CO','IASI_O3_PROFILE','IASI_O3_CPSR','OMI_O3_TOTAL_COL','OMI_O3_TROP_COL','OMI_O3_PROFILE','OMI_O3_CPSR','TROPOMI_O3_TOTAL_COL','TROPOMI_O3_TROP_COL','TROPOMI_O3_PROFILE','TROPOMI_O3_CPSR','TEMPO_O3_TOTAL_COL','TEMPO_O3_TROP_COL','TEMPO_O3_PROFILE','TEMPO_O3_CPSR','AIRNOW_O3','OMI_NO2_TOTAL_COL','OMI_NO2_TROP_COL','TROPOMI_NO2_TOTAL_COL','TROPOMI_NO2_TROP_COL','TEMPO_NO2_TOTAL_COL','TEMPO_NO2_TROP_COL','AIRNOW_NO2','OMI_SO2_COL','TROPOMI_SO2_COL','AIRNOW_SO2','MODIS_AOD_TOTAL_COL','AIRNOW_PM10','AIRNOW_PM25','LAND_SFC_U_WIND_COMPONENT','LAND_SFC_V_WIND_COMPONENT','LAND_SFC_SPECIFIC_HUMIDITY'"
+   export NL_SPECIAL_VERT_NORMALIZATION_PRESSURES="100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0,100000.0"
+   export NL_SPECIAL_VERT_NORMALIZATION_HEIGHTS="10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0,10000.0"
+   export NL_SPECIAL_VERT_NORMALIZATION_LEVELS="20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0,20.0"
+   export NL_SPECIAL_VERT_NORMALIZATION_SCALE_HEIGHTS="1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5"
 #
 # &obs_impact_tool_nml 
    export NL_IMPACT_TOOL_INPUT="'variable_localization.txt'"
@@ -2115,8 +2273,10 @@ EOF
 #
 #            RANDOM=$$
             export JOBRND=${TRANDOM}_wrfda_cr
-            ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${WRFDA_JOB_CLASS} ${WRFDA_TIME_LIMIT} ${WRFDA_NODES} ${WRFDA_TASKS} da_wrfvar.exe SERIAL ${ACCOUNT}
-            qsub job.ksh
+#            ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${WRFDA_JOB_CLASS} ${WRFDA_TIME_LIMIT} ${WRFDA_NODES} ${WRFDA_TASKS} da_wrfvar.exe SERIAL ${ACCOUNT}
+#            qsub job.ksh
+            chmod +x da_wrfvar.exe
+            ./da_wrfvar.exe > index.html 2>&1
 #
 # FINE RESOLUTION GRID
 #            cd ${RUN_DIR}/${DATE}/wrfchem_met_ic
@@ -2177,7 +2337,30 @@ EOF
 #            fi
             let MEM=${MEM}+1
          done
-         export P_DATE=$(${BUILD_DIR}/da_advance_time.exe ${P_DATE} ${LBC_FREQ} 2>/dev/null) 
+#
+# Chia-Hua Recentering Fix
+# Ensemble mean
+         ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}'.e001' ens_mean
+#
+# Mean difference
+         ncdiff -O ens_mean ${RUN_DIR}/${DATE}/real/wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}  mean_diff
+#
+# Recenter each member
+         let MEM=1
+         while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
+            export CMEM=e${MEM}
+            if [[ ${MEM} -lt 100 ]]; then export CMEM=e0${MEM}; fi
+            if [[ ${MEM} -lt 10  ]]; then export CMEM=e00${MEM}; fi
+            ncdiff -O wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM} mean_diff mem.${CMEM}
+            mv mem.${CMEM} wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
+            let MEM=${MEM}+1
+         done
+         ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}'.e001'  wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}_new_mean
+         rm ens_mean
+         rm mean_diff
+# End Recentering Fix
+#	 
+	 export P_DATE=$(${BUILD_DIR}/da_advance_time.exe ${P_DATE} ${LBC_FREQ} 2>/dev/null) 
       done
       export NL_E_WE=${NNXP_STAG_CR},${NNXP_STAG_FR}
       export NL_E_SN=${NNYP_STAG_CR},${NNYP_STAG_FR}
@@ -2244,8 +2427,10 @@ wrfinput_next_file='wrfinput_next_${L_DATE}'
 /
 EOF
             export JOBRND=${TRANDOM}_pert_bc
-            ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${SINGLE_JOB_CLASS} ${SINGLE_TIME_LIMIT} ${SINGLE_NODES} ${SINGLE_TASKS} pert_wrf_bc SERIAL ${ACCOUNT}
-            qsub -Wblock=true job.ksh
+#            ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${SINGLE_JOB_CLASS} ${SINGLE_TIME_LIMIT} ${SINGLE_NODES} ${SINGLE_TASKS} pert_wrf_bc SERIAL ${ACCOUNT}
+#            qsub -Wblock=true job.ksh
+            chmod +x pert_wrf_bc
+            ./pert_wrf_bc > index.html 2>&1
             export L_DATE=${NEXT_L_DATE} 
          done
          ${HYBRID_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
@@ -2253,6 +2438,29 @@ EOF
          mv wrfbdy_this wrfbdy_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
          let MEM=${MEM}+1
       done
+#
+# Chia-Hua Recentering Fix
+# Ensemble mean
+      ncea -O -n ${NUM_MEMBERS},3,1 wrfbdy_d${CR_DOMAIN}_${ANALYSIS_DATE}'.e001' ens_mean
+#
+# Mean difference
+      ncdiff -O ens_mean ${RUN_DIR}/${DATE}/real/wrfbdy_d${CR_DOMAIN}_${ANALYSIS_DATE}  mean_diff
+#
+# Recenter each member
+      let MEM=1
+      while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
+         export CMEM=e${MEM}
+         if [[ ${MEM} -lt 100 ]]; then export CMEM=e0${MEM}; fi
+         if [[ ${MEM} -lt 10  ]]; then export CMEM=e00${MEM}; fi
+         ncdiff -O wrfbdy_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM} mean_diff mem.${CMEM}
+         mv mem.${CMEM} wrfbdy_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
+         let MEM=${MEM}+1
+      done
+      ncea -O -n ${NUM_MEMBERS},3,1 wrfbdy_d${CR_DOMAIN}_${ANALYSIS_DATE}'.e001'  wrfbdy_d${CR_DOMAIN}_${ANALYSIS_DATE}_new_mean
+      rm ens_mean
+      rm mean_diff
+# End Recentering Fix
+#	 
    fi
 #
 #########################################################################
@@ -2506,9 +2714,10 @@ EOF
 #
       RANDOM=$$
       export JOBRND=${RANDOM}_fire
-      ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} "fire_emis.exe < fire_emis.mozc.inp" SERIAL ${ACCOUNT}
-      qsub -Wblock=true job.ksh
-#      ./fire_emis.exe > index.html 2>&1
+#      ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} "fire_emis.exe < fire_emis.mozc.inp" SERIAL ${ACCOUNT}
+#      qsub -Wblock=true job.ksh
+      chmod +x fire_emis.exe
+      ./fire_emis.exe < fire_emis.mozc.inp > index.html 2>&1
 #
       export L_DATE=${DATE}
       while [[ ${L_DATE} -le ${END_DATE} ]]; do
@@ -3150,16 +3359,16 @@ EOF
 #
 ########################################################################
 #
-# RUN MOPITT CO OBSERVATIONS
+# RUN MOPITT CO TOTAL_COL OBSERVATIONS
 #
 ########################################################################
 #
-   if ${RUN_MOPITT_CO_OBS}; then
-      if [[ ! -d ${RUN_DIR}/${DATE}/mopitt_co_obs ]]; then
-         mkdir -p ${RUN_DIR}/${DATE}/mopitt_co_obs
-         cd ${RUN_DIR}/${DATE}/mopitt_co_obs
+   if ${RUN_MOPITT_CO_TOTAL_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/mopitt_co_total_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/mopitt_co_total_col_obs
+         cd ${RUN_DIR}/${DATE}/mopitt_co_total_col_obs
       else
-         cd ${RUN_DIR}/${DATE}/mopitt_co_obs
+         cd ${RUN_DIR}/${DATE}/mopitt_co_total_col_obs
       fi
 #
 # SET MOPITT PARAMETERS
@@ -3201,7 +3410,8 @@ EOF
       export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${YYYY}${MM}${DD}${MOPITT_FILE_EXT}\'
 #
 # COPY EXECUTABLE
-      export FILE=mopitt_extract_no_transform_RT.pro
+#      export FILE=mopitt_v5_co_total_col_extract.m
+      export FILE=mopitt_co_total_col_extract.pro
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
 #
@@ -3211,15 +3421,9 @@ EOF
       export JOBRND=${RANDOM}_idl_mopitt
       cat << EOFF > job.ksh
 #!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
 idl << EOF
-.compile mopitt_extract_no_transform_RT.pro
-mopitt_extract_no_transform_RT, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG_SEC}, ${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
+.compile mopitt_co_total_col_extract.pro
+mopitt_co_total_col_extract, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG_SEC}, ${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
 EOF
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
@@ -3231,8 +3435,9 @@ else
    exit
 fi
 EOFF
-      qsub -Wblock=true job.ksh 
-#      ./job.ksh > index.html 2>&1
+#      qsub -Wblock=true job.ksh
+      chmod +x job.ksh
+      ./job.ksh > index_mat.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -3265,7 +3470,8 @@ EOFF
 	 export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}${MOPITT_FILE_EXT}\'
 #
 # COPY EXECUTABLE
-         export FILE=mopitt_extract_no_transform_RT.pro
+#      export FILE=mopitt_v5_co_total_col_extract.m
+         export FILE=mopitt_co_total_col_extract.pro
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
 #
@@ -3275,15 +3481,9 @@ EOFF
          export JOBRND=${RANDOM}_idl_mopitt
          cat << EOFF > job.ksh
 #!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
 idl << EOF
-.compile mopitt_extract_no_transform_RT.pro
-mopitt_extract_no_transform_RT, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG_SEC}, ${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
+.compile mopitt_co_total_col_extract.pro
+mopitt_co_total_col_extract, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG_SEC}, ${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
 EOF
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
@@ -3295,8 +3495,9 @@ else
    exit
 fi
 EOFF
-         qsub -Wblock=true job.ksh 
-#         ./job.ksh > index.html 2>&1
+#         qsub -Wblock=true job.ksh 
+         chmod +x job.ksh
+         ./job.ksh > index_mat.html 2>&1
       fi   
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -3320,7 +3521,7 @@ EOFF
       cp MOPITT_CO_${D_DATE}.dat ${D_DATE}.dat
       export NL_FILEDIR=\'./\' 
       export NL_FILENAME=${D_DATE}.dat
-      export NL_MOP_OUTFILE=obs_seq_mopitt_co_${DATE}.out
+      export NL_MOP_OUTFILE=obs_seq_mopitt_co_total_col_${DATE}.out
       export NL_MOPITT_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_MOPITT}\'
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_MOPITT_CO}
       export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
@@ -3349,9 +3550,478 @@ EOFF
       rm -rf input.nml
       ${HYBRID_SCRIPTS_DIR}/da_create_dart_mopitt_input_nml.ksh
 #
+# CREATE BIAS CORRECTION NAMELIST
+      export NL_DOES_FILE_EXIST=.true.
+      if [[ ${DATE} -eq ${FIRST_FILTER_DATE} || ${RUN_BIAS_CORRECTION} == false ]]; then
+         rm -rf ${NL_CORRECTION_FILENAME}
+         export NL_DOES_FILE_EXIST=.false.
+      else
+         rm -rf ${NL_CORRECTION_FILENAME}
+         cp ${RUN_DIR}/${PAST_DATE}/bias_corr/${NL_CORRECTION_FILENAME} ./.
+      fi
+#
+      rm -rf bias_correct_nml
+      cat << EOF > bias_correct_nml
+&bias_correct_nml
+path_filein='${RUN_DIR}/${DATE}/bias_corr'
+does_file_exist=${NL_DOES_FILE_EXIST}
+correction_filename=${NL_CORRECTION_FILENAME}
+nobs=1
+obs_list='TROPOMI_CO_COL'
+/
+EOF
+#
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/work/mopitt_ascii_to_obs ./.
-      ./mopitt_ascii_to_obs > index.html 2>&1
+      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/work/mopitt_co_total_col_ascii_to_obs ./.
+      ./mopitt_co_total_col_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ ! -s ${NL_MOP_OUTFILE} ]]; then
+         touch NO_MOPITT_CO_${DATE}
+      fi
+   fi
+#
+########################################################################
+#
+# RUN MOPITT CO PROFILE OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_MOPITT_CO_PROFILE_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/mopitt_co_profile_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/mopitt_co_profile_obs
+         cd ${RUN_DIR}/${DATE}/mopitt_co_profile_obs
+      else
+         cd ${RUN_DIR}/${DATE}/mopitt_co_profile_obs
+      fi
+#
+# SET MOPITT PARAMETERS
+      export MOPITT_FILE_PRE=MOP02J-
+      export MOPITT_FILE_EXT=-L2V10.1.3.beta.hdf   
+      export OUTFILE=\'TEMP_FILE.dat\'
+      export OUTFILE_NQ=TEMP_FILE.dat
+      export MOP_OUTFILE=\'MOPITT_CO_${D_DATE}.dat\'
+      export MOP_OUTFILE_NQ=MOPITT_CO_${D_DATE}.dat
+      rm -rf ${OUTFILE}
+      rm -rf ${MOP_OUTFILE}
+#
+#  SET OBS WINDOW
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET MOPITT INPUT DATA FILE
+      export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${YYYY}${MM}${DD}${MOPITT_FILE_EXT}\'
+#
+# COPY EXECUTABLE
+#      export FILE=mopitt_v5_co_profile_extract.m
+      export FILE=mopitt_co_profile_extract.pro
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+#
+      rm -rf job.ksh
+      touch job.ksh
+      RANDOM=$$
+      export JOBRND=${RANDOM}_idl_mopitt
+      cat << EOFF > job.ksh
+#!/bin/ksh -aeux
+idl << EOF
+.compile mopitt_co_profile_extract.pro
+mopitt_co_profile_extract, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG_SEC}, ${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
+EOF
+export RC=\$?     
+if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
+if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+if [[ \$RC = 0 ]]; then
+   touch SUCCESS
+else
+   touch FAILED 
+   exit
+fi
+EOFF
+#      qsub -Wblock=true job.ksh
+      chmod +x job.ksh
+      ./job.ksh > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+         touch ${MOP_OUTFILE_NQ}
+         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+	 rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+	 rm -rf ${OUTFILE_NQ}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]];  then
+         export BIN_BEG_HH=${ASIM_MN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         let HH_BEG=${BIN_BEG_HH}
+         let MN_BEG=${BIN_BEG_MN}
+         let SS_BEG=${BIN_BEG_SS}
+         let HH_END=${BIN_END_HH}
+         let MN_END=${BIN_END_MN}
+         let SS_END=${BIN_END_SS}
+         let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+         let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET MOPITT INPUT DATA FILE
+	 export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}${MOPITT_FILE_EXT}\'
+#
+# COPY EXECUTABLE
+#      export FILE=mopitt_v5_co_profile_extract.m
+         export FILE=mopitt_co_profile_extract.pro
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+#
+         rm -rf job.ksh
+         touch job.ksh
+         RANDOM=$$
+         export JOBRND=${RANDOM}_idl_mopitt
+         cat << EOFF > job.ksh
+#!/bin/ksh -aeux
+idl << EOF
+.compile mopitt_co_profile_extract.pro
+mopitt_co_profile_extract, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG_SEC}, ${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
+EOF
+export RC=\$?     
+if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
+if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+if [[ \$RC = 0 ]]; then
+   touch SUCCESS
+else
+   touch FAILED 
+   exit
+fi
+EOFF
+#         qsub -Wblock=true job.ksh 
+         chmod +x job.ksh
+         ./job.ksh > index_mat.html 2>&1
+      fi   
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+         touch ${MOP_OUTFILE_NQ}
+         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+	 rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+	 rm -rf ${OUTFILE_NQ}
+      fi
+      if [[ ! -e ${MOP_OUTFILE_NQ} ]]; then
+         touch NO_MOPITT_CO_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT MOPITT ASCII TO OBS_SEQ 
+      export NL_YEAR=${D_YYYY}
+      export NL_MONTH=${D_MM}
+      export NL_DAY=${D_DD}
+      export NL_HOUR=${D_HH}
+      cp MOPITT_CO_${D_DATE}.dat ${D_DATE}.dat
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=${D_DATE}.dat
+      export NL_MOP_OUTFILE=obs_seq_mopitt_co_profile_${DATE}.out
+      export NL_MOPITT_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_MOPITT}\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_MOPITT_CO}
+      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+#
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# USE MOPITT DATA 
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_mopitt_input_nml.ksh
+#
+# CREATE BIAS CORRECTION NAMELIST
+      export NL_DOES_FILE_EXIST=.true.
+      if [[ ${DATE} -eq ${FIRST_FILTER_DATE} || ${RUN_BIAS_CORRECTION} == false ]]; then
+         rm -rf ${NL_CORRECTION_FILENAME}
+         export NL_DOES_FILE_EXIST=.false.
+      else
+         rm -rf ${NL_CORRECTION_FILENAME}
+         cp ${RUN_DIR}/${PAST_DATE}/bias_corr/${NL_CORRECTION_FILENAME} ./.
+      fi
+#
+      rm -rf bias_correct_nml
+      cat << EOF > bias_correct_nml
+&bias_correct_nml
+path_filein='${RUN_DIR}/${DATE}/bias_corr'
+does_file_exist=${NL_DOES_FILE_EXIST}
+correction_filename=${NL_CORRECTION_FILENAME}
+nobs=1
+obs_list='TROPOMI_CO_COL'
+/
+EOF
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/work/mopitt_co_profile_ascii_to_obs ./.
+      ./mopitt_co_profile_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ ! -s ${NL_MOP_OUTFILE} ]]; then
+         touch NO_MOPITT_CO_${DATE}
+      fi
+   fi
+#
+########################################################################
+#
+# RUN MOPITT CO CPSR OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_MOPITT_CO_CPSR_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/mopitt_co_cpsr_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/mopitt_co_cpsr_obs
+         cd ${RUN_DIR}/${DATE}/mopitt_co_cpsr_obs
+      else
+         cd ${RUN_DIR}/${DATE}/mopitt_co_cpsr_obs
+      fi
+#
+# SET MOPITT PARAMETERS
+      export MOPITT_FILE_PRE=MOP02J-
+      export MOPITT_FILE_EXT=-L2V10.1.3.beta.hdf   
+      export OUTFILE=\'TEMP_FILE.dat\'
+      export OUTFILE_NQ=TEMP_FILE.dat
+      export MOP_OUTFILE=\'MOPITT_CO_${D_DATE}.dat\'
+      export MOP_OUTFILE_NQ=MOPITT_CO_${D_DATE}.dat
+      rm -rf ${OUTFILE}
+      rm -rf ${MOP_OUTFILE}
+#
+#  SET OBS WINDOW
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET MOPITT INPUT DATA FILE
+      export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${YYYY}${MM}${DD}${MOPITT_FILE_EXT}\'
+#
+# COPY EXECUTABLE
+#      export FILE=mopitt_v5_co_cpsr_extract.m
+      export FILE=mopitt_co_cpsr_extract.pro
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+#
+      rm -rf job.ksh
+      touch job.ksh
+      RANDOM=$$
+      export JOBRND=${RANDOM}_idl_mopitt
+      cat << EOFF > job.ksh
+#!/bin/ksh -aeux
+idl << EOF
+.compile mopitt_co_cpsr_extract.pro
+mopitt_co_cpsr_extract, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG_SEC}, ${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
+EOF
+export RC=\$?     
+if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
+if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+if [[ \$RC = 0 ]]; then
+   touch SUCCESS
+else
+   touch FAILED 
+   exit
+fi
+EOFF
+#      qsub -Wblock=true job.ksh
+      chmod +x job.ksh
+      ./job.ksh > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+         touch ${MOP_OUTFILE_NQ}
+         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+	 rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+	 rm -rf ${OUTFILE_NQ}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]];  then
+         export BIN_BEG_HH=${ASIM_MN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         let HH_BEG=${BIN_BEG_HH}
+         let MN_BEG=${BIN_BEG_MN}
+         let SS_BEG=${BIN_BEG_SS}
+         let HH_END=${BIN_END_HH}
+         let MN_END=${BIN_END_MN}
+         let SS_END=${BIN_END_SS}
+         let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+         let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET MOPITT INPUT DATA FILE
+	 export MOP_INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}${MOPITT_FILE_EXT}\'
+#
+# COPY EXECUTABLE
+#      export FILE=mopitt_v5_co_cpsr_extract.m
+         export FILE=mopitt_co_cpsr_extract.pro
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+#
+         rm -rf job.ksh
+         touch job.ksh
+         RANDOM=$$
+         export JOBRND=${RANDOM}_idl_mopitt
+         cat << EOFF > job.ksh
+#!/bin/ksh -aeux
+idl << EOF
+.compile mopitt_co_cpsr_extract.pro
+mopitt_co_cpsr_extract, ${MOP_INFILE}, ${OUTFILE}, ${BIN_BEG_SEC}, ${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
+EOF
+export RC=\$?     
+if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
+if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+if [[ \$RC = 0 ]]; then
+   touch SUCCESS
+else
+   touch FAILED 
+   exit
+fi
+EOFF
+#         qsub -Wblock=true job.ksh 
+         chmod +x job.ksh
+         ./job.ksh > index_mat.html 2>&1
+      fi   
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+         touch ${MOP_OUTFILE_NQ}
+         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+	 rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${MOP_OUTFILE_NQ}
+	 rm -rf ${OUTFILE_NQ}
+      fi
+      if [[ ! -e ${MOP_OUTFILE_NQ} ]]; then
+         touch NO_MOPITT_CO_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT MOPITT ASCII TO OBS_SEQ 
+      export NL_YEAR=${D_YYYY}
+      export NL_MONTH=${D_MM}
+      export NL_DAY=${D_DD}
+      export NL_HOUR=${D_HH}
+      cp MOPITT_CO_${D_DATE}.dat ${D_DATE}.dat
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=${D_DATE}.dat
+      export NL_MOP_OUTFILE=obs_seq_mopitt_co_cpsr_${DATE}.out
+      export NL_MOPITT_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_MOPITT}\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_MOPITT_CO}
+      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+#
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# USE MOPITT DATA 
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_mopitt_input_nml.ksh
+#
+# CREATE BIAS CORRECTION NAMELIST
+      export NL_DOES_FILE_EXIST=.true.
+      if [[ ${DATE} -eq ${FIRST_FILTER_DATE} || ${RUN_BIAS_CORRECTION} == false ]]; then
+         rm -rf ${NL_CORRECTION_FILENAME}
+         export NL_DOES_FILE_EXIST=.false.
+      else
+         rm -rf ${NL_CORRECTION_FILENAME}
+         cp ${RUN_DIR}/${PAST_DATE}/bias_corr/${NL_CORRECTION_FILENAME} ./.
+      fi
+#
+      rm -rf bias_correct_nml
+      cat << EOF > bias_correct_nml
+&bias_correct_nml
+path_filein='${RUN_DIR}/${DATE}/bias_corr'
+does_file_exist=${NL_DOES_FILE_EXIST}
+correction_filename=${NL_CORRECTION_FILENAME}
+nobs=1
+obs_list='TROPOMI_CO_COL'
+/
+EOF
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/work/mopitt_co_cpsr_ascii_to_obs ./.
+      ./mopitt_co_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ ! -s ${NL_MOP_OUTFILE} ]]; then
@@ -3361,16 +4031,16 @@ EOFF
 #
 #########################################################################
 #
-# RUN IASI CO OBSERVATIONS
+# RUN IASI CO PROFILE OBSERVATIONS
 #
 #########################################################################
 #
-   if ${RUN_IASI_CO_OBS}; then
-      if [[ ! -d ${RUN_DIR}/${DATE}/iasi_co_obs ]]; then
-         mkdir -p ${RUN_DIR}/${DATE}/iasi_co_obs
-         cd ${RUN_DIR}/${DATE}/iasi_co_obs
+   if ${RUN_IASI_CO_PROFILE_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/iasi_co_profile_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/iasi_co_profile_obs
+         cd ${RUN_DIR}/${DATE}/iasi_co_profile_obs
       else
-         cd ${RUN_DIR}/${DATE}/iasi_co_obs
+         cd ${RUN_DIR}/${DATE}/iasi_co_profile_obs
       fi
 #
 # SET IASI PARAMETERS
@@ -3431,7 +4101,7 @@ EOFF
                export IAS_FILEIN=\'${FILEIN}\'
 #
 # COPY_EXECUTABLE
-               export FILE=iasi_extract_no_transform_UA.pro
+               export FILE=iasi_co_profile_extract.pro
                rm -rf ${FILE}
                cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
 #
@@ -3441,16 +4111,9 @@ EOFF
                export JOBRND=${RANDOM}_idl_iasi
                cat << EOFF > job.ksh
 #!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
 idl << EOF
-.compile iasi_extract_no_transform_UA.pro
-
-iasi_extract_no_transform_UA,${IAS_FILEIN},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC},${NL_MIN_LON},${NL_MAX_LON},${NL_MIN_LAT},${NL_MAX_LAT}
+.compile iasi_co_profile_extract.pro
+iasi_co_profile_extract,${IAS_FILEIN},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC},${NL_MIN_LON},${NL_MAX_LON},${NL_MIN_LAT},${NL_MAX_LAT}
 EOF
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
@@ -3462,7 +4125,9 @@ else
    exit
 fi
 EOFF
-               qsub -Wblock=true job.ksh 
+#               qsub -Wblock=true job.ksh 
+               chmod +x job.ksh
+               ./job.ksh > index_mat.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
                if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -3518,7 +4183,7 @@ EOFF
                   export IAS_FILEIN=\'${FILEIN}\'
 #
 # COPY_EXECUTABLE
-                  export FILE=iasi_extract_no_transform_UA.pro
+                  export FILE=iasi_co_profile_extract.pro
                   rm -rf ${FILE}
                   cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
 #
@@ -3528,15 +4193,9 @@ EOFF
                   export JOBRND=${RANDOM}_idl_iasi
                   cat << EOFF > job.ksh
 #!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
 idl << EOF
-.compile iasi_extract_no_transform_UA.pro
-iasi_extract_no_transform_UA,${IAS_FILEIN},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC},${NL_MIN_LON},${NL_MAX_LON},${NL_MIN_LAT},${NL_MAX_LAT}
+.compile iasi_co_profile_extract.pro
+iasi_co_profile_extract,${IAS_FILEIN},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC},${NL_MIN_LON},${NL_MAX_LON},${NL_MIN_LAT},${NL_MAX_LAT}
 EOF
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
@@ -3548,7 +4207,9 @@ else
    exit
 fi
 EOFF
-                  qsub -Wblock=true job.ksh 
+#                  qsub -Wblock=true job.ksh 
+                  chmod +x job.ksh
+                  ./job.ksh > index_mat.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
                   if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -3573,7 +4234,7 @@ EOFF
       cp IASI_CO_${D_DATE}.dat ${D_DATE}.dat
       export NL_FILEDIR=\'./\' 
       export NL_FILENAME=${D_DATE}.dat
-      export NL_IAS_OUTFILE=obs_seq_iasi_co_${DATE}.out
+      export NL_IAS_OUTFILE=obs_seq_iasi_co_profile_${DATE}.out
       export NL_IASI_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
       export NL_IASI_O3_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_IASI_CO}
@@ -3608,8 +4269,8 @@ EOFF
       ${HYBRID_SCRIPTS_DIR}/da_create_dart_iasi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/IASI_CO/work/iasi_co_ascii_to_obs ./.
-      ./iasi_co_ascii_to_obs > index.html 2>&1
+      cp ${DART_DIR}/observations/obs_converters/IASI_CO/work/iasi_co_profile_ascii_to_obs ./.
+      ./iasi_co_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ ! -s ${NL_IAS_OUTFILE} ]]; then
@@ -3619,16 +4280,763 @@ EOFF
 #
 #########################################################################
 #
-# RUN IASI O3 OBSERVATIONS
+# RUN IASI CO TOTAL_COL OBSERVATIONS
 #
 #########################################################################
 #
-   if ${RUN_IASI_O3_OBS}; then
-      if [[ ! -d ${RUN_DIR}/${DATE}/iasi_o3_obs ]]; then
-         mkdir -p ${RUN_DIR}/${DATE}/iasi_o3_obs
-         cd ${RUN_DIR}/${DATE}/iasi_o3_obs
+   if ${RUN_IASI_CO_TOTAL_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/iasi_co_total_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/iasi_co_total_col_obs
+         cd ${RUN_DIR}/${DATE}/iasi_co_total_col_obs
       else
-         cd ${RUN_DIR}/${DATE}/iasi_o3_obs
+         cd ${RUN_DIR}/${DATE}/iasi_co_total_col_obs
+      fi
+#
+# SET IASI PARAMETERS
+      export IASI_FILE_PRE='VERSION2_NCAR_IASI_xxx_1C_M02'
+      export IASI_FILE_EXT='hdf'
+      export OUTFILE=\'TEMP_FILE.dat\'
+      export OUTFILE_NQ=TEMP_FILE.dat
+      export IAS_OUTFILE=\'IASI_CO_${D_DATE}.dat\'
+      export IAS_OUTFILE_NQ=IASI_CO_${D_DATE}.dat
+      let NCNT=4
+      rm -rf ${OUTFILE_NQ}
+      rm -rf ${IAS_OUTFILE_NQ}
+#
+#  SET OBS WINDOW
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET IASI INPUT DATA FILE
+      export A_DATE=${DATE}
+      while [[ ${A_DATE} -le ${ASIM_MAX_DATE} ]]; do 
+         export A_YY=$(echo $A_DATE | cut -c1-4)
+         export A_MM=$(echo $A_DATE | cut -c5-6)
+         export A_DD=$(echo $A_DATE | cut -c7-8)
+         export A_HH=$(echo $A_DATE | cut -c9-10)
+	 export A_DATE=${A_YY}${A_MM}${A_DD}${A_HH}
+	 export A_DIR=${A_YY}/${A_MM}/${A_DD}
+         export ICNT=0
+         while [[ ${ICNT} -le ${NCNT} ]]; do
+            export TEST=$($BUILD_DIR/da_advance_time.exe ${A_DATE} ${ICNT} 2>/dev/null)
+            export ND_YY=$(echo $TEST | cut -c1-4)
+            export ND_MM=$(echo $TEST | cut -c5-6)
+            export ND_DD=$(echo $TEST | cut -c7-8)
+            export ND_HH=$(echo $TEST | cut -c9-10)
+	    export ND_DATE=${ND_YY}${ND_MM}${ND_DD}${ND_HH}
+            export FILEIN=`ls ${EXPERIMENT_IASI_CO_DIR}/${A_DIR}/${IASI_FILE_PRE}_${A_DATE}*Z_${ND_DATE}*Z_*`
+            if [[ -e ${FILEIN} ]]; then 
+               export IAS_FILEIN=\'${FILEIN}\'
+#
+# COPY_EXECUTABLE
+               export FILE=iasi_co_total_col_extract.pro
+               rm -rf ${FILE}
+               cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
+#
+               rm -rf job.ksh
+               touch job.ksh
+               RANDOM=$$
+               export JOBRND=${RANDOM}_idl_iasi
+               cat << EOFF > job.ksh
+#!/bin/ksh -aeux
+idl << EOF
+.compile iasi_co_total_col_extract.pro
+iasi_co_total_col_extract,${IAS_FILEIN},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC},${NL_MIN_LON},${NL_MAX_LON},${NL_MIN_LAT},${NL_MAX_LAT}
+EOF
+export RC=\$?     
+if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
+if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+if [[ \$RC = 0 ]]; then
+   touch SUCCESS
+else
+   touch FAILED 
+   exit
+fi
+EOFF
+#               qsub -Wblock=true job.ksh 
+               chmod +x job.ksh
+               ./job.ksh > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+               if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                  touch ${IAS_OUTFILE_NQ}
+                  cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	          rm -rf ${OUTFILE_NQ}
+               elif [[ -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                  cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	          rm -rf ${OUTFILE_NQ}
+               fi
+            fi
+            (( ICNT=${ICNT}+1 ))
+         done
+         export A_DATE=$(${BUILD_DIR}/da_advance_time.exe ${A_DATE} 1 2>/dev/null)
+      done
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_HH=${ASIM_MN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         let HH_BEG=${BIN_BEG_HH}
+         let MN_BEG=${BIN_BEG_MN}
+         let SS_BEG=${BIN_BEG_SS}
+         let HH_END=${BIN_END_HH}
+         let MN_END=${BIN_END_MN}
+         let SS_END=${BIN_END_SS}
+         let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+         let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET IASI INPUT DATA FILE
+	 export A_DATE=${ASIM_MIN_DATE}
+         while [[ ${A_DATE} -le ${DATE} ]]; do 
+            export A_YY=$(echo $A_DATE | cut -c1-4)
+            export A_MM=$(echo $A_DATE | cut -c5-6)
+            export A_DD=$(echo $A_DATE | cut -c7-8)
+            export A_HH=$(echo $A_DATE | cut -c9-10)
+   	    export A_DATE=${A_YY}${A_MM}${A_DD}${A_HH}
+            export A_DIR=${A_YY}/${A_MM}/${A_DD}
+            export ICNT=0
+            while [[ ${ICNT} -le ${NCNT} ]]; do
+               export TEST=$($BUILD_DIR/da_advance_time.exe ${A_DATE} ${ICNT} 2>/dev/null)
+               export ND_YY=$(echo $TEST | cut -c1-4)
+               export ND_MM=$(echo $TEST | cut -c5-6)
+               export ND_DD=$(echo $TEST | cut -c7-8)
+               export ND_HH=$(echo $TEST | cut -c9-10)
+   	       export ND_DATE=${ND_YY}${ND_MM}${ND_DD}${ND_HH}
+               export FILEIN=`ls ${EXPERIMENT_IASI_CO_DIR}/${A_DIR}/${IASI_FILE_PRE}_${ND_DATE}*Z_${ND_DATE=}*Z_*`
+               if [[ -e ${FILEIN} ]]; then 
+                  export IAS_FILEIN=\'${FILEIN}\'
+#
+# COPY_EXECUTABLE
+                  export FILE=iasi_co_total_col_extract.pro
+                  rm -rf ${FILE}
+                  cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
+#
+                  rm -rf job.ksh
+                  touch job.ksh
+                  RANDOM=$$
+                  export JOBRND=${RANDOM}_idl_iasi
+                  cat << EOFF > job.ksh
+#!/bin/ksh -aeux
+idl << EOF
+.compile iasi_co_total_col_extract.pro
+iasi_co_total_col_extract,${IAS_FILEIN},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC},${NL_MIN_LON},${NL_MAX_LON},${NL_MIN_LAT},${NL_MAX_LAT}
+EOF
+export RC=\$?     
+if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
+if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+if [[ \$RC = 0 ]]; then
+   touch SUCCESS
+else
+   touch FAILED 
+   exit
+fi
+EOFF
+#                  qsub -Wblock=true job.ksh 
+                  chmod +x job.ksh
+                  ./job.ksh > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+                  if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                     touch ${IAS_OUTFILE_NQ}
+                     cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	             rm -rf ${OUTFILE_NQ}
+                  elif [[ -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                     cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	             rm -rf ${OUTFILE_NQ}
+                  fi
+	       fi
+               (( ICNT=${ICNT}+1 ))
+            done
+            export A_DATE=$(${BUILD_DIR}/da_advance_time.exe ${A_DATE} 1 2>/dev/null)
+         done
+      fi
+      if [[ ! -e ${IAS_OUTFILE_NQ} ]]; then
+         touch NO_MOPITT_CO_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT IASI_CO ASCII TO OBS_SEQ 
+      cp IASI_CO_${D_DATE}.dat ${D_DATE}.dat
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=${D_DATE}.dat
+      export NL_IAS_OUTFILE=obs_seq_iasi_co_total_col_${DATE}.out
+      export NL_IASI_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
+      export NL_IASI_O3_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_IASI_CO}
+      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+#
+      export NL_YEAR=${D_YYYY}
+      export NL_MONTH=${D_MM}
+      export NL_DAY=${D_DD}
+      export NL_HOUR=${D_HH}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# USE IASI DATA 
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_iasi_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/IASI_CO/work/iasi_co_total_col_ascii_to_obs ./.
+      ./iasi_co_total_col_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ ! -s ${NL_IAS_OUTFILE} ]]; then
+         touch NO_IASI_CO_${DATE}
+      fi
+   fi
+#
+#########################################################################
+#
+# RUN IASI CO PROFILE OBSERVATIONS
+#
+#########################################################################
+#
+   if ${RUN_IASI_CO_PROFILE_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/iasi_co_profile_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/iasi_co_profile_obs
+         cd ${RUN_DIR}/${DATE}/iasi_co_profile_obs
+      else
+         cd ${RUN_DIR}/${DATE}/iasi_co_profile_obs
+      fi
+#
+# SET IASI PARAMETERS
+      export IASI_FILE_PRE='VERSION2_NCAR_IASI_xxx_1C_M02'
+      export IASI_FILE_EXT='hdf'
+      export OUTFILE=\'TEMP_FILE.dat\'
+      export OUTFILE_NQ=TEMP_FILE.dat
+      export IAS_OUTFILE=\'IASI_CO_${D_DATE}.dat\'
+      export IAS_OUTFILE_NQ=IASI_CO_${D_DATE}.dat
+      let NCNT=4
+      rm -rf ${OUTFILE_NQ}
+      rm -rf ${IAS_OUTFILE_NQ}
+#
+#  SET OBS WINDOW
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET IASI INPUT DATA FILE
+      export A_DATE=${DATE}
+      while [[ ${A_DATE} -le ${ASIM_MAX_DATE} ]]; do 
+         export A_YY=$(echo $A_DATE | cut -c1-4)
+         export A_MM=$(echo $A_DATE | cut -c5-6)
+         export A_DD=$(echo $A_DATE | cut -c7-8)
+         export A_HH=$(echo $A_DATE | cut -c9-10)
+	 export A_DATE=${A_YY}${A_MM}${A_DD}${A_HH}
+	 export A_DIR=${A_YY}/${A_MM}/${A_DD}
+         export ICNT=0
+         while [[ ${ICNT} -le ${NCNT} ]]; do
+            export TEST=$($BUILD_DIR/da_advance_time.exe ${A_DATE} ${ICNT} 2>/dev/null)
+            export ND_YY=$(echo $TEST | cut -c1-4)
+            export ND_MM=$(echo $TEST | cut -c5-6)
+            export ND_DD=$(echo $TEST | cut -c7-8)
+            export ND_HH=$(echo $TEST | cut -c9-10)
+	    export ND_DATE=${ND_YY}${ND_MM}${ND_DD}${ND_HH}
+            export FILEIN=`ls ${EXPERIMENT_IASI_CO_DIR}/${A_DIR}/${IASI_FILE_PRE}_${A_DATE}*Z_${ND_DATE}*Z_*`
+            if [[ -e ${FILEIN} ]]; then 
+               export IAS_FILEIN=\'${FILEIN}\'
+#
+# COPY_EXECUTABLE
+               export FILE=iasi_co_profile_extract.pro
+               rm -rf ${FILE}
+               cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
+#
+               rm -rf job.ksh
+               touch job.ksh
+               RANDOM=$$
+               export JOBRND=${RANDOM}_idl_iasi
+               cat << EOFF > job.ksh
+#!/bin/ksh -aeux
+idl << EOF
+.compile iasi_co_profile_extract.pro
+iasi_co_profile_extract,${IAS_FILEIN},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC},${NL_MIN_LON},${NL_MAX_LON},${NL_MIN_LAT},${NL_MAX_LAT}
+EOF
+export RC=\$?     
+if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
+if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+if [[ \$RC = 0 ]]; then
+   touch SUCCESS
+else
+   touch FAILED 
+   exit
+fi
+EOFF
+#               qsub -Wblock=true job.ksh 
+               chmod +x job.ksh
+               ./job.ksh > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+               if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                  touch ${IAS_OUTFILE_NQ}
+                  cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	          rm -rf ${OUTFILE_NQ}
+               elif [[ -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                  cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	          rm -rf ${OUTFILE_NQ}
+               fi
+            fi
+            (( ICNT=${ICNT}+1 ))
+         done
+         export A_DATE=$(${BUILD_DIR}/da_advance_time.exe ${A_DATE} 1 2>/dev/null)
+      done
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_HH=${ASIM_MN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         let HH_BEG=${BIN_BEG_HH}
+         let MN_BEG=${BIN_BEG_MN}
+         let SS_BEG=${BIN_BEG_SS}
+         let HH_END=${BIN_END_HH}
+         let MN_END=${BIN_END_MN}
+         let SS_END=${BIN_END_SS}
+         let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+         let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET IASI INPUT DATA FILE
+	 export A_DATE=${ASIM_MIN_DATE}
+         while [[ ${A_DATE} -le ${DATE} ]]; do 
+            export A_YY=$(echo $A_DATE | cut -c1-4)
+            export A_MM=$(echo $A_DATE | cut -c5-6)
+            export A_DD=$(echo $A_DATE | cut -c7-8)
+            export A_HH=$(echo $A_DATE | cut -c9-10)
+   	    export A_DATE=${A_YY}${A_MM}${A_DD}${A_HH}
+            export A_DIR=${A_YY}/${A_MM}/${A_DD}
+            export ICNT=0
+            while [[ ${ICNT} -le ${NCNT} ]]; do
+               export TEST=$($BUILD_DIR/da_advance_time.exe ${A_DATE} ${ICNT} 2>/dev/null)
+               export ND_YY=$(echo $TEST | cut -c1-4)
+               export ND_MM=$(echo $TEST | cut -c5-6)
+               export ND_DD=$(echo $TEST | cut -c7-8)
+               export ND_HH=$(echo $TEST | cut -c9-10)
+   	       export ND_DATE=${ND_YY}${ND_MM}${ND_DD}${ND_HH}
+               export FILEIN=`ls ${EXPERIMENT_IASI_CO_DIR}/${A_DIR}/${IASI_FILE_PRE}_${ND_DATE}*Z_${ND_DATE=}*Z_*`
+               if [[ -e ${FILEIN} ]]; then 
+                  export IAS_FILEIN=\'${FILEIN}\'
+#
+# COPY_EXECUTABLE
+                  export FILE=iasi_co_profile_extract.pro
+                  rm -rf ${FILE}
+                  cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
+#
+                  rm -rf job.ksh
+                  touch job.ksh
+                  RANDOM=$$
+                  export JOBRND=${RANDOM}_idl_iasi
+                  cat << EOFF > job.ksh
+#!/bin/ksh -aeux
+idl << EOF
+.compile iasi_co_profile_extract.pro
+iasi_co_profile_extract,${IAS_FILEIN},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC},${NL_MIN_LON},${NL_MAX_LON},${NL_MIN_LAT},${NL_MAX_LAT}
+EOF
+export RC=\$?     
+if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
+if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+if [[ \$RC = 0 ]]; then
+   touch SUCCESS
+else
+   touch FAILED 
+   exit
+fi
+EOFF
+#                  qsub -Wblock=true job.ksh 
+                  chmod +x job.ksh
+                  ./job.ksh > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+                  if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                     touch ${IAS_OUTFILE_NQ}
+                     cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	             rm -rf ${OUTFILE_NQ}
+                  elif [[ -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                     cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	             rm -rf ${OUTFILE_NQ}
+                  fi
+	       fi
+               (( ICNT=${ICNT}+1 ))
+            done
+            export A_DATE=$(${BUILD_DIR}/da_advance_time.exe ${A_DATE} 1 2>/dev/null)
+         done
+      fi
+      if [[ ! -e ${IAS_OUTFILE_NQ} ]]; then
+         touch NO_MOPITT_CO_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT IASI_CO ASCII TO OBS_SEQ 
+      cp IASI_CO_${D_DATE}.dat ${D_DATE}.dat
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=${D_DATE}.dat
+      export NL_IAS_OUTFILE=obs_seq_iasi_co_profile_${DATE}.out
+      export NL_IASI_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
+      export NL_IASI_O3_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_IASI_CO}
+      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+#
+      export NL_YEAR=${D_YYYY}
+      export NL_MONTH=${D_MM}
+      export NL_DAY=${D_DD}
+      export NL_HOUR=${D_HH}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# USE IASI DATA 
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_iasi_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/IASI_CO/work/iasi_co_profile_ascii_to_obs ./.
+      ./iasi_co_profile_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ ! -s ${NL_IAS_OUTFILE} ]]; then
+         touch NO_IASI_CO_${DATE}
+      fi
+   fi
+#
+#########################################################################
+#
+# RUN IASI CO CPSR OBSERVATIONS
+#
+#########################################################################
+#
+   if ${RUN_IASI_CO_CPSR_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/iasi_co_cpsr_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/iasi_co_cpsr_obs
+         cd ${RUN_DIR}/${DATE}/iasi_co_cpsr_obs
+      else
+         cd ${RUN_DIR}/${DATE}/iasi_co_cpsr_obs
+      fi
+#
+# SET IASI PARAMETERS
+      export IASI_FILE_PRE='VERSION2_NCAR_IASI_xxx_1C_M02'
+      export IASI_FILE_EXT='hdf'
+      export OUTFILE=\'TEMP_FILE.dat\'
+      export OUTFILE_NQ=TEMP_FILE.dat
+      export IAS_OUTFILE=\'IASI_CO_${D_DATE}.dat\'
+      export IAS_OUTFILE_NQ=IASI_CO_${D_DATE}.dat
+      let NCNT=4
+      rm -rf ${OUTFILE_NQ}
+      rm -rf ${IAS_OUTFILE_NQ}
+#
+#  SET OBS WINDOW
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET IASI INPUT DATA FILE
+      export A_DATE=${DATE}
+      while [[ ${A_DATE} -le ${ASIM_MAX_DATE} ]]; do 
+         export A_YY=$(echo $A_DATE | cut -c1-4)
+         export A_MM=$(echo $A_DATE | cut -c5-6)
+         export A_DD=$(echo $A_DATE | cut -c7-8)
+         export A_HH=$(echo $A_DATE | cut -c9-10)
+	 export A_DATE=${A_YY}${A_MM}${A_DD}${A_HH}
+	 export A_DIR=${A_YY}/${A_MM}/${A_DD}
+         export ICNT=0
+         while [[ ${ICNT} -le ${NCNT} ]]; do
+            export TEST=$($BUILD_DIR/da_advance_time.exe ${A_DATE} ${ICNT} 2>/dev/null)
+            export ND_YY=$(echo $TEST | cut -c1-4)
+            export ND_MM=$(echo $TEST | cut -c5-6)
+            export ND_DD=$(echo $TEST | cut -c7-8)
+            export ND_HH=$(echo $TEST | cut -c9-10)
+	    export ND_DATE=${ND_YY}${ND_MM}${ND_DD}${ND_HH}
+            export FILEIN=`ls ${EXPERIMENT_IASI_CO_DIR}/${A_DIR}/${IASI_FILE_PRE}_${A_DATE}*Z_${ND_DATE}*Z_*`
+            if [[ -e ${FILEIN} ]]; then 
+               export IAS_FILEIN=\'${FILEIN}\'
+#
+# COPY_EXECUTABLE
+               export FILE=iasi_co_cpsr_extract.pro
+               rm -rf ${FILE}
+               cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
+#
+               rm -rf job.ksh
+               touch job.ksh
+               RANDOM=$$
+               export JOBRND=${RANDOM}_idl_iasi
+               cat << EOFF > job.ksh
+#!/bin/ksh -aeux
+idl << EOF
+.compile iasi_co_cpsr_extract.pro
+iasi_co_cpsr_extract,${IAS_FILEIN},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC},${NL_MIN_LON},${NL_MAX_LON},${NL_MIN_LAT},${NL_MAX_LAT}
+EOF
+export RC=\$?     
+if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
+if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+if [[ \$RC = 0 ]]; then
+   touch SUCCESS
+else
+   touch FAILED 
+   exit
+fi
+EOFF
+#               qsub -Wblock=true job.ksh 
+               chmod +x job.ksh
+               ./job.ksh > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+               if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                  touch ${IAS_OUTFILE_NQ}
+                  cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	          rm -rf ${OUTFILE_NQ}
+               elif [[ -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                  cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	          rm -rf ${OUTFILE_NQ}
+               fi
+            fi
+            (( ICNT=${ICNT}+1 ))
+         done
+         export A_DATE=$(${BUILD_DIR}/da_advance_time.exe ${A_DATE} 1 2>/dev/null)
+      done
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_HH=${ASIM_MN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         let HH_BEG=${BIN_BEG_HH}
+         let MN_BEG=${BIN_BEG_MN}
+         let SS_BEG=${BIN_BEG_SS}
+         let HH_END=${BIN_END_HH}
+         let MN_END=${BIN_END_MN}
+         let SS_END=${BIN_END_SS}
+         let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+         let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET IASI INPUT DATA FILE
+	 export A_DATE=${ASIM_MIN_DATE}
+         while [[ ${A_DATE} -le ${DATE} ]]; do 
+            export A_YY=$(echo $A_DATE | cut -c1-4)
+            export A_MM=$(echo $A_DATE | cut -c5-6)
+            export A_DD=$(echo $A_DATE | cut -c7-8)
+            export A_HH=$(echo $A_DATE | cut -c9-10)
+   	    export A_DATE=${A_YY}${A_MM}${A_DD}${A_HH}
+            export A_DIR=${A_YY}/${A_MM}/${A_DD}
+            export ICNT=0
+            while [[ ${ICNT} -le ${NCNT} ]]; do
+               export TEST=$($BUILD_DIR/da_advance_time.exe ${A_DATE} ${ICNT} 2>/dev/null)
+               export ND_YY=$(echo $TEST | cut -c1-4)
+               export ND_MM=$(echo $TEST | cut -c5-6)
+               export ND_DD=$(echo $TEST | cut -c7-8)
+               export ND_HH=$(echo $TEST | cut -c9-10)
+   	       export ND_DATE=${ND_YY}${ND_MM}${ND_DD}${ND_HH}
+               export FILEIN=`ls ${EXPERIMENT_IASI_CO_DIR}/${A_DIR}/${IASI_FILE_PRE}_${ND_DATE}*Z_${ND_DATE=}*Z_*`
+               if [[ -e ${FILEIN} ]]; then 
+                  export IAS_FILEIN=\'${FILEIN}\'
+#
+# COPY_EXECUTABLE
+                  export FILE=iasi_co_cpsr_extract.pro
+                  rm -rf ${FILE}
+                  cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
+#
+                  rm -rf job.ksh
+                  touch job.ksh
+                  RANDOM=$$
+                  export JOBRND=${RANDOM}_idl_iasi
+                  cat << EOFF > job.ksh
+#!/bin/ksh -aeux
+idl << EOF
+.compile iasi_co_cpsr_extract.pro
+iasi_co_cpsr_extract,${IAS_FILEIN},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC},${NL_MIN_LON},${NL_MAX_LON},${NL_MIN_LAT},${NL_MAX_LAT}
+EOF
+export RC=\$?     
+if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
+if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+if [[ \$RC = 0 ]]; then
+   touch SUCCESS
+else
+   touch FAILED 
+   exit
+fi
+EOFF
+#                  qsub -Wblock=true job.ksh 
+                  chmod +x job.ksh
+                  ./job.ksh > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+                  if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                     touch ${IAS_OUTFILE_NQ}
+                     cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	             rm -rf ${OUTFILE_NQ}
+                  elif [[ -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
+                     cat ${OUTFILE_NQ} >> ${IAS_OUTFILE_NQ}
+#	             rm -rf ${OUTFILE_NQ}
+                  fi
+	       fi
+               (( ICNT=${ICNT}+1 ))
+            done
+            export A_DATE=$(${BUILD_DIR}/da_advance_time.exe ${A_DATE} 1 2>/dev/null)
+         done
+      fi
+      if [[ ! -e ${IAS_OUTFILE_NQ} ]]; then
+         touch NO_MOPITT_CO_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT IASI_CO ASCII TO OBS_SEQ 
+      cp IASI_CO_${D_DATE}.dat ${D_DATE}.dat
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=${D_DATE}.dat
+      export NL_IAS_OUTFILE=obs_seq_iasi_co_cpsr_${DATE}.out
+      export NL_IASI_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
+      export NL_IASI_O3_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_IASI_CO}
+      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+#
+      export NL_YEAR=${D_YYYY}
+      export NL_MONTH=${D_MM}
+      export NL_DAY=${D_DD}
+      export NL_HOUR=${D_HH}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# USE IASI DATA 
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_iasi_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/IASI_CO/work/iasi_co_cpsr_ascii_to_obs ./.
+      ./iasi_co_cpsr_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ ! -s ${NL_IAS_OUTFILE} ]]; then
+         touch NO_IASI_CO_${DATE}
+      fi
+   fi
+#
+#########################################################################
+#
+# RUN IASI O3 PROFILE OBSERVATIONS
+#
+#########################################################################
+#
+   if ${RUN_IASI_O3_PROFILE_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/iasi_o3_profile_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/iasi_o3_profile_obs
+         cd ${RUN_DIR}/${DATE}/iasi_o3_profile_obs
+      else
+         cd ${RUN_DIR}/${DATE}/iasi_o3_profile_obs
       fi
 #
 # copy the IASI O3 error covariance file
@@ -3669,7 +5077,7 @@ EOFF
 # this is the call to an IDL routine to read and write variables
 # if already processed (with output), then this can be skipped (do_iasi=0)
 # else this needs to be called
-            export FILE=create_ascii_IASI_O3.pro
+            export FILE=iasi_o3_profile_extract.pro
             rm -rf ${FILE}
             cp ${DART_DIR}/observations/obs_converters/IASI_O3/native_to_ascii/${FILE} ./.
 #
@@ -3679,15 +5087,9 @@ EOFF
             export JOBRND=${RANDOM}_idl_iasi
             cat << EOFF > job.ksh
 #!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
 idl << EOF
-.compile create_ascii_IASI_O3.pro
-create_ascii_IASI_O3,${INFILE_COL},${INFILE_ERR},${INFILE_VMR},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}, ${DATE}
+.compile iasi_o3_profile_extract.pro
+iasi_o3_profile_extract,${INFILE_COL},${INFILE_ERR},${INFILE_VMR},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}, ${DATE}
 EOF
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
@@ -3699,7 +5101,9 @@ else
    exit
 fi
 EOFF
-            qsub -Wblock=true job.ksh 
+#            qsub -Wblock=true job.ksh 
+            chmod +x job.ksh
+            ./job.ksh > index_m.html 2>&1
 #
 # cat the output file to the assimlation window file
             export ASIM_OUTFILE=${YYYY}${MM}${DD}${HH}.dat
@@ -3737,7 +5141,7 @@ EOFF
 # this is the call to an IDL routine to read and write variables
 # if already processed (with output), then this can be skipped (do_iasi=0)
 # else this needs to be called
-            export FILE=create_ascii_IASI_O3.pro
+            export FILE=iasi_o3_profile_extract.pro
             rm -rf ${FILE}
             cp ${DART_DIR}/observations/obs_converters/IASI_O3/native_to_ascii/${FILE} ./.
 #
@@ -3747,15 +5151,9 @@ EOFF
             export JOBRND=${RANDOM}_idl_iasi
             cat << EOFF > job.ksh
 #!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
 idl << EOF
-.compile create_ascii_IASI_O3.pro
-create_ascii_IASI_O3,${INFILE_COL},${INFILE_ERR},${INFILE_VMR},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}, ${DATE}
+.compile iasi_o3_profile_extract.pro
+iasi_o3_profile_extract,${INFILE_COL},${INFILE_ERR},${INFILE_VMR},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}, ${DATE}
 EOF
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
@@ -3767,7 +5165,9 @@ else
    exit
 fi
 EOFF
-            qsub -Wblock=true job.ksh 
+#            qsub -Wblock=true job.ksh 
+            chmod +x job.ksh
+            ./job.ksh > index_mat.html 2>&1
 #
 # cat the output file to the assimlation window file
             export ASIM_OUTFILE=${YYYY}${MM}${DD}${HH}.dat
@@ -3830,13 +5230,13 @@ EOFF
       fi
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/IASI_O3/work/iasi_o3_ascii_to_obs ./.
-      ./iasi_o3_ascii_to_obs > index.html 2>&1  
+      cp ${DART_DIR}/observations/obs_converters/IASI_O3/work/iasi_o3_profile_ascii_to_obs ./.
+      ./iasi_o3_profile_ascii_to_obs > index.html 2>&1  
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       export IASI_FILE=iasi_obs_seq${D_DATE}
       if [[ -s ${IASI_FILE} ]]; then
-         cp ${IASI_FILE} obs_seq_iasi_o3_${DATE}.out
+         cp ${IASI_FILE} obs_seq_iasi_o3_profile_${DATE}.out
       else
          touch NO_DATA_${D_DATE}
       fi
@@ -3844,16 +5244,233 @@ EOFF
 #
 #########################################################################
 #
-# RUN OMI O3 OBSERVATIONS
+# RUN IASI O3 CPSR OBSERVATIONS
 #
 #########################################################################
 #
-   if ${RUN_OMI_O3_OBS}; then
-      if [[ ! -d ${RUN_DIR}/${DATE}/omi_o3_obs ]]; then
-         mkdir -p ${RUN_DIR}/${DATE}/omi_o3_obs
-         cd ${RUN_DIR}/${DATE}/omi_o3_obs
+   if ${RUN_IASI_O3_CPSR_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/iasi_o3_cpsr_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/iasi_o3_cpsr_obs
+         cd ${RUN_DIR}/${DATE}/iasi_o3_cpsr_obs
       else
-         cd ${RUN_DIR}/${DATE}/omi_o3_obs
+         cd ${RUN_DIR}/${DATE}/iasi_o3_cpsr_obs
+      fi
+#
+# copy the IASI O3 error covariance file
+      cp ${EXPERIMENT_IASI_O3_DIR}/IASI_apcov.dat ./
+#
+# set file prefix for IASI
+# this depends on versions and file times (edit if necessary)
+      export FILE_PRE='METOPA_IASI_EUMC_'
+#
+# set file suffix for IASI
+# this depends on versions and file times (edit if necessary)
+      export FILE_EXT='.dat'
+#
+      if [[ ${HH} == 00 ]]; then
+#
+# 00Z special case
+         let TEMP_MIN_HH=${ASIM_MIN_HH}
+         let TEMP_MAX_HH=${ASIM_MAX_HH}
+         (( BIN_BEG_SEC=${TEMP_MIN_HH}*60*60+1 ))
+         (( BIN_END_SEC=${TEMP_MAX_HH}*60*60 ))
+         export ASIM_OUTFILE=${YYYY}${MM}${DD}${HH}.dat
+         rm -rf ${ASIM_OUTFILE}
+         touch ${ASIM_OUTFILE}
+#
+# Past date
+         (( BIN_BEG_SEC=${TEMP_MIN_HH}*60*60+1 ))
+         (( BIN_END_SEC=24*60*60 ))
+         export FILE_COL=${EXPERIMENT_IASI_O3_DIR}/${FILE_PRE}${PAST_YYYY}${PAST_MM}${PAST_DD}_Columns${FILE_EXT}
+         export FILE_ERR=${EXPERIMENT_IASI_O3_DIR}/${FILE_PRE}${PAST_YYYY}${PAST_MM}${PAST_DD}_ERROR${FILE_EXT}
+         export FILE_VMR=${EXPERIMENT_IASI_O3_DIR}/${FILE_PRE}${PAST_YYYY}${PAST_MM}${PAST_DD}_VMR${FILE_EXT}
+         if [[ -e ${FILE_COL} && -e ${FILE_ERR} && -e ${FILE_VMR} ]]; then 
+            export OUTFILE_NM=TEMP_FILE.dat
+            export INFILE_COL=\'${FILE_COL}\'
+            export INFILE_ERR=\'${FILE_ERR}\'
+            export INFILE_VMR=\'${FILE_VMR}\'
+            export OUTFILE=\'${OUTFILE_NM}\'
+#
+# this is the call to an IDL routine to read and write variables
+# if already processed (with output), then this can be skipped (do_iasi=0)
+# else this needs to be called
+            export FILE=iasi_o3_cpsr_extract.pro
+            rm -rf ${FILE}
+            cp ${DART_DIR}/observations/obs_converters/IASI_O3/native_to_ascii/${FILE} ./.
+#
+            rm -rf job.ksh
+            touch job.ksh
+            RANDOM=$$
+            export JOBRND=${RANDOM}_idl_iasi
+            cat << EOFF > job.ksh
+#!/bin/ksh -aeux
+idl << EOF
+.compile iasi_o3_cpsr_extract.pro
+iasi_o3_cpsr_extract,${INFILE_COL},${INFILE_ERR},${INFILE_VMR},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}, ${DATE}
+EOF
+export RC=\$?     
+if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
+if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+if [[ \$RC = 0 ]]; then
+   touch SUCCESS
+else
+   touch FAILED 
+   exit
+fi
+EOFF
+#            qsub -Wblock=true job.ksh 
+            chmod +x job.ksh
+            ./job.ksh > index_m.html 2>&1
+#
+# cat the output file to the assimlation window file
+            export ASIM_OUTFILE=${YYYY}${MM}${DD}${HH}.dat
+            if [[ -e ${OUTFILE_NM} ]]; then
+               cat ${OUTFILE_NM} >> ${ASIM_OUTFILE}
+#               rm -rf ${OUTFILE_NM}
+            fi
+         else
+            echo APM IASI O3 INPUT FILES DO NOT EXIST
+         fi
+      else
+#
+# OOZ, 06Z, 12Z, 18Z normal cases
+         let TEMP_MIN_HH=${ASIM_MIN_HH}
+         let TEMP_MAX_HH=${ASIM_MAX_HH}
+         (( BIN_BEG_SEC=${TEMP_MIN_HH}*60*60+1 ))
+         (( BIN_END_SEC=${TEMP_MAX_HH}*60*60 ))
+         if [[ ${HH} == 00 ]]; then
+            (( BIN_BEG_SEC=1 ))
+            (( BIN_END_SEC=${TEMP_MAX_HH}*60*60 ))
+         fi
+         export ASIM_OUTFILE=${YYYY}${MM}${DD}${HH}.dat
+         rm -rf ${ASIM_OUTFILE}
+         touch ${ASIM_OUTFILE}
+         export FILE_COL=${EXPERIMENT_IASI_O3_DIR}/${FILE_PRE}${YYYY}${MM}${DD}_Columns${FILE_EXT}
+         export FILE_ERR=${EXPERIMENT_IASI_O3_DIR}/${FILE_PRE}${YYYY}${MM}${DD}_ERROR${FILE_EXT}
+         export FILE_VMR=${EXPERIMENT_IASI_O3_DIR}/${FILE_PRE}${YYYY}${MM}${DD}_VMR${FILE_EXT}
+         if [[ -e ${FILE_COL} && -e ${FILE_ERR} && -e ${FILE_VMR} ]]; then 
+            export OUTFILE_NM=TEMP_FILE.dat
+            export INFILE_COL=\'${FILE_COL}\'
+            export INFILE_ERR=\'${FILE_ERR}\'
+            export INFILE_VMR=\'${FILE_VMR}\'
+            export OUTFILE=\'${OUTFILE_NM}\'
+#
+# this is the call to an IDL routine to read and write variables
+# if already processed (with output), then this can be skipped (do_iasi=0)
+# else this needs to be called
+            export FILE=iasi_o3_cpsr_extract.pro
+            rm -rf ${FILE}
+            cp ${DART_DIR}/observations/obs_converters/IASI_O3/native_to_ascii/${FILE} ./.
+#
+            rm -rf job.ksh
+            touch job.ksh
+            RANDOM=$$
+            export JOBRND=${RANDOM}_idl_iasi
+            cat << EOFF > job.ksh
+#!/bin/ksh -aeux
+idl << EOF
+.compile iasi_o3_cpsr_extract.pro
+iasi_o3_cpsr_extract,${INFILE_COL},${INFILE_ERR},${INFILE_VMR},${OUTFILE},${BIN_BEG_SEC},${BIN_END_SEC}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}, ${DATE}
+EOF
+export RC=\$?     
+if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
+if [[ -f FAILED ]]; then rm -rf FAILED; fi          
+if [[ \$RC = 0 ]]; then
+   touch SUCCESS
+else
+   touch FAILED 
+   exit
+fi
+EOFF
+#            qsub -Wblock=true job.ksh 
+            chmod +x job.ksh
+            ./job.ksh > index_mat.html 2>&1
+#
+# cat the output file to the assimlation window file
+            export ASIM_OUTFILE=${YYYY}${MM}${DD}${HH}.dat
+            if [[ -e ${OUTFILE_NM} ]]; then
+               cat ${OUTFILE_NM} >> ${ASIM_OUTFILE}
+#               rm -rf ${OUTFILE_NM}
+            fi
+         else
+            echo APM IASI O3 INPUT FILES DO NOT EXIST
+         fi
+      fi   
+#
+# RUN_IASI_ASCII_TO_DART
+      if [[ ${HH} -eq 0 ]]; then
+         export L_YYYY=${PAST_YYYY}
+         export L_MM=${PAST_MM}
+         export L_DD=${PAST_DD}
+         export L_HH=24
+         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
+      else
+         export L_YYYY=${YYYY}
+         export L_MM=${MM}
+         export L_DD=${DD}
+         export L_HH=${HH}
+         export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
+      fi
+      export NL_YEAR=${L_YYYY}
+      export NL_MONTH=${L_MM}
+      export NL_DAY=${L_DD}
+      export NL_HOUR=${L_HH}
+      if [[ ${L_HH} -eq 24 ]]; then
+         NL_BIN_BEG=21.01
+         NL_BIN_END=3.00
+      elif [[ ${L_HH} -eq 6 ]]; then
+         NL_BIN_BEG=3.01
+         NL_BIN_END=9.00
+      elif [[ ${L_HH} -eq 12 ]]; then
+         NL_BIN_BEG=9.01
+         NL_BIN_END=15.00
+      elif [[ ${L_HH} -eq 18 ]]; then
+         NL_BIN_BEG=15.01
+         NL_BIN_END=21.00
+      fi
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=${D_DATE}.dat
+      export NL_IASI_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
+      export NL_IASI_O3_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_IASI_O3}
+      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+#
+# USE IASI DATA 
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_iasi_input_nml.ksh
+#
+# GET ASCII DATA
+      if [[ ! -e ${D_DATE}.dat ]]; then 
+         echo APM IASI O3 ASCII FILE DOES NOTE EXIST
+         exit
+      fi
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/IASI_O3/work/iasi_o3_cpsr_ascii_to_obs ./.
+      ./iasi_o3_cpsr_ascii_to_obs > index.html 2>&1  
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      export IASI_FILE=iasi_obs_seq${D_DATE}
+      if [[ -s ${IASI_FILE} ]]; then
+         cp ${IASI_FILE} obs_seq_iasi_o3_cpsr_${DATE}.out
+      else
+         touch NO_DATA_${D_DATE}
+      fi
+   fi
+#
+#########################################################################
+#
+# RUN OMI O3 TOTAL COL OBSERVATIONS
+#
+#########################################################################
+#
+   if ${RUN_OMI_O3_TOTAL_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/omi_o3_total_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/omi_o3_total_col_obs
+         cd ${RUN_DIR}/${DATE}/omi_o3_total_col_obs
+      else
+         cd ${RUN_DIR}/${DATE}/omi_o3_total_col_obs
       fi
 #
 # SET OMI PARAMETERS
@@ -3912,11 +5529,11 @@ EOFF
       rm -rf ${ARCHIVE_FILE}
 #
 # COPY EXECUTABLE
-      export FILE=omi_o3_extract.m
+      export FILE=omi_o3_total_col_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
-      mcc -m omi_o3_extract.m -o omi_o3_extract
-      ./run_omi_o3_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+      mcc -m omi_o3_total_col_extract.m -o omi_o3_extract_total_col
+      ./run_omi_o3_extract_total_col.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -3948,11 +5565,11 @@ EOFF
          rm -rf ${OUTFILE_NQ}
 #
 # COPY EXECUTABLE
-         export FILE=omi_o3_extract.m
+         export FILE=omi_o3_total_col_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
-         mcc -m omi_o3_extract.m -o omi_o3_extract
-         ./run_omi_o3_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+         mcc -m omi_o3_total_col_extract.m -o omi_o3_total_col_extract
+         ./run_omi_o3_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
       fi
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -3971,7 +5588,7 @@ EOFF
 # SET NAMELIST TO CONVERT OMI_O3 ASCII TO OBS_SEQ 
       export NL_FILEDIR=\'./\' 
       export NL_FILENAME=\'${ARCHIVE_FILE}\'
-      export NL_FILEOUT=\'obs_seq_omi_o3_${DATE}.out\'
+      export NL_FILEOUT=\'obs_seq_omi_o3_total_col_${DATE}.out\'
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_OMI_O3}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
@@ -4012,8 +5629,545 @@ EOFF
       ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/OMI_O3/work/omi_o3_ascii_to_obs ./.
-      ./omi_o3_ascii_to_obs > index.html 2>&1
+      cp ${DART_DIR}/observations/obs_converters/OMI_O3/work/omi_o3_total_col_ascii_to_obs ./.
+      ./omi_o3_total_col_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ ! -s ${NL_FILEOUT} ]]; then
+         touch NO_OMI_O3_${DATE}
+      fi
+   fi
+#
+#########################################################################
+#
+# RUN OMI O3 TROP COL OBSERVATIONS
+#
+#########################################################################
+#
+   if ${RUN_OMI_O3_TROP_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/omi_o3_trop_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/omi_o3_trop_col_obs
+         cd ${RUN_DIR}/${DATE}/omi_o3_trop_col_obs
+      else
+         cd ${RUN_DIR}/${DATE}/omi_o3_trop_col_obs
+      fi
+#
+# SET OMI PARAMETERS
+      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
+      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export OMI_FILE_PRE=OMI-Aura_L2-OMTO3_
+      export OMI_FILE_PRE_NQ=OMI-Aura_L2-OMTO3_
+      export OMI_FILE_EXT=.he5
+#
+# SET OBS_WINDOW
+      export BIN_BEG_YY=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_YY=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1 
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
+         export BIN_BEG_MM=${ASIM_MX_MM}
+         export BIN_BEG_DD=${ASIM_MX_DD}
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# SET OMI INPUT DATA FILE
+      export INFILE=${EXPERIMENT_OMI_O3_DIR}/${OMI_FILE_PRE_NQ}${YYYY}m${MM}${DD}t
+      export OUTFILE=TEMP_FILE.dat
+      export OUTFILE_NQ=TEMP_FILE.dat
+      export ARCHIVE_FILE=OMI_O3_${DATE}.dat
+      rm -rf ${OUTFILE_NQ}
+      rm -rf ${ARCHIVE_FILE}
+#
+# COPY EXECUTABLE
+      export FILE=omi_o3_trop_col_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
+      mcc -m omi_o3_trop_col_extract.m -o omi_o3_trop_col_extract
+      ./run_omi_o3_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         touch ${ARCHIVE_FILE}
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_YY=${ASIM_MIN_YYYY}
+         export BIN_BEG_MM=${ASIM_MIN_MM}
+         export BIN_BEG_DD=${ASIM_MIN_DD}
+         export BIN_BEG_HH=${ASIM_MIN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_YY=${ASIM_MIN_YYYY}
+         export BIN_END_MM=${ASIM_MIN_MM}
+         export BIN_END_DD=${ASIM_MIN_DD}
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         export INFILE=${EXPERIMENT_OMI_O3_DIR}/${OMI_FILE_PRE_NQ}${PAST_YYYY}m${PAST_MM}${PAST_DD}t
+         export OUTFILE=TEMP_FILE.dat
+         export OUTFILE_NQ=TEMP_FILE.dat
+         rm -rf ${OUTFILE_NQ}
+#
+# COPY EXECUTABLE
+         export FILE=omi_o3_trop_col_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
+         mcc -m omi_o3_trop_col_extract.m -o omi_o3_trop_col_extract
+         ./run_omi_o3_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      fi
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         touch ${ARCHIVE_FILE}
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      fi
+      if [[ ! -e ${ARCHIVE_FILE} ]]; then
+         touch NO_OMI_O3_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT OMI_O3 ASCII TO OBS_SEQ 
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=\'${ARCHIVE_FILE}\'
+      export NL_FILEOUT=\'obs_seq_omi_o3_trop_col_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_OMI_O3}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+      export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
+#
+# MODEL PROFILE SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
+#
+      export NL_YEAR=${D_YYYY}
+      export NL_MONTH=${D_MM}
+      export NL_DAY=${D_DD}
+      export NL_HOUR=${D_HH}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# USE OMI DATA 
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/OMI_O3/work/omi_o3_trop_col_ascii_to_obs ./.
+      ./omi_o3_trop_col_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ ! -s ${NL_FILEOUT} ]]; then
+         touch NO_OMI_O3_${DATE}
+      fi
+   fi
+#
+#########################################################################
+#
+# RUN OMI O3 PROFILE COL OBSERVATIONS
+#
+#########################################################################
+#
+   if ${RUN_OMI_O3_PROFILE_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/omi_o3_profile_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/omi_o3_profile_obs
+         cd ${RUN_DIR}/${DATE}/omi_o3_profile_obs
+      else
+         cd ${RUN_DIR}/${DATE}/omi_o3_profile_obs
+      fi
+#
+# SET OMI PARAMETERS
+      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
+      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export OMI_FILE_PRE=OMI-Aura_L2-OMO3PR_
+      export OMI_FILE_PRE_NQ=OMI-Aura_L2-OMO3PR_
+      export OMI_FILE_EXT=.he5
+#
+# SET OBS_WINDOW
+      export BIN_BEG_YY=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_YY=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1 
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
+         export BIN_BEG_MM=${ASIM_MX_MM}
+         export BIN_BEG_DD=${ASIM_MX_DD}
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# SET OMI INPUT DATA FILE
+      export INFILE=${EXPERIMENT_OMI_O3_DIR}/${OMI_FILE_PRE_NQ}${YYYY}m${MM}${DD}t
+      export OUTFILE=TEMP_FILE.dat
+      export OUTFILE_NQ=TEMP_FILE.dat
+      export ARCHIVE_FILE=OMI_O3_${DATE}.dat
+      rm -rf ${OUTFILE_NQ}
+      rm -rf ${ARCHIVE_FILE}
+#
+# COPY EXECUTABLE
+      export FILE=omi_o3_profile_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
+      mcc -m omi_o3_profile_extract.m -o omi_o3_profile_extract
+      ./run_omi_o3_profile_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         touch ${ARCHIVE_FILE}
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_YY=${ASIM_MIN_YYYY}
+         export BIN_BEG_MM=${ASIM_MIN_MM}
+         export BIN_BEG_DD=${ASIM_MIN_DD}
+         export BIN_BEG_HH=${ASIM_MIN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_YY=${ASIM_MIN_YYYY}
+         export BIN_END_MM=${ASIM_MIN_MM}
+         export BIN_END_DD=${ASIM_MIN_DD}
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         export INFILE=${EXPERIMENT_OMI_O3_DIR}/${OMI_FILE_PRE_NQ}${PAST_YYYY}m${PAST_MM}${PAST_DD}t
+         export OUTFILE=TEMP_FILE.dat
+         export OUTFILE_NQ=TEMP_FILE.dat
+         rm -rf ${OUTFILE_NQ}
+#
+# COPY EXECUTABLE
+         export FILE=omi_o3_profile_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
+         mcc -m omi_o3_profile_extract.m -o omi_o3_profile_extract
+         ./run_omi_o3_profile_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      fi
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         touch ${ARCHIVE_FILE}
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      fi
+      if [[ ! -e ${ARCHIVE_FILE} ]]; then
+         touch NO_OMI_O3_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT OMI_O3 ASCII TO OBS_SEQ 
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=\'${ARCHIVE_FILE}\'
+      export NL_FILEOUT=\'obs_seq_omi_o3_profile_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_OMI_O3}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+      export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
+#
+# MODEL PROFILE SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
+#
+      export NL_YEAR=${D_YYYY}
+      export NL_MONTH=${D_MM}
+      export NL_DAY=${D_DD}
+      export NL_HOUR=${D_HH}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# USE OMI DATA 
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/OMI_O3/work/omi_o3_profile_ascii_to_obs ./.
+      ./omi_o3_profile_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ ! -s ${NL_FILEOUT} ]]; then
+         touch NO_OMI_O3_${DATE}
+      fi
+   fi
+#
+#########################################################################
+#
+# RUN OMI O3 CPSR COL OBSERVATIONS
+#
+#########################################################################
+#
+   if ${RUN_OMI_O3_CPSR_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/omi_o3_cpsr_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/omi_o3_cpsr_obs
+         cd ${RUN_DIR}/${DATE}/omi_o3_cpsr_obs
+      else
+         cd ${RUN_DIR}/${DATE}/omi_o3_cpsr_obs
+      fi
+#
+# SET OMI PARAMETERS
+      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
+      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export OMI_FILE_PRE=OMI-Aura_L2-OMO3PR_
+      export OMI_FILE_PRE_NQ=OMI-Aura_L2-OMO3PR_
+      export OMI_FILE_EXT=.he5
+#
+# SET OBS_WINDOW
+      export BIN_BEG_YY=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_YY=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1 
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
+         export BIN_BEG_MM=${ASIM_MX_MM}
+         export BIN_BEG_DD=${ASIM_MX_DD}
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# SET OMI INPUT DATA FILE
+      export INFILE=${EXPERIMENT_OMI_O3_DIR}/${OMI_FILE_PRE_NQ}${YYYY}m${MM}${DD}t
+      export OUTFILE=TEMP_FILE.dat
+      export OUTFILE_NQ=TEMP_FILE.dat
+      export ARCHIVE_FILE=OMI_O3_${DATE}.dat
+      rm -rf ${OUTFILE_NQ}
+      rm -rf ${ARCHIVE_FILE}
+#
+# COPY EXECUTABLE
+      export FILE=omi_o3_cpsr_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
+      mcc -m omi_o3_cpsr_extract.m -o omi_o3_cpsr_extract
+      ./run_omi_o3_cpsr_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         touch ${ARCHIVE_FILE}
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_YY=${ASIM_MIN_YYYY}
+         export BIN_BEG_MM=${ASIM_MIN_MM}
+         export BIN_BEG_DD=${ASIM_MIN_DD}
+         export BIN_BEG_HH=${ASIM_MIN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_YY=${ASIM_MIN_YYYY}
+         export BIN_END_MM=${ASIM_MIN_MM}
+         export BIN_END_DD=${ASIM_MIN_DD}
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         export INFILE=${EXPERIMENT_OMI_O3_DIR}/${OMI_FILE_PRE_NQ}${PAST_YYYY}m${PAST_MM}${PAST_DD}t
+         export OUTFILE=TEMP_FILE.dat
+         export OUTFILE_NQ=TEMP_FILE.dat
+         rm -rf ${OUTFILE_NQ}
+#
+# COPY EXECUTABLE
+         export FILE=omi_o3_cpsr_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
+         mcc -m omi_o3_cpsr_extract.m -o omi_o3_cpsr_extract
+         ./run_omi_o3_cpsr_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      fi
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         touch ${ARCHIVE_FILE}
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      fi
+      if [[ ! -e ${ARCHIVE_FILE} ]]; then
+         touch NO_OMI_O3_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT OMI_O3 ASCII TO OBS_SEQ 
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=\'${ARCHIVE_FILE}\'
+      export NL_FILEOUT=\'obs_seq_omi_o3_cpsr_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_OMI_O3}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+      export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
+#
+# MODEL CPSR SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
+#
+      export NL_YEAR=${D_YYYY}
+      export NL_MONTH=${D_MM}
+      export NL_DAY=${D_DD}
+      export NL_HOUR=${D_HH}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# USE OMI DATA 
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/OMI_O3/work/omi_o3_cpsr_ascii_to_obs ./.
+      ./omi_o3_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ ! -s ${NL_FILEOUT} ]]; then
@@ -4023,16 +6177,16 @@ EOFF
 #
 ########################################################################
 #   
-# RUN OMI NO2 COLUMN OBSERVATIONS
+# RUN OMI NO2 TOTAL COL OBSERVATIONS
 #
 ########################################################################
 #
-   if ${RUN_OMI_NO2_OBS}; then
-      if [[ ! -d ${RUN_DIR}/${DATE}/omi_no2_obs ]]; then
-         mkdir -p ${RUN_DIR}/${DATE}/omi_no2_obs
-         cd ${RUN_DIR}/${DATE}/omi_no2_obs
+   if ${RUN_OMI_NO2_TOTAL_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/omi_no2_total_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/omi_no2_total_col_obs
+         cd ${RUN_DIR}/${DATE}/omi_no2_total_col_obs
       else
-         cd ${RUN_DIR}/${DATE}/omi_no2_obs
+         cd ${RUN_DIR}/${DATE}/omi_no2_total_col_obs
       fi
 #
 # SET OMI PARAMETERS
@@ -4090,11 +6244,11 @@ EOFF
       rm -rf ${ARCHIVE_FILE}
 #
 # COPY EXECUTABLE
-      export FILE=omi_no2_extract.m
+      export FILE=omi_no2_total_col_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/OMI_NO2/native_to_ascii/${FILE} ./.
-      mcc -m omi_no2_extract.m -o omi_no2_extract
-      ./run_omi_no2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+      mcc -m omi_no2_total_col_extract.m -o omi_no2_total_col_extract
+      ./run_omi_no2_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -4126,11 +6280,11 @@ EOFF
          rm -rf ${OUTFILE_NQ}
 #
 # COPY EXECUTABLE
-         export FILE=omi_no2_extract.m
+         export FILE=omi_no2_total_col_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/OMI_NO2/native_to_ascii/${FILE} ./.
-         mcc -m omi_no2_extract.m -o omi_no2_extract
-         ./run_omi_no2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+         mcc -m omi_no2_total_col_extract.m -o omi_no2_total_col_extract
+         ./run_omi_no2_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
       fi
 #
@@ -4150,7 +6304,7 @@ EOFF
 # SET NAMELIST TO CONVERT OMI_NO2 ASCII TO OBS_SEQ
       export NL_FILEDIR=\'./\'
       export NL_FILENAME=\'${ARCHIVE_FILE}\'
-      export NL_FILEOUT=\'obs_seq_omi_no2_${DATE}.out\'
+      export NL_FILEOUT=\'obs_seq_omi_no2_total_col_${DATE}.out\'
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_OMI_NO2}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
@@ -4191,8 +6345,187 @@ EOFF
       ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/OMI_NO2/work/omi_no2_ascii_to_obs ./.
-      ./omi_no2_ascii_to_obs > index.html 2>&1
+      cp ${DART_DIR}/observations/obs_converters/OMI_NO2/work/omi_no2_total_col_ascii_to_obs ./.
+      ./omi_no2_total_col_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ ! -s ${NL_FILEOUT} ]]; then
+         touch NO_OMI_NO2_${DATE}
+      fi
+   fi
+#
+########################################################################
+#   
+# RUN OMI NO2 TROP COL OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_OMI_NO2_TROP_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/omi_no2_trop_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/omi_no2_trop_col_obs
+         cd ${RUN_DIR}/${DATE}/omi_no2_trop_col_obs
+      else
+         cd ${RUN_DIR}/${DATE}/omi_no2_trop_col_obs
+      fi
+#
+# SET OMI PARAMETERS
+      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
+      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export OMI_FILE_PRE=OMI-Aura_L2-OMNO2_
+      export OMI_FILE_PRE_NQ=OMI-Aura_L2-OMNO2_
+      export OMI_FILE_EXT=.he5
+#
+# SET OBS_WINDOW
+      export BIN_BEG_YY=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_YY=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1 
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
+         export BIN_BEG_MM=${ASIM_MX_MM}
+         export BIN_BEG_DD=${ASIM_MX_DD}
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# SET OMI INPUT DATA FILE
+      export INFILE=${EXPERIMENT_OMI_NO2_DIR}/${OMI_FILE_PRE_NQ}${YYYY}m${MM}${DD}t
+      export OUTFILE=TEMP_FILE.dat
+      export OUTFILE_NQ=TEMP_FILE.dat
+      export ARCHIVE_FILE=OMI_NO2_${DATE}.dat
+      rm -rf ${OUTFILE_NQ}
+      rm -rf ${ARCHIVE_FILE}
+#
+# COPY EXECUTABLE
+      export FILE=omi_no2_trop_col_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/OMI_NO2/native_to_ascii/${FILE} ./.
+      mcc -m omi_no2_trop_col_extract.m -o omi_no2_trop_col_extract
+      ./run_omi_no2_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         touch ${ARCHIVE_FILE}
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_YY=${ASIM_MIN_YYYY}
+         export BIN_BEG_MM=${ASIM_MIN_MM}
+         export BIN_BEG_DD=${ASIM_MIN_DD}
+         export BIN_BEG_HH=${ASIM_MIN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_YY=${ASIM_MIN_YYYY}
+         export BIN_END_MM=${ASIM_MIN_MM}
+         export BIN_END_DD=${ASIM_MIN_DD}
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         export INFILE=${EXPERIMENT_OMI_NO2_DIR}/${OMI_FILE_PRE_NQ}${PAST_YYYY}m${PAST_MM}${PAST_DD}t
+         export OUTFILE=TEMP_FILE.dat
+         export OUTFILE_NQ=TEMP_FILE.dat
+         rm -rf ${OUTFILE_NQ}
+#
+# COPY EXECUTABLE
+         export FILE=omi_no2_trop_col_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/OMI_NO2/native_to_ascii/${FILE} ./.
+         mcc -m omi_no2_trop_col_extract.m -o omi_no2_trop_col_extract
+         ./run_omi_no2_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+      fi
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         touch ${ARCHIVE_FILE}
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      elif [[ -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
+         cat ${OUTFILE_NQ} >> ${ARCHIVE_FILE}
+         rm -rf ${OUTFILE_NQ}
+      fi
+      if [[ ! -e ${ARCHIVE_FILE} ]]; then
+         touch NO_OMI_NO2_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT OMI_NO2 ASCII TO OBS_SEQ
+      export NL_FILEDIR=\'./\'
+      export NL_FILENAME=\'${ARCHIVE_FILE}\'
+      export NL_FILEOUT=\'obs_seq_omi_no2_trop_col_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_OMI_NO2}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+      export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
+#
+# MODEL PROFILE SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
+#
+      export NL_YEAR=${D_YYYY}
+      export NL_MONTH=${D_MM}
+      export NL_DAY=${D_DD}
+      export NL_HOUR=${D_HH}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# USE OMI DATA 
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/OMI_NO2/work/omi_no2_trop_col_ascii_to_obs ./.
+      ./omi_no2_trop_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ ! -s ${NL_FILEOUT} ]]; then
@@ -4273,7 +6606,7 @@ EOFF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/OMI_SO2/native_to_ascii/${FILE} ./.
       mcc -m omi_so2_extract.m -o omi_so2_extract
-      ./run_omi_so2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+      ./run_omi_so2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -4309,7 +6642,7 @@ EOFF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/OMI_SO2/native_to_ascii/${FILE} ./.
          mcc -m omi_so2_extract.m -o omi_so2_extract
-         ./run_omi_so2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+         ./run_omi_so2_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
       fi
 #
@@ -4381,16 +6714,16 @@ EOFF
 #
 ########################################################################
 #
-# RUN TROPOMI CO COLUMN OBSERVATIONS
+# RUN TROPOMI CO TOTAL COL OBSERVATIONS
 #
 ########################################################################
 #
-   if ${RUN_TROPOMI_CO_OBS}; then
-      if [[ ! -d ${RUN_DIR}/${DATE}/tropomi_co_obs ]]; then
-         mkdir -p ${RUN_DIR}/${DATE}/tropomi_co_obs
-         cd ${RUN_DIR}/${DATE}/tropomi_co_obs
+   if ${RUN_TROPOMI_CO_TOTAL_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/tropomi_co_total_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/tropomi_co_total_col_obs
+         cd ${RUN_DIR}/${DATE}/tropomi_co_total_col_obs
       else
-         cd ${RUN_DIR}/${DATE}/tropomi_co_obs
+         cd ${RUN_DIR}/${DATE}/tropomi_co_total_col_obs
       fi
 #
 # SET TROPOMI PARAMETERS
@@ -4444,11 +6777,11 @@ EOFF
       export TRP_INFILE=\'${EXPERIMENT_TROPOMI_CO_DIR}/${TROPOMI_FILE_PRE}${YYYY}${MM}${DD}T\'
 #
 # COPY EXECUTABLE
-      export FILE=tropomi_co_extract.m
+      export FILE=tropomi_co_total_col_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/TROPOMI_CO/native_to_ascii/${FILE} ./.
-      mcc -m tropomi_co_extract.m -o tropomi_co_extract
-      ./run_tropomi_co_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+      mcc -m tropomi_co_total_col_extract.m -o tropomi_co_total_col_extract
+      ./run_tropomi_co_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -4477,11 +6810,11 @@ EOFF
          export TRP_INFILE=\'${EXPERIMENT_TROPOMI_CO_DIR}/${TROPOMI_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
 #
 # COPY EXECUTABLE
-         export FILE=tropomi_co_extract.m
+         export FILE=tropomi_co_total_col_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/TROPOMI_CO/native_to_ascii/${FILE} ./.
-         mcc -m tropomi_co_extract.m -o tropomi_co_extract
-         ./run_tropomi_co_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+         mcc -m tropomi_co_total_col_extract.m -o tropomi_co_total_col_extract
+         ./run_tropomi_co_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
       fi
 #
@@ -4501,7 +6834,7 @@ EOFF
 # SET NAMELIST TO CONVERT TROPOMI_CO ASCII TO OBS_SEQ 
       export NL_FILEDIR=\'./\' 
       export NL_FILENAME=\'${TRP_OUTFILE}\'
-      export NL_FILEOUT=\'obs_seq_tropomi_co_${DATE}.out\'
+      export NL_FILEOUT=\'obs_seq_tropomi_co_total_col_${DATE}.out\'
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TROPOMI_CO}
       export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
@@ -4533,14 +6866,35 @@ EOFF
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
       export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
       export NL_BIN_END_SEC=${BIN_END_SEC}
-#      
-# USE TROPOMI DATA 
+#
+# USE TROPOMI DATA
       rm -rf input.nml
       ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
 #
+# CREATE BIAS CORRECTION NAMELIST
+      export NL_DOES_FILE_EXIST=.true.
+      if [[ ${DATE} -eq ${FIRST_FILTER_DATE} || ${RUN_BIAS_CORRECTION} == false ]]; then
+         rm -rf ${NL_CORRECTION_FILENAME}
+	 export NL_DOES_FILE_EXIST=.false.
+      else
+         rm -rf ${NL_CORRECTION_FILENAME}
+         cp ${RUN_DIR}/${PAST_DATE}/bias_corr/${NL_CORRECTION_FILENAME} ./.
+      fi
+#
+      rm -rf bias_correct_nml
+      cat << EOF > bias_correct_nml
+&bias_correct_nml
+path_filein='${RUN_DIR}/${DATE}/bias_corr'
+does_file_exist=${NL_DOES_FILE_EXIST}
+correction_filename=${NL_CORRECTION_FILENAME}
+nobs=1
+obs_list='TROPOMI_CO_TOTAL_COL'
+/
+EOF
+#
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_CO/work/tropomi_co_ascii_to_obs ./.
-      ./tropomi_co_ascii_to_obs > index.html 2>&1
+      cp ${DART_DIR}/observations/obs_converters/TROPOMI_CO/work/tropomi_co_total_col_ascii_to_obs ./.
+      ./tropomi_co_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ -s ${NL_FILEOUT} ]]; then
@@ -4550,16 +6904,16 @@ EOFF
 #
 ########################################################################
 #
-# RUN TROPOMI O3 COLUMN OBSERVATIONS
+# RUN TROPOMI O3 TOTAL COLUMN OBSERVATIONS
 #
 ########################################################################
 #
-   if ${RUN_TROPOMI_O3_OBS}; then
-      if [[ ! -d ${RUN_DIR}/${DATE}/tropomi_o3_obs ]]; then
-         mkdir -p ${RUN_DIR}/${DATE}/tropomi_o3_obs
-         cd ${RUN_DIR}/${DATE}/tropomi_o3_obs
+   if ${RUN_TROPOMI_O3_TOTAL_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/tropomi_o3_total_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/tropomi_o3_total_col_obs
+         cd ${RUN_DIR}/${DATE}/tropomi_o3_total_col_obs
       else
-         cd ${RUN_DIR}/${DATE}/tropomi_o3_obs
+         cd ${RUN_DIR}/${DATE}/tropomi_o3_total_col_obs
       fi
 #
 # SET TROPOMI PARAMETERS
@@ -4613,11 +6967,11 @@ EOFF
       export TRP_INFILE=\'${EXPERIMENT_TROPOMI_O3_DIR}/${TROPOMI_FILE_PRE}${YYYY}${MM}${DD}T\'
 #
 # COPY EXECUTABLE
-      export FILE=tropomi_o3_extract.m
+      export FILE=tropomi_o3_total_col_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
-      mcc -m tropomi_o3_extract.m -o tropomi_o3_extract
-      ./run_tropomi_o3_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+      mcc -m tropomi_o3_total_col_extract.m -o tropomi_o3_total_col_extract
+      ./run_tropomi_o3_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -4646,11 +7000,11 @@ EOFF
          export TRP_INFILE=\'${EXPERIMENT_TROPOMI_O3_DIR}/${TROPOMI_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
 #
 # COPY EXECUTABLE
-         export FILE=tropomi_o3_extract.m
+         export FILE=tropomi_o3_total_col_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
-         mcc -m tropomi_o3_extract.m -o tropomi_o3_extract
-         ./run_tropomi_o3_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+         mcc -m tropomi_o3_total_col_extract.m -o tropomi_o3_total_col_extract
+         ./run_tropomi_o3_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
       fi	
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -4669,7 +7023,7 @@ EOFF
 # SET NAMELIST TO CONVERT TROPOMI_O3 ASCII TO OBS_SEQ 
       export NL_FILEDIR=\'./\' 
       export NL_FILENAME=\'${TRP_OUTFILE}\'
-      export NL_FILEOUT=\'obs_seq_tropomi_o3_${DATE}.out\'
+      export NL_FILEOUT=\'obs_seq_tropomi_o3_total_col_${DATE}.out\'
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TROPOMI_O3}
       export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
@@ -4702,13 +7056,13 @@ EOFF
       export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
       export NL_BIN_END_SEC=${BIN_END_SEC}
 #
-# USE TROPOMI DATA 
+# USE TROPOMI DATA
       rm -rf input.nml
       ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/work/tropomi_o3_ascii_to_obs ./.
-      ./tropomi_o3_ascii_to_obs > index.html 2>&1
+      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/work/tropomi_o3_total_col_ascii_to_obs ./.
+      ./tropomi_o3_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ ! -s ${NL_FILEOUT} ]]; then
@@ -4718,16 +7072,520 @@ EOFF
 #
 ########################################################################
 #
-# RUN TROPOMI NO2 COLUMN OBSERVATIONS
+# RUN TROPOMI O3 TROP COLUMN OBSERVATIONS
 #
 ########################################################################
 #
-   if ${RUN_TROPOMI_NO2_OBS}; then
-      if [[ ! -d ${RUN_DIR}/${DATE}/tropomi_no2_obs ]]; then
-         mkdir -p ${RUN_DIR}/${DATE}/tropomi_no2_obs
-         cd ${RUN_DIR}/${DATE}/tropomi_no2_obs
+   if ${RUN_TROPOMI_O3_TROP_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/tropomi_o3_trop_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/tropomi_o3_trop_col_obs
+         cd ${RUN_DIR}/${DATE}/tropomi_o3_trop_col_obs
       else
-         cd ${RUN_DIR}/${DATE}/tropomi_no2_obs
+         cd ${RUN_DIR}/${DATE}/tropomi_o3_trop_col_obs
+      fi
+#
+# SET TROPOMI PARAMETERS
+      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
+      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export TROPOMI_FILE_PRE=S5P_OFFL_L2__O3_TCL_
+      export TROPOMI_FILE_EXT=.nc
+      export OUTFILE=TEMP_FILE.dat
+      export TRP_OUTFILE=TROPOMI_O3_${DATE}.dat
+      rm -rf ${OUTFILE}
+      rm -rf ${TRP_OUTFILE}
+#
+# SET OBS_WINDOW
+      export BIN_BEG_YY=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_YY=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1 
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
+         export BIN_BEG_MM=${ASIM_MX_MM}
+         export BIN_BEG_DD=${ASIM_MX_DD}
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET TROPOMI INPUT DATA DIR
+      export TRP_INFILE=\'${EXPERIMENT_TROPOMI_O3_DIR}/${TROPOMI_FILE_PRE}${YYYY}${MM}${DD}T\'
+#
+# COPY EXECUTABLE
+      export FILE=tropomi_o3_trop_col_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
+      mcc -m tropomi_o3_trop_col_extract.m -o tropomi_o3_trop_col_extract
+      ./run_tropomi_o3_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TRP_OUTFILE}
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_YY=${ASIM_MIN_YYYY}
+         export BIN_BEG_MM=${ASIM_MIN_MM}
+         export BIN_BEG_DD=${ASIM_MIN_DD}
+         export BIN_BEG_HH=${ASIM_MIN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_YY=${ASIM_MIN_YYYY}
+         export BIN_END_MM=${ASIM_MIN_MM}
+         export BIN_END_DD=${ASIM_MIN_DD}
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         export TRP_INFILE=\'${EXPERIMENT_TROPOMI_O3_DIR}/${TROPOMI_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
+#
+# COPY EXECUTABLE
+         export FILE=tropomi_o3_trop_col_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
+         mcc -m tropomi_o3_trop_col_extract.m -o tropomi_o3_trop_col_extract
+         ./run_tropomi_o3_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+      fi	
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TRP_OUTFILE}
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+      if [[ ! -e ${TRP_OUTFILE} ]]; then
+         touch NO_TROPOMI_O3_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT TROPOMI_O3 ASCII TO OBS_SEQ 
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=\'${TRP_OUTFILE}\'
+      export NL_FILEOUT=\'obs_seq_tropomi_o3_trop_col_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TROPOMI_O3}
+      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+      export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
+#
+# MODEL PROFILE SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
+#
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# USE TROPOMI DATA
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/work/tropomi_o3_trop_col_ascii_to_obs ./.
+      ./tropomi_o3_trop_col_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ ! -s ${NL_FILEOUT} ]]; then
+         touch NO_TROPOMI_O3_${DATE}
+      fi
+   fi
+#
+########################################################################
+#
+# RUN TROPOMI O3 PROFILE OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_TROPOMI_O3_PROFILE_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/tropomi_o3_profile_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/tropomi_o3_profile_obs
+         cd ${RUN_DIR}/${DATE}/tropomi_o3_profile_obs
+      else
+         cd ${RUN_DIR}/${DATE}/tropomi_o3_profile_obs
+      fi
+#
+# SET TROPOMI PARAMETERS
+      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
+      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export TROPOMI_FILE_PRE=S5P_OFFL_L2__O3_____
+      export TROPOMI_FILE_EXT=.nc
+      export OUTFILE=TEMP_FILE.dat
+      export TRP_OUTFILE=TROPOMI_O3_${DATE}.dat
+      rm -rf ${OUTFILE}
+      rm -rf ${TRP_OUTFILE}
+#
+# SET OBS_WINDOW
+      export BIN_BEG_YY=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_YY=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1 
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
+         export BIN_BEG_MM=${ASIM_MX_MM}
+         export BIN_BEG_DD=${ASIM_MX_DD}
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET TROPOMI INPUT DATA DIR
+      export TRP_INFILE=\'${EXPERIMENT_TROPOMI_O3_DIR}/${TROPOMI_FILE_PRE}${YYYY}${MM}${DD}T\'
+#
+# COPY EXECUTABLE
+      export FILE=tropomi_o3_profile_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
+      mcc -m tropomi_o3_profile_extract.m -o tropomi_o3_profile_extract
+      ./run_tropomi_o3_profile_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TRP_OUTFILE}
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_YY=${ASIM_MIN_YYYY}
+         export BIN_BEG_MM=${ASIM_MIN_MM}
+         export BIN_BEG_DD=${ASIM_MIN_DD}
+         export BIN_BEG_HH=${ASIM_MIN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_YY=${ASIM_MIN_YYYY}
+         export BIN_END_MM=${ASIM_MIN_MM}
+         export BIN_END_DD=${ASIM_MIN_DD}
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         export TRP_INFILE=\'${EXPERIMENT_TROPOMI_O3_DIR}/${TROPOMI_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
+#
+# COPY EXECUTABLE
+         export FILE=tropomi_o3_profile_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
+         mcc -m tropomi_o3_profile_extract.m -o tropomi_o3_profile_extract
+         ./run_tropomi_o3_profile_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+      fi	
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TRP_OUTFILE}
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+      if [[ ! -e ${TRP_OUTFILE} ]]; then
+         touch NO_TROPOMI_O3_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT TROPOMI_O3 ASCII TO OBS_SEQ 
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=\'${TRP_OUTFILE}\'
+      export NL_FILEOUT=\'obs_seq_tropomi_o3_profile_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TROPOMI_O3}
+      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+      export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
+#
+# MODEL PROFILE SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
+#
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# USE TROPOMI DATA
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/work/tropomi_o3_profile_ascii_to_obs ./.
+      ./tropomi_o3_profile_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ ! -s ${NL_FILEOUT} ]]; then
+         touch NO_TROPOMI_O3_${DATE}
+      fi
+   fi
+#
+########################################################################
+#
+# RUN TROPOMI O3 CPSR OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_TROPOMI_O3_CPSR_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/tropomi_o3_cpsr_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/tropomi_o3_cpsr_obs
+         cd ${RUN_DIR}/${DATE}/tropomi_o3_cpsr_obs
+      else
+         cd ${RUN_DIR}/${DATE}/tropomi_o3_cpsr_obs
+      fi
+#
+# SET TROPOMI PARAMETERS
+      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
+      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export TROPOMI_FILE_PRE=S5P_OFFL_L2__O3_____
+      export TROPOMI_FILE_EXT=.nc
+      export OUTFILE=TEMP_FILE.dat
+      export TRP_OUTFILE=TROPOMI_O3_${DATE}.dat
+      rm -rf ${OUTFILE}
+      rm -rf ${TRP_OUTFILE}
+#
+# SET OBS_WINDOW
+      export BIN_BEG_YY=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_YY=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1 
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
+         export BIN_BEG_MM=${ASIM_MX_MM}
+         export BIN_BEG_DD=${ASIM_MX_DD}
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET TROPOMI INPUT DATA DIR
+      export TRP_INFILE=\'${EXPERIMENT_TROPOMI_O3_DIR}/${TROPOMI_FILE_PRE}${YYYY}${MM}${DD}T\'
+#
+# COPY EXECUTABLE
+      export FILE=tropomi_o3_cpsr_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
+      mcc -m tropomi_o3_cpsr_extract.m -o tropomi_o3_cpsr_extract
+      ./run_tropomi_o3_cpsr_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TRP_OUTFILE}
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_YY=${ASIM_MIN_YYYY}
+         export BIN_BEG_MM=${ASIM_MIN_MM}
+         export BIN_BEG_DD=${ASIM_MIN_DD}
+         export BIN_BEG_HH=${ASIM_MIN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_YY=${ASIM_MIN_YYYY}
+         export BIN_END_MM=${ASIM_MIN_MM}
+         export BIN_END_DD=${ASIM_MIN_DD}
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         export TRP_INFILE=\'${EXPERIMENT_TROPOMI_O3_DIR}/${TROPOMI_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
+#
+# COPY EXECUTABLE
+         export FILE=tropomi_o3_cpsr_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
+         mcc -m tropomi_o3_cpsr_extract.m -o tropomi_o3_cpsr_extract
+         ./run_tropomi_o3_cpsr_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+      fi	
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TRP_OUTFILE}
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+      if [[ ! -e ${TRP_OUTFILE} ]]; then
+         touch NO_TROPOMI_O3_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT TROPOMI_O3 ASCII TO OBS_SEQ 
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=\'${TRP_OUTFILE}\'
+      export NL_FILEOUT=\'obs_seq_tropomi_o3_cpsr_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TROPOMI_O3}
+      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+      export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
+#
+# MODEL CPSR SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
+#
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# USE TROPOMI DATA
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/work/tropomi_o3_cpsr_ascii_to_obs ./.
+      ./tropomi_o3_cpsr_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ ! -s ${NL_FILEOUT} ]]; then
+         touch NO_TROPOMI_O3_${DATE}
+      fi
+   fi
+#
+########################################################################
+#
+# RUN TROPOMI NO2 TOTAL COL OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_TROPOMI_NO2_TOTAL_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/tropomi_no2_total_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/tropomi_no2_total_col_obs
+         cd ${RUN_DIR}/${DATE}/tropomi_no2_total_col_obs
+      else
+         cd ${RUN_DIR}/${DATE}/tropomi_no2_total_col_obs
       fi
 #
 # SET TROPOMI PARAMETERS
@@ -4781,11 +7639,11 @@ EOFF
       export TRP_INFILE=\'${EXPERIMENT_TROPOMI_NO2_DIR}/${TROPOMI_FILE_PRE}${YYYY}${MM}${DD}T\'
 #
 # COPY EXECUTABLE
-      export FILE=tropomi_no2_extract.m
+      export FILE=tropomi_no2_total_col_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
-      mcc -m tropomi_no2_extract.m -o tropomi_no2_extract
-      ./run_tropomi_no2_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+      mcc -m tropomi_no2_total_col_extract.m -o tropomi_no2_total_col_extract
+      ./run_tropomi_no2_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -4814,11 +7672,11 @@ EOFF
 	 export TRP_INFILE=\'${EXPERIMENT_TROPOMI_NO2_DIR}/${TROPOMI_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
 #
 # COPY EXECUTABLE
-         export FILE=tropomi_no2_extract.m
+         export FILE=tropomi_no2_total_col_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
-         mcc -m tropomi_no2_extract.m -o tropomi_no2_extract
-         ./run_tropomi_no2_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL}
+         mcc -m tropomi_no2_total_col_extract.m -o tropomi_total_col_no2_extract
+         ./run_tropomi_no2_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
       fi
 #
@@ -4838,7 +7696,7 @@ EOFF
 # SET NAMELIST TO CONVERT TROPOMI_NO2 ASCII TO OBS_SEQ 
       export NL_FILEDIR=\'./\' 
       export NL_FILENAME=\'${TRP_OUTFILE}\'
-      export NL_FILEOUT=\'obs_seq_tropomi_no2_${DATE}.out\'      
+      export NL_FILEOUT=\'obs_seq_tropomi_no2_total_col_${DATE}.out\'      
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TROPOMI_NO2}
       export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
@@ -4870,14 +7728,183 @@ EOFF
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
       export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
       export NL_BIN_END_SEC=${BIN_END_SEC}
-#      
-# USE TROPOMI DATA 
+#
+# USE TROPOMI DATA
       rm -rf input.nml
       ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/work/tropomi_no2_ascii_to_obs ./.
-      ./tropomi_no2_ascii_to_obs > index.html 2>&1
+      cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/work/tropomi_no2_total_col_ascii_to_obs ./.
+      ./tropomi_no2_total_col_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ -s ${NL_FILEOUT} ]]; then
+         touch NO_TROPOMI_NO2_${DATE}
+      fi
+   fi
+#
+########################################################################
+#
+# RUN TROPOMI NO2 TROP COL OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_TROPOMI_NO2_TROP_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/tropomi_no2_trop_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/tropomi_no2_trop_col_obs
+         cd ${RUN_DIR}/${DATE}/tropomi_no2_trop_col_obs
+      else
+         cd ${RUN_DIR}/${DATE}/tropomi_no2_trop_col_obs
+      fi
+#
+# SET TROPOMI PARAMETERS
+      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
+      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export TROPOMI_FILE_PRE=S5P_OFFL_L2__NO2____
+      export TROPOMI_FILE_EXT=.nc
+      export OUTFILE=TEMP_FILE.dat
+      export TRP_OUTFILE=TROPOMI_NO2_${DATE}.dat
+      rm -rf ${OUTFILE}
+      rm -rf ${TRP_OUTFILE}
+#
+# SET OBS_WINDOW
+      export BIN_BEG_YY=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_YY=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1 
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
+         export BIN_BEG_MM=${ASIM_MX_MM}
+         export BIN_BEG_DD=${ASIM_MX_DD}
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET TROPOMI INPUT DATA FILE
+      export TRP_INFILE=\'${EXPERIMENT_TROPOMI_NO2_DIR}/${TROPOMI_FILE_PRE}${YYYY}${MM}${DD}T\'
+#
+# COPY EXECUTABLE
+      export FILE=tropomi_no2_trop_col_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
+      mcc -m tropomi_no2_trop_col_extract.m -o tropomi_no2_trop_col_extract
+      ./run_tropomi_no2_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TRP_OUTFILE}
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_YY=${ASIM_MIN_YYYY}
+         export BIN_BEG_MM=${ASIM_MIN_MM}
+         export BIN_BEG_DD=${ASIM_MIN_DD}
+         export BIN_BEG_HH=${ASIM_MIN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_YY=${ASIM_MIN_YYYY}
+         export BIN_END_MM=${ASIM_MIN_MM}
+         export BIN_END_DD=${ASIM_MIN_DD}
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+	 export TRP_INFILE=\'${EXPERIMENT_TROPOMI_NO2_DIR}/${TROPOMI_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
+#
+# COPY EXECUTABLE
+         export FILE=tropomi_no2_trop_col_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
+         mcc -m tropomi_no2_trop_col_extract.m -o tropomi_trop_col_no2_extract
+         ./run_tropomi_no2_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+      fi
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TRP_OUTFILE}
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TRP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+      if [[ ! -e ${TRP_OUTFILE} ]]; then
+         touch NO_TROPOMI_NO2_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT TROPOMI_NO2 ASCII TO OBS_SEQ 
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=\'${TRP_OUTFILE}\'
+      export NL_FILEOUT=\'obs_seq_tropomi_no2_trop_col_${DATE}.out\'      
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TROPOMI_NO2}
+      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+      export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
+#
+# MODEL PROFILE SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
+#
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#
+# USE TROPOMI DATA
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/work/tropomi_no2_trop_col_ascii_to_obs ./.
+      ./tropomi_no2_trop_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ -s ${NL_FILEOUT} ]]; then
@@ -4954,7 +7981,7 @@ EOFF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/TROPOMI_SO2/native_to_ascii/${FILE} ./.
       mcc -m tropomi_so2_extract.m -o tropomi_so2_extract
-      ./run_tropomi_so2_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+      ./run_tropomi_so2_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -4988,7 +8015,7 @@ EOFF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/TROPOMI_SO2/native_to_ascii/${FILE} ./.
          mcc -m tropomi_so2_extract.m -o tropomi_so2_extract
-         ./run_tropomi_so2_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+         ./run_tropomi_so2_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
       fi
 #
@@ -5040,8 +8067,8 @@ EOFF
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
       export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
       export NL_BIN_END_SEC=${BIN_END_SEC}
-#          
-# USE TROPOMI DATA 
+#
+# USE TROPOMI DATA
       rm -rf input.nml
       ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
 #
@@ -5057,16 +8084,16 @@ EOFF
 #
 ########################################################################
 #
-# RUN TEMPO O3 COLUMN OBSERVATIONS
+# RUN TEMPO O3 TOTAL COLUMN OBSERVATIONS
 #
 ########################################################################
 #
-   if ${RUN_TEMPO_O3_OBS}; then
-      if [[ ! -d ${RUN_DIR}/${DATE}/tempo_o3_obs ]]; then
-         mkdir -p ${RUN_DIR}/${DATE}/tempo_o3_obs
-         cd ${RUN_DIR}/${DATE}/tempo_o3_obs
+   if ${RUN_TEMPO_O3_TOTAL_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/tempo_o3_total_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/tempo_o3_total_col_obs
+         cd ${RUN_DIR}/${DATE}/tempo_o3_total_col_obs
       else
-         cd ${RUN_DIR}/${DATE}/tempo_o3_obs
+         cd ${RUN_DIR}/${DATE}/tempo_o3_total_col_obs
       fi
 #
 # SET TEMPO PARAMETERS
@@ -5074,7 +8101,7 @@ EOFF
       export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
-      export TEMPO_FILE_PRE=TEMPO_O3__L2_V01_
+      export TEMPO_FILE_PRE=TEMPO_O3PROF-PROXY_L2_V01_
       export TEMPO_FILE_EXT=.nc
       export OUTFILE=TEMP_FILE.dat
       export TMP_OUTFILE=TEMPO_O3_${DATE}.dat
@@ -5117,14 +8144,14 @@ EOFF
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
 #
 # SET TEMPO INPUT DATA DIR
-      export TMP_INFILE=\'${EXPERIMENT_TEMPO_O3_DIR}/${TEMPO_FILE_PRE}${YYYY}${MM}${DD}T\'
+      export TMP_INFILE=\'${EXPERIMENT_TEMPO_O3_DIR}/${YYYY}${MM}${DD}/${TEMPO_FILE_PRE}${YYYY}${MM}${DD}T\'
 #
 # COPY EXECUTABLE
-      export FILE=tempo_o3_extract.m
+      export FILE=tempo_o3_total_col_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
-      mcc -m tempo_o3_extract.m -o tempo_o3_extract
-      ./run_tempo_o3_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+      mcc -m tempo_o3_total_col_extract.m -o tempo_o3_total_col_extract
+      ./run_tempo_o3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -5150,14 +8177,14 @@ EOFF
          export BIN_END_HH=23
          export BIN_END_MN=59
          export BIN_END_SS=59
-         export TMP_INFILE=\'${EXPERIMENT_TEMPO_O3_DIR}/${TEMPO_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
+         export TMP_INFILE=\'${EXPERIMENT_TEMPO_O3_DIR}/${YYYY}${MM}${DD}/${TEMPO_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
 #
 # COPY EXECUTABLE
-         export FILE=tempo_o3_extract.m
+         export FILE=tempo_o3_total_col_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
-         mcc -m tempo_o3_extract.m -o tempo_o3_extract
-         ./run_tempo_o3_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+         mcc -m tempo_o3_total_col_extract.m -o tempo_o3_total_col_extract
+         ./run_tempo_o3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
       fi
 #
@@ -5176,12 +8203,20 @@ EOFF
 #
 # SET NAMELIST TO CONVERT TEMPO_O3 ASCII TO OBS_SEQ 
       export NL_FILEDIR=\'./\' 
-      export NL_FILENAME=${D_DATE}.dat
       export NL_FILENAME=\'${TMP_OUTFILE}\'
-      export NL_FILEOUT=\'obs_seq_tempo_o3_${DATE}.out\'
+      export NL_FILEOUT=\'obs_seq_tempo_o3_total_col_${DATE}.out\'
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TEMPO_O3}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+#
+# MODEL PROFILE SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
+#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
 #
       export BIN_BEG_HH=${ASIM_MN_HH}
       export BIN_BEG_MN=0
@@ -5201,14 +8236,14 @@ EOFF
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
       export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
       export NL_BIN_END_SEC=${BIN_END_SEC}
-#     
+#      
 # USE TEMPO DATA 
       rm -rf input.nml
       ${HYBRID_SCRIPTS_DIR}/da_create_dart_tempo_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/work/tempo_o3_ascii_to_obs ./.
-      ./tempo_o3_ascii_to_obs > index.html 2>&1
+      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/work/tempo_o3_total_col_ascii_to_obs ./.
+      ./tempo_o3_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ -s ${NL_FILEOUT} ]]; then
@@ -5218,16 +8253,523 @@ EOFF
 #
 ########################################################################
 #
-# RUN TEMPO NO2 COLUMN OBSERVATIONS
+# RUN TEMPO O3 TROP COLUMN OBSERVATIONS
 #
 ########################################################################
 #
-   if ${RUN_TEMPO_NO2_OBS}; then
-      if [[ ! -d ${RUN_DIR}/${DATE}/tempo_no2_obs ]]; then
-         mkdir -p ${RUN_DIR}/${DATE}/tempo_no2_obs
-         cd ${RUN_DIR}/${DATE}/tempo_no2_obs
+   if ${RUN_TEMPO_O3_TROP_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/tempo_o3_trop_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/tempo_o3_trop_col_obs
+         cd ${RUN_DIR}/${DATE}/tempo_o3_trop_col_obs
       else
-         cd ${RUN_DIR}/${DATE}/tempo_no2_obs
+         cd ${RUN_DIR}/${DATE}/tempo_o3_trop_col_obs
+      fi
+#
+# SET TEMPO PARAMETERS
+      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
+      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export TEMPO_FILE_PRE=TEMPO_O3PROF-PROXY_L2_V01_
+      export TEMPO_FILE_EXT=.nc
+      export OUTFILE=TEMP_FILE.dat
+      export TMP_OUTFILE=TEMPO_O3_${DATE}.dat
+      rm -rf ${OUTFILE}
+      rm -rf ${TMP_OUTFILE}
+#
+# SET OBS_WINDOW
+      export BIN_BEG_YY=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_YY=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1 
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
+         export BIN_BEG_MM=${ASIM_MX_MM}
+         export BIN_BEG_DD=${ASIM_MX_DD}
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET TEMPO INPUT DATA DIR
+      export TMP_INFILE=\'${EXPERIMENT_TEMPO_O3_DIR}/${YYYY}${MM}${DD}/${TEMPO_FILE_PRE}${YYYY}${MM}${DD}T\'
+#
+# COPY EXECUTABLE
+      export FILE=tempo_o3_trop_col_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+      mcc -m tempo_o3_trop_col_extract.m -o tempo_o3_trop_col_extract
+      ./run_tempo_o3_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TMP_OUTFILE}
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_YY=${ASIM_MIN_YYYY}
+         export BIN_BEG_MM=${ASIM_MIN_MM}
+         export BIN_BEG_DD=${ASIM_MIN_DD}
+         export BIN_BEG_HH=${ASIM_MIN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_YY=${ASIM_MIN_YYYY}
+         export BIN_END_MM=${ASIM_MIN_MM}
+         export BIN_END_DD=${ASIM_MIN_DD}
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         export TMP_INFILE=\'${EXPERIMENT_TEMPO_O3_DIR}/${YYYY}${MM}${DD}/${TEMPO_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
+#
+# COPY EXECUTABLE
+         export FILE=tempo_o3_trop_col_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+         mcc -m tempo_o3_trop_col_extract.m -o tempo_o3_trop_col_extract
+         ./run_tempo_o3_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+      fi
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TMP_OUTFILE}
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+      if [[ ! -e ${TMP_OUTFILE} ]]; then
+         touch NO_TEMPO_O3_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT TEMPO_O3 ASCII TO OBS_SEQ 
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=\'${TMP_OUTFILE}\'
+      export NL_FILEOUT=\'obs_seq_tempo_o3_trop_col_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TEMPO_O3}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+#
+# MODEL PROFILE SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
+#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
+#
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#      
+# USE TEMPO DATA 
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tempo_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/work/tempo_o3_trop_col_ascii_to_obs ./.
+      ./tempo_o3_trop_col_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ -s ${NL_FILEOUT} ]]; then
+         touch NO_TEMPO_O3_${DATE}
+      fi
+   fi
+#
+########################################################################
+#
+# RUN TEMPO O3 PROFILE OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_TEMPO_O3_PROFILE_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/tempo_o3_profile_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/tempo_o3_profile_obs
+         cd ${RUN_DIR}/${DATE}/tempo_o3_profile_obs
+      else
+         cd ${RUN_DIR}/${DATE}/tempo_o3_profile_obs
+      fi
+#
+# SET TEMPO PARAMETERS
+      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
+      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export TEMPO_FILE_PRE=TEMPO_O3PROF-PROXY_L2_V01_
+      export TEMPO_FILE_EXT=.nc
+      export OUTFILE=TEMP_FILE.dat
+      export TMP_OUTFILE=TEMPO_O3_${DATE}.dat
+      rm -rf ${OUTFILE}
+      rm -rf ${TMP_OUTFILE}
+#
+# SET OBS_WINDOW
+      export BIN_BEG_YY=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_YY=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1 
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
+         export BIN_BEG_MM=${ASIM_MX_MM}
+         export BIN_BEG_DD=${ASIM_MX_DD}
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET TEMPO INPUT DATA DIR
+      export TMP_INFILE=\'${EXPERIMENT_TEMPO_O3_DIR}/${YYYY}${MM}${DD}/${TEMPO_FILE_PRE}${YYYY}${MM}${DD}T\'
+#
+# COPY EXECUTABLE
+      export FILE=tempo_o3_profile_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+      mcc -m tempo_o3_profile_extract.m -o tempo_o3_profile_extract
+      ./run_tempo_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TMP_OUTFILE}
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_YY=${ASIM_MIN_YYYY}
+         export BIN_BEG_MM=${ASIM_MIN_MM}
+         export BIN_BEG_DD=${ASIM_MIN_DD}
+         export BIN_BEG_HH=${ASIM_MIN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_YY=${ASIM_MIN_YYYY}
+         export BIN_END_MM=${ASIM_MIN_MM}
+         export BIN_END_DD=${ASIM_MIN_DD}
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         export TMP_INFILE=\'${EXPERIMENT_TEMPO_O3_DIR}/${YYYY}${MM}${DD}/${TEMPO_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
+#
+# COPY EXECUTABLE
+         export FILE=tempo_o3_profile_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+         mcc -m tempo_o3_profile_extract.m -o tempo_o3_profile_extract
+         ./run_tempo_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+      fi
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TMP_OUTFILE}
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+      if [[ ! -e ${TMP_OUTFILE} ]]; then
+         touch NO_TEMPO_O3_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT TEMPO_O3 ASCII TO OBS_SEQ 
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=\'${TMP_OUTFILE}\'
+      export NL_FILEOUT=\'obs_seq_tempo_o3_profile_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TEMPO_O3}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+#
+# MODEL PROFILE SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
+#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
+#
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#      
+# USE TEMPO DATA 
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tempo_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/work/tempo_o3_profile_ascii_to_obs ./.
+      ./tempo_o3_profile_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ -s ${NL_FILEOUT} ]]; then
+         touch NO_TEMPO_O3_${DATE}
+      fi
+   fi
+#
+########################################################################
+#
+# RUN TEMPO O3 CPSR OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_TEMPO_O3_CPSR_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/tempo_o3_cpsr_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/tempo_o3_cpsr_obs
+         cd ${RUN_DIR}/${DATE}/tempo_o3_cpsr_obs
+      else
+         cd ${RUN_DIR}/${DATE}/tempo_o3_cpsr_obs
+      fi
+#
+# SET TEMPO PARAMETERS
+      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
+      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export TEMPO_FILE_PRE=TEMPO_O3PROF-PROXY_L2_V01_
+      export TEMPO_FILE_EXT=.nc
+      export OUTFILE=TEMP_FILE.dat
+      export TMP_OUTFILE=TEMPO_O3_${DATE}.dat
+      rm -rf ${OUTFILE}
+      rm -rf ${TMP_OUTFILE}
+#
+# SET OBS_WINDOW
+      export BIN_BEG_YY=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_YY=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1 
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
+         export BIN_BEG_MM=${ASIM_MX_MM}
+         export BIN_BEG_DD=${ASIM_MX_DD}
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET TEMPO INPUT DATA DIR
+      export TMP_INFILE=\'${EXPERIMENT_TEMPO_O3_DIR}/${YYYY}${MM}${DD}/${TEMPO_FILE_PRE}${YYYY}${MM}${DD}T\'
+#
+# COPY EXECUTABLE
+      export FILE=tempo_o3_cpsr_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+      mcc -m tempo_o3_cpsr_extract.m -o tempo_o3_cpsr_extract
+      ./run_tempo_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TMP_OUTFILE}
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then
+         export BIN_BEG_YY=${ASIM_MIN_YYYY}
+         export BIN_BEG_MM=${ASIM_MIN_MM}
+         export BIN_BEG_DD=${ASIM_MIN_DD}
+         export BIN_BEG_HH=${ASIM_MIN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_YY=${ASIM_MIN_YYYY}
+         export BIN_END_MM=${ASIM_MIN_MM}
+         export BIN_END_DD=${ASIM_MIN_DD}
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         export TMP_INFILE=\'${EXPERIMENT_TEMPO_O3_DIR}/${YYYY}${MM}${DD}/${TEMPO_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
+#
+# COPY EXECUTABLE
+         export FILE=tempo_o3_cpsr_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+         mcc -m tempo_o3_cpsr_extract.m -o tempo_o3_cpsr_extract
+         ./run_tempo_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+      fi
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TMP_OUTFILE}
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+      if [[ ! -e ${TMP_OUTFILE} ]]; then
+         touch NO_TEMPO_O3_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT TEMPO_O3 ASCII TO OBS_SEQ 
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=\'${TMP_OUTFILE}\'
+      export NL_FILEOUT=\'obs_seq_tempo_o3_cpsr_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TEMPO_O3}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+#
+# MODEL CPSR SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
+#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
+#
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#      
+# USE TEMPO DATA 
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tempo_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/work/tempo_o3_cpsr_ascii_to_obs ./.
+      ./tempo_o3_cpsr_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ -s ${NL_FILEOUT} ]]; then
+         touch NO_TEMPO_O3_${DATE}
+      fi
+   fi
+#
+########################################################################
+#
+# RUN TEMPO NO2 TOTAL COL OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_TEMPO_NO2_TOTAL_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/tempo_no2_total_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/tempo_no2_total_col_obs
+         cd ${RUN_DIR}/${DATE}/tempo_no2_total_col_obs
+      else
+         cd ${RUN_DIR}/${DATE}/tempo_no2_total_col_obs
       fi
 #
 # SET TEMPO PARAMETERS
@@ -5284,11 +8826,11 @@ EOFF
       export TMP_INFILE=\'${EXPERIMENT_TEMPO_NO2_DIR}/${YYYY}${MM}/${DD}/${TEMPO_FILE_PRE}${YYYY}${MM}${DD}T\'
 #
 # COPY EXECUTABLE
-      export FILE=tempo_no2_extract.m
+      export FILE=tempo_no2_total_col_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/native_to_ascii/${FILE} ./.
-      mcc -m tempo_no2_extract.m -o tempo_no2_extract
-      ./run_tempo_no2_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+      mcc -m tempo_no2_total_col_extract.m -o tempo_no2_total_col_extract
+      ./run_tempo_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -5317,11 +8859,11 @@ EOFF
          export TMP_INFILE=\'${EXPERIMENT_TEMPO_NO2_DIR}/${TEMPO_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
 #
 # COPY EXECUTABLE
-         export FILE=tempo_no2_extract.m
+         export FILE=tempo_no2_total_col_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/native_to_ascii/${FILE} ./.
-         mcc -m tempo_no2_extract.m -o tempo_no2_extract
-         ./run_tempo_no2_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL}
+         mcc -m tempo_no2_total_col_extract.m -o tempo_no2_total_col_extract
+         ./run_tempo_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
       fi
 #
@@ -5341,7 +8883,7 @@ EOFF
 # SET NAMELIST TO CONVERT TEMPO_NO2 ASCII TO OBS_SEQ 
       export NL_FILEDIR=\'./\' 
       export NL_FILENAME=\'${TMP_OUTFILE}\'
-      export NL_FILEOUT=\'obs_seq_tempo_no2_${DATE}.out\'
+      export NL_FILEOUT=\'obs_seq_tempo_no2_total_col_${DATE}.out\'
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TEMPO_NO2}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
@@ -5379,14 +8921,186 @@ EOFF
       ${HYBRID_SCRIPTS_DIR}/da_create_dart_tempo_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/work/tempo_no2_ascii_to_obs ./.
-      ./tempo_no2_ascii_to_obs > index.html 2>&1
+      cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/work/tempo_no2_total_col_ascii_to_obs ./.
+      ./tempo_no2_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TEMPO_NO2_${DATE}
       fi
-fi
+   fi
+#
+########################################################################
+#
+# RUN TEMPO NO2 TROP COL OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_TEMPO_NO2_TROP_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/tempo_no2_trop_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/tempo_no2_trop_col_obs
+         cd ${RUN_DIR}/${DATE}/tempo_no2_trop_col_obs
+      else
+         cd ${RUN_DIR}/${DATE}/tempo_no2_trop_col_obs
+      fi
+#
+# SET TEMPO PARAMETERS
+      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
+      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
+#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
+
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export TEMPO_FILE_PRE=TEMPO_NO2_L2_V01_
+      export TEMPO_FILE_EXT=.nc
+      export OUTFILE=TEMP_FILE.dat
+      export TMP_OUTFILE=TEMPO_NO2_${DATE}.dat
+      rm -rf ${OUTFILE}
+      rm -rf ${TMP_OUTFILE}
+#
+# SET OBS_WINDOW
+      export BIN_BEG_YY=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_YY=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1 
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
+         export BIN_BEG_MM=${ASIM_MX_MM}
+         export BIN_BEG_DD=${ASIM_MX_DD}
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET TEMPO INPUT DATA DIR
+      export TMP_INFILE=\'${EXPERIMENT_TEMPO_NO2_DIR}/${YYYY}${MM}/${DD}/${TEMPO_FILE_PRE}${YYYY}${MM}${DD}T\'
+#
+# COPY EXECUTABLE
+      export FILE=tempo_no2_trop_col_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/native_to_ascii/${FILE} ./.
+      mcc -m tempo_no2_trop_col_extract.m -o tempo_no2_trop_col_extract
+      ./run_tempo_no2_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TMP_OUTFILE}
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then	 
+         export BIN_BEG_YY=${ASIM_MIN_YYYY}
+         export BIN_BEG_MM=${ASIM_MIN_MM}
+         export BIN_BEG_DD=${ASIM_MIN_DD}
+         export BIN_BEG_HH=${ASIM_MIN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_YY=${ASIM_MIN_YYYY}
+         export BIN_END_MM=${ASIM_MIN_MM}
+         export BIN_END_DD=${ASIM_MIN_DD}
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         export TMP_INFILE=\'${EXPERIMENT_TEMPO_NO2_DIR}/${TEMPO_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
+#
+# COPY EXECUTABLE
+         export FILE=tempo_no2_trop_col_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/native_to_ascii/${FILE} ./.
+         mcc -m tempo_no2_trop_col_extract.m -o tempo_no2_trop_col_extract
+         ./run_tempo_no2_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+#
+      fi
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TMP_OUTFILE}
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+      if [[ ! -e ${TMP_OUTFILE} ]]; then
+         touch NO_TEMPO_NO2_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT TEMPO_NO2 ASCII TO OBS_SEQ 
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=\'${TMP_OUTFILE}\'
+      export NL_FILEOUT=\'obs_seq_tempo_no2_trop_col_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TEMPO_NO2}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+#
+# MODEL PROFILE SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
+#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
+#
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#      
+# USE TEMPO DATA 
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tempo_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/work/tempo_no2_trop_col_ascii_to_obs ./.
+      ./tempo_no2_trop_col_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ -s ${NL_FILEOUT} ]]; then
+         touch NO_TEMPO_NO2_${DATE}
+      fi
+   fi
 #
 #########################################################################
 #
@@ -5437,6 +9151,27 @@ fi
       export NL_USE_LOG_PM25=${USE_LOG_PM25_LOGIC}
       export NL_USE_LOG_AOD=${USE_LOG_AOD_LOGIC}
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_AIRNOW_O3}
+#
+# CREATE BIAS CORRECTION NAMELIST
+      export NL_DOES_FILE_EXIST=.true.
+      if [[ ${DATE} -eq ${FIRST_FILTER_DATE} || ${RUN_BIAS_CORRECTION} == false ]]; then
+         rm -rf ${NL_CORRECTION_FILENAME}
+	 export NL_DOES_FILE_EXIST=.false.
+      else
+         rm -rf ${NL_CORRECTION_FILENAME}
+         cp ${RUN_DIR}/${PAST_DATE}/bias_corr/${NL_CORRECTION_FILENAME} ./.
+      fi
+#
+      rm -rf bias_correct_nml
+      cat << EOF > bias_correct_nml
+&bias_correct_nml
+path_filein='${RUN_DIR}/${DATE}/bias_corr'
+does_file_exist=${NL_DOES_FILE_EXIST}
+correction_filename=${NL_CORRECTION_FILENAME}
+nobs=1
+obs_list='TROPOMI_CO_COL'
+/
+EOF
 #
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/AIRNOW/work/airnow_o3_ascii_to_obs ./.
@@ -5506,6 +9241,27 @@ fi
       export NL_USE_LOG_AOD=${USE_LOG_AOD_LOGIC}
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_AIRNOW_CO}
 #
+# CREATE BIAS CORRECTION NAMELIST
+      export NL_DOES_FILE_EXIST=.true.
+      if [[ ${DATE} -eq ${FIRST_FILTER_DATE} || ${RUN_BIAS_CORRECTION} == false ]]; then
+         rm -rf ${NL_CORRECTION_FILENAME}
+	 export NL_DOES_FILE_EXIST=.false.
+      else
+         rm -rf ${NL_CORRECTION_FILENAME}
+         cp ${RUN_DIR}/${PAST_DATE}/bias_corr/${NL_CORRECTION_FILENAME} ./.
+      fi
+#
+      rm -rf bias_correct_nml
+      cat << EOF > bias_correct_nml
+&bias_correct_nml
+path_filein='${RUN_DIR}/${DATE}/bias_corr'
+does_file_exist=${NL_DOES_FILE_EXIST}
+correction_filename=${NL_CORRECTION_FILENAME}
+nobs=1
+obs_list='TROPOMI_CO_COL'
+/
+EOF
+#
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/AIRNOW/work/airnow_co_ascii_to_obs ./.
       rm -rf create_airnow_obs_nml.nl
@@ -5523,6 +9279,100 @@ fi
          touch NO_DATA_${D_DATE}
       fi     
    fi
+#
+#########################################################################
+#
+# RUN MEXICO AQS CO OBSERVATIONS
+#
+#########################################################################
+#
+   if ${RUN_MEXICO_AQS_CO_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/mexico_aqs_co_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/mexico_aqs_co_obs
+         cd ${RUN_DIR}/${DATE}/mexico_aqs_co_obs
+      else
+         cd ${RUN_DIR}/${DATE}/mexico_aqs_co_obs
+      fi
+#
+# GET MEXICO AQS DATA
+      if [[ ! -e mexico_aqs_co_hourly_csv_data ]]; then
+         cp ${EXPERIMENT_MEXICO_AQS_DIR}/MCMA-monitoring-stations-just-CO.csv ./.
+         cp ${EXPERIMENT_MEXICO_AQS_DIR}/Mexico-in-situ-CO-2022.csv ./.
+      fi
+#
+      export BIN_BEG_YR=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      export BIN_END_YR=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+#
+# RUN_MEXICO_AQS_CO_ASCII_TO_DART
+      export NL_FILENAME_STATIONS=\'MCMA-monitoring-stations-just-CO.csv\'
+      export NL_FILENAME_DATA=\'Mexico-in-situ-CO-2022.csv\'
+      export NL_LAT_MN=${NL_MIN_LAT}
+      export NL_LAT_MX=${NL_MAX_LAT}
+      export NL_LON_MN=${NL_MIN_LON}
+      export NL_LON_MX=${NL_MAX_LON}
+      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_NOX=${USE_LOG_NOX_LOGIC}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+      export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
+      export NL_USE_LOG_PM10=${USE_LOG_PM10_LOGIC}
+      export NL_USE_LOG_PM25=${USE_LOG_PM25_LOGIC}
+      export NL_USE_LOG_AOD=${USE_LOG_AOD_LOGIC}
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_MEXICO_AQS_CO}
+#
+# CREATE BIAS CORRECTION NAMELIST
+      export NL_DOES_FILE_EXIST=.true.
+      if [[ ${DATE} -eq ${FIRST_FILTER_DATE} || ${RUN_BIAS_CORRECTION} == false ]]; then
+         rm -rf ${NL_CORRECTION_FILENAME}
+	 export NL_DOES_FILE_EXIST=.false.
+      else
+         rm -rf ${NL_CORRECTION_FILENAME}
+         cp ${RUN_DIR}/${PAST_DATE}/bias_corr/${NL_CORRECTION_FILENAME} ./.
+      fi
+#
+      rm -rf bias_correct_nml
+      cat << EOF > bias_correct_nml
+&bias_correct_nml
+path_filein='${RUN_DIR}/${DATE}/bias_corr'
+does_file_exist=${NL_DOES_FILE_EXIST}
+correction_filename=${NL_CORRECTION_FILENAME}
+nobs=1
+obs_list='TROPOMI_CO_COL'
+/
+EOF
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/MEXICO_AQS/work/mexico_aqs_co_ascii_to_obs ./.
+      rm -rf create_mexico_aqs_obs_nml.nl
+      rm -rf input.nml
+      ${HYBRID_SCRIPTS_DIR}/da_create_dart_mexico_aqs_input_nml.ksh
+      ./mexico_aqs_co_ascii_to_obs > index.file 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      export MEXICO_AQS_OUT_FILE=mexico_aqs_obs_seq
+      export MEXICO_AQS_ARCH_FILE=obs_seq_mexico_aqs_co_${DATE}.out
+      if [[ -s ${MEXICO_AQS_OUT_FILE} ]]; then
+         cp ${MEXICO_AQS_OUT_FILE} ${MEXICO_AQS_ARCH_FILE}
+         rm ${MEXICO_AQS_OUT_FILE}
+      else
+         touch NO_DATA_${D_DATE}
+      fi     
+   fi
+
+exit
+   
 #
 #########################################################################
 #
@@ -6011,16 +9861,16 @@ if ${RUN_AIRNOW_PM25_OBS}; then
 #
 #########################################################################
 #
-# RUN MODIS AOD OBSERVATIONS
+# RUN MODIS AOD TOTAL COL OBSERVATIONS
 #
 #########################################################################
 #
-   if ${RUN_MODIS_AOD_OBS}; then
-      if [[ ! -d ${RUN_DIR}/${DATE}/modis_aod_obs ]]; then
-         mkdir -p ${RUN_DIR}/${DATE}/modis_aod_obs
-         cd ${RUN_DIR}/${DATE}/modis_aod_obs
+   if ${RUN_MODIS_AOD_TOTAL_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/modis_aod_total_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/modis_aod_total_col_obs
+         cd ${RUN_DIR}/${DATE}/modis_aod_total_col_obs
       else
-         cd ${RUN_DIR}/${DATE}/modis_aod_obs
+         cd ${RUN_DIR}/${DATE}/modis_aod_total_col_obs
       fi
 #
 # SET MODIS PARAMETERS
@@ -6044,9 +9894,9 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       export MODIS_INDIR=${EXPERIMENT_MODIS_AOD_DIR}
 #
 # COPY EXECUTABLE
-      export FILE=modis_extract_hdf.pro
+      export FILE=modis_aod_total_col_extract.pro
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/MODIS/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/MODIS_AOD/native_to_ascii/${FILE} ./.
 #
       rm -rf job.ksh
       touch job.ksh
@@ -6054,15 +9904,9 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       export JOBRND=${RANDOM}_idl_modis
       cat << EOFF > job.ksh
 #!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
 idl << EOF
-.compile modis_extract_hdf.pro
-modis_extract_hdf, "${MODIS_INDIR}", "${OUTFILE_NQ}", ${N_YYYY}, ${N_MM}, ${N_DD}, ${N_HH}, ${N_ASIM_WIN}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
+.compile modis_aod_total_col_extract.pro
+modis_aod_total_col_extract, "${MODIS_INDIR}", "${OUTFILE_NQ}", ${N_YYYY}, ${N_MM}, ${N_DD}, ${N_HH}, ${N_ASIM_WIN}, ${NL_MIN_LON}, ${NL_MAX_LON}, ${NL_MIN_LAT}, ${NL_MAX_LAT}
 EOF
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
@@ -6073,7 +9917,9 @@ else
    touch FAILED 
 fi
 EOFF
-      qsub -Wblock=true job.ksh 
+#      qsub -Wblock=true job.ksh 
+      chmod +x job.ksh
+      ./job.ksh > index_mat.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${MOD_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -6086,8 +9932,7 @@ EOFF
       fi
 #
 # SET NAMELIST TO CONVERT MODIS ASCII TO OBS_SEQ 
-      export NL_MOD_OUTFILE=obs_seq_modis_aod_${DATE}.out
-#      export NL_FILENAME=\'airnow_no2_hourly_csv_data\'
+      export NL_MOD_OUTFILE=obs_seq_modis_aod_total_col_${DATE}.out
 #
       export BIN_BEG_YR=${ASIM_MN_YYYY}
       export BIN_BEG_MM=${ASIM_MN_MM}
@@ -6113,22 +9958,21 @@ EOFF
       export NL_FILENAME=modis_asciidata.input
 #
 # SETUP NAMELIST
-      rm -rf create_airnow_obs_nml.nl
+      rm -rf create_modis_obs_nml.nl
       rm -rf input.nml
       rm -rf ${NL_FILENAME}
       cp ${MOD_OUTFILE_NQ} ${NL_FILENAME}
-#      cp ${DART_DIR}/observations/obs_converters/MODIS/work/input.nml ./.
       ${HYBRID_SCRIPTS_DIR}/da_create_dart_modis_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/MODIS/work/modis_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/MODIS_AOD/work/modis_aod_total_col_ascii_to_obs ./.
 #
 # RUN OBS CONVERTER      
-      ./modis_ascii_to_obs > index.html 2>&1
+      ./modis_aod_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
-      if [[ -s modis_obs_seq.out ]]; then
-         mv modis_obs_seq.out ${NL_MOD_OUTFILE}
+      if [[ -s modis_aod_total_col_obs_seq.out ]]; then
+         mv modis_aod_total_col_obs_seq.out ${NL_MOD_OUTFILE}
       else
          touch NO_MODIS_AOD_${DATE}
       fi
@@ -6206,39 +10050,109 @@ EOFF
          export FILE_LIST[${NUM_FILES}]=obs_seq_MET_${DATE}.out
       fi
 #
-# MOPITT CO
-      if [[ -s ${MOPITT_CO_OBS_DIR}/obs_seq_mopitt_co_${DATE}.out && ${RUN_MOPITT_CO_OBS} ]]; then 
-         cp ${MOPITT_CO_OBS_DIR}/obs_seq_mopitt_co_${DATE}.out ./obs_seq_MOP_CO_${DATE}.out
+# MOPITT CO TOTAL_COL
+      if [[ -s ${MOPITT_CO_TOTAL_COL_OBS_DIR}/obs_seq_mopitt_co_total_col_${DATE}.out && ${RUN_MOPITT_CO_TOTAL_COL_OBS} ]]; then 
+         cp ${MOPITT_CO_TOTAL_COL_OBS_DIR}/obs_seq_mopitt_co_total_col_${DATE}.out ./obs_seq_MOP_CO_TOTAL_COL_${DATE}.out
          (( NUM_FILES=${NUM_FILES}+1 ))
-         export FILE_LIST[${NUM_FILES}]=obs_seq_MOP_CO_${DATE}.out
+         export FILE_LIST[${NUM_FILES}]=obs_seq_MOP_CO_TOTAL_COL_${DATE}.out
       fi
 #
-# IASI CO
-      if [[ -s ${IASI_CO_OBS_DIR}/obs_seq_iasi_co_${DATE}.out && ${RUN_IASI_CO_OBS} ]]; then 
-         cp ${IASI_CO_OBS_DIR}/obs_seq_iasi_co_${DATE}.out ./obs_seq_IAS_CO_${DATE}.out
+# MOPITT CO PROFILE
+      if [[ -s ${MOPITT_CO_PROFILE_OBS_DIR}/obs_seq_mopitt_co_profile_${DATE}.out && ${RUN_MOPITT_CO_PROFILE_OBS} ]]; then 
+         cp ${MOPITT_CO_PROFILE_OBS_DIR}/obs_seq_mopitt_co_profile_${DATE}.out ./obs_seq_MOP_CO_PROFILE_${DATE}.out
          (( NUM_FILES=${NUM_FILES}+1 ))
-         export FILE_LIST[${NUM_FILES}]=obs_seq_IAS_CO_${DATE}.out
+         export FILE_LIST[${NUM_FILES}]=obs_seq_MOP_CO_PROFILE_${DATE}.out
       fi
 #
-# IASI O3
-      if [[ -s ${IASI_O3_OBS_DIR}/obs_seq_iasi_o3_${DATE}.out && ${RUN_IASI_O3_OBS} ]]; then 
-         cp ${IASI_O3_OBS_DIR}/obs_seq_iasi_o3_${DATE}.out ./obs_seq_IAS_O3_${DATE}.out   
+# MOPITT CO CPSR
+      if [[ -s ${MOPITT_CO_CPSR_OBS_DIR}/obs_seq_mopitt_co_cpsr_${DATE}.out && ${RUN_MOPITT_CO_CPSR_OBS} ]]; then 
+         cp ${MOPITT_CO_CPSR_OBS_DIR}/obs_seq_mopitt_co_cpsr_${DATE}.out ./obs_seq_MOP_CO_CPSR_${DATE}.out
          (( NUM_FILES=${NUM_FILES}+1 ))
-         export FILE_LIST[${NUM_FILES}]=obs_seq_IAS_O3_${DATE}.out
+         export FILE_LIST[${NUM_FILES}]=obs_seq_MOP_CO_CPSR_${DATE}.out
       fi
 #
-# OMI O3
-      if [[ -s ${OMI_O3_OBS_DIR}/obs_seq_omi_o3_${DATE}.out && ${RUN_OMI_O3_OBS} ]]; then 
-         cp ${OMI_O3_OBS_DIR}/obs_seq_omi_o3_${DATE}.out ./obs_seq_OMI_O3_${DATE}.out   
+# IASI CO TOTAL COL
+      if [[ -s ${IASI_CO_TOTAL_COL_OBS_DIR}/obs_seq_iasi_co_total_col_${DATE}.out && ${RUN_IASI_CO_TOTAL_COL_OBS} ]]; then 
+         cp ${IASI_CO_TOTAL_COL_OBS_DIR}/obs_seq_iasi_co_total_col_${DATE}.out ./obs_seq_IAS_CO_TOTAL_COL_${DATE}.out
          (( NUM_FILES=${NUM_FILES}+1 ))
-         export FILE_LIST[${NUM_FILES}]=obs_seq_OMI_O3_${DATE}.out
+         export FILE_LIST[${NUM_FILES}]=obs_seq_IAS_CO_TOTAL_COL_${DATE}.out
       fi
 #
-# OMI NO2
-      if [[ -s ${OMI_NO2_OBS_DIR}/obs_seq_omi_no2_${DATE}.out && ${RUN_OMI_NO2_OBS} ]]; then 
-         cp ${OMI_NO2_OBS_DIR}/obs_seq_omi_no2_${DATE}.out ./obs_seq_OMI_NO2_${DATE}.out   
+# IASI CO PROFILE
+      if [[ -s ${IASI_CO_PROFILE_OBS_DIR}/obs_seq_iasi_co_profile_${DATE}.out && ${RUN_IASI_CO_PROFILE_OBS} ]]; then 
+         cp ${IASI_CO_PROFILE_OBS_DIR}/obs_seq_iasi_co_profile_${DATE}.out ./obs_seq_IAS_CO_PROFILE_${DATE}.out
          (( NUM_FILES=${NUM_FILES}+1 ))
-         export FILE_LIST[${NUM_FILES}]=obs_seq_OMI_NO2_${DATE}.out
+         export FILE_LIST[${NUM_FILES}]=obs_seq_IAS_CO_PROFILE_${DATE}.out
+      fi
+#
+# IASI CO CPSR
+      if [[ -s ${IASI_CO_CPSR_OBS_DIR}/obs_seq_iasi_co_cpsr_${DATE}.out && ${RUN_IASI_CO_CPSR_OBS} ]]; then 
+         cp ${IASI_CO_CPSR_OBS_DIR}/obs_seq_iasi_co_cpsr_${DATE}.out ./obs_seq_IAS_CO_CPSR_${DATE}.out
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_IAS_CO_CPSR_${DATE}.out
+      fi
+#
+# IASI O3 PROFILE
+      if [[ -s ${IASI_O3_PROFILE_OBS_DIR}/obs_seq_iasi_o3_profile_${DATE}.out && ${RUN_IASI_O3_PROFILE_OBS} ]]; then 
+         cp ${IASI_O3_PROFILE_OBS_DIR}/obs_seq_iasi_o3_profile_${DATE}.out ./obs_seq_IAS_O3_PROFILE_${DATE}.out
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_IAS_O3_PROFILE_${DATE}.out
+      fi
+#
+# IASI O3 CPSR
+      if [[ -s ${IASI_O3_CPSR_OBS_DIR}/obs_seq_iasi_o3_cpsr_${DATE}.out && ${RUN_IASI_O3_CPSR_OBS} ]]; then 
+         cp ${IASI_O3_OBS_DIR}/obs_seq_iasi_o3_cpsr_${DATE}.out ./obs_seq_IAS_O3_CPSR_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_IAS_O3_CPSR_${DATE}.out
+      fi
+#
+# MODIS AOD TOTAL COL
+      if [[ -s ${MODIS_AOD_TOTAL_COL_OBS_DIR}/obs_seq_modis_aod_total_col_${DATE}.out && ${RUN_MODIS_AOD_TOTAL_COL_OBS} ]]; then 
+         cp ${MODIS_AOD_TOTAL_COL_OBS_DIR}/obs_seq_modis_aod_total_col_${DATE}.out ./obs_seq_MOD_AOD_TOTAL_COL_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_MOD_AOD_TOTAL_COL_${DATE}.out
+      fi
+#
+# OMI O3 TOTAL COL
+      if [[ -s ${OMI_O3_TOTAL_COL_OBS_DIR}/obs_seq_omi_o3_total_col_${DATE}.out && ${RUN_OMI_O3_TOTAL_COL_OBS} ]]; then 
+         cp ${OMI_O3_TOTAL_COL_OBS_DIR}/obs_seq_omi_o3_total_col_${DATE}.out ./obs_seq_OMI_O3_TOTAL_COL_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_OMI_O3_TOTAL_COL_${DATE}.out
+      fi
+#
+# OMI O3 TROP COL
+      if [[ -s ${OMI_O3_TROP_COL_OBS_DIR}/obs_seq_omi_o3_trop_col_${DATE}.out && ${RUN_OMI_O3_TROP_COL_OBS} ]]; then 
+         cp ${OMI_O3_TROP_COL_OBS_DIR}/obs_seq_omi_o3_trop_col_${DATE}.out ./obs_seq_OMI_O3_TROP_COL_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_OMI_O3_TROP_COL_${DATE}.out
+      fi
+#
+# OMI O3 PROFILE
+      if [[ -s ${OMI_O3_PROFILE_OBS_DIR}/obs_seq_omi_o3_profile_${DATE}.out && ${RUN_OMI_O3_PROFILE_OBS} ]]; then 
+         cp ${OMI_O3_PROFILE_OBS_DIR}/obs_seq_omi_o3_profile_${DATE}.out ./obs_seq_OMI_O3_PROFILE_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_OMI_O3_PROFILE_${DATE}.out
+      fi
+#
+# OMI O3 CPSR
+      if [[ -s ${OMI_O3_CPSR_OBS_DIR}/obs_seq_omi_o3_cpsr_${DATE}.out && ${RUN_OMI_O3_CPSR_OBS} ]]; then 
+         cp ${OMI_O3_CPSR_OBS_DIR}/obs_seq_omi_o3_cpsr_${DATE}.out ./obs_seq_OMI_O3_CPSR_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_OMI_O3_CPSR_${DATE}.out
+      fi
+#
+# OMI NO2 TOTAL COL
+      if [[ -s ${OMI_NO2_TOTAL_COL_OBS_DIR}/obs_seq_omi_no2_total_col_${DATE}.out && ${RUN_OMI_NO2_TOTAL_COL_OBS} ]]; then 
+         cp ${OMI_NO2_TOTAL_COL_OBS_DIR}/obs_seq_omi_no2_total_col_${DATE}.out ./obs_seq_OMI_NO2_TOTAL_COL_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_OMI_NO2_TOTAL_COL_${DATE}.out
+      fi
+#
+# OMI NO2 TROP COL
+      if [[ -s ${OMI_NO2_TROP_COL_OBS_DIR}/obs_seq_omi_no2_trop_col_${DATE}.out && ${RUN_OMI_NO2_TROP_COL_OBS} ]]; then 
+         cp ${OMI_NO2_TROP_COL_OBS_DIR}/obs_seq_omi_no2_trop_col_${DATE}.out ./obs_seq_OMI_NO2_TROP_COL_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_OMI_NO2_TROP_COL_${DATE}.out
       fi
 #
 # OMI SO2
@@ -6248,25 +10162,53 @@ EOFF
          export FILE_LIST[${NUM_FILES}]=obs_seq_OMI_SO2_${DATE}.out
       fi
 #
-# TROPOMI CO
-      if [[ -s ${TROPOMI_CO_OBS_DIR}/obs_seq_tropomi_co_${DATE}.out && ${RUN_TROPOMI_CO_OBS} ]]; then 
-         cp ${TROPOMI_CO_OBS_DIR}/obs_seq_tropomi_co_${DATE}.out ./obs_seq_TROPOMI_CO_${DATE}.out   
+# TROPOMI CO TOTAL COL
+      if [[ -s ${TROPOMI_CO_TOTAL_COL_OBS_DIR}/obs_seq_tropomi_co_total_col_${DATE}.out && ${RUN_TROPOMI_CO_TOTAL_COL_OBS} ]]; then 
+         cp ${TROPOMI_CO_TOTAL_COL_OBS_DIR}/obs_seq_tropomi_co_total_col_${DATE}.out ./obs_seq_TROPOMI_CO_TOTAL_COL_${DATE}.out   
          (( NUM_FILES=${NUM_FILES}+1 ))
-         export FILE_LIST[${NUM_FILES}]=obs_seq_TROPOMI_CO_${DATE}.out
+         export FILE_LIST[${NUM_FILES}]=obs_seq_TROPOMI_CO_TOTAL_COL_${DATE}.out
       fi
 #
-# TROPOMI O3
-      if [[ -s ${TROPOMI_O3_OBS_DIR}/obs_seq_tropomi_o3_${DATE}.out && ${RUN_TROPOMI_O3_OBS} ]]; then 
-         cp ${TROPOMI_O3_OBS_DIR}/obs_seq_tropomi_o3_${DATE}.out ./obs_seq_TROPOMI_O3_${DATE}.out   
+# TROPOMI O3 TOTAL COL
+      if [[ -s ${TROPOMI_O3_TOTAL_COL_OBS_DIR}/obs_seq_tropomi_o3_total_col_${DATE}.out && ${RUN_TROPOMI_O3_TOTAL_COL_OBS} ]]; then 
+         cp ${TROPOMI_O3_TOTAL_COL_OBS_DIR}/obs_seq_tropomi_o3_total_col_${DATE}.out ./obs_seq_TROPOMI_O3_TOTAL_COL_${DATE}.out   
          (( NUM_FILES=${NUM_FILES}+1 ))
-         export FILE_LIST[${NUM_FILES}]=obs_seq_TROPOMI_O3_${DATE}.out
+         export FILE_LIST[${NUM_FILES}]=obs_seq_TROPOMI_O3_TOTAL_COL_${DATE}.out
       fi
 #
-# TROPOMI NO2
-      if [[ -s ${TROPOMI_NO2_OBS_DIR}/obs_seq_tropomi_no2_${DATE}.out && ${RUN_TROPOMI_NO2_OBS} ]]; then 
-         cp ${TROPOMI_NO2_OBS_DIR}/obs_seq_tropomi_no2_${DATE}.out ./obs_seq_TROPOMI_NO2_${DATE}.out   
+# TROPOMI O3 TROP COL
+      if [[ -s ${TROPOMI_O3_TROP_COL_OBS_DIR}/obs_seq_tropomi_o3_trop_col_${DATE}.out && ${RUN_TROPOMI_O3_TROP_COL_OBS} ]]; then 
+         cp ${TROPOMI_O3_TROP_COL_OBS_DIR}/obs_seq_tropomi_o3_trop_col_${DATE}.out ./obs_seq_TROPOMI_O3_TROP_COL_${DATE}.out   
          (( NUM_FILES=${NUM_FILES}+1 ))
-         export FILE_LIST[${NUM_FILES}]=obs_seq_TROPOMI_NO2_${DATE}.out
+         export FILE_LIST[${NUM_FILES}]=obs_seq_TROPOMI_O3_TROP_COL_${DATE}.out
+      fi
+#
+# TROPOMI O3 PROFILE
+      if [[ -s ${TROPOMI_O3_PROFILE_OBS_DIR}/obs_seq_tropomi_o3_profile_${DATE}.out && ${RUN_TROPOMI_O3_PROFILE_OBS} ]]; then 
+         cp ${TROPOMI_O3_PROFILE_OBS_DIR}/obs_seq_tropomi_o3_profile_${DATE}.out ./obs_seq_TROPOMI_O3_PROFILE_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_TROPOMI_O3_PROFILE_${DATE}.out
+      fi
+#
+# TROPOMI O3 CPSR
+      if [[ -s ${TROPOMI_O3_CPSR_OBS_DIR}/obs_seq_tropomi_o3_cpsr_${DATE}.out && ${RUN_TROPOMI_O3_CPSR_OBS} ]]; then 
+         cp ${TROPOMI_O3_CPSR_OBS_DIR}/obs_seq_tropomi_o3_cpsr_${DATE}.out ./obs_seq_TROPOMI_O3_CPSR_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_TROPOMI_O3_CPSR_${DATE}.out
+      fi
+#
+# TROPOMI NO2 TOTAL COL
+      if [[ -s ${TROPOMI_NO2_TOTAL_COL_OBS_DIR}/obs_seq_tropomi_no2_total_col_${DATE}.out && ${RUN_TROPOMI_NO2_TOTAL_COL_OBS} ]]; then 
+         cp ${TROPOMI_NO2_TOTAL_COL_OBS_DIR}/obs_seq_tropomi_no2_total_col_${DATE}.out ./obs_seq_TROPOMI_NO2_TOTAL_COL_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_TROPOMI_NO2_TOTAL_COL_${DATE}.out
+      fi
+#
+# TROPOMI NO2 TROP COL
+      if [[ -s ${TROPOMI_NO2_TROP_COL_OBS_DIR}/obs_seq_tropomi_no2_trop_col_${DATE}.out && ${RUN_TROPOMI_NO2_TROP_COL_OBS} ]]; then 
+         cp ${TROPOMI_NO2_TROP_COL_OBS_DIR}/obs_seq_tropomi_no2_trop_col_${DATE}.out ./obs_seq_TROPOMI_NO2_TROP_COL_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_TROPOMI_NO2_TROP_COL_${DATE}.out
       fi
 #
 # TROPOMI SO2
@@ -6276,18 +10218,46 @@ EOFF
          export FILE_LIST[${NUM_FILES}]=obs_seq_TROPOMI_SO2_${DATE}.out
       fi
 #
-# TEMPO O3
-      if [[ -s ${TEMPO_O3_OBS_DIR}/obs_seq_tempo_o3_${DATE}.out && ${RUN_TEMPO_O3_OBS} ]]; then 
-         cp ${TEMPO_O3_OBS_DIR}/obs_seq_tempo_o3_${DATE}.out ./obs_seq_TEMPO_O3_${DATE}.out   
+# TEMPO O3 TOTAL COL
+      if [[ -s ${TEMPO_O3_TOTAL_COL_OBS_DIR}/obs_seq_tempo_o3_total_col_${DATE}.out && ${RUN_TEMPO_O3_TOTAL_COL_OBS} ]]; then 
+         cp ${TEMPO_O3_TOTAL_COL_OBS_DIR}/obs_seq_tempo_o3_total_col_${DATE}.out ./obs_seq_TEMPO_O3_TOTAL_COL_${DATE}.out   
          (( NUM_FILES=${NUM_FILES}+1 ))
-         export FILE_LIST[${NUM_FILES}]=obs_seq_TEMPO_O3_${DATE}.out
+         export FILE_LIST[${NUM_FILES}]=obs_seq_TEMPO_O3_TOTAL_COL_${DATE}.out
       fi
 #
-# TEMPO NO2
-      if [[ -s ${TEMPO_NO2_OBS_DIR}/obs_seq_tempo_no2_${DATE}.out && ${RUN_TEMPO_NO2_OBS} ]]; then 
-         cp ${TEMPO_NO2_OBS_DIR}/obs_seq_tempo_no2_${DATE}.out ./obs_seq_TEMPO_NO2_${DATE}.out   
+# TEMPO O3 TROP COL
+      if [[ -s ${TEMPO_O3_TROP_COL_OBS_DIR}/obs_seq_tempo_o3_trop_col_${DATE}.out && ${RUN_TEMPO_O3_TROP_COL_OBS} ]]; then 
+         cp ${TEMPO_O3_TROP_COL_OBS_DIR}/obs_seq_tempo_o3_trop_col_${DATE}.out ./obs_seq_TEMPO_O3_TROP_COL_${DATE}.out   
          (( NUM_FILES=${NUM_FILES}+1 ))
-         export FILE_LIST[${NUM_FILES}]=obs_seq_TEMPO_NO2_${DATE}.out
+         export FILE_LIST[${NUM_FILES}]=obs_seq_TEMPO_O3_TROP_COL_${DATE}.out
+      fi
+#
+# TEMPO O3 PROFILE
+      if [[ -s ${TEMPO_O3_PROFILE_OBS_DIR}/obs_seq_tempo_o3_profile_${DATE}.out && ${RUN_TEMPO_O3_PROFILE_OBS} ]]; then 
+         cp ${TEMPO_O3_PROFILE_OBS_DIR}/obs_seq_tempo_o3_profile_${DATE}.out ./obs_seq_TEMPO_O3_PROFILE_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_TEMPO_O3_PROFILE_${DATE}.out
+      fi
+#
+# TEMPO O3 CPSR
+      if [[ -s ${TEMPO_O3_CPSR_OBS_DIR}/obs_seq_tempo_o3_cpsr_${DATE}.out && ${RUN_TEMPO_O3_CPSR_OBS} ]]; then 
+         cp ${TEMPO_O3_CPSR_OBS_DIR}/obs_seq_tempo_o3_cpsr_${DATE}.out ./obs_seq_TEMPO_O3_CPSR_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_TEMPO_O3_CPSR_${DATE}.out
+      fi
+#
+# TEMPO NO2 TOTAL COL
+      if [[ -s ${TEMPO_NO2_TOTAL_COL_OBS_DIR}/obs_seq_tempo_no2_total_col_${DATE}.out && ${RUN_INETEMPO_NO2_TOTAL_COL_OBS} ]]; then 
+         cp ${TEMPO_NO2_TOTAL_COL_OBS_DIR}/obs_seq_tempo_no2_total_col_${DATE}.out ./obs_seq_TEMPO_NO2_TOTAL_COL_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_TEMPO_NO2_TOTAL_COL_${DATE}.out
+      fi
+#
+# TEMPO NO2 TROP COL
+      if [[ -s ${TEMPO_NO2_TROP_COL_OBS_DIR}/obs_seq_tempo_no2_trop_col_${DATE}.out && ${RUN_TEMPO_NO2_TROP_COL_OBS} ]]; then 
+         cp ${TEMPO_NO2_TROP_COL_OBS_DIR}/obs_seq_tempo_no2_trop_col_${DATE}.out ./obs_seq_TEMPO_NO2_TROP_COL_${DATE}.out   
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_TEMPO_NO2_TROP_COL_${DATE}.out
       fi
 #
 # AIRNOW CO
@@ -6331,17 +10301,44 @@ EOFF
          (( NUM_FILES=${NUM_FILES}+1 ))
          export FILE_LIST[${NUM_FILES}]=obs_seq_AIR_PM25_${DATE}.out
       fi
-#
-# MODIS AOD
-      if [[ -s ${MODIS_AOD_OBS_DIR}/obs_seq_modis_aod_${DATE}.out && ${RUN_MODIS_AOD_OBS} ]]; then 
-         cp ${MODIS_AOD_OBS_DIR}/obs_seq_modis_aod_${DATE}.out ./obs_seq_MOD_AOD_${DATE}.out   
-         (( NUM_FILES=${NUM_FILES}+1 ))
-         export FILE_LIST[${NUM_FILES}]=obs_seq_MOD_AOD_${DATE}.out
-      fi
       export NL_NUM_INPUT_FILES=${NUM_FILES}
 #
 # All files present
-      if [[ ${NL_NUM_INPUT_FILES} -eq 20 ]]; then
+      if [[ ${NL_NUM_INPUT_FILES} -eq 37 ]]; then
+          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\',\'${FILE_LIST[32]}\',\'${FILE_LIST[33]}\',\'${FILE_LIST[34]}\',\'${FILE_LIST[35]}\',\'${FILE_LIST[36]}\',\'${FILE_LIST[37]}\'
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 36 ]]; then
+          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\',\'${FILE_LIST[32]}\',\'${FILE_LIST[33]}\',\'${FILE_LIST[34]}\',\'${FILE_LIST[35]}\',\'${FILE_LIST[36]}\'
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 35 ]]; then
+          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\',\'${FILE_LIST[32]}\',\'${FILE_LIST[33]}\',\'${FILE_LIST[34]}\',\'${FILE_LIST[35]}\'
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 34 ]]; then
+          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\',\'${FILE_LIST[32]}\',\'${FILE_LIST[33]}\',\'${FILE_LIST[34]}\'
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 33 ]]; then
+          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\',\'${FILE_LIST[32]}\',\'${FILE_LIST[33]}\'
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 32 ]]; then
+          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\',\'${FILE_LIST[32]}\'
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 31 ]]; then
+          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\'
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 30 ]]; then
+         export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]}
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 29 ]]; then
+         export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]}
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 28 ]]; then
+         export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]}
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 27 ]]; then
+         export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]}
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 26 ]]; then
+         export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]}\',\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\,\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]}
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 25 ]]; then
+         export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]}\',\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]}
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 24 ]]; then
+         export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]}\'
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 23 ]]; then
+         export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\'
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 22 ]]; then
+         export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\'
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 21 ]]; then
+         export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\'
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 20 ]]; then
          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\'
       elif [[ ${NL_NUM_INPUT_FILES} -eq 19 ]]; then
          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]}\',\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\,\'${FILE_LIST[19]}\'
@@ -6385,6 +10382,7 @@ EOFF
          echo APM: ERROR no obs_seq files for FILTER
          exit
       fi
+#
       export NL_FILENAME_OUT="'obs_seq.proc'"
       export NL_FIRST_OBS_DAYS=${ASIM_MIN_DAY_GREG}
       export NL_FIRST_OBS_SECONDS=${ASIM_MIN_SEC_GREG}
@@ -6422,6 +10420,7 @@ EOFF
       else
          cd ${RUN_DIR}/${DATE}/preprocess_obs
       fi
+      echo APM PREPROCESS
       if [[ ${DATE} -eq ${INITIAL_DATE} ]]; then
          echo 'This is initial date cannot run PREPROCESS '
          touch CANNOT_RUN_PREPROCESS
@@ -6465,13 +10464,7 @@ EOFF
          export JOBRND=${RANDOM}_preproc
          cat << EOFF > job.ksh
 #!/bin/ksh -aeux
-#PBS -N ${JOBRND}
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
-#
-./wrf_dart_obs_preprocess ${DAY_GREG} ${SEC_GREG} > index_html 2>&1 
+./wrf_dart_obs_preprocess ${DAY_GREG} ${SEC_GREG} > index.html 2>&1
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
 if [[ -f FAILED ]]; then rm -rf FAILED; fi          
@@ -6482,7 +10475,9 @@ else
    exit
 fi
 EOFF
-         qsub -Wblock=true job.ksh 
+#         qsub -Wblock=true job.ksh
+         chmod +x job.ksh
+         ./job.ksh > index.html 2>&1
          mv obs_seq.new obs_seq_comb_filtered_${DATE}.out 
       fi
    fi
@@ -6705,7 +10700,6 @@ GROUP chem_vars
    QTY_E_NO
    QTY_E_NO2
    QTY_E_SO2
-   QTY_E_SO4
    QTY_E_PM25
    QTY_E_PM10
    QTY_E_BC
@@ -6780,7 +10774,6 @@ GROUP chem_vars_no_obs
    QTY_E_NO
    QTY_E_NO2
    QTY_E_SO2
-   QTY_E_SO4
    QTY_E_PM25
    QTY_E_PM10
    QTY_E_BC
@@ -6854,6 +10847,7 @@ END GROUP
 #
 GROUP SO2_vars
    QTY_SO2
+   QTY_SO4
    QTY_E_SO2
 END GROUP
 #
@@ -6883,7 +10877,7 @@ GROUP PM10_vars
    QTY_E_PM10
    QTY_E_BC
    QTY_E_OC
-   QTY_E_SO4
+   QTY_E_SO2
 END GROUP
 #
 GROUP no_PM10_vars
@@ -6908,7 +10902,7 @@ GROUP PM25_vars
    QTY_E_PM25
    QTY_E_BC
    QTY_E_OC
-   QTY_E_SO4
+   QTY_E_SO2
 END GROUP
 #
 GROUP no_PM25_vars
@@ -6942,7 +10936,7 @@ GROUP AOD_vars
    QTY_E_PM10
    QTY_E_BC
    QTY_E_OC
-   QTY_E_SO4
+   QTY_E_SO2
 END GROUP
 #
 GROUP no_AOD_vars
@@ -6995,34 +10989,6 @@ EOF
          cd ${RUN_DIR}/${DATE}/dart_filter
       fi
 #
-# Get DART files
-      cp ${WRFCHEM_DART_WORK_DIR}/filter      ./.
-      cp ${DART_DIR}/assimilation_code/programs/gen_sampling_err_table/work/sampling_error_correction_table.nc ./.
-      cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
-      cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
-#
-# Get background forecasts
-      if [[ ${DATE} -eq ${FIRST_FILTER_DATE} ]]; then
-         export BACKGND_FCST_DIR=${WRFCHEM_INITIAL_DIR}
-      else
-         export BACKGND_FCST_DIR=${WRFCHEM_LAST_CYCLE_CR_DIR}
-      fi
-#
-# Get observations
-      if [[ ${PREPROCESS_OBS_DIR}/obs_seq_comb_filtered_${START_DATE}.out ]]; then      
-         cp  ${PREPROCESS_OBS_DIR}/obs_seq_comb_filtered_${START_DATE}.out obs_seq.out
-      else
-         echo APM ERROR: NO DART OBSERVATIONS
-         exit
-      fi
-#
-# Create namelist
-      ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input.nml.ksh
-      cp ${EXPERIMENT_STATIC_FILES}/ubvals_b40.20th.track1_1996-2005.nc ./.
-#
-# Copy DART file that controls the observation/state variable update localization
-      cp ${LOCALIZATION_DIR}/control_impact_runtime.txt ./control_impact_runtime.table
-#
 # Construct background file name/date
       export LL_DATE=${DATE}
       export LL_END_DATE=${DATE}
@@ -7032,111 +10998,142 @@ EOF
       export LL_HH=`echo ${LL_DATE} | cut -c9-10`
       export LL_FILE_DATE=${LL_YY}-${LL_MM}-${LL_DD}_${LL_HH}:00:00
 #
+# Process filter output without calling filter	 
+      if ! ${SKIP_FILTER}; then
+#
+# Get DART files
+         cp ${WRFCHEM_DART_WORK_DIR}/filter      ./.
+         cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
+         cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
+         cp ${DART_DIR}/assimilation_code/programs/gen_sampling_err_table/work/sampling_error_correction_table.nc ./.
+#
+# Get background forecasts
+         if [[ ${DATE} -eq ${FIRST_FILTER_DATE} ]]; then
+            export BACKGND_FCST_DIR=${WRFCHEM_INITIAL_DIR}
+         else
+            export BACKGND_FCST_DIR=${WRFCHEM_LAST_CYCLE_CR_DIR}
+         fi
+#
+# Get observations
+         if [[ ${PREPROCESS_OBS_DIR}/obs_seq_comb_filtered_${START_DATE}.out ]]; then      
+            cp  ${PREPROCESS_OBS_DIR}/obs_seq_comb_filtered_${START_DATE}.out obs_seq.out
+         else
+            echo APM ERROR: NO DART OBSERVATIONS
+            exit
+         fi
+#
+# Create namelist
+         ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input.nml.ksh
+         cp ${EXPERIMENT_STATIC_FILES}/ubvals_b40.20th.track1_1996-2005.nc ./.
+#
+# Copy DART file that controls the observation/state variable update localization
+         cp ${LOCALIZATION_DIR}/control_impact_runtime.txt ./control_impact_runtime.table
+#
 # Loop through members, link, copy background files, create input/output lists
-      let MEM=1
-      while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
-         export CMEM=e${MEM}
-         export KMEM=${MEM}
-         if [[ ${MEM} -lt 1000 ]]; then export KMEM=0${MEM}; fi
-         if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
-         if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
+         let MEM=1
+         while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
+            export CMEM=e${MEM}
+            export KMEM=${MEM}
+            if [[ ${MEM} -lt 1000 ]]; then export KMEM=0${MEM}; fi
+            if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
+            if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
 #   
 # Copy emission input files
-         cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./.
-         cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./.
-         cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_prior.${CMEM}
-         cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_prior.${CMEM}
-         let MEM=${MEM}+1
-      done
+            cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./.
+            cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./.
+            cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_prior.${CMEM}
+            cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_prior.${CMEM}
+            let MEM=${MEM}+1
+         done
 #
 # Calculate ensemble mean emissions prior
-      ncea -n ${NUM_MEMBERS},3,1 wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrfchemi_d${CR_DOMAIN}_prior_mean
-      ncea -n ${NUM_MEMBERS},3,1 wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrffirechemi_d${CR_DOMAIN}_prior_mean
+         ncea -n ${NUM_MEMBERS},3,1 wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrfchemi_d${CR_DOMAIN}_prior_mean
+         ncea -n ${NUM_MEMBERS},3,1 wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrffirechemi_d${CR_DOMAIN}_prior_mean
 #
 # Rename the emissions dimensions
-      rm -rf input_list.txt
-      rm -rf output_list.txt
-      touch input_list.txt
-      touch output_list.txt
-      let MEM=1
-      while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
-         export CMEM=e${MEM}
-         export KMEM=${MEM}
-         if [[ ${MEM} -lt 1000 ]]; then export KMEM=0${MEM}; fi
-         if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
-         if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
-	 ncrename -d emissions_zdim_stag,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
-         ncrename -d emissions_zdim_stag,fire_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+         rm -rf input_list.txt
+         rm -rf output_list.txt
+         touch input_list.txt
+         touch output_list.txt
+         let MEM=1
+         while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
+            export CMEM=e${MEM}
+            export KMEM=${MEM}
+            if [[ ${MEM} -lt 1000 ]]; then export KMEM=0${MEM}; fi
+            if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
+            if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
+            ncrename -d emissions_zdim_stag,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+            ncrename -d emissions_zdim_stag,fire_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
 #
 # Copy background input file
-         cp ${BACKGND_FCST_DIR}/run_${CMEM}/wrfout_d${CR_DOMAIN}_${FILE_DATE} wrfinput_d${CR_DOMAIN}_${CMEM}
+            cp ${BACKGND_FCST_DIR}/run_${CMEM}/wrfout_d${CR_DOMAIN}_${FILE_DATE} wrfinput_d${CR_DOMAIN}_${CMEM}
 #
 # Copy the emissions fields to be adjusted from the emissions input files
 # to the wrfinput files
-         ncks -A -v ${WRFCHEMI_DARTVARS} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfinput_d${CR_DOMAIN}_${CMEM}
-         ncks -A -v ${WRFFIRECHEMI_DARTVARS} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfinput_d${CR_DOMAIN}_${CMEM}
+            ncks -A -v ${WRFCHEMI_DARTVARS} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfinput_d${CR_DOMAIN}_${CMEM}
+            ncks -A -v ${WRFFIRECHEMI_DARTVARS} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfinput_d${CR_DOMAIN}_${CMEM}
 #
 # Add files to the DART input and output list
-         echo wrfinput_d${CR_DOMAIN}_${CMEM} >> input_list.txt
-         echo wrfinput_d${CR_DOMAIN}_${CMEM} >> output_list.txt
-         let MEM=${MEM}+1
-      done
+            echo wrfinput_d${CR_DOMAIN}_${CMEM} >> input_list.txt
+            echo wrfinput_d${CR_DOMAIN}_${CMEM} >> output_list.txt
+            let MEM=${MEM}+1
+         done
 #
 # Copy template files
-      cp wrfinput_d${CR_DOMAIN}_e001 wrfinput_d${CR_DOMAIN}      
+         cp wrfinput_d${CR_DOMAIN}_e001 wrfinput_d${CR_DOMAIN}      
 #
 # Copy "out" inflation files from prior cycle to "in" inflation files for current cycle
-      if ${USE_DART_INFL}; then
-         if [[ ${DATE} -eq ${FIRST_DART_INFLATE_DATE} ]]; then
-            export NL_INF_INITIAL_FROM_RESTART_PRIOR=.false.
-            export NL_INF_SD_INITIAL_FROM_RESTART_PRIOR=.false.
-            export NL_INF_INITIAL_FROM_RESTART_POST=.false.
-            export NL_INF_SD_INITIAL_FROM_RESTART_POST=.false.
-         else
-            export NL_INF_INITIAL_FROM_RESTART_PRIOR=.true.
-            export NL_INF_SD_INITIAL_FROM_RESTART_PRIOR=.true.
-            export NL_INF_INITIAL_FROM_RESTART_POST=.true.
-            export NL_INF_SD_INITIAL_FROM_RESTART_POST=.true.
-         fi
-         if [[ ${DATE} -ne ${FIRST_DART_INFLATE_DATE} ]]; then
-            if [[ ${NL_INF_FLAVOR_PRIOR} != 0 ]]; then
-               export INF_OUT_FILE_MN_PRIOR=${RUN_DIR}/${PAST_DATE}/dart_filter/output_priorinf_mean.nc
-               export INF_OUT_FILE_SD_PRIOR=${RUN_DIR}/${PAST_DATE}/dart_filter/output_priorinf_sd.nc
-               cp ${INF_OUT_FILE_MN_PRIOR} input_priorinf_mean.nc
-               cp ${INF_OUT_FILE_SD_PRIOR} input_priorinf_sd.nc
+         if ${USE_DART_INFL}; then
+            if [[ ${DATE} -eq ${FIRST_DART_INFLATE_DATE} ]]; then
+               export NL_INF_INITIAL_FROM_RESTART_PRIOR=.false.
+               export NL_INF_SD_INITIAL_FROM_RESTART_PRIOR=.false.
+               export NL_INF_INITIAL_FROM_RESTART_POST=.false.
+               export NL_INF_SD_INITIAL_FROM_RESTART_POST=.false.
+            else
+               export NL_INF_INITIAL_FROM_RESTART_PRIOR=.true.
+               export NL_INF_SD_INITIAL_FROM_RESTART_PRIOR=.true.
+               export NL_INF_INITIAL_FROM_RESTART_POST=.true.
+               export NL_INF_SD_INITIAL_FROM_RESTART_POST=.true.
             fi
-            if [[ ${NL_INF_FLAVOR_POST} != 0 ]]; then
-               export INF_OUT_FILE_MN_POST=${RUN_DIR}/${PAST_DATE}/dart_filter/output_postinf_mean.nc
-               export INF_OUT_FILE_SD_POST=${RUN_DIR}/${PAST_DATE}/dart_filter/output_postinf_sd.nc
-               cp ${INF_OUT_FILE_MN_POST} input_postinf_mean.nc
-               cp ${INF_OUT_FILE_SD_POST} input_postinf_sd.nc
-            fi 
+            if [[ ${DATE} -ne ${FIRST_DART_INFLATE_DATE} ]]; then
+               if [[ ${NL_INF_FLAVOR_PRIOR} != 0 ]]; then
+                  export INF_OUT_FILE_MN_PRIOR=${RUN_DIR}/${PAST_DATE}/dart_filter/output_priorinf_mean.nc
+                  export INF_OUT_FILE_SD_PRIOR=${RUN_DIR}/${PAST_DATE}/dart_filter/output_priorinf_sd.nc
+                  cp ${INF_OUT_FILE_MN_PRIOR} input_priorinf_mean.nc
+                  cp ${INF_OUT_FILE_SD_PRIOR} input_priorinf_sd.nc
+               fi
+               if [[ ${NL_INF_FLAVOR_POST} != 0 ]]; then
+                  export INF_OUT_FILE_MN_POST=${RUN_DIR}/${PAST_DATE}/dart_filter/output_postinf_mean.nc
+                  export INF_OUT_FILE_SD_POST=${RUN_DIR}/${PAST_DATE}/dart_filter/output_postinf_sd.nc
+                  cp ${INF_OUT_FILE_MN_POST} input_postinf_mean.nc
+                  cp ${INF_OUT_FILE_SD_POST} input_postinf_sd.nc
+               fi 
+            fi
          fi
-      fi
 #
 # Generate input.nml 
-      set -A temp `echo ${ASIM_MIN_DATE} 0 -g | ${WRFCHEM_DART_WORK_DIR}/advance_time`
-      (( temp[1]=${temp[1]}+1 ))
-      export NL_FIRST_OBS_DAYS=${temp[0]}
-      export NL_FIRST_OBS_SECONDS=${temp[1]}
-      set -A temp `echo ${ASIM_MAX_DATE} 0 -g | ${WRFCHEM_DART_WORK_DIR}/advance_time`
-      export NL_LAST_OBS_DAYS=${temp[0]}
-      export NL_LAST_OBS_SECONDS=${temp[1]}
-      export NL_NUM_INPUT_FILES=1
-      export NL_FILENAME_SEQ="'obs_seq.out'"
-      export NL_FILENAME_OUT="'obs_seq.processed'"
-      export NL_MOPITT_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_MOPITT}\'
-      export NL_IASI_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
-      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
-      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
-      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
-      export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
-      rm -rf input.nml
-      ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input.nml.ksh
+         set -A temp `echo ${ASIM_MIN_DATE} 0 -g | ${WRFCHEM_DART_WORK_DIR}/advance_time`
+         (( temp[1]=${temp[1]}+1 ))
+         export NL_FIRST_OBS_DAYS=${temp[0]}
+         export NL_FIRST_OBS_SECONDS=${temp[1]}
+         set -A temp `echo ${ASIM_MAX_DATE} 0 -g | ${WRFCHEM_DART_WORK_DIR}/advance_time`
+         export NL_LAST_OBS_DAYS=${temp[0]}
+         export NL_LAST_OBS_SECONDS=${temp[1]}
+         export NL_NUM_INPUT_FILES=1
+         export NL_FILENAME_SEQ="'obs_seq.out'"
+         export NL_FILENAME_OUT="'obs_seq.processed'"
+         export NL_MOPITT_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_MOPITT}\'
+         export NL_IASI_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
+         export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+         export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+         export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
+         export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
+         rm -rf input.nml
+         ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input.nml.ksh
 #
 # Make filter_apm_nml for special_outlier_threshold
-      rm -rf filter_apm.nml
-      cat << EOF > filter_apm.nml
+         rm -rf filter_apm.nml
+         cat << EOF > filter_apm.nml
 &filter_apm_nml
 special_outlier_threshold=${NL_SPECIAL_OUTLIER_THRESHOLD}
 /
@@ -7144,10 +11141,11 @@ EOF
 #
 # Run DART_FILTER
 # Create job script for this member and run it 
-      RANDOM=$$
-      export JOBRND=${RANDOM}_filter
-      ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${FILTER_JOB_CLASS} ${FILTER_TIME_LIMIT} ${FILTER_NODES} ${FILTER_TASKS} filter PARALLEL ${ACCOUNT}
-      qsub -Wblock=true job.ksh
+         RANDOM=$$
+         export JOBRND=${RANDOM}_filter
+         ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${FILTER_JOB_CLASS} ${FILTER_TIME_LIMIT} ${FILTER_NODES} ${FILTER_TASKS} filter PARALLEL ${ACCOUNT}
+         qsub -Wblock=true job.ksh
+      fi
 #
 # Check whether DART worked properly
       if [[ ! -f output_postinf_mean.nc || ! -f output_mean.nc || ! -f output_postinf_sd.nc || ! -f output_sd.nc || ! -f obs_seq.final ]]; then
@@ -7179,6 +11177,50 @@ EOF
 # Calculate ensemble mean emissions posterior
       ncea -n ${NUM_MEMBERS},3,1 wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrfchemi_d${CR_DOMAIN}_post_mean
       ncea -n ${NUM_MEMBERS},3,1 wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrffirechemi_d${CR_DOMAIN}_post_mean
+   fi
+#
+#########################################################################
+#
+# RUN BIAS CORRECTION
+#
+#########################################################################
+#
+   if ${RUN_BIAS_CORRECTION}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/bias_corr ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/bias_corr
+         cd ${RUN_DIR}/${DATE}/bias_corr
+      else
+         cd ${RUN_DIR}/${DATE}/bias_corr
+      fi
+      rm -rf bias_corr_wtd.exe
+      rm -rf bias_correct_nml
+      rm -rf index_bias_corr
+      rm -rf obs_seq.final
+      cp ${BIAS_CORR_DIR}/work/bias_corr_wtd.exe ./.
+      cp ${DART_FILTER_DIR}/obs_seq.final ./.
+#
+      export NL_DOES_FILE_EXIST=.true.
+      if [[ ${DATE} -eq ${FIRST_FILTER_DATE} ]]; then
+	 export NL_DOES_FILE_EXIST=.false.
+         rm -rf ${NL_CORRECTION_FILENAME}
+      else
+         rm -rf ${NL_CORRECTION_FILENAME}
+         cp ${RUN_DIR}/${PAST_DATE}/bias_corr/${NL_CORRECTION_FILENAME} ./.
+      fi
+#
+      rm -rf bias_correct_nml
+      cat << EOF > bias_correct_nml
+&bias_correct_nml
+path_filein='${RUN_DIR}/${DATE}/bias_corr'
+does_file_exist=${NL_DOES_FILE_EXIST}
+correction_filename='${NL_CORRECTION_FILENAME}'
+nobs=1
+obs_list='TROPOMI_CO_COL'
+/
+EOF
+#
+# Run bias corrections
+      ./bias_corr_wtd.exe > index_bias_corr 2>&1
    fi
 #
 #########################################################################
@@ -7312,7 +11354,7 @@ EOF
 #
 # Get WRF-Chem parameter files
          cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
-         cp ${WRFCHEM_DART_WORK_DIR}/work/input.nml ./.
+         cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
          cp ${WRFCHEM_DIR}/test/em_real/wrf.exe ./.
          cp ${WRFCHEM_DIR}/test/em_real/aerosol.formatted ./.
          cp ${WRFCHEM_DIR}/test/em_real/aerosol_lat.formatted ./.
@@ -7528,7 +11570,7 @@ EOF
          if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
          if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
          rm -rf wrfout_d${CR_DOMAIN}.${CMEM}
-         ln -sf ${OUTPUT_DIR}/run_${CMEM}/wrfout_d${CR_DOMAIN}_${B_FILE_DATE}.${CMEM} wrfout_d${CR_DOMAIN}.${CMEM}
+         ln -sf ${OUTPUT_DIR}/run_${CMEM}/wrfout_d${CR_DOMAIN}_${B_FILE_DATE} wrfout_d${CR_DOMAIN}.${CMEM}
          let MEM=${MEM}+1
       done
 #

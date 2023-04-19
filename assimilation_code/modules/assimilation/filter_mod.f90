@@ -637,12 +637,16 @@ call trace_message('After  trimming obs seq if start/stop time specified')
 time_step_number = -1
 curr_ens_time = set_time(0, 0)
 next_ens_time = set_time(0, 0)
+
 call filter_set_window_time(window_time)
 
 ! Compute mean and spread
 call compute_copy_mean_sd(state_ens_handle, 1, ens_size, ENS_MEAN_COPY, ENS_SD_COPY)
 
+call trace_message('After call to compute_copy_mean_sd')
+
 ! Write out the mean and sd for the input files if requested
+
 if (get_stage_to_write('input')) then
 
    call     trace_message('Before input state space output')

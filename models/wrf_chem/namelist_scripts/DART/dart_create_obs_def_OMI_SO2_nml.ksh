@@ -12,7 +12,8 @@ cat > input.nml_temp << EOF
  &obs_def_OMI_SO2_nml
    use_log_so2   = ${NL_USE_LOG_SO2:-.false.},
    nlayer_model = ${NL_NLAYER_MODEL:-36},
-   nlayer_omi_so2   = ${NL_NLAYER_OMI_SO2:-75},
+   nlayer_omi_so2_total_col   = ${NL_NLAYER_OMI_SO2_TOTAL_COL:-75},
+   nlayer_omi_so2_pbl_col = ${NL_NLAYER_OMI_SO2_PBL_COL:-75},
 / 
 EOF
 #

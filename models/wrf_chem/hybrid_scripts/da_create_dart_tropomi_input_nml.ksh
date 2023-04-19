@@ -26,6 +26,8 @@ cat > input.nml << EOF
    use_log_o3                  = ${NL_USE_LOG_O3}
    use_log_no2                 = ${NL_USE_LOG_NO2}
    use_log_so2                 = ${NL_USE_LOG_SO2}
+   use_log_ch4                 = ${NL_USE_LOG_CH4}
+   use_log_hcho                = ${NL_USE_LOG_HCHO}
    lon_min                     = ${NNL_MIN_LON}
    lon_max                     = ${NNL_MAX_LON}
    lat_min                     = ${NNL_MIN_LAT}
@@ -35,6 +37,12 @@ cat > input.nml << EOF
    nx_model                    = ${NL_NX_MODEL}
    ny_model                    = ${NL_NY_MODEL}
    nz_model                    = ${NL_NZ_MODEL}
+   obs_co_reten_freq           = ${NL_TROPOMI_CO_RETEN_FREQ}
+   obs_o3_reten_freq           = ${NL_TROPOMI_O3_RETEN_FREQ}
+   obs_no2_reten_freq          = ${NL_TROPOMI_NO2_RETEN_FREQ}
+   obs_so2_reten_freq          = ${NL_TROPOMI_SO2_RETEN_FREQ}
+   obs_ch4_reten_freq          = ${NL_TROPOMI_CH4_RETEN_FREQ}
+   obs_hcho_reten_freq         = ${NL_TROPOMI_HCHO_RETEN_FREQ}
 /
 &obs_sequence_nml
    write_binary_obs_sequence   = .false.
@@ -69,22 +77,39 @@ cat > input.nml << EOF
 &obs_def_TROPOMI_CO_nml
    use_log_co                  = ${NL_USE_LOG_CO:-.false.},
    nlayer_model                = ${NL_NLAYER_MODEL:-36},
-   nlayer_tropomi_co           = ${NL_NLAYER_TROPOMI_CO:-50},
+   nlayer_tropomi_co_total_col           = ${NL_NLAYER_TROPOMI_CO_TOTAL_COL:-50},
 /
 &obs_def_TROPOMI_O3_nml
    use_log_o3                  = ${NL_USE_LOG_O3:-.false.},
    nlayer_model                = ${NL_NLAYER_MODEL:-36},
-   nlayer_tropomi_o3           = ${NL_NLAYER_TROPOMI_O3:-14},
+   nlayer_tropomi_o3_total_col = ${NL_NLAYER_TROPOMI_O3_TOTAL_COL:-14},
+   nlayer_tropomi_o3_trop_col  = ${NL_NLAYER_TROPOMI_O3_TROP_COL:-14},
+   nlayer_tropomi_o3_profile   = ${NL_NLAYER_TROPOMI_O3_PROFILE:-14},
 / 
 &obs_def_TROPOMI_NO2_nml
    use_log_no2                 = ${NL_USE_LOG_NO2:-.false.},
    nlayer_model                = ${NL_NLAYER_MODEL:-36},
-   nlayer_tropomi_no2          = ${NL_NLAYER_TROPOMI_NO2:-34},
+   nlayer_tropomi_no2_total_col = ${NL_NLAYER_TROPOMI_NO2_TOTAL_COL:-34},
+   nlayer_tropomi_no2_trop_col  = ${NL_NLAYER_TROPOMI_NO2_TROP_COL:-34},
 / 
 &obs_def_TROPOMI_SO2_nml
-   use_log_so2                 = ${NL_USE_LOG_SO2:-.false.},
+   use_log_so2                   = ${NL_USE_LOG_SO2:-.false.},
+   nlayer_model                  = ${NL_NLAYER_MODEL:-36},
+   nlayer_tropomi_so2_total_col  = ${NL_NLAYER_TROPOMI_SO2_TOTAL_COL:-34},
+   nlayer_tropomi_so2_pbl_col    = ${NL_NLAYER_TROPOMI_SO2_PBL_COL:-34},
+/ 
+&obs_def_TROPOMI_CH4_nml
+   use_log_ch4                 = ${NL_USE_LOG_CH4:-.false.},
    nlayer_model                = ${NL_NLAYER_MODEL:-36},
-   nlayer_tropomi_so2          = ${NL_NLAYER_TROPOMI_SO2:-34},
+   nlayer_tropomi_ch4_total_col = ${NL_NLAYER_TROPOMI_CH4_TOTAL_COL:-34},
+   nlayer_tropomi_ch4_trop_col  = ${NL_NLAYER_TROPOMI_CH4_TROP_COL:-34},
+   nlayer_tropomi_ch4_profile  = ${NL_NLAYER_TROPOMI_CH4_PROFILE:-34},
+/ 
+&obs_def_TROPOMI_HCHO_nml
+   use_log_hcho                 = ${NL_USE_LOG_HCHO:-.false.},
+   nlayer_model                = ${NL_NLAYER_MODEL:-36},
+   nlayer_tropomi_hcho_total_col = ${NL_NLAYER_TROPOMI_HCHO_TOTAL_COL:-34},
+   nlayer_tropomi_hcho_trop_col  = ${NL_NLAYER_TROPOMI_HCHO_TROP_COL:-34},
 / 
 EOF
 

@@ -33,6 +33,8 @@ cat > input.nml << EOF
    nx_model                    = ${NL_NX_MODEL}
    ny_model                    = ${NL_NY_MODEL}
    nz_model                    = ${NL_NZ_MODEL}
+   obs_o3_reten_freq           = ${NL_TEMPO_O3_RETEN_FREQ}
+   obs_no2_reten_freq          = ${NL_TEMPO_NO2_RETEN_FREQ}
 /
 &obs_sequence_nml
    write_binary_obs_sequence   = .false.
@@ -67,12 +69,15 @@ cat > input.nml << EOF
 &obs_def_TEMPO_O3_nml
    use_log_o3                  = ${NL_USE_LOG_O3:-.false.},
    nlayer_model                = ${NL_NLAYER_MODEL:-36},
-   nlayer_tempo_o3             = ${NL_NLAYER_TEMPO_O3:-14},
+   nlayer_tempo_o3_total_col   = ${NL_NLAYER_TEMPO_O3_TOTAL_COL:-14},
+   nlayer_tempo_o3_trop_col    = ${NL_NLAYER_TEMPO_O3_TROP_COL:-14},
+   nlayer_tempo_o3_profile     = ${NL_NLAYER_TEMPO_O3_PROFILE:-14},
 /
 &obs_def_TEMPO_NO2_nml
    use_log_no2                 = ${NL_USE_LOG_NO2:-.false.},
    nlayer_model                = ${NL_NLAYER_MODEL:-36},
-   nlayer_tempo_no2            = ${NL_NLAYER_TEMPO_NO2:-14},
+   nlayer_tempo_no2_total_col  = ${NL_NLAYER_TEMPO_NO2_TOTAL_COL:-14},
+   nlayer_tempo_no2_trop_col   = ${NL_NLAYER_TEMPO_NO2_TROP_COL:-14},
 / 
 EOF
 

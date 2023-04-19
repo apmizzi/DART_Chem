@@ -12,7 +12,8 @@ cat > input.nml_temp << EOF
  &obs_def_OMI_NO2_nml
    use_log_no2   = ${NL_USE_LOG_NO2:-.false.},
    nlayer_model = ${NL_NLAYER_MODEL:-36},
-   nlayer_omi_no2   = ${NL_NLAYER_OMI_NO2:-40},
+   nlayer_omi_no2_total_col   = ${NL_NLAYER_OMI_NO2_TOTAL_COL:-40},
+   nlayer_omi_no2_trop_col   = ${NL_NLAYER_OMI_NO2_TROP_COL:-40},
 / 
 EOF
 #

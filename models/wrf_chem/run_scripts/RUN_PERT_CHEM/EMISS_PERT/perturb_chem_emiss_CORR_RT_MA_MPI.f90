@@ -43,6 +43,7 @@ character(len=*), parameter :: revdate  = ''
              real                                     :: corr_lngth_vt
              real                                     :: corr_lngth_tm
              real                                     :: corr_tm_delt
+             real                                     :: fac_min
              real                                     :: wgt,wgt_summ,wgt_end
              real,allocatable,dimension(:)            :: pert_chem_sum_old
              real,allocatable,dimension(:)            :: pert_chem_sum_new
@@ -58,12 +59,11 @@ character(len=*), parameter :: revdate  = ''
              real,allocatable,dimension(:,:,:)        :: pert_chem_end,pert_fire_end,pert_biog_end
              real,allocatable,dimension(:,:)          :: chem_data2d
              real,allocatable,dimension(:,:,:)        :: chem_data3d
-             real,allocatable,dimension(:,:,:,:)      :: chem_data3d_sav
-             real,allocatable,dimension(:,:,:)        :: chem_data3d_sum
              real,allocatable,dimension(:,:,:)        :: chem_data3d_mean
              real,allocatable,dimension(:,:,:)        :: chem_data3d_sprd
              real,allocatable,dimension(:,:,:)        :: chem_data3d_frac
              real,allocatable,dimension(:,:,:)        :: chem_fac_mem_old, chem_fac_mem_new
+             real,allocatable,dimension(:,:,:,:)      :: chem_data3d_sav
              real,allocatable,dimension(:,:,:,:)      :: chem_fac_old,fire_fac_old,biog_fac_old
              real,allocatable,dimension(:,:,:,:)      :: chem_fac_new,fire_fac_new,biog_fac_new
              real,allocatable,dimension(:,:,:,:)      :: chem_fac_end,fire_fac_end,biog_fac_end
@@ -96,6 +96,7 @@ character(len=*), parameter :: revdate  = ''
              nz_biog=1
              zfac=2.
              zmin=1.e-10
+             fac_min=0.01
 !
 ! Read control namelist
              unit=20
@@ -774,6 +775,21 @@ character(len=*), parameter :: revdate  = ''
                    enddo
                    deallocate(tmp_arry)
 !
+! Impose temporal correlations
+                   print *,'chemi temporal correlations'
+                   unita=30
+                   unitb=40
+                   if(.not.sw_corr_tm) then
+                      allocate(chem_fac_old(nx,ny,nz_chem,num_mem))
+                      open(unit=unita,file=trim(pert_path_pr)//'/pert_chem_emiss', &
+                      form='unformatted',status='unknown')
+                      read(unita) chem_fac_old
+                      close(unita)
+                   endif
+                   allocate(chem_fac_end(nx,ny,nz_chem,num_mem))
+                   wgt_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
+                   chem_fac_end(:,:,:,:)=wgt_end*chem_fac_old(:,:,:,:)+(1.-wgt_end)*chem_fac_new(:,:,:,:) 
+!
 ! Recenter about ensemble mean
                    print *,'chemi recentering'
                    allocate(mems(num_mem),pers(num_mem))             
@@ -805,35 +821,32 @@ character(len=*), parameter :: revdate  = ''
                          enddo
                       enddo
                    enddo
+                   do i=1,nx
+                      do j=1,ny
+                         do k=1,nz_chem
+                            mems(:)=chem_fac_end(i,j,k,:)
+                            mean=sum(mems)/real(num_mem)
+                            pers=(mems-mean)*(mems-mean)
+                            std=sqrt(sum(pers)/real(num_mem-1))
+                            do imem=1,num_mem
+                               chem_fac_end(i,j,k,imem)=(chem_fac_end(i,j,k,imem)-mean)*sprd_chem/std
+                            enddo
+                         enddo
+                      enddo
+                   enddo
                    deallocate(mems,pers)
 !
-! Impose temporal correlations
-                   print *,'chemi temporal correlations'
-                   unita=30
-                   unitb=40
-                   if(.not.sw_corr_tm) then
-                      allocate(chem_fac_old(nx,ny,nz_chem,num_mem))
-                      open(unit=unita,file=trim(pert_path_pr)//'/pert_chem_emiss', &
-                      form='unformatted',status='unknown')
-                      read(unita) chem_fac_old
-                      close(unita)
-                   endif
-                   allocate(chem_fac_end(nx,ny,nz_chem,num_mem))
-                   wgt_end=1.-1.0*corr_tm_delt/corr_lngth_tm
-                   chem_fac_end(:,:,:,:)=wgt_end*chem_fac_old(:,:,:,:)+sqrt(1.-wgt_end*wgt_end)*chem_fac_new(:,:,:,:) 
+! Save the perturbations factors for the next cycle
                    open(unit=unitb,file=trim(pert_path_po)//'/pert_chem_emiss', &
                    form='unformatted',status='unknown')
                    write(unitb) chem_fac_end
                    close(unitb)
 !
 ! Perturb the members (emission units are moles km-2 hr-1)
-! Recentering after temporal correlations
                    allocate(chem_data3d(nx,ny,nz_chem))
+                   allocate(chem_data3d_sav(nx,ny,nz_chem,num_mem))
                    do isp=1,nchem_spcs
                       print *, 'perturb the chemi EMISSs ',trim(ch_chem_spc(isp))
-                      allocate(chem_data3d_sav(nx,ny,nz_chem,num_mem))
-                      allocate(chem_data3d_sum(nx,ny,nz_chem))
-                      chem_data3d_sum(:,:,:)=0.  
                       do imem=1,num_mem
                          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
                          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
@@ -843,25 +856,12 @@ character(len=*), parameter :: revdate  = ''
                          do i=1,nx
                             do j=1,ny
                                do k=1,nz_chem
-                                  chem_data3d_sav(i,j,k,imem)=chem_data3d(i,j,k)*exp(chem_fac_end(i,j,k,imem))
-                                  chem_data3d_sum(i,j,k)=chem_data3d_sum(i,j,k)+(chem_data3d_sav(i,j,k,imem)- &
-                                  chem_data3d(i,j,k))
-                               enddo
-                            enddo
-                         enddo
-                      enddo                       ! members loop
-                      chem_data3d_sum(:,:,:)=chem_data3d_sum(:,:,:)/real(num_mem)
-                      do imem=1,num_mem                      
-                         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-                         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-                         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-                         wrfchem_file=trim(wrfchemi)//trim(cmem)
-                         do i=1,nx
-                            do j=1,ny
-                               do k=1,nz_chem
-                                  chem_data3d_sav(i,j,k,imem)=chem_data3d_sav(i,j,k,imem)-chem_data3d_sum(i,j,k)
-                                  if(chem_data3d_sav(i,j,k,imem).lt.0.) chem_data3d_sav(i,j,k,imem)=0.
-                                  chem_data3d(i,j,k)=chem_data3d_sav(i,j,k,imem)
+                                  if(chem_data3d(i,j,k)*(1.+chem_fac_end(i,j,k,imem)) .le. 0.) then
+                                     chem_data3d(i,j,k)=fac_min*chem_data3d(i,j,k)
+                                  else
+                                     chem_data3d(i,j,k)=chem_data3d(i,j,k)*(1.+chem_fac_end(i,j,k,imem))
+                                  endif
+                                  chem_data3d_sav(i,j,k,imem)=chem_data3d(i,j,k)
                                enddo
                             enddo
                          enddo
@@ -899,13 +899,12 @@ character(len=*), parameter :: revdate  = ''
                       print *, 'put the fraction ',trim(wrfchem_file)
                       call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_frac,nx,ny,nz_chem)
                       print *, 'finished ',trim(wrfchem_file)
-                      deallocate(chem_data3d_sav)
-                      deallocate(chem_data3d_sum)
                       deallocate(chem_data3d_mean)
                       deallocate(chem_data3d_sprd)
                       deallocate(chem_data3d_frac)
                    enddo                              ! species loop
                    deallocate(chem_data3d)
+                   deallocate(chem_data3d_sav)
                    deallocate(chem_fac_old)
                    deallocate(chem_fac_new)
                 endif
@@ -926,6 +925,21 @@ character(len=*), parameter :: revdate  = ''
                       call apm_unpack(tmp_arry,fire_fac_new(:,:,:,imem),nx,ny,nz_fire,1)
                    enddo
                    deallocate(tmp_arry)
+!
+! Impose temporal correlations
+                   print *,'fire temporal correlations'
+                   unita=30
+                   unitb=40
+                   if(.not.sw_corr_tm) then
+                      allocate(fire_fac_old(nx,ny,nz_fire,num_mem))
+                      open(unit=unita,file=trim(pert_path_pr)//'/pert_fire_emiss', &
+                      form='unformatted',status='unknown')
+                      read(unita) fire_fac_old
+                      close(unita)
+                   endif
+                   allocate(fire_fac_end(nx,ny,nz_fire,num_mem))
+                   wgt_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
+                   fire_fac_end(:,:,:,:)=wgt_end*fire_fac_old(:,:,:,:)+(1.-wgt_end)*fire_fac_new(:,:,:,:) 
 !
 ! Recenter about ensemble mean
                    print *,'fire recentering'
@@ -958,35 +972,32 @@ character(len=*), parameter :: revdate  = ''
                          enddo
                       enddo
                    enddo
+                   do i=1,nx
+                      do j=1,ny
+                         do k=1,nz_fire
+                            mems(:)=fire_fac_end(i,j,k,:)
+                            mean=sum(mems)/real(num_mem)
+                            pers=(mems-mean)*(mems-mean)
+                            std=sqrt(sum(pers)/real(num_mem-1))
+                            do imem=1,num_mem
+                               fire_fac_end(i,j,k,imem)=(fire_fac_end(i,j,k,imem)-mean)*sprd_fire/std
+                            enddo
+                         enddo
+                      enddo
+                   enddo
                    deallocate(mems,pers)
 !
-! Impose temporal correlations
-                   print *,'fire temporal correlations'
-                   unita=30
-                   unitb=40
-                   if(.not.sw_corr_tm) then
-                      allocate(fire_fac_old(nx,ny,nz_fire,num_mem))
-                      open(unit=unita,file=trim(pert_path_pr)//'/pert_fire_emiss', &
-                      form='unformatted',status='unknown')
-                      read(unita) fire_fac_old
-                      close(unita)
-                   endif
-                   allocate(fire_fac_end(nx,ny,nz_fire,num_mem))
-                   wgt_end=1.-1.0*corr_tm_delt/corr_lngth_tm
-                   fire_fac_end(:,:,:,:)=wgt_end*fire_fac_old(:,:,:,:)+sqrt(1.-wgt_end*wgt_end)*fire_fac_new(:,:,:,:) 
+! Save the perturbation factors for the next cycle
                    open(unit=unitb,file=trim(pert_path_po)//'/pert_fire_icbc', &
                    form='unformatted',status='unknown')
                    write(unitb) fire_fac_end
                    close(unitb)
 !
 ! Perturb the members
-! Recentering after temporal correlations                   
                    allocate(chem_data3d(nx,ny,nz_fire))
+                   allocate(chem_data3d_sav(nx,ny,nz_fire,num_mem))
                    do isp=1,nfire_spcs
                       print *, 'perturb the fire EMISSs ',trim(ch_fire_spc(isp))
-                      allocate(chem_data3d_sav(nx,ny,nz_fire,num_mem))
-                      allocate(chem_data3d_sum(nx,ny,nz_fire))
-                      chem_data3d_sum(:,:,:)=0.
                       do imem=1,num_mem
                          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
                          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
@@ -996,28 +1007,15 @@ character(len=*), parameter :: revdate  = ''
                          do i=1,nx
                             do j=1,ny
                                do k=1,nz_fire
-                                  chem_data3d_sav(i,j,k,imem)=chem_data3d(i,j,k)*exp(fire_fac_old(i,j,k,imem))
-                                  chem_data3d_sum(i,j,k)=chem_data3d_sum(i,j,k)+(chem_data3d_sav(i,j,k,imem)- &
-                                  chem_data3d(i,j,k))
+                                  if(chem_data3d(i,j,k)*(1.+fire_fac_end(i,j,k,imem)) .le. 0.) then
+                                     chem_data3d(i,j,k)=fac_min*chem_data3d(i,j,k)
+                                  else
+                                     chem_data3d(i,j,k)=chem_data3d(i,j,k)*(1.+fire_fac_end(i,j,k,imem))
+                                  endif
+                                  chem_data3d_sav(i,j,k,imem)=chem_data3d(i,j,k)
                                enddo
                             enddo
                          enddo 
-                      enddo                       ! members loop
-                      chem_data3d_sum(:,:,:)=chem_data3d_sum(:,:,:)/real(num_mem)
-                      do imem=1,num_mem                      
-                         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-                         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-                         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-                         wrfchem_file=trim(wrfchemi)//trim(cmem)
-                         do i=1,nx
-                            do j=1,ny
-                               do k=1,nz_fire
-                                  chem_data3d_sav(i,j,k,imem)=chem_data3d_sav(i,j,k,imem)-chem_data3d_sum(i,j,k)
-                                  if(chem_data3d_sav(i,j,k,imem).lt.0.) chem_data3d_sav(i,j,k,imem)=0.
-                                  chem_data3d(i,j,k)=chem_data3d_sav(i,j,k,imem)
-                               enddo
-                            enddo
-                         enddo
                          call put_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),chem_data3d,nx,ny,nz_fire)
                       enddo
 !
@@ -1046,13 +1044,12 @@ character(len=*), parameter :: revdate  = ''
                       call put_WRFCHEM_emiss_data(wrffire_file,ch_chem_spc(isp),chem_data3d_sprd,nx,ny,nz_fire)
                       wrffire_file=trim(wrffirechemi)//'_frac'
                       call put_WRFCHEM_emiss_data(wrffire_file,ch_chem_spc(isp),chem_data3d_frac,nx,ny,nz_fire)
-                      deallocate(chem_data3d_sav)
-                      deallocate(chem_data3d_sum)
                       deallocate(chem_data3d_mean)
                       deallocate(chem_data3d_sprd)
                       deallocate(chem_data3d_frac)
                    enddo
                    deallocate(chem_data3d)
+                   deallocate(chem_data3d_sav)
                    deallocate(fire_fac_old)
                    deallocate(fire_fac_new)
                 endif
@@ -1072,6 +1069,21 @@ character(len=*), parameter :: revdate  = ''
                       call apm_unpack(tmp_arry,biog_fac_new(:,:,:,imem),nx,ny,nz_biog,1)
                    enddo
                    deallocate(tmp_arry)
+!
+! Impose temporal correlations
+                   print *,'biog temporal correlations'
+                   unita=30
+                   unitb=40
+                   if(.not.sw_corr_tm) then
+                      allocate(biog_fac_old(nx,ny,nz_biog,num_mem))
+                      open(unit=unita,file=trim(pert_path_pr)//'/pert_biog_emiss', &
+                      form='unformatted',status='unknown')
+                      read(unita) biog_fac_old
+                      close(unita)
+                   endif
+                   allocate(biog_fac_end(nx,ny,nz_biog,num_mem))
+                   wgt_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
+                   biog_fac_end(:,:,:,:)=wgt_end*biog_fac_old(:,:,:,:)+(1.-wgt_end)*biog_fac_new(:,:,:,:) 
 !
 ! Recenter about ensemble mean
                    print *,'biog recentering'
@@ -1104,22 +1116,22 @@ character(len=*), parameter :: revdate  = ''
                          enddo
                       enddo
                    enddo
+                   do i=1,nx
+                      do j=1,ny
+                         do k=1,nz_biog
+                            mems(:)=biog_fac_new(i,j,k,:)
+                            mean=sum(mems)/real(num_mem)
+                            pers=(mems-mean)*(mems-mean)
+                            std=sqrt(sum(pers)/real(num_mem-1))
+                            do imem=1,num_mem
+                               biog_fac_end(i,j,k,imem)=(biog_fac_end(i,j,k,imem)-mean)*sprd_biog/std
+                            enddo
+                         enddo
+                      enddo
+                   enddo
                    deallocate(mems,pers)
 !
-! Impose temporal correlations
-                   print *,'biog temporal correlations'
-                   unita=30
-                   unitb=40
-                   if(.not.sw_corr_tm) then
-                      allocate(biog_fac_old(nx,ny,nz_biog,num_mem))
-                      open(unit=unita,file=trim(pert_path_pr)//'/pert_biog_emiss', &
-                      form='unformatted',status='unknown')
-                      read(unita) biog_fac_old
-                      close(unita)
-                   endif
-                   allocate(biog_fac_end(nx,ny,nz_biog,num_mem))
-                   wgt_end=1.-1.0*corr_tm_delt/corr_lngth_tm
-                   biog_fac_end(:,:,:,:)=wgt_end*biog_fac_old(:,:,:,:)+sqrt(1.-wgt_end*wgt_end)*biog_fac_new(:,:,:,:) 
+! Save the perturbation factors for the next cycle 
                    open(unit=unitb,file=trim(pert_path_po)//'/pert_biog_icbc', &
                    form='unformatted',status='unknown')
                    write(unitb) biog_fac_end
@@ -1128,11 +1140,9 @@ character(len=*), parameter :: revdate  = ''
 ! Perturb the members
 ! Recentering after temporal correlations                   
                    allocate(chem_data3d(nx,ny,nz_biog))
+                   allocate(chem_data3d_sav(nx,ny,nz_biog,num_mem))
                    do isp=1,nbiog_spcs
                       print *, 'perturb the biog EMISSs ',trim(ch_biog_spc(isp))
-                      allocate(chem_data3d_sav(nx,ny,nz_biog,num_mem))
-                      allocate(chem_data3d_sum(nx,ny,nz_biog))
-                      chem_data3d_sum(:,:,:)=0.
                       do imem=1,num_mem
                          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
                          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
@@ -1142,25 +1152,12 @@ character(len=*), parameter :: revdate  = ''
                          do i=1,nx
                             do j=1,ny
                                do k=1,nz_biog
-                                  chem_data3d_sav(i,j,k,imem)=chem_data3d(i,j,k)*exp(biog_fac_old(i,j,k,imem))
-                                  chem_data3d_sum(i,j,k)=chem_data3d_sum(i,j,k)+(chem_data3d_sav(i,j,k,imem)- &
-                                  chem_data3d(i,j,k))                                  
-                               enddo
-                            enddo
-                         enddo
-                      enddo                          ! members loop
-                      chem_data3d_sum(:,:,:)=chem_data3d_sum(:,:,:)/real(num_mem)
-                      do imem=1,num_mem                      
-                         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-                         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-                         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-                         wrfchem_file=trim(wrfchemi)//trim(cmem)
-                         do i=1,nx
-                            do j=1,ny
-                               do k=1,nz_biog
-                                  chem_data3d_sav(i,j,k,imem)=chem_data3d_sav(i,j,k,imem)-chem_data3d_sum(i,j,k)
-                                  if(chem_data3d_sav(i,j,k,imem).lt.0.) chem_data3d_sav(i,j,k,imem)=0.
-                                  chem_data3d(i,j,k)=chem_data3d_sav(i,j,k,imem)
+                                  if(chem_data3d(i,j,k)*(1.+biog_fac_end(i,j,k,imem)) .le. 0.) then
+                                     chem_data3d(i,j,k)=fac_min*chem_data3d(i,j,k)
+                                  else
+                                     chem_data3d(i,j,k)=chem_data3d(i,j,k)*(1.+biog_fac_end(i,j,k,imem))
+                                  endif
+                                  chem_data3d_sav(i,j,k,imem)=chem_data3d(i,j,k)
                                enddo
                             enddo
                          enddo
@@ -1192,13 +1189,12 @@ character(len=*), parameter :: revdate  = ''
                       call put_WRFCHEM_emiss_data(wrfbiog_file,ch_chem_spc(isp),chem_data3d_sprd,nx,ny,nz_biog)
                       wrfbiog_file=trim(wrfbiogchemi)//'_frac'
                       call put_WRFCHEM_emiss_data(wrfbiog_file,ch_chem_spc(isp),chem_data3d_frac,nx,ny,nz_biog)
-                      deallocate(chem_data3d_sav)
-                      deallocate(chem_data3d_sum)
                       deallocate(chem_data3d_mean)
                       deallocate(chem_data3d_sprd)
                       deallocate(chem_data3d_frac)
                    enddo
                    deallocate(chem_data3d)
+                   deallocate(chem_data3d_sav)
                    deallocate(biog_fac_old)
                    deallocate(biog_fac_new)
                 endif

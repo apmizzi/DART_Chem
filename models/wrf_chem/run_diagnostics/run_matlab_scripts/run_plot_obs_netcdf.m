@@ -1,11 +1,10 @@
 
-fname         = '/glade2/scratch2/mizzi/DART_OBS_DIAG/real_FRAPPE_RETR_AIR_CO/dart_filter_iasi_co_rawr/obs_epoch_001.nc'
-fname         = '/glade2/scratch2/mizzi/DART_OBS_DIAG/real_FRAPPE_RETR_AIR_CO/dart_filter_iasi_co_log/obs_epoch_001.nc'
-fname         = '/glade2/scratch2/mizzi/DART_OBS_DIAG/real_FRAPPE_RETR_AIR_CO/dart_filter/obs_epoch_001.nc'
-region        = [227 267 26 49 -Inf Inf];
-%ObsTypeString = 'MOPITT_CO_RETRIEVAL';
-ObsTypeString = 'IASI_CO_RETRIEVAL';
-%ObsTypeString = 'IASI_O3_RETRIEVAL';
+fname         = '/nobackupp11/amizzi/OUTPUT_DATA/DART_OBS_DIAG/real_FRAPPE_ALLCHEM_NASA_v4/obs_diag_output_profile.nc'
+region        = [0 360 -90 90 -Inf Inf];
+%ObsTypeString = 'MOPITT_CO_PROFILE';
+%ObsTypeString = 'IASI_CO_PROFILE';
+%ObsTypeString = 'IASI_O3_PROFILE';
+ObsTypeString = 'OMI_NO2_TROP_COL';
 CopyString    = 'NCEP BUFR observation';
 QCString      = 'DART quality control';
 maxgoodQC     = 2;

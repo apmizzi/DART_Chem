@@ -63,7 +63,7 @@ endif
 # call this script with the -nompi argument.
 #----------------------------------------------------------------------
 
-foreach TARGET ( mkmf_bias_corr )
+foreach TARGET ( mkmf_bias_corr mkmf_bias_corr_wtd )
 
    set PROG = `echo $TARGET | sed -e 's#mkmf_##'`
 

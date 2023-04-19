@@ -210,6 +210,13 @@ program airnow_co_ascii_to_obs
       call find_namelist_in_file("bias_correct_nml", "bias_correct_nml", iunit)
       read(iunit, nml = bias_correct_nml, iostat = io)
       call check_namelist_read(iunit, io, "bias_correct_nml")
+      print *, 'path_filein ',trim(path_filein)
+      print *, 'does_file_exit ',does_file_exist
+      print *, 'correction_filename ',trim(correction_filename)
+      print *, 'nobs ',nobs
+      do iobs=1,nobs
+         print *, 'obs_list ',iobs,trim(obs_list(iobs))
+      enddo
 !
 ! Determine bias correction
       correction_old=0.
@@ -218,12 +225,17 @@ program airnow_co_ascii_to_obs
          open(unit=iunit,file=trim(correction_filename),form='unformatted', &
          status='old',action='READ')
          rewind(iunit)
+         correction_old=-999.
          do iobs=1,nobs
             read(iunit) correction_old
             if(trim(obs_list(iobs)).eq.'AIRNOW_CO') then
                exit
             endif
          enddo
+         if(correction_old.eq.-999.) then
+            print *, 'APM: AIRNOW_CO - Error assigning bias correction'
+            stop
+         endif
          close(iunit)
       endif
 !

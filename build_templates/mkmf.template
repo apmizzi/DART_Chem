@@ -135,11 +135,12 @@ LD = ifort
 INCS = -I$(NETCDF)/include -I${MKLROOT}
 LIBS = -L$(NETCDF)/lib -lnetcdff -lnetcdf \
        -L${MKLROOT} -lmkl_rt -lmkl_lapack95_lp64 -lmkl_blas95_lp64 -lm -lpthread
-FFLAGS = -O3 -mcmodel=medium -shared-intel $(INCS)
+#
+FFLAGS = -O3 -traceback -mcmodel=medium -shared-intel $(INCS)
 
-#FFLAGS = -g -C -check noarg_temp_created -fpe0 \
-#         -fp-model precise  -ftrapuv -traceback \
-#         -warn declarations,uncalled,unused $(INCS)
+FFLAGS = -g -C -check noarg_temp_created -fpe0 \
+         -fp-model precise  -ftrapuv -traceback \
+         -warn declarations,uncalled,unused $(INCS)
 
 LDFLAGS = $(FFLAGS) $(LIBS)
 

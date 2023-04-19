@@ -12,7 +12,9 @@ cat > input.nml_temp << EOF
  &obs_def_TEMPO_O3_nml
    use_log_o3     = ${NL_USE_LOG_O3:-.false.},
    nlayer_model   = ${NL_NLAYER_MODEL:-36},
-   nlayer_tempo_o3   = ${NL_NLAYER_TEMPO_O3:-50},
+   nlayer_tempo_o3_total_col   = ${NL_NLAYER_TEMPO_O3_TOTAL_COL:-50},
+   nlayer_tempo_o3_trop_col   = ${NL_NLAYER_TEMPO_O3_TROP_COL:-50},
+   nlayer_tempo_o3_profile   = ${NL_NLAYER_TEMPO_O3_PROFILE:-50},
 / 
 EOF
 #

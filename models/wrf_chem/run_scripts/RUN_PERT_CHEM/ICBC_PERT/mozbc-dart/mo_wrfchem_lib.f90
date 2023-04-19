@@ -112,8 +112,8 @@
       integer :: file
       integer :: xdimid(2),  ydimid(2), zdimid(2), wdimid(2), tdimid(2)
       integer :: dims(4)
-      character(len=64) :: attribute
-      character(len=180) :: filespec(2)
+      character(len=70) :: attribute
+      character(len=200) :: filespec(2)
       character(len=32) :: varname
       character(len=32) :: dtstring
       character(len=19) :: tstring
@@ -459,7 +459,7 @@ any_missing : &
 !     local variables
 !------------------------------------------------------------------
       logical :: lexist
-      character(len=180) :: filenm
+      character(len=200) :: filenm
       character(len=19)  :: tstring
 
       call mz2wrf_time( tstring, date, secs )
@@ -872,7 +872,7 @@ is_trend : &
       integer :: status
       integer :: varid
       integer :: ncid_bc
-      character(len=180) :: filenm
+      character(len=200) :: filenm
       character(len=19)  :: tstring
 
       call mz2wrf_time( tstring, date, datesec )

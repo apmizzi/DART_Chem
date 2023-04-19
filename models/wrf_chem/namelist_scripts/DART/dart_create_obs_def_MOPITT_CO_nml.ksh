@@ -13,7 +13,8 @@ cat > input.nml_temp << EOF
    MOPITT_CO_retrieval_type   = ${NL_MOPITT_CO_RETRIEVAL_TYPE:-'RETR'},
    use_log_co   = ${NL_USE_LOG_CO:-.false.},
    nlayer_model    = ${NL_NLAYER_MODEL:-36},
-   nlayer_mopitt   = ${NL_NLAYER_MOPITT_CO:-10},
+   nlayer_mopitt_co_total_col = ${NL_NLAYER_MOPITT_CO_TOTAL_COL:-10},
+   nlayer_mopitt_co_profile   = ${NL_NLAYER_MOPITT_CO_PROFILE:-10},
 / 
 EOF
 #

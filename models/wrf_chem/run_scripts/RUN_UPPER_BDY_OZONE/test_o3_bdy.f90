@@ -7,6 +7,8 @@ program main
    implicit none
 !  
    integer                                          :: nx,ny,nz,ntim
+   integer                                          :: i,j,k,l
+   integer                                          :: i_pt,j_pt,k_pt,l_pt
    integer,allocatable,dimension(:)                 :: date
    real,allocatable,dimension(:)                    :: lon_glb
    real,allocatable,dimension(:)                    :: lat_glb
@@ -18,6 +20,12 @@ program main
    ny=13
    nz=56
    ntim=368
+!
+   i_pt=float(nx)/2.
+   j_pt=float(ny)/2.
+   l_pt=float(ntim)/2.
+   
+   
 !______________________________________________________________________________________________   
 !
 ! Read the upper boundary large scale data (do this once)
@@ -33,14 +41,18 @@ program main
 !
    allocate(lat_glb(ny))   
    call get_MOZART_REAL_DATA(data_file,'lat',ny,1,1,1,lat_glb)
-   print *, lat_glb
-   stop
 !
    allocate(lon_glb(nx))   
    call get_MOZART_REAL_DATA(data_file,'lon',nx,1,1,1,lon_glb)
 !
+!  o3 VMR   
    allocate(o3_glb(nx,ny,nz,ntim))   
    call get_MOZART_REAL_DATA(data_file,'O3_VMR_inst',nx,ny,nz,ntim,o3_glb)
+!
+   do k=1,nz
+      print *,'ozone level ',k,o3_glb(i_pt,j_pt,k,l_pt)
+   enddo
+   
 end
 
 !-------------------------------------------------------------------------------

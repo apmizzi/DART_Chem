@@ -31,8 +31,8 @@ ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_utilities_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_wrf_obs_preproc_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_MOPITT_CO_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_IASI_CO_nml.ksh
-${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_IASI_CO_COL_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_IASI_O3_nml.ksh
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_MODIS_AOD_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_OMI_O3_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_OMI_NO2_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_OMI_SO2_nml.ksh
@@ -44,7 +44,6 @@ ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_TEMPO_O3_n
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_TEMPO_NO2_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_AIRNOW_PM10_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_AIRNOW_PM25_nml.ksh
-${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_def_MODIS_AOD_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_impact_tool_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_quality_control_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_state_vector_io_nml.ksh

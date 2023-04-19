@@ -12,7 +12,7 @@ cat > input.nml_temp << EOF
  &obs_def_TROPOMI_CO_nml
    use_log_co       = ${NL_USE_LOG_CO:-.false.},
    nlayer_model     = ${NL_NLAYER_MODEL:-36},
-   nlayer_tropomi_co   = ${NL_NLAYER_TROPOMI_CO:-55},
+   nlayer_tropomi_co_total_col   = ${NL_NLAYER_TROPOMI_CO_TOTAL_COL:-55},
 / 
 EOF
 #

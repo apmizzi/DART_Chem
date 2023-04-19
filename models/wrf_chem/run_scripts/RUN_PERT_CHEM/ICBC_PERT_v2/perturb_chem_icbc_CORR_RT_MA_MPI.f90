@@ -48,6 +48,7 @@ character(len=*), parameter :: revdate  = ''
              real                                        :: atime1,atime2,atime3,atime4,atime5,atime6
              real                                        :: atime1_mem,atime2_mem
              real                                        :: chem_fac_mid,zloge
+             real                                        :: temp_trm_1,temp_trm_2,fac_min
              real,allocatable,dimension(:)               :: tmp_arry
              real,allocatable,dimension(:,:)             :: lat,lon
              real,allocatable,dimension(:,:,:)           :: geo_ht,wgt_sum
@@ -69,14 +70,14 @@ character(len=*), parameter :: revdate  = ''
              real,allocatable,dimension(:,:,:,:,:)       :: chem_data_sav_2
              real,allocatable,dimension(:)               :: mems,pers
              real,allocatable,dimension(:)               :: pert_chem_sum_old, pert_chem_sum_new
-             character(len=150)                          :: pert_path_old,pert_path_new,ch_spcs
-             character(len=150)                          :: wrfchem_file,wrfinput_err_new
-             character(len=150)                          :: wrfinput_fld_new,wrfbdy_fld_new
+             character(len=200)                          :: pert_path_old,pert_path_new,ch_spcs
+             character(len=200)                          :: wrfchem_file,wrfinput_err_new
+             character(len=200)                          :: wrfinput_fld_new,wrfbdy_fld_new
              character(len=20)                           :: cmem
              character(len=5),dimension(nbdy_exts)       :: bdy_exts=(/'_BXS ','_BXE ','_BYS ','_BYE ','_BTXS', &
              '_BTXE','_BTYS','_BTYE'/)
              integer,dimension(nbdy_exts)                :: bdy_dims=(/139,139,179,179,139,139,179,179/)
-             character(len=150),allocatable,dimension(:) :: ch_chem_spc
+             character(len=200),allocatable,dimension(:) :: ch_chem_spc
              logical                                     :: sw_corr_tm,sw_seed
              namelist /perturb_chem_icbc_corr_nml/date,nx,ny,nz,nchem_spcs,pert_path_old,pert_path_new,nnum_mem, &
              wrfinput_fld_new,wrfinput_err_new,wrfbdy_fld_new,sprd_chem,corr_lngth_hz,corr_lngth_vt, &
@@ -87,6 +88,9 @@ character(len=*), parameter :: revdate  = ''
              call mpi_init(ierr)
              call mpi_comm_rank(MPI_COMM_WORLD,rank,ierr)
              call mpi_comm_size(MPI_COMM_WORLD,num_procs,ierr)
+             if(rank.eq.0) then
+                print *, 'num_procs ',num_procs
+             endif
 !
 ! Assign constants
              pi=4.*atan(1.)
@@ -95,6 +99,7 @@ character(len=*), parameter :: revdate  = ''
              zfac=2.
              tfac=60.*60.
              zloge=log10(exp(1.))
+             fac_min=0.01
 !
 ! Read control namelist
              unit=20
@@ -202,7 +207,7 @@ character(len=*), parameter :: revdate  = ''
                 print *, 'APM ERROR: NOT ENOUGH PROCESSORS num_mem = ',num_mem, ' procs = ',num_procs-1
                 call mpi_finalize(ierr)
                 stop
-             endif 
+             endif
 !             if(sw_seed) call init_random_seed()
              if(rank.ne.0) then
              if(sw_seed) call init_const_random_seed(rank,date)
@@ -367,16 +372,35 @@ character(len=*), parameter :: revdate  = ''
                    do imem=1,num_mem
                       call mpi_recv(tmp_arry,nx*ny*nz,MPI_FLOAT,imem,11,MPI_COMM_WORLD,stat,ierr)
                       call apm_unpack(tmp_arry,chem_fac_old(:,:,:,imem),nx,ny,nz,1)
+                      print *, 'Complete MPI fac_old receive member ',imem
                    enddo
                 endif
                 allocate(chem_fac_new(nx,ny,nz,num_mem))
                 do imem=1,num_mem
                    call mpi_recv(tmp_arry,nx*ny*nz,MPI_FLOAT,imem,12,MPI_COMM_WORLD,stat,ierr)
                    call apm_unpack(tmp_arry,chem_fac_new(:,:,:,imem),nx,ny,nz,1)
+                   print *, 'Complete MPI fac_new receive member ',imem
                 enddo
                 deallocate(tmp_arry)
 !
-! Recenetering
+! Impose temporal correlations
+                print *, rank,'temporal correlations '
+                unita=30
+                unitb=40
+                if(.not.sw_corr_tm) then
+                   allocate(chem_fac_old(nx,ny,nz,num_mem))
+                   open(unit=unita,file=trim(pert_path_old)//'/pert_chem_icbc', &
+                   form='unformatted',status='unknown')
+                   read(unita) chem_fac_old
+                   close(unita)
+                endif
+                allocate(chem_fac_end(nx,ny,nz,num_mem))
+                wgt_bc_str=exp(-0.0*corr_tm_delt/corr_lngth_tm)
+                wgt_bc_mid=exp(-0.5*corr_tm_delt/corr_lngth_tm)
+                wgt_bc_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
+                chem_fac_end(:,:,:,:)=wgt_bc_end*chem_fac_old(:,:,:,:)+(1.-wgt_bc_end)*chem_fac_new(:,:,:,:)
+!
+! Recentering
                 print *, rank,'recentering '
                 allocate(mems(num_mem),pers(num_mem))             
                 if(sw_corr_tm) then
@@ -389,7 +413,7 @@ character(len=*), parameter :: revdate  = ''
                             std=sqrt(sum(pers)/real(num_mem-1))
                             do imem=1,num_mem
                                if(std.ne.0) then
-                                  chem_fac_old(i,j,k,imem)=(chem_fac_old(i,j,k,imem)-mean)*sprd_chem/zloge/std
+                                  chem_fac_old(i,j,k,imem)=(chem_fac_old(i,j,k,imem)-mean)*sprd_chem/std
                                endif 
                             enddo
                          enddo
@@ -411,24 +435,24 @@ character(len=*), parameter :: revdate  = ''
                       enddo
                    enddo
                 enddo
+                do i=1,nx
+                   do j=1,ny
+                      do k=1,nz
+                         mems(:)=chem_fac_end(i,j,k,:)
+                         mean=sum(mems)/real(num_mem)
+                         pers(:)=(mems(:)-mean)*(mems(:)-mean)
+                         std=sqrt(sum(pers)/real(num_mem-1))
+                         do imem=1,num_mem
+                            if(std.ne.0) then
+                               chem_fac_end(i,j,k,imem)=(chem_fac_end(i,j,k,imem)-mean)*sprd_chem/std
+                            endif 
+                         enddo
+                      enddo
+                   enddo
+                enddo
                 deallocate(mems,pers)
 !
-! Impose temporal correlations
-                print *, rank,'temporal correlations '
-                unita=30
-                unitb=40
-                if(.not.sw_corr_tm) then
-                   allocate(chem_fac_old(nx,ny,nz,num_mem))
-                   open(unit=unita,file=trim(pert_path_old)//'/pert_chem_icbc', &
-                   form='unformatted',status='unknown')
-                   read(unita) chem_fac_old
-                   close(unita)
-                endif
-                allocate(chem_fac_end(nx,ny,nz,num_mem))
-                wgt_bc_str=1.-0.0*corr_tm_delt/corr_lngth_tm
-                wgt_bc_mid=1.-0.5*corr_tm_delt/corr_lngth_tm
-                wgt_bc_end=1.-1.0*corr_tm_delt/corr_lngth_tm
-                chem_fac_end(:,:,:,:)=wgt_bc_end*chem_fac_old(:,:,:,:)+sqrt(1.-wgt_bc_end*wgt_bc_end)*chem_fac_new(:,:,:,:) 
+! Save the perturbation factors for the next cycle                
                 open(unit=unitb,file=trim(pert_path_new)//'/pert_chem_icbc', &
                 form='unformatted',status='unknown')
                 write(unitb) chem_fac_end
@@ -443,18 +467,17 @@ character(len=*), parameter :: revdate  = ''
                       if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
                       if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
 ! ICs
-                      print *, 'Start ICs mem ',imem               
                       wrfchem_file=trim(wrfinput_fld_new)//trim(cmem)
                       allocate(chem_data3d(nx,ny,nz,1))
                       call get_WRFCHEM_icbc_data(wrfchem_file,ch_chem_spc(isp),chem_data3d,nx,ny,nz,1)
                       do i=1,nx
                          do j=1,ny
                             do k=1,nz
-!
-! The perturbation is N(0,1) in ln space.  It needs to be N(0,1) in log space.
-! Rule: ln(x)=log(x)/log(e).  So the coversion is chem_fac_old(i,j,k,imem)/log(e).
-!
-                               chem_data3d(i,j,k,1)=chem_data3d(i,j,k,1)*exp(chem_fac_old(i,j,k,imem))
+                               if(chem_data3d(i,j,k,1)*(1.+chem_fac_old(i,j,k,imem)) .le. 0.) then
+                                  chem_data3d(i,j,k,1)=fac_min*chem_data3d(i,j,k,1)
+                               else
+                                  chem_data3d(i,j,k,1)=chem_data3d(i,j,k,1)*(1.+chem_fac_old(i,j,k,imem))
+                               endif
                             enddo
                          enddo
                       enddo 
@@ -467,10 +490,10 @@ character(len=*), parameter :: revdate  = ''
                          if(ibdy.eq.1) allocate(chem_data_sav_1(bdy_dims(ibdy),nz,nhalo,nt,2))
                          if(ibdy.eq.3) allocate(chem_data_sav_2(bdy_dims(ibdy),nz,nhalo,nt,2))
                          ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
-                         print *, 'Start BCs mem, spcs ',imem,trim(ch_spcs)               
                          allocate(chem_databdy(bdy_dims(ibdy),nz,nhalo,nt))
                          call get_WRFCHEM_icbc_data(wrfchem_file,ch_spcs,chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
                          if(ibdy.eq.1.or.ibdy.eq.2.or.ibdy.eq.5.or.ibdy.eq.6) then 
+! non-tendency terms
                             if(ibdy.eq.1.or.ibdy.eq.2) then
                                chem_data_sav_1(:,:,:,:,ibdy)=chem_databdy(:,:,:,:)
                                i=1
@@ -478,15 +501,25 @@ character(len=*), parameter :: revdate  = ''
                                do h=1,nhalo
                                   do k=1,nz
                                      do j=1,bdy_dims(ibdy)
-                                        chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k,imem)+sqrt(1.-wgt_bc_mid* &
-                                        wgt_bc_mid)*chem_fac_new(i,j,k,imem)
-                                        chem_databdy(j,k,h,1)=chem_databdy(j,k,h,1)*exp(chem_fac_old(i,j,k,imem))
-                                        chem_databdy(j,k,h,2)=chem_databdy(j,k,h,2)*exp(chem_fac_mid)
+                                        chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k,imem)+(1.-wgt_bc_mid)* &
+                                        chem_fac_new(i,j,k,imem)
+                                        if(chem_databdy(j,k,h,1)*(1.+chem_fac_old(i,j,k,imem)) .le. 0.) then
+                                           chem_databdy(j,k,h,1)=fac_min*chem_databdy(j,k,h,1)
+                                        else
+                                           chem_databdy(j,k,h,1)=chem_databdy(j,k,h,1)*(1.+chem_fac_old(i,j,k,imem))
+                                        endif
+                                        if(chem_databdy(j,k,h,2)*(1.+chem_fac_mid) .le. 0) then
+                                           chem_databdy(j,k,h,2)=fac_min*chem_databdy(j,k,h,2)
+                                        else
+                                           chem_databdy(j,k,h,2)=chem_databdy(j,k,h,2)*(1.+chem_fac_mid)
+                                        endif
                                      enddo
                                   enddo
                                enddo
                             else
+! Tendency terms
 ! Tendency terms need to account for a temporal change in the perturbation
+! Form: d(Af)/dt = dA/dt*f + A*df/dt; chem_databdy is dA/dt; chem_data_sav_1 is A
                                allocate(chem_data_end(bdy_dims(ibdy),nz,nhalo))
                                chem_data_end(:,:,:)=chem_databdy(:,:,:,2)*corr_tm_delt/2.*tfac+chem_data_sav_1(:,:,:,2,ibdy-4)
                                i=1
@@ -494,38 +527,25 @@ character(len=*), parameter :: revdate  = ''
                                do h=1,nhalo
                                   do k=1,nz
                                      do j=1,bdy_dims(ibdy)
-
-                                        chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k,imem)+sqrt(1.-wgt_bc_mid* &
-                                        wgt_bc_mid)*chem_fac_new(i,j,k,imem)
-
-!                                        if(trim(ch_chem_spc(isp)).eq.'co' .and. imem.eq.1) then
-!                                           print *, 'i,j,k,h,ibdy,imem ',i,j,k,h,ibdy,imem
-!                                           print *, 'old ',   chem_fac_old(i,j,k,imem)
-!                                           print *, 'mid ',   chem_fac_mid
-!                                           print *, 'new ',   chem_fac_new(i,j,k,imem)
-!                                           print *, 'end ',   chem_fac_end(i,j,k,imem)
-!                                           print *, 'sav 1 ', chem_data_sav_1(j,k,h,1,ibdy-4)
-!                                           print *, 'sav 2 ', chem_data_sav_1(j,k,h,2,ibdy-4)
-!                                           print *, 'end ',   chem_data_end(j,k,h)
-!                                           print *, 'tend 1 ',chem_databdy(j,k,h,1)
-!                                           print *, 'tend 2 ',chem_databdy(j,k,h,2)
-!                                        endif
+                                        chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k,imem)+(1.-wgt_bc_mid)* &
+                                        chem_fac_new(i,j,k,imem)
 !
                                         chem_databdy(j,k,h,1)=chem_databdy(j,k,h,1)* &
-                                        (exp(chem_fac_old(i,j,k,imem))+exp(chem_fac_mid))/2. + &
-                                        (exp(chem_fac_mid)-exp(chem_fac_old(i,j,k,imem)))/(corr_tm_delt/2.)/tfac* &
-                                        (chem_data_sav_1(j,k,h,1,ibdy-4)+chem_data_sav_1(j,k,h,2,ibdy-4))/2.
+                                        (1.+(chem_fac_old(i,j,k,imem)+chem_fac_mid)/2.) + &
+                                        (chem_data_sav_1(j,k,h,1,ibdy-4)+chem_data_sav_1(j,k,h,2,ibdy-4))/2. * &
+                                        (chem_fac_mid-chem_fac_old(i,j,k,imem))/(corr_tm_delt/2.)/tfac
 !
                                         chem_databdy(j,k,h,2)=chem_databdy(j,k,h,2)* &
-                                        (exp(chem_fac_mid)+exp(chem_fac_end(i,j,k,imem)))/2. + &
-                                        (exp(chem_fac_end(i,j,k,imem))-exp(chem_fac_mid))/(corr_tm_delt/2.)/tfac* &
-                                        (chem_data_sav_1(j,k,h,2,ibdy-4)+chem_data_end(j,k,h))/2.                             
+                                        (1.+(chem_fac_mid+chem_fac_end(i,j,k,imem))/2.) + &
+                                        (chem_data_sav_1(j,k,h,2,ibdy-4)+chem_data_end(j,k,h))/2. * &
+                                        (chem_fac_end(i,j,k,imem)-chem_fac_mid)/(corr_tm_delt/2.)/tfac
                                      enddo
                                   enddo
                                enddo
                                deallocate(chem_data_end)
                             endif
                          else if(ibdy.eq.3.or.ibdy.eq.4.or.ibdy.eq.7.or.ibdy.eq.8) then
+! non-tendency terms
                             if(ibdy.eq.3.or.ibdy.eq.4) then
                                chem_data_sav_2(:,:,:,:,ibdy-2)=chem_databdy(:,:,:,:)
                                j=1  
@@ -533,15 +553,25 @@ character(len=*), parameter :: revdate  = ''
                                do h=1,nhalo
                                   do k=1,nz
                                      do i=1,bdy_dims(ibdy)
-                                        chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k,imem)+sqrt(1.-wgt_bc_mid* &
-                                        wgt_bc_mid)*chem_fac_new(i,j,k,imem)
-                                        chem_databdy(i,k,h,1)=chem_databdy(i,k,h,1)*exp(chem_fac_old(i,j,k,imem))
-                                        chem_databdy(i,k,h,2)=chem_databdy(i,k,h,2)*exp(chem_fac_mid)
+                                        chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k,imem)+(1.-wgt_bc_mid)* &
+                                        chem_fac_new(i,j,k,imem)
+                                        if(chem_databdy(i,k,h,1)*(1.+chem_fac_old(i,j,k,imem)).le.0.) then
+                                           chem_databdy(i,k,h,1)=fac_min*chem_databdy(i,k,h,1)
+                                        else
+                                           chem_databdy(i,k,h,1)=chem_databdy(i,k,h,1)*(1.+chem_fac_old(i,j,k,imem))
+                                        endif
+                                        if(chem_databdy(i,k,h,2)*(1.+chem_fac_mid).le.0.) then
+                                           chem_databdy(i,k,h,2)=fac_min*chem_databdy(i,k,h,2)
+                                        else
+                                           chem_databdy(i,k,h,2)=chem_databdy(i,k,h,2)*(1.+chem_fac_mid)
+                                        endif
                                      enddo
                                   enddo
                                enddo
                             else
+! Tendency terms
 ! Tendency terms need to account for a temporal change in the perturbation
+! Form: d(Af)/dt = dA/dt*f + A*df/dt; chem_databdy is dA/dt; chem_data_sav_2 is A
                                allocate(chem_data_end(bdy_dims(ibdy),nz,nhalo))
                                chem_data_end(:,:,:)=chem_databdy(:,:,:,2)*(corr_tm_delt/2.)*tfac+chem_data_sav_2(:,:,:,2,ibdy-6)
                                j=1  
@@ -549,18 +579,18 @@ character(len=*), parameter :: revdate  = ''
                                do h=1,nhalo
                                   do k=1,nz
                                      do i=1,bdy_dims(ibdy)
-                                        chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k,imem)+sqrt(1.-wgt_bc_mid* &
-                                        wgt_bc_mid)*chem_fac_new(i,j,k,imem)
+                                        chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k,imem)+(1.-wgt_bc_mid)* &
+                                        chem_fac_new(i,j,k,imem)
 !
-                                        chem_databdy(i,k,h,1)=chem_databdy(i,k,h,1)* &
-                                        (exp(chem_fac_old(i,j,k,imem))+exp(chem_fac_mid))/2. + &
-                                        (exp(chem_fac_mid)-exp(chem_fac_old(i,j,k,imem)))/(corr_tm_delt/2.)/tfac* &
-                                        (chem_data_sav_2(i,k,h,1,ibdy-6)+chem_data_sav_2(i,k,h,2,ibdy-6))/2.
+                                        chem_databdy(j,k,h,1)=chem_databdy(i,k,h,1)* &
+                                        (1.+(chem_fac_old(i,j,k,imem)+chem_fac_mid)/2.) + &
+                                        (chem_data_sav_2(i,k,h,1,ibdy-6)+chem_data_sav_2(i,k,h,2,ibdy-6))/2. * &
+                                        (chem_fac_mid-chem_fac_old(i,j,k,imem))/(corr_tm_delt/2.)/tfac
 !
-                                        chem_databdy(i,k,h,2)=chem_databdy(i,k,h,2)* &
-                                        (exp(chem_fac_mid)+exp(chem_fac_end(i,j,k,imem)))/2. + &
-                                        (exp(chem_fac_end(i,j,k,imem))-exp(chem_fac_mid))/(corr_tm_delt/2.)/tfac* &
-                                        (chem_data_sav_2(i,k,h,2,ibdy-6)+chem_data_end(i,k,h))/2.
+                                        chem_databdy(j,k,h,2)=chem_databdy(i,k,h,2)* &
+                                        (1.+(chem_fac_mid+chem_fac_end(i,j,k,imem))/2.) + &
+                                        (chem_data_sav_2(i,k,h,2,ibdy-6)+chem_data_end(i,k,h))/2. * &
+                                        (chem_fac_end(i,j,k,imem)-chem_fac_mid)/(corr_tm_delt/2.)/tfac
                                      enddo
                                   enddo
                                enddo
@@ -569,7 +599,6 @@ character(len=*), parameter :: revdate  = ''
                          endif
                          call put_WRFCHEM_icbc_data(wrfchem_file,ch_spcs,chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
                          deallocate(chem_databdy)
-                         print *, 'Finish BCs mem, spcs ',imem,trim(ch_spcs)               
                       enddo   ! BC type loop
                       deallocate(chem_data_sav_1)
                       deallocate(chem_data_sav_2)
@@ -647,7 +676,7 @@ character(len=*), parameter :: revdate  = ''
              integer,dimension(maxdim)             :: v_dimid
              integer,dimension(maxdim)             :: v_dim
              real,dimension(nx,ny)                 :: xland
-             character(len=150)                    :: v_nam
+             character(len=200)                    :: v_nam
              character*(80)                         :: name
              character*(80)                         :: file
 !
@@ -727,7 +756,7 @@ character(len=*), parameter :: revdate  = ''
              integer,dimension(maxdim)             :: v_dimid
              integer,dimension(maxdim)             :: v_dim
              real,dimension(nx,ny)                 :: lat,lon
-             character(len=150)                    :: v_nam
+             character(len=200)                    :: v_nam
              character*(80)                         :: name
              character*(80)                         :: file
 !
@@ -820,7 +849,7 @@ character(len=*), parameter :: revdate  = ''
              integer,dimension(maxdim)             :: v_dim
              real,dimension(nx,ny,nzp)             :: ph,phb
              real,dimension(nx,ny,nz)              :: geo_ht
-             character(len=150)                    :: v_nam
+             character(len=200)                    :: v_nam
              character*(80)                        :: name,cmem
              character*(80)                        :: file
 !
@@ -918,7 +947,7 @@ character(len=*), parameter :: revdate  = ''
              integer,dimension(maxdim)             :: v_dimid
              integer,dimension(maxdim)             :: v_dim
              real,dimension(nx,ny,nz,nt)           :: data
-             character(len=150)                    :: v_nam
+             character(len=200)                    :: v_nam
              character*(*)                         :: name
              character*(*)                         :: file
 !
@@ -932,7 +961,6 @@ character(len=*), parameter :: revdate  = ''
 !
 ! get variables identifiers
              rc = nf_inq_varid(f_id,trim(name),v_id)
-             print *, rc,f_id,' ',trim(name),' ',v_id
 !             print *, v_id
              if(rc.ne.0) then
                 print *, 'nf_inq_varid error ', v_id
@@ -993,7 +1021,7 @@ character(len=*), parameter :: revdate  = ''
              integer,dimension(maxdim)             :: v_dimid
              integer,dimension(maxdim)             :: v_dim
              real,dimension(nx,ny,nz,nt)           :: data
-             character(len=150)                    :: v_nam
+             character(len=200)                    :: v_nam
              character*(*)                         :: name
              character*(*)                         :: file
 !

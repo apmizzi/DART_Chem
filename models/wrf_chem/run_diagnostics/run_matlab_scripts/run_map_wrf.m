@@ -1,3 +1,4 @@
+
 fname_diff         = '/glade/p/acd/mizzi/DART_TEST_AVE/MOPCOMB_Exp_3_RtDA_60M_p30p30_sp4/Cat_Diff.nc';
 fname_post         = '/glade/p/acd/mizzi/DART_TEST_AVE/MOPCOMB_Exp_3_RtDA_60M_p30p30_sp4/Cat_Posterior_Diag.nc';
 fname_prior        = '/glade/p/acd/mizzi/DART_TEST_AVE/MOPCOMB_Exp_3_RtDA_60M_p30p30_sp4/Cat_Prior_Diag.nc';

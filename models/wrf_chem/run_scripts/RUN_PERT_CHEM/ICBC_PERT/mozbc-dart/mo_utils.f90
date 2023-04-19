@@ -147,7 +147,7 @@
       integer :: swght
       integer :: mzcnt
       integer :: slen
-      character(len=164) :: mstring
+      character(len=384) :: mstring
       logical :: one2one
 
       nspec = 0

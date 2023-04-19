@@ -175,12 +175,12 @@ foreach PROG ( $MPI_TARGETS )
    endif
 
 end
-
-if ( $cdebug ) then
-   echo 'preserving .o and .mod files for debugging'
-else
-   \rm -f *.o *.mod Makefile .cppdefs
-endif
+#
+#if ( $cdebug ) then
+#   echo 'preserving .o and .mod files for debugging'
+#else
+#   \rm -f *.o *.mod Makefile .cppdefs
+#endif
 \rm -f input.nml*_default
 
 echo "Success: All MPI parallel DART programs compiled."
