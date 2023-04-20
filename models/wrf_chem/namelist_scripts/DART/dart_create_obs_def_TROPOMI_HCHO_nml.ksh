@@ -1,0 +1,28 @@
+#!/bin/ksh -x
+#########################################################################
+#
+# Purpose: Create DART &obs_def_TROPOMI_HCHO_nml 
+#
+#########################################################################
+#
+# Generate namelist section
+rm -f input.nml_temp
+touch input.nml_temp
+cat > input.nml_temp << EOF
+ &obs_def_TROPOMI_HCHO_nml
+   use_log_hcho      = ${NL_USE_LOG_HCHO:-.false.},
+   nlayer_model     = ${NL_NLAYER_MODEL:-36},
+   nlayer_tropomi_hcho_total_col   = ${NL_NLAYER_TROPOMI_HCHO_TOTAL_COL:-40},
+   nlayer_tropomi_hcho_trop_col   = ${NL_NLAYER_TROPOMI_HCHO_TROP_COL:-40},
+/ 
+EOF
+#
+# Append namelist section to input.nml
+if [[ -f input.nml ]]; then
+   cat input.nml_temp >> input.nml
+   rm input.nml_temp
+else
+   mv input.nml_temp input.nml
+fi
+
+
