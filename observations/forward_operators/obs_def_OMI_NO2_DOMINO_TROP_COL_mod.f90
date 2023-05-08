@@ -103,11 +103,11 @@ logical, save :: module_initialized = .false.
 logical :: use_log_no2   = .false.
 integer :: nlayer_model = -9999
 integer :: nlayer_omi = -9999
-integer :: nlayer_omi_no2_domino_total_col = -9999
-integer :: nlayer_omi_no2_domino_trop_col = -9999
+integer :: nlayer_omi_no2_total_col = -9999
+integer :: nlayer_omi_no2_trop_col = -9999
 
-namelist /obs_def_OMI_NO2_DOMINO_nml/ use_log_no2, nlayer_model, &
-nlayer_omi_no2_domino_total_col, nlayer_omi_no2_domino_trop_col
+namelist /obs_def_OMI_NO2_nml/ use_log_no2, nlayer_model, &
+nlayer_omi_no2_total_col, nlayer_omi_no2_trop_col
 
 !-------------------------------------------------------------------------------
 contains
@@ -125,24 +125,24 @@ call register_module(source, revision, revdate)
 module_initialized = .true.
 
 ! Read namelist values
-call find_namelist_in_file("input.nml", "obs_def_OMI_NO2_DOMINO_nml", iunit)
-read(iunit, nml = obs_def_OMI_NO2_DOMINO_nml, iostat = rc)
-call check_namelist_read(iunit, rc, "obs_def_OMI_NO2_DOMINO_nml")
+call find_namelist_in_file("input.nml", "obs_def_OMI_NO2_nml", iunit)
+read(iunit, nml = obs_def_OMI_NO2_nml, iostat = rc)
+call check_namelist_read(iunit, rc, "obs_def_OMI_NO2_nml")
 
 ! Record the namelist values
-if (do_nml_file()) write(nmlfileunit, nml=obs_def_OMI_NO2_DOMINO_nml)
-if (do_nml_term()) write(     *     , nml=obs_def_OMI_NO2_DOMINO_nml)
-nlayer_omi=nlayer_omi_no2_domino_trop_col
+if (do_nml_file()) write(nmlfileunit, nml=obs_def_OMI_NO2_nml)
+if (do_nml_term()) write(     *     , nml=obs_def_OMI_NO2_nml)
+nlayer_omi=nlayer_omi_no2_trop_col
 
 ! Check for valid values
 
 if (nlayer_model < 1) then
-   write(string1,*)'obs_def_OMI_NO2_DOMINO_nml:nlayer_model must be > 0, it is ',nlayer_model
+   write(string1,*)'obs_def_OMI_NO2_nml:nlayer_model must be > 0, it is ',nlayer_model
    call error_handler(E_ERR,'initialize_module',string1,source)
 endif
 
 if (nlayer_omi < 1) then
-   write(string1,*)'obs_def_OMI_NO2_DOMINO_nml:nlayer_omi must be > 0, it is ',nlayer_omi
+   write(string1,*)'obs_def_OMI_NO2_nml:nlayer_omi must be > 0, it is ',nlayer_omi
    call error_handler(E_ERR,'initialize_module',string1,source)
 endif
 
@@ -318,7 +318,7 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
       no2_min = log(no2_min)
    endif
 
-! Assign vertical grid information
+! Assign vertical grid information (grid is bottom to top)
 
    layer_omi = nlayer(key)
    level_omi = nlayer(key)+1
@@ -330,6 +330,7 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
    allocate(prs_omi_mem(level_omi))
    prs_omi(1:level_omi)=pressure(key,1:level_omi)*100.
    prs_trop_omi=prs_trop(key)*100.   
+
 ! Get location infomation
 
    mloc = get_location(location)
@@ -507,37 +508,7 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
 ! Convert units for no2 from ppmv
       no2_val(:,k) = no2_val(:,k) * 1.e-6_r8
    enddo
-   
 !
-! Get model values at trop_prs(key)
-   allocate (no2_trop(ens_size))   
-   allocate (tmp_trop(ens_size))   
-   allocate (qmr_trop(ens_size))   
-
-   zstatus(:)=0
-   loc2 = set_location(mloc(1), mloc(2), prs_trop_omi, VERTISPRESSURE)
-   call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_trop, zstatus)  
-   zstatus(:)=0
-   call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_trop, zstatus)  
-   zstatus(:)=0
-   call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_trop, zstatus)  
-   no2_trop(:)=no2_trop(:) * 1.e-6_r8
-   
-   do imem=1,ens_size
-      if(no2_trop(imem).eq.missing_r8 .or. tmp_trop(imem).eq.missing_r8 .or. &
-      qmr_trop(imem).eq.missing_r8) then
-         zstatus(:)=20
-         expct_val(:)=missing_r8
-         write(string1, *) &
-         'APM: Key, Model trop data has missing values ',key,no2_trop(imem), &
-          tmp_trop(imem),qmr_trop(imem)
-         call error_handler(E_ALLMSG, routine, string1, source)
-         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-         deallocate(no2_trop,tmp_trop,qmr_trop)
-         return
-      endif
-   enddo
-
    istatus(:)=0
    zstatus(:)=0
    expct_val(:)=0.0
@@ -551,74 +522,45 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
          prs_omi_mem(1)=prs_sfc(imem)
       endif   
 
-! Calculate the thicknesses
+! Calculate the thicknesses (grid is bottom to top)
 
-      do k=1,kend_omi+1
-         if(k.ne.kend_omi+1) then 
-            lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
-            up_wt=log(prs_omi_mem(k))-lnpr_mid
-            dw_wt=lnpr_mid-log(prs_omi_mem(k+1))
-            tl_wt=up_wt+dw_wt
-            tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
-            tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
-            thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
-            log(prs_omi_mem(k)/prs_omi_mem(k+1))
-         else
-            lnpr_mid=(log(prs_trop_omi)+log(prs_omi_mem(k)))/2.
-            up_wt=log(prs_omi_mem(k))-lnpr_mid
-            dw_wt=lnpr_mid-log(prs_trop_omi)
-            tl_wt=up_wt+dw_wt
-            tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
-            tmp_vir_kp = (1.0_r8 + eps*qmr_trop(imem))*tmp_trop(imem)
-            thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
-            log(prs_omi_mem(k)/prs_trop_omi)
-         endif
+      do k=1,kend_omi
+         lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
+         up_wt=log(prs_omi_mem(k))-lnpr_mid
+         dw_wt=lnpr_mid-log(prs_omi_mem(k+1))
+         tl_wt=up_wt+dw_wt
+         tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
+         tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
+         thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
+         log(prs_omi_mem(k)/prs_omi_mem(k+1))
 
 !         write(string1, *) &
 !         'APM: Key, Thickness calcs ', key, k, thick(k), up_wt, dw_wt, tmp_vir_k,tmp_vir_kp, &
-!         prs_omi_mem(k), prs_trop_omi     
+!         prs_omi_mem(k), prs_omi_mem(k+1)     
 !         call error_handler(E_ALLMSG, routine, string1, source)
 
       enddo
    
-! Process the vertical summation
+! Process the vertical summation (OMI NO2 DOMINO units are molec/cm^2)
 
       do k=1,kend_omi+1
-         if(k.ne.kend_omi+1) then 
-            lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
-            up_wt=log(prs_omi_mem(k))-lnpr_mid
-            dw_wt=lnpr_mid-log(prs_omi_mem(k+1))
-            tl_wt=up_wt+dw_wt
+         lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
+         up_wt=log(prs_omi_mem(k))-lnpr_mid
+         dw_wt=lnpr_mid-log(prs_omi_mem(k+1))
+         tl_wt=up_wt+dw_wt
 
 ! Convert from VMR to molar density (mol/m^3)
-            if(use_log_no2) then
-               no2_val_conv = (dw_wt*exp(no2_val(imem,k))+up_wt*exp(no2_val(imem,k+1)))/tl_wt * &
-               (dw_wt*prs_omi(k)+up_wt*prs_omi(k+1)) / &
-               (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
-            else
-               no2_val_conv = (dw_wt*no2_val(imem,k)+up_wt*no2_val(imem,k+1))/tl_wt * &
-               (dw_wt*prs_omi(k)+up_wt*prs_omi(k+1)) / &
-               (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
-            endif
+         if(use_log_no2) then
+            no2_val_conv = (dw_wt*exp(no2_val(imem,k))+up_wt*exp(no2_val(imem,k+1)))/tl_wt * &
+            (dw_wt*prs_omi(k)+up_wt*prs_omi(k+1)) / &
+            (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
          else
-            lnpr_mid=(log(prs_trop_omi)+log(prs_omi_mem(k)))/2.
-            up_wt=log(prs_omi_mem(k))-lnpr_mid
-            dw_wt=lnpr_mid-log(prs_trop_omi)
-            tl_wt=up_wt+dw_wt
-
-! Convert from VMR to molar density (mol/m^3)
-            if(use_log_no2) then
-               no2_val_conv = (dw_wt*exp(no2_val(imem,k))+up_wt*exp(no2_trop(imem)))/tl_wt * &
-               (dw_wt*prs_omi(k)+up_wt*prs_trop_omi) / &
-               (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_trop(imem)))
-            else
-               no2_val_conv = (dw_wt*no2_val(imem,k)+up_wt*no2_trop(imem))/tl_wt * &
-               (dw_wt*prs_omi(k)+up_wt*prs_trop_omi) / &
-               (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_trop(imem)))
-            endif
+            no2_val_conv = (dw_wt*no2_val(imem,k)+up_wt*no2_val(imem,k+1))/tl_wt * &
+            (dw_wt*prs_omi(k)+up_wt*prs_omi(k+1)) / &
+            (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
          endif
 
-! Get expected observation
+! Get expected observation (convert mol/m^2 to molec/cm^2)
 
          expct_val(imem) = expct_val(imem) + thick(k) * no2_val_conv * &
          AvogN/msq2cmsq * scat_wt(key,k) 
@@ -630,9 +572,9 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
 
       enddo
 
-!      write(string1, *) &
-!      'APM: Member ',imem,'Key, Final Value for ob ',key,expct_val(imem)
-!      call error_handler(E_ALLMSG, routine, string1, source)
+      write(string1, *) &
+      'APM: Member ',imem,'Key, Final Value for ob ',key,expct_val(imem)
+      call error_handler(E_ALLMSG, routine, string1, source)
 
       if(isnan(expct_val(imem))) then
          zstatus(imem)=20
@@ -657,7 +599,6 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
 
 ! Clean up and return
    deallocate(no2_val, tmp_val, qmr_val, prs_val)
-   deallocate(no2_trop,tmp_trop,qmr_trop)
    deallocate(thick)
    deallocate(prs_omi, prs_omi_mem)
 

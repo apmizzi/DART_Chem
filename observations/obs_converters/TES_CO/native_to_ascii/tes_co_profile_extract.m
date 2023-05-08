@@ -157,12 +157,12 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       field='/HDFEOS/SWATHS/CONadirSwath/Data Fields/AveragingKernelDiagonal';
       avgk_diag_lay=h5read(file_in,field);
 %
-% co_lay (layer,nobs)
+% co_lay (layer,nobs) (vmr)
       field='/HDFEOS/SWATHS/CONadirSwath/Data Fields/CO';
       co_lay=h5read(file_in,field);
       units=h5readatt(file_in,field,'Units');
 %
-% co_lay_err (layer,nobs)
+% co_lay_err (layer,nobs) (ln(vmr))
       field='/HDFEOS/SWATHS/CONadirSwath/Data Fields/COPrecision';
       co_lay_err=h5read(file_in,field);
       units=h5readatt(file_in,field,'Units');

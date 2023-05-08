@@ -129,7 +129,7 @@ program omi_no2_trop_col_ascii_to_obs
    character*129                   :: data_type,cmd
    character*129                   :: path_model,file_model,file_in
 !
-   logical                         :: use_log_o3,use_log_no2,use_log_so2
+   logical                         :: use_log_o3,use_log_no2,use_log_so2,use_log_hcho
 !
 ! Species-specific variables
    real                            :: amfstrat,amfstrat_clr,amfstrat_cld
@@ -153,7 +153,7 @@ program omi_no2_trop_col_ascii_to_obs
 !
    namelist /create_omi_obs_nml/filedir,filename,fileout,year,month,day,hour, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_o3,use_log_no2,use_log_so2, &
-   lon_min,lon_max,lat_min,lat_max, &
+   use_log_hcho,lon_min,lon_max,lat_min,lat_max, &
    path_model,file_model,nx_model,ny_model,nz_model
 !
 ! Set constants

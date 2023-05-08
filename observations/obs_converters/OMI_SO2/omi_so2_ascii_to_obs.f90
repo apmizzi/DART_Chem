@@ -69,7 +69,7 @@ program omi_so2_ascii_to_obs
                                       get_time
 
    use obs_kind_mod, only           : QTY_SO2,                     &
-                                      OMI_SO2_COLUMN,              &
+                                      OMI_SO2_COL,                 &
                                       get_type_of_obs_from_menu
 
    use random_seq_mod, only         : random_seq_type,            &
@@ -364,7 +364,7 @@ program omi_so2_ascii_to_obs
 !      which_vert=1       ! level
       which_vert=2       ! pressure surface
 !
-      obs_kind = OMI_SO2_COLUMN
+      obs_kind = OMI_SO2_COL
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90) 
       obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
 !

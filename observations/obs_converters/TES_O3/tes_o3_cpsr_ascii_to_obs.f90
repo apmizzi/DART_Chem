@@ -16,10 +16,10 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 !
-program tempo_o3_cpsr_ascii_to_obs
+program tes_o3_cpsr_ascii_to_obs
 !
 !=============================================
-! TEMPO O3 column obs
+! TES O3 column obs
 !=============================================
    use utilities_mod, only          : timestamp,                  &
                                       register_module,            &
@@ -56,7 +56,7 @@ program tempo_o3_cpsr_ascii_to_obs
                                       obs_def_type,               &
                                       set_obs_def_type_of_obs
 
-   use obs_def_tempo_o3_cpsr_mod, only     : set_obs_def_tempo_o3_cpsr
+   use obs_def_tes_o3_cpsr_mod, only     : set_obs_def_tes_o3_cpsr
 
    use assim_model_mod, only        : static_init_assim_model
 
@@ -69,7 +69,7 @@ program tempo_o3_cpsr_ascii_to_obs
                                       get_time
 
    use obs_kind_mod, only           : QTY_O3,                     &
-                                      TEMPO_O3_CPSR,              &
+                                      TES_O3_CPSR,              &
                                       get_type_of_obs_from_menu
 
    use random_seq_mod, only         : random_seq_type,            &
@@ -80,7 +80,7 @@ program tempo_o3_cpsr_ascii_to_obs
    implicit none
 !
 ! version controlled file description for error handling, do not edit
-   character(len=*), parameter     :: source   = 'tempo_o3_cpsr_ascii_to_obs.f90'
+   character(len=*), parameter     :: source   = 'tes_o3_cpsr_ascii_to_obs.f90'
    character(len=*), parameter     :: revision = ''
    character(len=*), parameter     :: revdate  = ''
 !
@@ -104,10 +104,11 @@ program tempo_o3_cpsr_ascii_to_obs
    integer                         :: seconds,days,which_vert
    integer                         :: seconds_last,days_last
    integer                         :: nx_model,ny_model,nz_model
-   integer                         :: reject,k,l,kk,kend,ilay
-   integer                         :: i_min,j_min
+   integer                         :: reject,k,l,kk,klev,kend,ilay
+   integer                         :: i_min,j_min,reject_ak
    integer                         :: sum_reject,sum_accept,sum_total
-   integer                         :: obs_accept,obs_o3_reten_freq,obs_no2_reten_freq
+   integer                         :: obs_accept,obs_o3_reten_freq,obs_co_reten_freq
+   integer                         :: obs_co2_reten_freq,obs_ch4_reten_freq,obs_nh3_reten_freq
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
@@ -120,28 +121,29 @@ program tempo_o3_cpsr_ascii_to_obs
    real                            :: prs_loc,obs_sum
    real*8                          :: obs_err_var,level
 !
-   real*8,dimension(num_qc)        :: tempo_qc
+   real*8,dimension(num_qc)        :: tes_qc
    real*8,dimension(num_copies)    :: obs_val
 !
    character*129                   :: filedir,filename,fileout
    character*129                   :: copy_meta_data
-   character*129                   :: qc_meta_data='TEMPO O3 QC index'
+   character*129                   :: qc_meta_data='TES O3 QC index'
    character*129                   :: chr_year,chr_month,chr_day
-   character*129                   :: file_name='tempo_o3_cpsr_obs_seq'
+   character*129                   :: file_name='tes_o3_cpsr_obs_seq'
    character*129                   :: data_type,cmd
    character*129                   :: path_model,file_model,file_in
 !
-   logical                         :: use_log_co,use_log_o3,use_log_no2,use_log_so2
+   logical                         :: use_log_o3,use_log_co,use_log_co2,use_log_ch4,use_log_nh3
 !
 ! Species-specific variables
-   real                              :: col_amt_obs,col_amt_err_obs
-   real                              :: lat_obs,lon_obs
+   real                              :: o3_trop_col_obs,o3_trop_col_obs_prior,o3_trop_col_obs_err
+   real                              :: o3_total_col_obs,o3_total_col_obs_prior,o3_total_col_obs_err
+   real                              :: lat_obs,lon_obs,dofs_obs,trop_prs
    real*8                            :: lat_obs_r8,lon_obs_r8
-   real,allocatable,dimension(:,:)   :: avgk_obs,cov_obs
-   real,allocatable,dimension(:)     :: prior_obs,o3_obs
+   real,allocatable,dimension(:,:)   :: avgk_obs,cov_obs,cov_total
+   real,allocatable,dimension(:)     :: avgk_diag_obs,o3_obs,o3_obs_prior,o3_obs_err
    real*8,allocatable,dimension(:)   :: avgk_obs_r8
    real*8,allocatable,dimension(:,:) :: cov_obs_r8
-   real*8,allocatable,dimension(:)   :: o3_obs_r8
+   real*8,allocatable,dimension(:)   :: prior_obs_r8,o3_obs_r8
    real,allocatable,dimension(:)     :: prs_obs
    real*8,allocatable,dimension(:)   :: prs_obs_r8
    real,allocatable,dimension(:)     :: prf_locl,prf_full
@@ -151,23 +153,23 @@ program tempo_o3_cpsr_ascii_to_obs
    real,allocatable,dimension(:,:,:) :: tmp_prt,tmp_fld,vtmp_fld
    real,allocatable,dimension(:,:,:) :: o3_fld,qmr_fld
 
-   real                              :: col_amt_total_obs,col_amt_trop_obs
-   real                              :: trop_index,cov_total,cov_trop,wt1_sum,wt2_sum
+   real                              :: trop_index,cov_trop,wt1_sum,wt2_sum
    real                              :: avgk_term, sum_o3_obs
    real*8                            :: prior_total_r8
    real*8,allocatable,dimension(:)   :: avgk_total_obs_r8
-
-   integer                           :: nlayer,cnt,flg,nmodes,i,imds
-   real*8                            :: prior_obs_r8
-   real,allocatable,dimension(:)     :: o3_cpsr,prior_cpsr
-   real,allocatable,dimension(:,:)   :: avgk_cpsr
-   real,allocatable,dimension(:)     :: o3_shift,prior_shift
-   real,allocatable,dimension(:,:)   :: avgk_shift,cov_shift
 !
-   namelist /create_tempo_obs_nml/filedir,filename,fileout, &
-   bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
-   lon_min,lon_max,lat_min,lat_max, &
-   path_model,file_model,nx_model,ny_model,nz_model,obs_o3_reten_freq,obs_no2_reten_freq
+! CPSR arrays
+   real,allocatable,dimension(:)     :: o3_shift,prior_shift
+   real,allocatable,dimension(:)     :: o3_cpsr,prior_cpsr
+   real,allocatable,dimension(:,:)   :: avgk_shift,avgk_cpsr,cov_shift
+   integer                           :: irow,irow_sh,icol,icol_sh
+   integer                           :: nmodes,imds
+!
+   namelist /create_tes_obs_nml/filedir,filename,fileout, &
+   bin_beg_sec,bin_end_sec,fac_obs_error,use_log_o3,use_log_co,use_log_co2,use_log_ch4, &
+   use_log_nh3,lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model,ny_model, &
+   nz_model,obs_o3_reten_freq,obs_co_reten_freq,obs_co2_reten_freq,obs_ch4_reten_freq, &
+   obs_nh3_reten_freq
 !
 ! Set constants
    pi=4.*atan(1.)
@@ -189,13 +191,13 @@ program tempo_o3_cpsr_ascii_to_obs
 ! Initialize the obs_sequence module
    call static_init_obs_sequence()
 !
-   call find_namelist_in_file("input.nml", "create_tempo_obs_nml", iunit)
-   read(iunit, nml = create_tempo_obs_nml, iostat = io)
-   call check_namelist_read(iunit, io, "create_tempo_obs_nml")
+   call find_namelist_in_file("input.nml", "create_tes_obs_nml", iunit)
+   read(iunit, nml = create_tes_obs_nml, iostat = io)
+   call check_namelist_read(iunit, io, "create_tes_obs_nml")
 !
 ! Record the namelist values used for the run ...
-   call error_handler(E_MSG,'init_create_tempo_obs','create_tempo_obs_nml values are',' ',' ',' ')
-   write(     *     , nml=create_tempo_obs_nml)
+   call error_handler(E_MSG,'init_create_tes_obs','create_tes_obs_nml values are',' ',' ',' ')
+   write(     *     , nml=create_tes_obs_nml)
 !
 ! Initialize an obs_sequence structure
    call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)
@@ -205,7 +207,7 @@ program tempo_o3_cpsr_ascii_to_obs
 !
    do icopy =1, num_copies
       if (icopy == 1) then
-         copy_meta_data='TEMPO O3 observation'
+         copy_meta_data='TES O3 observation'
       else
          copy_meta_data='Truth'
       endif
@@ -214,7 +216,7 @@ program tempo_o3_cpsr_ascii_to_obs
    call set_qc_meta_data(seq, 1, qc_meta_data)
 !
 !-------------------------------------------------------
-! Read TEMPO O3 data
+! Read TES O3 data
 !-------------------------------------------------------
 !
 ! Set dates and initialize qc_count
@@ -244,13 +246,13 @@ program tempo_o3_cpsr_ascii_to_obs
    tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
    o3_fld(:,:,:)=o3_fld(:,:,:)*1.e-6
 !
-! Open TEMPO O3 binary file
+! Open TES O3 binary file
    fileid=100
    write(6,*)'opening ',TRIM(filedir)//TRIM(filename)
    open(fileid,file=TRIM(filedir)//TRIM(filename),                     &
    form='formatted', status='old', iostat=ios)
 !
-! Read TEMPO O3
+! Read TES O3
    read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    do while (ios == 0)
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
@@ -258,119 +260,114 @@ program tempo_o3_cpsr_ascii_to_obs
       read(fileid,*,iostat=ios) lat_obs,lon_obs
       if(lon_obs.lt.0.) lon_obs=lon_obs+360.
       read(fileid,*,iostat=ios) nlay_obs,nlev_obs
-      read(fileid,*,iostat=ios) trop_index
-      allocate(prs_obs(nlev_obs))
+      allocate(prs_obs(nlay_obs))
       allocate(o3_obs(nlay_obs))
-      allocate(prior_obs(nlay_obs))
+      allocate(o3_obs_prior(nlay_obs))
+      allocate(o3_obs_err(nlay_obs))
       allocate(avgk_total_obs_r8(nlay_obs))
       allocate(avgk_obs(nlay_obs,nlay_obs))
+      allocate(avgk_diag_obs(nlay_obs))
       allocate(cov_obs(nlay_obs,nlay_obs))
-      allocate(prs_obs_r8(nlev_obs))
+      allocate(cov_total(nlay_obs,nlay_obs))
+      allocate(prs_obs_r8(nlay_obs))
+      allocate(prior_obs_r8(nlay_obs))
       allocate(avgk_obs_r8(nlay_obs))
       allocate(prf_locl(nlay_obs))
       allocate(prf_full(nlay_obs))
-      allocate(o3_cpsr(nlay_obs))
-      allocate(prior_cpsr(nlay_obs))
-      allocate(avgk_cpsr(nlay_obs,nlay_obs))
-      allocate(o3_shift(nlay_obs),prior_shift(nlay_obs))
-      allocate(avgk_shift(nlay_obs,nlay_obs),cov_shift(nlay_obs,nlay_obs))
-
-      read(fileid,*,iostat=ios) prs_obs(1:nlev_obs)
+      read(fileid,*,iostat=ios) prs_obs(1:nlay_obs)
+      read(fileid,*,iostat=ios) trop_prs
       read(fileid,*,iostat=ios) o3_obs(1:nlay_obs)
-      read(fileid,*,iostat=ios) prior_obs(1:nlay_obs)
+      read(fileid,*,iostat=ios) o3_obs_prior(1:nlay_obs)
+      read(fileid,*,iostat=ios) o3_obs_err(1:nlay_obs)
+      read(fileid,*,iostat=ios) dofs_obs
       do k=1,nlay_obs
          read(fileid,*,iostat=ios) (avgk_obs(k,l),l=1,nlay_obs)
       enddo
+      read(fileid,*,iostat=ios) avgk_diag_obs(1:nlay_obs)
       do k=1,nlay_obs
          read(fileid,*,iostat=ios) (cov_obs(k,l),l=1,nlay_obs)
       enddo
-      read(fileid,*,iostat=ios) col_amt_trop_obs
-      read(fileid,*,iostat=ios) col_amt_total_obs
+      do k=1,nlay_obs
+         read(fileid,*,iostat=ios) (cov_total(k,l),l=1,nlay_obs)
+      enddo
+      read(fileid,*,iostat=ios) o3_trop_col_obs
+      read(fileid,*,iostat=ios) o3_trop_col_obs_prior
+      read(fileid,*,iostat=ios) o3_trop_col_obs_err
+      read(fileid,*,iostat=ios) o3_total_col_obs
+      read(fileid,*,iostat=ios) o3_total_col_obs_prior
+      read(fileid,*,iostat=ios) o3_total_col_obs_err
+
+      print *, 'TES O3: Completed data read'
 !
-      flg=0
-      if(any(isnan(cov_obs(:,:)))) flg=1
-      do i=1,nlay_obs
-         if(cov_obs(i,i).lt.0.) then
-            flg=1
-            print *, 'tempo_variance is NaN or negative ',cov_obs(i,i)
+! Find first level above the ground
+      klev=0
+      do ilay=1,nlay_obs
+         if(prs_obs(ilay).lt.0.) then
+            klev=klev+1
+         else
             exit
          endif
       enddo
-      if(flg.eq.1) then
-         deallocate(prs_obs) 
-         deallocate(o3_obs) 
-         deallocate(prior_obs)
-         deallocate(avgk_total_obs_r8)
-         deallocate(avgk_obs)
-         deallocate(cov_obs)
-         deallocate(prs_obs_r8) 
-         deallocate(avgk_obs_r8)
-         deallocate(prf_locl) 
-         deallocate(prf_full)
-         deallocate(o3_cpsr)
-         deallocate(prior_cpsr)
-         deallocate(avgk_cpsr)
-         deallocate(o3_shift,prior_shift)
-         deallocate(avgk_shift,cov_shift)
-         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-         cycle
-      endif           
+      kend=nlay_obs-klev
 !
-      prs_obs(:)=prs_obs(:)*100.
-      prs_obs_r8(:)=prs_obs(:)
-!
+      prs_obs(klev+1:nlay_obs)=prs_obs(klev+1:nlay_obs)*100.
+      prs_obs_r8(1:kend)=prs_obs(klev+1:nlay_obs)
+      prior_obs_r8(1:kend)=o3_obs_prior(klev+1:nlay_obs)
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
-!
-! Check for layers below the surface pressure      
-      cnt=0
-      do k=nlay_obs/2,nlay_obs
-         if(o3_obs(k).lt.0.) then
-            cnt=cnt+1
-         endif
-      enddo
-      nlayer=nlay_obs-cnt
-!     
-      do k=1,nlayer
-         o3_shift(k)=o3_obs(k)
-         prior_shift(k)=prior_obs(k)
-         do kk=1,nlayer
-            avgk_shift(k,kk)=avgk_obs(k,kk)
-            cov_shift(k,kk)=cov_obs(k,kk)
-         enddo
-      enddo
-!
-!--------------------------------------------------------
-! Find model O3 profile corresponding to the observation
-! TEMPO O3 and WRF-Chem vertical grids are bottom to top        
-!--------------------------------------------------------
-!      reject=0
-!      call get_model_profile(prf_locl,prf_full,nz_model, &
-!      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
-!      qmr_fld(i_min,j_min,:),o3_fld(i_min,j_min,:), &
-!      nlev_obs,avgk_obs,prior_obs,kend)
 !
 ! Obs thinning test
       obs_accept=obs_accept+1
       if(obs_accept/obs_o3_reten_freq*obs_o3_reten_freq.eq.obs_accept) then
 !
+! Check whether avgk row is zero.
+         do ilay=klev+1,nlay_obs
+            reject_ak=1
+            do icol=klev+1,nlay_obs
+               if(avgk_obs(ilay,icol).ne.-999 .or. cov_total(ilay,icol).ne.-999) then
+                  reject_ak=0
+                  exit
+               endif  
+            enddo
+         enddo
+         if(reject_ak.eq.1) cycle
+!
+! Apply CPSR transform
+         allocate(o3_shift(kend))
+         allocate(prior_shift(kend))
+         allocate(avgk_shift(kend,kend))
+         allocate(cov_shift(kend,kend))
+         allocate(o3_cpsr(kend))
+         allocate(prior_cpsr(kend))
+         allocate(avgk_cpsr(kend,kend))
+         do irow=klev+1,nlay_obs
+            irow_sh=irow-klev
+            o3_shift(irow_sh)=o3_obs(irow)
+            prior_shift(irow_sh)=o3_obs_prior(irow)
+            do icol=klev+1,nlay_obs
+               icol_sh=icol-klev
+               avgk_shift(irow_sh,icol_sh)=avgk_obs(irow,icol)
+               cov_shift(irow_sh,icol_sh)=fac_obs_error**2 * fac_err**2 * &
+               cov_total(irow,icol)*o3_obs(irow)*o3_obs(icol)
+            enddo
+         enddo
+!
 ! Calculate CPSRs for this retrieval profile
-         call cpsr_calculation(nmodes,nlayer,o3_cpsr,avgk_cpsr,prior_cpsr,o3_shift,prior_shift, &
-         avgk_shift,cov_shift)
+         call cpsr_calculation(nmodes,kend,o3_cpsr,avgk_cpsr,prior_cpsr,o3_shift,prior_shift, &
+         avgk_shift,cov_shift,sum_accept)
 !
 ! Loop through the dominant modes (OMI O3 is top to bottom)
          do imds=1,nmodes
-            avgk_obs_r8(1:nlayer)=avgk_cpsr(imds,1:nlayer)
-            prior_obs_r8=prior_cpsr(imds)
+            avgk_obs_r8(1:kend)=avgk_cpsr(imds,1:kend)
 !
 ! Process accepted observations
             sum_accept=sum_accept+1
             qc_count=qc_count+1
 !
-! Obs value is a cpsr
+! Obs is a CPSR (the compressed and rotated obs errors are unity)
             obs_val(:)=o3_cpsr(imds)
-            obs_err_var=(fac_obs_error*fac_err*1.)**2.
-            tempo_qc(:)=0
+            obs_err_var=1.
+            tes_qc(:)=0
             obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
             call get_time(obs_time, seconds, days)
 !
@@ -379,19 +376,20 @@ program tempo_o3_cpsr_ascii_to_obs
 !            which_vert=1       ! level
 !            which_vert=2       ! pressure
 !
-            obs_kind = TEMPO_O3_CPSR
+            obs_kind = TES_O3_CPSR
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90)
-            level=imds 
+            level=real(imds)
             obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
 !
             call set_obs_def_type_of_obs(obs_def, obs_kind)
             call set_obs_def_location(obs_def, obs_location)
             call set_obs_def_time(obs_def, obs_time)
             call set_obs_def_error_variance(obs_def, obs_err_var)
-            call set_obs_def_tempo_o3_cpsr(qc_count, prs_obs_r8(:), avgk_obs_r8(:), prior_obs_r8, nlayer)
+            call set_obs_def_tes_o3_cpsr(qc_count, prs_obs_r8(1:kend), &
+            avgk_obs_r8(1:kend), prior_obs_r8(1:kend), kend, nmodes, nlay_obs)
             call set_obs_def_key(obs_def, qc_count)
             call set_obs_values(obs, obs_val, 1)
-            call set_qc(obs, tempo_qc, num_qc)
+            call set_qc(obs, tes_qc, num_qc)
             call set_obs_def(obs, obs_def)
 !
             old_ob=0
@@ -411,22 +409,28 @@ program tempo_o3_cpsr_ascii_to_obs
             endif
             obs_old=obs
          enddo
+         deallocate(o3_shift)
+         deallocate(prior_shift)
+         deallocate(avgk_shift)
+         deallocate(cov_shift)
+         deallocate(o3_cpsr)
+         deallocate(prior_cpsr)
+         deallocate(avgk_cpsr)
       endif
       deallocate(prs_obs) 
       deallocate(o3_obs) 
-      deallocate(prior_obs)
+      deallocate(o3_obs_prior)
+      deallocate(o3_obs_err)
       deallocate(avgk_total_obs_r8)
       deallocate(avgk_obs)
+      deallocate(avgk_diag_obs)
       deallocate(cov_obs)
+      deallocate(cov_total)
       deallocate(prs_obs_r8) 
       deallocate(avgk_obs_r8)
+      deallocate(prior_obs_r8)
       deallocate(prf_locl) 
       deallocate(prf_full)
-      deallocate(o3_cpsr)
-      deallocate(prior_cpsr)
-      deallocate(avgk_cpsr)
-      deallocate(o3_shift,prior_shift)
-      deallocate(avgk_shift,cov_shift)
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    enddo
 !
@@ -456,11 +460,11 @@ program tempo_o3_cpsr_ascii_to_obs
       call execute_command_line(trim(cmd))
    endif   
 !
-end program tempo_o3_cpsr_ascii_to_obs
+end program tes_o3_cpsr_ascii_to_obs
 !
-subroutine cpsr_calculation(nlayer_trc,nlayer,spec_cpsr,avgk_cpsr,prior_cpsr,spec_obs,prior_obs,avgk_obs,cov_obs) 
+subroutine cpsr_calculation(nlayer_trc,nlayer,spec_cpsr,avgk_cpsr,prior_cpsr,spec_obs,prior_obs,avgk_obs,cov_obs,cnt) 
    real,parameter                               :: eps_tol=1.e-3
-   integer                                      :: k,kk
+   integer                                      :: k,kk,cnt
    integer                                      :: info,nlayer,nlayer_trc,qstatus
    real                                         :: sdof
    integer                                      :: lwrk
@@ -505,6 +509,7 @@ subroutine cpsr_calculation(nlayer_trc,nlayer,spec_cpsr,avgk_cpsr,prior_cpsr,spe
    enddo
 !   print *,'nlayer_trc ',nlayer_trc
 !   print *, 'SV ',SV_cov(:)
+   
    call mat_transpose(U_cov,UT_cov,nlayer,nlayer)
    call mat_transpose(VT_cov,V_cov,nlayer,nlayer)
    call vec_to_mat(SV_cov,SV,nlayer)
@@ -641,6 +646,7 @@ subroutine cpsr_calculation(nlayer_trc,nlayer,spec_cpsr,avgk_cpsr,prior_cpsr,spe
 
 ! Get new errors (check if err2_rs_r < 0 the qstatus=1)
    qstatus=0.0
+   
    do k=1,nlayer
       err2_rs_r(k)=sqrt(rs_cov(k,k))
    enddo

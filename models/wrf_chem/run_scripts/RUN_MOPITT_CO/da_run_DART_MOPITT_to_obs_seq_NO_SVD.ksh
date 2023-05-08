@@ -5,9 +5,7 @@
 #
 # SET TIME INFORMATION
   export START_DATE=2008060106
-  export END_DATE=2008060918
-#  export END_DATE=2008060112
-#  export END_DATE=2008063018
+  export END_DATE=2008063018
   export TIME_INC=6
   export ASIM_WINDOW=3
 #
@@ -18,28 +16,14 @@
 # PATHS
   export WRFDA_VER=WRFDAv3.4_dmpar
   export WRF_VER=WRFv3.4_dmpar
-  export DART_VER=DART_CHEM_MY_BRANCH
+  export DART_VER=DART_CHEM
 #
 # INDEPENDENT DIRECTORIES
   export ROOT_DIR=/glade/p/work/mizzi
 #  export DATA_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_dat_No_SVD
   export DATA_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_CO_DnN_dat_No_SVD
   export ASIM_DIR=/glade/scratch/mizzi/MOPITT_to_OBSSEQ
-#
-# OUTPUT DIR
-#  export OBS_MOPITT_OUT_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_CO_RAWR_NO_ROT_SUPR
-#  export OBS_MOPITT_OUT_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_CO_RAWR_F50_NO_ROT_SUPR
-#  export OBS_MOPITT_OUT_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_CO_RETR_NO_ROT_SUPR
-#  export OBS_MOPITT_OUT_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_CO_RETR_ME_NO_ROT_SUPR
-#  export OBS_MOPITT_OUT_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_CO_RETR_QOR_NO_ROT_SUPR
-#  export OBS_MOPITT_OUT_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_CO_RETR_QOR_NO_SCALE_SUPR
-#  export OBS_MOPITT_OUT_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_CO_RETR_QOR_SCALE_SUPR
-  export OBS_MOPITT_OUT_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_CO_RETR_CPSR_SCALE_SUPR_SINGLE_CLUSTER
-#  export OBS_MOPITT_OUT_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_CO_RETR_CPSR_NO_SCALE_SUPR
-#  export OBS_MOPITT_OUT_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_CO_RETR_CPSR_SCALE_SUPR
-#  export OBS_MOPITT_OUT_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_CO_RETR_NO_ROT_RJ3_SUPR
-#  export OBS_MOPITT_OUT_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_CO_RETR_CPSR_SCALE_RJ3_SUPR
-#  export OBS_MOPITT_OUT_DIR=/glade/p/acd/mizzi/AVE_TEST_DATA/obs_MOPITT_CO_RETR_CPSR_SCALE_RJ0_SUPR
+  export OBS_MOPITT_DIR=/glade/p/acd/mizzi/for_arthur/MOPITT/proc_files
 #
 # DEPENDENT DIRECTORIES
   export CODE_DIR=${ROOT_DIR}/TRUNK
@@ -99,14 +83,12 @@
            export L_DD=${PAST_DD}
            export L_HH=24
            export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-           export F_DATE=${YYYY}${MM}${DD}${HH}
         else
            export L_YYYY=${YYYY}
            export L_MM=${MM}
            export L_DD=${DD}
            export L_HH=${HH}
            export D_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
-           export F_DATE=${L_YYYY}${L_MM}${L_DD}${L_HH}
         fi
         export NL_YEAR=${L_YYYY}
         export NL_MONTH=${L_MM}
@@ -138,18 +120,11 @@
 # GET EXECUTABLE
         cp ${DART_DIR}/observations/MOPITT_CO/work/mopitt_ascii_to_obs ./.
         ./mopitt_ascii_to_obs
+
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
         export MOPITT_FILE=mopitt_obs_seq${D_DATE}
-        if [[ -e ${MOPITT_FILE} ]]; then
-           cp ${MOPITT_FILE} ${OBS_MOPITT_OUT_DIR}/obs_seq_mopitt_${D_DATE}
-#           mkdir -p ${OBS_MOPITT_OUT_DIR}/${F_DATE}
-#           cp ${MOPITT_FILE} ${OBS_MOPITT_OUT_DIR}/${F_DATE}/obs_seq_mopitt_${F_DATE}
-        else
-           touch ${OBS_MOPITT_OUT_DIR}/NO_DATA_${D_DATE}
-#           mkdir -p ${OBS_MOPITT_OUT_DIR}/${F_DATE}
-#           touch ${OBS_MOPITT_OUT_DIR}/${F_DATE}/NO_DATA_${F_DATE}
-        fi
+        cp ${MOPITT_FILE} ${OBS_MOPITT_DIR}/obs_seq_mopitt_${D_DATE}
 #
 # LOOP TO NEXT DAY AND TIME 
      export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} ${TIME_INC} 2>/dev/null)  

@@ -107,6 +107,8 @@ program omi_so2_pbl_col_ascii_to_obs
    integer                         :: reject,k,kk,kend,kpbl
    integer                         :: i_min,j_min
    integer                         :: sum_reject,sum_accept,sum_total
+   integer                         :: obs_accept,obs_o3_reten_freq, &
+                                      obs_no2_reten_freq,obs_so2_reten_freq,obs_hcho_reten_freq
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
@@ -150,8 +152,8 @@ program omi_so2_pbl_col_ascii_to_obs
 !
    namelist /create_omi_obs_nml/filedir,filename,fileout,year,month,day,hour, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_o3,use_log_no2,use_log_so2, &
-   use_log_hcho,lon_min,lon_max,lat_min,lat_max, &
-   path_model,file_model,nx_model,ny_model,nz_model
+   use_log_hcho,lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model, &
+   ny_model,nz_model,obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq,obs_hcho_reten_freq
 !
 ! Set constants
    pi=4.*atan(1.)
@@ -164,6 +166,7 @@ program omi_so2_pbl_col_ascii_to_obs
    sum_reject=0
    sum_accept=0
    sum_total=0
+   obs_accept=0
    AMF=0.36
 !
 ! Record the current time, date, etc. to the logfile
@@ -279,116 +282,61 @@ program omi_so2_pbl_col_ascii_to_obs
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
 !
-!      print *, trim(data_type),obs_id
-!      print *, yr_obs,mn_obs,dy_obs
-!      print *, hh_obs,mm_obs,ss_obs
-!      print *, lat_obs,lon_obs
-!      print *, nlay_obs,nlev_obs
-!      print *, col_amt,col_amt_pbl,col_amt_stl
-!      print *, cld_frac,cld_prs,cld_rad_frac
-!      print *, rad_cld_frac
-!      print *, slnt_col_amt
-!      print *, 'zenang ',zenang
-!      print *, 'scat_wt ',scat_wt(1:nlay_obs) 
-!      print *, 'prs_obs ',prs_obs(1:nlev_obs)
-!
-!--------------------------------------------------------
-! Find model SO2 profile corresponding to the observation
-! kend is the index for the top of the model
-!--------------------------------------------------------
-!      reject=0
-!      call get_model_profile(prf_model,nz_model, &
-!      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
-!      qmr_fld(i_min,j_min,:),so2_fld(i_min,j_min,:),psfc_fld(i_min,j_min), &
-!      tmp2_fld(i_min,j_min),qmr2_fld(i_min,j_min),hgt_obs,nlev_obs,scat_wt,kend)
-!
-!--------------------------------------------------------
-! Find vertical location
-!--------------------------------------------------------
-!      call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_model,nlay_obs, &
-!      pblh_fld(i_min,j_min),hgt_obs,kend,kpbl)
-!      level=prs_loc
-!      level=75000.
-!      print *,'kend,nlay_obs ',kend,nlay_obs
-!
-! Check scattering weights
-!      do k=1,nlay_obs
-!         kk=nlay_obs-k+1
-!         if(scat_wt(kk).ne.0) then
-!            if(kend.le.k) then
-!               reject=1
-!               exit 
-!            endif
-!         endif
-!      enddo
-!      if(reject.eq.1) then
-!         sum_reject=sum_reject+1
-!         reject=0
-!         deallocate(prs_obs) 
-!         deallocate(scat_wt)
-!         deallocate(prs_obs_r8) 
-!         deallocate(scat_wt_r8)
-!         deallocate(prf_model) 
-!         deallocate(hgt_obs)
-!         deallocate(layer_wt)
-!         deallocate(layer_wt_pbl)
-!         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!         cycle   
-!      endif
-!
-! Process accepted observations
-!      print *, 'localization pressure level (hPa) ',level/100.,kend
-      sum_accept=sum_accept+1
+! Obs thinning test
+      obs_accept=obs_accept+1
+      if(obs_accept/obs_so2_reten_freq*obs_so2_reten_freq.eq.obs_accept) then
 !
 ! Set data for writing obs_sequence file
-      qc_count=qc_count+1
+         qc_count=qc_count+1
+         sum_accept=sum_accept+1
 !
 ! Obs value is the tropospheric slant column
-      obs_val(:)=col_amt_pbl*AMF
-      obs_err_var=(fac_obs_error*fac_err*col_amt_pbl*AMF)**2.
-      omi_qc(:)=0
+         obs_val(:)=col_amt_pbl*AMF
+         obs_err_var=(fac_obs_error*fac_err*col_amt_pbl*AMF)**2.
+         omi_qc(:)=0
 !
-      obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
-      call get_time(obs_time, seconds, days)
+         obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
+         call get_time(obs_time, seconds, days)
 !
-      kend=nlay_obs      
-      which_vert=-2      ! undefined
-!      which_vert=-1      ! surface
-!      which_vert=1       ! level
-!      which_vert=2       ! pressure surface
+         kend=nlay_obs      
+         which_vert=-2      ! undefined
+!         which_vert=-1      ! surface
+!         which_vert=1       ! level
+!         which_vert=2       ! pressure surface
 !
-      obs_kind = OMI_SO2_PBL_COL
-      level=0.
+         obs_kind = OMI_SO2_PBL_COL
+         level=0.
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90) 
-      obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
+         obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
 !
-      call set_obs_def_type_of_obs(obs_def, obs_kind)
-      call set_obs_def_location(obs_def, obs_location)
-      call set_obs_def_time(obs_def, obs_time)
-      call set_obs_def_error_variance(obs_def, obs_err_var)
-      call set_obs_def_omi_so2_pbl_col(qc_count, prs_obs_r8, scat_wt_r8, nlay_obs, kend)
-      call set_obs_def_key(obs_def, qc_count)
-      call set_obs_values(obs, obs_val, 1)
-      call set_qc(obs, omi_qc, num_qc)
-      call set_obs_def(obs, obs_def)
+         call set_obs_def_type_of_obs(obs_def, obs_kind)
+         call set_obs_def_location(obs_def, obs_location)
+         call set_obs_def_time(obs_def, obs_time)
+         call set_obs_def_error_variance(obs_def, obs_err_var)
+         call set_obs_def_omi_so2_pbl_col(qc_count, prs_obs_r8, scat_wt_r8, nlay_obs, kend)
+         call set_obs_def_key(obs_def, qc_count)
+         call set_obs_values(obs, obs_val, 1)
+         call set_qc(obs, omi_qc, num_qc)
+         call set_obs_def(obs, obs_def)
 !
-      old_ob=0
-      if(days.lt.days_last) then
-         old_ob=1
-      elseif(days.eq.days_last .and. seconds.lt.seconds_last) then
-         old_ob=1
+         old_ob=0
+         if(days.lt.days_last) then
+            old_ob=1
+         elseif(days.eq.days_last .and. seconds.lt.seconds_last) then
+            old_ob=1
+         endif
+         if(old_ob.eq.0) then
+            days_last=days
+            seconds_last=seconds
+         endif
+!         print *, 'APM: ',qc_count,days,seconds
+         if ( qc_count == 1 .or. old_ob.eq.1) then
+            call insert_obs_in_seq(seq, obs)
+         else
+            call insert_obs_in_seq(seq, obs, obs_old )
+         endif
+         obs_old=obs
       endif
-      if(old_ob.eq.0) then
-         days_last=days
-         seconds_last=seconds
-      endif
-!      print *, 'APM: ',qc_count,days,seconds
-      if ( qc_count == 1 .or. old_ob.eq.1) then
-         call insert_obs_in_seq(seq, obs)
-      else
-         call insert_obs_in_seq(seq, obs, obs_old )
-      endif
-      obs_old=obs
       deallocate(prs_obs) 
       deallocate(scat_wt)
       deallocate(prs_obs_r8) 

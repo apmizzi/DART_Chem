@@ -107,7 +107,7 @@ program tes_co2_profile_ascii_to_obs
    integer                         :: reject,k,l,kk,klev,kend,ilay
    integer                         :: i_min,j_min,icol,reject_ak
    integer                         :: sum_reject,sum_accept,sum_total
-   integer                         :: obs_accept,obs_co_reten_freq,obs_o3_reten_freq
+   integer                         :: obs_accept,obs_o3_reten_freq,obs_co_reten_freq
    integer                         :: obs_co2_reten_freq,obs_ch4_reten_freq,obs_nh3_reten_freq
 !
    integer,dimension(12)           :: days_in_month=(/ &
@@ -132,7 +132,7 @@ program tes_co2_profile_ascii_to_obs
    character*129                   :: data_type,cmd
    character*129                   :: path_model,file_model,file_in
 !
-   logical                         :: use_log_co,use_log_o3,use_log_co2,use_log_ch4,use_log_nh3
+   logical                         :: use_log_o3,use_log_co,use_log_co2,use_log_ch4,use_log_nh3
 !
 ! Species-specific variables
    real                              :: co2_trop_col_obs,co2_trop_col_obs_prior,co2_trop_col_obs_err
@@ -159,9 +159,9 @@ program tes_co2_profile_ascii_to_obs
    real*8,allocatable,dimension(:)   :: avgk_total_obs_r8
 !
    namelist /create_tes_obs_nml/filedir,filename,fileout, &
-   bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_co2,use_log_ch4, &
+   bin_beg_sec,bin_end_sec,fac_obs_error,use_log_o3,use_log_co,use_log_co2,use_log_ch4, &
    use_log_nh3,lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model,ny_model, &
-   nz_model,obs_co_reten_freq,obs_o3_reten_freq,obs_co2_reten_freq,obs_ch4_reten_freq, &
+   nz_model,obs_o3_reten_freq,obs_co_reten_freq,obs_co2_reten_freq,obs_ch4_reten_freq, &
    obs_nh3_reten_freq
 !
 ! Set constants
@@ -175,7 +175,7 @@ program tes_co2_profile_ascii_to_obs
    sum_accept=0
    sum_total=0
    obs_accept=0
-   fac_err=0.1
+   fac_err=1.0
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
@@ -234,10 +234,10 @@ program tes_co2_profile_ascii_to_obs
    call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
    call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
    call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
-!!!   call get_DART_diag_data(file_in,'co2',co2_fld,nx_model,ny_model,nz_model,1)
+   call get_DART_diag_data(file_in,'co2',co2_fld,nx_model,ny_model,nz_model,1)
    prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
    tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-!!!   co2_fld(:,:,:)=co2_fld(:,:,:)*1.e-6
+   co2_fld(:,:,:)=co2_fld(:,:,:)*1.e-6
 !
 ! Open TES CO2 binary file
    fileid=100
@@ -287,34 +287,35 @@ program tes_co2_profile_ascii_to_obs
       read(fileid,*,iostat=ios) co2_total_col_obs_prior
       read(fileid,*,iostat=ios) co2_total_col_obs_err
 
-      print *, 'TES CO2: Completed data read'      
+      print *, 'TES CO2: Completed data read'
 !
-      prs_obs(:)=prs_obs(:)*100.
-      prs_obs_r8(:)=prs_obs(:)
-      prior_obs_r8(:)=co2_obs_prior(:)
+! Find first level above the ground
+      klev=0
+      do ilay=1,nlay_obs
+         if(prs_obs(ilay).lt.0.) then
+            klev=klev+1
+         else
+            exit
+         endif
+      enddo
+      kend=nlay_obs-klev
+!
+      prs_obs(klev+1:nlay_obs)=prs_obs(klev+1:nlay_obs)*100.
+      prs_obs_r8(1:kend)=prs_obs(klev+1:nlay_obs)
+      prior_obs_r8(1:kend)=co2_obs_prior(klev+1:nlay_obs)
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
 !
-!--------------------------------------------------------
-! Find model CO2 profile corresponding to the observation
-! TES CO2 and WRF-Chem vertical grids are bottom to top        
-!--------------------------------------------------------
-!      reject=0
-!      call get_model_profile(prf_locl,prf_full,nz_model, &
-!      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
-!      qmr_fld(i_min,j_min,:),co2_fld(i_min,j_min,:), &
-!      nlev_obs,avgk_obs,prior_obs,kend)
-!
 ! Obs thinning test
       obs_accept=obs_accept+1
-      if(obs_accept/obs_co2_reten_freq*obs_co2_reten_freq.eq.obs_accept) then
+      if(obs_accept/obs_co_reten_freq*obs_co_reten_freq.eq.obs_accept) then
 !      
 ! Loop through the profile retrievals
-         do ilay=1,nlay_obs
+         do ilay=klev+1,nlay_obs
 !
 ! Check whether avgk row is zero.
             reject_ak=1
-            do icol=1,nlay_obs
+            do icol=klev+1,nlay_obs
                if(avgk_obs(ilay,icol).ne.-999) then
                   reject_ak=0
                   exit
@@ -324,16 +325,13 @@ program tes_co2_profile_ascii_to_obs
 !
 ! Process accepted observations
             sum_accept=sum_accept+1
-!
-! Set data for writing obs_sequence file
             qc_count=qc_count+1
-            print *, 'APM: qc_count, ilay ',qc_count, ilay
 !
-! Obs value is the tropospheric vertical column
-            avgk_obs_r8(1:nlay_obs)=avgk_obs(ilay,1:nlay_obs)         
+! Obs is a profile
+            avgk_obs_r8(1:kend)=avgk_obs(ilay,klev+1:nlay_obs)         
             obs_val(:)=co2_obs(ilay)
+            obs_err_var=(fac_obs_error*fac_err*co2_obs_err(ilay)*co2_obs(ilay))**2
 !            obs_err_var=(fac_obs_error*fac_err*sqrt(cov_obs(ilay,ilay)))**2
-            obs_err_var=(fac_obs_error*fac_err*co2_obs(ilay))**2
             tes_qc(:)=0
             obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
             call get_time(obs_time, seconds, days)
@@ -345,8 +343,6 @@ program tes_co2_profile_ascii_to_obs
 !
             obs_kind = TES_CO2_PROFILE
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90)
-            klev=ilay
-            kend=ilay
             level=prs_obs(ilay)
             obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
 !
@@ -354,8 +350,8 @@ program tes_co2_profile_ascii_to_obs
             call set_obs_def_location(obs_def, obs_location)
             call set_obs_def_time(obs_def, obs_time)
             call set_obs_def_error_variance(obs_def, obs_err_var)
-            call set_obs_def_tes_co2_profile(qc_count, prs_obs_r8(1:nlay_obs), &
-            avgk_obs_r8(1:nlay_obs), prior_obs_r8(1:nlay_obs), nlay_obs, klev, kend)
+            call set_obs_def_tes_co2_profile(qc_count, prs_obs_r8(1:kend), &
+            avgk_obs_r8(1:kend), prior_obs_r8(1:kend), kend, ilay, nlay_obs)
             call set_obs_def_key(obs_def, qc_count)
             call set_obs_values(obs, obs_val, 1)
             call set_qc(obs, tes_qc, num_qc)

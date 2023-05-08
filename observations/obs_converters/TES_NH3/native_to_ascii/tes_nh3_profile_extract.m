@@ -16,6 +16,7 @@ function tes_nh3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
    wss_mx=str2double(cwss_mx);
    nx_mdl=str2double(cnx_mdl);
    ny_mdl=str2double(cny_mdl);
+
 %
 % Get file list and number of files
    command=strcat('rm'," ",'-rf'," ",fileout);
@@ -23,7 +24,7 @@ function tes_nh3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
    fid=fopen(fileout,'w');
 %
    command=strcat('ls'," ",'-1'," ",filein,'*')
-   [status,file_list_a]=system(command);
+   [status,file_list_a]=system(command)
    
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);
@@ -90,9 +91,10 @@ function tes_nh3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       day=h5readatt(file_in,field,'GranuleDay');
       month=h5readatt(file_in,field,'GranuleMonth');
       year=h5readatt(file_in,field,'GranuleYear');
+      field='/HDFEOS/SWATHS/NH3NadirSwath';
+      zgrid=h5readatt(file_in,field,'VerticalCoordinate');
 %
 % Read Time
-%      field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/Time';
       field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/UTCTime';
       utc_time=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');
@@ -118,7 +120,7 @@ function tes_nh3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       
       file_str_secs=file_str_hh*3600 + file_str_mn*60 + file_str_ss;
       file_end_secs=file_end_hh*3600 + file_end_mn*60 + file_end_ss;
-      fprintf('%d %s \n',ifile,file_in);
+%      fprintf('%d %s \n',ifile,file_in);
 %      fprintf('If file_str_secs %d <= day_secs_end %d, and \n',file_str_secs,day_secs_end);
 %      fprintf('If file_end_secs %d >= day_secs_beg %d, then process data \n',file_end_secs,day_secs_beg);
       if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
@@ -145,9 +147,9 @@ function tes_nh3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/AveragingKernel';
       avgk_lay=h5read(file_in,field);
       dims=size(avgk_lay);
-      layer=dims(1);            % 67
-      level=layer+1;            % 68
-      nobs=dims(3);             % 34
+      layer=dims(1);
+      level=layer+1;
+      nobs=dims(3);
       units=h5readatt(file_in,field,'Units');
 %
 % averaging kernel diagonal (layer,nobs)
@@ -158,9 +160,18 @@ function tes_nh3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/DegreesOfFreedomForSignal';
       dofs=h5read(file_in,field);
 %
+% err_cov_mea(layer,layer,nobs)
+      field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/MeasurementErrorCovariance';
+      err_cov_mea=h5read(file_in,field);
+%
 % nh3_lay (layer,nobs)
       field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/NH3';
       nh3_lay=h5read(file_in,field);
+      units=h5readatt(file_in,field,'Units');
+%
+% nh3_lay_prior (layer,nobs)
+      field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/Initial';
+      nh3_lay_prior=h5read(file_in,field);
       units=h5readatt(file_in,field,'Units');
 %
 % nh3_lay_err (layer,nobs)
@@ -168,10 +179,17 @@ function tes_nh3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       nh3_lay_err=h5read(file_in,field);
       units=h5readatt(file_in,field,'Units');
 %
-% nh3_lay_prior (layer,nobs)
-      field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/Initial';
-      nh3_lay_prior=h5read(file_in,field);
-      units=h5readatt(file_in,field,'Units');
+% nh3_trop col (nobs)
+%      field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/NH3TroposphericColumn';
+%      nh3_trop_col=h5read(file_in,field);
+%
+% nh3_trop_col_err (nobs)
+%      field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/NH3TroposphericColumnError';
+%      nh3_trop_col_err=h5read(file_in,field);
+%
+% nh3_trop_col_prior (nobs)
+%      field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/NH3TroposphericColumnInitial';
+%      nh3_trop_col_prior=h5read(file_in,field);
 %
 % nh3_total_col (nobs)
       field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/TotalColumnDensity';
@@ -184,27 +202,23 @@ function tes_nh3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
 % nh3_total_col_prior (nobs)
       field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/TotalColumnDensityInitial';
       nh3_total_col_prior=h5read(file_in,field);
-%
-% err_cov_mea(layer,layer,nobs)
-      field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/MeasurementErrorCovariance';
-      err_cov_mea=h5read(file_in,field);
 %      
 % err_cov_obs(layer,layer,nobs)
       field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/ObservationErrorCovariance';
       err_cov_obs=h5read(file_in,field);
 %
-% err_cov_total(layer,layer,nobs)
-      field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/TotalErrorCovariance';
-      err_cov_total=h5read(file_in,field);
+% prs_lay (layer,nobs) Pressure is bottom to top (hPa)
+      field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/Pressure';
+      prs_lay=h5read(file_in,field);
+      units=h5readatt(file_in,field,'Units');
 %
 % total_err (layer,nobs)
       field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/TotalError';
       total_err=h5read(file_in,field);
 %
-% prs_lay (layer,nobs) Pressure is bottom to top (hPa)
-      field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/Pressure';
-      prs_lay=h5read(file_in,field);
-      units=h5readatt(file_in,field,'Units');
+% err_cov_total(layer,layer,nobs)
+      field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/TotalErrorCovariance';
+      err_cov_total=h5read(file_in,field);
 %
 % tropopause pressure(nobs)
       field='/HDFEOS/SWATHS/NH3NadirSwath/Data Fields/TropopausePressure';
@@ -236,6 +250,7 @@ function tes_nh3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
          ss_tes=round(str2double(utcc_time(18:23)));
          tesdate=single(convert_time(yyyy_tes,mn_tes, ...
          dy_tes,hh_tes,mm_tes,ss_tes));
+
 %
 % Check time
 %         fprintf('min_date %d, tes_date %d, max_date %d \n',windate_min,tesdate,windate_max)
@@ -244,6 +259,7 @@ function tes_nh3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
          end
 %
 % QA/QC
+%
          if(zenang(iobs)>=80.0)
             fprintf('APM: zenang %6.2f \n',zenang(iobs))
             continue
@@ -254,6 +270,10 @@ function tes_nh3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
                continue
             end
          end
+%         if(isnan(nh3_trop_col(iobs)))
+%            fprintf('APM: nh3_trop_col is a NaN \n')
+%            continue
+%         end
          if(isnan(nh3_total_col(iobs)))
             fprintf('APM: nh3_total_col is a NaN \n')
             continue
@@ -360,6 +380,9 @@ function tes_nh3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
             fprintf(fid,'%14.8g ',err_cov_total(k,1:layer,iobs));
             fprintf(fid,'\n');
 	 end
+%         fprintf(fid,'%14.8g \n',nh3_trop_col(iobs));
+%         fprintf(fid,'%14.8g \n',nh3_trop_col_prior(iobs));
+%         fprintf(fid,'%14.8g \n',nh3_trop_col_err(iobs));
          fprintf(fid,'%14.8g \n',nh3_total_col(iobs));
          fprintf(fid,'%14.8g \n',nh3_total_col_prior(iobs));
          fprintf(fid,'%14.8g \n',nh3_total_col_err(iobs));
