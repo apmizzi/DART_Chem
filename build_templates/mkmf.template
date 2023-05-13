@@ -132,9 +132,10 @@ LD = ifort
 #
 # NETCDF = /opt/local
 
-INCS = -I$(NETCDF)/include -I${MKLROOT}
+INCS = -I$(NETCDF)/include -I${MKLROOT} -I/nasa/hpe/mpt/2.23_cent7/include
 LIBS = -L$(NETCDF)/lib -lnetcdff -lnetcdf \
-       -L${MKLROOT} -lmkl_rt -lmkl_lapack95_lp64 -lmkl_blas95_lp64 -lm -lpthread
+       -L${MKLROOT} -lmkl_rt -lmkl_lapack95_lp64 -lmkl_blas95_lp64 -lm -lpthread \
+       -L/nasa/hpe/mpt/2.23_cent7/lib -lpthread -lmpi
 #
 FFLAGS = -O3 -traceback -mcmodel=medium -shared-intel $(INCS)
 
