@@ -3,9 +3,6 @@
 # DART software - Copyright UCAR. This open source software is provided
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
-#
-# DART $Id$
-
 
 # init_ensemble_var.csh - script that creates perturbed initial
 #                         conditions from the WRF-VAR system.
@@ -53,7 +50,6 @@ set dd     = `echo $initial_date | cut -b7-8`
 set hh     = `echo $initial_date | cut -b9-10`
 
 ${COPY} ${TEMPLATE_DIR}/namelist.input.meso namelist.input
-${COPY} ${TEMPLATE_DIR}/input.nml.template input.nml
 ${REMOVE} ${RUN_DIR}/WRF
 ${LINK} ${OUTPUT_DIR}/${initial_date} WRF
 
@@ -64,11 +60,8 @@ while ( $n <= $NUM_ENS )
 
    mkdir -p ${RUN_DIR}/advance_temp${n}
 
-   # TJH why does the run_dir/*/input.nml come from the template_dir and not the rundir?
-   # TJH furthermore, template_dir/input.nml.template and rundir/input.nml are identical. SIMPLIFY.
-
    ${LINK} ${RUN_DIR}/WRF_RUN/* ${RUN_DIR}/advance_temp${n}/.
-   ${LINK} ${TEMPLATE_DIR}/input.nml.template ${RUN_DIR}/advance_temp${n}/input.nml
+   ${LINK} ${RUN_DIR}/input.nml ${RUN_DIR}/advance_temp${n}/input.nml
 
    ${COPY} ${OUTPUT_DIR}/${initial_date}/wrfinput_d01_${gdate[1]}_${gdate[2]}_mean \
            ${RUN_DIR}/advance_temp${n}/wrfvar_output.nc
@@ -87,12 +80,13 @@ EOF
 #=================================================================
 #PBS -N first_advance_${n}
 #PBS -j oe
-#PBS -A ${CNCAR_GAU_ACCOUNT}
-#PBS -l walltime=${CADVANCE_TIME}
-#PBS -q ${CADVANCE_QUEUE}
+#PBS -A ${COMPUTER_CHARGE_ACCOUNT}
+#PBS -l walltime=${ADVANCE_TIME}
+#PBS -q ${ADVANCE_QUEUE}
 #PBS -m ae
-#PBS -M ${CEMAIL}
-#PBS -l select=${CADVANCE_NODES}:ncpus=${CADVANCE_PROCS}:mpiprocs=${CADVANCE_MPI}
+#PBS -M ${EMAIL}
+#PBS -k eod
+#PBS -l select=${ADVANCE_NODES}:ncpus=${ADVANCE_PROCS}:mpiprocs=${ADVANCE_MPI}
 #=================================================================
 
    echo "rt_assim_init_${n}.csh is running in `pwd`"
@@ -131,7 +125,3 @@ end
 
 exit 0
 
-# <next few lines under version control, do not edit>
-# $URL$
-# $Revision$
-# $Date$

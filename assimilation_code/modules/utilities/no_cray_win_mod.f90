@@ -1,8 +1,6 @@
 ! DART software - Copyright UCAR. This open source software is provided
 ! by UCAR, "as is", without charge, subject to all terms of use at
 ! http://www.image.ucar.edu/DAReS/DART/DART_download
-!
-! $Id$
 
 !> Window without cray pointer. Should you point the window at contigous memory?
 module window_mod
@@ -25,12 +23,6 @@ private
 public :: create_mean_window, create_state_window, free_mean_window, &
           free_state_window, data_count, mean_win, state_win, current_win, &
           mean_ens_handle, NO_WINDOW, MEAN_WINDOW, STATE_WINDOW
-
-! version controlled file description for error handling, do not edit
-character(len=256), parameter :: source   = &
-   "$URL$"
-character(len=32 ), parameter :: revision = "$Revision$"
-character(len=128), parameter :: revdate  = "$Date$"
 
 ! mpi window handles
 integer :: state_win   !< window for the forward operator
@@ -63,9 +55,11 @@ contains
 !> For the non-distributed case this is simply a transpose
 !> For the distributed case memory is allocated in this module
 !> then an mpi window is attached to this memory.
-subroutine create_state_window(state_ens_handle)
+subroutine create_state_window(state_ens_handle, fwd_op_ens_handle, qc_ens_handle)
 
 type(ensemble_type), intent(inout) :: state_ens_handle
+type(ensemble_type), intent(inout), optional :: fwd_op_ens_handle
+type(ensemble_type), intent(inout), optional :: qc_ens_handle
 
 integer :: ierr
 integer :: bytesize !< size in bytes of each element in the window
@@ -77,6 +71,12 @@ data_count = copies_in_window(state_ens_handle)
 
 if (get_allow_transpose(state_ens_handle)) then
    call all_copies_to_all_vars(state_ens_handle)
+   if (present(fwd_op_ens_handle)) then
+      call all_copies_to_all_vars(fwd_op_ens_handle)
+   endif
+   if (present(qc_ens_handle)) then
+      call all_copies_to_all_vars(qc_ens_handle)
+   endif
 else
    ! find how many variables I have
    my_num_vars = state_ens_handle%my_num_vars
@@ -192,8 +192,3 @@ end subroutine free_mean_window
 !> @}
 end module window_mod
 
-! <next few lines under version control, do not edit>
-! $URL$
-! $Id$
-! $Revision$
-! $Date$

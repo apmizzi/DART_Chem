@@ -2,13 +2,18 @@
 ! by UCAR, "as is", without charge, subject to all terms of use at
 ! http://www.image.ucar.edu/DAReS/DART/DART_download
 
+!------------------------------------------------------------------------------
+!> quality_control_mod.f90
+!>
+!> This module contains routines related to quality control.
+!>
+!------------------------------------------------------------------------------
 module quality_control_mod
 
-!> This module contains routines related to quality control.
 
 use     types_mod,    only : r8
 
-use utilities_mod,    only : register_module, error_handler, E_ERR, E_MSG, &
+use utilities_mod,    only : error_handler, E_ERR, E_MSG, &
                              do_output, do_nml_file, do_nml_term, nmlfileunit, &
                              find_namelist_in_file, check_namelist_read
 
@@ -18,40 +23,6 @@ use obs_sequence_mod, only : obs_sequence_type, init_obs, get_obs_from_key, &
                              get_obs_def, obs_type
 
 use obs_def_mod,      only : get_obs_def_type_of_obs, obs_def_type
-
-use obs_kind_mod,     only : MOPITT_CO_TOTAL_COL, MOPITT_CO_PROFILE, MOPITT_CO_CPSR, &
-                 IASI_CO_TOTAL_COL, IASI_CO_PROFILE, IASI_CO_CPSR, &
-                 IASI_CO_TOTAL_COL, IASI_O3_PROFILE, IASI_O3_CPSR, &
-                 MODIS_AOD_TOTAL_COL, &
-                 OMI_O3_TOTAL_COL, OMI_O3_TROP_COL, OMI_O3_PROFILE, OMI_O3_CPSR, &
-                 OMI_NO2_TOTAL_COL, OMI_NO2_TROP_COL, &
-                 OMI_NO2_DOMINO_TOTAL_COL, OMI_NO2_DOMINO_TROP_COL, &
-                 OMI_SO2_TOTAL_COL, OMI_SO2_PBL_COL, &
-                 OMI_HCHO_TOTAL_COL, OMI_HCHO_TROP_COL, &
-                 TROPOMI_CO_TOTAL_COL, &
-                 TROPOMI_O3_TOTAL_COL, TROPOMI_O3_TROP_COL, TROPOMI_O3_PROFILE, TROPOMI_O3_CPSR, &
-                 TROPOMI_NO2_TOTAL_COL, TROPOMI_NO2_TROP_COL, &
-                 TROPOMI_SO2_TOTAL_COL, TROPOMI_SO2_PBL_COL, &
-                 TROPOMI_CH4_TOTAL_COL, TROPOMI_CH4_TROP_COL, &
-                 TROPOMI_HCHO_TOTAL_COL, TROPOMI_HCHO_TROP_COL, &
-                 TEMPO_O3_TOTAL_COL, TEMPO_O3_TROP_COL, TEMPO_O3_PROFILE, TEMPO_O3_CPSR, &
-                 TEMPO_NO2_TOTAL_COL, TEMPO_NO2_TROP_COL, &
-                 TES_CO_TOTAL_COL, TES_CO_PROFILE, TES_CO_CPSR, &
-                 TES_CO2_TOTAL_COL, TES_CO2_PROFILE, TES_CO2_CPSR, &
-                 TES_O3_TOTAL_COL, TES_O3_PROFILE, TES_O3_CPSR, &
-                 TES_NH3_TOTAL_COL, TES_NH3_PROFILE, TES_NH3_CPSR, &
-                 TES_CH4_TOTAL_COL, TES_CH4_PROFILE, TES_CH4_CPSR, &
-                 CRIS_CO_TOTAL_COL, CRIS_CO_PROFILE, CRIS_CO_CPSR, &
-                 CRIS_O3_TOTAL_COL, CRIS_O3_PROFILE, CRIS_O3_CPSR, &
-                 CRIS_NH3_TOTAL_COL, CRIS_NH3_PROFILE, CRIS_NH3_CPSR, &
-                 CRIS_CH4_TOTAL_COL, CRIS_CH4_PROFILE, CRIS_CH4_CPSR, &
-                 CRIS_PAN_TOTAL_COL, CRIS_PAN_PROFILE, CRIS_PAN_CPSR, &
-                 SCIAM_NO2_TOTAL_COL, SCIAM_NO2_TROP_COL, &
-                 GOME2A_NO2_TOTAL_COL, GOME2A_NO2_TROP_COL, &
-                 MLS_O3_TOTAL_COL, MLS_O3_PROFILE, &
-                 MLS_HNO3_TOTAL_COL, MLS_HNO3_PROFILE, &
-                 AIRNOW_CO, AIRNOW_O3, AIRNOW_NO2, AIRNOW_SO2, &
-                 AIRNOW_PM10, AIRNOW_PM25
 
 !------------------------------------------------------------------------------
 
@@ -67,12 +38,7 @@ public :: initialize_qc, input_qc_ok, get_dart_qc, check_outlier_threshold, &
           DARTQC_BAD_INCOMING_QC, DARTQC_FAILED_OUTLIER_TEST, &
           DARTQC_FAILED_VERT_CONVERT
 
-!------------------------------------------------------------------------------
-! version controlled file description for error handling, do not edit
-character(len=*), parameter :: source   = 'quality_control_mod.f90'
-character(len=*), parameter :: revision = ''
-character(len=*), parameter :: revdate  = ''
-!------------------------------------------------------------------------------
+character(len=*), parameter :: source = 'quality_control_mod.f90'
 
 ! Dart quality control variables
 integer, parameter :: DARTQC_ASSIM_GOOD_FOP        = 0
@@ -92,12 +58,11 @@ integer, parameter :: DARTQC_FAILED_VERT_CONVERT   = 8
 
 real(r8) :: input_qc_threshold = 3.0_r8  ! values larger than input_qc_threshold will be rejected
 real(r8) :: outlier_threshold  = -1.0_r8
-real(r8) :: special_outlier_threshold = -1.0_r8
 
 logical  :: enable_special_outlier_code = .false. ! user defined outlier threshold code
-namelist / quality_control_nml / input_qc_threshold, outlier_threshold,  &
-   enable_special_outlier_code, special_outlier_threshold
 
+namelist / quality_control_nml / input_qc_threshold, outlier_threshold,  &
+   enable_special_outlier_code
 !------------------------------------------------------------------------------
 
 contains
@@ -136,8 +101,8 @@ if(do_output()) then
 
    ! if doing something special with outlier threshold, say so
    if (enable_special_outlier_code) then
-      call error_handler(E_MSG,'quality_control_mod:', 'special outlier threshold handling enabled', &
-         source, revision, revdate)
+      call error_handler(E_MSG,'quality_control_mod:', &
+              'special outlier threshold handling enabled', source)
    endif
 
 endif
@@ -243,8 +208,8 @@ if(isprior) then
    
    else   ! 'should not happen'
       dart_qc = -99  ! inconsistent istatus codes
-      call error_handler(E_ERR, 'get_dart_qc: ', 'internal error, should not happen: bad else in qc case', &
-                         source, revision, revdate)
+      call error_handler(E_ERR, 'get_dart_qc: ', &
+              'internal error, should not happen: bad else in qc case', source)
    endif
 
 else ! posterior
@@ -297,7 +262,8 @@ logical  :: failed
 ! only if it is still successful (assim or eval, 0 or 1), then check
 ! for failing outlier test.
 
-if ( (outlier_threshold < 0) .or. (.not. good_dart_qc(dart_qc)) ) return
+! If bad QC flag exit here.
+if ( .not. good_dart_qc(dart_qc)) return
 
 error   = obs_prior_mean - obs_val
 diff_sd = sqrt(obs_prior_var + obs_err_var)
@@ -312,10 +278,10 @@ endif
 ! the default outlier threshold value, and enough info to extract the specific 
 ! obs type for this obs. the function should return .true. if this is an 
 ! outlier, .false. if it is ok.
-
 if (enable_special_outlier_code) then
    failed = failed_outlier(ratio, this_obs_key, obs_seq)
 else 
+   if ( outlier_threshold < 0 ) return ! don't modify dart_qc if no outlier check
    failed = (ratio > outlier_threshold)
 endif
 
@@ -326,13 +292,14 @@ endif
 end subroutine check_outlier_threshold
 
 !------------------------------------------------------------------------------
+!> Function failed_outlier
+!>
 !> Intended to be easy to modify if needed to use other criteria
 !> when evaluating the outlier threshold.  Set the namelist to
 !> turn this call on (enable_special_outlier_code) and then add your
 !> own tests to this section.  Return 'true' if the tests fail,
 !> return 'false' if the obs is ok.
 !------------------------------------------------------------------------------
-
 function failed_outlier(ratio, this_obs_key, seq)
 
 ! return true if the observation value is too far away from the ensemble mean
@@ -379,511 +346,6 @@ this_obs_type = get_obs_def_type_of_obs(obs_def)
 
 select case (this_obs_type)
 
-! APM: +++
-   case (MOPITT_CO_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (MOPITT_CO_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (MOPITT_CO_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (IASI_CO_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (IASI_CO_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (IASI_CO_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (IASI_O3_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (IASI_O3_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (MODIS_AOD_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (OMI_O3_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (OMI_O3_TROP_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (OMI_O3_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (OMI_O3_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (OMI_NO2_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (OMI_NO2_TROP_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (OMI_NO2_DOMINO_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (OMI_NO2_DOMINO_TROP_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (OMI_SO2_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (OMI_SO2_PBL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (OMI_HCHO_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (OMI_HCHO_TROP_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TROPOMI_CO_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TROPOMI_O3_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TROPOMI_O3_TROP_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TROPOMI_O3_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TROPOMI_O3_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TROPOMI_NO2_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TROPOMI_NO2_TROP_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TROPOMI_SO2_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TROPOMI_SO2_PBL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TROPOMI_CH4_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TROPOMI_CH4_TROP_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TROPOMI_HCHO_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TROPOMI_HCHO_TROP_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TEMPO_O3_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TEMPO_O3_TROP_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TEMPO_O3_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TEMPO_O3_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TEMPO_NO2_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TEMPO_NO2_TROP_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_CO_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_CO_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_CO_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_CO2_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_CO2_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_CO2_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_O3_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_O3_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_O3_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_NH3_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_NH3_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_NH3_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_CH4_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_CH4_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (TES_CH4_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_CO_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_CO_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_CO_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_O3_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_O3_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_O3_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_NH3_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_NH3_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_NH3_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_CH4_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_CH4_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_CH4_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_PAN_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_PAN_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (CRIS_PAN_CPSR)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (SCIAM_NO2_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (SCIAM_NO2_TROP_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (GOME2A_NO2_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (GOME2A_NO2_TROP_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (MLS_O3_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (MLS_O3_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (MLS_HNO3_TOTAL_COL)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (MLS_HNO3_PROFILE)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (AIRNOW_CO)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (AIRNOW_O3)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (AIRNOW_NO2)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (AIRNOW_SO2)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (AIRNOW_PM10)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
-   case (AIRNOW_PM25)
-      if (ratio > special_outlier_threshold) then
-         failed_outlier = .true.
-      else
-         failed_outlier = .false.
-      endif
 ! example of specifying a different threshold value for one obs type:
 !   case (RADIOSONDE_TEMPERATURE)
 !      if (ratio > some_other_value) then
@@ -903,6 +365,8 @@ select case (this_obs_type)
       else
          failed_outlier = .false.
       endif
+      ! outlier_threshold < 0 means don't do outlier check.
+      if ( outlier_threshold < 0 ) failed_outlier = .false.
 
 end select
 

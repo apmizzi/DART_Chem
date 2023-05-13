@@ -1,8 +1,6 @@
 ! DART software - Copyright UCAR. This open source software is provided
 ! by UCAR, "as is", without charge, subject to all terms of use at
 ! http://www.image.ucar.edu/DAReS/DART/DART_download
-!
-! $Id$
 
 module direct_netcdf_mod
 
@@ -83,7 +81,7 @@ use state_structure_mod,  only : get_num_variables, get_sum_variables,  &
                                  get_sum_variables_below, get_dim_length, &
                                  get_variable_name, get_io_clamping_maxval,   &
                                  get_io_clamping_minval, do_io_clamping,         &
-                                 get_io_num_dims, get_io_dim_lengths,            &
+                                 get_io_num_dims, get_dim_lengths,            &
                                  get_variable_size, get_io_num_unique_dims,   &
                                  get_io_unique_dim_name, get_dim_name,        &
                                  get_io_unique_dim_length, get_scale_factor, &
@@ -91,9 +89,11 @@ use state_structure_mod,  only : get_num_variables, get_sum_variables,  &
                                  get_units, get_long_name, get_short_name, &
                                  get_has_missing_value, get_FillValue, &
                                  get_missing_value, get_add_offset, get_xtype, &
+                                 get_has_FillValue, &
                                  get_index_start, get_index_end , get_num_dims, &
                                  create_diagnostic_structure, &
-                                 end_diagnostic_structure
+                                 end_diagnostic_structure, &
+                                 has_unlimited_dim
 
 use io_filenames_mod,     only : get_restart_filename, inherit_copy_units, &
                                  stage_metadata_type, get_file_description, &
@@ -124,11 +124,7 @@ public :: read_transpose,            &
           read_variables,            &
           nc_get_num_times
 
-! version controlled file description for error handling, do not edit
-character(len=256), parameter :: source   = &
-   "$URL$"
-character(len=32 ), parameter :: revision = "$Revision$"
-character(len=128), parameter :: revdate  = "$Date$"
+character(len=*), parameter :: source = 'direct_netcdf_mod.f90'
 
 ! only a single MPI Task reads and writes reads the state variable,
 ! when using single_file_{input,output} = .true.
@@ -172,17 +168,13 @@ subroutine read_transpose(state_ens_handle, name_handle, domain, dart_index, rea
 type(ensemble_type),       intent(inout) :: state_ens_handle !< Ensemble handle
 type(stage_metadata_type), intent(in)    :: name_handle      !< Name handle
 integer,                   intent(in)    :: domain           !< Which domain to read
-integer,                   intent(inout) :: dart_index       !< This is for multiple domains
+integer(i8),               intent(inout) :: dart_index       !< This is for multiple domains
 logical,                   intent(in)    :: read_single_vars !< Read one variable at a time
 
 if (task_count() == 1) then
-!   print *, 'APM: before read_transpose_single_task'
    call read_transpose_single_task(state_ens_handle, name_handle, domain, dart_index)
-!   print *, 'APM: after read_transpose_single_task'
 else
-!   print *, 'APM: before read_transpose_multi_task'
    call read_transpose_multi_task( state_ens_handle, name_handle, domain, dart_index, read_single_vars)
-!   print *, 'APM: after read_transpose_multi_task'
 endif
 
 end subroutine read_transpose
@@ -198,7 +190,7 @@ subroutine transpose_write(state_ens_handle, name_handle, domain, &
 type(ensemble_type),       intent(inout) :: state_ens_handle
 type(stage_metadata_type), intent(in)    :: name_handle
 integer,                   intent(in)    :: domain
-integer,                   intent(inout) :: dart_index
+integer(i8),               intent(inout) :: dart_index
 logical,                   intent(in)    :: write_single_vars !< write one variable at a time
 logical,                   intent(in)    :: write_single_precision
 
@@ -272,7 +264,7 @@ integer :: icopy, ivar, ret, ens_size, num_output_ens, domain
 if (my_task_id() == 0) then
    if(.not. byteSizesOK()) then
        call error_handler(E_ERR,'initialize_single_file_io', &
-      'Compiler does not support required kinds of variables.',source,revision,revdate) 
+      'Compiler does not support required kinds of variables.',source) 
    end if
 
    num_output_ens = file_handle%stage_metadata%noutput_ens
@@ -320,8 +312,7 @@ if (my_task_id() == 0) then
    call find_textfile_dims("input.nml", nlines, linelen)
    if (nlines <= 0 .or. linelen <= 0) then
       call error_handler(E_MSG,'initialize_single_file_io', &
-                         'cannot open/read input.nml to save in diagnostic file', &
-                         source,revision,revdate)
+              'cannot open/read input.nml to save in diagnostic file', source)
    endif
    
    allocate(textblock(nlines))
@@ -343,10 +334,6 @@ if (my_task_id() == 0) then
                  'initialize_single_file_io', 'put_att title '//trim(fname))
    call nc_check(nf90_put_att(ncFileID%ncid, NF90_GLOBAL, "assim_model_source", source ), &
                  'initialize_single_file_io', 'put_att assim_model_source '//trim(fname))
-   call nc_check(nf90_put_att(ncFileID%ncid, NF90_GLOBAL, "assim_model_revision", revision ), &
-                 'initialize_single_file_io', 'put_att assim_model_revision '//trim(fname))
-   call nc_check(nf90_put_att(ncFileID%ncid, NF90_GLOBAL, "assim_model_revdate", revdate ), &
-                 'initialize_single_file_io', 'put_att assim_model_revdate '//trim(fname))
    
    !    Metadata for each Copy
    call nc_check(nf90_def_var(ncid=ncFileID%ncid, name="MemberMetadata", xtype=nf90_char,    &
@@ -368,7 +355,7 @@ if (my_task_id() == 0) then
    ret = nc_write_calendar_atts(ncFileID, TimeVarID)     ! comes from time_manager_mod
    if ( ret /= 0 ) then
       write(msgstring, *)'nc_write_calendar_atts  bombed with error ', ret
-      call error_handler(E_MSG,'initialize_single_file_io',msgstring,source,revision,revdate)
+      call error_handler(E_MSG,'initialize_single_file_io',msgstring,source)
    endif
    
    ! Create the time "mirror" with a static length. There is another routine
@@ -484,12 +471,12 @@ end subroutine finalize_single_file_io
 !> read a single netcdf file containing all of the members
 !> and possibly inflation information
 
-subroutine read_single_file(state_ens_handle, file_handle, use_time_from_file, time, pert_from_single_copy)
+subroutine read_single_file(state_ens_handle, file_handle, use_time_from_file, mtime, pert_from_single_copy)
 
 type(ensemble_type),  intent(inout) :: state_ens_handle      !! ensemble handle to store data
 type(file_info_type), intent(in)    :: file_handle           !! file handle for file names
 logical,              intent(in)    :: use_time_from_file    !! read time from file
-type(time_type),      intent(inout) :: time                  !! external time
+type(time_type),      intent(inout) :: mtime                 !! external time
 logical, optional,    intent(in)    :: pert_from_single_copy !! reading single file and perturbing
 
 ! NetCDF IO variables
@@ -499,10 +486,11 @@ integer, dimension(NF90_MAX_VAR_DIMS) :: dim_lengths
 integer, dimension(NF90_MAX_VAR_DIMS) :: dim_start_point
 
 integer :: icopy, ivar, domain  
-integer :: ens_size, extra_size, time_size, var_size, elm_count, ndims
+integer :: ens_size, extra_size, time_size, ndims
 integer :: my_pe, recv_pe, recv_start, recv_end, start_rank
-integer :: start_pos, end_pos, send_start, send_end, start_point
+integer :: send_start, send_end
 logical :: do_perturb, is_sender, is_receiver, is_extra_copy
+integer(i8) :: var_size, elm_count, start_pos, end_pos, start_point
 
 real(r8), allocatable :: var_block(:)
 
@@ -526,9 +514,9 @@ fname = get_restart_filename(file_handle%stage_metadata, 1, domain)
 
 !>@todo Check time consistency across files? This is assuming they are consistent.
 ! read time from input file if time not set in namelist
-if( use_time_from_file ) time = read_model_time(fname)
+if( use_time_from_file ) mtime = read_model_time(fname)
 
-state_ens_handle%time = time
+state_ens_handle%time = mtime
 
 ret = nf90_open(fname, NF90_NOWRITE, my_ncid)
 call nc_check(ret, 'read_single_file: nf90_open', fname)
@@ -537,7 +525,7 @@ ret = nf90_inq_dimid(my_ncid, "member", MemDimID)
 if (ret /= NF90_NOERR) then
    call error_handler(E_ERR,'direct_netcdf_mod:', &
          'If using single_file_in/single_file_out = .true. ', &
-          source, revision, revdate, text2='you must have a member dimension in your input/output file.')
+          source, text2='you must have a member dimension in your input/output file.')
 endif
 
 ret = nf90_inq_dimid(my_ncid, "time", TimeDimID)
@@ -709,13 +697,13 @@ if (my_task_id() == SINGLE_IO_TASK_ID) then
       write(msgstring,*)'model time (d,s)',id1,is1,' not in ',ncFileID%fname
       write(msgstring,'(''model time (d,s) ('',i8,i5,'') is index '',i6, '' in ncFileID '',i10)') &
              id1,is1,timeindex,ncFileID%ncid
-      call error_handler(E_ERR,'write_model_variables', msgstring, source, revision, revdate)
+      call error_handler(E_ERR,'write_model_variables', msgstring, source)
    endif
    
    call get_time(curr_ens_time,is1,id1)
    write(msgstring,'(''model time (d,s) ('',i8,i5,'') is index '',i6, '' in ncFileID '',i10)') &
           id1,is1,timeindex,ncFileID%ncid
-   call error_handler(E_DBG,'write_model_variables', msgstring, source, revision, revdate)
+   call error_handler(E_DBG,'write_model_variables', msgstring, source)
    
    my_ncid = ncFileID%ncid
 endif 
@@ -836,10 +824,7 @@ end subroutine write_augmented_state
 
 !-------------------------------------------------------------------------------
 !> Read in variables from start_var to end_var
-!>@todo FIXME: At the moment, this code is assuming that the variables in the state start
-!> at (1,1,1) and that the whole variable is read. This is not the case for
-!> TIEGCM and CLM. 
-
+!> Read the latest time slice in the file
 subroutine read_variables(ncfile_in, var_block, start_var, end_var, domain)
 
 integer,  intent(in)    :: ncfile_in
@@ -849,10 +834,15 @@ integer,  intent(in)    :: end_var
 integer,  intent(in)    :: domain
 
 integer :: i
-integer :: istart, iend
-integer :: var_size
-integer, allocatable :: dims(:)
-integer :: ret, var_id
+integer(i8) :: istart, iend
+integer(i8) :: var_size
+integer :: num_dims
+integer, allocatable :: counts(:)
+integer, allocatable :: slice_start(:) ! slice of variable
+integer :: ret, var_id, unlim_dimID
+logical :: missing_possible
+
+missing_possible = get_missing_ok_status()
 
 istart = 1
 
@@ -861,20 +851,48 @@ do i = start_var, end_var
    var_size = get_variable_size(domain, i)
    iend = istart + var_size - 1
 
-   ! number of dimensions and length of each
-   allocate(dims(get_io_num_dims(domain, i)))
+   ! number of dimensions and length the variable
+   num_dims = get_io_num_dims(domain, i)
+   allocate(counts(num_dims))
+   allocate(slice_start(num_dims))
+   counts(:) = 1
 
-   dims = get_io_dim_lengths(domain, i)
+   slice_start(:) = 1 ! default to read all dimensions start at 1
+
+   if (has_unlimited_dim(domain)) then
+
+      counts(num_dims) = 1 ! one slice of unlimited dimesion
+      counts(1:num_dims-1) = get_dim_lengths(domain, i) ! the state
+      
+      ! read latest time slice - hack to get started with tiegcm
+      ! not sure if it will always be the last time slice
+      ret = nf90_inquire(ncfile_in, unlimitedDimID=unlim_dimID)
+      call nc_check(ret, 'read_variables: nf90_inquire', 'unlimitedDimID')
+
+      if (unlim_dimID /= -1) then ! unlimited dimension exists
+         ret = nf90_inquire_dimension(ncfile_in, unlim_dimID, len=slice_start(num_dims))
+         call nc_check(ret, 'read_variables: nf90_inquire_dimension', 'unlimitedDim length')
+         if (slice_start(num_dims) == 0) slice_start(num_dims) = 1 ! newly created file
+      else  ! file does not have an unlimited dimension because it was created by DART
+          slice_start(num_dims) = 1
+      endif
+
+   else
+
+      counts(1:get_num_dims(domain,i)) = get_dim_lengths(domain, i) ! the state
+   endif
 
    ret = nf90_inq_varid(ncfile_in, get_variable_name(domain, i), var_id)
    call nc_check(ret, 'read_variables: nf90_inq_varid',trim(get_variable_name(domain,i)) )
 
-   ret = nf90_get_var(ncfile_in, var_id, var_block(istart:iend), count=dims)
+   ret = nf90_get_var(ncfile_in, var_id, var_block(istart:iend), count=counts, start=slice_start)
    call nc_check(ret, 'read_variables: nf90_get_var',trim(get_variable_name(domain,i)) )
+
+   if (missing_possible) call set_dart_missing_value(var_block(istart:iend), domain, i)
 
    istart = istart + var_size
 
-   deallocate(dims)
+   deallocate(counts, slice_start)
 
 enddo
 
@@ -894,14 +912,15 @@ subroutine read_transpose_single_task(state_ens_handle, name_handle, domain, dar
 type(ensemble_type),      intent(inout) :: state_ens_handle
 type(stage_metadata_type), intent(in)   :: name_handle
 integer,                   intent(in)   :: domain
-integer,                  intent(inout) :: dart_index !< This is for multiple domains
+integer(i8),              intent(inout) :: dart_index !< This is for multiple domains
 
 real(r8), allocatable :: vector(:)
 
 integer :: ncfile !< netcdf input file identifier
 character(len=256) :: netcdf_filename
 
-integer :: block_size , istart, iend , copy , start_var
+integer(i8) :: block_size, istart, iend
+integer :: copy , start_var
 
 istart     = dart_index ! position in state_ens_handle%vars
 block_size = 0
@@ -955,7 +974,7 @@ subroutine transpose_write_single_task(state_ens_handle, name_handle, domain, &
 type(ensemble_type),       intent(inout) :: state_ens_handle
 type(stage_metadata_type), intent(in)    :: name_handle
 integer,                   intent(in)    :: domain
-integer,                   intent(inout) :: dart_index
+integer(i8),               intent(inout) :: dart_index
 logical,                   intent(in)    :: write_single_precision
 
 ! netcdf variables
@@ -964,7 +983,8 @@ character(len=256) :: netcdf_filename_out
 
 real(r8), allocatable :: vector(:)
 
-integer :: block_size , istart, iend , copy , start_var, end_var
+integer(i8) :: block_size , istart, iend
+integer :: copy , start_var, end_var
 integer :: time_owner, time_owner_index
 logical :: clamp_vars, force_copy
 type(time_type) :: dart_time
@@ -1003,7 +1023,10 @@ COPIES: do copy = 1, state_ens_handle%my_num_copies
          call get_ensemble_time(state_ens_handle, time_owner_index, dart_time)
          ncfile_out = create_and_open_state_output(name_handle, domain, copy, &
                                                    dart_time, write_single_precision)
-
+         !>@todo if multiple domains exist in the same file, only the variables
+         !>      from the first domain are created by create_and_open_state_output()
+         !>      and since the file exists, the variables for the additional domains
+         !>      never get defined in the netCDF file.
       endif
    endif
 
@@ -1058,7 +1081,7 @@ subroutine read_transpose_multi_task(state_ens_handle, name_handle, domain, &
 type(ensemble_type),       intent(inout) :: state_ens_handle
 type(stage_metadata_type), intent(in)    :: name_handle
 integer,                   intent(in)    :: domain
-integer,                   intent(inout) :: dart_index !< This is for multiple domains
+integer(i8),               intent(inout) :: dart_index !< This is for multiple domains
 logical,                   intent(in)    :: read_var_by_var !< Read one variable at a time 
 
 integer :: start_var, end_var   !< start/end variables in a read block
@@ -1066,15 +1089,15 @@ integer :: start_rank           !< starting rank containg variable of interest
 integer :: recv_start, recv_end !< start/end variables for receives
 integer :: send_start, send_end !< start/end variables for sends
 integer :: recv_pe, sending_pe  !< PEs sending and receiving data
-integer :: elm_count            !< number of elements to send
-integer :: block_size           !< number of state elements in a block
-integer :: istart, iend         !< position in state vector copies array
+integer(i8) :: elm_count        !< number of elements to send
+integer(i8) :: block_size       !< number of state elements in a block
+integer(i8) :: istart, iend     !< position in state vector copies array
 integer :: ens_size             !< ensemble size
 integer :: my_pe                !< task or pe?
 integer :: ensemble_member      !< the ensmeble_member you are receiving.
 integer :: my_copy              !< which copy a pe is reading, from 1 to ens_handle%num_copies
 integer :: c                    !< copies_read loop index
-integer :: start_point
+integer(i8) :: start_point
 integer :: copies_read
 integer :: num_state_variables
 integer :: dummy_loop
@@ -1240,19 +1263,19 @@ subroutine transpose_write_multi_task(state_ens_handle, name_handle, domain, &
 type(ensemble_type),       intent(inout) :: state_ens_handle
 type(stage_metadata_type), intent(in)    :: name_handle
 integer,                   intent(in)    :: domain
-integer,                   intent(inout) :: dart_index
+integer(i8),               intent(inout) :: dart_index
 logical,                   intent(in)    :: write_var_by_var !< Write a single variable, one at a time
 logical,                   intent(in)    :: write_single_precision
 
-integer :: i
+integer(i8) :: i
 integer :: start_var, end_var !< start/end variables in a read block
 integer :: my_pe !< task or pe?
 integer :: recv_pe, sending_pe
 real(r8), allocatable :: var_block(:) !< for reading in variables
-integer :: block_size !< number of variables in a block
-integer :: elm_count !< number of elements to send
-integer :: istart!< position in state_ens_handle%copies
-integer :: iend
+integer(i8) :: block_size !< number of variables in a block
+integer(i8) :: elm_count !< number of elements to send
+integer(i8) :: istart!< position in state_ens_handle%copies
+integer(i8) :: iend
 integer :: ens_size !< ensemble size
 integer :: start_rank
 integer :: recv_start, recv_end
@@ -1481,9 +1504,9 @@ if ( minclamp /= missing_r8 ) then ! missing_r8 is flag for no clamping
           variable = max(minclamp, variable)
        endif
    
-      write(msgstring, *) trim(varname)// ' lower bound ', minclamp, ' min value ', my_minmax(1)
-      call error_handler(E_ALLMSG, 'clamp_variable', msgstring, &
-                         source,revision,revdate)
+! TJH TOO VERBOSE      write(msgstring, *) trim(varname)// ' lower bound ', minclamp, ' min value ', my_minmax(1)
+! TJH TOO VERBOSE      call error_handler(E_ALLMSG, 'clamp_variable', msgstring, &
+! TJH TOO VERBOSE                         source)
    endif
 endif ! min range set
 
@@ -1497,9 +1520,9 @@ if ( maxclamp /= missing_r8 ) then ! missing_r8 is flag for no clamping
          variable = min(maxclamp, variable)
       endif
 
-      write(msgstring, *) trim(varname)// ' upper bound ', maxclamp, ' max value ', my_minmax(2)
-      call error_handler(E_ALLMSG, 'clamp_variable', msgstring, &
-                         source,revision,revdate)
+! TJH TOO VERBOSE      write(msgstring, *) trim(varname)// ' upper bound ', maxclamp, ' max value ', my_minmax(2)
+! TJH TOO VERBOSE      call error_handler(E_ALLMSG, 'clamp_variable', msgstring, &
+! TJH TOO VERBOSE                         source)
    endif
 
 endif ! max range set
@@ -1523,9 +1546,15 @@ integer,  intent(in)    :: domain
 logical,  intent(in)    :: do_file_clamping
 logical,  intent(in)    :: force_copy
 
-integer :: istart, iend
-integer :: i, ret, var_id, var_size
-integer, allocatable :: dims(:)
+integer(i8) :: istart, iend, var_size
+integer :: i, ret, var_id, unlim_dimID
+integer :: num_dims
+integer, allocatable :: counts(:)
+integer, allocatable :: slice_start(:) ! slice of variable
+
+logical :: missing_possible
+
+missing_possible = get_missing_ok_status()
 
 !>@todo reduce output in log file?
 ! clamp_variable() currently prints out a line per variable per ensemble member.
@@ -1552,18 +1581,46 @@ do i = start_var, end_var
          call clamp_variable(domain, i, var_block(istart:iend))
       endif
      
-      ! number of dimensions and length of each
-      allocate(dims(get_io_num_dims(domain, i)))
+      ! number of dimensions and length of each variable
+      num_dims = get_io_num_dims(domain, i)
+      allocate(counts(num_dims))
+      allocate(slice_start(num_dims))
+      slice_start(:) = 1 ! default to read all dimensions starting at 1
+      counts(:) = 1
 
-      dims = get_io_dim_lengths(domain, i)
+      if (has_unlimited_dim(domain)) then
 
+         counts(num_dims) = 1 ! one slice of unlimited dimesion
+         counts(1:get_num_dims(domain, i)) = get_dim_lengths(domain, i)
+
+         ! write the latest time slice - HK hack to get started with tiegcm
+         ! not sure if it will always be the last time slice
+         ret = nf90_inquire(ncid, unlimitedDimID=unlim_dimID)
+         call nc_check(ret, 'write_variables: nf90_inquire', 'unlimitedDimID')
+         if (unlim_dimID /= -1) then ! unlimited dimension exists
+            ret = nf90_inquire_dimension(ncid, unlim_dimID, len=slice_start(num_dims))
+            call nc_check(ret, 'write_variables: nf90_inquire dimension', 'unlimitedDim length')
+            if (slice_start(num_dims) == 0) slice_start(num_dims) = 1 ! newly created file
+         else  ! file does not have an unlimited dimension because it was created by DART
+            slice_start(num_dims) = 1
+         endif
+
+      else
+
+         counts(1:get_num_dims(domain, i)) = get_dim_lengths(domain, i)
+      endif
+
+
+!>@todo FIXME, the first variable in the second domain is not found when using coamps_nest.
       ret = nf90_inq_varid(ncid, trim(get_variable_name(domain, i)), var_id)
-      call nc_check(ret, 'write_variables:', 'getting variable "'//trim(get_variable_name(domain,i))//'"')
+      call nc_check(ret, 'write_variables:', 'nf90_inq_varid "'//trim(get_variable_name(domain,i))//'"')
 
-      ret = nf90_put_var(ncid, var_id, var_block(istart:iend), count=dims)
-      call nc_check(ret, 'write_variables:', 'writing "'//trim(get_variable_name(domain,i))//'"')
+      if (missing_possible) call set_model_missing_value(var_block(istart:iend), domain, i)
 
-      deallocate(dims)
+      ret = nf90_put_var(ncid, var_id, var_block(istart:iend), count=counts, start=slice_start)
+      call nc_check(ret, 'write_variables:', 'nf90_put_var "'//trim(get_variable_name(domain,i))//'"')
+
+      deallocate(counts, slice_start)
    endif
 
    istart = istart + var_size
@@ -1595,6 +1652,8 @@ type(time_type),           intent(in) :: dart_time
 logical,                   intent(in) :: single_precision_output
 integer :: ncfile_out
 
+character(len=*), parameter :: routine = 'create_and_open_state_output'
+
 integer :: ret
 integer :: create_mode
 integer :: i, j
@@ -1609,41 +1668,43 @@ character(len=256) :: filename
 filename = get_restart_filename(name_handle, copy_number, dom_id)
 
 write(msgstring,*) 'Creating output file ', trim(filename)
-call error_handler(E_ALLMSG,'create_and_open_state_output:', msgstring)
+call error_handler(E_ALLMSG, routine, msgstring)
 
 ! What file options do you want?
 create_mode = ior(NF90_CLOBBER, NF90_64BIT_OFFSET)
 ret = nf90_create(filename, create_mode, ncfile_out)
-call nc_check(ret, 'create_and_open_state_output: creating', trim(filename))
+call nc_check(ret, routine, 'nf90_create "'//trim(filename)//'"')
 
 ret = nf90_enddef(ncfile_out)
-call nc_check(ret, 'create_and_open_state_output', 'end define mode')
+call nc_check(ret, routine, 'end define mode')
 
 ! write grid information
 call nc_write_model_atts(ncfile_out, dom_id)
-call nc_check(nf90_Redef(ncfile_out),'create_and_open_state_output',   'redef ')
+call nc_check(nf90_Redef(ncfile_out), routine, 'redef ')
 
 ! filename discription
-call nc_write_file_information(ncfile_out, filename, get_file_description(name_handle, copy_number, dom_id))
-
+call nc_write_file_information(ncfile_out, filename, &
+          get_file_description(name_handle, copy_number, dom_id))
 
 ! revision information
 call nc_write_revision_info(ncfile_out)
 
 ! clamping information
-call nc_write_global_att_clamping(ncfile_out, copy_number, dom_id, from_scratch=.true.)
-
+call nc_write_global_att_clamping(ncfile_out, copy_number, dom_id, &
+          from_scratch=.true.)
 
 ! define dimensions, loop around unique dimensions
 do i = 1, get_io_num_unique_dims(dom_id)
    if ( trim(get_io_unique_dim_name(dom_id, i)) == 'time' ) then
       ret = nf90_def_dim(ncfile_out, 'time', NF90_UNLIMITED, new_dimid)
    else
-      ret = nf90_def_dim(ncfile_out, get_io_unique_dim_name(dom_id, i), get_io_unique_dim_length(dom_id, i), new_dimid)
+      ret = nf90_def_dim(ncfile_out, get_io_unique_dim_name(dom_id, i), &
+                       get_io_unique_dim_length(dom_id, i), new_dimid)
    endif
    !>@todo if we already have a unique names we can take this test out
+   !HK no you can not, because nc_write_model_atts can create dimemsions.
    if(ret /= NF90_NOERR .and. ret /= NF90_ENAMEINUSE) then
-      call nc_check(ret, 'create_and_open_state_output', &
+      call nc_check(ret, routine, &
               'defining dimensions'//trim(get_io_unique_dim_name(dom_id, i)))
    endif
 enddo
@@ -1666,13 +1727,14 @@ do i = 1, get_num_variables(dom_id) ! loop around state variables
       ! query the dimension ids
       do j = 1, ndims
          ret = nf90_inq_dimid(ncfile_out, get_dim_name(dom_id, i, j), dimids(j))
-         call nc_check(ret, 'create_and_open_state_output', 'querying dimensions')
+         call nc_check(ret, routine, 'querying dimensions')
       enddo
   
       ! define variable name and attributes
+      write(msgstring,*) '"'//trim(get_variable_name(dom_id, i))//'"'
       ret = nf90_def_var(ncfile_out, trim(get_variable_name(dom_id, i)), &
                          xtype=xtype, dimids=dimids(1:ndims), varid=new_varid)
-      call nc_check(ret, 'create_and_open_state_output', 'defining variable')
+      call nc_check(ret, routine, 'defining variable '//trim(msgstring))
   
       call set_var_id(dom_id, i, new_varid)
   
@@ -1683,10 +1745,9 @@ do i = 1, get_num_variables(dom_id) ! loop around state variables
 enddo
 
 ret = nf90_enddef(ncfile_out)
-call nc_check(ret, 'create_and_open_state_output', 'end define mode')
+call nc_check(ret, routine, 'nf90_enddef end define mode')
 
 call write_model_time(ncfile_out, dart_time)
-
 
 end function create_and_open_state_output
 
@@ -1719,7 +1780,8 @@ if ( get_short_name(domid, varid) /= ' ' ) then
 endif
 
 ! check to see if template file has missing value attributes
-if ( get_has_missing_value(domid, varid) ) then
+if ( get_has_missing_value(domid, varid) .or. &
+     get_has_FillValue(    domid, varid) ) then
    select case ( get_xtype(domid, varid) )
       case ( NF90_INT )
          call nc_write_missing_value_int(ncFileID, filename, ncVarID, domid, varid)
@@ -1897,14 +1959,10 @@ call DATE_AND_TIME(crdate,crtime,crzone,values)
 write(str1,'(''YYYY MM DD HH MM SS = '',i4,5(1x,i2.2))') &
                   values(1), values(2), values(3), values(5), values(6), values(7)
 
-call nc_check(nf90_put_att(ncFileID, NF90_GLOBAL, 'DART_creation_date' ,str1    ), &
+call nc_check(nf90_put_att(ncFileID, NF90_GLOBAL, 'DART_creation_date', str1), &
            'nc_write_revision_info', 'creation put ')
-call nc_check(nf90_put_att(ncFileID, NF90_GLOBAL, 'DART_source'  ,source  ), &
+call nc_check(nf90_put_att(ncFileID, NF90_GLOBAL, 'DART_source', source), &
            'nc_write_revision_info', 'source put ')
-call nc_check(nf90_put_att(ncFileID, NF90_GLOBAL, 'DART_revision',revision), &
-           'nc_write_revision_info', 'revision put ')
-call nc_check(nf90_put_att(ncFileID, NF90_GLOBAL, 'DART_revdate' ,revdate ), &
-           'nc_write_revision_info', 'revdate put ')
 
 end subroutine nc_write_revision_info
 
@@ -1977,7 +2035,7 @@ integer,          intent(in) :: ncVarID
 integer,          intent(in) :: domid
 integer,          intent(in) :: varid
 
-real(r8) :: missingValR8, spvalR8
+real(digits12) :: missingValR8, spvalR8
 
 call get_missing_value(domid, varid, missingValR8)
 if (missingValR8 /= MISSING_R8) then
@@ -2039,9 +2097,9 @@ subroutine send_to_waiting_task(state_ens_handle, recv_pe, start, elm_count, blo
 
 type(ensemble_type), intent(in) :: state_ens_handle
 integer,             intent(in) :: recv_pe ! receiving pe
-integer,             intent(in) :: start ! start in variable block on sender.
-integer,             intent(in) :: elm_count ! how many elements
-integer,             intent(in) :: block_size ! size of info on sender - the receiver only
+integer(i8),         intent(in) :: start ! start in variable block on sender.
+integer(i8),         intent(in) :: elm_count ! how many elements
+integer(i8),         intent(in) :: block_size ! size of info on sender - the receiver only
                                               ! gets part of this.
 real(r8),            intent(in) :: variable_block(block_size) ! variable info
 
@@ -2083,8 +2141,8 @@ subroutine send_variables_to_write(state_ens_handle, recv_pe, &
 type(ensemble_type), intent(in) :: state_ens_handle
 integer,             intent(in) :: recv_pe ! receiving pe
 integer,             intent(in) :: ensemble_member
-integer,             intent(in) :: start  ! start in copies array on sender.
-integer,             intent(in) :: finish ! end in copies array on sender
+integer(i8),         intent(in) :: start  ! start in copies array on sender.
+integer(i8),         intent(in) :: finish ! end in copies array on sender
 
 real(r8), allocatable :: buffer(:) ! for making send array contiguous
 
@@ -2121,8 +2179,8 @@ subroutine wait_to_receive(state_ens_handle, recv_pe, &
 type(ensemble_type), intent(inout) :: state_ens_handle
 integer,             intent(in)    :: recv_pe ! receiving pe
 integer,             intent(in)    :: ensemble_member
-integer,             intent(in)    :: start  ! start in copies array on sender.
-integer,             intent(in)    :: finish ! end in copies array on sender
+integer(i8),         intent(in)    :: start  ! start in copies array on sender.
+integer(i8),         intent(in)    :: finish ! end in copies array on sender
 
 real(r8), allocatable :: buffer(:) ! for making send array contiguous
 
@@ -2158,9 +2216,9 @@ subroutine recv_variables_to_write(state_ens_handle, sending_pe, start, &
 
 type(ensemble_type), intent(in)    :: state_ens_handle
 integer,             intent(in)    :: sending_pe !! sending_pe
-integer,             intent(in)    :: start      !! start in vars array on receiver.
-integer,             intent(in)    :: elm_count  !! how many elements
-integer,             intent(in)    :: block_size !! size of info on sender - the receiver only gets part of this.
+integer(i8),         intent(in)    :: start      !! start in vars array on receiver.
+integer(i8),         intent(in)    :: elm_count  !! how many elements
+integer(i8),         intent(in)    :: block_size !! size of info on sender - the receiver only gets part of this.
 real(r8),            intent(inout) :: variable_block(block_size) !! variable info
 
 real(r8), allocatable :: buffer(:) !! for making send array contiguous
@@ -2196,7 +2254,7 @@ integer,                intent(in) :: timeindex
 
 integer, dimension(NF90_MAX_VAR_DIMS) :: dim_lengths
 integer, dimension(NF90_MAX_VAR_DIMS) :: start_point
-integer :: istart, iend
+integer(i8) :: istart, iend
 integer :: ivar, jdim
 integer :: ndims
 integer :: ret ! netcdf return code
@@ -2479,12 +2537,12 @@ end subroutine write_extra_attributes
 !------------------------------------------------------------------
 !> helper function to return the netcdf dimension id's and lengths
 
-subroutine get_dimension_info(copy, dom_id, var_id, time, is_extra, numdims, start, lengths)
+subroutine get_dimension_info(copy, dom_id, var_id, timestep, is_extra, numdims, start, lengths)
 
 integer, intent(in)  :: copy 
 integer, intent(in)  :: dom_id 
 integer, intent(in)  :: var_id 
-integer, intent(in)  :: time
+integer, intent(in)  :: timestep
 logical, intent(in)  :: is_extra
 integer, intent(out) :: numdims
 integer, intent(out) :: start  (NF90_MAX_VAR_DIMS)
@@ -2511,9 +2569,9 @@ do jdim = 1, numdims
       if ( is_extra ) then 
          ! extra copies have time but it might not be the jdim dimension
          dcount        = dcount + 1
-         start(dcount) = time! time
+         start(dcount) = timestep
       else
-         start(jdim)   = time 
+         start(jdim)   = timestep 
       endif
 
    else if ( dimname == 'member') then
@@ -2574,13 +2632,13 @@ if( ret == 0 ) then ! has member id
       if (member_size < 1) then
          write(msgstring,  *) 'input file contains ', member_size, ' ensemble members; '
          write(msgstring2, *) 'requires at least 1 member to perturb'
-         call error_handler(E_ERR, 'check_singlefile_member_info: ', msgstring, source, revision, revdate)
+         call error_handler(E_ERR, 'check_singlefile_member_info: ', msgstring, source)
       endif
 
    else if (member_size < ens_size) then
       write(msgstring,  *) 'input file only contains ', member_size, ' ensemble members; '
       write(msgstring2, *) 'requested ensemble size is ', ens_size
-      call error_handler(E_ERR, 'check_singlefile_member_info: ', msgstring, source, revision, revdate)
+      call error_handler(E_ERR, 'check_singlefile_member_info: ', msgstring, source)
 
    endif
 
@@ -2590,7 +2648,7 @@ else
    if ( .not. do_pert ) then
       write(msgstring,  *) 'input file does not contain a "member" dimension; '
       write(msgstring2, *) 'cannot read in an ensemble of values'
-      call error_handler(E_ERR, 'check_singlefile_member_info: ', msgstring, source, revision, revdate)
+      call error_handler(E_ERR, 'check_singlefile_member_info: ', msgstring, source)
    endif
 
 endif
@@ -2656,17 +2714,17 @@ call nc_check(NF90_Inquire_Dimension(my_ncid, unlimitedDimID, varname, nTlen), &
 
 if ( ndims /= 1 ) then
    write(msgstring,*)'"time" expected to be rank-1' 
-   call error_handler(E_WARN,'nc_get_tindex',msgstring,source,revision,revdate)
+   call error_handler(E_WARN,'nc_get_tindex',msgstring,source)
    timeindex = timeindex -   1
 endif
 if ( dimids(1) /= unlimitedDimID ) then
    write(msgstring,*)'"time" must be the unlimited dimension'
-   call error_handler(E_WARN,'nc_get_tindex',msgstring,source,revision,revdate)
+   call error_handler(E_WARN,'nc_get_tindex',msgstring,source)
    timeindex = timeindex -  10
 endif
 if ( timeindex < -1 ) then
    write(msgstring,*)'trouble deep ... can go no farther. Stopping.'
-   call error_handler(E_ERR,'nc_get_tindex',msgstring,source,revision,revdate)
+   call error_handler(E_ERR,'nc_get_tindex',msgstring,source)
 endif
 
 ! convert statetime to time base of "days since ..."
@@ -2676,14 +2734,14 @@ if (ncFileID%Ntimes < 1) then          ! First attempt at writing a state ...
 
    write(msgstring,*)'current unlimited  dimension length',nTlen, &
                      'for ncFileID ',trim(ncFileID%fname)
-   call error_handler(E_DBG,'nc_get_tindex',msgstring,source,revision,revdate)
+   call error_handler(E_DBG,'nc_get_tindex',msgstring,source)
    write(msgstring,*)'current time array dimension length',ncFileID%Ntimes
-   call error_handler(E_DBG,'nc_get_tindex',msgstring,source,revision,revdate)
+   call error_handler(E_DBG,'nc_get_tindex',msgstring,source)
 
    nTlen = nc_append_time(ncFileID, statetime)
 
    write(msgstring,*)'Initial time array dimension length',ncFileID%Ntimes
-   call error_handler(E_DBG,'nc_get_tindex',msgstring,source,revision,revdate)
+   call error_handler(E_DBG,'nc_get_tindex',msgstring,source)
 
 endif
 
@@ -2707,17 +2765,17 @@ if ( timeindex <= 0 ) then   ! There was no match. Either the model
    if (statetime < ncFileID%times(1) ) then
 
       call error_handler(E_DBG,'nc_get_tindex', &
-              'Model time precedes earliest netCDF time.', source,revision,revdate)
+              'Model time precedes earliest netCDF time.', source)
 
       write(msgstring,*)'          model time (days, seconds) ',days,secs
-      call error_handler(E_DBG,'nc_get_tindex',msgstring,source,revision,revdate)
+      call error_handler(E_DBG,'nc_get_tindex',msgstring,source)
 
       call get_time(ncFileID%times(1),secs,days)
       write(msgstring,*)'earliest netCDF time (days, seconds) ',days,secs
-      call error_handler(E_DBG,'nc_get_tindex',msgstring,source,revision,revdate)
+      call error_handler(E_DBG,'nc_get_tindex',msgstring,source)
 
       call error_handler(E_ERR,'nc_get_tindex', &
-              'Model time precedes earliest netCDF time.', source,revision,revdate)
+              'Model time precedes earliest netCDF time.', source)
       timeindex = -2
 
    else if ( statetime < ncFileID%times(ncFileID%Ntimes) ) then  
@@ -2726,20 +2784,20 @@ if ( timeindex <= 0 ) then   ! There was no match. Either the model
       ! This is very bad.
 
       write(msgstring,*)'model time does not match any netCDF time.'
-      call error_handler(E_DBG,'nc_get_tindex',msgstring,source,revision,revdate)
+      call error_handler(E_DBG,'nc_get_tindex',msgstring,source)
       write(msgstring,*)'model time (days, seconds) is ',days,secs
-      call error_handler(E_DBG,'nc_get_tindex',msgstring,source,revision,revdate)
+      call error_handler(E_DBG,'nc_get_tindex',msgstring,source)
 
       BadLoop : do i = 1,ncFileId%Ntimes   ! just find times to print before exiting
 
          if ( ncFileId%times(i) > statetime ) then
             call get_time(ncFileID%times(i-1),secs,days)
             write(msgstring,*)'preceding netCDF time (days, seconds) ',days,secs
-            call error_handler(E_DBG,'nc_get_tindex',msgstring,source,revision,revdate)
+            call error_handler(E_DBG,'nc_get_tindex',msgstring,source)
 
             call get_time(ncFileID%times(i),secs,days)
             write(msgstring,*)'subsequent netCDF time (days, seconds) ',days,secs
-            call error_handler(E_ERR,'nc_get_tindex',msgstring,source,revision,revdate)
+            call error_handler(E_ERR,'nc_get_tindex',msgstring,source)
             timeindex = -3
             exit BadLoop
          endif
@@ -2752,7 +2810,7 @@ if ( timeindex <= 0 ) then   ! There was no match. Either the model
 
       write(msgstring,'(''appending model time (d,s) ('',i8,i5,'') as index '',i6, '' in ncFileID '',i10)') &
           days,secs,timeindex,my_ncid
-      call error_handler(E_DBG,'nc_get_tindex',msgstring,source,revision,revdate)
+      call error_handler(E_DBG,'nc_get_tindex',msgstring,source)
 
    endif
    
@@ -2770,11 +2828,11 @@ end function nc_get_tindex
 !> This REQUIRES that "time" is a coordinate variable AND it is the
 !> unlimited dimension. If not ... bad things happen.
 
-function nc_append_time(ncFileID, time) result(lngth)
+function nc_append_time(ncFileID, dart_time) result(lngth)
 
 type(netcdf_file_type), intent(inout) :: ncFileID
-type(time_type), intent(in) :: time
-integer                     :: lngth
+type(time_type),        intent(in)    :: dart_time
+integer                               :: lngth
 
 integer  :: nDimensions, nVariables, nAttributes, unlimitedDimID
 integer  :: TimeVarID
@@ -2799,10 +2857,10 @@ call nc_check(NF90_Inquire_Variable(my_ncid, TimeVarID, varname, xtype, ndims, d
              'nc_append_time', 'inquire_variable time')
 
 if ( ndims /= 1 ) call error_handler(E_ERR,'nc_append_time', &
-           '"time" expected to be rank-1',source,revision,revdate)
+           '"time" expected to be rank-1',source)
 
 if ( dimids(1) /= unlimitedDimID ) call error_handler(E_ERR,'nc_append_time', &
-           'unlimited dimension expected to be slowest-moving',source,revision,revdate)
+           'unlimited dimension expected to be slowest-moving',source)
 
 ! make sure the mirror and the netcdf file are in sync
 call nc_check(NF90_Inquire_Dimension(my_ncid, unlimitedDimID, varname, lngth ), &
@@ -2812,14 +2870,14 @@ if (lngth /= ncFileId%Ntimes) then
    write(msgstring,*)'netCDF file has length ',lngth,' /= mirror has length of ',ncFileId%Ntimes
    call error_handler(E_ERR,'nc_append_time', &
            'time mirror and netcdf file time dimension out-of-sync', &
-           source,revision,revdate,text2=msgstring)
+           source,text2=msgstring)
 endif
 
 ! make sure the time mirror can handle another entry.
 if ( lngth == ncFileID%NtimesMAX ) then   
 
    write(msgstring,*)'doubling mirror length of ',lngth,' of ',ncFileID%fname
-   call error_handler(E_DBG,'nc_append_time',msgstring,source,revision,revdate)
+   call error_handler(E_DBG,'nc_append_time',msgstring,source)
 
    allocate(temptime(ncFileID%NtimesMAX), tempRtime(ncFileID%NtimesMAX)) 
    temptime  = ncFileID%times            ! preserve
@@ -2838,7 +2896,7 @@ if ( lngth == ncFileID%NtimesMAX ) then
 
 endif
 
-call get_time(time, secs, days)         ! get time components to append
+call get_time(dart_time, secs, days)    ! get time components to append
 realtime = days + secs/86400.0_digits12 ! time base is "days since ..."
 lngth           = lngth + 1             ! index of new time 
 ncFileID%Ntimes = lngth                 ! new working length of time mirror
@@ -2846,12 +2904,12 @@ ncFileID%Ntimes = lngth                 ! new working length of time mirror
 call nc_check(nf90_put_var(my_ncid, TimeVarID, realtime, start=(/ lngth /) ), &
            'nc_append_time', 'put_var time')
 
-ncFileID%times( lngth) = time
+ncFileID%times( lngth) = dart_time
 ncFileID%rtimes(lngth) = realtime
 
 write(msgstring,*)'ncFileID (',my_ncid,') : "',trim(varname), &
          '" (should be "time") has length ',lngth, ' appending t= ',realtime
-call error_handler(E_DBG,'nc_append_time',msgstring,source,revision,revdate)
+call error_handler(E_DBG,'nc_append_time',msgstring,source)
 
 end function nc_append_time
 
@@ -2947,9 +3005,9 @@ function num_elements_on_pe(pe, start_rank, block_size) result(elm_count)
 
 integer, intent(in) :: pe
 integer, intent(in) :: start_rank
-integer, intent(in) :: block_size
+integer(i8), intent(in) :: block_size
 
-integer :: elm_count, remainder
+integer(i8) :: elm_count, remainder
 
 elm_count = block_size/task_count()
 remainder = mod(block_size, task_count())
@@ -3001,12 +3059,106 @@ end function find_start_point
 
 
 !--------------------------------------------------------
+!> replace the netCDF missing_value or _FillValue with
+!> the DART missing value.
+
+subroutine set_dart_missing_value(array, domain, variable)
+
+real(r8), intent(inout) :: array(:)
+integer,  intent(in)    :: domain
+integer,  intent(in)    :: variable
+
+integer        :: model_missing_valueINT
+real(r4)       :: model_missing_valueR4
+real(digits12) :: model_missing_valueR8
+
+! check to see if variable has missing value attributes
+if ( get_has_missing_value(domain, variable) ) then
+
+   select case ( get_xtype(domain, variable) )
+      case ( NF90_INT )
+         call get_missing_value(domain, variable, model_missing_valueINT)
+         where(array == model_missing_valueINT) array = MISSING_R8
+      case ( NF90_FLOAT )
+         call get_missing_value(domain, variable, model_missing_valueR4)
+         where(array == model_missing_valueR4) array = MISSING_R8
+      case ( NF90_DOUBLE )
+         call get_missing_value(domain, variable, model_missing_valueR8)
+         where(array == model_missing_valueR8) array = MISSING_R8
+   end select
+
+endif
+
+if ( get_has_FillValue(domain, variable) ) then
+
+   select case ( get_xtype(domain, variable) )
+      case ( NF90_INT )
+         call get_FillValue(domain, variable, model_missing_valueINT)
+         where(array == model_missing_valueINT) array = MISSING_R8
+      case ( NF90_FLOAT )
+         call get_FillValue(domain, variable, model_missing_valueR4)
+         where(array == model_missing_valueR4) array = MISSING_R8
+      case ( NF90_DOUBLE )
+         call get_FillValue(domain, variable, model_missing_valueR8)
+         where(array == model_missing_valueR8) array = MISSING_R8
+   end select
+
+endif
+
+end subroutine set_dart_missing_value
+
+!--------------------------------------------------------
+!> replace the DART missing value code with the 
+!> original netCDF missing_value (or _FillValue) value.
+
+subroutine set_model_missing_value(array, domain, variable)
+
+real(r8), intent(inout) :: array(:)
+integer,  intent(in)    :: domain
+integer,  intent(in)    :: variable
+
+integer        :: model_missing_valueINT
+real(r4)       :: model_missing_valueR4
+real(digits12) :: model_missing_valueR8
+
+! check to see if variable has missing value attributes
+if ( get_has_missing_value(domain, variable) ) then
+
+   select case ( get_xtype(domain, variable) )
+      case ( NF90_INT )
+         call get_missing_value(domain, variable, model_missing_valueINT)
+         where(array == MISSING_R8) array = model_missing_valueINT
+      case ( NF90_FLOAT )
+         call get_missing_value(domain, variable, model_missing_valueR4)
+         where(array == MISSING_R8) array = model_missing_valueR4
+      case ( NF90_DOUBLE )
+         call get_missing_value(domain, variable, model_missing_valueR8)
+         where(array == MISSING_R8) array = model_missing_valueR8
+   end select
+
+endif
+
+if ( get_has_FillValue(domain, variable) ) then
+
+   select case ( get_xtype(domain, variable) )
+      case ( NF90_INT )
+         call get_FillValue(domain, variable, model_missing_valueINT)
+         where(array == MISSING_R8)   array = model_missing_valueINT
+      case ( NF90_FLOAT )
+         call get_FillValue(domain, variable, model_missing_valueR4)
+         where(array == MISSING_R8)   array = model_missing_valueR4
+      case ( NF90_DOUBLE )
+         call get_FillValue(domain, variable, model_missing_valueR8)
+         where(array == MISSING_R8)   array = model_missing_valueR8
+   end select
+
+endif
+
+end subroutine set_model_missing_value
+
+!--------------------------------------------------------
+!--------------------------------------------------------
 
 !> @}
 end module direct_netcdf_mod
 
-! <next few lines under version control, do not edit>
-! $URL$
-! $Id$
-! $Revision$
-! $Date$

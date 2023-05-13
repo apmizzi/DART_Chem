@@ -2,12 +2,11 @@
 ! by UCAR, "as is", without charge, subject to all terms of use at
 ! http://www.image.ucar.edu/DAReS/DART/DART_download
 !
-! $Id$
 
 ! Fortran has a limit of 32 characters for variable names. Hence,
 ! each column can be at most 32 characters wide.
 ! xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
-! BEGIN DART PREPROCESS KIND LIST
+! BEGIN DART PREPROCESS TYPE DEFINITIONS
 ! SAT_TEMPERATURE,                 QTY_TEMPERATURE,                COMMON_CODE
 ! SAT_TEMPERATURE_ELECTRON,        QTY_TEMPERATURE_ELECTRON,       COMMON_CODE
 ! SAT_TEMPERATURE_ION,             QTY_TEMPERATURE_ION,            COMMON_CODE
@@ -49,17 +48,16 @@
 ! COSMIC_ELECTRON_DENSITY,         QTY_ELECTRON_DENSITY
 ! GND_GPS_VTEC,		           QTY_GND_GPS_VTEC
 ! CHAMP_DENSITY,                   QTY_DENSITY
-! MIDAS_TEC,                       QTY_VERTICAL_TEC
+! MIDAS_TEC,                       QTY_VERTICAL_TEC,               COMMON_CODE
 ! SSUSI_O_N2_RATIO,                QTY_O_N2_COLUMN_DENSITY_RATIO
 ! GPS_VTEC_EXTRAP,                 QTY_VERTICAL_TEC,               COMMON_CODE
 ! SABER_TEMPERATURE,               QTY_TEMPERATURE,                COMMON_CODE
 ! AURAMLS_TEMPERATURE,             QTY_TEMPERATURE,                COMMON_CODE
-! END DART PREPROCESS KIND LIST
+! END DART PREPROCESS TYPE DEFINITIONS
 
 ! BEGIN DART PREPROCESS USE OF SPECIAL OBS_DEF MODULE
 !  use obs_def_upper_atm_mod, only : get_expected_upper_atm_density
 !  use obs_def_upper_atm_mod, only : get_expected_gnd_gps_vtec
-!  use obs_def_upper_atm_mod, only : get_expected_vtec
 !  use obs_def_upper_atm_mod, only : get_expected_O_N2_ratio
 !  use obs_def_upper_atm_mod, only : get_expected_electron_density
 ! END DART PREPROCESS USE OF SPECIAL OBS_DEF MODULE
@@ -69,8 +67,6 @@
 !      call get_expected_upper_atm_density(state_handle, ens_size, location, expected_obs, istatus)
 ! case(CHAMP_DENSITY) 
 !      call get_expected_upper_atm_density(state_handle, ens_size, location, expected_obs, istatus)
-! case(MIDAS_TEC) 
-!      call get_expected_vtec(state_handle, ens_size, location, expected_obs, istatus)
 ! case(GND_GPS_VTEC)
 !      call get_expected_gnd_gps_vtec(state_handle, ens_size, location, expected_obs, istatus)
 ! case(SSUSI_O_N2_RATIO)
@@ -83,8 +79,6 @@
 ! case(SAT_RHO) 
 !      continue
 ! case(CHAMP_DENSITY) 
-!      continue
-! case(MIDAS_TEC) 
 !      continue
 ! case(GND_GPS_VTEC)
 !      continue
@@ -99,8 +93,6 @@
 !      continue
 ! case(CHAMP_DENSITY) 
 !      continue
-! case(MIDAS_TEC) 
-!      continue
 ! case(GND_GPS_VTEC)
 !      continue
 ! case(SSUSI_O_N2_RATIO)
@@ -114,8 +106,6 @@
 !      continue
 ! case(CHAMP_DENSITY) 
 !      continue
-! case(MIDAS_TEC) 
-!      continue
 ! case(GND_GPS_VTEC)
 !      continue
 ! case(SSUSI_O_N2_RATIO)
@@ -123,10 +113,6 @@
 ! case(COSMIC_ELECTRON_DENSITY)
 !      continue
 ! END DART PREPROCESS INTERACTIVE_OBS_DEF
-
-!>@todo FIXME should the obs_def_tec_mod.f90 be incorporated here.
-!>            there are stubs for different TEC obs here, and some
-!>            in the obs_def_tec_mod.f90 ... one for all?
 
 ! BEGIN DART PREPROCESS MODULE CODE
 module obs_def_upper_atm_mod
@@ -156,14 +142,14 @@ implicit none
 private
 public :: get_expected_upper_atm_density, &
           get_expected_gnd_gps_vtec, &
-          get_expected_vtec, &
           get_expected_O_N2_ratio, &
           get_expected_electron_density
 
 ! version controlled file description for error handling, do not edit
-character(len=*), parameter :: source   = 'obs_def_upper_atm_mod.f90'
-character(len=*), parameter :: revision = ''
-character(len=*), parameter :: revdate  = ''
+character(len=256), parameter :: source   = &
+   "$URL$"
+character(len=32 ), parameter :: revision = "$Revision$"
+character(len=128), parameter :: revdate  = "$Date$"
 
 logical, save :: module_initialized = .false.
 
@@ -353,31 +339,6 @@ elsewhere
 end where
 
 end subroutine get_expected_gnd_gps_vtec
-
-!-----------------------------------------------------------------------------
-
-! Given DART state vector and a location, 
-! it computes thermospheric neutral density [Kg/m3] 
-! The istatus variable should be returned as 0 unless there is a problem
-
-subroutine get_expected_vtec(state_handle, ens_size, location, expected_obs, istatus)
-
-type(ensemble_type), intent(in) :: state_handle
-integer,             intent(in) :: ens_size
-type(location_type), intent(in) :: location
-real(r8),           intent(out) :: expected_obs(ens_size)
-integer,            intent(out) :: istatus(ens_size)
-
-
-if ( .not. module_initialized ) call initialize_module
-
-call error_handler(E_ERR, 'get_expected_vtec', 'routine needs to be written', &
-           source, revision, revdate)
-
-expected_obs = missing_r8
-istatus = 1
-
-end subroutine get_expected_vtec
 
 !-----------------------------------------------------------------------------
 
@@ -682,8 +643,3 @@ end subroutine get_expected_oxygen_ion_density
 end module obs_def_upper_atm_mod
 ! END DART PREPROCESS MODULE CODE      
 
-! <next few lines under version control, do not edit>
-! $URL$
-! $Id$
-! $Revision$
-! $Date$

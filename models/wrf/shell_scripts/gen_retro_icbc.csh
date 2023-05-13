@@ -3,8 +3,6 @@
 # DART software - Copyright UCAR. This open source software is provided
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
-#
-# DART $Id$
 
 #==================================================================
 #BSUB -J gen_retro_icbc
@@ -22,6 +20,7 @@
 #PBS -q regular               
 #PBS -o gen_retro_icbc.out                    
 #PBS -j oe                              
+#PBS -k eod                              
 #PBS -l select=5:ncpus=60:mpiprocs=60
 #PBS -V                        
 
@@ -44,7 +43,6 @@ echo "gen_retro_icbc.csh is running in `pwd`"
 set datea     = 2017042700
 set datefnl   = 2017042712 # set this appropriately #%%%#
 set paramfile = /glade2/scratch2/USERNAME/WORK_DIR/scripts/param.csh   # set this appropriately #%%%#
-set paramfile = /glade/work/thoar/DART/clean_rma_trunk/models/wrf/tutorial/scripts/param.csh
 
 source $paramfile
 
@@ -60,7 +58,7 @@ while ( 1 == 1 )
    if ( ! -d ${OUTPUT_DIR}/${datea} )  mkdir -p ${OUTPUT_DIR}/${datea}
 
    cd ${ICBC_DIR}
-   ${LINK} ${TEMPLATE_DIR}/input.nml.template input.nml
+   ${LINK} ${RUN_DIR}/input.nml input.nml
    ${REMOVE} gfs*pgrb2* *grib2
 
    #  prepare to run WPS ungrib and metgrid
@@ -176,11 +174,12 @@ EOF
       echo "2i\"                                      >! script.sed
       echo "#======================================\" >> script.sed
       echo "#PBS -N run_real\"                        >> script.sed
-      echo "#PBS -A ${CNCAR_GAU_ACCOUNT}\"            >> script.sed
+      echo "#PBS -A ${COMPUTER_CHARGE_ACCOUNT}\"      >> script.sed
       echo "#PBS -l walltime=00:05:00\"               >> script.sed
-      echo "#PBS -q ${CADVANCE_QUEUE}\"               >> script.sed
+      echo "#PBS -q ${ADVANCE_QUEUE}\"                >> script.sed
       echo "#PBS -o run_real.out\"                    >> script.sed
       echo "#PBS -j oe\"                              >> script.sed
+      echo "#PBS -k eod\"                             >> script.sed
       echo "#PBS -l select=3:ncpus=36:mpiprocs=36\"   >> script.sed
       echo "#PBS -V\"                                 >> script.sed
       echo "#======================================\" >> script.sed
@@ -218,7 +217,3 @@ end
 
 exit 0
 
-# <next few lines under version control, do not edit>
-# $URL$
-# $Revision$
-# $Date$

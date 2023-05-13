@@ -1,12 +1,12 @@
 #!/bin/csh
-
+#
 # DART software - Copyright UCAR. This open source software is provided
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
-#
+ 
 # Shell script to run the WRF model from DART input.
 # where the model advance is executed as a separate process.
-
+#
 # This script performs the following:
 # 1.  Creates a temporary directory to run a WRF realization (see options)
 # 2.  Copies or links the necessary files into the temporary directory
@@ -219,11 +219,12 @@ while($state_copy <= $num_states)     # MULTIPLE DOMAINS - we don't expect advan
 #   endif
 
    # link WRF-runtime files (required) and be.dat (if using WRF-Var)
-     ${LN} ${CENTRALDIR}/WRF_RUN/*       .
+   ${LN} ${CENTRALDIR}/WRF_RUN/*       .
 
-   # link DART namelist
-   ${COPY} ${CENTRALDIR}/input.nml       .
-
+   # Copy DART namelist if necessary
+   if ( ! -e input.nml) then
+      ${COPY} ${CENTRALDIR}/input.nml       .
+   endif
    # append LSM data from previous cycle
    if ( -e ${CENTRALDIR}/append_lsm_data ) then
       ${LN} ${CENTRALDIR}/LSM/lsm_data_${ensemble_member}.nc lsm_data.nc

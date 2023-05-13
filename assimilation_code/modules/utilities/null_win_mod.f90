@@ -1,8 +1,6 @@
 ! DART software - Copyright UCAR. This open source software is provided
 ! by UCAR, "as is", without charge, subject to all terms of use at
 ! http://www.image.ucar.edu/DAReS/DART/DART_download
-!
-! $Id$
 
 !> Window without cray pointer. Should you point the window at contigous memory?
 module window_mod
@@ -15,19 +13,12 @@ use ensemble_manager_mod, only : ensemble_type, copies_in_window, &
                                  set_num_extra_copies, &
                                  end_ensemble_manager
 
-
 implicit none
 
 private
 public :: create_mean_window, create_state_window, free_mean_window, &
           free_state_window, data_count, mean_win, state_win, current_win, &
           mean_ens_handle, NO_WINDOW, MEAN_WINDOW, STATE_WINDOW
-
-! version controlled file description for error handling, do not edit
-character(len=256), parameter :: source   = &
-   "$URL$"
-character(len=32 ), parameter :: revision = "$Revision$"
-character(len=128), parameter :: revdate  = "$Date$"
 
 integer :: data_count !! number of copies in the window
 type(ensemble_type) :: mean_ens_handle
@@ -47,9 +38,11 @@ contains
 
 !-------------------------------------------------------------
 !> Always using distributed in non-mpi case
-subroutine create_state_window(state_ens_handle)
+subroutine create_state_window(state_ens_handle, fwd_op_ens_handle, qc_ens_handle)
 
 type(ensemble_type), intent(inout) :: state_ens_handle
+type(ensemble_type), intent(inout), optional :: fwd_op_ens_handle
+type(ensemble_type), intent(inout), optional :: qc_ens_handle
 
 ! Find out how many copies to put in the window
 ! copies_in_window is not necessarily equal to ens_handle%num_copies
@@ -106,8 +99,3 @@ end subroutine free_mean_window
 !> @}
 end module window_mod
 
-! <next few lines under version control, do not edit>
-! $URL$
-! $Id$
-! $Revision$
-! $Date$

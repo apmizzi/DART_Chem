@@ -1,15 +1,13 @@
 ! DART software - Copyright UCAR. This open source software is provided
 ! by UCAR, "as is", without charge, subject to all terms of use at
 ! http://www.image.ucar.edu/DAReS/DART/DART_download
-!
-! $Id$
 
 !> Program to build an obs_sequence file from simulated observations.
 
 program perfect_model_obs
 
 use        types_mod,     only : r8, i8, metadatalength, MAX_NUM_DOMS
-use    utilities_mod,     only : register_module, error_handler, &
+use    utilities_mod,     only : error_handler, &
                                  find_namelist_in_file, check_namelist_read, &
                                  E_ERR, E_MSG, E_DBG, nmlfileunit, timestamp, &
                                  do_nml_file, do_nml_term, logfileunit, &
@@ -65,11 +63,7 @@ use mpi_utilities_mod,    only : my_task_id
 
 implicit none
 
-! version controlled file description for error handling, do not edit
-character(len=256), parameter :: source   = &
-   "$URL$"
-character(len=32 ), parameter :: revision = "$Revision$"
-character(len=128), parameter :: revdate  = "$Date$"
+character(len=*), parameter :: source = 'perfect_model_obs.f90'
 
 ! Module storage for message output
 character(len=512) :: msgstring
@@ -85,7 +79,6 @@ integer  :: async              = 0
 logical  :: trace_execution    = .false.
 logical  :: output_timestamps  = .false.
 logical  :: silence            = .false.
-logical  :: distributed_state  = .true.
 
 ! if init_time_days and seconds are negative initial time is 0, 0
 ! for no restart or comes from restart if restart exists
@@ -124,7 +117,7 @@ namelist /perfect_model_obs_nml/ read_input_state_from_file, write_output_state_
                                  trace_execution, output_timestamps,                &
                                  print_every_nth_obs, output_forward_op_errors,     &
                                  input_state_files, output_state_files,             &
-                                 single_file_in, single_file_out, distributed_state
+                                 single_file_in, single_file_out
 
 !------------------------------------------------------------------------------
 
@@ -250,11 +243,7 @@ call error_handler(E_MSG,'perfect_main',msgstring)
 
 ! Set up the ensemble storage and read in the restart file
 call trace_message('Before reading in ensemble restart file')
-if(distributed_state) then
-   call init_ensemble_manager(ens_handle, ens_size, model_size)
-else
-   call init_ensemble_manager(ens_handle, ens_size, model_size, transpose_type_in = 2)
-endif
+call init_ensemble_manager(ens_handle, ens_size, model_size)
 
 call set_num_extra_copies(ens_handle, 0)
 
@@ -268,6 +257,15 @@ has_cycling = single_file_out
 call parse_filenames(input_state_files,  input_filelist,  nfilesin)
 call parse_filenames(output_state_files, output_filelist, nfilesout)
 
+!> @todo FIXME  if nfilesout == 0 and write_output_state_to_file is .false.
+!> that shouldn't be an error.  if nfilesin == 0 and read_input_state_from_file
+!> is false, that also shouldn't be an error.  (unless you're writing the mean
+!> and sd, and then maybe we should have a different name for output of input values.)
+if (nfilesin == 0 .or. nfilesout == 0 ) then
+   msgstring = 'must specify both "input_state_files" and "output_state_files" in the namelist'
+   call error_handler(E_ERR,'perfect_main',msgstring,source)
+endif
+
 allocate(true_state_filelist(nfilesout))
 
 ! mutiple domains ( this is very unlikely to be the case, but in order to
@@ -279,15 +277,6 @@ if (nfilesout > 1) then
    enddo
 else
    true_state_filelist(1) = 'true_state.nc'
-endif
-
-!> @todo FIXME  if nfilesout == 0 and write_output_state_to_file is .false.
-!> that shouldn't be an error.  if nfilesin == 0 and read_input_state_from_file
-!> is false, that also shouldn't be an error.  (unless you're writing the mean
-!> and sd, and then maybe we should have a different name for output of input values.)
-if (nfilesin == 0 .or. nfilesout == 0 ) then
-   msgstring = 'must specify both "input_state_files" and "output_state_files" in the namelist'
-   call error_handler(E_ERR,'perfect_main',msgstring,source,revision,revdate)
 endif
 
 call io_filenames_init(file_info_input,  1, cycling=has_cycling, single_file=single_file_in)
@@ -326,13 +315,10 @@ endif
 if (my_task_id() == 0) then
    call get_time(ens_handle%time(1),secs,days)
    write(msgstring, *) 'initial model time of perfect_model member (days,seconds) ',days,secs
-   call error_handler(E_DBG,'perfect_read_restart',msgstring,source,revision,revdate)
+   call error_handler(E_DBG,'perfect_read_restart',msgstring,source)
 endif
 
 call trace_message('After reading in ensemble restart file')
-
-! Create window for forward operators
-call create_state_window(ens_handle)
 
 !>@todo FIXME this block must be supported in the single file loop with time dimension
 call trace_message('Before initializing output diagnostic file')
@@ -355,7 +341,7 @@ if(first_obs_seconds > 0 .or. first_obs_days > 0) then
    call delete_seq_head(first_obs_time, seq, all_gone)
    if(all_gone) then
       msgstring = 'All obs in sequence are before first_obs_days:first_obs_seconds'
-      call error_handler(E_ERR,'perfect_main',msgstring,source,revision,revdate)
+      call error_handler(E_ERR,'perfect_main',msgstring,source)
    endif
 endif
 
@@ -367,7 +353,7 @@ if(last_obs_seconds >= 0 .or. last_obs_days >= 0) then
    call delete_seq_tail(last_obs_time, seq, all_gone)
    if(all_gone) then
       msgstring = 'All obs in sequence are after last_obs_days:last_obs_seconds'
-      call error_handler(E_ERR,'perfect_main',msgstring,source,revision,revdate)
+      call error_handler(E_ERR,'perfect_main',msgstring,source)
    endif
 endif
 
@@ -420,7 +406,7 @@ AdvanceTime: do
       if (.not. has_cycling) then
          call error_handler(E_ERR,'filter:', &
              'advancing the model inside PMO and multiple file output not currently supported', &
-             source, revision, revdate, text2='support will be added in subsequent releases', &
+             source, text2='support will be added in subsequent releases', &
              text3='set "single_file_out=.true" for PMO to advance the model, or advance the model outside PMO')
       endif
 
@@ -485,6 +471,9 @@ AdvanceTime: do
 
    write(msgstring, '(A,I8,A)') 'Ready to evaluate up to', size(keys), ' observations'
    call trace_message(msgstring, 'perfect_model_obs:', -1)
+
+   ! Set up access to the state
+   call create_state_window(ens_handle)
 
    ! Compute the forward observation operator for each observation in set
    do j = 1, fwd_op_ens_handle%my_num_vars
@@ -581,6 +570,8 @@ AdvanceTime: do
 
    endif
 
+   ! End access to the state
+   call free_state_window(ens_handle)
 
    ! Deallocate the keys storage
    deallocate(keys)
@@ -619,9 +610,6 @@ endif
 call trace_message('After  writing state restart file if requested')
 call trace_message('Before ensemble and obs memory cleanup')
 
-! Close the windows
-call free_state_window(ens_handle)
-
 !  Release storage for ensemble
 call end_ensemble_manager(ens_handle)
 
@@ -633,7 +621,7 @@ call trace_message('After  ensemble and obs memory cleanup')
 call trace_message('Perfect_model done')
 call timestamp_message('Perfect_model done')
 
-!call error_handler(E_MSG,'perfect_main','FINISHED',source,revision,revdate)
+!call error_handler(E_MSG,'perfect_main','FINISHED',source)
 
 ! closes the log file.
 call finalize_mpi_utilities()
@@ -644,18 +632,17 @@ end subroutine perfect_main
 
 subroutine perfect_initialize_modules_used()
 
-! Standard initialization (mpi not needed to use ensemble manager
-! since we are enforcing that this run as a single task).
+! Standard initialization
 call initialize_mpi_utilities('perfect_model_obs')
 
 ! Initialize modules used that require it
-call register_module(source,revision,revdate)
 
 ! Initialize the obs sequence module
 call static_init_obs_sequence()
+
 ! Initialize the model class data now that obs_sequence is all set up
 call static_init_assim_model()
-! Initialize the model class data now that obs_sequence is all set up
+
 call state_vector_io_init()
 call initialize_qc()
 

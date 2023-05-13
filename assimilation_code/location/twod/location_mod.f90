@@ -1,8 +1,6 @@
 ! DART software - Copyright UCAR. This open source software is provided
 ! by UCAR, "as is", without charge, subject to all terms of use at
 ! http://www.image.ucar.edu/DAReS/DART/DART_download
-!
-! $Id$
 
 module location_mod
 
@@ -10,9 +8,13 @@ module location_mod
 ! The internal representation of the location is currently implemented
 ! as (x, y) from 0.0 to 1.0 in both dimensions.
 
-use      types_mod, only : r8, MISSING_R8
-use  utilities_mod, only : register_module, error_handler, E_ERR, ascii_file_format
+use      types_mod, only : r8, MISSING_R8, i8
+use  utilities_mod, only : error_handler, E_ERR, ascii_file_format
 use random_seq_mod, only : random_seq_type, init_random_seq, random_uniform
+use default_location_mod, only : has_vertical_choice, vertical_localization_on, &
+                                 get_vertical_localization_coord, &
+                                 set_vertical_localization_coord
+use ensemble_manager_mod, only : ensemble_type
 
 implicit none
 private
@@ -20,18 +22,16 @@ private
 public :: location_type, get_location, set_location, &
           set_location_missing, is_location_in_region, get_maxdist, &
           write_location, read_location, interactive_location, query_location, &
-          LocationDims, LocationName, LocationLName, get_close_obs, &
-          get_close_maxdist_init, get_close_obs_init, get_close_type, &
-          operator(==), operator(/=), get_dist, get_close_obs_destroy, &
-          vert_is_height, vert_is_pressure, vert_is_undef, vert_is_level, &
-          vert_is_surface, has_vertical_localization, &
-          set_vert, get_vert, set_which_vert
+          LocationDims, LocationName, LocationLName, LocationStorageOrder, LocationUnits, &
+          get_close_obs, get_close_maxdist_init, get_close_init, get_close_type, &
+          operator(==), operator(/=), get_dist, get_close_destroy, &
+          is_vertical, set_vertical, vertical_localization_on, &
+          set_vert, get_vert, set_which_vert, has_vertical_choice, &
+          get_close_state, &
+          convert_vertical_obs, convert_vertical_state, get_vertical_localization_coord, &
+          set_vertical_localization_coord
 
-! version controlled file description for error handling, do not edit
-character(len=256), parameter :: source   = &
-   "$URL$"
-character(len=32 ), parameter :: revision = "$Revision$"
-character(len=128), parameter :: revdate  = "$Date$"
+character(len=*), parameter :: source = 'twod/location_mod.f90'
 
 type location_type
    private
@@ -52,6 +52,8 @@ logical, save :: module_initialized = .false.
 integer,              parameter :: LocationDims = 2
 character(len = 129), parameter :: LocationName = "loc2D"
 character(len = 129), parameter :: LocationLName = "twod cyclic locations: x, y"
+character(len = 129), parameter :: LocationStorageOrder = "x, y"
+character(len = 129), parameter :: LocationUnits = " "
 
 character(len = 129) :: errstring
 
@@ -71,7 +73,6 @@ subroutine initialize_module
  
 if (module_initialized) return
 
-call register_module(source, revision, revdate)
 module_initialized = .true.
 
 end subroutine initialize_module
@@ -168,12 +169,12 @@ if ( .not. module_initialized ) call initialize_module
 
 if(x < 0.0_r8 .or. x > 1.0_r8) then
    write(errstring,*)'x (',x,') is not within range [0,1]'
-   call error_handler(E_ERR, 'set_location', errstring, source, revision, revdate)
+   call error_handler(E_ERR, 'set_location', errstring, source)
 endif
 
 if(y < 0.0_r8 .or. y > 1.0_r8) then
    write(errstring,*)'y (',y,') is not within range [0,1]'
-   call error_handler(E_ERR, 'set_location', errstring, source, revision, revdate)
+   call error_handler(E_ERR, 'set_location', errstring, source)
 endif
 
 set_location_single%x = x
@@ -195,7 +196,7 @@ if ( .not. module_initialized ) call initialize_module
 
 if (size(list) < 2) then
    write(errstring,*)'requires 2 input values'
-   call error_handler(E_ERR, 'set_location', errstring, source, revision, revdate)
+   call error_handler(E_ERR, 'set_location', errstring, source)
 endif
 
 set_location_array = set_location_single(list(1), list(2))
@@ -245,7 +246,7 @@ select case(attr)
    query_location = loc%y
  case default
    call error_handler(E_ERR, 'query_location; twod', &
-         'Only x or y are legal attributes to request from location', source, revision, revdate)
+         'Only x or y are legal attributes to request from location', source)
 end select
 
 end function query_location
@@ -291,8 +292,7 @@ endif
 ! to a file, and you can't have binary format set.
 if (.not. ascii_file_format(fform)) then
    call error_handler(E_ERR, 'write_location', &
-      'Cannot use string buffer with binary format', &
-       source, revision, revdate)
+      'Cannot use string buffer with binary format', source)
 endif
 
 ! format the location to be more human-friendly; which in
@@ -303,7 +303,7 @@ charlength = 25
 
 if (len(charstring) < charlength) then
    write(errstring, *) 'charstring buffer must be at least ', charlength, ' chars long'
-   call error_handler(E_ERR, 'write_location', errstring, source, revision, revdate)
+   call error_handler(E_ERR, 'write_location', errstring, source)
 endif
 
 write(charstring, '(A,F9.7,2X,F9.7)') 'X/Y: ',  loc%x, loc%y
@@ -330,7 +330,7 @@ if (ascii_file_format(fform)) then
    read(locfile, '(a5)' ) header
    if(header /= 'loc2D') then
       write(errstring,*)'Expected location header "loc2D" in input file, got ', header 
-      call error_handler(E_ERR, 'read_location', errstring, source, revision, revdate)
+      call error_handler(E_ERR, 'read_location', errstring, source)
    endif
    ! Now read the location data value
    read(locfile, *) read_location%x, read_location%y
@@ -420,27 +420,36 @@ endif
 end subroutine interactive_location
 
 !----------------------------------------------------------------------------
+! Initializes get_close accelerator - unused in this location module
 
-subroutine get_close_obs_init(gc, num, obs)
- 
-! Initializes part of get_close accelerator that depends on the particular obs
+subroutine get_close_init(gc, num, maxdist, locs, maxdist_list)
 
 type(get_close_type), intent(inout) :: gc
 integer,              intent(in)    :: num
-type(location_type),  intent(in)    :: obs(num)
+real(r8),             intent(in)    :: maxdist
+type(location_type),  intent(in)    :: locs(:)
+real(r8), intent(in), optional      :: maxdist_list(:)
 
-! Set the value of num_obs in the structure
+! Set the maximum localization distance
+gc%maxdist = maxdist
+
+! Save the value of num_locs
 gc%num = num
 
-end subroutine get_close_obs_init
+if (present(maxdist_list)) then
+   write(errstring,*)'twod locations does not support different cutoff distances by type'
+   call error_handler(E_ERR, 'get_close_init', errstring, source)
+endif
+
+end subroutine get_close_init
 
 !----------------------------------------------------------------------------
 
-subroutine get_close_obs_destroy(gc)
+subroutine get_close_destroy(gc)
 
 type(get_close_type), intent(inout) :: gc
 
-end subroutine get_close_obs_destroy
+end subroutine get_close_destroy
 
 !----------------------------------------------------------------------------
 
@@ -456,8 +465,7 @@ gc%maxdist = maxdist
 end subroutine get_close_maxdist_init
 
 !----------------------------------------------------------------------------
-
-subroutine get_close_obs(gc, base_obs_loc, base_obs_type, obs, obs_kind, &
+subroutine get_close(gc, base_obs_loc, base_obs_type, obs, obs_kind, &
    num_close, close_ind, dist)
 
 ! Default version with no smarts; no need to be smart in 1D
@@ -478,7 +486,7 @@ real(r8) :: this_dist
 ! you have to destroy the old gc and init a new one.
 if (size(obs) /= gc%num) then
    write(errstring,*)'obs() array must match one passed to get_close_obs_init()'
-   call error_handler(E_ERR, 'get_close_obs', errstring, source, revision, revdate)
+   call error_handler(E_ERR, 'get_close_obs', errstring, source)
 endif
 
 ! Return list of obs that are within maxdist and their distances
@@ -493,7 +501,42 @@ do i = 1, gc%num
    endif
 end do
 
+end subroutine get_close
+
+!---------------------------------------------------------------------------
+subroutine get_close_obs(gc, base_loc, base_type, locs, loc_qtys, loc_types, &
+                         num_close, close_ind, dist, ens_handle)
+
+
+type(get_close_type),          intent(in)  :: gc
+type(location_type),           intent(in)  :: base_loc, locs(:)
+integer,                       intent(in)  :: base_type, loc_qtys(:), loc_types(:)
+integer,                       intent(out) :: num_close, close_ind(:)
+real(r8),            optional, intent(out) :: dist(:)
+type(ensemble_type), optional, intent(in)  :: ens_handle
+
+call get_close(gc, base_loc, base_type, locs, loc_qtys, &
+               num_close, close_ind, dist)
+
 end subroutine get_close_obs
+
+!---------------------------------------------------------------------------
+subroutine get_close_state(gc, base_loc, base_type, locs, loc_qtys, loc_indx, &
+                           num_close, close_ind, dist, ens_handle)
+
+
+type(get_close_type),          intent(in)  :: gc
+type(location_type),           intent(in)  :: base_loc, locs(:)
+integer,                       intent(in)  :: base_type, loc_qtys(:)
+integer(i8),                   intent(in)  :: loc_indx(:)
+integer,                       intent(out) :: num_close, close_ind(:)
+real(r8),            optional, intent(out) :: dist(:)
+type(ensemble_type), optional, intent(in)  :: ens_handle
+
+call get_close(gc, base_loc, base_type, locs, loc_qtys, &
+               num_close, close_ind, dist)
+
+end subroutine get_close_state
 
 !---------------------------------------------------------------------------
 
@@ -536,70 +579,32 @@ end function is_location_in_region
 !         common code that sometimes needs vertical info.
 !----------------------------------------------------------------------------
 
-function vert_is_undef(loc)
- 
-! Stub, always returns false.
-
-logical                          :: vert_is_undef
-type(location_type), intent(in)  :: loc
-
-vert_is_undef = .false.
-
-end function vert_is_undef
-
+!----------------------------------------------------------------------------
+! stubs - here only because they have a location type as one of the arguments
 !----------------------------------------------------------------------------
 
-function vert_is_surface(loc)
- 
-! Stub, always returns false.
+function is_vertical(loc, which_vert)
 
-logical                          :: vert_is_surface
+logical                          :: is_vertical
 type(location_type), intent(in)  :: loc
+character(len=*),    intent(in)  :: which_vert
 
-vert_is_surface = .false.
+is_vertical = .false.
 
-end function vert_is_surface
+end function is_vertical
 
-!----------------------------------------------------------------------------
+!--------------------------------------------------------------------
 
-function vert_is_pressure(loc)
- 
-! Stub, always returns false.
+subroutine set_vertical(loc, vloc, which_vert)
 
-logical                          :: vert_is_pressure
-type(location_type), intent(in)  :: loc
+type(location_type), intent(inout) :: loc
+real(r8), optional,  intent(in)    :: vloc
+integer,  optional,  intent(in)    :: which_vert
 
-vert_is_pressure = .false.
 
-end function vert_is_pressure
+end subroutine set_vertical
 
-!----------------------------------------------------------------------------
-
-function vert_is_height(loc)
- 
-! Stub, always returns false.
-
-logical                          :: vert_is_height
-type(location_type), intent(in)  :: loc
-
-vert_is_height = .false.
-
-end function vert_is_height
-
-!----------------------------------------------------------------------------
-
-function vert_is_level(loc)
- 
-! Stub, always returns false.
-
-logical                          :: vert_is_level
-type(location_type), intent(in)  :: loc
-
-vert_is_level = .false.
-
-end function vert_is_level
-
-!---------------------------------------------------------------------------
+!--------------------------------------------------------------------
 
 function has_vertical_localization()
  
@@ -645,14 +650,42 @@ integer,                intent(in) :: which_vert !< vertical coordinate type
 
 end subroutine set_which_vert
 
+!--------------------------------------------------------------------
+
+subroutine convert_vertical_obs(ens_handle, num, locs, loc_qtys, loc_types, &
+                                which_vert, status)
+
+type(ensemble_type), intent(in)    :: ens_handle
+integer,             intent(in)    :: num
+type(location_type), intent(inout) :: locs(:)
+integer,             intent(in)    :: loc_qtys(:), loc_types(:)
+integer,             intent(in)    :: which_vert
+integer,             intent(out)   :: status(:)
+
+status(:) = 0
+
+end subroutine convert_vertical_obs
+
+!--------------------------------------------------------------------
+
+subroutine convert_vertical_state(ens_handle, num, locs, loc_qtys, loc_indx, &
+                                  which_vert, istatus)
+
+type(ensemble_type), intent(in)    :: ens_handle
+integer,             intent(in)    :: num
+type(location_type), intent(inout) :: locs(:)
+integer,             intent(in)    :: loc_qtys(:)
+integer(i8),         intent(in)    :: loc_indx(:)
+integer,             intent(in)    :: which_vert
+integer,             intent(out)   :: istatus
+
+istatus = 0
+
+end subroutine convert_vertical_state
+
 !----------------------------------------------------------------------------
 ! end of location/twod/location_mod.f90
 !----------------------------------------------------------------------------
 
 end module location_mod
 
-! <next few lines under version control, do not edit>
-! $URL$
-! $Id$
-! $Revision$
-! $Date$
