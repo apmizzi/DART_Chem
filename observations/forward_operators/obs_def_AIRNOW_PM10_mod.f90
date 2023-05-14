@@ -16,9 +16,9 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 
-! BEGIN DART PREPROCESS KIND LIST
+! BEGIN DART PREPROCESS TYPE LIST
 ! AIRNOW_PM10,         QTY_PM10
-! END DART PREPROCESS KIND LIST
+! END DART PREPROCESS TYPE LIST
 
 ! BEGIN DART PREPROCESS USE OF SPECIAL OBS_DEF MODULE
 !   use obs_def_AIRNOW_PM10_mod, only : get_expected_airnow_pm10

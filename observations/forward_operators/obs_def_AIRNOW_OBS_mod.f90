@@ -16,7 +16,7 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 
-! BEGIN DART PREPROCESS KIND LIST
+! BEGIN DART PREPROCESS TYPE LIST
 ! AIRNOW_CO,                       QTY_CO,                     COMMON_CODE
 ! AIRNOW_SO2,                      QTY_SO2,                    COMMON_CODE
 ! AIRNOW_NO2,                      QTY_NO2,                    COMMON_CODE
