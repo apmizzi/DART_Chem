@@ -248,7 +248,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export WRFDA_VER=WRFDAv4.3.2_dmpar
    export WRF_VER=WRFv4.3.2_dmpar
    export WRFCHEM_VER=WRFCHEMv4.3.2_dmpar   
-   export DART_VER=DART_chem_upgrade
+   export DART_VER=DART_Chem
 #
 # ROOT DIRECTORIES:
    export SCRATCH_DIR=/nobackupp11/amizzi/OUTPUT_DATA
