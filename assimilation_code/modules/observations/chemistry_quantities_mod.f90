@@ -19,6 +19,16 @@
 !   QTY_NO2
 !   QTY_N2O
 !
+!   QTY_NOY
+!   QTY_NMOC  
+!   QTY_PM10
+!   QTY_PM25  
+!   QTY_AOD  
+!   QTY_SO2  
+!   QTY_PAN  
+!   QTY_HCHO  
+!   QTY_HNO3  
+!
 !   QTY_CO01
 !   QTY_CO02
 !   QTY_CO03

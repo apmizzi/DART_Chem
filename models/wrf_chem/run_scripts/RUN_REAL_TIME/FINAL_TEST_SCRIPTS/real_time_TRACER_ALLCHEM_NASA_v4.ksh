@@ -1,4 +1,4 @@
-#!/bin/ksh -aux
+!/bin/ksh -aux
 #
 # Copyright 2019 University Corporation for Atmospheric Research and 
 # Colorado Department of Public Health and Environment.
@@ -319,7 +319,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export WRFDA_VER=WRFDAv4.3.2_dmpar
    export WRF_VER=WRFv4.3.2_dmpar
    export WRFCHEM_VER=WRFCHEMv4.3.2_dmpar
-   export DART_VER=DART_Chem
+   export DART_VER=DART_MERGE/NCAR_DART
 #
 # ROOT DIRECTORIES:
    export SCRATCH_DIR=/nobackupp11/amizzi/OUTPUT_DATA
@@ -338,7 +338,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export BUILD_DIR=${WRFDA_DIR}/var/da
    export WRF_DIR=${TRUNK_DIR}/${WRF_VER}
    export WRFCHEM_DART_WORK_DIR=${DART_DIR}/models/wrf_chem/work
-   export HYBRID_SCRIPTS_DIR=${DART_DIR}/models/wrf_chem/hybrid_scripts
+   export JOB_CONTROL_SCRIPTS_DIR=${DART_DIR}/models/wrf_chem/job_control_scripts
+   export NAMELIST_SCRIPTS_DIR=${DART_DIR}/models/wrf_chem/namelist_scripts
    export ADJUST_EMISS_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_EMISS_INV
    export WES_COLDENS_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_WES_COLDENS
    export MEGAN_BIO_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_MEGAN_BIO
@@ -515,7 +516,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_OMI_O3_PROFILE_OBS=false # (done)
       export RUN_OMI_O3_CPSR_OBS=false
       export RUN_OMI_NO2_TOTAL_COL_OBS=false
-      export RUN_OMI_NO2_TROP_COL_OBS=false # (done)
+      export RUN_OMI_NO2_TROP_COL_OBS=true # (done)
       export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
       export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false # (done)
       export RUN_OMI_SO2_TOTAL_COL_OBS=false
@@ -594,7 +595,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_PANDA_PM25_OBS=false
       export RUN_MEXICO_AQS_CO_OBS=false
       export RUN_MET_OBS=false
-      export RUN_COMBINE_OBS=false
+      export RUN_COMBINE_OBS=true
 #
       if [[ ${DATE} -eq ${INITIAL_DATE}  ]]; then
          export RUN_PREPROCESS_OBS=false
@@ -2161,11 +2162,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export NL_DY=${DX_CR}
       export NL_START_DATE=${FILE_DATE}
       export NL_END_DATE=${NEXT_FILE_DATE}
-      ${HYBRID_SCRIPTS_DIR}/da_create_wps_namelist_RT.ksh
+      ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wps_namelist_RT.ksh
 #
 #      RANDOM=$$
 #      export JOBRND=${RANDOM}_geogrid
-#      ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} geogrid.exe SERIAL ${ACCOUNT}
+#      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} geogrid.exe SERIAL ${ACCOUNT}
 #      qsub -Wblock=true job.ksh
       rm -rf index.html
       chmod +x geogrid.exe
@@ -2207,7 +2208,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export NL_END_HOUR=$(echo $L_END_DATE | cut -c9-10),$(echo $L_END_DATE | cut -c9-10)
       export NL_START_DATE=\'${L_START_YEAR}-${L_START_MONTH}-${L_START_DAY}_${L_START_HOUR}:00:00\',\'${L_START_YEAR}-${L_START_MONTH}-${L_START_DAY}_${L_START_HOUR}:00:00\'
       export NL_END_DATE=\'${L_END_YEAR}-${L_END_MONTH}-${L_END_DAY}_${L_END_HOUR}:00:00\',\'${L_END_YEAR}-${L_END_MONTH}-${L_END_DAY}_${L_END_HOUR}:00:00\'
-      ${HYBRID_SCRIPTS_DIR}/da_create_wps_namelist_RT.ksh
+      ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wps_namelist_RT.ksh
 #
 # UNTAR THE PARENT FORECAST FILES
       FILES=''
@@ -2244,7 +2245,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       ${WPS_DIR}/link_grib.csh $FILES
 #      RANDOM=$$
 #      export JOBRND=${RANDOM}_ungrib
-#      ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} ungrib.exe SERIAL ${ACCOUNT}
+#      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} ungrib.exe SERIAL ${ACCOUNT}
 #      qsub -Wblock=true job.ksh
       rm -rf index.html
       chmod +x ungrib.exe
@@ -2305,11 +2306,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export NL_END_HOUR=$(echo $L_END_DATE | cut -c9-10),$(echo $L_END_DATE | cut -c9-10)
       export NL_START_DATE=\'${L_START_YEAR}-${L_START_MONTH}-${L_START_DAY}_${L_START_HOUR}:00:00\',\'${L_START_YEAR}-${L_START_MONTH}-${L_START_DAY}_${L_START_HOUR}:00:00\'
       export NL_END_DATE=\'${L_END_YEAR}-${L_END_MONTH}-${L_END_DAY}_${L_END_HOUR}:00:00\',\'${L_END_YEAR}-${L_END_MONTH}-${L_END_DAY}_${L_END_HOUR}:00:00\'
-      ${HYBRID_SCRIPTS_DIR}/da_create_wps_namelist_RT.ksh
+      ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wps_namelist_RT.ksh
 #
       RANDOM=$$
       export JOBRND=${RANDOM}_metgrid
-#      ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} metgrid.exe SERIAL ${ACCOUNT}
+#      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} metgrid.exe SERIAL ${ACCOUNT}
 #      qsub -Wblock=true job.ksh
      rm -rf index.html
      chmod +x metgrid.exe
@@ -2375,11 +2376,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export NL_END_HOUR=$(echo $L_END_DATE | cut -c9-10),$(echo $L_END_DATE | cut -c9-10)
          export NL_START_DATE=\'${L_START_YEAR}-${L_START_MONTH}-${L_START_DAY}_${L_START_HOUR}:00:00\',\'${L_START_YEAR}-${L_START_MONTH}-${L_START_DAY}_${L_START_HOUR}:00:00\'
          export NL_END_DATE=\'${L_END_YEAR}-${L_END_MONTH}-${L_END_DAY}_${L_END_HOUR}:00:00\',\'${L_END_YEAR}-${L_END_MONTH}-${L_END_DAY}_${L_END_HOUR}:00:00\'
-         ${HYBRID_SCRIPTS_DIR}/da_create_wrf_namelist_RT_v4.ksh
+         ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wrf_namelist_RT_v4.ksh
 #
          RANDOM=$$
          export JOBRND=${RANDOM}_real
-#         ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} real.exe SERIAL ${ACCOUNT}
+#         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} real.exe SERIAL ${ACCOUNT}
 #         qsub -Wblock=true job.ksh
          rm -rf index.html
          chmod +x real.exe
@@ -2750,7 +2751,7 @@ EOF
             export DA_INPUT_FILE=../../real/wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}
             export NL_SEED_ARRAY1=$(${BUILD_DIR}/da_advance_time.exe ${DATE} 0 -f hhddmmyycc)
             export NL_SEED_ARRAY2=`echo ${MEM} \* 100000 | bc -l `
-            ${HYBRID_SCRIPTS_DIR}/da_create_wrfda_namelist_v4.ksh
+            ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wrfda_namelist_v4.ksh
             cp ${EXPERIMENT_PREPBUFR_DIR}/${DATE}/prepbufr.gdas.${DATE}.wo40.be ob.bufr
             cp ${DA_INPUT_FILE} fg
             cp ${BE_DIR}/be.dat.cv3 be.dat
@@ -2759,7 +2760,7 @@ EOF
 #
 #            RANDOM=$$
             export JOBRND=${TRANDOM}_wrfda_cr
-#            ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${WRFDA_JOB_CLASS} ${WRFDA_TIME_LIMIT} ${WRFDA_NODES} ${WRFDA_TASKS} da_wrfvar.exe SERIAL ${ACCOUNT}
+#            ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${WRFDA_JOB_CLASS} ${WRFDA_TIME_LIMIT} ${WRFDA_NODES} ${WRFDA_TASKS} da_wrfvar.exe SERIAL ${ACCOUNT}
 #            qsub job.ksh
             chmod +x da_wrfvar.exe
             ./da_wrfvar.exe > index.html 2>&1
@@ -2784,7 +2785,7 @@ EOF
 #            export NL_I_PARENT_START=${ISTR_FR}
 #            export NL_J_PARENT_START=${JSTR_FR}
 #            export DA_INPUT_FILE=../../real/wrfinput_d${FR_DOMAIN}_${ANALYSIS_DATE}
-#            ${HYBRID_SCRIPTS_DIR}/da_create_wrfda_namelist_v4.ksh
+#            ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wrfda_namelist_v4.ksh
 #            cp ${EXPERIMENT_PREPBUFR_DIR}/${DATE}/prepbufr.gdas.${DATE}.wo40.be ob.bufr
 #            cp ${DA_INPUT_FILE} fg
 #            cp ${BE_DIR}/be.dat.cv3 be.dat
@@ -2793,14 +2794,14 @@ EOF
 #   
 #            RANDOM=$$
 #            export JOBRND=${TRANDOM}_wrfda_fr
-#            ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${WRFDA_JOB_CLASS} ${WRFDA_TIME_LIMIT} ${WRFDA_NODES} ${WRFDA_TASKS} da_wrfvar.exe SERIAL ${ACCOUNT}
+#            ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${WRFDA_JOB_CLASS} ${WRFDA_TIME_LIMIT} ${WRFDA_NODES} ${WRFDA_TASKS} da_wrfvar.exe SERIAL ${ACCOUNT}
 #            qsub job.ksh
             let MEM=${MEM}+1
          done
 #
 # Wait for WRFDA to complete for all members
          cd ${RUN_DIR}/${DATE}/wrfchem_met_ic
-         ${HYBRID_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
+         ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
 #
          let MEM=1
          while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
@@ -2887,7 +2888,7 @@ EOF
          rm -rf pert_wrf_bc
          cp ${WRFCHEM_DART_WORK_DIR}/pert_wrf_bc ./.
          rm -rf input.nml
-         ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input.nml.ksh
+         ${NAMELIST_SCRIPTS_DIR}/DART/dart_create_input.nml.ksh
 #
 # LOOP THROUGH ALL BDY TENDENCY TIMES FOR THIS MEMBER.
          export L_DATE=${DATE}
@@ -2913,13 +2914,13 @@ wrfinput_next_file='wrfinput_next_${L_DATE}'
 /
 EOF
             export JOBRND=${TRANDOM}_pert_bc
-#            ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${SINGLE_JOB_CLASS} ${SINGLE_TIME_LIMIT} ${SINGLE_NODES} ${SINGLE_TASKS} pert_wrf_bc SERIAL ${ACCOUNT}
+#            ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${SINGLE_JOB_CLASS} ${SINGLE_TIME_LIMIT} ${SINGLE_NODES} ${SINGLE_TASKS} pert_wrf_bc SERIAL ${ACCOUNT}
 #            qsub -Wblock=true job.ksh
             chmod +x pert_wrf_bc
             ./pert_wrf_bc > index.html 2>&1
             export L_DATE=${NEXT_L_DATE} 
          done
-         ${HYBRID_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
+         ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
          export ANALYSIS_DATE=$(${BUILD_DIR}/da_advance_time.exe ${DATE} 0 -W 2>/dev/null)
          mv wrfbdy_this wrfbdy_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
          let MEM=${MEM}+1
@@ -3118,7 +3119,7 @@ EOF
 #
          RANDOM=$$
          export JOBRND=${RANDOM}_bio
-#         ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${BIO_JOB_CLASS} ${BIO_TIME_LIMIT} ${BIO_NODES} ${BIO_TASKS} "megan_bio_emiss.exe < megan_bio_emiss.inp" SERIAL ${ACCOUNT}
+#         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${BIO_JOB_CLASS} ${BIO_TIME_LIMIT} ${BIO_NODES} ${BIO_TASKS} "megan_bio_emiss.exe < megan_bio_emiss.inp" SERIAL ${ACCOUNT}
 #         qsub -Wblock=true job.ksh
 #
 	 rm -rf index.html
@@ -3200,7 +3201,7 @@ EOF
 #
       RANDOM=$$
       export JOBRND=${RANDOM}_fire
-#      ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} "fire_emis.exe < fire_emis.mozc.inp" SERIAL ${ACCOUNT}
+#      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} "fire_emis.exe < fire_emis.mozc.inp" SERIAL ${ACCOUNT}
 #      qsub -Wblock=true job.ksh
       chmod +x fire_emis.exe
       ./fire_emis.exe < fire_emis.mozc.inp > index.html 2>&1
@@ -3416,10 +3417,10 @@ EOF
       export JOBRND=${RANDOM}_cr_icbc_pert
 #
 # SERIAL VERSION
-#      ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} perturb_chem_icbc_CORR_RT_MA.exe SERIAL ${ACCOUNT}
+#      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} perturb_chem_icbc_CORR_RT_MA.exe SERIAL ${ACCOUNT}
 #
 # PARALLEL VERSION
-      ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_icbc_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
+      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_icbc_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
 #
       qsub -Wblock=true job.ksh
 #
@@ -3640,11 +3641,11 @@ EOF
 # SERIAL VERSION
          RANDOM=$$
 #         export JOBRND=${RANDOM}_cr_emiss_pert
-#         ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} perturb_chem_emiss_CORR_RT_MA.exe SERIAL ${ACCOUNT}
+#         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} perturb_chem_emiss_CORR_RT_MA.exe SERIAL ${ACCOUNT}
 #
 # PARALLEL VERSION
          export JOBRND=${RANDOM}_cr_emiss_pert
-         ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
+         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
 #
          qsub -Wblock=true job.ksh
 #
@@ -3712,7 +3713,7 @@ EOF
 #
 #         RANDOM=$$
 #         export JOBRND=${RANDOM}_fr_emiss_pert
-#         ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} perturb_chem_emiss_CORR_RT_CONST.exe SERIAL ${ACCOUNT}
+#         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} perturb_chem_emiss_CORR_RT_CONST.exe SERIAL ${ACCOUNT}
 #         qsub -Wblock=true job.ksh
 #
 # ADVANCE TIME
@@ -3799,14 +3800,14 @@ wrffirechemi_new='${NL_WRFFIRECHEMI_NEW}'
 EOF
                ./adjust_chem_emiss.exe > index_adjust_chem_emiss
 #               export JOBRND=${TRANDOM}_adj
-#               ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${SINGLE_JOB_CLASS} ${SINGLE_TIME_LIMIT} ${SINGLE_NODES} ${SINGLE_TASKS} adjust_chem_emiss.exe SERIAL ${ACCOUNT}
+#               ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${SINGLE_JOB_CLASS} ${SINGLE_TIME_LIMIT} ${SINGLE_NODES} ${SINGLE_TASKS} adjust_chem_emiss.exe SERIAL ${ACCOUNT}
 #               qsub job.ksh
 #
                export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} 1 2>/dev/null)
             done
             let MEM=MEM+1
          done
-#         ${HYBRID_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
+#         ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
 #
          let MEM=1
          while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
@@ -3899,7 +3900,7 @@ EOF
 #      export FILE=mopitt_v5_co_total_col_extract.m
       export FILE=mopitt_co_total_col_extract.pro
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/${FILE} ./.
 #
       rm -rf job.ksh
       touch job.ksh
@@ -3960,7 +3961,7 @@ EOFF
 #      export FILE=mopitt_v5_co_total_col_extract.m
          export FILE=mopitt_co_total_col_extract.pro
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/${FILE} ./.
 #
          rm -rf job.ksh
          touch job.ksh
@@ -4035,7 +4036,7 @@ EOFF
 #
 # USE MOPITT DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_mopitt_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_mopitt_input_nml.ksh
 #
 # CREATE BIAS CORRECTION NAMELIST
       export NL_DOES_FILE_EXIST=.true.
@@ -4059,7 +4060,7 @@ obs_list='TROPOMI_CO_COL'
 EOF
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/work/mopitt_co_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/work/mopitt_co_total_col_ascii_to_obs ./.
       ./mopitt_co_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -4124,7 +4125,7 @@ EOF
 #      export FILE=mopitt_v5_co_profile_extract.m
       export FILE=mopitt_co_profile_extract.pro
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/${FILE} ./.
 #
       rm -rf job.ksh
       touch job.ksh
@@ -4184,7 +4185,7 @@ EOFF
 #      export FILE=mopitt_v5_co_profile_extract.m
          export FILE=mopitt_co_profile_extract.pro
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/${FILE} ./.
 #
          rm -rf job.ksh
          touch job.ksh
@@ -4259,7 +4260,7 @@ EOFF
 #
 # USE MOPITT DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_mopitt_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_mopitt_input_nml.ksh
 #
 # CREATE BIAS CORRECTION NAMELIST
       export NL_DOES_FILE_EXIST=.true.
@@ -4283,7 +4284,7 @@ obs_list='TROPOMI_CO_COL'
 EOF
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/work/mopitt_co_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/work/mopitt_co_profile_ascii_to_obs ./.
       ./mopitt_co_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -4348,7 +4349,7 @@ EOF
 #      export FILE=mopitt_v5_co_cpsr_extract.m
       export FILE=mopitt_co_cpsr_extract.pro
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/${FILE} ./.
 #
       rm -rf job.ksh
       touch job.ksh
@@ -4408,7 +4409,7 @@ EOFF
 #      export FILE=mopitt_v5_co_cpsr_extract.m
          export FILE=mopitt_co_cpsr_extract.pro
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/${FILE} ./.
 #
          rm -rf job.ksh
          touch job.ksh
@@ -4483,7 +4484,7 @@ EOFF
 #
 # USE MOPITT DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_mopitt_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_mopitt_input_nml.ksh
 #
 # CREATE BIAS CORRECTION NAMELIST
       export NL_DOES_FILE_EXIST=.true.
@@ -4507,7 +4508,7 @@ obs_list='TROPOMI_CO_COL'
 EOF
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/MOPITT_CO/work/mopitt_co_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/work/mopitt_co_cpsr_ascii_to_obs ./.
       ./mopitt_co_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -4590,7 +4591,7 @@ EOF
 # COPY_EXECUTABLE
                export FILE=iasi_co_profile_extract.pro
                rm -rf ${FILE}
-               cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
+               cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_CO/native_to_ascii/${FILE} ./.
 #
                rm -rf job.ksh
                touch job.ksh
@@ -4672,7 +4673,7 @@ EOFF
 # COPY_EXECUTABLE
                   export FILE=iasi_co_profile_extract.pro
                   rm -rf ${FILE}
-                  cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
+                  cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_CO/native_to_ascii/${FILE} ./.
 #
                   rm -rf job.ksh
                   touch job.ksh
@@ -4753,10 +4754,10 @@ EOFF
 #
 # USE IASI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_iasi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_iasi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/IASI_CO/work/iasi_co_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_CO/work/iasi_co_profile_ascii_to_obs ./.
       ./iasi_co_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -4839,7 +4840,7 @@ EOFF
 # COPY_EXECUTABLE
                export FILE=iasi_co_total_col_extract.pro
                rm -rf ${FILE}
-               cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
+               cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_CO/native_to_ascii/${FILE} ./.
 #
                rm -rf job.ksh
                touch job.ksh
@@ -4921,7 +4922,7 @@ EOFF
 # COPY_EXECUTABLE
                   export FILE=iasi_co_total_col_extract.pro
                   rm -rf ${FILE}
-                  cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
+                  cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_CO/native_to_ascii/${FILE} ./.
 #
                   rm -rf job.ksh
                   touch job.ksh
@@ -5002,10 +5003,10 @@ EOFF
 #
 # USE IASI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_iasi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_iasi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/IASI_CO/work/iasi_co_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_CO/work/iasi_co_total_col_ascii_to_obs ./.
       ./iasi_co_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -5088,7 +5089,7 @@ EOFF
 # COPY_EXECUTABLE
                export FILE=iasi_co_profile_extract.pro
                rm -rf ${FILE}
-               cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
+               cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_CO/native_to_ascii/${FILE} ./.
 #
                rm -rf job.ksh
                touch job.ksh
@@ -5170,7 +5171,7 @@ EOFF
 # COPY_EXECUTABLE
                   export FILE=iasi_co_profile_extract.pro
                   rm -rf ${FILE}
-                  cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
+                  cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_CO/native_to_ascii/${FILE} ./.
 #
                   rm -rf job.ksh
                   touch job.ksh
@@ -5251,10 +5252,10 @@ EOFF
 #
 # USE IASI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_iasi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_iasi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/IASI_CO/work/iasi_co_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_CO/work/iasi_co_profile_ascii_to_obs ./.
       ./iasi_co_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -5337,7 +5338,7 @@ EOFF
 # COPY_EXECUTABLE
                export FILE=iasi_co_cpsr_extract.pro
                rm -rf ${FILE}
-               cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
+               cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_CO/native_to_ascii/${FILE} ./.
 #
                rm -rf job.ksh
                touch job.ksh
@@ -5419,7 +5420,7 @@ EOFF
 # COPY_EXECUTABLE
                   export FILE=iasi_co_cpsr_extract.pro
                   rm -rf ${FILE}
-                  cp ${DART_DIR}/observations/obs_converters/IASI_CO/native_to_ascii/${FILE} ./.
+                  cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_CO/native_to_ascii/${FILE} ./.
 #
                   rm -rf job.ksh
                   touch job.ksh
@@ -5500,10 +5501,10 @@ EOFF
 #
 # USE IASI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_iasi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_iasi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/IASI_CO/work/iasi_co_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_CO/work/iasi_co_cpsr_ascii_to_obs ./.
       ./iasi_co_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -5566,7 +5567,7 @@ EOFF
 # else this needs to be called
             export FILE=iasi_o3_profile_extract.pro
             rm -rf ${FILE}
-            cp ${DART_DIR}/observations/obs_converters/IASI_O3/native_to_ascii/${FILE} ./.
+            cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_O3/native_to_ascii/${FILE} ./.
 #
             rm -rf job.ksh
             touch job.ksh
@@ -5630,7 +5631,7 @@ EOFF
 # else this needs to be called
             export FILE=iasi_o3_profile_extract.pro
             rm -rf ${FILE}
-            cp ${DART_DIR}/observations/obs_converters/IASI_O3/native_to_ascii/${FILE} ./.
+            cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_O3/native_to_ascii/${FILE} ./.
 #
             rm -rf job.ksh
             touch job.ksh
@@ -5708,7 +5709,7 @@ EOFF
 #
 # USE IASI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_iasi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_iasi_input_nml.ksh
 #
 # GET ASCII DATA
       if [[ ! -e ${D_DATE}.dat ]]; then 
@@ -5717,7 +5718,7 @@ EOFF
       fi
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/IASI_O3/work/iasi_o3_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_O3/work/iasi_o3_profile_ascii_to_obs ./.
       ./iasi_o3_profile_ascii_to_obs > index.html 2>&1  
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -5783,7 +5784,7 @@ EOFF
 # else this needs to be called
             export FILE=iasi_o3_cpsr_extract.pro
             rm -rf ${FILE}
-            cp ${DART_DIR}/observations/obs_converters/IASI_O3/native_to_ascii/${FILE} ./.
+            cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_O3/native_to_ascii/${FILE} ./.
 #
             rm -rf job.ksh
             touch job.ksh
@@ -5847,7 +5848,7 @@ EOFF
 # else this needs to be called
             export FILE=iasi_o3_cpsr_extract.pro
             rm -rf ${FILE}
-            cp ${DART_DIR}/observations/obs_converters/IASI_O3/native_to_ascii/${FILE} ./.
+            cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_O3/native_to_ascii/${FILE} ./.
 #
             rm -rf job.ksh
             touch job.ksh
@@ -5925,7 +5926,7 @@ EOFF
 #
 # USE IASI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_iasi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_iasi_input_nml.ksh
 #
 # GET ASCII DATA
       if [[ ! -e ${D_DATE}.dat ]]; then 
@@ -5934,7 +5935,7 @@ EOFF
       fi
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/IASI_O3/work/iasi_o3_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_O3/work/iasi_o3_cpsr_ascii_to_obs ./.
       ./iasi_o3_cpsr_ascii_to_obs > index.html 2>&1  
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -5983,7 +5984,7 @@ EOFF
 # COPY EXECUTABLE
       export FILE=modis_aod_total_col_extract.pro
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/MODIS_AOD/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MODIS_AOD/native_to_ascii/${FILE} ./.
 #
       rm -rf job.ksh
       touch job.ksh
@@ -6049,10 +6050,10 @@ EOFF
       rm -rf input.nml
       rm -rf ${NL_FILENAME}
       cp ${MOD_OUTFILE_NQ} ${NL_FILENAME}
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_modis_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_modis_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/MODIS_AOD/work/modis_aod_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MODIS_AOD/work/modis_aod_total_col_ascii_to_obs ./.
 #
 # RUN OBS CONVERTER      
       ./modis_aod_total_col_ascii_to_obs > index.html 2>&1
@@ -6137,7 +6138,7 @@ EOFF
 # COPY EXECUTABLE
       export FILE=omi_o3_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
       mcc -m omi_o3_total_col_extract.m -o omi_o3_extract_total_col
       ./run_omi_o3_extract_total_col.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -6173,7 +6174,7 @@ EOFF
 # COPY EXECUTABLE
          export FILE=omi_o3_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
          mcc -m omi_o3_total_col_extract.m -o omi_o3_total_col_extract
          ./run_omi_o3_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
       fi
@@ -6232,10 +6233,10 @@ EOFF
 #
 # USE OMI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_omi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/OMI_O3/work/omi_o3_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/work/omi_o3_total_col_ascii_to_obs ./.
       ./omi_o3_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -6316,7 +6317,7 @@ EOFF
 # COPY EXECUTABLE
       export FILE=omi_o3_trop_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
       mcc -m omi_o3_trop_col_extract.m -o omi_o3_trop_col_extract
       ./run_omi_o3_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -6352,7 +6353,7 @@ EOFF
 # COPY EXECUTABLE
          export FILE=omi_o3_trop_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
          mcc -m omi_o3_trop_col_extract.m -o omi_o3_trop_col_extract
          ./run_omi_o3_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
       fi
@@ -6411,10 +6412,10 @@ EOFF
 #
 # USE OMI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_omi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/OMI_O3/work/omi_o3_trop_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/work/omi_o3_trop_col_ascii_to_obs ./.
       ./omi_o3_trop_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -6495,7 +6496,7 @@ EOFF
 # COPY EXECUTABLE
       export FILE=omi_o3_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
       mcc -m omi_o3_profile_extract.m -o omi_o3_profile_extract
       ./run_omi_o3_profile_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -6531,7 +6532,7 @@ EOFF
 # COPY EXECUTABLE
          export FILE=omi_o3_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
          mcc -m omi_o3_profile_extract.m -o omi_o3_profile_extract
          ./run_omi_o3_profile_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
       fi
@@ -6590,10 +6591,10 @@ EOFF
 #
 # USE OMI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_omi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/OMI_O3/work/omi_o3_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/work/omi_o3_profile_ascii_to_obs ./.
       ./omi_o3_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -6674,7 +6675,7 @@ EOFF
 # COPY EXECUTABLE
       export FILE=omi_o3_cpsr_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
       mcc -m omi_o3_cpsr_extract.m -o omi_o3_cpsr_extract
       ./run_omi_o3_cpsr_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -6710,7 +6711,7 @@ EOFF
 # COPY EXECUTABLE
          export FILE=omi_o3_cpsr_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/OMI_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
          mcc -m omi_o3_cpsr_extract.m -o omi_o3_cpsr_extract
          ./run_omi_o3_cpsr_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
       fi
@@ -6769,11 +6770,11 @@ EOFF
 #
 # USE OMI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_omi_input_nml.ksh
 #
 # GET EXECUTABLE
       rm -rf omi_o3_cpsr_ascii_to_obs
-      cp ${DART_DIR}/observations/obs_converters/OMI_O3/work/omi_o3_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/work/omi_o3_cpsr_ascii_to_obs ./.
       ./omi_o3_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -6853,7 +6854,7 @@ EOFF
 # COPY EXECUTABLE
       export FILE=omi_no2_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/OMI_NO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/native_to_ascii/${FILE} ./.
       mcc -m omi_no2_total_col_extract.m -o omi_no2_total_col_extract
       ./run_omi_no2_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -6889,7 +6890,7 @@ EOFF
 # COPY EXECUTABLE
          export FILE=omi_no2_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/OMI_NO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/native_to_ascii/${FILE} ./.
          mcc -m omi_no2_total_col_extract.m -o omi_no2_total_col_extract
          ./run_omi_no2_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -6949,10 +6950,10 @@ EOFF
 #
 # USE OMI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_omi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/OMI_NO2/work/omi_no2_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/work/omi_no2_total_col_ascii_to_obs ./.
       ./omi_no2_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -7032,7 +7033,7 @@ v#
 # COPY EXECUTABLE
       export FILE=omi_no2_trop_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/OMI_NO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/native_to_ascii/${FILE} ./.
       mcc -m omi_no2_trop_col_extract.m -o omi_no2_trop_col_extract
       ./run_omi_no2_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -7068,7 +7069,7 @@ v#
 # COPY EXECUTABLE
          export FILE=omi_no2_trop_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/OMI_NO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/native_to_ascii/${FILE} ./.
          mcc -m omi_no2_trop_col_extract.m -o omi_no2_trop_col_extract
          ./run_omi_no2_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -7128,10 +7129,10 @@ v#
 #
 # USE OMI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_omi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/OMI_NO2/work/omi_no2_trop_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/work/omi_no2_trop_col_ascii_to_obs ./.
       ./omi_no2_trop_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -7211,7 +7212,7 @@ v#
 # COPY EXECUTABLE
       export FILE=omi_so2_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/OMI_SO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_SO2/native_to_ascii/${FILE} ./.
       mcc -m omi_so2_total_col_extract.m -o omi_so2_total_col_extract
       ./run_omi_so2_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -7247,7 +7248,7 @@ v#
 # COPY EXECUTABLE
          export FILE=omi_so2_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/OMI_SO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_SO2/native_to_ascii/${FILE} ./.
          mcc -m omi_so2_total_col_extract.m -o omi_so2_total_col_extract
          ./run_omi_so2_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -7307,10 +7308,10 @@ v#
 #
 # USE OMI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_omi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/OMI_SO2/work/omi_so2_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_SO2/work/omi_so2_total_col_ascii_to_obs ./.
       ./omi_so2_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -7390,7 +7391,7 @@ v#
 # COPY EXECUTABLE
       export FILE=omi_so2_pbl_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/OMI_SO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_SO2/native_to_ascii/${FILE} ./.
       mcc -m omi_so2_pbl_col_extract.m -o omi_so2_pbl_col_extract
       ./run_omi_so2_pbl_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -7426,7 +7427,7 @@ v#
 # COPY EXECUTABLE
          export FILE=omi_so2_pbl_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/OMI_SO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_SO2/native_to_ascii/${FILE} ./.
          mcc -m omi_so2_pbl_col_extract.m -o omi_so2_pbl_col_extract
          ./run_omi_so2_pbl_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -7487,10 +7488,10 @@ v#
 #
 # USE OMI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_omi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/OMI_SO2/work/omi_so2_pbl_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_SO2/work/omi_so2_pbl_col_ascii_to_obs ./.
       ./omi_so2_pbl_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -7567,7 +7568,7 @@ v#
 # COPY EXECUTABLE
       export FILE=omi_hcho_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/OMI_HCHO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_HCHO/native_to_ascii/${FILE} ./.
       mcc -m omi_hcho_total_col_extract.m -o omi_hcho_total_col_extract
       ./run_omi_hcho_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -7601,7 +7602,7 @@ v#
 # COPY EXECUTABLE
          export FILE=omi_hcho_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/OMI_HCHO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_HCHO/native_to_ascii/${FILE} ./.
          mcc -m omi_hcho_total_col_extract.m -o omi_hcho_total_col_extract
          ./run_omi_hcho_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -7664,10 +7665,10 @@ v#
 #
 # USE OMI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_omi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/OMI_HCHO/work/omi_hcho_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_HCHO/work/omi_hcho_total_col_ascii_to_obs ./.
       ./omi_hcho_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -7747,7 +7748,7 @@ v#
 # COPY EXECUTABLE
       export FILE=omi_hcho_trop_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/OMI_HCHO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_HCHO/native_to_ascii/${FILE} ./.
       mcc -m omi_hcho_trop_col_extract.m -o omi_hcho_trop_col_extract
       ./run_omi_hcho_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -7783,7 +7784,7 @@ v#
 # COPY EXECUTABLE
          export FILE=omi_hcho_trop_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/OMI_HCHO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_HCHO/native_to_ascii/${FILE} ./.
          mcc -m omi_hcho_trop_col_extract.m -o omi_hcho_trop_col_extract
          ./run_omi_hcho_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -7847,10 +7848,10 @@ v#
 #
 # USE OMI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_omi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/OMI_HCHO/work/omi_hcho_trop_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_HCHO/work/omi_hcho_trop_col_ascii_to_obs ./.
       ./omi_hcho_trop_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -7926,7 +7927,7 @@ v#
 # COPY EXECUTABLE
       export FILE=tropomi_co_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_CO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CO/native_to_ascii/${FILE} ./.
       mcc -m tropomi_co_total_col_extract.m -o tropomi_co_total_col_extract
       ./run_tropomi_co_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -7959,7 +7960,7 @@ v#
 # COPY EXECUTABLE
          export FILE=tropomi_co_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_CO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CO/native_to_ascii/${FILE} ./.
          mcc -m tropomi_co_total_col_extract.m -o tropomi_co_total_col_extract
          ./run_tropomi_co_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -8016,7 +8017,7 @@ v#
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # CREATE BIAS CORRECTION NAMELIST
       export NL_DOES_FILE_EXIST=.true.
@@ -8040,7 +8041,7 @@ obs_list='TROPOMI_CO_TOTAL_COL'
 EOF
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_CO/work/tropomi_co_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CO/work/tropomi_co_total_col_ascii_to_obs ./.
       ./tropomi_co_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -8116,7 +8117,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tropomi_o3_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
       mcc -m tropomi_o3_total_col_extract.m -o tropomi_o3_total_col_extract
       ./run_tropomi_o3_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -8149,7 +8150,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tropomi_o3_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
          mcc -m tropomi_o3_total_col_extract.m -o tropomi_o3_total_col_extract
          ./run_tropomi_o3_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -8205,10 +8206,10 @@ EOF
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/work/tropomi_o3_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/work/tropomi_o3_total_col_ascii_to_obs ./.
       ./tropomi_o3_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -8284,7 +8285,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tropomi_o3_trop_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
       mcc -m tropomi_o3_trop_col_extract.m -o tropomi_o3_trop_col_extract
       ./run_tropomi_o3_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -8317,7 +8318,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tropomi_o3_trop_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
          mcc -m tropomi_o3_trop_col_extract.m -o tropomi_o3_trop_col_extract
          ./run_tropomi_o3_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -8373,10 +8374,10 @@ EOF
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/work/tropomi_o3_trop_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/work/tropomi_o3_trop_col_ascii_to_obs ./.
       ./tropomi_o3_trop_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -8452,7 +8453,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tropomi_o3_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
       mcc -m tropomi_o3_profile_extract.m -o tropomi_o3_profile_extract
       ./run_tropomi_o3_profile_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -8485,7 +8486,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tropomi_o3_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
          mcc -m tropomi_o3_profile_extract.m -o tropomi_o3_profile_extract
          ./run_tropomi_o3_profile_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -8541,10 +8542,10 @@ EOF
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/work/tropomi_o3_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/work/tropomi_o3_profile_ascii_to_obs ./.
       ./tropomi_o3_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -8620,7 +8621,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tropomi_o3_cpsr_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
       mcc -m tropomi_o3_cpsr_extract.m -o tropomi_o3_cpsr_extract
       ./run_tropomi_o3_cpsr_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -8653,7 +8654,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tropomi_o3_cpsr_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
          mcc -m tropomi_o3_cpsr_extract.m -o tropomi_o3_cpsr_extract
          ./run_tropomi_o3_cpsr_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -8709,10 +8710,10 @@ EOF
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_O3/work/tropomi_o3_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/work/tropomi_o3_cpsr_ascii_to_obs ./.
       ./tropomi_o3_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -8788,7 +8789,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tropomi_no2_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_NO2/native_to_ascii/${FILE} ./.
       mcc -m tropomi_no2_total_col_extract.m -o tropomi_no2_total_col_extract
       ./run_tropomi_no2_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -8821,7 +8822,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tropomi_no2_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_NO2/native_to_ascii/${FILE} ./.
          mcc -m tropomi_no2_total_col_extract.m -o tropomi_total_col_no2_extract
          ./run_tropomi_no2_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -8878,10 +8879,10 @@ EOF
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/work/tropomi_no2_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_NO2/work/tropomi_no2_total_col_ascii_to_obs ./.
       ./tropomi_no2_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -8957,7 +8958,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tropomi_no2_trop_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_NO2/native_to_ascii/${FILE} ./.
       mcc -m tropomi_no2_trop_col_extract.m -o tropomi_no2_trop_col_extract
       ./run_tropomi_no2_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -8990,7 +8991,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tropomi_no2_trop_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_NO2/native_to_ascii/${FILE} ./.
          mcc -m tropomi_no2_trop_col_extract.m -o tropomi_trop_col_no2_extract
          ./run_tropomi_no2_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -9047,10 +9048,10 @@ EOF
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_NO2/work/tropomi_no2_trop_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_NO2/work/tropomi_no2_trop_col_ascii_to_obs ./.
       ./tropomi_no2_trop_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -9126,7 +9127,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tropomi_so2_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_SO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_SO2/native_to_ascii/${FILE} ./.
       mcc -m tropomi_so2_total_col_extract.m -o tropomi_so2_total_col_extract
       ./run_tropomi_so2_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -9160,7 +9161,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tropomi_so2_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_SO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_SO2/native_to_ascii/${FILE} ./.
          mcc -m tropomi_so2_total_col_extract.m -o tropomi_so2_total_col_extract
          ./run_tropomi_so2_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -9217,10 +9218,10 @@ EOF
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_SO2/work/tropomi_so2_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_SO2/work/tropomi_so2_total_col_ascii_to_obs ./.
       ./tropomi_so2_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -9299,7 +9300,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tropomi_so2_pbl_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_SO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_SO2/native_to_ascii/${FILE} ./.
       mcc -m tropomi_so2_pbl_col_extract.m -o tropomi_so2_pbl_col_extract
       ./run_tropomi_so2_pbl_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -9333,7 +9334,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tropomi_so2_pbl_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_SO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_SO2/native_to_ascii/${FILE} ./.
          mcc -m tropomi_so2_pbl_col_extract.m -o tropomi_so2_pbl_col_extract
          ./run_tropomi_so2_pbl_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -9395,10 +9396,10 @@ EOF
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_SO2/work/tropomi_so2_pbl_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_SO2/work/tropomi_so2_pbl_col_ascii_to_obs ./.
       ./tropomi_so2_pbl_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -9474,7 +9475,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tropomi_ch4_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_CH4/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CH4/native_to_ascii/${FILE} ./.
       mcc -m tropomi_ch4_total_col_extract.m -o tropomi_ch4_total_col_extract
       ./run_tropomi_ch4_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -9507,7 +9508,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tropomi_ch4_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_CH4/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CH4/native_to_ascii/${FILE} ./.
          mcc -m tropomi_ch4_total_col_extract.m -o tropomi_total_col_ch4_extract
          ./run_tropomi_ch4_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -9566,10 +9567,10 @@ EOF
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_CH4/work/tropomi_ch4_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CH4/work/tropomi_ch4_total_col_ascii_to_obs ./.
       ./tropomi_ch4_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -9648,7 +9649,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tropomi_ch4_trop_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_CH4/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CH4/native_to_ascii/${FILE} ./.
       mcc -m tropomi_ch4_trop_col_extract.m -o tropomi_ch4_trop_col_extract
       ./run_tropomi_ch4_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -9681,7 +9682,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tropomi_ch4_trop_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_CH4/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CH4/native_to_ascii/${FILE} ./.
          mcc -m tropomi_ch4_trop_col_extract.m -o tropomi_trop_col_ch4_extract
          ./run_tropomi_ch4_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -9743,10 +9744,10 @@ EOF
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_CH4/work/tropomi_ch4_trop_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CH4/work/tropomi_ch4_trop_col_ascii_to_obs ./.
       ./tropomi_ch4_trop_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -9825,7 +9826,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tropomi_ch4_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_CH4/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CH4/native_to_ascii/${FILE} ./.
       mcc -m tropomi_ch4_profile_extract.m -o tropomi_ch4_profile_extract
       ./run_tropomi_ch4_profile_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -9858,7 +9859,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tropomi_ch4_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_CH4/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CH4/native_to_ascii/${FILE} ./.
          mcc -m tropomi_ch4_profile_extract.m -o tropomi_profile_ch4_extract
          ./run_tropomi_ch4_profile_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -9920,10 +9921,10 @@ EOF
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_CH4/work/tropomi_ch4_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CH4/work/tropomi_ch4_profile_ascii_to_obs ./.
       ./tropomi_ch4_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -10002,7 +10003,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tropomi_ch4_cpsr_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_CH4/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CH4/native_to_ascii/${FILE} ./.
       mcc -m tropomi_ch4_cpsr_extract.m -o tropomi_ch4_cpsr_extract
       ./run_tropomi_ch4_cpsr_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -10035,7 +10036,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tropomi_ch4_cpsr_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_CH4/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CH4/native_to_ascii/${FILE} ./.
          mcc -m tropomi_ch4_cpsr_extract.m -o tropomi_cpsr_ch4_extract
          ./run_tropomi_ch4_cpsr_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -10097,10 +10098,10 @@ EOF
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_CH4/work/tropomi_ch4_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CH4/work/tropomi_ch4_cpsr_ascii_to_obs ./.
       ./tropomi_ch4_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -10179,7 +10180,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tropomi_hcho_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_HCHO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_HCHO/native_to_ascii/${FILE} ./.
       mcc -m tropomi_hcho_total_col_extract.m -o tropomi_hcho_total_col_extract
       ./run_tropomi_hcho_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -10212,7 +10213,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tropomi_hcho_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_HCHO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_HCHO/native_to_ascii/${FILE} ./.
          mcc -m tropomi_hcho_total_col_extract.m -o tropomi_total_col_hcho_extract
          ./run_tropomi_hcho_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -10274,10 +10275,10 @@ EOF
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_HCHO/work/tropomi_hcho_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_HCHO/work/tropomi_hcho_total_col_ascii_to_obs ./.
       ./tropomi_hcho_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -10356,7 +10357,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tropomi_hcho_trop_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_HCHO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_HCHO/native_to_ascii/${FILE} ./.
       mcc -m tropomi_hcho_trop_col_extract.m -o tropomi_hcho_trop_col_extract
       ./run_tropomi_hcho_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -10389,7 +10390,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tropomi_hcho_trop_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TROPOMI_HCHO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_HCHO/native_to_ascii/${FILE} ./.
          mcc -m tropomi_hcho_trop_col_extract.m -o tropomi_trop_col_hcho_extract
          ./run_tropomi_hcho_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -10451,10 +10452,10 @@ EOF
 #
 # USE TROPOMI DATA
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tropomi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TROPOMI_HCHO/work/tropomi_hcho_trop_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_HCHO/work/tropomi_hcho_trop_col_ascii_to_obs ./.
       ./tropomi_hcho_trop_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -10530,7 +10531,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tempo_o3_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
       mcc -m tempo_o3_total_col_extract.m -o tempo_o3_total_col_extract
       ./run_tempo_o3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -10563,7 +10564,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tempo_o3_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
          mcc -m tempo_o3_total_col_extract.m -o tempo_o3_total_col_extract
          ./run_tempo_o3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -10620,10 +10621,10 @@ EOF
 #      
 # USE TEMPO DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tempo_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tempo_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/work/tempo_o3_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/work/tempo_o3_total_col_ascii_to_obs ./.
       ./tempo_o3_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -10699,7 +10700,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tempo_o3_trop_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
       mcc -m tempo_o3_trop_col_extract.m -o tempo_o3_trop_col_extract
       ./run_tempo_o3_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -10732,7 +10733,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tempo_o3_trop_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
          mcc -m tempo_o3_trop_col_extract.m -o tempo_o3_trop_col_extract
          ./run_tempo_o3_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -10789,10 +10790,10 @@ EOF
 #      
 # USE TEMPO DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tempo_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tempo_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/work/tempo_o3_trop_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/work/tempo_o3_trop_col_ascii_to_obs ./.
       ./tempo_o3_trop_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -10868,7 +10869,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tempo_o3_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
       mcc -m tempo_o3_profile_extract.m -o tempo_o3_profile_extract
       ./run_tempo_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -10901,7 +10902,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tempo_o3_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
          mcc -m tempo_o3_profile_extract.m -o tempo_o3_profile_extract
          ./run_tempo_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -10958,10 +10959,10 @@ EOF
 #      
 # USE TEMPO DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tempo_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tempo_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/work/tempo_o3_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/work/tempo_o3_profile_ascii_to_obs ./.
       ./tempo_o3_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -11037,7 +11038,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tempo_o3_cpsr_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
       mcc -m tempo_o3_cpsr_extract.m -o tempo_o3_cpsr_extract
       ./run_tempo_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -11070,7 +11071,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tempo_o3_cpsr_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
          mcc -m tempo_o3_cpsr_extract.m -o tempo_o3_cpsr_extract
          ./run_tempo_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -11127,10 +11128,10 @@ EOF
 #      
 # USE TEMPO DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tempo_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tempo_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TEMPO_O3/work/tempo_o3_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/work/tempo_o3_cpsr_ascii_to_obs ./.
       ./tempo_o3_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -11209,7 +11210,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tempo_no2_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_NO2/native_to_ascii/${FILE} ./.
       mcc -m tempo_no2_total_col_extract.m -o tempo_no2_total_col_extract
       ./run_tempo_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -11242,7 +11243,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tempo_no2_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_NO2/native_to_ascii/${FILE} ./.
          mcc -m tempo_no2_total_col_extract.m -o tempo_no2_total_col_extract
          ./run_tempo_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -11299,10 +11300,10 @@ EOF
 #      
 # USE TEMPO DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tempo_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tempo_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/work/tempo_no2_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_NO2/work/tempo_no2_total_col_ascii_to_obs ./.
       ./tempo_no2_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -11381,7 +11382,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tempo_no2_trop_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_NO2/native_to_ascii/${FILE} ./.
       mcc -m tempo_no2_trop_col_extract.m -o tempo_no2_trop_col_extract
       ./run_tempo_no2_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -11414,7 +11415,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tempo_no2_trop_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_NO2/native_to_ascii/${FILE} ./.
          mcc -m tempo_no2_trop_col_extract.m -o tempo_no2_trop_col_extract
          ./run_tempo_no2_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -11471,10 +11472,10 @@ EOF
 #      
 # USE TEMPO DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tempo_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tempo_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TEMPO_NO2/work/tempo_no2_trop_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_NO2/work/tempo_no2_trop_col_ascii_to_obs ./.
       ./tempo_no2_trop_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -11553,7 +11554,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_co_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_CO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/${FILE} ./.
       mcc -m tes_co_total_col_extract.m -o tes_co_total_col_extract
       ./run_tes_co_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -11586,7 +11587,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_co_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_CO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/${FILE} ./.
          mcc -m tes_co_total_col_extract.m -o tes_co_total_col_extract
          ./run_tes_co_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -11643,10 +11644,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_CO/work/tes_co_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/work/tes_co_total_col_ascii_to_obs ./.
       ./tes_co_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -11723,7 +11724,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_co_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_CO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/${FILE} ./.
       mcc -m tes_co_profile_extract.m -o tes_co_profile_extract
       ./run_tes_co_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -11756,7 +11757,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_co_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_CO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/${FILE} ./.
          mcc -m tes_co_profile_extract.m -o tes_co_profile_extract
          ./run_tes_co_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -11814,10 +11815,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_CO/work/tes_co_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/work/tes_co_profile_ascii_to_obs ./.
       ./tes_co_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -11896,7 +11897,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_co_cpsr_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_CO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/${FILE} ./.
       mcc -m tes_co_cpsr_extract.m -o tes_co_cpsr_extract
       ./run_tes_co_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -11929,7 +11930,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_co_cpsr_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_CO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/${FILE} ./.
          mcc -m tes_co_cpsr_extract.m -o tes_co_cpsr_extract
          ./run_tes_co_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -11987,10 +11988,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_CO/work/tes_co_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/work/tes_co_cpsr_ascii_to_obs ./.
       ./tes_co_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -12069,7 +12070,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_co2_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_CO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO2/native_to_ascii/${FILE} ./.
       mcc -m tes_co2_total_col_extract.m -o tes_co2_total_col_extract
       ./run_tes_co2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -12102,7 +12103,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_co2_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_CO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO2/native_to_ascii/${FILE} ./.
          mcc -m tes_co2_total_col_extract.m -o tes_co2_total_col_extract
          ./run_tes_co2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -12162,10 +12163,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_CO2/work/tes_co2_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO2/work/tes_co2_total_col_ascii_to_obs ./.
       ./tes_co2_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -12242,7 +12243,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_co2_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_CO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO2/native_to_ascii/${FILE} ./.
       mcc -m tes_co2_profile_extract.m -o tes_co2_profile_extract
       ./run_tes_co2_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -12275,7 +12276,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_co2_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_CO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO2/native_to_ascii/${FILE} ./.
          mcc -m tes_co2_profile_extract.m -o tes_co2_profile_extract
          ./run_tes_co2_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -12335,10 +12336,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_CO2/work/tes_co2_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO2/work/tes_co2_profile_ascii_to_obs ./.
       ./tes_co2_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -12417,7 +12418,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_co2_cpsr_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_CO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO2/native_to_ascii/${FILE} ./.
       mcc -m tes_co2_cpsr_extract.m -o tes_co2_cpsr_extract
       ./run_tes_co2_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -12450,7 +12451,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_co2_cpsr_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_CO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO2/native_to_ascii/${FILE} ./.
          mcc -m tes_co2_cpsr_extract.m -o tes_co2_cpsr_extract
          ./run_tes_co2_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -12510,10 +12511,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_CO2/work/tes_co2_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO2/work/tes_co2_cpsr_ascii_to_obs ./.
       ./tes_co2_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -12592,7 +12593,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_o3_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/native_to_ascii/${FILE} ./.
       mcc -m tes_o3_total_col_extract.m -o tes_o3_total_col_extract
       ./run_tes_o3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -12625,7 +12626,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_o3_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/native_to_ascii/${FILE} ./.
          mcc -m tes_o3_total_col_extract.m -o tes_o3_total_col_extract
          ./run_tes_o3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -12685,10 +12686,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_O3/work/tes_o3_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/work/tes_o3_total_col_ascii_to_obs ./.
       ./tes_o3_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -12765,7 +12766,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_o3_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/native_to_ascii/${FILE} ./.
       mcc -m tes_o3_profile_extract.m -o tes_o3_profile_extract
       ./run_tes_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -12798,7 +12799,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_o3_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/native_to_ascii/${FILE} ./.
          mcc -m tes_o3_profile_extract.m -o tes_o3_profile_extract
          ./run_tes_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -12856,10 +12857,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_O3/work/tes_o3_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/work/tes_o3_profile_ascii_to_obs ./.
       ./tes_o3_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -12937,7 +12938,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_o3_cpsr_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/native_to_ascii/${FILE} ./.
       mcc -m tes_o3_cpsr_extract.m -o tes_o3_cpsr_extract
       ./run_tes_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -12970,7 +12971,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_o3_cpsr_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/native_to_ascii/${FILE} ./.
          mcc -m tes_o3_cpsr_extract.m -o tes_o3_cpsr_extract
          ./run_tes_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -13030,10 +13031,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_O3/work/tes_o3_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/work/tes_o3_cpsr_ascii_to_obs ./.
       ./tes_o3_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -13112,7 +13113,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_nh3_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_NH3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_NH3/native_to_ascii/${FILE} ./.
       mcc -m tes_nh3_total_col_extract.m -o tes_nh3_total_col_extract
       ./run_tes_nh3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -13146,7 +13147,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_nh3_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_NH3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_NH3/native_to_ascii/${FILE} ./.
          mcc -m tes_nh3_total_col_extract.m -o tes_nh3_total_col_extract
          ./run_tes_nh3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -13206,10 +13207,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_NH3/work/tes_nh3_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_NH3/work/tes_nh3_total_col_ascii_to_obs ./.
       ./tes_nh3_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -13287,7 +13288,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_nh3_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_NH3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_NH3/native_to_ascii/${FILE} ./.
       mcc -m tes_nh3_profile_extract.m -o tes_nh3_profile_extract
       ./run_tes_nh3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -13320,7 +13321,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_nh3_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_NH3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_NH3/native_to_ascii/${FILE} ./.
          mcc -m tes_nh3_profile_extract.m -o tes_nh3_profile_extract
          ./run_tes_nh3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -13380,10 +13381,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_NH3/work/tes_nh3_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_NH3/work/tes_nh3_profile_ascii_to_obs ./.
       ./tes_nh3_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -13461,7 +13462,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_nh3_cpsr_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_NH3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_NH3/native_to_ascii/${FILE} ./.
       mcc -m tes_nh3_cpsr_extract.m -o tes_nh3_cpsr_extract
       ./run_tes_nh3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -13494,7 +13495,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_nh3_cpsr_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_NH3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_NH3/native_to_ascii/${FILE} ./.
          mcc -m tes_nh3_cpsr_extract.m -o tes_nh3_cpsr_extract
          ./run_tes_nh3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -13554,10 +13555,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_NH3/work/tes_nh3_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_NH3/work/tes_nh3_cpsr_ascii_to_obs ./.
       ./tes_nh3_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -13636,7 +13637,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_ch4_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_CH4/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CH4/native_to_ascii/${FILE} ./.
       mcc -m tes_ch4_total_col_extract.m -o tes_ch4_total_col_extract
       ./run_tes_ch4_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -13669,7 +13670,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_ch4_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_CH4/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CH4/native_to_ascii/${FILE} ./.
          mcc -m tes_ch4_total_col_extract.m -o tes_ch4_total_col_extract
          ./run_tes_ch4_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -13729,10 +13730,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_CH4/work/tes_ch4_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CH4/work/tes_ch4_total_col_ascii_to_obs ./.
       ./tes_ch4_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -13811,7 +13812,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_ch4_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_CH4/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CH4/native_to_ascii/${FILE} ./.
       mcc -m tes_ch4_profile_extract.m -o tes_ch4_profile_extract
       ./run_tes_ch4_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -13844,7 +13845,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_ch4_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_CH4/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CH4/native_to_ascii/${FILE} ./.
          mcc -m tes_ch4_profile_extract.m -o tes_ch4_profile_extract
          ./run_tes_ch4_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -13904,10 +13905,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_CH4/work/tes_ch4_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CH4/work/tes_ch4_profile_ascii_to_obs ./.
       ./tes_ch4_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -13986,7 +13987,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=tes_ch4_cpsr_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/TES_CH4/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CH4/native_to_ascii/${FILE} ./.
       mcc -m tes_ch4_cpsr_extract.m -o tes_ch4_cpsr_extract
       ./run_tes_ch4_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -14019,7 +14020,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=tes_ch4_cpsr_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/TES_CH4/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CH4/native_to_ascii/${FILE} ./.
          mcc -m tes_ch4_cpsr_extract.m -o tes_ch4_cpsr_extract
          ./run_tes_ch4_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -14077,10 +14078,10 @@ EOF
 #      
 # USE TES DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_tes_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/TES_CH4/work/tes_ch4_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CH4/work/tes_ch4_cpsr_ascii_to_obs ./.
       ./tes_ch4_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -14159,7 +14160,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=cris_co_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/CRIS_CO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CO/native_to_ascii/${FILE} ./.
       mcc -m cris_co_total_col_extract.m -o cris_co_total_col_extract
       ./run_cris_co_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -14192,7 +14193,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=cris_co_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/CRIS_CO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CO/native_to_ascii/${FILE} ./.
          mcc -m cris_co_total_col_extract.m -o cris_co_total_col_extract
          ./run_cris_co_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -14249,10 +14250,10 @@ EOF
 #      
 # USE CRIS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_cris_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_cris_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/CRIS_CO/work/cris_co_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CO/work/cris_co_total_col_ascii_to_obs ./.
       ./cris_co_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -14332,7 +14333,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=cris_co_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/CRIS_CO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CO/native_to_ascii/${FILE} ./.
       mcc -m cris_co_profile_extract.m -o cris_co_profile_extract
       ./run_cris_co_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -14365,7 +14366,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=cris_co_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/CRIS_CO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CO/native_to_ascii/${FILE} ./.
          mcc -m cris_co_profile_extract.m -o cris_co_profile_extract
          ./run_cris_co_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -14426,10 +14427,10 @@ EOF
 #      
 # USE CRIS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_cris_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_cris_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/CRIS_CO/work/cris_co_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CO/work/cris_co_profile_ascii_to_obs ./.
       ./cris_co_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -14508,7 +14509,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=cris_co_cpsr_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/CRIS_CO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CO/native_to_ascii/${FILE} ./.
       mcc -m cris_co_cpsr_extract.m -o cris_co_cpsr_extract
       ./run_cris_co_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -14541,7 +14542,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=cris_co_cpsr_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/CRIS_CO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CO/native_to_ascii/${FILE} ./.
          mcc -m cris_co_cpsr_extract.m -o cris_co_cpsr_extract
          ./run_cris_co_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -14601,10 +14602,10 @@ EOF
 #      
 # USE CRIS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_cris_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_cris_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/CRIS_CO/work/cris_co_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CO/work/cris_co_cpsr_ascii_to_obs ./.
       ./cris_co_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -14684,7 +14685,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=cris_o3_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/CRIS_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_O3/native_to_ascii/${FILE} ./.
       mcc -m cris_o3_total_col_extract.m -o cris_o3_total_col_extract
       ./run_cris_o3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -14717,7 +14718,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=cris_o3_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/CRIS_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_O3/native_to_ascii/${FILE} ./.
          mcc -m cris_o3_total_col_extract.m -o cris_o3_total_col_extract
          ./run_cris_o3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -14777,10 +14778,10 @@ EOF
 #      
 # USE CRIS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_cris_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_cris_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/CRIS_O3/work/cris_o3_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_O3/work/cris_o3_total_col_ascii_to_obs ./.
       ./cris_o3_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -14860,7 +14861,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=cris_o3_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/CRIS_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_O3/native_to_ascii/${FILE} ./.
       mcc -m cris_o3_profile_extract.m -o cris_o3_profile_extract
       ./run_cris_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -14893,7 +14894,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=cris_o3_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/CRIS_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_O3/native_to_ascii/${FILE} ./.
          mcc -m cris_o3_profile_extract.m -o cris_o3_profile_extract
          ./run_cris_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -14954,10 +14955,10 @@ EOF
 #      
 # USE CRIS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_cris_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_cris_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/CRIS_O3/work/cris_o3_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_O3/work/cris_o3_profile_ascii_to_obs ./.
       ./cris_o3_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -15036,7 +15037,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=cris_o3_cpsr_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/CRIS_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_O3/native_to_ascii/${FILE} ./.
       mcc -m cris_o3_cpsr_extract.m -o cris_o3_cpsr_extract
       ./run_cris_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -15069,7 +15070,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=cris_o3_cpsr_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/CRIS_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_O3/native_to_ascii/${FILE} ./.
          mcc -m cris_o3_cpsr_extract.m -o cris_o3_cpsr_extract
          ./run_cris_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -15129,10 +15130,10 @@ EOF
 #      
 # USE CRIS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_cris_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_cris_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/CRIS_O3/work/cris_o3_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_O3/work/cris_o3_cpsr_ascii_to_obs ./.
       ./cris_o3_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -15211,7 +15212,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=cris_nh3_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/CRIS_NH3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_NH3/native_to_ascii/${FILE} ./.
       mcc -m cris_nh3_total_col_extract.m -o cris_nh3_total_col_extract
       ./run_cris_nh3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -15245,7 +15246,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=cris_nh3_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/CRIS_NH3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_NH3/native_to_ascii/${FILE} ./.
          mcc -m cris_nh3_total_col_extract.m -o cris_nh3_total_col_extract
          ./run_cris_nh3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -15305,10 +15306,10 @@ EOF
 #      
 # USE CRIS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_cris_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_cris_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/CRIS_NH3/work/cris_nh3_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_NH3/work/cris_nh3_total_col_ascii_to_obs ./.
       ./cris_nh3_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -15388,7 +15389,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=cris_nh3_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/CRIS_NH3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_NH3/native_to_ascii/${FILE} ./.
       mcc -m cris_nh3_profile_extract.m -o cris_nh3_profile_extract
       ./run_cris_nh3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -15421,7 +15422,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=cris_nh3_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/CRIS_NH3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_NH3/native_to_ascii/${FILE} ./.
          mcc -m cris_nh3_profile_extract.m -o cris_nh3_profile_extract
          ./run_cris_nh3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -15482,10 +15483,10 @@ EOF
 #      
 # USE CRIS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_cris_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_cris_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/CRIS_NH3/work/cris_nh3_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_NH3/work/cris_nh3_profile_ascii_to_obs ./.
       ./cris_nh3_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -15564,7 +15565,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=cris_ch4_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/CRIS_CH4/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CH4/native_to_ascii/${FILE} ./.
       mcc -m cris_ch4_total_col_extract.m -o cris_ch4_total_col_extract
       ./run_cris_ch4_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -15597,7 +15598,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=cris_ch4_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/CRIS_CH4/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CH4/native_to_ascii/${FILE} ./.
          mcc -m cris_ch4_total_col_extract.m -o cris_ch4_total_col_extract
          ./run_cris_ch4_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -15657,10 +15658,10 @@ EOF
 #      
 # USE CRIS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_cris_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_cris_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/CRIS_CH4/work/cris_ch4_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CH4/work/cris_ch4_total_col_ascii_to_obs ./.
       ./cris_ch4_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -15740,7 +15741,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=cris_ch4_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/CRIS_CH4/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CH4/native_to_ascii/${FILE} ./.
       mcc -m cris_ch4_profile_extract.m -o cris_ch4_profile_extract
       ./run_cris_ch4_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -15773,7 +15774,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=cris_ch4_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/CRIS_CH4/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CH4/native_to_ascii/${FILE} ./.
          mcc -m cris_ch4_profile_extract.m -o cris_ch4_profile_extract
          ./run_cris_ch4_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -15834,10 +15835,10 @@ EOF
 #      
 # USE CRIS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_cris_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_cris_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/CRIS_CH4/work/cris_ch4_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CH4/work/cris_ch4_profile_ascii_to_obs ./.
       ./cris_ch4_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -15916,7 +15917,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=cris_ch4_cpsr_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/CRIS_CH4/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CH4/native_to_ascii/${FILE} ./.
       mcc -m cris_ch4_cpsr_extract.m -o cris_ch4_cpsr_extract
       ./run_cris_ch4_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -15949,7 +15950,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=cris_ch4_cpsr_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/CRIS_CH4/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CH4/native_to_ascii/${FILE} ./.
          mcc -m cris_ch4_cpsr_extract.m -o cris_ch4_cpsr_extract
          ./run_cris_ch4_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -16007,10 +16008,10 @@ EOF
 #      
 # USE CRIS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_cris_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_cris_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/CRIS_CH4/work/cris_ch4_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CH4/work/cris_ch4_cpsr_ascii_to_obs ./.
       ./cris_ch4_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -16090,7 +16091,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=cris_pan_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/CRIS_PAN/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_PAN/native_to_ascii/${FILE} ./.
       mcc -m cris_pan_total_col_extract.m -o cris_pan_total_col_extract
       ./run_cris_pan_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -16123,7 +16124,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=cris_pan_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/CRIS_PAN/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_PAN/native_to_ascii/${FILE} ./.
          mcc -m cris_pan_total_col_extract.m -o cris_pan_total_col_extract
          ./run_cris_pan_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -16184,10 +16185,10 @@ EOF
 #      
 # USE CRIS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_cris_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_cris_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/CRIS_PAN/work/cris_pan_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_PAN/work/cris_pan_total_col_ascii_to_obs ./.
       ./cris_pan_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -16266,7 +16267,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=cris_pan_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/CRIS_PAN/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_PAN/native_to_ascii/${FILE} ./.
       mcc -m cris_pan_profile_extract.m -o cris_pan_profile_extract
       ./run_cris_pan_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -16299,7 +16300,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=cris_pan_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/CRIS_PAN/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_PAN/native_to_ascii/${FILE} ./.
          mcc -m cris_pan_profile_extract.m -o cris_pan_profile_extract
          ./run_cris_pan_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -16360,10 +16361,10 @@ EOF
 #      
 # USE CRIS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_cris_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_cris_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/CRIS_PAN/work/cris_pan_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_PAN/work/cris_pan_profile_ascii_to_obs ./.
       ./cris_pan_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -16442,7 +16443,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=cris_pan_cpsr_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/CRIS_PAN/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_PAN/native_to_ascii/${FILE} ./.
       mcc -m cris_pan_cpsr_extract.m -o cris_pan_cpsr_extract
       ./run_cris_pan_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -16475,7 +16476,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=cris_pan_cpsr_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/CRIS_PAN/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_PAN/native_to_ascii/${FILE} ./.
          mcc -m cris_pan_cpsr_extract.m -o cris_pan_cpsr_extract
          ./run_cris_pan_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -16533,10 +16534,10 @@ EOF
 #      
 # USE CRIS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_cris_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_cris_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/CRIS_PAN/work/cris_pan_cpsr_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_PAN/work/cris_pan_cpsr_ascii_to_obs ./.
       ./cris_pan_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -16613,7 +16614,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=sciam_no2_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/SCIAM_NO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/SCIAM_NO2/native_to_ascii/${FILE} ./.
       mcc -m sciam_no2_total_col_extract.m -o sciam_no2_total_col_extract
       ./run_sciam_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${SCIAM_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -16646,7 +16647,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=sciam_no2_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/SCIAM_NO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/SCIAM_NO2/native_to_ascii/${FILE} ./.
          mcc -m sciam_no2_total_col_extract.m -o sciam_no2_total_col_extract
          ./run_sciam_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${SCIAM_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -16700,10 +16701,10 @@ EOF
 #      
 # USE SCIAM DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_sciam_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_sciam_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/SCIAM_NO2/work/sciam_no2_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/SCIAM_NO2/work/sciam_no2_total_col_ascii_to_obs ./.
       ./sciam_no2_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -16783,7 +16784,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=sciam_no2_trop_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/SCIAM_NO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/SCIAM_NO2/native_to_ascii/${FILE} ./.
       mcc -m sciam_no2_trop_col_extract.m -o sciam_no2_trop_col_extract
       ./run_sciam_no2_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${SCIAM_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -16816,7 +16817,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=sciam_no2_trop_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/SCIAM_NO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/SCIAM_NO2/native_to_ascii/${FILE} ./.
          mcc -m sciam_no2_trop_col_extract.m -o sciam_no2_trop_col_extract
          ./run_sciam_no2_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${SCIAM_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -16872,10 +16873,10 @@ EOF
 #      
 # USE SCIAM DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_sciam_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_sciam_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/SCIAM_NO2/work/sciam_no2_trop_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/SCIAM_NO2/work/sciam_no2_trop_col_ascii_to_obs ./.
       ./sciam_no2_trop_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -16952,7 +16953,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=gome2a_no2_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/GOME2A_NO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2A_NO2/native_to_ascii/${FILE} ./.
       mcc -m gome2a_no2_total_col_extract.m -o gome2a_no2_total_col_extract
       ./run_gome2a_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${GOME2A_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -16985,7 +16986,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=gome2a_no2_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/GOME2A_NO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2A_NO2/native_to_ascii/${FILE} ./.
          mcc -m gome2a_no2_total_col_extract.m -o gome2a_no2_total_col_extract
          ./run_gome2a_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${GOME2A_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -17039,10 +17040,10 @@ EOF
 #      
 # USE GOME2A DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_gome2a_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_gome2a_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/GOME2A_NO2/work/gome2a_no2_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2A_NO2/work/gome2a_no2_total_col_ascii_to_obs ./.
       ./gome2a_no2_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -17119,7 +17120,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=gome2a_no2_trop_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/GOME2A_NO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2A_NO2/native_to_ascii/${FILE} ./.
       mcc -m gome2a_no2_trop_col_extract.m -o gome2a_no2_trop_col_extract
       ./run_gome2a_no2_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${GOME2A_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -17152,7 +17153,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=gome2a_no2_trop_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/GOME2A_NO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2A_NO2/native_to_ascii/${FILE} ./.
          mcc -m gome2a_no2_trop_col_extract.m -o gome2a_no2_trop_col_extract
          ./run_gome2a_no2_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${GOME2A_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -17206,10 +17207,10 @@ EOF
 #      
 # USE GOME2A DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_gome2a_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_gome2a_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/GOME2A_NO2/work/gome2a_no2_trop_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2A_NO2/work/gome2a_no2_trop_col_ascii_to_obs ./.
       ./gome2a_no2_trop_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -17286,7 +17287,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=mls_o3_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/MLS_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_O3/native_to_ascii/${FILE} ./.
       mcc -m mls_o3_total_col_extract.m -o mls_o3_total_col_extract
       ./run_mls_o3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -17319,7 +17320,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=mls_o3_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/MLS_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_O3/native_to_ascii/${FILE} ./.
          mcc -m mls_o3_total_col_extract.m -o mls_o3_total_col_extract
          ./run_mls_o3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -17373,10 +17374,10 @@ EOF
 #      
 # USE MLS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_mls_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_mls_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/MLS_O3/work/mls_o3_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_O3/work/mls_o3_total_col_ascii_to_obs ./.
       ./mls_o3_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -17453,7 +17454,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=mls_o3_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/MLS_O3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_O3/native_to_ascii/${FILE} ./.
       mcc -m mls_o3_profile_extract.m -o mls_o3_profile_extract
       ./run_mls_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -17486,7 +17487,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=mls_o3_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/MLS_O3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_O3/native_to_ascii/${FILE} ./.
          mcc -m mls_o3_profile_extract.m -o mls_o3_profile_extract
          ./run_mls_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -17541,10 +17542,10 @@ EOF
 #      
 # USE MLS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_mls_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_mls_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/MLS_O3/work/mls_o3_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_O3/work/mls_o3_profile_ascii_to_obs ./.
       ./mls_o3_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -17621,7 +17622,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=mls_hno3_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/MLS_HNO3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/native_to_ascii/${FILE} ./.
       mcc -m mls_hno3_total_col_extract.m -o mls_hno3_total_col_extract
       ./run_mls_hno3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -17654,7 +17655,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=mls_hno3_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/MLS_HNO3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/native_to_ascii/${FILE} ./.
          mcc -m mls_hno3_total_col_extract.m -o mls_hno3_total_col_extract
          ./run_mls_hno3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
 #
@@ -17709,10 +17710,10 @@ EOF
 #      
 # USE MLS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_mls_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_mls_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/MLS_HNO3/work/mls_hno3_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/work/mls_hno3_total_col_ascii_to_obs ./.
       ./mls_hno3_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -17788,7 +17789,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=mls_hno3_profile_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/MLS_HNO3/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/native_to_ascii/${FILE} ./.
       mcc -m mls_hno3_profile_extract.m -o mls_hno3_profile_extract
       ./run_mls_hno3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} >> index_mat1.html 2>&1
 #
@@ -17821,7 +17822,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=mls_hno3_profile_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/MLS_HNO3/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/native_to_ascii/${FILE} ./.
          mcc -m mls_hno3_profile_extract.m -o mls_hno3_profile_extract
          ./run_mls_hno3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -17876,10 +17877,10 @@ EOF
 #      
 # USE MLS DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_mls_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_mls_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/MLS_HNO3/work/mls_hno3_profile_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/work/mls_hno3_profile_ascii_to_obs ./.
       ./mls_hno3_profile_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -17956,7 +17957,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=omi_no2_domino_total_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/OMI_NO2_DOMINO/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2_DOMINO/native_to_ascii/${FILE} ./.
       mcc -m omi_no2_domino_total_col_extract.m -o omi_no2_domino_total_col_extract
       ./run_omi_no2_domino_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -17989,7 +17990,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=omi_no2_domino_total_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/OMI_NO2_DOMINO/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2_DOMINO/native_to_ascii/${FILE} ./.
          mcc -m omi_no2_domino_total_col_extract.m -o omi_no2_domino_total_col_extract
          ./run_omi_no2_domino_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -18047,10 +18048,10 @@ EOF
 #      
 # USE OMI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_omi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/OMI_NO2/work/omi_no2_domino_total_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/work/omi_no2_domino_total_col_ascii_to_obs ./.
       ./omi_no2_domino_total_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -18127,7 +18128,7 @@ EOF
 # COPY EXECUTABLE
       export FILE=omi_no2_domino_trop_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/OMI_NO2/native_to_ascii/${FILE} ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/native_to_ascii/${FILE} ./.
       mcc -m omi_no2_domino_trop_col_extract.m -o omi_no2_domino_trop_col_extract
       ./run_omi_no2_domino_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
@@ -18160,7 +18161,7 @@ EOF
 # COPY EXECUTABLE
          export FILE=omi_no2_domino_trop_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/OMI_NO2/native_to_ascii/${FILE} ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/native_to_ascii/${FILE} ./.
          mcc -m omi_no2_domino_trop_col_extract.m -o omi_no2_domino_trop_col_extract
          ./run_omi_no2_domino_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
@@ -18221,10 +18222,10 @@ EOF
 #      
 # USE OMI DATA 
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_omi_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_omi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/OMI_NO2/work/omi_no2_domino_trop_col_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/work/omi_no2_domino_trop_col_ascii_to_obs ./.
       ./omi_no2_domino_trop_col_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -18305,10 +18306,10 @@ obs_list='TROPOMI_CO_COL'
 EOF
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/AIRNOW/work/airnow_o3_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/AIRNOW/work/airnow_o3_ascii_to_obs ./.
       rm -rf create_airnow_obs_nml.nl
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_airnow_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_airnow_input_nml.ksh
       ./airnow_o3_ascii_to_obs > index.file 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -18394,10 +18395,10 @@ obs_list='TROPOMI_CO_COL'
 EOF
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/AIRNOW/work/airnow_co_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/AIRNOW/work/airnow_co_ascii_to_obs ./.
       rm -rf create_airnow_obs_nml.nl
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_airnow_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_airnow_input_nml.ksh
       ./airnow_co_ascii_to_obs > index.file 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -18462,10 +18463,10 @@ if ${RUN_AIRNOW_NO2_OBS}; then
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_AIRNOW_NO2}
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/AIRNOW/work/airnow_no2_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/AIRNOW/work/airnow_no2_ascii_to_obs ./.
       rm -rf create_airnow_obs_nml.nl
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_airnow_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_airnow_input_nml.ksh
       ./airnow_no2_ascii_to_obs > index.file 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -18530,10 +18531,10 @@ if ${RUN_AIRNOW_SO2_OBS}; then
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_AIRNOW_SO2}
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/AIRNOW/work/airnow_so2_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/AIRNOW/work/airnow_so2_ascii_to_obs ./.
       rm -rf create_airnow_obs_nml.nl
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_airnow_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_airnow_input_nml.ksh
       ./airnow_so2_ascii_to_obs > index.file 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -18598,10 +18599,10 @@ if ${RUN_AIRNOW_PM10_OBS}; then
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_AIRNOW_PM10}
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/AIRNOW/work/airnow_pm10_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/AIRNOW/work/airnow_pm10_ascii_to_obs ./.
       rm -rf create_airnow_obs_nml.nl
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_airnow_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_airnow_input_nml.ksh
       ./airnow_pm10_ascii_to_obs > index.file 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -18666,10 +18667,10 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_AIRNOW_PM25}
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/AIRNOW/work/airnow_pm25_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/AIRNOW/work/airnow_pm25_ascii_to_obs ./.
       rm -rf create_airnow_obs_nml.nl
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_airnow_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_airnow_input_nml.ksh
       ./airnow_pm25_ascii_to_obs > index.file 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -18737,10 +18738,10 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       export NL_LON_MX=${NL_MAX_LON}
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/PANDA/work/panda_co_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/PANDA/work/panda_co_ascii_to_obs ./.
       rm -rf create_panda_obs_nml.nl
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_panda_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_panda_input_nml.ksh
       ./panda_co_ascii_to_obs
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -18808,10 +18809,10 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       export NL_LON_MX=${NL_MAX_LON}
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/PANDA/work/panda_o3_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/PANDA/work/panda_o3_ascii_to_obs ./.
       rm -rf create_panda_obs_nml.nl
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_panda_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_panda_input_nml.ksh
       ./panda_o3_ascii_to_obs
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -18879,10 +18880,10 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       export NL_LON_MX=${NL_MAX_LON}
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/PANDA/work/panda_pm25_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/PANDA/work/panda_pm25_ascii_to_obs ./.
       rm -rf create_panda_obs_nml.nl
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_panda_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_panda_input_nml.ksh
       ./panda_pm25_ascii_to_obs
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -18970,10 +18971,10 @@ obs_list='TROPOMI_CO_COL'
 EOF
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/MEXICO_AQS/work/mexico_aqs_co_ascii_to_obs ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MEXICO_AQS/work/mexico_aqs_co_ascii_to_obs ./.
       rm -rf create_mexico_aqs_obs_nml.nl
       rm -rf input.nml
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_mexico_aqs_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_mexico_aqs_input_nml.ksh
       ./mexico_aqs_co_ascii_to_obs > index.file 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
@@ -19028,7 +19029,7 @@ EOF
       ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/work/prepbufr_RT.csh ${D_YYYY} ${DD_MM} ${DD_DD} ${DD_DD} ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/exe > index.file 2>&1
 #
 # RUN ASCII TO OBS_SEQ CONVERTER
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_ncep_ascii_to_obs_input_nml_RT.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_ncep_ascii_to_obs_input_nml_RT.ksh
       ${DART_DIR}/observations/obs_converters/NCEP/ascii_to_obs/work/create_real_obs > index_create 2>&1
 #
       mv obs_seq${D_DATE} obs_seq_prep_${DATE}.out
@@ -19919,7 +19920,7 @@ EOF
       export NL_USE_LOG_HNO3=${USE_LOG_HNO3_LOGIC}
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
       export NL_USE_LOG_PAN=${USE_LOG_PAN_LOGIC}
-      ${HYBRID_SCRIPTS_DIR}/da_create_dart_input_nml.ksh       
+      ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_dart_input_nml.ksh       
 #
       ./obs_sequence_tool > index.html 2>&1
       mv obs_seq.proc obs_seq_comb_${DATE}.out
@@ -19983,7 +19984,7 @@ EOF
       export NL_USE_LOG_HNO3=${USE_LOG_HNO3_LOGIC}
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
       export NL_USE_LOG_PAN=${USE_LOG_PAN_LOGIC}
-      ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input.nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/DART/dart_create_input.nml.ksh
 #
 # GET INPUT DATA
       rm -rf obs_seq.old
@@ -20153,15 +20154,15 @@ exit
          export NL_MAX_DOM=1
          export NL_IOFIELDS_FILENAME=\'hist_io_flds_v1\',\'hist_io_flds_v2\'
          rm -rf namelist.input
-         ${HYBRID_SCRIPTS_DIR}/da_create_wrfchem_namelist_RT_v4.ksh
+         ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wrfchem_namelist_RT_v4.ksh
          export JOBRND=${TRANDOM}_wrf
-         ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${WRFCHEM_JOB_CLASS} ${WRFCHEM_TIME_LIMIT} ${WRFCHEM_NODES} ${WRFCHEM_TASKS} wrf.exe PARALLEL ${ACCOUNT}
+         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${WRFCHEM_JOB_CLASS} ${WRFCHEM_TIME_LIMIT} ${WRFCHEM_NODES} ${WRFCHEM_TASKS} wrf.exe PARALLEL ${ACCOUNT}
          qsub job.ksh
          let IMEM=${IMEM}+1
       done
 #
 # Wait for WRFCHEM to complete for each member
-      ${HYBRID_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
+      ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
    fi
 #
 #########################################################################
@@ -20600,7 +20601,7 @@ EOF
 #
 # Create input.nml
       rm -rf input.nml
-      ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input.nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/DART/dart_create_input.nml.ksh
 #
 # Copy the obs_impact_tool executable
       cp ${WRFCHEM_DART_WORK_DIR}/obs_impact_tool ./.
@@ -20657,7 +20658,7 @@ EOF
          fi
 #
 # Create namelist
-         ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input.nml.ksh
+         ${NAMELIST_SCRIPTS_DIR}/DART/dart_create_input.nml.ksh
          cp ${EXPERIMENT_STATIC_FILES}/ubvals_b40.20th.track1_1996-2005.nc ./.
 #
 # Copy DART file that controls the observation/state variable update localization
@@ -20763,7 +20764,7 @@ EOF
          export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
          export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
          rm -rf input.nml
-         ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input.nml.ksh
+         ${NAMELIST_SCRIPTS_DIR}/DART/dart_create_input.nml.ksh
 #
 # Make filter_apm_nml for special_outlier_threshold
          rm -rf filter_apm.nml
@@ -20777,7 +20778,7 @@ EOF
 # Create job script for this member and run it 
          RANDOM=$$
          export JOBRND=${RANDOM}_filter
-         ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${FILTER_JOB_CLASS} ${FILTER_TIME_LIMIT} ${FILTER_NODES} ${FILTER_TASKS} filter PARALLEL ${ACCOUNT}
+         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${FILTER_JOB_CLASS} ${FILTER_TIME_LIMIT} ${FILTER_NODES} ${FILTER_TASKS} filter PARALLEL ${ACCOUNT}
          qsub -Wblock=true job.ksh
       fi
 #
@@ -20891,7 +20892,7 @@ EOF
          cp ${BDYCDN_IN} wrfbdy_d${CR_DOMAIN}_${FILE_DATE}_prior.${CMEM}
          export DA_OUTPUT_FILE=${DART_FILTER_DIR}/wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM} 
          export BDYCDN_OUT=wrfbdy_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM}    
-         ${HYBRID_SCRIPTS_DIR}/da_run_update_bc.ksh > index_update_bc 2>&1
+         ${JOB_CONTROL_SCRIPTS_DIR}/da_run_update_bc.ksh > index_update_bc 2>&1
 #
          let MEM=$MEM+1
       done
@@ -21161,16 +21162,16 @@ EOF
          export NL_MAX_DOM=1
          export NL_IOFIELDS_FILENAME=\'hist_io_flds_v1\',\'hist_io_flds_v2\'
          rm -rf namelist.input
-         ${HYBRID_SCRIPTS_DIR}/da_create_wrfchem_namelist_RT_v4.ksh
+         ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wrfchem_namelist_RT_v4.ksh
 #
          export JOBRND=${TRANDOM}_wrf
-         ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${WRFCHEM_JOB_CLASS} ${WRFCHEM_TIME_LIMIT} ${WRFCHEM_NODES} ${WRFCHEM_TASKS} wrf.exe PARALLEL ${ACCOUNT}
+         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${WRFCHEM_JOB_CLASS} ${WRFCHEM_TIME_LIMIT} ${WRFCHEM_NODES} ${WRFCHEM_TASKS} wrf.exe PARALLEL ${ACCOUNT}
          qsub job.ksh
          let IMEM=${IMEM}+1
       done
 #
 # Wait for WRFCHEM to complete for each member
-      ${HYBRID_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
+      ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
    fi
 #
 #########################################################################
@@ -21336,11 +21337,11 @@ EOFF
       export NL_MAX_DOM=2
       export NL_IOFIELDS_FILENAME=\'hist_io_flds_v1\',\'hist_io_flds_v2\'
       rm -rf namelist.input
-      ${HYBRID_SCRIPTS_DIR}/da_create_wrfchem_namelist_RT_v4.ksh
+      ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wrfchem_namelist_RT_v4.ksh
 #
       RANDOM=$$
       export JOBRND=${RANDOM}_wrf
-      ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${WRFCHEM_JOB_CLASS} ${WRFCHEM_TIME_LIMIT} ${WRFCHEM_NODES} ${WRFCHEM_TASKS} wrf.exe PARALLEL ${ACCOUNT}
+      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${WRFCHEM_JOB_CLASS} ${WRFCHEM_TIME_LIMIT} ${WRFCHEM_NODES} ${WRFCHEM_TASKS} wrf.exe PARALLEL ${ACCOUNT}
       qsub -Wblock=true job.ksh
    fi
 #
@@ -21485,11 +21486,11 @@ EOFF
          export L_TIME_LIMIT=${WRFCHEM_TIME_LIMIT}
       fi
       rm -rf namelist.input
-      ${HYBRID_SCRIPTS_DIR}/da_create_wrfchem_namelist_RT_v4.ksh
+      ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wrfchem_namelist_RT_v4.ksh
 #
       RANDOM=$$
       export JOBRND=${RANDOM}_wrf
-      ${HYBRID_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${WRFCHEM_JOB_CLASS} ${WRFCHEM_TIME_LIMIT} ${WRFCHEM_NODES} ${WRFCHEM_TASKS} wrf.exe PARALLEL ${ACCOUNT}
+      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${WRFCHEM_JOB_CLASS} ${WRFCHEM_TIME_LIMIT} ${WRFCHEM_NODES} ${WRFCHEM_TASKS} wrf.exe PARALLEL ${ACCOUNT}
       qsub -Wblock=true job.ksh
    fi
 #

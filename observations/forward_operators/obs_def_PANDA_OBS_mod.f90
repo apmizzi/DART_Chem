@@ -16,7 +16,7 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 
-! BEGIN DART PREPROCESS TYPE LIST
+! BEGIN DART PREPROCESS TYPE DEFINITIONS
 ! PANDA_CO,                       QTY_CO,                     COMMON_CODE
 ! PANDA_SO2,                      QTY_SO2,                    COMMON_CODE
 ! PANDA_NO2,                      QTY_NO2,                    COMMON_CODE
@@ -24,12 +24,11 @@
 ! PANDA_O3,                       QTY_O3,                     COMMON_CODE
 ! PANDA_PM10,                     QTY_PM10,                   COMMON_CODE
 ! PANDA_PM25,                     QTY_PM25,                   COMMON_CODE
-! PANDA_PB,                       QTY_PB,                     COMMON_CODE
 ! PANDA_NMOC,                     QTY_NMOC,                   COMMON_CODE
 ! PANDA_PRESSURE,                 QTY_PRESSURE,               COMMON_CODE
 ! PANDA_TEMPERATURE,              QTY_TEMPERATURE,            COMMON_CODE
 ! PANDA_RELATIVE_HUMIDITY,        QTY_RELATIVE_HUMIDITY,      COMMON_CODE
 ! PANDA_U_WIND_COMPONENT,         QTY_U_WIND_COMPONENT,       COMMON_CODE
 ! PANDA_V_WIND_COMPONENT,         QTY_V_WIND_COMPONENT,       COMMON_CODE
-! END DART PREPROCESS KIND LIST
+! END DART PREPROCESS TYPE DEFINITIONS
 
