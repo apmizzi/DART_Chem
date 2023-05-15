@@ -25,6 +25,7 @@ program wrf_dart_obs_preprocess
 !     - superob aircraft and satellite wind data
 !
 !     created Oct. 2007 Ryan Torn, NCAR/MMM
+!     extended for chemical species by Arthur P Mizzi, ACOM
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -38,11 +39,47 @@ use  netcdf_utilities_mod, only : nc_check
 use     obs_kind_mod, only : RADIOSONDE_U_WIND_COMPONENT, ACARS_U_WIND_COMPONENT, &
                              MARINE_SFC_U_WIND_COMPONENT, LAND_SFC_U_WIND_COMPONENT, &
                              METAR_U_10_METER_WIND, GPSRO_REFRACTIVITY, &
-                             SAT_U_WIND_COMPONENT, PROFILER_U_WIND_COMPONENT, VORTEX_LAT
-use time_manager_mod, only : time_type, set_calendar_type, GREGORIAN, set_time
+                             SAT_U_WIND_COMPONENT, PROFILER_U_WIND_COMPONENT, VORTEX_LAT, &
+! APM/JB +++
+                             MOPITT_CO_TOTAL_COL, MOPITT_CO_PROFILE, MOPITT_V5_CO_PROFILE, MOPITT_CO_CPSR,&
+                             IASI_CO_TOTAL_COL, IASI_CO_PROFILE, IASI_CO_CPSR, &
+                             IASI_O3_PROFILE, IASI_O3_CPSR, &
+                             MODIS_AOD_TOTAL_COL, &
+                             OMI_O3_TOTAL_COL, OMI_O3_TROP_COL, OMI_O3_PROFILE, OMI_O3_CPSR, &
+                             OMI_NO2_TOTAL_COL, OMI_NO2_TROP_COL, &
+                             OMI_NO2_DOMINO_TOTAL_COL, OMI_NO2_DOMINO_TROP_COL, &
+                             OMI_SO2_TOTAL_COL, OMI_SO2_PBL_COL, &
+                             OMI_HCHO_TOTAL_COL, OMI_HCHO_TROP_COL, &
+                             TROPOMI_CO_TOTAL_COL, &
+                             TROPOMI_O3_TOTAL_COL, TROPOMI_O3_TROP_COL, TROPOMI_O3_PROFILE, TROPOMI_O3_CPSR, &
+                             TROPOMI_NO2_TOTAL_COL, TROPOMI_NO2_TROP_COL, &
+                             TROPOMI_SO2_TOTAL_COL, TROPOMI_SO2_PBL_COL,&
+                             TROPOMI_CH4_TOTAL_COL, TROPOMI_CH4_TROP_COL, TROPOMI_CH4_PROFILE, TROPOMI_CH4_CPSR, &
+                             TROPOMI_HCHO_TOTAL_COL, TROPOMI_HCHO_TROP_COL, &
+                             TEMPO_O3_TOTAL_COL, TEMPO_O3_TROP_COL, TEMPO_O3_PROFILE, TEMPO_O3_CPSR, &
+                             TEMPO_NO2_TOTAL_COL, TEMPO_NO2_TROP_COL, &
+                             TES_CO_TOTAL_COL, TES_CO_TROP_COL, TES_CO_PROFILE, TES_CO_CPSR, &
+                             TES_CO2_TOTAL_COL, TES_CO2_TROP_COL, TES_CO2_PROFILE, TES_CO2_CPSR, &
+                             TES_O3_TOTAL_COL, TES_O3_TROP_COL, TES_O3_PROFILE, TES_O3_CPSR, &
+                             TES_NH3_TOTAL_COL, TES_NH3_TROP_COL, TES_NH3_PROFILE, TES_NH3_CPSR, &
+                             TES_CH4_TOTAL_COL, TES_CH4_TROP_COL, TES_CH4_PROFILE, TES_CH4_CPSR, &
+                             CRIS_CO_TOTAL_COL, CRIS_CO_PROFILE, CRIS_CO_CPSR, &
+                             CRIS_O3_TOTAL_COL, CRIS_O3_PROFILE, CRIS_O3_CPSR, &
+                             CRIS_NH3_TOTAL_COL, CRIS_NH3_PROFILE, CRIS_NH3_CPSR, &
+                             CRIS_CH4_TOTAL_COL, CRIS_CH4_PROFILE, CRIS_CH4_CPSR, &
+                             CRIS_PAN_TOTAL_COL, CRIS_PAN_PROFILE, CRIS_PAN_CPSR, &
+                             SCIAM_NO2_TOTAL_COL, SCIAM_NO2_TROP_COL, &
+                             GOME2A_NO2_TOTAL_COL, GOME2A_NO2_TROP_COL, &
+                             MLS_O3_TOTAL_COL, MLS_O3_PROFILE, MLS_O3_CPSR, &
+                             MLS_HNO3_TOTAL_COL, MLS_HNO3_PROFILE, MLS_HNO3_CPSR, &
+                             AIRNOW_CO, AIRNOW_O3, AIRNOW_NO2, AIRNOW_SO2, AIRNOW_PM10, AIRNOW_PM25, &
+                             PANDA_CO, PANDA_O3, PANDA_PM25
+! APM/JB ---
+
+use     time_manager_mod, only : time_type, set_calendar_type, GREGORIAN, set_time
 use ensemble_manager_mod, only : ensemble_type, init_ensemble_manager, end_ensemble_manager
-use        model_mod, only : static_init_model
-use           netcdf
+use            model_mod, only : static_init_model
+use  netcdf
 
 implicit none
 
@@ -62,7 +99,106 @@ character(len=129) :: file_name_input    = 'obs_seq.old',        &
                       profiler_extra     = 'obs_seq.profiler',   &
                       gpsro_extra        = 'obs_seq.gpsro',      &
                       trop_cyclone_extra = 'obs_seq.tc'
-integer            :: max_num_obs              = 100000   ! Largest number of obs in one sequence
+! APM/JB +++
+character(len=129) :: modis_aod_total_col_extra    = 'obs_seq.modis_aod_total_col',   & 
+                      mopitt_co_total_col_extra    = 'obs_seq.mopitt_co_total_col',   &
+                      mopitt_co_profile_extra      = 'obs_seq.mopitt_co_profile',   &
+                      mopitt_v5_co_profile_extra   = 'obs_seq.mopitt_v5_co_profile',   &
+                      mopitt_co_cpsr_extra         = 'obs_seq.mopitt_co_cpsr',   &
+                      iasi_co_total_col_extra      = 'obs_seq.iasi_co_total_col',     &
+                      iasi_co_profile_extra        = 'obs_seq.iasi_co_profile_col',     &
+                      iasi_co_cpsr_extra           = 'obs_seq.iasi_co_cpsr_col',     &
+                      iasi_o3_profile_extra        = 'obs_seq.iasi_o3_profile',     &
+                      iasi_o3_cpsr_extra           = 'obs_seq.iasi_o3_cpsr',     &
+                      omi_o3_total_col_extra       = 'obs_seq.omi_o3_total_col',      &
+                      omi_o3_trop_col_extra        = 'obs_seq.omi_o3_trop_col',      &
+                      omi_o3_profile_extra         = 'obs_seq.omi_o3_profile',      &
+                      omi_o3_cpsr_extra            = 'obs_seq.omi_o3_cpsr',      &
+                      omi_no2_total_col_extra      = 'obs_seq.omi_no2_total_col',     &
+                      omi_no2_trop_col_extra       = 'obs_seq.omi_no2_trop_col',     &
+                      omi_no2_domino_total_col_extra  = 'obs_seq.omi_no2_domino_total_col',     &
+                      omi_no2_domino_trop_col_extra   = 'obs_seq.omi_no2_domino_trop_col',     &
+                      omi_so2_total_col_extra      = 'obs_seq.omi_so2_total_col',     &
+                      omi_so2_pbl_col_extra        = 'obs_seq.omi_so2_pbl_col',     &
+                      omi_hcho_total_col_extra     = 'obs_seq.omi_hcho_total_col',     &
+                      omi_hcho_trop_col_extra      = 'obs_seq.omi_hcho_trop_col',     &
+                      tropomi_co_total_col_extra   = 'obs_seq.tropomi_co_total_col',  &
+                      tropomi_o3_total_col_extra   = 'obs_seq.tropomi_o3_total_col',  &
+                      tropomi_o3_trop_col_extra    = 'obs_seq.tropomi_o3_trop_col',  &
+                      tropomi_o3_profile_extra     = 'obs_seq.tropomi_o3_profile',  &
+                      tropomi_o3_cpsr_extra        = 'obs_seq.tropomi_o3_cpsr',  &
+                      tropomi_no2_total_col_extra  = 'obs_seq.tropomi_no2_total_col', &
+                      tropomi_no2_trop_col_extra   = 'obs_seq.tropomi_no2_trop_col', &
+                      tropomi_so2_total_col_extra  = 'obs_seq.tropomi_so2_total_col', &
+                      tropomi_so2_pbl_col_extra    = 'obs_seq.tropomi_so2_pbl_col', &
+                      tropomi_ch4_total_col_extra  = 'obs_seq.tropomi_ch4_total_col', &
+                      tropomi_ch4_trop_col_extra   = 'obs_seq.tropomi_ch4_trop_col', &
+                      tropomi_ch4_profile_extra    = 'obs_seq.tropomi_ch4_profile', &
+                      tropomi_ch4_cpsr_extra       = 'obs_seq.tropomi_ch4_cpsr', &
+                      tropomi_hcho_total_col_extra = 'obs_seq.tropomi_hcho_total_col', &
+                      tropomi_hcho_trop_col_extra  = 'obs_seq.tropomi_hcho_trop_col', &
+                      tempo_o3_total_col_extra     = 'obs_seq.tempo_o3_total_col',    &
+                      tempo_o3_trop_col_extra      = 'obs_seq.tempo_o3_trop_col',    &
+                      tempo_o3_profile_extra       = 'obs_seq.tempo_o3_profile',    &
+                      tempo_o3_cpsr_extra          = 'obs_seq.tempo_o3_cpsr',    &
+                      tempo_no2_total_col_extra    = 'obs_seq.tempo_no2_total_col',   &
+                      tempo_no2_trop_col_extra     = 'obs_seq.tempo_no2_trop_col',   &
+                      tes_co_total_col_extra       = 'obs_seq.tes_co_total_col',   &
+                      tes_co_trop_col_extra        = 'obs_seq.tes_co_trop_col',   &
+                      tes_co_profile_extra         = 'obs_seq.tes_co_profile',   &
+                      tes_co_cpsr_extra            = 'obs_seq.tes_co_cpsr',   &
+                      tes_co2_total_col_extra      = 'obs_seq.tes_co2_total_col',   &
+                      tes_co2_trop_col_extra       = 'obs_seq.tes_co2_trop_col',   &
+                      tes_co2_profile_extra        = 'obs_seq.tes_co2_profile',   &
+                      tes_co2_cpsr_extra           = 'obs_seq.tes_co2_cpsr',   &
+                      tes_o3_total_col_extra       = 'obs_seq.tes_o3_total_col',   &
+                      tes_o3_trop_col_extra        = 'obs_seq.tes_o3_trop_col',   &
+                      tes_o3_profile_extra         = 'obs_seq.tes_o3_profile',   &
+                      tes_o3_cpsr_extra            = 'obs_seq.tes_o3_cpsr',   &
+                      tes_nh3_total_col_extra      = 'obs_seq.tes_nh3_total_col',   &
+                      tes_nh3_trop_col_extra       = 'obs_seq.tes_nh3_trop_col',   &
+                      tes_nh3_profile_extra        = 'obs_seq.tes_nh3_profile',   &
+                      tes_nh3_cpsr_extra           = 'obs_seq.tes_nh3_cpsr',   &
+                      tes_ch4_total_col_extra      = 'obs_seq.tes_ch4_total_col',   &
+                      tes_ch4_trop_col_extra       = 'obs_seq.tes_ch4_trop_col',   &
+                      tes_ch4_profile_extra        = 'obs_seq.tes_ch4_profile',   &
+                      tes_ch4_cpsr_extra           = 'obs_seq.tes_ch4_cpsr',   &
+                      cris_co_total_col_extra      = 'obs_seq.cris_co_total_col',   &
+                      cris_co_profile_extra        = 'obs_seq.cris_co_profile',   &
+                      cris_co_cpsr_extra           = 'obs_seq.cris_co_cpsr',   &
+                      cris_o3_total_col_extra      = 'obs_seq.cris_o3_total_col',   &
+                      cris_o3_profile_extra        = 'obs_seq.cris_o3_profile',   &
+                      cris_o3_cpsr_extra           = 'obs_seq.cris_o3_cpsr',   &
+                      cris_nh3_total_col_extra     = 'obs_seq.cris_nh3_total_col',   &
+                      cris_nh3_profile_extra       = 'obs_seq.cris_nh3_profile',   &
+                      cris_nh3_cpsr_extra          = 'obs_seq.cris_nh3_cpsr',   &
+                      cris_ch4_total_col_extra     = 'obs_seq.cris_ch4_total_col',   &
+                      cris_ch4_profile_extra       = 'obs_seq.cris_ch4_profile',   &
+                      cris_ch4_cpsr_extra          = 'obs_seq.cris_ch4_cpsr',   &
+                      cris_pan_total_col_extra     = 'obs_seq.cris_pan_total_col',   &
+                      cris_pan_profile_extra       = 'obs_seq.cris_pan_profile',   &
+                      cris_pan_cpsr_extra          = 'obs_seq.cris_pan_cpsr',   &
+                      sciam_no2_total_col_extra    = 'obs_seq.sciam_no2_total_col',   &
+                      sciam_no2_trop_col_extra     = 'obs_seq.sciam_no2_trop_col',   &
+                      gome2a_no2_total_col_extra   = 'obs_seq.gome2a_no2_total_col',   &
+                      gome2a_no2_trop_col_extra    = 'obs_seq.gome2a_no2_trop_col',   &
+                      mls_o3_total_col_extra       = 'obs_seq.mls_o3_total_col',   &
+                      mls_o3_profile_extra         = 'obs_seq.mls_o3_profile',   &
+                      mls_o3_cpsr_extra            = 'obs_seq.mls_o3_cpsr',   &
+                      mls_hno3_total_col_extra     = 'obs_seq.mls_hno3_total_col',   &
+                      mls_hno3_profile_extra       = 'obs_seq.mls_hno3_profile',   &
+                      mls_hno3_cpsr_extra          = 'obs_seq.mls_hno3_cpsr',   &
+                      airnow_co_extra              = 'obs_seq.airnow_co',   &
+                      airnow_o3_extra              = 'obs_seq.airnow_o3',   &
+                      airnow_no2_extra             = 'obs_seq.airnow_no2',   &
+                      airnow_so2_extra             = 'obs_seq.airnow_so2',   &
+                      airnow_pm10_extra            = 'obs_seq.airnow_pm10',   &
+                      airnow_pm25_extra            = 'obs_seq.airnow_pm25',   &
+                      panda_co_extra               = 'obs_seq.panda_co',    &
+                      panda_o3_extra               = 'obs_seq.panda_o3',    &
+                      panda_pm25_extra             = 'obs_seq.panda_pm25'
+
+! APM/JB ---
 logical            :: overwrite_obs_time       = .false.  ! true to overwrite all observation times
 
 !  boundary-specific parameters
@@ -92,6 +228,70 @@ real(r8)           :: sat_wind_horiz_int       = 100.0_r8   ! horizontal interva
 real(r8)           :: sat_wind_pres_int        = 2500.0_r8  ! pressure interval for super-ob
 logical            :: overwrite_ncep_satwnd_qc = .false.    ! true to overwrite NCEP QC (see instructions)
 
+!>@todo FIXME either implement these or remove them. 
+! NOTUSED ! APM/JB +++
+! NOTUSED !  MODIS AOD TOTAL COL specific parameters
+! NOTUSED logical      :: superob_modis_aod_total_col           = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)     :: modis_aod_total_col_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)     :: modis_aod_total_col_pres_int          = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical      :: overwrite_ncep_modis_aod_total_col_qc = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  MOPITT CO TOTAL COL specific parameters
+! NOTUSED logical      :: superob_mopitt_co_total_col           = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)     :: mopitt_co_total_col_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)     :: mopitt_co_total_col_pres_int          = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical      :: overwrite_ncep_mopitt_co_total_col_qc = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  MOPITT CO PROFILE specific parameters
+! NOTUSED logical      :: superob_mopitt_co_profile             = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)     :: mopitt_co_profile_horiz_int           = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)     :: mopitt_co_profile_pres_int            = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical      :: overwrite_ncep_mopitt_co_profile_qc   = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  IASI CO TOTAL COL specific parameters
+! NOTUSED logical      :: superob_iasi_co_total_col             = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)     :: iasi_co_total_col_horiz_int           = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)     :: iasi_co_total_col_pres_int            = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical      :: overwrite_ncep_iasi_co_total_col_qc   = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  IASI CO PROFILE specific parameters
+! NOTUSED logical      :: superob_iasi_co_profile               = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)     :: iasi_co_profile_horiz_int             = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)     :: iasi_co_profile_pres_int              = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical      :: overwrite_ncep_iasi_co_profile_qc     = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  IASI O3 specific parameters
+! NOTUSED logical            :: superob_iasi_o3             = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: iasi_o3_horiz_int           = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: iasi_o3_pres_int            = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_iasi_o3_qc   = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  OMI NO2 specific parameters
+! NOTUSED logical            :: superob_omi_no2             = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: omi_no2_horiz_int           = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: omi_no2_pres_int            = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_omi_no2_qc   = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  AIRNOW CO specific parameters
+! NOTUSED logical            :: superob_airnow_co           = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: airnow_co_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: airnow_co_pres_int          = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_airnow_co_qc = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  AIRNOW O3 specific parameters
+! NOTUSED logical            :: superob_airnow_o3           = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: airnow_o3_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: airnow_o3_pres_int          = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_airnow_o3_qc = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  PANDA CO specific parameters
+! NOTUSED logical            :: superob_panda_co            = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: panda_co_horiz_int          = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: panda_co_pres_int           = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_panda_co_qc  = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  PANDA O3 specific parameters
+! NOTUSED logical            :: superob_panda_o3            = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: panda_o3_horiz_int          = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: panda_o3_pres_int           = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_panda_o3_qc  = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED !  PANDA PM25 specific parameters
+! NOTUSED logical            :: superob_panda_pm25           = .false.    ! super-ob sat wind data
+! NOTUSED real(r8)           :: panda_pm25_horiz_int         = 100.0_r8   ! horizontal interval for super-ob
+! NOTUSED real(r8)           :: panda_pm25_pres_int          = 2500.0_r8  ! pressure interval for super-ob
+! NOTUSED logical            :: overwrite_ncep_panda_pm25_qc = .false.    ! true to overwrite NCEP QC (see instructions)
+! NOTUSED ! APM/JB ---
+
 !  surface obs. specific parameters
 logical            :: overwrite_ncep_sfc_qc    = .false.  ! true to overwrite NCEP QC (see instructions)
 
@@ -103,24 +303,112 @@ namelist /wrf_obs_preproc_nml/file_name_input, file_name_output,      &
          acars_extra, land_sfc_extra, marine_sfc_extra, sat_wind_extra, profiler_extra, &
          trop_cyclone_extra, gpsro_extra, tc_sonde_radii, increase_bdy_error,      &
          maxobsfac, obsdistbdy, sat_wind_horiz_int, aircraft_horiz_int, &
-         overwrite_obs_time
+         overwrite_obs_time, &
+         modis_aod_total_col_extra, &
+         mopitt_co_total_col_extra, mopitt_co_profile_extra, mopitt_v5_co_profile_extra, mopitt_co_cpsr_extra, &
+         iasi_co_total_col_extra, iasi_co_profile_extra, iasi_co_cpsr_extra, &
+         iasi_o3_profile_extra, iasi_o3_cpsr_extra, &
+         omi_o3_total_col_extra, omi_o3_trop_col_extra, omi_o3_profile_extra, omi_o3_cpsr_extra, &
+         omi_no2_total_col_extra, omi_no2_trop_col_extra, &
+         omi_no2_domino_total_col_extra, omi_no2_domino_trop_col_extra, &
+         omi_so2_total_col_extra, omi_so2_pbl_col_extra, &
+         omi_hcho_total_col_extra, omi_hcho_trop_col_extra, &
+         tropomi_co_total_col_extra, &
+         tropomi_o3_total_col_extra, tropomi_o3_trop_col_extra, tropomi_o3_profile_extra, tropomi_o3_cpsr_extra, &
+         tropomi_no2_total_col_extra, tropomi_no2_trop_col_extra, &
+         tropomi_so2_total_col_extra, tropomi_so2_pbl_col_extra, &
+         tropomi_ch4_total_col_extra, tropomi_ch4_trop_col_extra, tropomi_ch4_profile_extra, tropomi_ch4_cpsr_extra, &
+         tropomi_hcho_total_col_extra, tropomi_hcho_trop_col_extra, &
+         tempo_o3_total_col_extra, tempo_o3_trop_col_extra, tempo_o3_profile_extra, tempo_o3_cpsr_extra, &
+         tempo_no2_total_col_extra, tempo_no2_trop_col_extra, &
+         tes_co_total_col_extra, tes_co_trop_col_extra, tes_co_profile_extra, tes_co_cpsr_extra, &
+         tes_co2_total_col_extra, tes_co2_trop_col_extra, tes_co2_profile_extra, tes_co2_cpsr_extra, &
+         tes_o3_total_col_extra, tes_o3_trop_col_extra, tes_o3_profile_extra, tes_o3_cpsr_extra, &
+         tes_nh3_total_col_extra, tes_nh3_trop_col_extra, tes_nh3_profile_extra, tes_nh3_cpsr_extra, &
+         tes_ch4_total_col_extra, tes_ch4_trop_col_extra, tes_ch4_profile_extra, tes_ch4_cpsr_extra, &
+         cris_co_total_col_extra, cris_co_profile_extra, cris_co_cpsr_extra, &
+         cris_o3_total_col_extra, cris_o3_profile_extra, cris_o3_cpsr_extra, &
+         cris_nh3_total_col_extra, cris_nh3_profile_extra, cris_nh3_cpsr_extra, &
+         cris_ch4_total_col_extra, cris_ch4_profile_extra, cris_ch4_cpsr_extra, &
+         cris_pan_total_col_extra, cris_pan_profile_extra, cris_pan_cpsr_extra, &
+         sciam_no2_total_col_extra, sciam_no2_trop_col_extra, &
+         gome2a_no2_total_col_extra, gome2a_no2_trop_col_extra, &
+         mls_o3_total_col_extra, mls_o3_profile_extra, mls_o3_cpsr_extra, &
+         mls_hno3_total_col_extra, mls_hno3_profile_extra, mls_hno3_cpsr_extra, &
+         airnow_co_extra, airnow_o3_extra, airnow_no2_extra, airnow_so2_extra, &
+         airnow_pm10_extra, airnow_pm25_extra, &
+         panda_co_extra, panda_o3_extra, panda_pm25_extra
+
+!>@todo FIXME either implement these or remove them. 
+! APM/JB +++
+! NOTUSED          superob_modis_aod, modis_aod_pres_int, modis_aod_extra, modis_aod_horiz_int, &
+! NOTUSED          superob_mopitt_co, mopitt_co_pres_int, mopitt_co_extra, mopitt_co_horiz_int, &
+! NOTUSED          superob_iasi_co, iasi_co_pres_int, iasi_co_extra, iasi_co_horiz_int, &
+! NOTUSED          superob_iasi_o3, iasi_o3_pres_int, iasi_o3_extra, iasi_o3_horiz_int, &
+! NOTUSED          superob_omi_no2, omi_no2_pres_int, omi_no2_extra, omi_no2_horiz_int, &
+! NOTUSED          superob_airnow_co, airnow_co_pres_int, airnow_co_extra, airnow_co_horiz_int, &
+! NOTUSED          superob_airnow_o3, airnow_o3_pres_int, airnow_o3_extra, airnow_o3_horiz_int, &
+! NOTUSED          superob_panda_co, panda_co_pres_int, panda_co_extra, panda_co_horiz_int, &
+! NOTUSED          superob_panda_o3, panda_o3_pres_int, panda_o3_extra, panda_o3_horiz_int, &
+! NOTUSED          superob_panda_pm25, panda_pm25_pres_int, panda_pm25_extra, panda_pm25_horiz_int
+! APM/JB ---
 
 ! ----------------------------------------------------------------------
 ! Declare other variables
 ! ----------------------------------------------------------------------
 
+character(len=80)       :: name, sgday, sgsec
+
 character(len=129)      :: obs_seq_read_format
-character(len=80)       :: name
 
 integer                 :: io, iunit, fid, var_id, obs_seq_file_id, num_copies, &
                            num_qc, num_obs, max_obs_seq, nx, ny, gday, gsec
+integer                 :: max_num_obs              = 600000   ! Largest number of obs in one sequence
 
 real(r8)                :: real_nx, real_ny
 
 logical                 :: file_exist, pre_I_format
 
 type(obs_sequence_type) :: seq_all, seq_rawin, seq_sfc, seq_acars, seq_satwnd, &
-                           seq_prof, seq_tc, seq_gpsro, seq_other
+                           seq_prof, seq_tc, seq_gpsro, seq_other, &
+
+! APM/JB +++
+                           seq_modis_aod_total_col, &
+                           seq_mopitt_co_total_col, seq_mopitt_co_profile, seq_mopitt_v5_co_profile, seq_mopitt_co_cpsr, &
+                           seq_iasi_co_total_col, seq_iasi_co_profile, seq_iasi_co_cpsr, &
+                           seq_iasi_o3_profile, seq_iasi_o3_cpsr, &
+                           seq_omi_o3_total_col, seq_omi_o3_trop_col, seq_omi_o3_profile, seq_omi_o3_cpsr, &
+                           seq_omi_no2_total_col, seq_omi_no2_trop_col, &
+                           seq_omi_no2_domino_total_col, seq_omi_no2_domino_trop_col, &
+                           seq_omi_so2_total_col, seq_omi_so2_pbl_col, & 
+                           seq_omi_hcho_total_col, seq_omi_hcho_trop_col, &
+                           seq_tropomi_co_total_col, &
+                           seq_tropomi_o3_total_col, seq_tropomi_o3_trop_col, seq_tropomi_o3_profile, seq_tropomi_o3_cpsr, &
+                           seq_tropomi_no2_total_col, seq_tropomi_no2_trop_col, &
+                           seq_tropomi_so2_total_col, seq_tropomi_so2_pbl_col, &
+                           seq_tropomi_ch4_total_col, seq_tropomi_ch4_trop_col, seq_tropomi_ch4_profile, seq_tropomi_ch4_cpsr, &
+                           seq_tropomi_hcho_total_col, seq_tropomi_hcho_trop_col, &
+                           seq_tempo_o3_total_col, seq_tempo_o3_trop_col, seq_tempo_o3_profile, seq_tempo_o3_cpsr, &
+                           seq_tempo_no2_total_col, seq_tempo_no2_trop_col, &
+                           seq_tes_co_total_col, seq_tes_co_trop_col, seq_tes_co_profile, seq_tes_co_cpsr, &
+                           seq_tes_co2_total_col, seq_tes_co2_trop_col, seq_tes_co2_profile, seq_tes_co2_cpsr, &
+                           seq_tes_o3_total_col, seq_tes_o3_trop_col, seq_tes_o3_profile, seq_tes_o3_cpsr, &
+                           seq_tes_nh3_total_col, seq_tes_nh3_trop_col, seq_tes_nh3_profile, seq_tes_nh3_cpsr, &
+                           seq_tes_ch4_total_col, seq_tes_ch4_trop_col, seq_tes_ch4_profile, seq_tes_ch4_cpsr, &
+                           seq_cris_co_total_col, seq_cris_co_profile, seq_cris_co_cpsr, &
+                           seq_cris_o3_total_col, seq_cris_o3_profile, seq_cris_o3_cpsr, &
+                           seq_cris_nh3_total_col, seq_cris_nh3_profile, seq_cris_nh3_cpsr, &
+                           seq_cris_ch4_total_col, seq_cris_ch4_profile, seq_cris_ch4_cpsr, &
+                           seq_cris_pan_total_col, seq_cris_pan_profile, seq_cris_pan_cpsr, &
+                           seq_sciam_no2_total_col, seq_sciam_no2_trop_col, &
+                           seq_gome2a_no2_total_col, seq_gome2a_no2_trop_col, &
+                           seq_mls_o3_total_col, seq_mls_o3_profile, seq_mls_o3_cpsr, &
+                           seq_mls_hno3_total_col, seq_mls_hno3_profile, seq_mls_hno3_cpsr, &
+                           seq_airnow_co, seq_airnow_o3, seq_airnow_no2, seq_airnow_so2, &
+                           seq_airnow_pm10, seq_airnow_pm25, &
+                           seq_panda_co, seq_panda_o3, seq_panda_pm25
+! APM/JB ---
+
 
 type(time_type)         :: anal_time
 
@@ -128,8 +416,22 @@ type(ensemble_type)     :: dummy_ens
 
 call initialize_utilities("wrf_dart_obs_preprocess")
 
-print*,'Enter target assimilation time (gregorian day, second): '
-read*,gday,gsec
+! APM/JB +++
+!print*,'APM:Enter target assimilation time (gregorian day, second): '
+!read*,gday,gsec
+call getarg(1,sgday)
+call getarg(2,sgsec)
+print *,'Target assimilation time is (gregorian day, second): ', trim(sgday),', ', trim(sgsec)
+
+sgday=trim(sgday)
+sgsec=trim(sgsec)
+
+read( sgday, '(i10)' ) gday
+read( sgsec, '(i10)' ) gsec
+
+! print*, gday, gsec
+! APM/JB ---
+
 call set_calendar_type(GREGORIAN)
 anal_time = set_time(gsec, gday)
 
@@ -140,6 +442,8 @@ call init_ensemble_manager(dummy_ens, 1, 1_i8)
 call find_namelist_in_file("input.nml", "wrf_obs_preproc_nml", iunit)
 read(iunit, nml = wrf_obs_preproc_nml, iostat = io)
 call check_namelist_read(iunit, io, "wrf_obs_preproc_nml")
+
+print *, 'APM: after check namelist '
 
 !  open a wrfinput file, which is on this domain
 call nc_check( nf90_open(path = "wrfinput_d01", mode = nf90_nowrite, ncid = fid), &
@@ -153,6 +457,8 @@ call nc_check( nf90_inq_dimid(fid, "south_north", var_id), &
 call nc_check( nf90_inquire_dimension(fid, var_id, name, ny), &
                'main', 'inquire dimension south_north' )
 call nc_check( nf90_close(fid), 'main', 'close wrfinput_d01' )
+
+print *, 'APM: after nc_check '
 
 ! several places need a real(r8) version of nx and ny, so set them up
 ! here so they're ready to use.  previous versions of this code used
@@ -183,16 +489,221 @@ call create_new_obs_seq(num_copies, num_qc, max_obs_seq, seq_sfc)
 call create_new_obs_seq(num_copies, num_qc, max_obs_seq, seq_acars)
 call create_new_obs_seq(num_copies, num_qc, max_obs_seq, seq_satwnd)
 call create_new_obs_seq(num_copies, num_qc, max_obs_seq, seq_prof)
-call create_new_obs_seq(num_copies, num_qc, max_obs_seq, seq_gpsro)
 call create_new_obs_seq(num_copies, num_qc, 100,         seq_tc)
+call create_new_obs_seq(num_copies, num_qc, max_obs_seq, seq_gpsro)
+! APM/JB +++
+print *, 'APM: begin create_new_obs_seq for chemistry '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_modis_aod_total_col)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_mopitt_co_total_col)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_mopitt_co_profile)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_mopitt_v5_co_profile)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_mopitt_co_cpsr)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_iasi_co_total_col)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_iasi_co_profile)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_iasi_co_cpsr)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_iasi_o3_profile)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_iasi_o3_cpsr)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_o3_total_col)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_o3_trop_col)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_o3_profile)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_o3_cpsr)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_no2_total_col)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_no2_trop_col)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_no2_domino_total_col)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_no2_domino_trop_col)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_so2_total_col)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_so2_pbl_col)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_hcho_total_col)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_omi_hcho_trop_col)
+print *,'APM: begin tropomi co total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_co_total_col)
+print *,'APM: begin tropomi o3 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_o3_total_col)
+print *,'APM: begin tropomi o3 trop col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_o3_trop_col)
+print *,'APM: begin tropomi o3 profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_o3_profile)
+print *,'APM: begin tropomi o3 cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_o3_cpsr)
+print *,'APM: begin tropomi no2 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_no2_total_col)
+print *,'APM: begin tropomi no2 trop col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_no2_trop_col)
+print *,'APM: begin tropomi so2 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_so2_total_col)
+print *,'APM: begin tropomi so2 pbl col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_so2_pbl_col)
+print *,'APM: begin tropomi ch4 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_ch4_total_col)
+print *,'APM: begin tropomi ch4 trop col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_ch4_trop_col)
+print *,'APM: begin tropomi ch4 profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_ch4_profile)
+print *,'APM: begin tropomi ch4 cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_ch4_cpsr)
+print *,'APM: begin tropomi hcho total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_hcho_total_col)
+print *,'APM: begin tropomi hcho trop col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tropomi_hcho_trop_col)
+print *,'APM: begin tempo o3 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tempo_o3_total_col)
+print *,'APM: begin tropomi o3 trop col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tempo_o3_trop_col)
+print *,'APM: begin tropomi o3 profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tempo_o3_profile)
+print *,'APM: begin tropomi o3 cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tempo_o3_cpsr)
+print *,'APM: begin tropomi no2 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tempo_no2_total_col)
+print *,'APM: begin tropomi no2 trop col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tempo_no2_trop_col)
+print *,'APM: begin tes co total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_co_total_col)
+print *,'APM: begin tes co trop col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_co_trop_col)
+print *,'APM: begin tes co profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_co_profile)
+print *,'APM: begin tes co cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_co_cpsr)
+print *,'APM: begin tes co2 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_co2_total_col)
+print *,'APM: begin tes co2 trop col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_co2_trop_col)
+print *,'APM: begin tes co2 profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_co2_profile)
+print *,'APM: begin tes co2 cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_co2_cpsr)
+print *,'APM: begin tes o3 totalcol '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_o3_total_col)
+print *,'APM: begin tes o3 tropcol '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_o3_trop_col)
+print *,'APM: begin tes o3 profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_o3_profile)
+print *,'APM: begin tes o3 cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_o3_cpsr)
+print *,'APM: begin tes nh3 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_nh3_total_col)
+print *,'APM: begin tes nh3 trop col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_nh3_trop_col)
+print *,'APM: begin tes nh3 profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_nh3_profile)
+print *,'APM: begin tes nh3 cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_nh3_cpsr)
+print *,'APM: begin tes ch4 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_ch4_total_col)
+print *,'APM: begin tes ch4 trop col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_ch4_trop_col)
+print *,'APM: begin tes ch4 profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_ch4_profile)
+print *,'APM: begin tes ch4 cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_tes_ch4_cpsr)
+print *,'APM: begin cris co total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_co_total_col)
+print *,'APM: begin cris co profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_co_profile)
+print *,'APM: begin cris co cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_co_cpsr)
+print *,'APM: begin cris o3 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_o3_total_col)
+print *,'APM: begin cris o3 profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_o3_profile)
+print *,'APM: begin cris o3 cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_o3_cpsr)
+print *,'APM: begin cris nh3 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_nh3_total_col)
+print *,'APM: begin cris nh3 profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_nh3_profile)
+print *,'APM: begin cris nh3 cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_nh3_cpsr)
+print *,'APM: begin cris ch4 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_ch4_total_col)
+print *,'APM: begin cris ch4 profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_ch4_profile)
+print *,'APM: begin cris ch4 cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_ch4_cpsr)
+print *,'APM: begin cris pan total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_pan_total_col)
+print *,'APM: begin cris pan profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_pan_profile)
+print *,'APM: begin cris pan cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_cris_pan_cpsr)
+print *,'APM: begin scaim no2 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_sciam_no2_total_col)
+print *,'APM: begin scaim no2 trop col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_sciam_no2_trop_col)
+print *,'APM: begin gome2a no2 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_gome2a_no2_total_col)
+print *,'APM: begin gome2a no2 trop col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_gome2a_no2_trop_col)
+print *,'APM: begin mls o3 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_mls_o3_total_col)
+print *,'APM: begin mls o3 profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_mls_o3_profile)
+print *,'APM: begin mls o3 cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_mls_o3_cpsr)
+print *,'APM: begin mls hno3 total col '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_mls_hno3_total_col)
+print *,'APM: begin mls hno3 profile '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_mls_hno3_profile)
+print *,'APM: begin mls hno3 cpsr '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_mls_hno3_cpsr)
+print *,'APM: begin airnow '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_airnow_co)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_airnow_o3)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_airnow_no2)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_airnow_so2)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_airnow_pm10)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_airnow_pm25)
+print *,'APM: finish airnow '
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_panda_co)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_panda_o3)
+call create_new_obs_seq(num_copies, num_qc, max_num_obs, seq_panda_pm25)
+print *, 'APM: after create_new_obs_seq for chemistry '
+! APM/JB ---
 call create_new_obs_seq(num_copies, num_qc, max_obs_seq, seq_other)
 
 !  read input obs_seq file, divide into platforms
+! APM_JB +++
 call read_and_parse_input_seq(file_name_input, real_nx, real_ny, obs_boundary, &
 include_sig_data, obs_pressure_top, obs_height_top, sfc_elevation_check, &
 sfc_elevation_tol, overwrite_ncep_sfc_qc, overwrite_ncep_satwnd_qc, &
-overwrite_obs_time, anal_time, seq_rawin, seq_sfc, seq_acars, seq_satwnd, & 
-seq_tc, seq_gpsro, seq_other)
+overwrite_obs_time, anal_time, &
+seq_rawin, seq_sfc, seq_acars, seq_satwnd, seq_tc, seq_gpsro,  &
+seq_modis_aod_total_col, &
+seq_mopitt_co_total_col, seq_mopitt_co_profile, seq_mopitt_v5_co_profile, seq_mopitt_co_cpsr, &
+seq_iasi_co_total_col, seq_iasi_co_profile, seq_iasi_co_cpsr, &
+seq_iasi_o3_profile, seq_iasi_o3_cpsr, &
+seq_omi_o3_total_col, seq_omi_o3_trop_col, seq_omi_o3_profile, seq_omi_o3_cpsr, &
+seq_omi_no2_total_col, seq_omi_no2_trop_col, &
+seq_omi_no2_domino_total_col, seq_omi_no2_domino_trop_col, &
+seq_omi_so2_total_col, seq_omi_so2_pbl_col, &
+seq_omi_hcho_total_col, seq_omi_hcho_trop_col, &
+seq_tropomi_co_total_col, &
+seq_tropomi_o3_total_col, seq_tropomi_o3_trop_col, seq_tropomi_o3_profile, seq_tropomi_o3_cpsr, &
+seq_tropomi_no2_total_col, seq_tropomi_no2_trop_col, &
+seq_tropomi_so2_total_col, seq_tropomi_so2_pbl_col, &
+seq_tropomi_ch4_total_col, seq_tropomi_ch4_trop_col, seq_tropomi_ch4_profile, seq_tropomi_ch4_cpsr, &
+seq_tropomi_hcho_total_col, seq_tropomi_hcho_trop_col, &
+seq_tempo_o3_total_col, seq_tempo_o3_trop_col, seq_tempo_o3_profile, seq_tempo_o3_cpsr, &
+seq_tempo_no2_total_col, seq_tempo_no2_trop_col, &
+seq_tes_co_total_col, seq_tes_co_trop_col, seq_tes_co_profile, seq_tes_co_cpsr, &
+seq_tes_co2_total_col, seq_tes_co2_trop_col, seq_tes_co2_profile, seq_tes_co2_cpsr, &
+seq_tes_o3_total_col, seq_tes_o3_trop_col, seq_tes_o3_profile, seq_tes_o3_cpsr, &
+seq_tes_nh3_total_col, seq_tes_nh3_trop_col, seq_tes_nh3_profile, seq_tes_nh3_cpsr, &
+seq_tes_ch4_total_col, seq_tes_ch4_trop_col, seq_tes_ch4_profile, seq_tes_ch4_cpsr, &
+seq_cris_co_total_col, seq_cris_co_profile, seq_cris_co_cpsr, &
+seq_cris_o3_total_col, seq_cris_o3_profile, seq_cris_o3_cpsr, &
+seq_cris_nh3_total_col, seq_cris_nh3_profile, seq_cris_nh3_cpsr, &
+seq_cris_ch4_total_col, seq_cris_ch4_profile, seq_cris_ch4_cpsr, &
+seq_cris_pan_total_col, seq_cris_pan_profile, seq_cris_pan_cpsr, &
+seq_sciam_no2_total_col, seq_sciam_no2_trop_col, &
+seq_gome2a_no2_total_col, seq_gome2a_no2_trop_col, &
+seq_mls_o3_total_col, seq_mls_o3_profile, seq_mls_o3_cpsr, &
+seq_mls_hno3_total_col, seq_mls_hno3_profile, seq_mls_hno3_cpsr, &
+seq_airnow_co, seq_airnow_o3, seq_airnow_no2, seq_airnow_so2, &
+seq_airnow_pm10, seq_airnow_pm25, &
+seq_panda_co, seq_panda_o3, seq_panda_pm25, seq_other)
+! PM/JB ---
 
 !  add supplimental rawinsonde observations from file
 call add_supplimental_obs(sonde_extra, seq_rawin, max_obs_seq, &
@@ -248,6 +759,498 @@ VORTEX_LAT, nx, ny, obs_boundary, include_sig_data, &
 obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
 overwrite_obs_time, anal_time)
 
+! APM/JB +++
+!  add supplimental MODIS AOD TOTAL COL_observations from file
+call add_supplimental_obs(modis_aod_total_col_extra, seq_modis_aod_total_col, max_obs_seq, &
+MODIS_AOD_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+!  add supplimental MOPITT CO TOTAL COL observations from file
+call add_supplimental_obs(mopitt_co_total_col_extra, seq_mopitt_co_total_col, max_obs_seq, &
+MOPITT_CO_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+!  add supplimental MOPITT CO PROFILE observations from file
+call add_supplimental_obs(mopitt_co_profile_extra, seq_mopitt_co_profile, max_obs_seq, &
+MOPITT_CO_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+!  add supplimental MOPITT CO V5 PROFILE observations from file
+call add_supplimental_obs(mopitt_v5_co_profile_extra, seq_mopitt_v5_co_profile, max_obs_seq, &
+MOPITT_V5_CO_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+!  add supplimental MOPITT CO CPSR observations from file
+call add_supplimental_obs(mopitt_co_cpsr_extra, seq_mopitt_co_cpsr, max_obs_seq, &
+MOPITT_CO_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(iasi_co_total_col_extra, seq_iasi_co_total_col, max_obs_seq, &
+IASI_CO_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(iasi_co_profile_extra, seq_iasi_co_profile, max_obs_seq, &
+IASI_CO_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(iasi_co_cpsr_extra, seq_iasi_co_cpsr, max_obs_seq, &
+IASI_CO_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(iasi_o3_profile_extra, seq_iasi_o3_profile, max_obs_seq, &
+IASI_O3_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(iasi_o3_cpsr_extra, seq_iasi_o3_cpsr, max_obs_seq, &
+IASI_O3_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(omi_o3_total_col_extra, seq_omi_o3_total_col, max_obs_seq, &
+OMI_O3_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(omi_o3_trop_col_extra, seq_omi_o3_trop_col, max_obs_seq, &
+OMI_O3_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(omi_o3_profile_extra, seq_omi_o3_profile, max_obs_seq, &
+OMI_O3_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(omi_o3_cpsr_extra, seq_omi_o3_cpsr, max_obs_seq, &
+OMI_O3_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(omi_no2_total_col_extra, seq_omi_no2_total_col, max_obs_seq, &
+OMI_NO2_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(omi_no2_trop_col_extra, seq_omi_no2_trop_col, max_obs_seq, &
+OMI_NO2_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(omi_no2_domino_total_col_extra, seq_omi_no2_domino_total_col, max_obs_seq, &
+OMI_NO2_DOMINO_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(omi_no2_domino_trop_col_extra, seq_omi_no2_domino_trop_col, max_obs_seq, &
+OMI_NO2_DOMINO_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(omi_so2_total_col_extra, seq_omi_so2_total_col, max_obs_seq, &
+OMI_SO2_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(omi_so2_pbl_col_extra, seq_omi_so2_pbl_col, max_obs_seq, &
+OMI_SO2_PBL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(omi_hcho_total_col_extra, seq_omi_hcho_total_col, max_obs_seq, &
+OMI_HCHO_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(omi_hcho_trop_col_extra, seq_omi_hcho_trop_col, max_obs_seq, &
+OMI_HCHO_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_co_total_col_extra, seq_tropomi_co_total_col, max_obs_seq, &
+TROPOMI_CO_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_o3_total_col_extra, seq_tropomi_o3_total_col, max_obs_seq, &
+TROPOMI_O3_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_o3_trop_col_extra, seq_tropomi_o3_trop_col, max_obs_seq, &
+TROPOMI_O3_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_o3_profile_extra, seq_tropomi_o3_profile, max_obs_seq, &
+TROPOMI_O3_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_o3_cpsr_extra, seq_tropomi_o3_cpsr, max_obs_seq, &
+TROPOMI_O3_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_no2_total_col_extra, seq_tropomi_no2_total_col, max_obs_seq, &
+TROPOMI_NO2_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_no2_trop_col_extra, seq_tropomi_no2_trop_col, max_obs_seq, &
+TROPOMI_NO2_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_so2_total_col_extra, seq_tropomi_so2_total_col, max_obs_seq, &
+TROPOMI_SO2_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_so2_pbl_col_extra, seq_tropomi_so2_pbl_col, max_obs_seq, &
+TROPOMI_SO2_PBL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_ch4_total_col_extra, seq_tropomi_ch4_total_col, max_obs_seq, &
+TROPOMI_CH4_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_ch4_trop_col_extra, seq_tropomi_ch4_trop_col, max_obs_seq, &
+TROPOMI_CH4_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_ch4_profile_extra, seq_tropomi_ch4_profile, max_obs_seq, &
+TROPOMI_CH4_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_ch4_cpsr_extra, seq_tropomi_ch4_cpsr, max_obs_seq, &
+TROPOMI_CH4_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_hcho_total_col_extra, seq_tropomi_hcho_total_col, max_obs_seq, &
+TROPOMI_HCHO_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tropomi_hcho_trop_col_extra, seq_tropomi_hcho_trop_col, max_obs_seq, &
+TROPOMI_HCHO_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tempo_o3_total_col_extra, seq_tempo_o3_total_col, max_obs_seq, &
+TEMPO_O3_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tempo_o3_trop_col_extra, seq_tempo_o3_trop_col, max_obs_seq, &
+TEMPO_O3_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tempo_o3_profile_extra, seq_tempo_o3_profile, max_obs_seq, &
+TEMPO_O3_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tempo_o3_cpsr_extra, seq_tempo_o3_cpsr, max_obs_seq, &
+TEMPO_O3_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tempo_no2_total_col_extra, seq_tempo_no2_total_col, max_obs_seq, &
+TEMPO_NO2_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tempo_no2_trop_col_extra, seq_tempo_no2_trop_col, max_obs_seq, &
+TEMPO_NO2_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_co_total_col_extra, seq_tes_co_total_col, max_obs_seq, &
+TES_CO_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_co_trop_col_extra, seq_tes_co_trop_col, max_obs_seq, &
+TES_CO_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_co_profile_extra, seq_tes_co_profile, max_obs_seq, &
+TES_CO_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_co_cpsr_extra, seq_tes_co_cpsr, max_obs_seq, &
+TES_CO_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_co2_total_col_extra, seq_tes_co2_total_col, max_obs_seq, &
+TES_CO2_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_co2_trop_col_extra, seq_tes_co2_trop_col, max_obs_seq, &
+TES_CO2_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_co2_profile_extra, seq_tes_co2_profile, max_obs_seq, &
+TES_CO2_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_co2_cpsr_extra, seq_tes_co2_cpsr, max_obs_seq, &
+TES_CO2_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_o3_total_col_extra, seq_tes_o3_total_col, max_obs_seq, &
+TES_O3_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_o3_trop_col_extra, seq_tes_o3_trop_col, max_obs_seq, &
+TES_O3_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_o3_profile_extra, seq_tes_o3_profile, max_obs_seq, &
+TES_O3_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_o3_cpsr_extra, seq_tes_o3_cpsr, max_obs_seq, &
+TES_O3_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_nh3_total_col_extra, seq_tes_nh3_total_col, max_obs_seq, &
+TES_NH3_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_nh3_trop_col_extra, seq_tes_nh3_trop_col, max_obs_seq, &
+TES_NH3_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_nh3_profile_extra, seq_tes_nh3_profile, max_obs_seq, &
+TES_NH3_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_nh3_cpsr_extra, seq_tes_nh3_cpsr, max_obs_seq, &
+TES_NH3_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_ch4_total_col_extra, seq_tes_ch4_total_col, max_obs_seq, &
+TES_CH4_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_ch4_trop_col_extra, seq_tes_ch4_trop_col, max_obs_seq, &
+TES_CH4_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_ch4_profile_extra, seq_tes_ch4_profile, max_obs_seq, &
+TES_CH4_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(tes_ch4_cpsr_extra, seq_tes_ch4_cpsr, max_obs_seq, &
+TES_CH4_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_co_total_col_extra, seq_cris_co_total_col, max_obs_seq, &
+CRIS_CO_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_co_profile_extra, seq_cris_co_profile, max_obs_seq, &
+CRIS_CO_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_co_cpsr_extra, seq_cris_co_cpsr, max_obs_seq, &
+CRIS_CO_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_o3_total_col_extra, seq_cris_o3_total_col, max_obs_seq, &
+CRIS_O3_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_o3_profile_extra, seq_cris_o3_profile, max_obs_seq, &
+CRIS_O3_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_o3_cpsr_extra, seq_cris_o3_cpsr, max_obs_seq, &
+CRIS_O3_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_nh3_total_col_extra, seq_cris_nh3_total_col, max_obs_seq, &
+CRIS_NH3_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_nh3_profile_extra, seq_cris_nh3_profile, max_obs_seq, &
+CRIS_NH3_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_nh3_cpsr_extra, seq_cris_nh3_cpsr, max_obs_seq, &
+CRIS_NH3_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_ch4_total_col_extra, seq_cris_ch4_total_col, max_obs_seq, &
+CRIS_CH4_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_ch4_profile_extra, seq_cris_ch4_profile, max_obs_seq, &
+CRIS_CH4_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_ch4_cpsr_extra, seq_cris_ch4_cpsr, max_obs_seq, &
+CRIS_CH4_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_pan_total_col_extra, seq_cris_pan_total_col, max_obs_seq, &
+CRIS_PAN_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_pan_profile_extra, seq_cris_pan_profile, max_obs_seq, &
+CRIS_PAN_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(cris_pan_cpsr_extra, seq_cris_pan_cpsr, max_obs_seq, &
+CRIS_PAN_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(sciam_no2_total_col_extra, seq_sciam_no2_total_col, max_obs_seq, &
+SCIAM_NO2_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(sciam_no2_trop_col_extra, seq_sciam_no2_trop_col, max_obs_seq, &
+SCIAM_NO2_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(gome2a_no2_total_col_extra, seq_gome2a_no2_total_col, max_obs_seq, &
+GOME2A_NO2_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(gome2a_no2_trop_col_extra, seq_gome2a_no2_trop_col, max_obs_seq, &
+GOME2A_NO2_TROP_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(mls_o3_total_col_extra, seq_mls_o3_total_col, max_obs_seq, &
+MLS_O3_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(mls_o3_profile_extra, seq_mls_o3_profile, max_obs_seq, &
+MLS_O3_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(mls_o3_cpsr_extra, seq_mls_o3_cpsr, max_obs_seq, &
+MLS_O3_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(mls_hno3_total_col_extra, seq_mls_hno3_total_col, max_obs_seq, &
+MLS_HNO3_TOTAL_COL, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(mls_hno3_profile_extra, seq_mls_hno3_profile, max_obs_seq, &
+MLS_HNO3_PROFILE, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(mls_hno3_cpsr_extra, seq_mls_hno3_cpsr, max_obs_seq, &
+MLS_HNO3_CPSR, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(airnow_co_extra, seq_airnow_co, max_obs_seq, &
+AIRNOW_CO, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(airnow_o3_extra, seq_airnow_o3, max_obs_seq, &
+AIRNOW_O3, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(airnow_no2_extra, seq_airnow_no2, max_obs_seq, &
+AIRNOW_NO2, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(airnow_so2_extra, seq_airnow_so2, max_obs_seq, &
+AIRNOW_SO2, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(airnow_pm10_extra, seq_airnow_pm10, max_obs_seq, &
+AIRNOW_PM10, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(airnow_pm25_extra, seq_airnow_pm25, max_obs_seq, &
+AIRNOW_PM25, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(panda_co_extra, seq_panda_co, max_obs_seq, &
+PANDA_CO, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(panda_o3_extra, seq_panda_o3, max_obs_seq, &
+PANDA_O3, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+!
+call add_supplimental_obs(panda_pm25_extra, seq_panda_pm25, max_obs_seq, &
+PANDA_PM25, nx, ny, obs_boundary, include_sig_data, &
+obs_pressure_top, obs_height_top, sfc_elevation_check, sfc_elevation_tol, &
+overwrite_obs_time, anal_time)
+! APM/JB ---
+
 !  remove all sonde observations within radius of TC if desired
 if ( tc_sonde_radii > 0.0_r8 ) call remove_sondes_near_tc(seq_tc, & 
                                                seq_rawin, tc_sonde_radii)
@@ -263,8 +1266,102 @@ if ( superob_sat_winds ) call superob_sat_wind_data(seq_satwnd, anal_time, &
 max_obs_seq = get_num_obs(seq_tc)     + get_num_obs(seq_rawin) + &
               get_num_obs(seq_sfc)    + get_num_obs(seq_acars) + &
               get_num_obs(seq_satwnd) + get_num_obs(seq_prof)  + &
-              get_num_obs(seq_gpsro)  +  get_num_obs(seq_other)
-
+              get_num_obs(seq_gpsro)  +  get_num_obs(seq_other) + &
+! APM/JB +++
+              get_num_obs(seq_modis_aod_total_col) + &
+              get_num_obs(seq_mopitt_co_total_col) + &
+              get_num_obs(seq_mopitt_co_profile) + &
+              get_num_obs(seq_mopitt_v5_co_profile) + &
+              get_num_obs(seq_mopitt_co_cpsr) + &
+              get_num_obs(seq_iasi_co_total_col) + &
+              get_num_obs(seq_iasi_co_profile) + &
+              get_num_obs(seq_iasi_co_cpsr) + &
+              get_num_obs(seq_iasi_o3_profile) + &
+              get_num_obs(seq_iasi_o3_cpsr) + &
+              get_num_obs(seq_omi_o3_total_col) + &
+              get_num_obs(seq_omi_o3_trop_col) + &
+              get_num_obs(seq_omi_o3_profile) + &
+              get_num_obs(seq_omi_o3_cpsr) + &
+              get_num_obs(seq_omi_no2_total_col) + &
+              get_num_obs(seq_omi_no2_trop_col) + &
+              get_num_obs(seq_omi_no2_domino_total_col) + &
+              get_num_obs(seq_omi_no2_domino_trop_col) + &
+              get_num_obs(seq_omi_so2_total_col) + &
+              get_num_obs(seq_omi_so2_pbl_col) + &
+              get_num_obs(seq_omi_hcho_total_col) + &
+              get_num_obs(seq_omi_hcho_trop_col) + &
+              get_num_obs(seq_tropomi_co_total_col) + &
+              get_num_obs(seq_tropomi_o3_total_col) + &
+              get_num_obs(seq_tropomi_o3_trop_col) + &
+              get_num_obs(seq_tropomi_o3_profile) + &
+              get_num_obs(seq_tropomi_o3_cpsr) + &
+              get_num_obs(seq_tropomi_no2_total_col) + &
+              get_num_obs(seq_tropomi_no2_trop_col) + &
+              get_num_obs(seq_tropomi_so2_total_col) + &
+              get_num_obs(seq_tropomi_so2_pbl_col) + &
+              get_num_obs(seq_tropomi_ch4_total_col) + &
+              get_num_obs(seq_tropomi_ch4_trop_col) + &
+              get_num_obs(seq_tropomi_ch4_profile) + &
+              get_num_obs(seq_tropomi_ch4_cpsr) + &
+              get_num_obs(seq_tropomi_hcho_total_col) + &
+              get_num_obs(seq_tropomi_hcho_trop_col) + &
+              get_num_obs(seq_tempo_o3_total_col) + &
+              get_num_obs(seq_tempo_o3_trop_col) + &
+              get_num_obs(seq_tempo_o3_profile) + &
+              get_num_obs(seq_tempo_o3_cpsr) + &
+              get_num_obs(seq_tempo_no2_total_col) + &
+              get_num_obs(seq_tempo_no2_trop_col) + &
+              get_num_obs(seq_tes_co_total_col) + &
+              get_num_obs(seq_tes_co_trop_col) + &
+              get_num_obs(seq_tes_co_profile) + &
+              get_num_obs(seq_tes_co_cpsr) + &
+              get_num_obs(seq_tes_co2_total_col) + &
+              get_num_obs(seq_tes_co2_trop_col) + &
+              get_num_obs(seq_tes_co2_profile) + &
+              get_num_obs(seq_tes_co2_cpsr) + &
+              get_num_obs(seq_tes_o3_total_col) + &
+              get_num_obs(seq_tes_o3_trop_col) + &
+              get_num_obs(seq_tes_o3_profile) + &
+              get_num_obs(seq_tes_o3_cpsr) + &
+              get_num_obs(seq_tes_nh3_total_col) + &
+              get_num_obs(seq_tes_nh3_trop_col) + &
+              get_num_obs(seq_tes_nh3_profile) + &
+              get_num_obs(seq_tes_nh3_cpsr) + &
+              get_num_obs(seq_tes_ch4_total_col) + &
+              get_num_obs(seq_tes_ch4_trop_col) + &
+              get_num_obs(seq_tes_ch4_profile) + &
+              get_num_obs(seq_tes_ch4_cpsr) + &
+              get_num_obs(seq_cris_co_total_col) + &
+              get_num_obs(seq_cris_co_profile) + &
+              get_num_obs(seq_cris_co_cpsr) + &
+              get_num_obs(seq_cris_o3_total_col) + &
+              get_num_obs(seq_cris_o3_profile) + &
+              get_num_obs(seq_cris_o3_cpsr) + &
+              get_num_obs(seq_cris_nh3_total_col) + &
+              get_num_obs(seq_cris_nh3_profile) + &
+              get_num_obs(seq_cris_nh3_cpsr) + &
+              get_num_obs(seq_cris_ch4_total_col) + &
+              get_num_obs(seq_cris_ch4_profile) + &
+              get_num_obs(seq_cris_ch4_cpsr) + &
+              get_num_obs(seq_cris_pan_total_col) + &
+              get_num_obs(seq_cris_pan_profile) + &
+              get_num_obs(seq_cris_pan_cpsr) + &
+              get_num_obs(seq_sciam_no2_total_col) + &
+              get_num_obs(seq_sciam_no2_trop_col) + &
+              get_num_obs(seq_gome2a_no2_total_col) + &
+              get_num_obs(seq_gome2a_no2_trop_col) + &
+              get_num_obs(seq_mls_o3_total_col) + &
+              get_num_obs(seq_mls_o3_profile) + &
+              get_num_obs(seq_mls_o3_cpsr) + &
+              get_num_obs(seq_mls_hno3_total_col) + &
+              get_num_obs(seq_mls_hno3_profile) + &
+              get_num_obs(seq_mls_hno3_cpsr) + &
+              get_num_obs(seq_airnow_co) + get_num_obs(seq_airnow_o3) + &
+              get_num_obs(seq_airnow_no2) + get_num_obs(seq_airnow_so2) + &
+              get_num_obs(seq_airnow_pm10) + get_num_obs(seq_airnow_pm25) + &
+              get_num_obs(seq_panda_co) + get_num_obs(seq_panda_o3) + &
+              get_num_obs(seq_panda_pm25)
+! APM/JB ---
 call create_new_obs_seq(num_copies, num_qc, max_obs_seq, seq_all)
 
 call build_master_sequence(seq_tc, seq_all)
@@ -290,6 +1387,300 @@ call destroy_obs_sequence(seq_prof)
 
 call build_master_sequence(seq_other, seq_all)
 call destroy_obs_sequence(seq_other)
+
+! APM/JB +++
+call build_master_sequence(seq_modis_aod_total_col, seq_all)
+call destroy_obs_sequence(seq_modis_aod_total_col)
+!
+call build_master_sequence(seq_mopitt_co_total_col, seq_all)
+call destroy_obs_sequence(seq_mopitt_co_total_col)
+!
+call build_master_sequence(seq_mopitt_co_profile, seq_all)
+call destroy_obs_sequence(seq_mopitt_co_profile)
+!
+call build_master_sequence(seq_mopitt_v5_co_profile, seq_all)
+call destroy_obs_sequence(seq_mopitt_v5_co_profile)
+!
+call build_master_sequence(seq_mopitt_co_cpsr, seq_all)
+call destroy_obs_sequence(seq_mopitt_co_cpsr)
+!
+call build_master_sequence(seq_iasi_co_total_col, seq_all)
+call destroy_obs_sequence(seq_iasi_co_total_col)
+!
+call build_master_sequence(seq_iasi_co_profile, seq_all)
+call destroy_obs_sequence(seq_iasi_co_profile)
+!
+call build_master_sequence(seq_iasi_co_cpsr, seq_all)
+call destroy_obs_sequence(seq_iasi_co_cpsr)
+!
+call build_master_sequence(seq_iasi_o3_profile, seq_all)
+call destroy_obs_sequence(seq_iasi_o3_profile)
+!
+call build_master_sequence(seq_iasi_o3_cpsr, seq_all)
+call destroy_obs_sequence(seq_iasi_o3_cpsr)
+!
+call build_master_sequence(seq_omi_o3_total_col, seq_all)
+call destroy_obs_sequence(seq_omi_o3_total_col)
+!
+call build_master_sequence(seq_omi_o3_trop_col, seq_all)
+call destroy_obs_sequence(seq_omi_o3_trop_col)
+!
+call build_master_sequence(seq_omi_o3_profile, seq_all)
+call destroy_obs_sequence(seq_omi_o3_profile)
+!
+call build_master_sequence(seq_omi_o3_cpsr, seq_all)
+call destroy_obs_sequence(seq_omi_o3_cpsr)
+!
+call build_master_sequence(seq_omi_no2_total_col, seq_all)
+call destroy_obs_sequence(seq_omi_no2_total_col)
+!
+call build_master_sequence(seq_omi_no2_trop_col, seq_all)
+call destroy_obs_sequence(seq_omi_no2_trop_col)
+!
+call build_master_sequence(seq_omi_no2_domino_total_col, seq_all)
+call destroy_obs_sequence(seq_omi_no2_domino_total_col)
+!
+call build_master_sequence(seq_omi_no2_domino_trop_col, seq_all)
+call destroy_obs_sequence(seq_omi_no2_domino_trop_col)
+!
+call build_master_sequence(seq_omi_so2_total_col, seq_all)
+call destroy_obs_sequence(seq_omi_so2_total_col)
+!
+call build_master_sequence(seq_omi_so2_pbl_col, seq_all)
+call destroy_obs_sequence(seq_omi_so2_pbl_col)
+!
+call build_master_sequence(seq_omi_hcho_total_col, seq_all)
+call destroy_obs_sequence(seq_omi_hcho_total_col)
+!
+call build_master_sequence(seq_omi_hcho_trop_col, seq_all)
+call destroy_obs_sequence(seq_omi_hcho_trop_col)
+!
+call build_master_sequence(seq_tropomi_co_total_col, seq_all)
+call destroy_obs_sequence(seq_tropomi_co_total_col)
+!
+call build_master_sequence(seq_tropomi_o3_total_col, seq_all)
+call destroy_obs_sequence(seq_tropomi_o3_total_col)
+!
+call build_master_sequence(seq_tropomi_o3_trop_col, seq_all)
+call destroy_obs_sequence(seq_tropomi_o3_trop_col)
+!
+call build_master_sequence(seq_tropomi_o3_profile, seq_all)
+call destroy_obs_sequence(seq_tropomi_o3_profile)
+!
+call build_master_sequence(seq_tropomi_o3_cpsr, seq_all)
+call destroy_obs_sequence(seq_tropomi_o3_cpsr)
+!
+call build_master_sequence(seq_tropomi_no2_total_col, seq_all)
+call destroy_obs_sequence(seq_tropomi_no2_total_col)
+!
+call build_master_sequence(seq_tropomi_no2_trop_col, seq_all)
+call destroy_obs_sequence(seq_tropomi_no2_trop_col)
+!
+call build_master_sequence(seq_tropomi_so2_total_col, seq_all)
+call destroy_obs_sequence(seq_tropomi_so2_total_col)
+!
+call build_master_sequence(seq_tropomi_so2_pbl_col, seq_all)
+call destroy_obs_sequence(seq_tropomi_so2_pbl_col)
+!
+call build_master_sequence(seq_tropomi_ch4_total_col, seq_all)
+call destroy_obs_sequence(seq_tropomi_ch4_total_col)
+!
+call build_master_sequence(seq_tropomi_ch4_trop_col, seq_all)
+call destroy_obs_sequence(seq_tropomi_ch4_trop_col)
+!
+call build_master_sequence(seq_tropomi_ch4_profile, seq_all)
+call destroy_obs_sequence(seq_tropomi_ch4_profile)
+!
+call build_master_sequence(seq_tropomi_ch4_cpsr, seq_all)
+call destroy_obs_sequence(seq_tropomi_ch4_cpsr)
+!
+call build_master_sequence(seq_tropomi_hcho_total_col, seq_all)
+call destroy_obs_sequence(seq_tropomi_hcho_total_col)
+!
+call build_master_sequence(seq_tropomi_hcho_trop_col, seq_all)
+call destroy_obs_sequence(seq_tropomi_hcho_trop_col)
+!
+call build_master_sequence(seq_tempo_o3_total_col, seq_all)
+call destroy_obs_sequence(seq_tempo_o3_total_col)
+!
+call build_master_sequence(seq_tempo_o3_trop_col, seq_all)
+call destroy_obs_sequence(seq_tempo_o3_trop_col)
+!
+call build_master_sequence(seq_tempo_o3_profile, seq_all)
+call destroy_obs_sequence(seq_tempo_o3_profile)
+!
+call build_master_sequence(seq_tempo_o3_cpsr, seq_all)
+call destroy_obs_sequence(seq_tempo_o3_cpsr)
+!
+call build_master_sequence(seq_tempo_no2_total_col, seq_all)
+call destroy_obs_sequence(seq_tempo_no2_total_col)
+!
+call build_master_sequence(seq_tempo_no2_trop_col, seq_all)
+call destroy_obs_sequence(seq_tempo_no2_trop_col)
+!
+call build_master_sequence(seq_tes_co_total_col, seq_all)
+call destroy_obs_sequence(seq_tes_co_total_col)
+!
+call build_master_sequence(seq_tes_co_trop_col, seq_all)
+call destroy_obs_sequence(seq_tes_co_trop_col)
+!
+call build_master_sequence(seq_tes_co_profile, seq_all)
+call destroy_obs_sequence(seq_tes_co_profile)
+!
+call build_master_sequence(seq_tes_co_cpsr, seq_all)
+call destroy_obs_sequence(seq_tes_co_cpsr)
+!
+call build_master_sequence(seq_tes_co2_total_col, seq_all)
+call destroy_obs_sequence(seq_tes_co2_total_col)
+!
+call build_master_sequence(seq_tes_co2_trop_col, seq_all)
+call destroy_obs_sequence(seq_tes_co2_trop_col)
+!
+call build_master_sequence(seq_tes_co2_profile, seq_all)
+call destroy_obs_sequence(seq_tes_co2_profile)
+!
+call build_master_sequence(seq_tes_co2_cpsr, seq_all)
+call destroy_obs_sequence(seq_tes_co2_cpsr)
+!
+call build_master_sequence(seq_tes_o3_total_col, seq_all)
+call destroy_obs_sequence(seq_tes_o3_total_col)
+!
+call build_master_sequence(seq_tes_o3_trop_col, seq_all)
+call destroy_obs_sequence(seq_tes_o3_trop_col)
+!
+call build_master_sequence(seq_tes_o3_profile, seq_all)
+call destroy_obs_sequence(seq_tes_o3_profile)
+!
+call build_master_sequence(seq_tes_o3_cpsr, seq_all)
+call destroy_obs_sequence(seq_tes_o3_cpsr)
+!
+call build_master_sequence(seq_tes_nh3_total_col, seq_all)
+call destroy_obs_sequence(seq_tes_nh3_total_col)
+!
+call build_master_sequence(seq_tes_nh3_trop_col, seq_all)
+call destroy_obs_sequence(seq_tes_nh3_trop_col)
+!
+call build_master_sequence(seq_tes_nh3_profile, seq_all)
+call destroy_obs_sequence(seq_tes_nh3_profile)
+!
+call build_master_sequence(seq_tes_nh3_cpsr, seq_all)
+call destroy_obs_sequence(seq_tes_nh3_cpsr)
+!
+call build_master_sequence(seq_tes_ch4_total_col, seq_all)
+call destroy_obs_sequence(seq_tes_ch4_total_col)
+!
+call build_master_sequence(seq_tes_ch4_trop_col, seq_all)
+call destroy_obs_sequence(seq_tes_ch4_trop_col)
+!
+call build_master_sequence(seq_tes_ch4_profile, seq_all)
+call destroy_obs_sequence(seq_tes_ch4_profile)
+!
+call build_master_sequence(seq_tes_ch4_cpsr, seq_all)
+call destroy_obs_sequence(seq_tes_ch4_cpsr)
+!
+call build_master_sequence(seq_cris_co_total_col, seq_all)
+call destroy_obs_sequence(seq_cris_co_total_col)
+!
+call build_master_sequence(seq_cris_co_profile, seq_all)
+call destroy_obs_sequence(seq_cris_co_profile)
+!
+call build_master_sequence(seq_cris_co_cpsr, seq_all)
+call destroy_obs_sequence(seq_cris_co_cpsr)
+!
+call build_master_sequence(seq_cris_o3_total_col, seq_all)
+call destroy_obs_sequence(seq_cris_o3_total_col)
+!
+call build_master_sequence(seq_cris_o3_profile, seq_all)
+call destroy_obs_sequence(seq_cris_o3_profile)
+!
+call build_master_sequence(seq_cris_o3_cpsr, seq_all)
+call destroy_obs_sequence(seq_cris_o3_cpsr)
+!
+call build_master_sequence(seq_cris_nh3_total_col, seq_all)
+call destroy_obs_sequence(seq_cris_nh3_total_col)
+!
+call build_master_sequence(seq_cris_nh3_profile, seq_all)
+call destroy_obs_sequence(seq_cris_nh3_profile)
+!
+call build_master_sequence(seq_cris_nh3_cpsr, seq_all)
+call destroy_obs_sequence(seq_cris_nh3_cpsr)
+!
+call build_master_sequence(seq_cris_ch4_total_col, seq_all)
+call destroy_obs_sequence(seq_cris_ch4_total_col)
+!
+call build_master_sequence(seq_cris_ch4_profile, seq_all)
+call destroy_obs_sequence(seq_cris_ch4_profile)
+!
+call build_master_sequence(seq_cris_ch4_cpsr, seq_all)
+call destroy_obs_sequence(seq_cris_ch4_cpsr)
+!
+call build_master_sequence(seq_cris_pan_total_col, seq_all)
+call destroy_obs_sequence(seq_cris_pan_total_col)
+!
+call build_master_sequence(seq_cris_pan_profile, seq_all)
+call destroy_obs_sequence(seq_cris_pan_profile)
+!
+call build_master_sequence(seq_cris_pan_cpsr, seq_all)
+call destroy_obs_sequence(seq_cris_pan_cpsr)
+!
+call build_master_sequence(seq_sciam_no2_total_col, seq_all)
+call destroy_obs_sequence(seq_sciam_no2_total_col)
+!
+call build_master_sequence(seq_sciam_no2_trop_col, seq_all)
+call destroy_obs_sequence(seq_sciam_no2_trop_col)
+!
+call build_master_sequence(seq_gome2a_no2_total_col, seq_all)
+call destroy_obs_sequence(seq_gome2a_no2_total_col)
+!
+call build_master_sequence(seq_gome2a_no2_trop_col, seq_all)
+call destroy_obs_sequence(seq_gome2a_no2_trop_col)
+!
+call build_master_sequence(seq_mls_o3_total_col, seq_all)
+call destroy_obs_sequence(seq_mls_o3_total_col)
+!
+call build_master_sequence(seq_mls_o3_profile, seq_all)
+call destroy_obs_sequence(seq_mls_o3_profile)
+!
+call build_master_sequence(seq_mls_o3_cpsr, seq_all)
+call destroy_obs_sequence(seq_mls_o3_cpsr)
+!
+call build_master_sequence(seq_mls_hno3_total_col, seq_all)
+call destroy_obs_sequence(seq_mls_hno3_total_col)
+!
+call build_master_sequence(seq_mls_hno3_profile, seq_all)
+call destroy_obs_sequence(seq_mls_hno3_profile)
+!
+call build_master_sequence(seq_mls_hno3_cpsr, seq_all)
+call destroy_obs_sequence(seq_mls_hno3_cpsr)
+!
+call build_master_sequence(seq_airnow_co, seq_all)
+call destroy_obs_sequence(seq_airnow_co)
+!
+call build_master_sequence(seq_airnow_o3, seq_all)
+call destroy_obs_sequence(seq_airnow_o3)
+!
+call build_master_sequence(seq_airnow_no2, seq_all)
+call destroy_obs_sequence(seq_airnow_no2)
+!
+call build_master_sequence(seq_airnow_so2, seq_all)
+call destroy_obs_sequence(seq_airnow_so2)
+!
+call build_master_sequence(seq_airnow_pm10, seq_all)
+call destroy_obs_sequence(seq_airnow_pm10)
+!
+call build_master_sequence(seq_airnow_pm25, seq_all)
+call destroy_obs_sequence(seq_airnow_pm25)
+!
+call build_master_sequence(seq_panda_co, seq_all)
+call destroy_obs_sequence(seq_panda_co)
+!
+call build_master_sequence(seq_panda_o3, seq_all)
+call destroy_obs_sequence(seq_panda_o3)
+!
+call build_master_sequence(seq_panda_pm25, seq_all)
+call destroy_obs_sequence(seq_panda_pm25)
+!
+! APM/JB ---
 
 write(6,*) 'Total number of observations:', get_num_obs(seq_all)
 
@@ -362,7 +1753,43 @@ use       obs_def_mod, only : obs_def_type, get_obs_def_type_of_obs, set_obs_def
 use      obs_kind_mod, only : RADIOSONDE_U_WIND_COMPONENT, ACARS_U_WIND_COMPONENT, &
                               LAND_SFC_U_WIND_COMPONENT, MARINE_SFC_U_WIND_COMPONENT, &
                               METAR_U_10_METER_WIND, GPSRO_REFRACTIVITY, &
-                              SAT_U_WIND_COMPONENT, VORTEX_LAT
+                              SAT_U_WIND_COMPONENT, VORTEX_LAT, &
+! APM/JB +++
+                             MODIS_AOD_TOTAL_COL, &
+                             MOPITT_CO_TOTAL_COL, MOPITT_CO_PROFILE, MOPITT_V5_CO_PROFILE, MOPITT_CO_CPSR,&
+                             IASI_CO_TOTAL_COL, IASI_CO_PROFILE, IASI_CO_CPSR, &
+                             IASI_O3_PROFILE, IASI_O3_CPSR, &
+                             OMI_O3_TOTAL_COL, OMI_O3_TROP_COL, OMI_O3_PROFILE, OMI_O3_CPSR, &
+                             OMI_NO2_TOTAL_COL, OMI_NO2_TROP_COL, &
+                             OMI_NO2_DOMINO_TOTAL_COL, OMI_NO2_DOMINO_TROP_COL, &
+                             OMI_SO2_TOTAL_COL, OMI_SO2_PBL_COL, &
+                             OMI_HCHO_TOTAL_COL, OMI_HCHO_TROP_COL, &
+                             TROPOMI_CO_TOTAL_COL, &
+                             TROPOMI_O3_TOTAL_COL, TROPOMI_O3_TROP_COL, TROPOMI_O3_PROFILE, TROPOMI_O3_CPSR, &
+                             TROPOMI_NO2_TOTAL_COL, TROPOMI_NO2_TROP_COL, &
+                             TROPOMI_SO2_TOTAL_COL, TROPOMI_SO2_PBL_COL,&
+                             TROPOMI_CH4_TOTAL_COL, TROPOMI_CH4_TROP_COL, TROPOMI_CH4_PROFILE, TROPOMI_CH4_CPSR, &
+                             TROPOMI_HCHO_TOTAL_COL, TROPOMI_HCHO_TROP_COL, &
+                             TEMPO_O3_TOTAL_COL, TEMPO_O3_TROP_COL, TEMPO_O3_PROFILE, TEMPO_O3_CPSR, &
+                             TEMPO_NO2_TOTAL_COL, TEMPO_NO2_TROP_COL, &
+                             TES_CO_TOTAL_COL, TES_CO_TROP_COL, TES_CO_PROFILE, TES_CO_CPSR, &
+                             TES_CO2_TOTAL_COL, TES_CO2_TROP_COL, TES_CO2_PROFILE, TES_CO2_CPSR,&
+                             TES_O3_TOTAL_COL, TES_O3_TROP_COL, TES_O3_PROFILE, TES_O3_CPSR,&
+                             TES_NH3_TOTAL_COL, TES_NH3_TROP_COL, TES_NH3_PROFILE, TES_NH3_CPSR,&
+                             TES_CH4_TOTAL_COL, TES_CH4_TROP_COL, TES_CH4_PROFILE, TES_CH4_CPSR, &
+                             CRIS_CO_TOTAL_COL, CRIS_CO_PROFILE, CRIS_CO_CPSR, &
+                             CRIS_O3_TOTAL_COL, CRIS_O3_PROFILE, CRIS_O3_CPSR,&
+                             CRIS_NH3_TOTAL_COL, CRIS_NH3_PROFILE, CRIS_NH3_CPSR,&
+                             CRIS_CH4_TOTAL_COL, CRIS_CH4_PROFILE, CRIS_CH4_CPSR, &
+                             CRIS_PAN_TOTAL_COL, CRIS_PAN_PROFILE, CRIS_PAN_CPSR,&
+                             SCIAM_NO2_TOTAL_COL, SCIAM_NO2_TROP_COL, &
+                             GOME2A_NO2_TOTAL_COL, GOME2A_NO2_TROP_COL, &
+                             MLS_O3_TOTAL_COL, MLS_O3_PROFILE, MLS_O3_CPSR,&
+                             MLS_HNO3_TOTAL_COL, MLS_HNO3_PROFILE, MLS_HNO3_CPSR, &
+                             AIRNOW_CO, AIRNOW_O3, AIRNOW_NO2, AIRNOW_SO2, AIRNOW_PM10, AIRNOW_PM25,&
+                             PANDA_CO, PANDA_O3, PANDA_PM25
+
+! APM/JB ---
 use         model_mod, only : get_domain_info 
 
 implicit none
@@ -376,6 +1803,13 @@ real(r8), intent(in)                   :: obs_bdy, ptop, htop, elev_max
 
 integer  :: nloc, okind, dom_id
 logical  :: file_exist, last_obs, pass_checks, first_obs
+!! APM/JB +++
+!            modis_aod_total_col_obs_check, mopitt_co_total_col_obs_check, mopitt_co_profile_obs_check, &
+!            iasi_co_total_col_obs_check, iasi_co_profile_obs_check, &
+!            iasi_o3_profile_obs_check, omi_no2_obs_check, airnow_co_obs_check, airnow_o3_obs_check, &
+!            panda_co_obs_check, panda_o3_obs_check, panda_pm25_obs_check
+!! APM/JB ---
+
 real(r8) :: xyz_loc(3), xloc, yloc
 real(r8) :: real_nx, real_ny
 
@@ -411,6 +1845,298 @@ select case (plat_kind)
     write(6,*) 'Adding Supplimental Tropical Cyclone Data'
   case (GPSRO_REFRACTIVITY)
     write(6,*) 'Adding Supplimental GPS RO Data'
+! APM/JB +++
+  case (MODIS_AOD_TOTAL_COL)
+    write(6,*) 'Adding Supplimental MODIS AOD TOTAL COL Data'
+!
+  case (MOPITT_CO_TOTAL_COL)
+    write(6,*) 'Adding Supplimental MOPITT CO TOTAL COL  Data'
+!
+  case (MOPITT_CO_PROFILE)
+    write(6,*) 'Adding Supplimental MOPITT CO PROFILE  Data'
+!
+  case (MOPITT_V5_CO_PROFILE)
+    write(6,*) 'Adding Supplimental MOPITT V5 CO PROFILE  Data'
+!
+  case (MOPITT_CO_CPSR)
+    write(6,*) 'Adding Supplimental MOPITT CO CPSR  Data'
+!
+  case (IASI_CO_TOTAL_COL)
+    write(6,*) 'Adding Supplimental IASI CO TOTAL COL Data'
+!
+  case (IASI_CO_PROFILE)
+    write(6,*) 'Adding Supplimental IASI CO PROFILE Data'
+!
+  case (IASI_CO_CPSR)
+    write(6,*) 'Adding Supplimental IASI CO CPSR Data'
+!
+  case (IASI_O3_PROFILE)
+    write(6,*) 'Adding Supplimental IASI O3 PROFILE Data'
+!
+  case (IASI_O3_CPSR)
+    write(6,*) 'Adding Supplimental IASI O3 CPSR Data'
+!
+  case (OMI_O3_TOTAL_COL)
+    write(6,*) 'Adding Supplimental OMI O3 TOTAL COL Data'
+!
+  case (OMI_O3_TROP_COL)
+    write(6,*) 'Adding Supplimental OMI O3 TROP COL Data'
+!
+  case (OMI_O3_PROFILE)
+    write(6,*) 'Adding Supplimental OMI O3 PROFILE Data'
+!
+  case (OMI_O3_CPSR)
+    write(6,*) 'Adding Supplimental OMI O3 CPSR Data'
+!
+  case (OMI_NO2_TOTAL_COL)
+    write(6,*) 'Adding Supplimental OMI NO2 TOTAL COL Data'
+!
+  case (OMI_NO2_TROP_COL)
+    write(6,*) 'Adding Supplimental OMI NO2 TROP COL Data'
+!
+  case (OMI_NO2_DOMINO_TOTAL_COL)
+    write(6,*) 'Adding Supplimental OMI NO2 DOMINO TOTAL COL Data'
+!
+  case (OMI_NO2_DOMINO_TROP_COL)
+    write(6,*) 'Adding Supplimental OMI NO2 DOMINO TROP COL Data'
+!
+  case (OMI_SO2_TOTAL_COL)
+    write(6,*) 'Adding Supplimental OMI SO2 TOTAL COL Data'
+!
+  case (OMI_SO2_PBL_COL)
+    write(6,*) 'Adding Supplimental OMI SO2 PBL COL Data'
+!
+  case (OMI_HCHO_TOTAL_COL)
+    write(6,*) 'Adding Supplimental OMI HCHO TOTAL COL Data'
+!
+  case (OMI_HCHO_TROP_COL)
+    write(6,*) 'Adding Supplimental OMI HCHO TROP COL Data'
+!
+  case (TROPOMI_CO_TOTAL_COL)
+    write(6,*) 'Adding Supplimental TROPOMI CO TOTAL COLData'
+!
+  case (TROPOMI_O3_TOTAL_COL)
+    write(6,*) 'Adding Supplimental TROPOMI O3 TOTAL COL Data'
+!
+  case (TROPOMI_O3_TROP_COL)
+    write(6,*) 'Adding Supplimental TROPOMI O3 TROP COL Data'
+!
+  case (TROPOMI_O3_PROFILE)
+    write(6,*) 'Adding Supplimental TROPOMI O3 PROFILE Data'
+!
+  case (TROPOMI_O3_CPSR)
+    write(6,*) 'Adding Supplimental TROPOMI O3 CPSR Data'
+!
+  case (TROPOMI_NO2_TOTAL_COL)
+    write(6,*) 'Adding Supplimental TROPOMI NO2 TOTAL COL Data'
+!
+  case (TROPOMI_NO2_TROP_COL)
+    write(6,*) 'Adding Supplimental TROPOMI NO2 TROP COL Data'
+!
+  case (TROPOMI_SO2_TOTAL_COL)
+    write(6,*) 'Adding Supplimental TROPOMI_SO2 TOTAL COL Data'
+!
+  case (TROPOMI_SO2_PBL_COL)
+    write(6,*) 'Adding Supplimental TROPOMI_SO2 PBL COL Data'
+!
+  case (TROPOMI_CH4_TOTAL_COL)
+    write(6,*) 'Adding Supplimental TROPOMI CH4 TOTAL COL Data'
+!
+  case (TROPOMI_CH4_TROP_COL)
+    write(6,*) 'Adding Supplimental TROPOMI CH4 TROP COL Data'
+!
+  case (TROPOMI_CH4_PROFILE)
+    write(6,*) 'Adding Supplimental TROPOMI CH4 PROFILE Data'
+!
+  case (TROPOMI_CH4_CPSR)
+    write(6,*) 'Adding Supplimental TROPOMI CH4 CPSR Data'
+!
+  case (TROPOMI_HCHO_TOTAL_COL)
+    write(6,*) 'Adding Supplimental TROPOMI HCHO TOTAL COL Data'
+!
+  case (TROPOMI_HCHO_TROP_COL)
+    write(6,*) 'Adding Supplimental TROPOMI HCHO TROP COL Data'
+!
+  case (TEMPO_O3_TOTAL_COL)
+    write(6,*) 'Adding Supplimental TEMPO_O3_TOTAL_COL Data'
+!
+  case (TEMPO_O3_TROP_COL)
+    write(6,*) 'Adding Supplimental TEMPO_O3_TROP_COL Data'
+!
+  case (TEMPO_O3_PROFILE)
+    write(6,*) 'Adding Supplimental TEMPO_O3_PROFILE Data'
+!
+  case (TEMPO_O3_CPSR)
+    write(6,*) 'Adding Supplimental TEMPO_O3_CPSR Data'
+!
+  case (TEMPO_NO2_TOTAL_COL)
+    write(6,*) 'Adding Supplimental TEMPO_NO2 TOTAL COL Data'
+!
+  case (TEMPO_NO2_TROP_COL)
+    write(6,*) 'Adding Supplimental TEMPO_NO2 TROP COL Data'
+!
+  case (TES_CO_TOTAL_COL)
+    write(6,*) 'Adding Supplimental TES_CO_TOTAL_COL Data'
+!
+  case (TES_CO_TROP_COL)
+    write(6,*) 'Adding Supplimental TES_CO_TROP_COL Data'
+!
+  case (TES_CO_PROFILE)
+    write(6,*) 'Adding Supplimental TES_CO_PROFILE Data'
+!
+  case (TES_CO_CPSR)
+    write(6,*) 'Adding Supplimental TES_CO_CPSR Data'
+!
+  case (TES_CO2_TOTAL_COL)
+    write(6,*) 'Adding Supplimental TES_CO2_TOTAL_COL Data'
+!
+  case (TES_CO2_TROP_COL)
+    write(6,*) 'Adding Supplimental TES_CO2_TROP_COL Data'
+!
+  case (TES_CO2_PROFILE)
+    write(6,*) 'Adding Supplimental TES_CO2_PROFILE Data'
+!
+  case (TES_CO2_CPSR)
+    write(6,*) 'Adding Supplimental TES_CO2_CPSR Data'
+!
+  case (TES_O3_TOTAL_COL)
+    write(6,*) 'Adding Supplimental TES_O3_TOTAL_COL Data'
+!
+  case (TES_O3_TROP_COL)
+    write(6,*) 'Adding Supplimental TES_O3_TROP_COL Data'
+!
+  case (TES_O3_PROFILE)
+    write(6,*) 'Adding Supplimental TES_O3_PROFILE Data'
+!
+  case (TES_O3_CPSR)
+    write(6,*) 'Adding Supplimental TES_O3_CPSR Data'
+!
+  case (TES_NH3_TOTAL_COL)
+    write(6,*) 'Adding Supplimental TES_NH3_TOTAL_COL Data'
+!
+  case (TES_NH3_TROP_COL)
+    write(6,*) 'Adding Supplimental TES_NH3_TROP_COL Data'
+!
+  case (TES_NH3_PROFILE)
+    write(6,*) 'Adding Supplimental TES_NH3_PROFILE Data'
+!
+  case (TES_NH3_CPSR)
+    write(6,*) 'Adding Supplimental TES_NH3_CPSR Data'
+!
+  case (TES_CH4_TOTAL_COL)
+    write(6,*) 'Adding Supplimental TES_CH4_TOTAL_COL Data'
+!
+  case (TES_CH4_TROP_COL)
+    write(6,*) 'Adding Supplimental TES_CH4_TROP_COL Data'
+!
+  case (TES_CH4_PROFILE)
+    write(6,*) 'Adding Supplimental TES_CH4_PROFILE Data'
+!
+  case (TES_CH4_CPSR)
+    write(6,*) 'Adding Supplimental TES_CH4_CPSR Data'
+!
+  case (CRIS_CO_TOTAL_COL)
+    write(6,*) 'Adding Supplimental CRIS_CO_TOTAL_COL Data'
+!
+  case (CRIS_CO_PROFILE)
+    write(6,*) 'Adding Supplimental CRIS_CO_PROFILE Data'
+!
+  case (CRIS_CO_CPSR)
+    write(6,*) 'Adding Supplimental CRIS_CO_CPSR Data'
+!
+  case (CRIS_O3_TOTAL_COL)
+    write(6,*) 'Adding Supplimental CRIS_O3_TOTAL_COL Data'
+!
+  case (CRIS_O3_PROFILE)
+    write(6,*) 'Adding Supplimental CRIS_O3_PROFILE Data'
+!
+  case (CRIS_O3_CPSR)
+    write(6,*) 'Adding Supplimental CRIS_O3_CPSR Data'
+!
+  case (CRIS_NH3_TOTAL_COL)
+    write(6,*) 'Adding Supplimental CRIS_NH3_TOTAL_COL Data'
+!
+  case (CRIS_NH3_PROFILE)
+    write(6,*) 'Adding Supplimental CRIS_NH3_PROFILE Data'
+!
+  case (CRIS_NH3_CPSR)
+    write(6,*) 'Adding Supplimental CRIS_NH3_CPSR Data'
+!
+  case (CRIS_CH4_TOTAL_COL)
+    write(6,*) 'Adding Supplimental CRIS_CH4_TOTAL_COL Data'
+!
+  case (CRIS_CH4_PROFILE)
+    write(6,*) 'Adding Supplimental CRIS_CH4_PROFILE Data'
+!
+  case (CRIS_CH4_CPSR)
+    write(6,*) 'Adding Supplimental CRIS_CH4_CPSR Data'
+!
+  case (CRIS_PAN_TOTAL_COL)
+    write(6,*) 'Adding Supplimental CRIS_PAN_TOTAL_COL Data'
+!
+  case (CRIS_PAN_PROFILE)
+    write(6,*) 'Adding Supplimental CRIS_PAN_PROFILE Data'
+!
+  case (CRIS_PAN_CPSR)
+    write(6,*) 'Adding Supplimental CRIS_PAN_CPSR Data'
+!
+  case (SCIAM_NO2_TOTAL_COL)
+    write(6,*) 'Adding Supplimental SCIAM_NO2_TOTAL_COL Data'
+!
+  case (SCIAM_NO2_TROP_COL)
+    write(6,*) 'Adding Supplimental SCIAM_NO2_TROP_COL Data'
+!
+  case (GOME2A_NO2_TOTAL_COL)
+    write(6,*) 'Adding Supplimental GOME2A_NO2_TOTAL_COL Data'
+!
+  case (GOME2A_NO2_TROP_COL)
+    write(6,*) 'Adding Supplimental GOME2A_NO2_TROP_COL Data'
+!
+  case (MLS_O3_TOTAL_COL)
+    write(6,*) 'Adding Supplimental MLS_O3_TOTAL_COL Data'
+!
+  case (MLS_O3_PROFILE)
+    write(6,*) 'Adding Supplimental MLS_O3_PROFILE Data'
+!
+  case (MLS_O3_CPSR)
+    write(6,*) 'Adding Supplimental MLS_O3_CPSR Data'
+!
+  case (MLS_HNO3_TOTAL_COL)
+    write(6,*) 'Adding Supplimental MLS_HNO3_TOTAL_COL Data'
+!
+  case (MLS_HNO3_PROFILE)
+    write(6,*) 'Adding Supplimental MLS_HNO3_PROFILE Data'
+!
+  case (MLS_HNO3_CPSR)
+    write(6,*) 'Adding Supplimental MLS_HNO3_CPSR Data'
+!
+  case (AIRNOW_CO)
+    write(6,*) 'Adding Supplimental AIRNOW_CO Data'
+!
+  case (AIRNOW_O3)
+    write(6,*) 'Adding Supplimental AIRNOW_O3 Data'
+!
+  case (AIRNOW_NO2)
+    write(6,*) 'Adding Supplimental AIRNOW_NO2 Data'
+!
+  case (AIRNOW_SO2)
+    write(6,*) 'Adding Supplimental AIRNOW_SO2 Data'
+!
+  case (AIRNOW_PM10)
+    write(6,*) 'Adding Supplimental AIRNOW_PM10 Data'
+!
+  case (AIRNOW_PM25)
+    write(6,*) 'Adding Supplimental AIRNOW_PM25 Data'
+!
+  case (PANDA_CO)
+    write(6,*) 'Adding Supplimental PANDA_CO Data'
+!
+  case (PANDA_O3)
+    write(6,*) 'Adding Supplimental PANDA_O3 Data'
+!
+  case (PANDA_PM25)
+    write(6,*) 'Adding Supplimental PANDA_PM25 Data'
+! APM/JB ---
 
 end select
 
@@ -504,6 +2230,299 @@ ObsLoop:  do while ( .not. last_obs ) ! loop over all observations in a sequence
       pass_checks = sat_wind_obs_check()
     case default
       pass_checks = .true.
+
+! APM/JB +++
+    case (MODIS_AOD_TOTAL_COL)
+      pass_checks = modis_aod_total_col_obs_check()
+!
+    case (MOPITT_CO_TOTAL_COL)
+      pass_checks = mopitt_co_total_col_obs_check()
+!
+    case (MOPITT_CO_PROFILE)
+      pass_checks = mopitt_co_profile_obs_check()
+!
+    case (MOPITT_V5_CO_PROFILE)
+      pass_checks = mopitt_v5_co_profile_obs_check()
+!
+    case (MOPITT_CO_CPSR)
+      pass_checks = mopitt_co_cpsr_obs_check()
+!
+    case (IASI_CO_TOTAL_COL)
+      pass_checks = iasi_co_total_col_obs_check()
+!
+    case (IASI_CO_PROFILE)
+      pass_checks = iasi_co_profile_obs_check()
+!
+    case (IASI_CO_CPSR)
+      pass_checks = iasi_co_cpsr_obs_check()
+!
+    case (IASI_O3_PROFILE)
+      pass_checks = iasi_o3_profile_obs_check()
+!
+    case (IASI_O3_CPSR)
+      pass_checks = iasi_o3_cpsr_obs_check()
+!
+    case (OMI_O3_TOTAL_COL)
+      pass_checks = omi_o3_total_col_obs_check()
+!
+    case (OMI_O3_TROP_COL)
+      pass_checks = omi_o3_trop_col_obs_check()
+!
+    case (OMI_O3_PROFILE)
+      pass_checks = omi_o3_profile_obs_check()
+!
+    case (OMI_O3_CPSR)
+      pass_checks = omi_o3_cpsr_obs_check()
+!
+    case (OMI_NO2_TOTAL_COL)
+      pass_checks = omi_no2_total_col_obs_check()
+!
+    case (OMI_NO2_TROP_COL)
+      pass_checks = omi_no2_trop_col_obs_check()
+!
+    case (OMI_NO2_DOMINO_TOTAL_COL)
+      pass_checks = omi_no2_domino_total_col_obs_check()
+!
+    case (OMI_NO2_DOMINO_TROP_COL)
+      pass_checks = omi_no2_domino_trop_col_obs_check()
+!
+    case (OMI_SO2_TOTAL_COL)
+      pass_checks = omi_so2_total_col_obs_check()
+!
+    case (OMI_SO2_PBL_COL)
+      pass_checks = omi_so2_pbl_col_obs_check()
+!
+    case (OMI_HCHO_TOTAL_COL)
+      pass_checks = omi_hcho_total_col_obs_check()
+!
+    case (OMI_HCHO_TROP_COL)
+      pass_checks = omi_hcho_trop_col_obs_check()
+!
+    case (TROPOMI_CO_TOTAL_COL)
+      pass_checks = tropomi_co_total_col_obs_check()
+!
+    case (TROPOMI_O3_TOTAL_COL)
+      pass_checks = tropomi_o3_total_col_obs_check()
+!
+    case (TROPOMI_O3_TROP_COL)
+      pass_checks = tropomi_o3_trop_col_obs_check()
+!
+    case (TROPOMI_O3_PROFILE)
+      pass_checks = tropomi_o3_profile_obs_check()
+!
+    case (TROPOMI_O3_CPSR)
+      pass_checks = tropomi_o3_cpsr_obs_check()
+!
+    case (TROPOMI_NO2_TOTAL_COL)
+      pass_checks = tropomi_no2_total_col_obs_check()
+!
+    case (TROPOMI_NO2_TROP_COL)
+      pass_checks = tropomi_no2_trop_col_obs_check()
+!
+    case (TROPOMI_SO2_TOTAL_COL)
+      pass_checks = tropomi_so2_total_col_obs_check()
+!
+    case (TROPOMI_SO2_PBL_COL)
+      pass_checks = tropomi_so2_pbl_col_obs_check()
+!
+    case (TROPOMI_CH4_TOTAL_COL)
+      pass_checks = tropomi_ch4_total_col_obs_check()
+!
+    case (TROPOMI_CH4_TROP_COL)
+      pass_checks = tropomi_ch4_trop_col_obs_check()
+!
+    case (TROPOMI_CH4_PROFILE)
+      pass_checks = tropomi_ch4_profile_obs_check()
+!
+    case (TROPOMI_CH4_CPSR)
+      pass_checks = tropomi_ch4_cpsr_obs_check()
+!
+    case (TROPOMI_HCHO_TOTAL_COL)
+      pass_checks = tropomi_hcho_total_col_obs_check()
+!
+    case (TROPOMI_HCHO_TROP_COL)
+      pass_checks = tropomi_hcho_trop_col_obs_check()
+!
+    case (TEMPO_O3_TOTAL_COL)
+      pass_checks = tempo_o3_total_col_obs_check()
+!
+    case (TEMPO_O3_TROP_COL)
+      pass_checks = tempo_o3_trop_col_obs_check()
+!
+    case (TEMPO_O3_PROFILE)
+      pass_checks = tempo_o3_profile_obs_check()
+!
+    case (TEMPO_O3_CPSR)
+      pass_checks = tempo_o3_cpsr_obs_check()
+!
+    case (TEMPO_NO2_TOTAL_COL)
+      pass_checks = tempo_no2_total_col_obs_check()
+!
+    case (TEMPO_NO2_TROP_COL)
+      pass_checks = tempo_no2_trop_col_obs_check()
+!
+    case (TES_CO_TOTAL_COL)
+      pass_checks = tes_co_total_col_obs_check()
+!
+    case (TES_CO_TROP_COL)
+      pass_checks = tes_co_trop_col_obs_check()
+!
+    case (TES_CO_PROFILE)
+      pass_checks = tes_co_profile_obs_check()
+!
+    case (TES_CO_CPSR)
+      pass_checks = tes_co_cpsr_obs_check()
+!
+    case (TES_CO2_TOTAL_COL)
+      pass_checks = tes_co2_total_col_obs_check()
+!
+    case (TES_CO2_TROP_COL)
+      pass_checks = tes_co2_trop_col_obs_check()
+!
+    case (TES_CO2_PROFILE)
+      pass_checks = tes_co2_profile_obs_check()
+!
+    case (TES_CO2_CPSR)
+      pass_checks = tes_co2_cpsr_obs_check()
+!
+    case (TES_O3_TOTAL_COL)
+      pass_checks = tes_o3_total_col_obs_check()
+!
+    case (TES_O3_TROP_COL)
+      pass_checks = tes_o3_trop_col_obs_check()
+!
+    case (TES_O3_PROFILE)
+      pass_checks = tes_o3_profile_obs_check()
+!
+    case (TES_O3_CPSR)
+      pass_checks = tes_o3_cpsr_obs_check()
+!
+    case (TES_NH3_TOTAL_COL)
+      pass_checks = tes_nh3_total_col_obs_check()
+!
+    case (TES_NH3_TROP_COL)
+      pass_checks = tes_nh3_trop_col_obs_check()
+!
+    case (TES_NH3_PROFILE)
+      pass_checks = tes_nh3_profile_obs_check()
+!
+    case (TES_NH3_CPSR)
+      pass_checks = tes_nh3_cpsr_obs_check()
+!
+    case (TES_CH4_TOTAL_COL)
+      pass_checks = tes_ch4_total_col_obs_check()
+!
+    case (TES_CH4_TROP_COL)
+      pass_checks = tes_ch4_trop_col_obs_check()
+!
+    case (TES_CH4_PROFILE)
+      pass_checks = tes_ch4_profile_obs_check()
+!
+    case (TES_CH4_CPSR)
+      pass_checks = tes_ch4_cpsr_obs_check()
+!
+    case (CRIS_CO_TOTAL_COL)
+      pass_checks = cris_co_total_col_obs_check()
+!
+    case (CRIS_CO_PROFILE)
+      pass_checks = cris_co_profile_obs_check()
+!
+    case (CRIS_CO_CPSR)
+      pass_checks = cris_co_cpsr_obs_check()
+!
+    case (CRIS_O3_TOTAL_COL)
+      pass_checks = cris_o3_total_col_obs_check()
+!
+    case (CRIS_O3_PROFILE)
+      pass_checks = cris_o3_profile_obs_check()
+!
+    case (CRIS_O3_CPSR)
+      pass_checks = cris_o3_cpsr_obs_check()
+!
+    case (CRIS_NH3_TOTAL_COL)
+      pass_checks = cris_nh3_total_col_obs_check()
+!
+    case (CRIS_NH3_PROFILE)
+      pass_checks = cris_nh3_profile_obs_check()
+!
+    case (CRIS_NH3_CPSR)
+      pass_checks = cris_nh3_cpsr_obs_check()
+!
+    case (CRIS_CH4_TOTAL_COL)
+      pass_checks = cris_ch4_total_col_obs_check()
+!
+    case (CRIS_CH4_PROFILE)
+      pass_checks = cris_ch4_profile_obs_check()
+!
+    case (CRIS_CH4_CPSR)
+      pass_checks = cris_ch4_cpsr_obs_check()
+!
+    case (CRIS_PAN_TOTAL_COL)
+      pass_checks = cris_pan_total_col_obs_check()
+!
+    case (CRIS_PAN_PROFILE)
+      pass_checks = cris_pan_profile_obs_check()
+!
+    case (CRIS_PAN_CPSR)
+      pass_checks = cris_pan_cpsr_obs_check()
+!
+    case (SCIAM_NO2_TOTAL_COL)
+      pass_checks = sciam_no2_total_col_obs_check()
+!
+    case (SCIAM_NO2_TROP_COL)
+      pass_checks = sciam_no2_trop_col_obs_check()
+!
+    case (GOME2A_NO2_TOTAL_COL)
+      pass_checks = gome2a_no2_total_col_obs_check()
+!
+    case (GOME2A_NO2_TROP_COL)
+      pass_checks = gome2a_no2_trop_col_obs_check()
+!
+    case (MLS_O3_TOTAL_COL)
+      pass_checks = mls_o3_total_col_obs_check()
+!
+    case (MLS_O3_PROFILE)
+      pass_checks = mls_o3_profile_obs_check()
+!
+    case (MLS_O3_CPSR)
+      pass_checks = mls_o3_cpsr_obs_check()
+!
+    case (MLS_HNO3_TOTAL_COL)
+      pass_checks = mls_hno3_total_col_obs_check()
+!
+    case (MLS_HNO3_PROFILE)
+      pass_checks = mls_hno3_profile_obs_check()
+!
+    case (MLS_HNO3_CPSR)
+      pass_checks = mls_hno3_cpsr_obs_check()
+!
+    case (AIRNOW_CO)
+      pass_checks = airnow_co_obs_check()
+!
+    case (AIRNOW_O3)
+      pass_checks = airnow_o3_obs_check()
+!
+    case (AIRNOW_NO2)
+      pass_checks = airnow_no2_obs_check()
+!
+    case (AIRNOW_SO2)
+      pass_checks = airnow_so2_obs_check()
+!
+    case (AIRNOW_PM10)
+      pass_checks = airnow_pm10_obs_check()
+!
+    case (AIRNOW_PM25)
+      pass_checks = airnow_pm25_obs_check()
+!
+    case (PANDA_CO)
+      pass_checks = panda_co_obs_check()
+!
+    case (PANDA_O3)
+      pass_checks = panda_o3_obs_check()
+!
+    case (PANDA_PM25)
+      pass_checks = panda_pm25_obs_check()
+! APM/JB ---
 
   end select
 
@@ -919,7 +2938,7 @@ real(r8), intent(in)            :: elev_max
 
 integer  :: istatus(1)
 logical  :: rawinsonde_obs_check
-real(r8) :: xyz_loc(3), xmod(1), hsfc(1)
+real(r8) :: xyz_loc(3), hsfc(1)
 
 rawinsonde_obs_check = .true.
 xyz_loc = get_location(obs_loc)
@@ -976,16 +2995,53 @@ subroutine read_and_parse_input_seq(filename, nx, ny, obs_bdy, siglevel, ptop, &
                                     htop, sfcelev, elev_max, new_sfc_qc, &
                                     new_satwnd_qc, overwrite_time, atime, &
                                     rawin_seq, sfc_seq, acars_seq, satwnd_seq, &
-                                    tc_seq, gpsro_seq, other_seq)
+! APM/JB +++
+                                    tc_seq, gpsro_seq, &
+                           modis_aod_total_col_seq, &
+                           mopitt_co_total_col_seq, mopitt_co_profile_seq, mopitt_v5_co_profile_seq, mopitt_co_cpsr_seq, &
+                           iasi_co_total_col_seq, iasi_co_profile_seq, iasi_co_cpsr_seq, &
+                           iasi_o3_profile_seq, iasi_o3_cpsr_seq,  &
+                           omi_o3_total_col_seq, omi_o3_trop_col_seq, omi_o3_profile_seq, omi_o3_cpsr_seq, &
+                           omi_no2_total_col_seq, omi_no2_trop_col_seq, &
+                           omi_no2_domino_total_col_seq, omi_no2_domino_trop_col_seq, &
+                           omi_so2_total_col_seq, omi_so2_pbl_col_seq, &
+                           omi_hcho_total_col_seq, omi_hcho_trop_col_seq, &
+                           tropomi_co_total_col_seq, &
+                           tropomi_o3_total_col_seq, tropomi_o3_trop_col_seq, tropomi_o3_profile_seq, tropomi_o3_cpsr_seq, &
+                           tropomi_no2_total_col_seq, tropomi_no2_trop_col_seq, &
+                           tropomi_so2_total_col_seq, tropomi_so2_pbl_col_seq, &
+                           tropomi_ch4_total_col_seq, tropomi_ch4_trop_col_seq, tropomi_ch4_profile_seq, tropomi_ch4_cpsr_seq, &
+                           tropomi_hcho_total_col_seq, tropomi_hcho_trop_col_seq, &
+                           tempo_o3_total_col_seq, tempo_o3_trop_col_seq, tempo_o3_profile_seq, tempo_o3_cpsr_seq, &
+                           tempo_no2_total_col_seq, tempo_no2_trop_col_seq, &
+                           tes_co_total_col_seq, tes_co_trop_col_seq, tes_co_profile_seq, tes_co_cpsr_seq, &
+                           tes_co2_total_col_seq, tes_co2_trop_col_seq, tes_co2_profile_seq, tes_co2_cpsr_seq, &
+                           tes_o3_total_col_seq, tes_o3_trop_col_seq, tes_o3_profile_seq, tes_o3_cpsr_seq, &
+                           tes_nh3_total_col_seq, tes_nh3_trop_col_seq, tes_nh3_profile_seq, tes_nh3_cpsr_seq, &
+                           tes_ch4_total_col_seq, tes_ch4_trop_col_seq, tes_ch4_profile_seq, tes_ch4_cpsr_seq, &
+                           cris_co_total_col_seq, cris_co_profile_seq, cris_co_cpsr_seq, &
+                           cris_o3_total_col_seq, cris_o3_profile_seq, cris_o3_cpsr_seq, &
+                           cris_nh3_total_col_seq, cris_nh3_profile_seq, cris_nh3_cpsr_seq, &
+                           cris_ch4_total_col_seq, cris_ch4_profile_seq, cris_ch4_cpsr_seq, &
+                           cris_pan_total_col_seq, cris_pan_profile_seq, cris_pan_cpsr_seq, &
+                           sciam_no2_total_col_seq, sciam_no2_trop_col_seq, &
+                           gome2a_no2_total_col_seq, gome2a_no2_trop_col_seq, &
+                           mls_o3_total_col_seq, mls_o3_profile_seq, mls_o3_cpsr_seq, &
+                           mls_hno3_total_col_seq, mls_hno3_profile_seq, mls_hno3_cpsr_seq, &
+                           airnow_co_seq, airnow_o3_seq, airnow_no2_seq, airnow_so2_seq, &
+                           airnow_pm10_seq, airnow_pm25_seq, &
+                           panda_co_seq, panda_o3_seq, &
+                           panda_pm25_seq, other_seq)
+! APM/JB ---
 
 use         types_mod, only : r8
 use  netcdf_utilities_mod, only : nc_open_file_readonly, nc_close_file, &
                                   nc_get_variable
 use  time_manager_mod, only : time_type 
 use      location_mod, only : location_type, get_location, is_vertical
-use  obs_sequence_mod, only : obs_sequence_type, obs_type, init_obs, &
+use  obs_sequence_mod, only : obs_sequence_type, obs_type, init_obs, get_obs_key, &
                               get_num_copies, get_num_qc, get_qc_meta_data, &
-                              get_first_obs, get_obs_def, copy_obs, get_num_qc, &
+                              get_first_obs, get_last_obs, get_obs_def, copy_obs, get_num_qc, &
                               append_obs_to_seq, get_next_obs, get_qc, set_qc, &
                               destroy_obs_sequence, read_obs_seq, set_obs_def
 use       obs_def_mod, only : obs_def_type, get_obs_def_type_of_obs, get_obs_def_location, &
@@ -1010,7 +3066,71 @@ use      obs_kind_mod, only : RADIOSONDE_U_WIND_COMPONENT, RADIOSONDE_V_WIND_COM
                               METAR_DEWPOINT_2_METER, METAR_RELATIVE_HUMIDITY_2_METER, &
                               METAR_ALTIMETER, MARINE_SFC_ALTIMETER, LAND_SFC_ALTIMETER, &
                               SAT_U_WIND_COMPONENT, SAT_V_WIND_COMPONENT, &
-                              VORTEX_LAT, VORTEX_LON, VORTEX_PMIN, VORTEX_WMAX
+                              VORTEX_LAT, VORTEX_LON, VORTEX_PMIN, VORTEX_WMAX, &
+! APM/JB +++
+                              MODIS_AOD_TOTAL_COL,  &
+                              MOPITT_CO_TOTAL_COL,  &
+                              MOPITT_CO_PROFILE,  &
+                              MOPITT_V5_CO_PROFILE,  &
+                              MOPITT_CO_CPSR,  &
+                              IASI_CO_TOTAL_COL, &
+                              IASI_CO_PROFILE, &
+                              IASI_CO_CPSR, &
+                              IASI_O3_PROFILE, &
+                              IASI_O3_CPSR, &
+                              OMI_O3_TOTAL_COL, &
+                              OMI_O3_TROP_COL, &
+                              OMI_O3_PROFILE, &
+                              OMI_O3_CPSR, &
+                              OMI_NO2_TOTAL_COL, &
+                              OMI_NO2_TROP_COL, &
+                              OMI_NO2_DOMINO_TOTAL_COL, &
+                              OMI_NO2_DOMINO_TROP_COL, &
+                              OMI_SO2_TOTAL_COL, &
+                              OMI_SO2_PBL_COL, &
+                              OMI_HCHO_TOTAL_COL, &
+                              OMI_HCHO_TROP_COL, &
+                              TROPOMI_CO_TOTAL_COL, &
+                              TROPOMI_O3_TOTAL_COL, &
+                              TROPOMI_O3_TROP_COL, &
+                              TROPOMI_O3_PROFILE, &
+                              TROPOMI_O3_CPSR, &
+                              TROPOMI_NO2_TOTAL_COL, &
+                              TROPOMI_NO2_TROP_COL, &
+                              TROPOMI_SO2_TOTAL_COL, &
+                              TROPOMI_SO2_PBL_COL, &
+                              TROPOMI_CH4_TOTAL_COL, &
+                              TROPOMI_CH4_TROP_COL, &
+                              TROPOMI_CH4_PROFILE, &
+                              TROPOMI_CH4_CPSR, &
+                              TROPOMI_HCHO_TOTAL_COL, &
+                              TROPOMI_HCHO_TROP_COL, &
+                              TEMPO_O3_TOTAL_COL, &
+                              TEMPO_O3_TROP_COL, &
+                              TEMPO_O3_PROFILE, &
+                              TEMPO_O3_CPSR, &
+                              TEMPO_NO2_TOTAL_COL, &
+                              TEMPO_NO2_TROP_COL, &
+                              TES_CO_TOTAL_COL, TES_CO_TROP_COL, TES_CO_PROFILE, TES_CO_CPSR, &
+                              TES_CO2_TOTAL_COL, TES_CO2_TROP_COL, TES_CO2_PROFILE, TES_CO2_CPSR, &
+                              TES_O3_TOTAL_COL, TES_O3_TROP_COL, TES_O3_PROFILE, TES_O3_CPSR, &
+                              TES_NH3_TOTAL_COL, TES_NH3_TROP_COL, TES_NH3_PROFILE, TES_NH3_CPSR, &
+                              TES_CH4_TOTAL_COL, TES_CH4_TROP_COL, TES_CH4_PROFILE, TES_CH4_CPSR, &
+                              CRIS_CO_TOTAL_COL, CRIS_CO_PROFILE, CRIS_CO_CPSR, &
+                              CRIS_O3_TOTAL_COL, CRIS_O3_PROFILE, CRIS_O3_CPSR, &
+                              CRIS_NH3_TOTAL_COL, CRIS_NH3_PROFILE, CRIS_NH3_CPSR, &
+                              CRIS_CH4_TOTAL_COL, CRIS_CH4_PROFILE, CRIS_CH4_CPSR, &
+                              CRIS_PAN_TOTAL_COL, CRIS_PAN_PROFILE, CRIS_PAN_CPSR, &
+                              SCIAM_NO2_TOTAL_COL, SCIAM_NO2_TROP_COL, &
+                              GOME2A_NO2_TOTAL_COL, GOME2A_NO2_TROP_COL, &
+                              MLS_O3_TOTAL_COL, MLS_O3_PROFILE, MLS_O3_CPSR, &
+                              MLS_HNO3_TOTAL_COL, MLS_HNO3_PROFILE, MLS_HNO3_CPSR, &
+                              AIRNOW_CO, AIRNOW_O3, &
+                              AIRNOW_NO2, AIRNOW_SO2, &
+                              AIRNOW_PM10, AIRNOW_PM25, &
+                              PANDA_CO, PANDA_O3, PANDA_PM25
+! APM/JB ---
+
 use         model_mod, only : get_domain_info
 
 implicit none
@@ -1026,11 +3146,52 @@ logical,                 intent(in)    :: siglevel, sfcelev, new_sfc_qc, &
                                           new_satwnd_qc, overwrite_time
 type(time_type),         intent(in)    :: atime
 type(obs_sequence_type), intent(inout) :: rawin_seq, sfc_seq, acars_seq, &
-                                          satwnd_seq, tc_seq, gpsro_seq, other_seq
+                                          satwnd_seq, tc_seq, gpsro_seq, other_seq, &
+! APM/JB +++
+                         modis_aod_total_col_seq, &
+                         mopitt_co_total_col_seq, mopitt_co_profile_seq, mopitt_v5_co_profile_seq, mopitt_co_cpsr_seq, &
+                         iasi_co_total_col_seq, iasi_co_profile_seq, iasi_co_cpsr_seq, &
+                         iasi_o3_profile_seq, iasi_o3_cpsr_seq, &
+                         omi_o3_total_col_seq, omi_o3_trop_col_seq, omi_o3_profile_seq, omi_o3_cpsr_seq, &
+                         omi_no2_total_col_seq, omi_no2_trop_col_seq, &
+                         omi_no2_domino_total_col_seq, omi_no2_domino_trop_col_seq, &
+                         omi_so2_total_col_seq, omi_so2_pbl_col_seq, &
+                         omi_hcho_total_col_seq, omi_hcho_trop_col_seq, &
+                         tropomi_co_total_col_seq, &
+                         tropomi_o3_total_col_seq, tropomi_o3_trop_col_seq, tropomi_o3_profile_seq, tropomi_o3_cpsr_seq, &
+                         tropomi_no2_total_col_seq, tropomi_no2_trop_col_seq, &
+                         tropomi_so2_total_col_seq, tropomi_so2_pbl_col_seq, &
+                         tropomi_ch4_total_col_seq, tropomi_ch4_trop_col_seq, tropomi_ch4_profile_seq, tropomi_ch4_cpsr_seq, &
+                         tropomi_hcho_total_col_seq, tropomi_hcho_trop_col_seq, &
+                         tempo_o3_total_col_seq, tempo_o3_trop_col_seq, tempo_o3_profile_seq, tempo_o3_cpsr_seq, &
+                         tempo_no2_total_col_seq, tempo_no2_trop_col_seq, &
+                         tes_co_total_col_seq, tes_co_trop_col_seq, tes_co_profile_seq, tes_co_cpsr_seq, &
+                         tes_co2_total_col_seq, tes_co2_trop_col_seq, tes_co2_profile_seq, tes_co2_cpsr_seq, &
+                         tes_o3_total_col_seq, tes_o3_trop_col_seq, tes_o3_profile_seq, tes_o3_cpsr_seq, &
+                         tes_nh3_total_col_seq, tes_nh3_trop_col_seq, tes_nh3_profile_seq, tes_nh3_cpsr_seq, &
+                         tes_ch4_total_col_seq, tes_ch4_trop_col_seq, tes_ch4_profile_seq, tes_ch4_cpsr_seq, &
+                         cris_co_total_col_seq, cris_co_profile_seq, cris_co_cpsr_seq, &
+                         cris_o3_total_col_seq, cris_o3_profile_seq, cris_o3_cpsr_seq, &
+                         cris_nh3_total_col_seq, cris_nh3_profile_seq, cris_nh3_cpsr_seq, &
+                         cris_ch4_total_col_seq, cris_ch4_profile_seq, cris_ch4_cpsr_seq, &
+                         cris_pan_total_col_seq, cris_pan_profile_seq, cris_pan_cpsr_seq, &
+                         sciam_no2_total_col_seq, sciam_no2_trop_col_seq, &
+                         gome2a_no2_total_col_seq, gome2a_no2_trop_col_seq, &
+                         mls_o3_total_col_seq, mls_o3_profile_seq, mls_o3_cpsr_seq, &
+                         mls_hno3_total_col_seq, mls_hno3_profile_seq, mls_hno3_cpsr_seq, &
+                         airnow_co_seq, airnow_o3_seq, airnow_no2_seq, airnow_so2_seq, &
+                         airnow_pm10_seq, airnow_pm25_seq, &
+                         panda_co_seq, panda_o3_seq, panda_pm25_seq
+! APM/JB ---
 
 character(len=129)    :: qcmeta
-integer               :: fid, var_id, okind, dom_id, i, j
+integer               :: fid, okind, dom_id, i, j
 logical               :: file_exist, last_obs, input_ncep_qc
+!! APM/JB +++
+!                         modis_aod_total_col_obs_check, mopitt_co_obs_check, iasi_co_obs_check, &
+!                         iasi_o3_obs_check, omi_no2_obs_check, airnow_co_obs_check, airnow_o3_obs_check, &
+!                         panda_co_obs_check, panda_o3_obs_check, panda_pm25_obs_check
+!! APM/JB ---
 real(r8), allocatable :: xland(:,:), qc(:)
 real(r8)              :: xyz_loc(3), xloc, yloc
 
@@ -1083,7 +3244,9 @@ InputObsLoop:  do while ( .not. last_obs ) ! loop over all observations in a seq
     cycle InputObsLoop
 
   end if
-
+  print *, 'APM: obs kind ',okind
+  print *, 'APM: obs location ',xyz_loc(1),xyz_loc(2),xyz_loc(3)
+  
   !  check vertical location
   if ( (is_vertical(obs_loc, "PRESSURE") .and. xyz_loc(3) < ptop) .or. &
        (is_vertical(obs_loc, "HEIGHT")   .and. xyz_loc(3) > htop) ) then
@@ -1186,6 +3349,396 @@ InputObsLoop:  do while ( .not. last_obs ) ! loop over all observations in a seq
 
       call copy_obs(obs, obs_in)
       call append_obs_to_seq(gpsro_seq, obs)
+
+! APM/JB +++
+    case ( MODIS_AOD_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(modis_aod_total_col_seq, obs)
+!
+    case ( MOPITT_CO_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(mopitt_co_total_col_seq, obs)
+!
+    case ( MOPITT_CO_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(mopitt_co_profile_seq, obs)
+!
+    case ( MOPITT_V5_CO_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(mopitt_v5_co_profile_seq, obs)
+!
+    case ( MOPITT_CO_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(mopitt_co_cpsr_seq, obs)
+!
+    case ( IASI_CO_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(iasi_co_total_col_seq, obs)
+!
+    case ( IASI_CO_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(iasi_co_profile_seq, obs)
+!
+    case ( IASI_CO_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(iasi_co_cpsr_seq, obs)
+!
+    case ( IASI_O3_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(iasi_o3_profile_seq, obs)
+!
+    case ( IASI_O3_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(iasi_o3_cpsr_seq, obs)
+!
+    case ( OMI_O3_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(omi_o3_total_col_seq, obs)
+!
+    case ( OMI_O3_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(omi_o3_trop_col_seq, obs)
+!
+    case ( OMI_O3_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(omi_o3_profile_seq, obs)
+!
+    case ( OMI_O3_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(omi_o3_cpsr_seq, obs)
+!
+    case ( OMI_NO2_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(omi_no2_total_col_seq, obs)
+!
+    case ( OMI_NO2_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(omi_no2_trop_col_seq, obs)
+!
+    case ( OMI_NO2_DOMINO_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(omi_no2_domino_total_col_seq, obs)
+!
+    case ( OMI_NO2_DOMINO_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(omi_no2_domino_trop_col_seq, obs)
+!
+    case ( OMI_SO2_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(omi_so2_total_col_seq, obs)
+!
+    case ( OMI_SO2_PBL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(omi_so2_pbl_col_seq, obs)
+!
+    case ( OMI_HCHO_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(omi_hcho_total_col_seq, obs)
+!
+    case ( OMI_HCHO_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(omi_hcho_trop_col_seq, obs)
+!
+    case ( TROPOMI_CO_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_co_total_col_seq, obs)
+!
+    case ( TROPOMI_O3_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_o3_total_col_seq, obs)
+!
+    case ( TROPOMI_O3_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_o3_trop_col_seq, obs)
+!
+    case ( TROPOMI_O3_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_o3_profile_seq, obs)
+!
+    case ( TROPOMI_O3_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_o3_cpsr_seq, obs)
+!
+    case ( TROPOMI_NO2_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_no2_total_col_seq, obs)
+!
+    case ( TROPOMI_NO2_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_no2_trop_col_seq, obs)
+!
+    case ( TROPOMI_SO2_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_so2_total_col_seq, obs)
+!
+    case ( TROPOMI_SO2_PBL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_so2_pbl_col_seq, obs)
+!
+    case ( TROPOMI_CH4_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_ch4_total_col_seq, obs)
+!
+    case ( TROPOMI_CH4_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_ch4_trop_col_seq, obs)
+!
+    case ( TROPOMI_CH4_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_ch4_profile_seq, obs)
+!
+    case ( TROPOMI_CH4_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_ch4_cpsr_seq, obs)
+!
+    case ( TROPOMI_HCHO_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_hcho_total_col_seq, obs)
+!
+    case ( TROPOMI_HCHO_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tropomi_hcho_trop_col_seq, obs)
+!
+    case ( TEMPO_O3_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tempo_o3_total_col_seq, obs)
+!
+    case ( TEMPO_O3_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tempo_o3_trop_col_seq, obs)
+!
+    case ( TEMPO_O3_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tempo_o3_profile_seq, obs)
+!
+    case ( TEMPO_O3_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tempo_o3_cpsr_seq, obs)
+!
+    case ( TEMPO_NO2_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tempo_no2_total_col_seq, obs)
+!
+    case ( TEMPO_NO2_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tempo_no2_trop_col_seq, obs)
+!
+    case ( TES_CO_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_co_total_col_seq, obs)
+!
+    case ( TES_CO_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_co_trop_col_seq, obs)
+!
+    case ( TES_CO_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_co_profile_seq, obs)
+!
+    case ( TES_CO_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_co_cpsr_seq, obs)
+!
+    case ( TES_CO2_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_co2_total_col_seq, obs)
+!
+    case ( TES_CO2_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_co2_trop_col_seq, obs)
+!
+    case ( TES_CO2_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_co2_profile_seq, obs)
+!
+    case ( TES_CO2_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_co2_cpsr_seq, obs)
+!
+    case ( TES_O3_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_o3_total_col_seq, obs)
+!
+    case ( TES_O3_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_o3_trop_col_seq, obs)
+!
+    case ( TES_O3_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_o3_profile_seq, obs)
+!
+    case ( TES_O3_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_o3_cpsr_seq, obs)
+!
+    case ( TES_NH3_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_nh3_total_col_seq, obs)
+!
+    case ( TES_NH3_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_nh3_trop_col_seq, obs)
+!
+    case ( TES_NH3_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_nh3_profile_seq, obs)
+!
+    case ( TES_NH3_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_nh3_cpsr_seq, obs)
+!
+    case ( TES_CH4_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_ch4_total_col_seq, obs)
+!
+    case ( TES_CH4_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_ch4_trop_col_seq, obs)
+!
+    case ( TES_CH4_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_ch4_profile_seq, obs)
+!
+    case ( TES_CH4_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(tes_ch4_cpsr_seq, obs)
+!
+    case ( CRIS_CO_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_co_total_col_seq, obs)
+!
+    case ( CRIS_CO_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_co_profile_seq, obs)
+!
+    case ( CRIS_CO_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_co_cpsr_seq, obs)
+!
+    case ( CRIS_O3_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_o3_total_col_seq, obs)
+!
+    case ( CRIS_O3_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_o3_profile_seq, obs)
+!
+    case ( CRIS_O3_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_o3_cpsr_seq, obs)
+!
+    case ( CRIS_NH3_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_nh3_total_col_seq, obs)
+!
+    case ( CRIS_NH3_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_nh3_profile_seq, obs)
+!
+    case ( CRIS_NH3_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_nh3_cpsr_seq, obs)
+!
+    case ( CRIS_CH4_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_ch4_total_col_seq, obs)
+!
+    case ( CRIS_CH4_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_ch4_profile_seq, obs)
+!
+    case ( CRIS_CH4_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_ch4_cpsr_seq, obs)
+!
+    case ( CRIS_PAN_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_pan_total_col_seq, obs)
+!
+    case ( CRIS_PAN_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_pan_profile_seq, obs)
+!
+    case ( CRIS_PAN_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(cris_pan_cpsr_seq, obs)
+!
+    case ( SCIAM_NO2_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(sciam_no2_total_col_seq, obs)
+!
+    case ( SCIAM_NO2_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(sciam_no2_trop_col_seq, obs)
+!
+    case ( GOME2A_NO2_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(gome2a_no2_total_col_seq, obs)
+!
+    case ( GOME2A_NO2_TROP_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(gome2a_no2_trop_col_seq, obs)
+!
+    case ( MLS_O3_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(mls_o3_total_col_seq, obs)
+!
+    case ( MLS_O3_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(mls_o3_profile_seq, obs)
+!
+    case ( MLS_O3_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(mls_o3_cpsr_seq, obs)
+!
+    case ( MLS_HNO3_TOTAL_COL )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(mls_hno3_total_col_seq, obs)
+!
+    case ( MLS_HNO3_PROFILE )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(mls_hno3_profile_seq, obs)
+!
+    case ( MLS_HNO3_CPSR )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(mls_hno3_cpsr_seq, obs)
+!
+    case ( AIRNOW_CO )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(airnow_co_seq, obs)
+!
+    case ( AIRNOW_O3 )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(airnow_o3_seq, obs)
+!
+    case ( AIRNOW_NO2 )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(airnow_no2_seq, obs)
+!
+    case ( AIRNOW_SO2 )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(airnow_so2_seq, obs)
+!
+    case ( AIRNOW_PM10 )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(airnow_pm10_seq, obs)
+!
+    case ( AIRNOW_PM25 )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(airnow_pm25_seq, obs)
+!
+    case ( PANDA_CO )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(panda_co_seq, obs)
+!
+    case ( PANDA_O3 )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(panda_o3_seq, obs)
+!
+    case ( PANDA_PM25 )
+      call copy_obs(obs, obs_in)
+      call append_obs_to_seq(panda_pm25_seq, obs)
+! APM/JB ---
 
     case default
 
@@ -1300,6 +3853,2048 @@ end do
 return
 end subroutine remove_sondes_near_tc
 
+!
+! APM/JB +++
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   modis_aod_total_col_obs_check - function that determines whether to include an
+!                        MODIS AOD observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function modis_aod_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: modis_aod_total_col_obs_check
+
+modis_aod_total_col_obs_check = .true.
+
+return
+end function modis_aod_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   mopitt_co_total_col_obs_check - function that determines whether to include an
+!                        MOPITT CO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function mopitt_co_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: mopitt_co_total_col_obs_check
+
+mopitt_co_total_col_obs_check = .true.
+
+return
+end function mopitt_co_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   mopitt_co_profile_obs_check - function that determines whether to include an
+!                        MOPITT CO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function mopitt_co_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: mopitt_co_profile_obs_check
+
+mopitt_co_profile_obs_check = .true.
+
+return
+end function mopitt_co_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   mopitt_v5_co_profile_obs_check - function that determines whether to include an
+!                        MOPITT CO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function mopitt_v5_co_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: mopitt_v5_co_profile_obs_check
+
+mopitt_v5_co_profile_obs_check = .true.
+
+return
+end function mopitt_v5_co_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   mopitt_co_cpsr_obs_check - function that determines whether to include an
+!                        MOPITT CO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function mopitt_co_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: mopitt_co_cpsr_obs_check
+
+mopitt_co_cpsr_obs_check = .true.
+
+return
+end function mopitt_co_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   iasi_co_total_col_obs_check - function that determines whether to include an
+!                        IASI CO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function iasi_co_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: iasi_co_total_col_obs_check
+
+iasi_co_total_col_obs_check = .true.
+
+return
+end function iasi_co_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   iasi_co_profile_obs_check - function that determines whether to include an
+!                        IASI CO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function iasi_co_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: iasi_co_profile_obs_check
+
+iasi_co_profile_obs_check = .true.
+
+return
+end function iasi_co_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   iasi_co_cpsr_obs_check - function that determines whether to include an
+!                        IASI CO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function iasi_co_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: iasi_co_cpsr_obs_check
+
+iasi_co_cpsr_obs_check = .true.
+
+return
+end function iasi_co_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   iasi_o3_profile_obs_check - function that determines whether to include an
+!                        IASI O3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function iasi_o3_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: iasi_o3_profile_obs_check
+
+iasi_o3_profile_obs_check = .true.
+
+return
+end function iasi_o3_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   iasi_o3_cpsr_obs_check - function that determines whether to include an
+!                        IASI O3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function iasi_o3_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: iasi_o3_cpsr_obs_check
+
+iasi_o3_cpsr_obs_check = .true.
+
+return
+end function iasi_o3_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   omi_o3_total_col_obs_check - function that determines whether to include an
+!                        OMI O3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function omi_o3_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: omi_o3_total_col_obs_check
+
+omi_o3_total_col_obs_check = .true.
+
+return
+end function omi_o3_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   omi_o3_trop_col_obs_check - function that determines whether to include an
+!                        OMI O3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function omi_o3_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: omi_o3_trop_col_obs_check
+
+omi_o3_trop_col_obs_check = .true.
+
+return
+end function omi_o3_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   omi_o3_profile_obs_check - function that determines whether to include an
+!                        OMI O3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function omi_o3_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: omi_o3_profile_obs_check
+
+omi_o3_profile_obs_check = .true.
+
+return
+end function omi_o3_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   omi_o3_cpsr_obs_check - function that determines whether to include an
+!                        OMI O3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function omi_o3_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: omi_o3_cpsr_obs_check
+
+omi_o3_cpsr_obs_check = .true.
+
+return
+end function omi_o3_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   omi_no2_total_col_obs_check - function that determines whether to include an
+!                        OMI NO2 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function omi_no2_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: omi_no2_total_col_obs_check
+
+omi_no2_total_col_obs_check = .true.
+
+return
+end function omi_no2_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   omi_no2_trop_col_obs_check - function that determines whether to include an
+!                        OMI NO2 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function omi_no2_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: omi_no2_trop_col_obs_check
+
+omi_no2_trop_col_obs_check = .true.
+
+return
+end function omi_no2_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   omi_no2_domino_total_col_obs_check - function that determines whether to include an
+!                        OMI NO2_DOMINO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function omi_no2_domino_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: omi_no2_domino_total_col_obs_check
+
+omi_no2_domino_total_col_obs_check = .true.
+
+return
+end function omi_no2_domino_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   omi_no2_domino_trop_col_obs_check - function that determines whether to include an
+!                        OMI NO2_DOMINO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function omi_no2_domino_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: omi_no2_domino_trop_col_obs_check
+
+omi_no2_domino_trop_col_obs_check = .true.
+
+return
+end function omi_no2_domino_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   omi_so2_total_col_obs_check - function that determines whether to include an
+!                        OMI SO2 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function omi_so2_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: omi_so2_total_col_obs_check
+
+omi_so2_total_col_obs_check = .true.
+
+return
+end function omi_so2_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   omi_so2_pbl_col_obs_check - function that determines whether to include an
+!                        OMI SO2 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function omi_so2_pbl_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: omi_so2_pbl_col_obs_check
+
+omi_so2_pbl_col_obs_check = .true.
+
+return
+end function omi_so2_pbl_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   omi_hcho_total_col_obs_check - function that determines whether to include an
+!                        OMI HCHO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function omi_hcho_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: omi_hcho_total_col_obs_check
+
+omi_hcho_total_col_obs_check = .true.
+
+return
+end function omi_hcho_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   omi_hcho_trop_col_obs_check - function that determines whether to include an
+!                        OMI HCHO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function omi_hcho_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: omi_hcho_trop_col_obs_check
+
+omi_hcho_trop_col_obs_check = .true.
+
+return
+end function omi_hcho_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_co_total_col_obs_check - function that determines whether to include an
+!                        TROPOMI CO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_co_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_co_total_col_obs_check
+
+tropomi_co_total_col_obs_check = .true.
+
+return
+end function tropomi_co_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_o3_total_col_obs_check - function that determines whether to include an
+!                        TROPOMI o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_o3_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_o3_total_col_obs_check
+
+tropomi_o3_total_col_obs_check = .true.
+
+return
+end function tropomi_o3_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_o3_trop_col_obs_check - function that determines whether to include an
+!                        TROPOMI o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_o3_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_o3_trop_col_obs_check
+
+tropomi_o3_trop_col_obs_check = .true.
+
+return
+end function tropomi_o3_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_o3_profile_obs_check - function that determines whether to include an
+!                        TROPOMI o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_o3_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_o3_profile_obs_check
+
+tropomi_o3_profile_obs_check = .true.
+
+return
+end function tropomi_o3_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_o3_cpsr_obs_check - function that determines whether to include an
+!                        TROPOMI o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_o3_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_o3_cpsr_obs_check
+
+tropomi_o3_cpsr_obs_check = .true.
+
+return
+end function tropomi_o3_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_no2_total_col_obs_check - function that determines whether to include an
+!                        TROPOMI NO2 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_no2_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_no2_total_col_obs_check
+
+tropomi_no2_total_col_obs_check = .true.
+
+return
+end function tropomi_no2_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_no2_trop_col_obs_check - function that determines whether to include an
+!                        TROPOMI NO2 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_no2_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_no2_trop_col_obs_check
+
+tropomi_no2_trop_col_obs_check = .true.
+
+return
+end function tropomi_no2_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_so2_total_col_obs_check - function that determines whether to include an
+!                        TROPOMI SO2 total col observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_so2_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_so2_total_col_obs_check
+
+tropomi_so2_total_col_obs_check = .true.
+
+return
+end function tropomi_so2_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_so2_pbl_col_obs_check - function that determines whether to include an
+!                        TROPOMI SO2 PBL col observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_so2_pbl_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_so2_pbl_col_obs_check
+
+tropomi_so2_pbl_col_obs_check = .true.
+
+return
+end function tropomi_so2_pbl_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_ch4_total_col_obs_check - function that determines whether to include an
+!                        TROPOMI CH4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_ch4_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_ch4_total_col_obs_check
+
+tropomi_ch4_total_col_obs_check = .true.
+
+return
+end function tropomi_ch4_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_ch4_trop_col_obs_check - function that determines whether to include an
+!                        TROPOMI CH4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_ch4_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_ch4_trop_col_obs_check
+
+tropomi_ch4_trop_col_obs_check = .true.
+
+return
+end function tropomi_ch4_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_ch4_profile_obs_check - function that determines whether to include an
+!                        TROPOMI CH4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_ch4_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_ch4_profile_obs_check
+
+tropomi_ch4_profile_obs_check = .true.
+
+return
+end function tropomi_ch4_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_ch4_cpsr_obs_check - function that determines whether to include an
+!                        TROPOMI CH4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_ch4_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_ch4_cpsr_obs_check
+
+tropomi_ch4_cpsr_obs_check = .true.
+
+return
+end function tropomi_ch4_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_hcho_total_col_obs_check - function that determines whether to include an
+!                        TROPOMI HCHO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_hcho_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_hcho_total_col_obs_check
+
+tropomi_hcho_total_col_obs_check = .true.
+
+return
+end function tropomi_hcho_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tropomi_hcho_trop_col_obs_check - function that determines whether to include an
+!                        TROPOMI HCHO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tropomi_hcho_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tropomi_hcho_trop_col_obs_check
+
+tropomi_hcho_trop_col_obs_check = .true.
+
+return
+end function tropomi_hcho_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tempo_o3_total_col_obs_check - function that determines whether to include an
+!                        TEMPO o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tempo_o3_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tempo_o3_total_col_obs_check
+
+tempo_o3_total_col_obs_check = .true.
+
+return
+end function tempo_o3_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tempo_o3_trop_obs_check - function that determines whether to include an
+!                        TEMPO o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tempo_o3_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tempo_o3_trop_col_obs_check
+
+tempo_o3_trop_col_obs_check = .true.
+
+return
+end function tempo_o3_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tempo_o3_profile_obs_check - function that determines whether to include an
+!                        TEMPO o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tempo_o3_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tempo_o3_profile_obs_check
+
+tempo_o3_profile_obs_check = .true.
+
+return
+end function tempo_o3_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tempo_o3_cpsr_obs_check - function that determines whether to include an
+!                        TEMPO o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tempo_o3_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tempo_o3_cpsr_obs_check
+
+tempo_o3_cpsr_obs_check = .true.
+
+return
+end function tempo_o3_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tempo_no2_total_col_obs_check - function that determines whether to include an
+!                        TEMPO NO2 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tempo_no2_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tempo_no2_total_col_obs_check
+
+tempo_no2_total_col_obs_check = .true.
+
+return
+end function tempo_no2_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tempo_no2_trop_col_obs_check - function that determines whether to include an
+!                        TEMPO NO2 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tempo_no2_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tempo_no2_trop_col_obs_check
+
+tempo_no2_trop_col_obs_check = .true.
+
+return
+end function tempo_no2_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_co_total_col_obs_check - function that determines whether to include an
+!                        TES co observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_co_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_co_total_col_obs_check
+
+tes_co_total_col_obs_check = .true.
+
+return
+end function tes_co_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_co_trop_obs_check - function that determines whether to include an
+!                        TES co observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_co_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_co_trop_col_obs_check
+
+tes_co_trop_col_obs_check = .true.
+
+return
+end function tes_co_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_co_profile_obs_check - function that determines whether to include an
+!                        TES co observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_co_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_co_profile_obs_check
+
+tes_co_profile_obs_check = .true.
+
+return
+end function tes_co_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_co_cpsr_obs_check - function that determines whether to include an
+!                        TES co observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_co_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_co_cpsr_obs_check
+
+tes_co_cpsr_obs_check = .true.
+
+return
+end function tes_co_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_co2_total_col_obs_check - function that determines whether to include an
+!                        TES co2 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_co2_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_co2_total_col_obs_check
+
+tes_co2_total_col_obs_check = .true.
+
+return
+end function tes_co2_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_co2_trop_obs_check - function that determines whether to include an
+!                        TES co2 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_co2_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_co2_trop_col_obs_check
+
+tes_co2_trop_col_obs_check = .true.
+
+return
+end function tes_co2_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_co2_profile_obs_check - function that determines whether to include an
+!                        TES co2 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_co2_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_co2_profile_obs_check
+
+tes_co2_profile_obs_check = .true.
+
+return
+end function tes_co2_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_co2_cpsr_obs_check - function that determines whether to include an
+!                        TES co2 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_co2_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_co2_cpsr_obs_check
+
+tes_co2_cpsr_obs_check = .true.
+
+return
+end function tes_co2_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_o3_total_col_obs_check - function that determines whether to include an
+!                        TES o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_o3_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_o3_total_col_obs_check
+
+tes_o3_total_col_obs_check = .true.
+
+return
+end function tes_o3_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_o3_trop_obs_check - function that determines whether to include an
+!                        TES o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_o3_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_o3_trop_col_obs_check
+
+tes_o3_trop_col_obs_check = .true.
+
+return
+end function tes_o3_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_o3_profile_obs_check - function that determines whether to include an
+!                        TES o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_o3_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_o3_profile_obs_check
+
+tes_o3_profile_obs_check = .true.
+
+return
+end function tes_o3_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_o3_cpsr_obs_check - function that determines whether to include an
+!                        TES o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_o3_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_o3_cpsr_obs_check
+
+tes_o3_cpsr_obs_check = .true.
+
+return
+end function tes_o3_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_nh3_total_col_obs_check - function that determines whether to include an
+!                        TES nh3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_nh3_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_nh3_total_col_obs_check
+
+tes_nh3_total_col_obs_check = .true.
+
+return
+end function tes_nh3_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_nh3_trop_obs_check - function that determines whether to include an
+!                        TES nh3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_nh3_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_nh3_trop_col_obs_check
+
+tes_nh3_trop_col_obs_check = .true.
+
+return
+end function tes_nh3_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_nh3_profile_obs_check - function that determines whether to include an
+!                        TES nh3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_nh3_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_nh3_profile_obs_check
+
+tes_nh3_profile_obs_check = .true.
+
+return
+end function tes_nh3_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_nh3_cpsr_obs_check - function that determines whether to include an
+!                        TES nh3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_nh3_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_nh3_cpsr_obs_check
+
+tes_nh3_cpsr_obs_check = .true.
+
+return
+end function tes_nh3_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_ch4_total_col_obs_check - function that determines whether to include an
+!                        TES ch4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_ch4_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_ch4_total_col_obs_check
+
+tes_ch4_total_col_obs_check = .true.
+
+return
+end function tes_ch4_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_ch4_trop_obs_check - function that determines whether to include an
+!                        TES ch4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_ch4_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_ch4_trop_col_obs_check
+
+tes_ch4_trop_col_obs_check = .true.
+
+return
+end function tes_ch4_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_ch4_profile_obs_check - function that determines whether to include an
+!                        TES ch4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_ch4_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_ch4_profile_obs_check
+
+tes_ch4_profile_obs_check = .true.
+
+return
+end function tes_ch4_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   tes_ch4_cpsr_obs_check - function that determines whether to include an
+!                        TES ch4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function tes_ch4_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: tes_ch4_cpsr_obs_check
+
+tes_ch4_cpsr_obs_check = .true.
+
+return
+end function tes_ch4_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_co_total_col_obs_check - function that determines whether to include an
+!                        CRIS co observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_co_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_co_total_col_obs_check
+
+cris_co_total_col_obs_check = .true.
+
+return
+end function cris_co_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_co_profile_obs_check - function that determines whether to include an
+!                        CRIS co observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_co_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_co_profile_obs_check
+
+cris_co_profile_obs_check = .true.
+
+return
+end function cris_co_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_co_cpsr_obs_check - function that determines whether to include an
+!                        CRIS co observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_co_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_co_cpsr_obs_check
+
+cris_co_cpsr_obs_check = .true.
+
+return
+end function cris_co_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_o3_total_col_obs_check - function that determines whether to include an
+!                        CRIS o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_o3_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_o3_total_col_obs_check
+
+cris_o3_total_col_obs_check = .true.
+
+return
+end function cris_o3_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_o3_profile_obs_check - function that determines whether to include an
+!                        CRIS o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_o3_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_o3_profile_obs_check
+
+cris_o3_profile_obs_check = .true.
+
+return
+end function cris_o3_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_o3_cpsr_obs_check - function that determines whether to include an
+!                        CRIS o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_o3_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_o3_cpsr_obs_check
+
+cris_o3_cpsr_obs_check = .true.
+
+return
+end function cris_o3_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_nh3_total_col_obs_check - function that determines whether to include an
+!                        CRIS nh3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_nh3_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_nh3_total_col_obs_check
+
+cris_nh3_total_col_obs_check = .true.
+
+return
+end function cris_nh3_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_nh3_profile_obs_check - function that determines whether to include an
+!                        CRIS nh3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_nh3_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_nh3_profile_obs_check
+
+cris_nh3_profile_obs_check = .true.
+
+return
+end function cris_nh3_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_nh3_cpsr_obs_check - function that determines whether to include an
+!                        CRIS nh3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_nh3_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_nh3_cpsr_obs_check
+
+cris_nh3_cpsr_obs_check = .true.
+
+return
+end function cris_nh3_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_ch4_total_col_obs_check - function that determines whether to include an
+!                        CRIS ch4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_ch4_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_ch4_total_col_obs_check
+
+cris_ch4_total_col_obs_check = .true.
+
+return
+end function cris_ch4_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_ch4_profile_obs_check - function that determines whether to include an
+!                        CRIS ch4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_ch4_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_ch4_profile_obs_check
+
+cris_ch4_profile_obs_check = .true.
+
+return
+end function cris_ch4_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_ch4_cpsr_obs_check - function that determines whether to include an
+!                        CRIS ch4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_ch4_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_ch4_cpsr_obs_check
+
+cris_ch4_cpsr_obs_check = .true.
+
+return
+end function cris_ch4_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_pan_total_col_obs_check - function that determines whether to include an
+!                        CRIS pan observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_pan_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_pan_total_col_obs_check
+
+cris_pan_total_col_obs_check = .true.
+
+return
+end function cris_pan_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_pan_profile_obs_check - function that determines whether to include an
+!                        CRIS pan observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_pan_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_pan_profile_obs_check
+
+cris_pan_profile_obs_check = .true.
+
+return
+end function cris_pan_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   cris_pan_cpsr_obs_check - function that determines whether to include an
+!                        CRIS pan observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function cris_pan_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: cris_pan_cpsr_obs_check
+
+cris_pan_cpsr_obs_check = .true.
+
+return
+end function cris_pan_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   sciam_no2_total_col_obs_check - function that determines whether to include an
+!                        TES ch4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function sciam_no2_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: sciam_no2_total_col_obs_check
+
+sciam_no2_total_col_obs_check = .true.
+
+return
+end function sciam_no2_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   sciam_no2_trop_obs_check - function that determines whether to include an
+!                        TES ch4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function sciam_no2_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: sciam_no2_trop_col_obs_check
+
+sciam_no2_trop_col_obs_check = .true.
+
+return
+end function sciam_no2_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   gome2a_no2_total_col_obs_check - function that determines whether to include an
+!                        TES ch4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function gome2a_no2_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: gome2a_no2_total_col_obs_check
+
+gome2a_no2_total_col_obs_check = .true.
+
+return
+end function gome2a_no2_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   gome2a_no2_trop_obs_check - function that determines whether to include an
+!                        TES ch4 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function gome2a_no2_trop_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: gome2a_no2_trop_col_obs_check
+
+gome2a_no2_trop_col_obs_check = .true.
+
+return
+end function gome2a_no2_trop_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   mls_o3_total_col_obs_check - function that determines whether to include an
+!                        TES o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function mls_o3_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: mls_o3_total_col_obs_check
+
+mls_o3_total_col_obs_check = .true.
+
+return
+end function mls_o3_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   mls_o3_profile_obs_check - function that determines whether to include an
+!                        TES o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function mls_o3_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: mls_o3_profile_obs_check
+
+mls_o3_profile_obs_check = .true.
+
+return
+end function mls_o3_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   mls_o3_cpsr_obs_check - function that determines whether to include an
+!                        TES o3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function mls_o3_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: mls_o3_cpsr_obs_check
+
+mls_o3_cpsr_obs_check = .true.
+
+return
+end function mls_o3_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   mls_hno3_total_col_obs_check - function that determines whether to include an
+!                        TES hno3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function mls_hno3_total_col_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: mls_hno3_total_col_obs_check
+
+mls_hno3_total_col_obs_check = .true.
+
+return
+end function mls_hno3_total_col_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   mls_hno3_profile_obs_check - function that determines whether to include an
+!                        TES hno3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function mls_hno3_profile_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: mls_hno3_profile_obs_check
+
+mls_hno3_profile_obs_check = .true.
+
+return
+end function mls_hno3_profile_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   mls_hno3_cpsr_obs_check - function that determines whether to include an
+!                        TES hno3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function mls_hno3_cpsr_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: mls_hno3_cpsr_obs_check
+
+mls_hno3_cpsr_obs_check = .true.
+
+return
+end function mls_hno3_cpsr_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   airnow_co_obs_check - function that determines whether to include an
+!                        AIRNOW CO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function airnow_co_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: airnow_co_obs_check
+
+airnow_co_obs_check = .true.
+
+return
+end function airnow_co_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   airnow_o3_obs_check - function that determines whether to include an
+!                        AIRNOW O3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function airnow_o3_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: airnow_o3_obs_check
+
+airnow_o3_obs_check = .true.
+
+return
+end function airnow_o3_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   airnow_no2_obs_check - function that determines whether to include an
+!                        AIRNOW NO2 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function airnow_no2_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: airnow_no2_obs_check
+
+airnow_no2_obs_check = .true.
+
+return
+end function airnow_no2_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   airnow_so2_obs_check - function that determines whether to include an
+!                        AIRNOW SO2 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function airnow_so2_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: airnow_so2_obs_check
+
+airnow_so2_obs_check = .true.
+
+return
+end function airnow_so2_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   airnow_pm10_obs_check - function that determines whether to include an
+!                        AIRNOW PM10 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function airnow_pm10_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: airnow_pm10_obs_check
+
+airnow_pm10_obs_check = .true.
+
+return
+end function airnow_pm10_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   airnow_pm25_obs_check - function that determines whether to include an
+!                        AIRNOW PM25 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function airnow_pm25_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: airnow_pm25_obs_check
+
+airnow_pm25_obs_check = .true.
+
+return
+end function airnow_pm25_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   panda_co_obs_check - function that determines whether to include an
+!                        PANDA CO observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function panda_co_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: panda_co_obs_check
+
+panda_co_obs_check = .true.
+
+return
+end function panda_co_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   panda_o3_obs_check - function that determines whether to include an
+!                        PANDA O3 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function panda_o3_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: panda_o3_obs_check
+
+panda_o3_obs_check = .true.
+
+return
+end function panda_o3_obs_check
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!   panda_pm25_obs_check - function that determines whether to include an
+!                        PANDA PM25 observation in the sequence.
+!                        For now, this function is a placeholder and 
+!                        returns true.
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+function panda_pm25_obs_check()
+
+use     types_mod, only : r8
+
+implicit none
+
+logical  :: panda_pm25_obs_check
+
+panda_pm25_obs_check = .true.
+
+return
+end function panda_pm25_obs_check
+!
+! APM/JB ---
+!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !   sat_wind_obs_check - function that determines whether to include an
@@ -2008,7 +6603,7 @@ real(r8), intent(in) :: xyz_loc(3), elev_max
 
 integer              :: istatus(1)
 logical              :: surface_obs_check
-real(r8)             :: xmod(1), hsfc(1)
+real(r8)             :: hsfc(1)
 
 surface_obs_check = .true.
 

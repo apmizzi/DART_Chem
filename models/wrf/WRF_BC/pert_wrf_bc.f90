@@ -78,14 +78,35 @@ logical, parameter :: debug = .false.
 
 real(r8) :: bdyfrq_old, bdyfrq, dtnext
 
+! APM +++
+   integer            :: iunit
+   character(len=180) :: wrfbdy_this_file,wrfinput_this_file,wrfinput_next_file
+   namelist /pert_wrf_bc_nml/ wrfbdy_this_file,wrfinput_this_file,wrfinput_next_file
+! APM ---
 !----------------------------------------------------------------------
 
 call initialize_utilities('pert_wrf_bc')
 call register_module(source, revision, revdate)
 
-wrf_input_current_file='wrfinput_this'
-wrf_input_next_file='wrfinput_next'
-wrf_bdy_file  ='wrfbdy_this'
+! APM +++
+   iunit=20
+   wrfbdy_this_file='wrfbdy_this'
+   wrfinput_this_file='wrfinput_this'
+   wrfinput_next_file='wrfinput_next'
+!
+   open(unit=iunit,file='pert_wrf_bc_nml.nl',form='formatted', &
+   status='old',action='read')
+   read(iunit,pert_wrf_bc_nml)
+   close(iunit)
+!
+   print *, 'wrfbdy_this_file ',trim(wrfbdy_this_file)
+   print *, 'wrfinput_this_file ',trim(wrfinput_this_file)
+   print *, 'wrfinput_next_file ',trim(wrfinput_next_file)
+!
+   wrf_input_current_file = trim(wrfinput_this_file)
+   wrf_input_next_file = trim(wrfinput_next_file)
+   wrf_bdy_file = trim(wrfbdy_this_file)
+! APM---
 
 if((.not. file_exist(wrf_input_current_file)) .or. &
    (.not. file_exist(wrf_input_next_file)) .or. &
