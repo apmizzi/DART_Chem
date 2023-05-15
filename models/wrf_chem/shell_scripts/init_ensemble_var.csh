@@ -1,63 +1,46 @@
-#!/bin/csh 
+#!/bin/csh
 #
 # DART software - Copyright UCAR. This open source software is provided
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
-#
-########################################################################
-#
-#     init_ensemble_var.csh - script that creates perturbed initial
-#                           conditions from the WRF-VAR system.
-#
-#     created Nov. 2007, Ryan Torn NCAR/MMM
-#     modified by G. Romine and N. Collins April 2011 for use with generic 
-#     wrf-dart experiments. 
-#     
-#     This script will prepare a set of perturbed IC files for use
-#     in a wrfdart experiment. Var perturbations are added at the 
-#     initial time, followed by a model advance. So, you should have
-#     the initial time one assimilation window prior to the first 
-#     set of observations. 
-#
-#
-#     To run this script, the following is assumed:
-#     You have already run real.exe, generating the IC/BC for the
-#     initial and forecast time. These should look like:
-#        - wrfinput_d01_IGDAY_IGSEC_mean
-#        - wrfinput_d01_FGDAY_FGSEC_mean
-#        - wrfbdy_d01_FGDAY_FGSEC_mean
-#
-#     these should be placed in a directory called $OUTPUT_DIR/$initial_date/
-#
-#     The IGDAY and IGSEC is the Gregorian day and seconds for the initial
-#     time, while FGDAY and FGSEC are the Gregorian day and seconds for
-#     first assimilation time (should be one assimilation window apart)
-#
-#     You must have da_wrfvar.exe built (assumed mpi), along with the 
-#     support files of be.dat and (supplemental) bc_pert_scale
-#     the executable is assumed to reside in $RUN_DIR/WRF_RUN
-#
-#     Further, you should have a full dart build of executables in the 
-#     ${DART_DIR}/models/wrf/work directory
-#
-#     You must provide a script to execute a model advance starting
-#     from a dart restart file
-#
-#     You will need to make numerous edits below to set up things to run
-#     jobs on your local system. An example is provided (commented out) to
-#     run on NCAR's bluefire system environment.  Look for the string: EDIT
-#
-########################################################################
 
-set paramfile = init_param.csh
+# init_ensemble_var.csh - script that creates perturbed initial
+#                         conditions from the WRF-VAR system.
+#                         (perts are drawn from the perturbation bank)
+#
+# created Nov. 2007, Ryan Torn NCAR/MMM
+# modified by G. Romine 2011-2018
+
+set initial_date = ${1}
+set paramfile = `readlink -f ${2}` # Get absolute path for param.csh from command line arg
 source $paramfile
-#EDIT#
-set initial_date = 2010060500
-# initial_date is of the form yyyymmddhh
 
-cd $RUN_DIR
+cd ${RUN_DIR}
 
-${COPY} ${TEMPLATE_DIR}/input.nml input.nml
+# KRF Generate the i/o lists in rundir automatically when initializing the ensemble
+set num_ens = ${NUM_ENS}
+set input_file_name  = "input_list_d01.txt"
+set input_file_path  = "./advance_temp"
+set output_file_name = "output_list_d01.txt"
+
+set n = 1
+
+if ( -e $input_file_name )  rm $input_file_name
+if ( -e $output_file_name ) rm $output_file_name
+
+while ($n <= $num_ens)
+
+   set     ensstring = `printf %04d $n`
+   set  in_file_name = ${input_file_path}${n}"/wrfinput_d01"
+   set out_file_name = "filter_restart_d01."$ensstring
+
+   echo $in_file_name  >> $input_file_name
+   echo $out_file_name >> $output_file_name
+
+   @ n++
+end
+###
+
 set gdate  = (`echo $initial_date 0h -g | ${DART_DIR}/models/wrf/work/advance_time`)
 set gdatef = (`echo $initial_date ${ASSIM_INT_HOURS}h -g | ${DART_DIR}/models/wrf/work/advance_time`)
 set wdate  =  `echo $initial_date 0h -w | ${DART_DIR}/models/wrf/work/advance_time`
@@ -66,126 +49,79 @@ set mm     = `echo $initial_date | cut -b5-6`
 set dd     = `echo $initial_date | cut -b7-8`
 set hh     = `echo $initial_date | cut -b9-10`
 
+${COPY} ${TEMPLATE_DIR}/namelist.input.meso namelist.input
 ${REMOVE} ${RUN_DIR}/WRF
 ${LINK} ${OUTPUT_DIR}/${initial_date} WRF
-
-mkdir -p ${OUTPUT_DIR}/${initial_date}/DART
-${LINK} ${OUTPUT_DIR}/${initial_date}/wrfinput_d01_${gdate[1]}_${gdate[2]}_mean wrfinput_d01
-
-# these are the initial inflation mean and standard deviation for inflation
-echo 1.0 0.6 | ${RUN_DIR}/fill_inflation_restart
-${MOVE}  inflate_ics ${OUTPUT_DIR}/${initial_date}/DART/prior_inf_ic
 
 set n = 1
 while ( $n <= $NUM_ENS )
 
-   echo "  STARTING ENSEMBLE MEMBER $n"
+   echo "  QUEUEING ENSEMBLE MEMBER $n at `date`"
 
-   set ensstring = `printf "%04d" $n`
-   mkdir -p ${RUN_DIR}/mem${n}
+   mkdir -p ${RUN_DIR}/advance_temp${n}
 
-   ${LINK} ${RUN_DIR}/WRF_RUN/* ${RUN_DIR}/mem${n}/.
-   ${LINK} ${TEMPLATE_DIR}/input.nml ${RUN_DIR}/mem${n}/input.nml
+   ${LINK} ${RUN_DIR}/WRF_RUN/* ${RUN_DIR}/advance_temp${n}/.
+   ${LINK} ${RUN_DIR}/input.nml ${RUN_DIR}/advance_temp${n}/input.nml
 
-   ${REMOVE} script.sed
-   @ seed_array2 = $n * 1000
-   cat >! script.sed << EOF
-   /run_hours/c\
-   run_hours                  = 0,
-   /run_minutes/c\
-   run_minutes                = 0,
-   /run_seconds/c\
-   run_seconds                = 0,
-   /start_year/c\
-   start_year                 = 1*${yyyy},
-   /start_month/c\
-   start_month                = 1*${mm},
-   /start_day/c\
-   start_day                  = 1*${dd},
-   /start_hour/c\
-   start_hour                 = 1*${hh},
-   /start_minute/c\
-   start_minute               = 1*00,
-   /start_second/c\
-   start_second               = 1*00,
-   /end_year/c\
-   end_year                   = 1*${yyyy},
-   /end_month/c\
-   end_month                  = 1*${mm},
-   /end_day/c\
-   end_day                    = 1*${dd},
-   /end_hour/c\
-   end_hour                   = 1*${hh},
-   /end_minute/c\
-   end_minute                 = 1*00,
-   /end_second/c\
-   end_second                 = 1*00,
-   /analysis_date/c\
-   analysis_date = \'${wdate}.0000\',
-   s/PERT_SCALING/${IC_PERT_SCALE}/
-   /seed_array1/c\
-   seed_array1 = ${initial_date},
-   /seed_array2/c\
-   seed_array2 = $seed_array2 /
+   ${COPY} ${OUTPUT_DIR}/${initial_date}/wrfinput_d01_${gdate[1]}_${gdate[2]}_mean \
+           ${RUN_DIR}/advance_temp${n}/wrfvar_output.nc
+   sleep 3
+   ${COPY} ${RUN_DIR}/add_bank_perts.ncl ${RUN_DIR}/advance_temp${n}/.
+
+   set cmd3 = "ncl 'MEM_NUM=${n}' 'PERTS_DIR="\""${PERTS_DIR}"\""' ${RUN_DIR}/advance_temp${n}/add_bank_perts.ncl"
+   ${REMOVE} ${RUN_DIR}/advance_temp${n}/nclrun3.out
+          cat >!    ${RUN_DIR}/advance_temp${n}/nclrun3.out << EOF
+          $cmd3
 EOF
+   echo $cmd3 >! ${RUN_DIR}/advance_temp${n}/nclrun3.out.tim   # TJH replace cat above
 
-   sed -f script.sed ${TEMPLATE_DIR}/namelist.input >! ${RUN_DIR}/mem${n}/namelist.input
-   ${LINK} ${OUTPUT_DIR}/${initial_date}/wrfinput_d01_${gdate[1]}_${gdate[2]}_mean ${RUN_DIR}/mem${n}/fg
-
-   if ( -e ${RUN_DIR}/assim_init_${n}.csh ) then
-     ${REMOVE} ${RUN_DIR}/assim_init_${n}.csh
-   endif
-   touch ${RUN_DIR}/assim_init_${n}.csh
-
-   cat >> ${RUN_DIR}/assim_init_${n}.csh << EOF
+   cat >! ${RUN_DIR}/rt_assim_init_${n}.csh << EOF
 #!/bin/csh
+#=================================================================
+#PBS -N first_advance_${n}
+#PBS -j oe
+#PBS -A ${COMPUTER_CHARGE_ACCOUNT}
+#PBS -l walltime=${ADVANCE_TIME}
+#PBS -q ${ADVANCE_QUEUE}
+#PBS -m ae
+#PBS -M ${EMAIL}
+#PBS -k eod
+#PBS -l select=${ADVANCE_NODES}:ncpus=${ADVANCE_PROCS}:mpiprocs=${ADVANCE_MPI}
+#=================================================================
 
-#EDIT#
-########## Replace with appropriate job defs for your system, or delete
+   echo "rt_assim_init_${n}.csh is running in `pwd`"
 
-#==================================================================
-#BSUB -J assim_init_${n}
-#BSUB -o assim_init_${n}.%J.log
-#BSUB -P ${NCAR_GAU_ACCOUNT}
-#BSUB -W ${NCAR_RUNTIME}
-#BSUB -q ${NCAR_QUEUE}
-#BSUB -n ${NCAR_CORES}
-#BSUB -x
-#BSUB -R "span[ptile=${NCAR_PTILE}]"
-#==================================================================
+   cd ${RUN_DIR}/advance_temp${n}
 
-########### END of NCAR job block definitions
-   
-   cd ${RUN_DIR}/mem${n}
+   if (-e wrfvar_output.nc) then
+      echo "Running nclrun3.out to create wrfinput_d01 for member $n at `date`"
 
-   ${MPI_EXEC} ./da_wrfvar.exe >& output.wrfvar
+      chmod +x nclrun3.out
+      ./nclrun3.out >& add_perts.out
 
-   ${MOVE} wrfvar_output wrfinput_d01
+      if ( -z add_perts.err ) then
+         echo "Perts added to member ${n}"
+      else
+         echo "ERROR! Non-zero status returned from add_bank_perts.ncl. Check ${RUN_DIR}/advance_temp${n}/add_perts.err."
+         cat add_perts.err
+         exit
+      endif
 
-   ${RUN_DIR}/wrf_to_dart >& output.wrf_to_dart
-   ${MOVE} dart_wrf_vector ${RUN_DIR}/filter_ic_new.${ensstring}
-
-   ${REMOVE} wrfinput_d01
+      ${MOVE} wrfvar_output.nc wrfinput_d01
+   endif
 
    cd $RUN_DIR
-   advance_mem_restart.csh $initial_date $n $paramfile
 
-   if ( -e ${RUN_DIR}/assim_model_state_ud.${ensstring} ) then
+   echo "Running first_advance.csh for member $n at `date`"
+   ${SHELL_SCRIPTS_DIR}/first_advance.csh $initial_date $n $paramfile
 
-      ${MOVE} assim_model_state_ud.${ensstring}             ${OUTPUT_DIR}/${initial_date}/DART/filter_ic.${ensstring}
-      ${MOVE} WRFOUT/wrf.out_${gdatef[1]}_${gdatef[2]}_${n} ${OUTPUT_DIR}/${initial_date}/.
-      ${REMOVE} filter_ic_new.${ensstring} start_member_${n} ${RUN_DIR}/mem${n} assim_init_${n}.csh
-   
-   endif
 EOF
 
-# replace with an appropriate command to launch jobs on your system
-     echo `eval "$JOB_SUBMIT ${RUN_DIR}/assim_init_${n}.csh"`
+   qsub ${RUN_DIR}/rt_assim_init_${n}.csh
 
    @ n++
 
 end
-
 
 exit 0
 

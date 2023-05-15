@@ -16,8 +16,8 @@
 
    module area_mapper
 
-   use misc_definitions_module
-   use constants_module
+   use megan_definitions_module
+   use megan_constants_module
    use bio_types
 
    implicit none

@@ -19,7 +19,7 @@
 !     transform raw fire emissions to wrf,mozart,cam-chem domain
 !-----------------------------------------------------------------
 
-   use utils
+   use finn_utils
    use wrf_utils
    use glb_utils, only : glb_file, write_glb_fire_file, glb_file_final
    use fire_file, only : write_fire_file, max_fire_size, dealloc_fire_emis_glb_atts

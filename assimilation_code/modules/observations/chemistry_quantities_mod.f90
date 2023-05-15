@@ -25,10 +25,25 @@
 !   QTY_PM25  
 !   QTY_AOD  
 !   QTY_SO2  
+!   QTY_SO4  
 !   QTY_PAN  
 !   QTY_HCHO  
-!   QTY_HNO3  
-!
+!   QTY_HNO3
+!   QTY_DST01
+!   QTY_DST02
+!   QTY_DST03
+!   QTY_DST04
+!   QTY_DST05
+!   QTY_BC1
+!   QTY_BC2
+!   QTY_OC1
+!   QTY_OC2
+!   QTY_SSLT01
+!   QTY_SSLT02
+!   QTY_SSLT03
+!   QTY_SSLT04
+!   QTY_P25
+!  
 !   QTY_CO01
 !   QTY_CO02
 !   QTY_CO03

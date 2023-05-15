@@ -52,7 +52,7 @@
 !---------------------------------------------------------------------
    
    use wrf_utils, only : proj_info
-   use utils,     only : wrf2fire_type, diffdat, geth_newdate
+   use finn_utils,     only : wrf2fire_type, diffdat, geth_newdate
 
 !---------------------------------------------------------------------
 !   dummy arguments
@@ -369,7 +369,7 @@ species_loop : &
 !  write global fire emission files
 !---------------------------------------------------------------------
 
-    use utils,     only : wrf2fire_type, diag_level, geth_newdate
+    use finn_utils,     only : wrf2fire_type, diag_level, geth_newdate
     use wrf_utils, only : proj_info
 
 !---------------------------------------------------------------------

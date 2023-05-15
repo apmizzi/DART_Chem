@@ -24,7 +24,7 @@ program map_megan2_emissions
 
    use area_mapper, only : xlong => lon, xlat => lat
    use bio_types
-   use misc_definitions_module, only : PROJ_PS, PROJ_LATLON, PROJ_LATLON, PROJ_CASSINI
+   use megan_definitions_module, only : PROJ_PS, PROJ_LATLON, PROJ_LATLON, PROJ_CASSINI
 
    implicit none
 
@@ -286,7 +286,7 @@ domain_loop : &
 !---------------------------------------------------------------------
 
    use area_mapper, only : proj_init
-   use constants_module, only : rad_per_deg, earth_radius_m
+   use megan_constants_module, only : rad_per_deg, earth_radius_m
 
 !---------------------------------------------------------------------
 !   local variables

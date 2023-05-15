@@ -41,7 +41,7 @@
 !---------------------------------------------------------------------
 
     use wrf_utils
-    use utils, only : wrf2fire_type, diag_level
+    use finn_utils, only : wrf2fire_type, diag_level
     use srf_types, only : plant_cover, ntypes
     use attr_types, only : glb_att
 

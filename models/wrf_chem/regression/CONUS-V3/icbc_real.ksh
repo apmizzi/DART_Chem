@@ -305,19 +305,19 @@ cat > input.nml.tmp << EOF
    write_binary_obs_sequence   = .false.  /
 
  &preprocess_nml
-   input_obs_kind_mod_file  = '../../../obs_kind/DEFAULT_obs_kind_mod.F90',
-   output_obs_kind_mod_file = '../../../obs_kind/obs_kind_mod.f90',
-   input_obs_def_mod_file   = '../../../obs_def/DEFAULT_obs_def_mod.F90',
-   output_obs_def_mod_file  = '../../../obs_def/obs_def_mod.f90',
-   input_files              = '../../../obs_def/obs_def_reanalysis_bufr_mod.f90',
-                              '../../../obs_def/obs_def_altimeter_mod.f90',
-                              '../../../obs_def/obs_def_radar_mod.f90',
-                              '../../../obs_def/obs_def_metar_mod.f90',
-                              '../../../obs_def/obs_def_dew_point_mod.f90',
-                              '../../../obs_def/obs_def_gps_mod.f90',
-                              '../../../obs_def/obs_def_gts_mod.f90',
-                              '../../../obs_def/obs_def_QuikSCAT_mod.f90',
-                              '../../../obs_def/obs_def_vortex_mod.f90'  /
+   input_obs_kind_mod_file  = '../../../assimilation_code/modules/observations/DEFAULT_obs_kind_mod.F90',
+   output_obs_kind_mod_file = '../../../assimilation_code/modules/observations/obs_kind_mod.f90',
+   input_obs_def_mod_file   = '../../../observations/forward_operators/DEFAULT_obs_def_mod.F90',
+   output_obs_def_mod_file  = '../../../observations/forward_operators/obs_def_mod.f90',
+   input_files              = '../../../observations/forward_operators/obs_def_reanalysis_bufr_mod.f90',
+                              '../../../observations/forward_operators/obs_def_altimeter_mod.f90',
+                              '../../../observations/forward_operators/obs_def_radar_mod.f90',
+                              '../../../observations/forward_operators/obs_def_metar_mod.f90',
+                              '../../../observations/forward_operators/obs_def_dew_point_mod.f90',
+                              '../../../observations/forward_operators/obs_def_gps_mod.f90',
+                              '../../../observations/forward_operators/obs_def_gts_mod.f90',
+                              '../../../observations/forward_operators/obs_def_QuikSCAT_mod.f90',
+                              '../../../observations/forward_operators/obs_def_vortex_mod.f90'  /
 
  &obs_kind_nml
    assimilate_these_obs_types = 'RADIOSONDE_TEMPERATURE',
@@ -954,6 +954,7 @@ EOF
    ln -sf $DART_DIR/models/wrf/work/wrf_to_dart    .
    ln -sf $DART_DIR/models/wrf/work/dart_to_wrf    .
    ln -sf $DART_DIR/models/wrf/work/pert_wrf_bc    .
+   ln -sf $DART_DIR/models/wrf/work/wakeup_filter  .
    ln -sf $DART_DIR/models/wrf/work/obs_diag       .
    ln -sf $DART_DIR/models/wrf/work/filter         .
    cp $DART_DIR/models/wrf/shell_scripts/advance_model.csh  .

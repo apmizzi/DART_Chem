@@ -14,7 +14,7 @@
 !
 ! DART $Id: $
 
-       module utils
+       module finn_utils
 
        implicit none
 
@@ -1039,4 +1039,4 @@ inner_loop : &
 
       end function JDAY2GREG
 
-   end module utils
+   end module finn_utils
