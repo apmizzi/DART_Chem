@@ -28,12 +28,8 @@ wrfbdy_d01       will be OVERWRITTEN.
 ------------------------------------------------------------------
 
 Compile:
-
-	mkmf_update_wrf_bc
-
-	make
-
-	(make clean to remove objs and execs)
+        
+        ./quickbuild.sh
 
 Run:
 
@@ -42,3 +38,8 @@ Run:
 	(make sure you have all three files mentioned above)
 
 ------------------------------------------------------------------
+
+# <next few lines under version control, do not edit>
+# $URL$
+# $Revision$
+# $Date$
