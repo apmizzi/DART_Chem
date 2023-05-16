@@ -9,14 +9,14 @@ main() {
 export DART=$(git rev-parse --show-toplevel)
 source "$DART"/build_templates/buildconvfunctions.sh
 
-CONVERTER=OMI_NO2
+CONVERTER=ATMOS_CHEM/OMI_NO2
 LOCATION=threed_sphere
 
 
 programs=(
-omi_no2_domino_trop_col_ascii_to_obs
 omi_no2_total_col_ascii_to_obs
 omi_no2_trop_col_ascii_to_obs
+omi_no2_domino_trop_col_ascii_to_obs
 obs_sequence_tool
 advance_time
 )
