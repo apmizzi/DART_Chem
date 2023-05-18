@@ -16,10 +16,10 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 !
-program tempo_o3_total_col_ascii_to_obs
+program cris_ch4_total_col_ascii_to_obs
 !
 !=============================================
-! TEMPO O3 column obs
+! CRIS CH4 column obs
 !=============================================
    use utilities_mod, only          : timestamp,                  &
                                       register_module,            &
@@ -56,7 +56,7 @@ program tempo_o3_total_col_ascii_to_obs
                                       obs_def_type,               &
                                       set_obs_def_type_of_obs
 
-   use obs_def_tempo_o3_total_col_mod, only     : set_obs_def_tempo_o3_total_col
+   use obs_def_cris_ch4_total_col_mod, only     : set_obs_def_cris_ch4_total_col
 
    use assim_model_mod, only        : static_init_assim_model
 
@@ -68,8 +68,8 @@ program tempo_o3_total_col_ascii_to_obs
                                       time_type,                  &
                                       get_time
 
-   use obs_kind_mod, only           : QTY_O3,                     &
-                                      TEMPO_O3_TOTAL_COL,              &
+   use obs_kind_mod, only           : QTY_CH4,                     &
+                                      CRIS_CH4_TOTAL_COL,          &
                                       get_type_of_obs_from_menu
 
    use random_seq_mod, only         : random_seq_type,            &
@@ -80,7 +80,7 @@ program tempo_o3_total_col_ascii_to_obs
    implicit none
 !
 ! version controlled file description for error handling, do not edit
-   character(len=*), parameter     :: source   = 'tempo_o3_total_col_ascii_to_obs.f90'
+   character(len=*), parameter     :: source   = 'cris_ch4_total_col_ascii_to_obs.f90'
    character(len=*), parameter     :: revision = ''
    character(len=*), parameter     :: revdate  = ''
 !
@@ -104,10 +104,11 @@ program tempo_o3_total_col_ascii_to_obs
    integer                         :: seconds,days,which_vert
    integer                         :: seconds_last,days_last
    integer                         :: nx_model,ny_model,nz_model
-   integer                         :: reject,k,l,kk,kend
-   integer                         :: i_min,j_min
+   integer                         :: reject,k,l,kk,klev,kend,ilay
+   integer                         :: i_min,j_min,icol,reject_ak
    integer                         :: sum_reject,sum_accept,sum_total
-   integer                         :: obs_accept,obs_o3_reten_freq,obs_no2_reten_freq
+   integer                         :: obs_accept,obs_co_reten_freq,obs_o3_reten_freq
+   integer                         :: obs_ch4_reten_freq,obs_nh3_reten_freq,obs_pan_reten_freq
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
@@ -120,28 +121,29 @@ program tempo_o3_total_col_ascii_to_obs
    real                            :: prs_loc,obs_sum
    real*8                          :: obs_err_var,level
 !
-   real*8,dimension(num_qc)        :: tempo_qc
+   real*8,dimension(num_qc)        :: cris_qc
    real*8,dimension(num_copies)    :: obs_val
 !
    character*129                   :: filedir,filename,fileout
    character*129                   :: copy_meta_data
-   character*129                   :: qc_meta_data='TEMPO O3 QC index'
+   character*129                   :: qc_meta_data='CRIS CH4 QC index'
    character*129                   :: chr_year,chr_month,chr_day
-   character*129                   :: file_name='tempo_o3_total_col_obs_seq'
+   character*129                   :: file_name='cris_ch4_total_col_obs_seq'
    character*129                   :: data_type,cmd
    character*129                   :: path_model,file_model,file_in
 !
-   logical                         :: use_log_co,use_log_o3,use_log_no2,use_log_so2
+   logical                         :: use_log_o3,use_log_co,use_log_ch4,use_log_nh3,use_log_pan
 !
 ! Species-specific variables
-   real                              :: col_amt_obs,col_amt_err_obs
-   real                              :: lat_obs,lon_obs
+   real                              :: ch4_trop_col_obs,ch4_trop_col_obs_prior,ch4_trop_col_obs_err
+   real                              :: ch4_total_col_obs,ch4_total_col_obs_prior,ch4_total_col_obs_err
+   real                              :: lat_obs,lon_obs,dofs_obs,trop_prs
    real*8                            :: lat_obs_r8,lon_obs_r8
-   real,allocatable,dimension(:,:)   :: avgk_obs,cov_obs
-   real,allocatable,dimension(:)     :: prior_obs,o3_obs
+   real,allocatable,dimension(:,:)   :: avgk_obs,cov_obs,cov_total
+   real,allocatable,dimension(:)     :: avgk_diag_obs,ch4_obs,ch4_obs_prior,ch4_obs_err
    real*8,allocatable,dimension(:)   :: avgk_obs_r8
    real*8,allocatable,dimension(:,:) :: cov_obs_r8
-   real*8,allocatable,dimension(:)   :: prior_obs_r8,o3_obs_r8
+   real*8,allocatable,dimension(:)   :: prior_obs_r8,ch4_obs_r8
    real,allocatable,dimension(:)     :: prs_obs
    real*8,allocatable,dimension(:)   :: prs_obs_r8
    real,allocatable,dimension(:)     :: prf_locl,prf_full
@@ -149,18 +151,18 @@ program tempo_o3_total_col_ascii_to_obs
    real,allocatable,dimension(:,:)   :: lon,lat
    real,allocatable,dimension(:,:,:) :: prs_prt,prs_bas,prs_fld
    real,allocatable,dimension(:,:,:) :: tmp_prt,tmp_fld,vtmp_fld
-   real,allocatable,dimension(:,:,:) :: o3_fld,qmr_fld
+   real,allocatable,dimension(:,:,:) :: ch4_fld,qmr_fld
 
-   real                              :: col_amt_total_obs,col_amt_trop_obs
-   real                              :: trop_index,cov_total,cov_trop
-   real                              :: avgk_term, sum_o3_obs
+   real                              :: trop_index,cov_trop,wt1_sum,wt2_sum
+   real                              :: avgk_term, sum_ch4_obs
    real*8                            :: prior_total_r8
    real*8,allocatable,dimension(:)   :: avgk_total_obs_r8
 !
-   namelist /create_tempo_obs_nml/filedir,filename,fileout, &
-   bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
-   lon_min,lon_max,lat_min,lat_max, &
-   path_model,file_model,nx_model,ny_model,nz_model,obs_o3_reten_freq,obs_no2_reten_freq
+   namelist /create_cris_obs_nml/filedir,filename,fileout, &
+   bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_ch4, &
+   use_log_nh3,use_log_pan,lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model,ny_model, &
+   nz_model,obs_co_reten_freq,obs_o3_reten_freq,obs_ch4_reten_freq, &
+   obs_nh3_reten_freq,obs_pan_reten_freq
 !
 ! Set constants
    pi=4.*atan(1.)
@@ -173,7 +175,7 @@ program tempo_o3_total_col_ascii_to_obs
    sum_accept=0
    sum_total=0
    obs_accept=0
-   fac_err=1.0
+   fac_err=0.1
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
@@ -182,13 +184,13 @@ program tempo_o3_total_col_ascii_to_obs
 ! Initialize the obs_sequence module
    call static_init_obs_sequence()
 !
-   call find_namelist_in_file("input.nml", "create_tempo_obs_nml", iunit)
-   read(iunit, nml = create_tempo_obs_nml, iostat = io)
-   call check_namelist_read(iunit, io, "create_tempo_obs_nml")
+   call find_namelist_in_file("input.nml", "create_cris_obs_nml", iunit)
+   read(iunit, nml = create_cris_obs_nml, iostat = io)
+   call check_namelist_read(iunit, io, "create_cris_obs_nml")
 !
 ! Record the namelist values used for the run ...
-   call error_handler(E_MSG,'init_create_tempo_obs','create_tempo_obs_nml values are',' ',' ',' ')
-   write(     *     , nml=create_tempo_obs_nml)
+   call error_handler(E_MSG,'init_create_cris_obs','create_cris_obs_nml values are',' ',' ',' ')
+   write(     *     , nml=create_cris_obs_nml)
 !
 ! Initialize an obs_sequence structure
    call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)
@@ -198,7 +200,7 @@ program tempo_o3_total_col_ascii_to_obs
 !
    do icopy =1, num_copies
       if (icopy == 1) then
-         copy_meta_data='TEMPO O3 observation'
+         copy_meta_data='CRIS CH4 observation'
       else
          copy_meta_data='Truth'
       endif
@@ -207,7 +209,7 @@ program tempo_o3_total_col_ascii_to_obs
    call set_qc_meta_data(seq, 1, qc_meta_data)
 !
 !-------------------------------------------------------
-! Read TEMPO O3 data
+! Read CRIS CH4 data
 !-------------------------------------------------------
 !
 ! Set dates and initialize qc_count
@@ -224,7 +226,7 @@ program tempo_o3_total_col_ascii_to_obs
    allocate(tmp_prt(nx_model,ny_model,nz_model))
    allocate(tmp_fld(nx_model,ny_model,nz_model))
    allocate(qmr_fld(nx_model,ny_model,nz_model))
-   allocate(o3_fld(nx_model,ny_model,nz_model))
+   allocate(ch4_fld(nx_model,ny_model,nz_model))
    file_in=trim(path_model)//'/'//trim(file_model)
    call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
    call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
@@ -232,18 +234,18 @@ program tempo_o3_total_col_ascii_to_obs
    call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
    call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
    call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(file_in,'o3',o3_fld,nx_model,ny_model,nz_model,1)
+   call get_DART_diag_data(file_in,'ch4',ch4_fld,nx_model,ny_model,nz_model,1)
    prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
    tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-   o3_fld(:,:,:)=o3_fld(:,:,:)*1.e-6
+   ch4_fld(:,:,:)=ch4_fld(:,:,:)*1.e-6
 !
-! Open TEMPO O3 binary file
+! Open CRIS CH4 binary file
    fileid=100
    write(6,*)'opening ',TRIM(filedir)//TRIM(filename)
    open(fileid,file=TRIM(filedir)//TRIM(filename),                     &
    form='formatted', status='old', iostat=ios)
 !
-! Read TEMPO O3
+! Read CRIS CH4
    read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    do while (ios == 0)
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
@@ -251,131 +253,139 @@ program tempo_o3_total_col_ascii_to_obs
       read(fileid,*,iostat=ios) lat_obs,lon_obs
       if(lon_obs.lt.0.) lon_obs=lon_obs+360.
       read(fileid,*,iostat=ios) nlay_obs,nlev_obs
-      read(fileid,*,iostat=ios) trop_index
-      allocate(prs_obs(nlev_obs))
-      allocate(o3_obs(nlay_obs))
-      allocate(prior_obs(nlay_obs))
+      allocate(prs_obs(nlay_obs))
+      allocate(ch4_obs(nlay_obs))
+      allocate(ch4_obs_prior(nlay_obs))
+      allocate(ch4_obs_err(nlay_obs))
       allocate(avgk_total_obs_r8(nlay_obs))
       allocate(avgk_obs(nlay_obs,nlay_obs))
+      allocate(avgk_diag_obs(nlay_obs))
       allocate(cov_obs(nlay_obs,nlay_obs))
-      allocate(prs_obs_r8(nlev_obs))
+      allocate(cov_total(nlay_obs,nlay_obs))
+      allocate(prs_obs_r8(nlay_obs))
       allocate(prior_obs_r8(nlay_obs))
       allocate(avgk_obs_r8(nlay_obs))
       allocate(prf_locl(nlay_obs))
       allocate(prf_full(nlay_obs))
-      read(fileid,*,iostat=ios) prs_obs(1:nlev_obs)
-      read(fileid,*,iostat=ios) o3_obs(1:nlay_obs)
-      read(fileid,*,iostat=ios) prior_obs(1:nlay_obs)
+      read(fileid,*,iostat=ios) prs_obs(1:nlay_obs)
+      read(fileid,*,iostat=ios) ch4_obs(1:nlay_obs)
+      read(fileid,*,iostat=ios) ch4_obs_prior(1:nlay_obs)
+      read(fileid,*,iostat=ios) dofs_obs
       do k=1,nlay_obs
          read(fileid,*,iostat=ios) (avgk_obs(k,l),l=1,nlay_obs)
       enddo
       do k=1,nlay_obs
          read(fileid,*,iostat=ios) (cov_obs(k,l),l=1,nlay_obs)
       enddo
-      read(fileid,*,iostat=ios) col_amt_trop_obs
-      read(fileid,*,iostat=ios) col_amt_total_obs
+      print *, 'CRIS CH4: Completed data read'      
 !
       prs_obs(:)=prs_obs(:)*100.
+      do k=1,nlay_obs
+         if(isnan(prs_obs(k))) then
+            prs_obs(k)=-9999.
+            avgk_obs(k,:)=-9999.
+            avgk_obs(:,k)=-9999.
+            ch4_obs_prior(k)=-9999.
+         endif
+      enddo
       prs_obs_r8(:)=prs_obs(:)
-      prior_obs_r8(:)=prior_obs(:)
+      prior_obs_r8(:)=ch4_obs_prior(:)
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
 !
-! Calculate vertically integrated error covariance, averaging
-! kernel, and prior term
-      cov_total=0.
-      sum_o3_obs=0.
-      prior_total_r8=0.
-      avgk_total_obs_r8(:)=0.
-      do k=1,nlay_obs
-         cov_total=cov_total+cov_obs(k,k)
-         sum_o3_obs=sum_o3_obs+o3_obs(k)
-         do kk=1,nlay_obs
-            if(k.eq.kk) then
-               avgk_term=(1.-avgk_obs(kk,k))
-            else
-               avgk_term=-avgk_obs(kk,k)
-            endif
-            avgk_total_obs_r8(k)=avgk_total_obs_r8(k)+avgk_obs(kk,k)
-            prior_total_r8=prior_total_r8+avgk_term*prior_obs(k)
-         enddo
-      enddo
-!
-!--------------------------------------------------------
-! Find model O3 profile corresponding to the observation
-! TEMPO O3 and WRF-Chem vertical grids are bottom to top        
-!--------------------------------------------------------
-!      reject=0
-!      call get_model_profile(prf_locl,prf_full,nz_model, &
-!      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
-!      qmr_fld(i_min,j_min,:),o3_fld(i_min,j_min,:), &
-!      nlev_obs,avgk_obs,prior_obs,kend)
-!
 ! Obs thinning test
       obs_accept=obs_accept+1
-      if(obs_accept/obs_o3_reten_freq*obs_o3_reten_freq.eq.obs_accept) then
+      if(obs_accept/obs_ch4_reten_freq*obs_ch4_reten_freq.eq.obs_accept) then
+!      
+! Loop through the profile retrievals
+         do ilay=1,nlay_obs
+!
+! Check whether avgk row is zero.
+            reject_ak=1
+            do icol=1,nlay_obs
+               if(avgk_obs(ilay,icol).ne.-9999.) then
+                  reject_ak=0
+                  exit
+               endif  
+            enddo
+            if(reject_ak.eq.1) cycle
+!
+! Check whether pressure was flagged as NaN
+            if(prs_obs(ilay).le.0.) then
+               cycle
+            endif
 !
 ! Process accepted observations
-         sum_accept=sum_accept+1
+            sum_accept=sum_accept+1
 !
 ! Set data for writing obs_sequence file
-         qc_count=qc_count+1
+            qc_count=qc_count+1
+            print *, 'APM: qc_count, ilay ',qc_count, ilay
 !
 ! Obs value is the tropospheric vertical column
-         obs_val(:)=col_amt_total_obs
-         obs_err_var=(fac_obs_error*fac_err*sqrt(cov_total))**2
-         tempo_qc(:)=0
-         obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
-         call get_time(obs_time, seconds, days)
+            avgk_obs_r8(1:nlay_obs)=avgk_obs(ilay,1:nlay_obs)         
+            obs_val(:)=ch4_obs(ilay)
+!            obs_err_var=(fac_obs_error*fac_err*sqrt(cov_obs(ilay,ilay)))**2
+            obs_err_var=(fac_obs_error*fac_err*ch4_obs(ilay))**2
+            cris_qc(:)=0
+            obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
+            call get_time(obs_time, seconds, days)
 !
-         which_vert=-2      ! undefined
-!         which_vert=-1      ! surface
-!         which_vert=1       ! level
-!         which_vert=2       ! pressure
-!        
-         obs_kind = TEMPO_O3_TOTAL_COL
+!            which_vert=-2      ! undefined
+!            which_vert=-1      ! surface
+!            which_vert=1       ! level
+            which_vert=2       ! pressure
+!
+            obs_kind = CRIS_CH4_TOTAL_COL
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90)
-         level=0.      
-         obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
-!        
-         call set_obs_def_type_of_obs(obs_def, obs_kind)
-         call set_obs_def_location(obs_def, obs_location)
-         call set_obs_def_time(obs_def, obs_time)
-         call set_obs_def_error_variance(obs_def, obs_err_var)
-         call set_obs_def_tempo_o3_total_col(qc_count, prs_obs_r8(:), avgk_total_obs_r8(:), prior_total_r8, nlay_obs)
-         call set_obs_def_key(obs_def, qc_count)
-         call set_obs_values(obs, obs_val, 1)
-         call set_qc(obs, tempo_qc, num_qc)
-         call set_obs_def(obs, obs_def)
-!        
-         old_ob=0
-         if(days.lt.days_last) then
-            old_ob=1
-         elseif(days.eq.days_last .and. seconds.lt.seconds_last) then
-            old_ob=1
-         endif
-         if(old_ob.eq.0) then
-            days_last=days
-            seconds_last=seconds
-         endif
-         if ( qc_count == 1 .or. old_ob.eq.1) then
-            call insert_obs_in_seq(seq, obs)
-         else
-            call insert_obs_in_seq(seq, obs, obs_old )
-         endif
-         obs_old=obs
+            klev=ilay
+            kend=ilay
+            level=prs_obs(ilay)
+            obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
+!
+            call set_obs_def_type_of_obs(obs_def, obs_kind)
+            call set_obs_def_location(obs_def, obs_location)
+            call set_obs_def_time(obs_def, obs_time)
+            call set_obs_def_error_variance(obs_def, obs_err_var)
+            call set_obs_def_cris_ch4_total_col(qc_count, prs_obs_r8(1:nlay_obs), &
+            avgk_obs_r8(1:nlay_obs), prior_obs_r8(1:nlay_obs), nlay_obs, klev, kend)
+            call set_obs_def_key(obs_def, qc_count)
+            call set_obs_values(obs, obs_val, 1)
+            call set_qc(obs, cris_qc, num_qc)
+            call set_obs_def(obs, obs_def)
+!
+            old_ob=0
+            if(days.lt.days_last) then
+               old_ob=1
+            elseif(days.eq.days_last .and. seconds.lt.seconds_last) then
+               old_ob=1
+            endif
+            if(old_ob.eq.0) then
+               days_last=days
+               seconds_last=seconds
+            endif
+            if ( qc_count == 1 .or. old_ob.eq.1) then
+               call insert_obs_in_seq(seq, obs)
+            else
+               call insert_obs_in_seq(seq, obs, obs_old )
+            endif
+            obs_old=obs
+         enddo
       endif
       deallocate(prs_obs) 
-      deallocate(o3_obs) 
+      deallocate(ch4_obs) 
+      deallocate(ch4_obs_prior)
+      deallocate(ch4_obs_err)
       deallocate(avgk_total_obs_r8)
       deallocate(avgk_obs)
-      deallocate(prior_obs)
+      deallocate(avgk_diag_obs)
       deallocate(cov_obs)
+      deallocate(cov_total)
       deallocate(prs_obs_r8) 
       deallocate(avgk_obs_r8)
       deallocate(prior_obs_r8)
       deallocate(prf_locl) 
-      deallocate(prf_full) 
+      deallocate(prf_full)
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    enddo
 !
@@ -390,7 +400,7 @@ program tempo_o3_total_col_ascii_to_obs
    deallocate(tmp_prt)
    deallocate(tmp_fld)
    deallocate(qmr_fld)
-   deallocate(o3_fld)
+   deallocate(ch4_fld)
 !
    print *, 'total obs ',sum_total
    print *, 'accepted ',sum_accept
@@ -405,114 +415,7 @@ program tempo_o3_total_col_ascii_to_obs
       call execute_command_line(trim(cmd))
    endif   
 !
-end program tempo_o3_total_col_ascii_to_obs
-!
-subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,kend)
-!
-! This subroutine identifies a vertical location for 
-! vertical positioning/localization 
-! 
-   implicit none
-   integer                         :: nlay_obs,nlev_obs
-   integer                         :: k,kstr,kmax,kend
-   real                            :: prs_loc
-   real                            :: wt_ctr,wt_end
-   real                            :: zmax
-   real,dimension(nlev_obs)        :: prs_obs
-   real,dimension(nlay_obs)        :: locl_prf,locl_prf_sm
-!
-! apply vertical smoother
-!   wt_ctr=2.
-!   wt_end=1.
-!   avgk_sm(:)=0.
-!   do k=1,nlay
-!      if(k.eq.1) then
-!         avgk_sm(k)=(wt_ctr*avgk(k)+wt_end*avgk(k+1))/(wt_ctr+wt_end)
-!         cycle
-!      elseif(k.eq.nlay) then
-!         avgk_sm(k)=(wt_end*avgk(k-1)+wt_ctr*avgk(k))/(wt_ctr+wt_end)
-!         cycle
-!      else
-!         avgk_sm(k)=(wt_end*avgk(k-1)+wt_ctr*avgk(k)+wt_end*avgk(k+1))/(wt_ctr+2.*wt_end)
-!      endif
-!   enddo
-!
-   locl_prf_sm(:)=locl_prf(:)   
-! locate maximum
-   zmax=-1.e10
-   kmax=0
-   do k=1,kend
-      if(abs(locl_prf_sm(k)).gt.zmax) then
-         zmax=abs(locl_prf_sm(k))
-         kmax=k
-      endif
-   enddo
-   if(kmax.eq.1) kmax=kmax+1
-   prs_loc=(prs_obs(kmax)+prs_obs(kmax+1))/2.
-end subroutine vertical_locate
-!
-subroutine get_model_profile(prf_locl,prf_full,nz_mdl,prs_obs,prs_mdl, &
-   tmp_mdl,qmr_mdl,o3_mdl,nlev_obs,v_wgts,prior,kend)
-   implicit none
-   integer                                :: nz_mdl
-   integer                                :: nlev_obs
-   integer                                :: i,j,k,kend
-   real                                   :: Ru,Rd,cp,eps,AvogN,msq2cmsq,grav
-   real,dimension(nz_mdl)                 :: prs_mdl,tmp_mdl,qmr_mdl,o3_mdl
-   real,dimension(nz_mdl)                 :: tmp_prf,vtmp_prf,o3_prf
-   real,dimension(nlev_obs-1)             :: thick,v_wgts,prior,prf_locl,prf_full
-   real,dimension(nlev_obs)               :: o3_prf_mdl,vtmp_prf_mdl,prs_obs
-!
-! Constants (mks units)
-   Ru=8.316
-   Rd=286.9
-   cp=1004.
-   eps=0.61
-   AvogN=6.02214e23
-   msq2cmsq=1.e4
-   grav=9.8
-!
-! calculate temperature from potential temperature
-   do k=1,nz_mdl
-      tmp_prf(k)=tmp_mdl(k)*((prs_mdl(k)/ &
-      100000.)**(Rd/cp))
-   enddo         
-! calculate virtual temperature
-   do k=1,nz_mdl
-      vtmp_prf(k)=tmp_prf(k)*(1.+eps*qmr_mdl(k))
-   enddo         
-! convert to molar density         
-   do k=1,nz_mdl
-      o3_prf(k)=o3_mdl(k)*prs_mdl(k)/Ru/tmp_prf(k)
-   enddo
-! Vertical interpolation
-   o3_prf_mdl(:)=-9999.  
-   vtmp_prf_mdl(:)=-9999.   
-   call interp_to_obs(o3_prf_mdl,o3_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-   call interp_to_obs(vtmp_prf_mdl,vtmp_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-!   
-! calculate number density times vertical weighting
-   prf_locl(:)=-9999.
-   prf_full(:)=-9999.
-   do k=1,nlev_obs-1
-      thick(k)=Rd*(vtmp_prf_mdl(k)+vtmp_prf_mdl(k+1))/2./grav* &
-      log(prs_obs(k)/prs_obs(k+1))     
-   enddo
-!
-! apply scattering weights
-   do k=1,nlev_obs-1
-! full term
-      prf_full(k)=thick(k) * (o3_prf_mdl(k)+o3_prf_mdl(k+1))/2.* &
-      v_wgts(k) + (1.-v_wgts(k))*prior(k)
-!
-! no thicknesses      
-      prf_locl(k)=(o3_prf_mdl(k)+o3_prf_mdl(k+1))/2.* &
-      v_wgts(k) + (1.-v_wgts(k))*prior(k)
-   enddo
-!   print *, 'prf_full  ',prf_full(:)
-!   print *, 'o3 fld   ',o3_prf_mdl(:)
-!   print *, 'avgk_obs ',v_wgts(:)
-end subroutine get_model_profile
+end program cris_ch4_total_col_ascii_to_obs
 !
 subroutine get_DART_diag_data(file_in,name,data,nx,ny,nz,nc)
    use netcdf
@@ -588,324 +491,6 @@ subroutine handle_err(rc,text)
    print *, 'APM: NETCDF ERROR ',trim(text),' ',rc
    call abort
 end subroutine handle_err
-!
-subroutine interp_hori_vert(fld1_prf,fld2_prf,fld1_mdl,fld2_mdl,x_mdl,y_mdl, &
-   x_obs,y_obs,prs_mdl,prs_obs,nx_mdl,ny_mdl,nz_mdl,nlev_obs,reject,kend)
-   implicit none
-   integer                                :: nx_mdl,ny_mdl,nz_mdl,nlev_obs
-   integer                                :: i,j,k,i_min,j_min,kend
-   integer                                :: im,ip,jm,jp,quad,reject
-   real                                   :: re,pi,rad2deg
-   real                                   :: rad,rad_crit,rad_min,mdl_x,mdl_y,obs_x,obs_y
-   real                                   :: dx_dis,dy_dis
-   real                                   :: x_obs,y_obs,x_obs_temp
-   real                                   :: x_obser,y_obser
-   real                                   :: w_q1,w_q2,w_q3,w_q4,wt
-   real,dimension(nlev_obs)               :: fld1_prf,fld2_prf,prs_obs
-   real,dimension(nz_mdl)                 :: fld1_prf_mdl,fld2_prf_mdl,prs_prf_mdl
-   real,dimension(nx_mdl,ny_mdl)          :: x_mdl,y_mdl
-   real,dimension(nx_mdl,ny_mdl,nz_mdl)   :: fld1_mdl,fld2_mdl,prs_mdl
-   real                                   :: cone_fac,cen_lat,cen_lon,truelat1, &
-                                             truelat2,moad_cen_lat,stand_lon, &
-                                             pole_lat,pole_lon,xi,xj,zi,zj,zlon,zlat
-   integer                                :: ierr
-!
-! Set constants
-   pi=4.*atan(1.)
-   rad2deg=360./(2.*pi)
-   re=6371000.
-   rad_crit=10000.
-   reject=0.
-!
-   cone_fac=.715567   
-   cen_lat=40.
-   cen_lon=-97.
-   truelat1=33.
-   truelat2=45.
-   moad_cen_lat=40.0000
-   stand_lon=-97.
-   pole_lat=90.
-   pole_lon=0.
-!
-! Code to test projection and inverse projection
-!   zi=nx_mdl
-!   zj=ny_mdl
-!   call w3fb13(real(y_mdl(zi,zj)),real(x_mdl(zi,zj)+360.), &
-!   real(y_mdl(1,1)),real(x_mdl(1,1)+360.),12000.,cen_lon+360.,truelat1,truelat2,xi,xj)
-!   print *,'i,j ',zi,zj
-!   print *,'lon lat ',x_mdl(zi,zj)+360.,y_mdl(zi,zj)
-!   print *, 'xi,xj ',xi,xj
-!
-!   call w3fb14(xi,xj,real(y_mdl(1,1)),real(x_mdl(1,1)+360.),12000.,cen_lon+360.,truelat1, &
-!   truelat2,zlat,zlon,ierr)
-!   print *, 'zlon,zlat ',zlon,zlat
-!   print *, 'ierr ',ierr
-!
-! The input grids need to be in degrees
-   x_obser=x_obs
-   y_obser=y_obs
-   if(x_obser.lt.0.) x_obser=(360.+x_obser)
-   call w3fb13(y_obser,x_obser,real(y_mdl(1,1)),real(x_mdl(1,1)+360.), &
-   12000.,cen_lon+360.,truelat1,truelat2,xi,xj)
-   i_min = nint(xi)
-   j_min = nint(xj)
-!   print *,' '
-!   print *,'i_min,j_min ',i_min,j_min
-!   print *,'i_max,j_max ',nx_mdl,ny_mdl
-!   x_obs_temp=x_obs
-!   if(x_obs.gt.180.) x_obs_temp=x_obs-360.
-!   print *,'x_obs,y_obs ',x_obs_temp,y_obs
-!   print *,'x_mdl(1,1),x_mdl(1,ny_mdl),x_mdl(nx_mdl,1),x_mdl(nx_mdl,ny_mdl) ', &
-!   x_mdl(1,1),x_mdl(1,ny_mdl),x_mdl(nx_mdl,1),x_mdl(nx_mdl,ny_mdl)
-!   print *,'y_mdl(1,1),y_mdl(1,ny_mdl),y_mdl(nx_mdl,1),y_mdl(nx_mdl,ny_mdl) ', &
-!   y_mdl(1,1),y_mdl(1,ny_mdl),y_mdl(nx_mdl,1),y_mdl(nx_mdl,ny_mdl)
-!
-! Check lower bounds
-   if(i_min.lt.1 .and. int(xi).eq.0) then
-      i_min=1
-   elseif (i_min.lt.1 .and. int(xi).lt.0) then
-      i_min=-9999
-      j_min=-9999
-      reject=1
-   endif
-   if(j_min.lt.1 .and. int(xj).eq.0) then
-      j_min=1
-   elseif (j_min.lt.1 .and. int(xj).lt.0) then
-      i_min=-9999
-      j_min=-9999
-      reject=1
-   endif
-!
-! Check upper bounds
-   if(i_min.gt.nx_mdl .and. int(xi).eq.nx_mdl) then
-      i_min=nx_mdl
-   elseif (i_min.gt.nx_mdl .and. int(xi).gt.nx_mdl) then
-      i_min=-9999
-      j_min=-9999
-      reject=1
-   endif
-   if(j_min.gt.ny_mdl .and. int(xj).eq.ny_mdl) then
-      j_min=ny_mdl
-   elseif (j_min.gt.ny_mdl .and. int(xj).gt.ny_mdl) then
-      i_min=-9999
-      j_min=-9999
-      reject=1
-   endif
-!   print *,'i_min,j_min,reject ',i_min,j_min,reject
-   if(reject.eq.1) return  
-!
-! Use model point closest to the observatkon   
-   fld1_prf(:)=-9999.
-   fld1_prf_mdl(:)=fld1_mdl(i_min,j_min,:)
-   fld2_prf_mdl(:)=fld2_mdl(i_min,j_min,:)
-   prs_prf_mdl(:)=prs_mdl(i_min,j_min,:)
-!
-! Vertical interpolation
-   call interp_to_obs(fld1_prf,fld1_prf_mdl,prs_prf_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-   call interp_to_obs(fld2_prf,fld2_prf_mdl,prs_prf_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-   return
-!
-! This part of subroutine is not used  
-! Do horizontal interpolation
-   im=i_min-1
-   if(im.eq.0) im=1
-   ip=i_min+1
-   if(ip.eq.nx_mdl+1) ip=nx_mdl
-   jm=j_min-1
-   if(jm.eq.0) jm=1
-   jp=j_min+1
-   if(jp.eq.ny_mdl+1) jp=ny_mdl
-!
-! Find quadrant
-   quad=0
-   mdl_x=x_mdl(i_min,j_min)
-   if(x_mdl(i_min,j_min).lt.0.) mdl_x=360.+x_mdl(i_min,j_min)
-   mdl_y=y_mdl(i_min,j_min)
-   if(mdl_x.ge.x_obser.and.mdl_y.ge.y_obser) quad=1 
-   if(mdl_x.le.x_obser.and.mdl_y.ge.y_obser) quad=2 
-   if(mdl_x.le.x_obser.and.mdl_y.le.y_obser) quad=3 
-   if(mdl_x.ge.x_obser.and.mdl_y.le.y_obser) quad=4
-   if(quad.eq.0) then
-      print *, 'APM:ERROR IN PROCEDURE INTERP_HORIONTAL quad = 0 '
-      stop
-   endif
-!
-! Quad 1
-   if (quad.eq.1) then
-      mdl_x=x_mdl(i_min,j_min)
-      if(x_mdl(i_min,j_min).lt.0.) mdl_x=360.+x_mdl(i_min,j_min) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,j_min))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,j_min))/rad2deg*re
-      w_q1=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(im,j_min)
-      if(x_mdl(im,j_min).lt.0.) mdl_x=360.+x_mdl(im,j_min) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(im,j_min))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(im,j_min))/rad2deg*re
-      w_q2=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(im,jm)
-      if(x_mdl(im,jm).lt.0.) mdl_x=360.+x_mdl(im,jm) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(im,jm))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(im,jm))/rad2deg*re
-      w_q3=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(i_min,jm)
-      if(x_mdl(i_min,jm).lt.0.) mdl_x=360.+x_mdl(i_min,jm) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,jm))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,jm))/rad2deg*re
-      w_q4=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-! Quad 2
-   else if (quad.eq.2) then
-      mdl_x=x_mdl(ip,j_min)
-      if(x_mdl(ip,j_min).lt.0.) mdl_x=360.+x_mdl(ip,j_min) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(ip,j_min))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(ip,j_min))/rad2deg*re
-      w_q1=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(i_min,j_min)
-      if(x_mdl(i_min,j_min).lt.0.) mdl_x=360.+x_mdl(i_min,j_min) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,j_min))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,j_min))/rad2deg*re
-      w_q2=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(i_min,jm)
-      if(x_mdl(i_min,jm).lt.0.) mdl_x=360.+x_mdl(i_min,jm) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,jm))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,jm))/rad2deg*re
-      w_q3=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(ip,jm)
-      if(x_mdl(ip,jm).lt.0.) mdl_x=360.+x_mdl(ip,jm) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(ip,jm))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(ip,jm))/rad2deg*re
-      w_q4=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-! Quad 3
-   else if (quad.eq.3) then
-      mdl_x=x_mdl(ip,jp)
-      if(x_mdl(ip,jp).lt.0.) mdl_x=360.+x_mdl(ip,jp) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(ip,jp))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(ip,jp))/rad2deg*re
-      w_q1=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(i_min,jp)
-      if(x_mdl(i_min,jp).lt.0.) mdl_x=360.+x_mdl(i_min,jp) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,jp))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,jp))/rad2deg*re
-      w_q2=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(i_min,j_min)
-      if(x_mdl(i_min,j_min).lt.0.) mdl_x=360.+x_mdl(i_min,j_min) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,j_min))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,j_min))/rad2deg*re
-      w_q3=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(ip,j_min)
-      if(x_mdl(ip,j_min).lt.0.) mdl_x=360.+x_mdl(ip,j_min) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(ip,j_min))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(ip,j_min))/rad2deg*re
-      w_q4=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-! Quad 4
-   else if (quad.eq.4) then
-      mdl_x=x_mdl(i_min,jp)
-      if(x_mdl(i_min,jp).lt.0.) mdl_x=360.+x_mdl(i_min,jp) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,jp))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,jp))/rad2deg*re
-      w_q1=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(im,jp)
-      if(x_mdl(im,jp).lt.0.) mdl_x=360.+x_mdl(im,jp) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(im,jp))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(im,jp))/rad2deg*re
-      w_q2=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(im,jm)
-      if(x_mdl(im,jm).lt.0.) mdl_x=360.+x_mdl(im,jm) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(im,jm))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(im,jm))/rad2deg*re
-      w_q3=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-      mdl_x=x_mdl(i_min,j_min)
-      if(x_mdl(i_min,j_min).lt.0.) mdl_x=360.+x_mdl(i_min,j_min) 
-      dx_dis=abs(x_obser-mdl_x)/rad2deg*cos((y_obser+y_mdl(i_min,j_min))/rad2deg/2.)*re
-      dy_dis=abs(y_obser-y_mdl(i_min,j_min))/rad2deg*re
-      w_q4=sqrt(dx_dis*dx_dis + dy_dis*dy_dis)
-   endif
-   if(x_obser.ne.x_mdl(i_min,j_min).or.y_obser.ne.y_mdl(i_min,j_min)) then
-      wt=1./w_q1+1./w_q2+1./w_q3+1./w_q4
-   endif
-!
-   fld1_prf_mdl(:)=0.
-   fld2_prf_mdl(:)=0.
-   prs_prf_mdl(:)=0.
-   do k=1,nz_mdl
-      if(x_obser.eq.x_mdl(i_min,j_min).and.y_obser.eq.y_mdl(i_min,j_min)) then
-         fld1_prf_mdl(k)=fld1_mdl(i_min,j_min,k)
-         fld2_prf_mdl(k)=fld2_mdl(i_min,j_min,k)
-         prs_prf_mdl(k)=prs_mdl(i_min,j_min,k)
-      else if(quad.eq.1) then
-         fld1_prf_mdl(k)=(1./w_q1*fld1_mdl(i_min,j_min,k)+1./w_q2*fld1_mdl(im,j_min,k)+ &
-         1./w_q3*fld1_mdl(im,jm,k)+1./w_q4*fld1_mdl(i_min,jm,k))/wt
-         fld2_prf_mdl(k)=(1./w_q1*fld2_mdl(i_min,j_min,k)+1./w_q2*fld2_mdl(im,j_min,k)+ &
-         1./w_q3*fld2_mdl(im,jm,k)+1./w_q4*fld2_mdl(i_min,jm,k))/wt
-         prs_prf_mdl(k)=(1./w_q1*prs_mdl(i_min,j_min,k)+1./w_q2*prs_mdl(im,j_min,k)+ &
-         1./w_q3*prs_mdl(im,jm,k)+1./w_q4*prs_mdl(i_min,jm,k))/wt
-      else if(quad.eq.2) then
-         fld1_prf_mdl(k)=(1./w_q1*fld1_mdl(ip,j_min,k)+1./w_q2*fld1_mdl(i_min,j_min,k)+ &
-         1./w_q3*fld1_mdl(i_min,jm,k)+1./w_q4*fld1_mdl(ip,jm,k))/wt
-         fld2_prf_mdl(k)=(1./w_q1*fld2_mdl(ip,j_min,k)+1./w_q2*fld2_mdl(i_min,j_min,k)+ &
-         1./w_q3*fld2_mdl(i_min,jm,k)+1./w_q4*fld2_mdl(ip,jm,k))/wt
-         prs_prf_mdl(k)=(1./w_q1*prs_mdl(ip,j_min,k)+1./w_q2*prs_mdl(i_min,j_min,k)+ &
-         1./w_q3*prs_mdl(i_min,jm,k)+1./w_q4*prs_mdl(ip,jm,k))/wt
-      else if(quad.eq.3) then
-         fld1_prf_mdl(k)=(1./w_q1*fld1_mdl(ip,jp,k)+1./w_q2*fld1_mdl(i_min,jp,k)+ &
-         1./w_q3*fld1_mdl(i_min,j_min,k)+1./w_q4*fld1_mdl(ip,j_min,k))/wt
-         fld2_prf_mdl(k)=(1./w_q1*fld2_mdl(ip,jp,k)+1./w_q2*fld2_mdl(i_min,jp,k)+ &
-         1./w_q3*fld2_mdl(i_min,j_min,k)+1./w_q4*fld2_mdl(ip,j_min,k))/wt
-         prs_prf_mdl(k)=(1./w_q1*prs_mdl(ip,jp,k)+1./w_q2*prs_mdl(i_min,jp,k)+ &
-         1./w_q3*prs_mdl(i_min,j_min,k)+1./w_q4*prs_mdl(ip,j_min,k))/wt
-      else if(quad.eq.4) then
-         fld1_prf_mdl(k)=(1./w_q1*fld1_mdl(i_min,jp,k)+1./w_q2*fld1_mdl(im,jp,k)+ &
-         1./w_q3*fld1_mdl(im,j_min,k)+1./w_q4*fld1_mdl(i_min,j_min,k))/wt
-         fld2_prf_mdl(k)=(1./w_q1*fld2_mdl(i_min,jp,k)+1./w_q2*fld2_mdl(im,jp,k)+ &
-         1./w_q3*fld2_mdl(im,j_min,k)+1./w_q4*fld2_mdl(i_min,j_min,k))/wt
-         prs_prf_mdl(k)=(1./w_q1*prs_mdl(i_min,jp,k)+1./w_q2*prs_mdl(im,jp,k)+ &
-         1./w_q3*prs_mdl(im,j_min,k)+1./w_q4*prs_mdl(i_min,j_min,k))/wt
-      endif 
-   enddo
-!
-! Vertical interpolation
-   call interp_to_obs(fld1_prf,fld1_prf_mdl,prs_prf_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-   call interp_to_obs(fld2_prf,fld2_prf_mdl,prs_prf_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-end subroutine interp_hori_vert
-!
-subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-! Assumes prs_obs and prs_mdl are bottom to top
-   implicit none
-   integer                          :: nz_mdl,nlev_obs
-   integer                          :: k,kk,kend
-   real                             :: wt_dw,wt_up 
-   real,dimension(nz_mdl)           :: fld_mdl,prs_mdl
-   real,dimension(nlev_obs)         :: prs_obs
-   real,dimension(nlev_obs)         :: prf_mdl
-!
-   prf_mdl(:)=-9999.
-   kend=-9999
-   do k=1,nlev_obs-1
-      if((prs_obs(k)+prs_obs(k+1))/2..lt.prs_mdl(nz_mdl) .and. &
-      kend.eq.-9999) then
-         kend=k
-         exit
-      endif
-   enddo
-   do k=1,nlev_obs
-      if(prs_obs(k) .gt. prs_mdl(1)) then
-         prf_mdl(k)=fld_mdl(1)
-         cycle
-      endif
-      if(prs_obs(k) .lt. prs_mdl(nz_mdl)) then
-         prf_mdl(k)=fld_mdl(nz_mdl)
-         if(kend.eq.-9999) kend=k-1
-         cycle
-      endif
-      do kk=1,nz_mdl-1
-         if(prs_mdl(kk).ge.prs_obs(k) .and. prs_mdl(kk+1).lt.prs_obs(k)) then
-            wt_up=log(prs_mdl(kk))-log(prs_obs(k))
-            wt_dw=log(prs_obs(k))-log(prs_mdl(kk+1))
-            prf_mdl(k)=(wt_up*fld_mdl(kk)+wt_dw*fld_mdl(kk+1))/(wt_dw+wt_up)
-            exit
-         endif
-      enddo               
-   enddo
-end subroutine interp_to_obs
 !
       SUBROUTINE W3FB06(ALAT,ALON,ALAT1,ALON1,DX,ALONV,XI,XJ)
 !$$$   SUBPROGRAM  DOCUMENTATION  BLOCK
