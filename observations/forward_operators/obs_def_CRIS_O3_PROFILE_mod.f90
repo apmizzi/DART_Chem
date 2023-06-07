@@ -16,9 +16,9 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 !
-! BEGIN DART PREPROCESS KIND LIST
+! BEGIN DART PREPROCESS TYPE DEFINITIONS
 ! CRIS_O3_PROFILE, QTY_O3
-! END DART PREPROCESS KIND LIST
+! END DART PREPROCESS TYPE DEFINITIONS
 !
 ! BEGIN DART PREPROCESS USE OF SPECIAL OBS_DEF MODULE
 !   use obs_def_cris_o3_profile_mod, only : get_expected_cris_o3_profile, &
@@ -1170,7 +1170,7 @@ subroutine set_obs_def_cris_o3_profile(key, o3_pressure, o3_avg_kernel, o3_prior
 o3_nlayer, o3_klev, o3_kend)
 
    integer,                           intent(in)   :: key, o3_nlayer, o3_klev, o3_kend
-   real(r8), dimension(o3_nlayer),  intent(in)   :: o3_pressure
+   real(r8), dimension(o3_nlayer),    intent(in)   :: o3_pressure
    real(r8), dimension(o3_nlayer),    intent(in)   :: o3_avg_kernel
    real(r8), dimension(o3_nlayer),    intent(in)   :: o3_prior
    

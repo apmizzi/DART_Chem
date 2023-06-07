@@ -269,28 +269,6 @@ program gome2a_no2_trop_col_ascii_to_obs
       lat_obs_r8=lat_obs
       amf_trop_obs_r8=amf_trop_obs
 !
-!--------------------------------------------------------
-! Find model NO2 profile corresponding to the observation
-!--------------------------------------------------------
-      reject=0
-!      call get_model_profile(prf_locl,prf_full,nz_model, &
-!      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
-!      qmr_fld(i_min,j_min,:),no2_fld(i_min,j_min,:), &
-!      nlev_obs,scat_wts_obs,kend)
-!      print *, 'kend, prs ',kend,prs_obs(nlay_obs-kend+1)
-!      print *, 'no2_mdl ',no2_fld(i_min,j_min,1:nz_model)
-!      print *, 'qmr_mdl ',qmr_fld(i_min,j_min,1:nz_model)
-!      print *, 'tmp_mdl ',tmp_fld(i_min,j_min,1:nz_model)
-!      print *, 'prs_mdl ',prs_fld(i_min,j_min,1:nz_model)
-!      print *, 'prs_obs ',prs_obs(1:kend)
-!      print *, 'prf_full ',prf_full(1:kend)
-!      print *, 'prf_locl ',prf_locl(1:kend)
-!
-!--------------------------------------------------------
-! Find vertical location
-!--------------------------------------------------------
-!      call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_locl,nlay_obs,kend,trop_indx)
-!
 ! Obs thinning test
       obs_accept=obs_accept+1
       if(obs_accept/obs_no2_reten_freq*obs_no2_reten_freq.eq.obs_accept) then
@@ -380,99 +358,8 @@ program gome2a_no2_trop_col_ascii_to_obs
    cmd='rm -rf '//trim(fileout)
    if(qc_count.eq.0) then
       call execute_command_line(trim(cmd))
-   endif   
-!
+   endif
 end program gome2a_no2_trop_col_ascii_to_obs
-!
-subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,kend,trop_indx)
-!
-! This subroutine identifies a vertical location for 
-! vertical positioning/localization 
-! 
-   implicit none
-   integer                         :: nlay_obs,nlev_obs
-   integer                         :: k,kstr,kmax,kend
-   integer                         :: trop_indx
-   real                            :: prs_loc
-   real                            :: wt_ctr,wt_end
-   real                            :: zmax
-   real,dimension(nlev_obs)        :: prs_obs
-   real,dimension(nlay_obs)        :: locl_prf,locl_prf_sm
-!
-   locl_prf_sm(:)=locl_prf(:)   
-! locate maximum
-   zmax=-1.e10
-   kmax=0
-   do k=1,trop_indx
-      if(abs(locl_prf_sm(k)).gt.zmax) then
-         zmax=abs(locl_prf_sm(k))
-         kmax=k
-      endif
-   enddo
-   if(kmax.eq.1) kmax=kmax+1
-   prs_loc=(prs_obs(kmax)+prs_obs(kmax+1))/2.
-end subroutine vertical_locate
-!
-subroutine get_model_profile(prf_locl,prf_full,nz_mdl,prs_obs,prs_mdl, &
-   tmp_mdl,qmr_mdl,no2_mdl,nlev_obs,v_wgts,kend)
-   implicit none
-   integer                                :: nz_mdl
-   integer                                :: nlev_obs
-   integer                                :: i,j,k,kk,kend
-   real                                   :: Ru,Rd,cp,eps,AvogN,msq2cmsq,grav
-   real,dimension(nz_mdl)                 :: prs_mdl,tmp_mdl,qmr_mdl,no2_mdl
-   real,dimension(nz_mdl)                 :: tmp_prf,vtmp_prf,no2_prf
-   real,dimension(nlev_obs-1)             :: thick,v_wgts,prf_locl,prf_full
-   real,dimension(nlev_obs)               :: no2_prf_mdl,vtmp_prf_mdl,prs_obs
-!
-! Constants (mks units)
-   Ru=8.316
-   Rd=286.9
-   cp=1004.
-   eps=0.61
-   AvogN=6.02214e23
-   msq2cmsq=1.e4
-   grav=9.8
-!
-! calculate temperature from potential temperature
-   do k=1,nz_mdl
-      tmp_prf(k)=tmp_mdl(k)*((prs_mdl(k)/ &
-      100000.)**(Rd/cp))
-   enddo         
-! calculate virtual temperature
-   do k=1,nz_mdl
-      vtmp_prf(k)=tmp_prf(k)*(1.+eps*qmr_mdl(k))
-   enddo         
-! convert to molar density         
-   do k=1,nz_mdl
-      no2_prf(k)=no2_mdl(k)*prs_mdl(k)/Ru/tmp_prf(k)
-   enddo
-! Vertical interpolation (bottom to top)
-   no2_prf_mdl(:)=-9999.  
-   vtmp_prf_mdl(:)=-9999.   
-   call interp_to_obs(no2_prf_mdl,no2_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-   call interp_to_obs(vtmp_prf_mdl,vtmp_prf,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-!   
-! calculate number density times vertical weighting
-   prf_locl(:)=-9999.
-   prf_full(:)=-9999.
-   do k=1,nlev_obs-1
-      thick(k)=Rd*(vtmp_prf_mdl(k)+vtmp_prf_mdl(k+1))/2./grav* &
-      log(prs_obs(k)/prs_obs(k+1))     
-   enddo
-!
-! convert to moleculates/cm^2 and apply scatering weights
-   do k=1,nlev_obs-1
-      prf_locl(k)=thick(k)*(no2_prf_mdl(k)+no2_prf_mdl(k+1))/2.* &
-      AvogN/msq2cmsq * v_wgts(k)
-!      
-      prf_full(k)=thick(k)*(no2_prf_mdl(k)+no2_prf_mdl(k+1))/2.* &
-      AvogN/msq2cmsq * v_wgts(k)
-   enddo
-!   print *, 'prf_full  ',prf_full(:)
-!   print *, 'no2 fld   ',no2_prf_mdl(:)
-!   print *, 'avgk_obs ',v_wgts(:)
-end subroutine get_model_profile
 !
 subroutine get_DART_diag_data(file_in,name,data,nx,ny,nz,nc)
    use netcdf
@@ -548,45 +435,6 @@ subroutine handle_err(rc,text)
    print *, 'APM: NETCDF ERROR ',trim(text),' ',rc
    call abort
 end subroutine handle_err
-!
-subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
-! Assumes prs_obs and prs_mdl are bottom to top
-   implicit none
-   integer                          :: nz_mdl,nlev_obs
-   integer                          :: k,kk,kend
-   real                             :: wt_dw,wt_up 
-   real,dimension(nz_mdl)           :: fld_mdl,prs_mdl
-   real,dimension(nlev_obs)         :: prs_obs
-   real,dimension(nlev_obs)         :: prf_mdl
-!
-   prf_mdl(:)=-9999.
-   kend=-9999
-   do k=1,nlev_obs-1
-      if((prs_obs(k)+prs_obs(k+1))/2..lt.prs_mdl(nz_mdl) .and. &
-      kend.eq.-9999) then
-         kend=k
-         exit
-      endif
-   enddo
-   do k=1,nlev_obs
-      if(prs_obs(k) .gt. prs_mdl(1)) then
-         prf_mdl(k)=fld_mdl(1)
-         cycle
-      endif
-      if(prs_obs(k) .lt. prs_mdl(nz_mdl)) then
-         prf_mdl(k)=fld_mdl(nz_mdl)
-         cycle
-      endif
-      do kk=1,nz_mdl-1
-         if(prs_mdl(kk).ge.prs_obs(k) .and. prs_mdl(kk+1).lt.prs_obs(k)) then
-            wt_up=log(prs_mdl(kk))-log(prs_obs(k))
-            wt_dw=log(prs_obs(k))-log(prs_mdl(kk+1))
-            prf_mdl(k)=(wt_up*fld_mdl(kk+1)+wt_dw*fld_mdl(kk))/(wt_dw+wt_up)
-            exit
-         endif
-      enddo               
-   enddo
-end subroutine interp_to_obs
 !
       SUBROUTINE W3FB06(ALAT,ALON,ALAT1,ALON1,DX,ALONV,XI,XJ)
 !$$$   SUBPROGRAM  DOCUMENTATION  BLOCK

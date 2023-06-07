@@ -16,10 +16,10 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 !
-program tempo_o3_cpsr_ascii_to_obs
+program tes_o3_cpsr_ascii_to_obs
 !
 !=============================================
-! TEMPO O3 column obs
+! TES O3 column obs
 !=============================================
    use utilities_mod, only          : timestamp,                  &
                                       register_module,            &
@@ -56,7 +56,7 @@ program tempo_o3_cpsr_ascii_to_obs
                                       obs_def_type,               &
                                       set_obs_def_type_of_obs
 
-   use obs_def_tempo_o3_cpsr_mod, only     : set_obs_def_tempo_o3_cpsr
+   use obs_def_tes_o3_cpsr_mod, only     : set_obs_def_tes_o3_cpsr
 
    use assim_model_mod, only        : static_init_assim_model
 
@@ -69,7 +69,7 @@ program tempo_o3_cpsr_ascii_to_obs
                                       get_time
 
    use obs_kind_mod, only           : QTY_O3,                     &
-                                      TEMPO_O3_CPSR,              &
+                                      TES_O3_CPSR,              &
                                       get_type_of_obs_from_menu
 
    use random_seq_mod, only         : random_seq_type,            &
@@ -80,7 +80,7 @@ program tempo_o3_cpsr_ascii_to_obs
    implicit none
 !
 ! version controlled file description for error handling, do not edit
-   character(len=*), parameter     :: source   = 'tempo_o3_cpsr_ascii_to_obs.f90'
+   character(len=*), parameter     :: source   = 'tes_o3_cpsr_ascii_to_obs.f90'
    character(len=*), parameter     :: revision = ''
    character(len=*), parameter     :: revdate  = ''
 !
@@ -120,14 +120,14 @@ program tempo_o3_cpsr_ascii_to_obs
    real                            :: prs_loc,obs_sum
    real*8                          :: obs_err_var,level
 !
-   real*8,dimension(num_qc)        :: tempo_qc
+   real*8,dimension(num_qc)        :: tes_qc
    real*8,dimension(num_copies)    :: obs_val
 !
    character*129                   :: filedir,filename,fileout
    character*129                   :: copy_meta_data
-   character*129                   :: qc_meta_data='TEMPO O3 QC index'
+   character*129                   :: qc_meta_data='TES O3 QC index'
    character*129                   :: chr_year,chr_month,chr_day
-   character*129                   :: file_name='tempo_o3_cpsr_obs_seq'
+   character*129                   :: file_name='tes_o3_cpsr_obs_seq'
    character*129                   :: data_type,cmd
    character*129                   :: path_model,file_model,file_in
 !
@@ -164,7 +164,7 @@ program tempo_o3_cpsr_ascii_to_obs
    real,allocatable,dimension(:)     :: o3_shift,prior_shift
    real,allocatable,dimension(:,:)   :: avgk_shift,cov_shift
 !
-   namelist /create_tempo_obs_nml/filedir,filename,fileout, &
+   namelist /create_tes_obs_nml/filedir,filename,fileout, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
    lon_min,lon_max,lat_min,lat_max, &
    path_model,file_model,nx_model,ny_model,nz_model,obs_o3_reten_freq,obs_no2_reten_freq
@@ -189,13 +189,13 @@ program tempo_o3_cpsr_ascii_to_obs
 ! Initialize the obs_sequence module
    call static_init_obs_sequence()
 !
-   call find_namelist_in_file("input.nml", "create_tempo_obs_nml", iunit)
-   read(iunit, nml = create_tempo_obs_nml, iostat = io)
-   call check_namelist_read(iunit, io, "create_tempo_obs_nml")
+   call find_namelist_in_file("input.nml", "create_tes_obs_nml", iunit)
+   read(iunit, nml = create_tes_obs_nml, iostat = io)
+   call check_namelist_read(iunit, io, "create_tes_obs_nml")
 !
 ! Record the namelist values used for the run ...
-   call error_handler(E_MSG,'init_create_tempo_obs','create_tempo_obs_nml values are',' ',' ',' ')
-   write(     *     , nml=create_tempo_obs_nml)
+   call error_handler(E_MSG,'init_create_tes_obs','create_tes_obs_nml values are',' ',' ',' ')
+   write(     *     , nml=create_tes_obs_nml)
 !
 ! Initialize an obs_sequence structure
    call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)
@@ -205,7 +205,7 @@ program tempo_o3_cpsr_ascii_to_obs
 !
    do icopy =1, num_copies
       if (icopy == 1) then
-         copy_meta_data='TEMPO O3 observation'
+         copy_meta_data='TES O3 observation'
       else
          copy_meta_data='Truth'
       endif
@@ -214,7 +214,7 @@ program tempo_o3_cpsr_ascii_to_obs
    call set_qc_meta_data(seq, 1, qc_meta_data)
 !
 !-------------------------------------------------------
-! Read TEMPO O3 data
+! Read TES O3 data
 !-------------------------------------------------------
 !
 ! Set dates and initialize qc_count
@@ -244,13 +244,13 @@ program tempo_o3_cpsr_ascii_to_obs
    tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
    o3_fld(:,:,:)=o3_fld(:,:,:)*1.e-6
 !
-! Open TEMPO O3 binary file
+! Open TES O3 binary file
    fileid=100
    write(6,*)'opening ',TRIM(filedir)//TRIM(filename)
    open(fileid,file=TRIM(filedir)//TRIM(filename),                     &
    form='formatted', status='old', iostat=ios)
 !
-! Read TEMPO O3
+! Read TES O3
    read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    do while (ios == 0)
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
@@ -292,7 +292,7 @@ program tempo_o3_cpsr_ascii_to_obs
       do i=1,nlay_obs
          if(cov_obs(i,i).lt.0.) then
             flg=1
-            print *, 'tempo_variance is NaN or negative ',cov_obs(i,i)
+            print *, 'tes_variance is NaN or negative ',cov_obs(i,i)
             exit
          endif
       enddo
@@ -342,7 +342,7 @@ program tempo_o3_cpsr_ascii_to_obs
 !
 !--------------------------------------------------------
 ! Find model O3 profile corresponding to the observation
-! TEMPO O3 and WRF-Chem vertical grids are bottom to top        
+! TES O3 and WRF-Chem vertical grids are bottom to top        
 !--------------------------------------------------------
 !      reject=0
 !      call get_model_profile(prf_locl,prf_full,nz_model, &
@@ -370,7 +370,7 @@ program tempo_o3_cpsr_ascii_to_obs
 ! Obs value is a cpsr
             obs_val(:)=o3_cpsr(imds)
             obs_err_var=(fac_obs_error*fac_err*1.)**2.
-            tempo_qc(:)=0
+            tes_qc(:)=0
             obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
             call get_time(obs_time, seconds, days)
 !
@@ -379,7 +379,7 @@ program tempo_o3_cpsr_ascii_to_obs
 !            which_vert=1       ! level
 !            which_vert=2       ! pressure
 !
-            obs_kind = TEMPO_O3_CPSR
+            obs_kind = TES_O3_CPSR
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90)
             level=imds 
             obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
@@ -388,10 +388,10 @@ program tempo_o3_cpsr_ascii_to_obs
             call set_obs_def_location(obs_def, obs_location)
             call set_obs_def_time(obs_def, obs_time)
             call set_obs_def_error_variance(obs_def, obs_err_var)
-            call set_obs_def_tempo_o3_cpsr(qc_count, prs_obs_r8(:), avgk_obs_r8(:), prior_obs_r8, nlayer)
+            call set_obs_def_tes_o3_cpsr(qc_count, prs_obs_r8(:), avgk_obs_r8(:), prior_obs_r8, nlayer)
             call set_obs_def_key(obs_def, qc_count)
             call set_obs_values(obs, obs_val, 1)
-            call set_qc(obs, tempo_qc, num_qc)
+            call set_qc(obs, tes_qc, num_qc)
             call set_obs_def(obs, obs_def)
 !
             old_ob=0
@@ -456,7 +456,7 @@ program tempo_o3_cpsr_ascii_to_obs
       call execute_command_line(trim(cmd))
    endif   
 !
-end program tempo_o3_cpsr_ascii_to_obs
+end program tes_o3_cpsr_ascii_to_obs
 !
 subroutine cpsr_calculation(nlayer_trc,nlayer,spec_cpsr,avgk_cpsr,prior_cpsr,spec_obs,prior_obs,avgk_obs,cov_obs) 
    real,parameter                               :: eps_tol=1.e-3
