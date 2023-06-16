@@ -58,7 +58,14 @@ use        types_mod, only : r8, missing_r8
 use    utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &
                              nmlfileunit, check_namelist_read, &
                              find_namelist_in_file, do_nml_file, do_nml_term, &
-                             ascii_file_format
+                             ascii_file_format, &
+                             read_int_scalar, &
+                             write_int_scalar, &       
+                             read_r8_scalar, &
+                             write_r8_scalar, &
+                             read_r8_array, &
+                             write_r8_array
+
 use     location_mod, only : location_type, set_location, get_location, VERTISPRESSURE, VERTISLEVEL, VERTISSURFACE, VERTISUNDEF
 
 use  assim_model_mod, only : interpolate
@@ -635,8 +642,6 @@ SELECT CASE (fileformat)
 END SELECT
 
 end subroutine write_mopitt_avg_kernels
-
-
 
 end module obs_def_mopitt_mod
 ! END DART PREPROCESS MODULE CODE

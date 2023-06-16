@@ -461,6 +461,7 @@ character(len=*), parameter :: revdate  = ''
 ! Perturb the members
                 print *, rank,'perturb the IC/BCs '
                 do isp=1,nchem_spcs
+                   print *, 'Chem species ',trim(ch_chem_spc(isp))
                    allocate(chem_data3d_sav(nx,ny,nz,num_mem))
                    do imem=1,num_mem
                       if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
@@ -618,6 +619,11 @@ character(len=*), parameter :: revdate  = ''
                             std=sqrt(sum(pers)/real(num_mem-1))
                             chem_data3d_mean(i,j,k,1)=mean
                             chem_data3d_sprd(i,j,k,1)=std
+                            if(mean.eq.0) then
+                               print *, 'mean, std ',mean,std
+                               chem_data3d_frac(i,j,k,1)=0.
+                               cycle
+                            endif   
                             chem_data3d_frac(i,j,k,1)=std/mean
                          enddo
                       enddo

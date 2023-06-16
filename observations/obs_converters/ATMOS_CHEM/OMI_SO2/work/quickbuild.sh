@@ -14,7 +14,6 @@ LOCATION=threed_sphere
 
 
 programs=(
-omi_so2_total_col_ascii_to_obs
 omi_so2_pbl_col_ascii_to_obs
 obs_sequence_tool
 advance_time

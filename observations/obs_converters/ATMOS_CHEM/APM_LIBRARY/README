@@ -1,0 +1,4 @@
+To build the libapm_code.a run './quickbuild.sh'
+To display the  the contents of libapm_co use 'ar t libapm_code.a'
+To clean the directory  run './quickbuild.sh clean' followed by'rm dart.*'
+

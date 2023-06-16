@@ -56,7 +56,13 @@ use             types_mod, only : r8, MISSING_R8
 use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &
                                   nmlfileunit, check_namelist_read, &
                                   find_namelist_in_file, do_nml_file, do_nml_term, &
-                                  ascii_file_format
+                                  ascii_file_format, &
+                                  read_int_scalar, &
+                                  write_int_scalar, &       
+                                  read_r8_scalar, &
+                                  write_r8_scalar, &
+                                  read_r8_array, &
+                                  write_r8_array
 
 use          location_mod, only : location_type, set_location, get_location, &
                                   VERTISPRESSURE, VERTISSURFACE, VERTISLEVEL, &
@@ -583,141 +589,6 @@ pressure(key,1:hcho_nlayer)   = hcho_pressure(1:hcho_nlayer)
 avg_kernel(key,1:hcho_nlayer) = hcho_avg_kernel(1:hcho_nlayer)
 
 end subroutine set_obs_def_tropomi_hcho_total_col
-
-!-------------------------------------------------------------------------------
-
-function read_int_scalar(ifile, fform, context)
-
-integer                      :: read_int_scalar
-integer,          intent(in) :: ifile
-character(len=*), intent(in) :: fform
-character(len=*), intent(in) :: context
-
-integer :: io
-
-if (ascii_file_format(fform)) then
-   read(ifile, *, iostat = io) read_int_scalar
-else
-   read(ifile, iostat = io) read_int_scalar
-endif
-if ( io /= 0 ) then
-   call error_handler(E_ERR,'read_int_scalar', context, source)
-endif
-
-end function read_int_scalar
-
-!-------------------------------------------------------------------------------
-
-subroutine write_int_scalar(ifile, my_scalar, fform, context)
-
-integer,          intent(in) :: ifile
-integer,          intent(in) :: my_scalar
-character(len=*), intent(in) :: fform
-character(len=*), intent(in) :: context
-
-integer :: io
-
-if (ascii_file_format(fform)) then
-   write(ifile, *, iostat=io) my_scalar
-else
-   write(ifile, iostat=io) my_scalar
-endif
-if ( io /= 0 ) then
-   call error_handler(E_ERR, 'write_int_scalar', context, source)
-endif
-
-end subroutine write_int_scalar
-
-!-------------------------------------------------------------------------------
-
-function read_r8_scalar(ifile, fform, context)
-
-real(r8)                     :: read_r8_scalar
-integer,          intent(in) :: ifile
-character(len=*), intent(in) :: fform
-character(len=*), intent(in) :: context
-
-integer :: io
-
-if (ascii_file_format(fform)) then
-   read(ifile, *, iostat = io) read_r8_scalar
-else
-   read(ifile, iostat = io) read_r8_scalar
-endif
-if ( io /= 0 ) then
-   call error_handler(E_ERR,'read_r8_scalar', context, source)
-endif
-
-end function read_r8_scalar
-
-!-------------------------------------------------------------------------------
-
-subroutine write_r8_scalar(ifile, my_scalar, fform, context)
-
-integer,          intent(in) :: ifile
-real(r8),         intent(in) :: my_scalar
-character(len=*), intent(in) :: fform
-character(len=*), intent(in) :: context
-
-integer :: io
-
-if (ascii_file_format(fform)) then
-   write(ifile, *, iostat=io) my_scalar
-else
-   write(ifile, iostat=io) my_scalar
-endif
-if ( io /= 0 ) then
-   call error_handler(E_ERR, 'write_r8_scalar', context, source)
-endif
-
-end subroutine write_r8_scalar
-
-!-------------------------------------------------------------------------------
-
-subroutine read_r8_array(ifile, num_items, r8_array, fform, context)
-
-integer,          intent(in)  :: ifile, num_items
-real(r8),         intent(out) :: r8_array(:)
-character(len=*), intent(in)  :: fform
-character(len=*), intent(in)  :: context
-
-integer :: io
-
-if (ascii_file_format(fform)) then
-   read(ifile, *, iostat = io) r8_array(1:num_items)
-else
-   read(ifile, iostat = io) r8_array(1:num_items)
-endif
-if ( io /= 0 ) then
-   call error_handler(E_ERR, 'read_r8_array', context, source)
-endif
-
-end subroutine read_r8_array
-
-!-------------------------------------------------------------------------------
-
-subroutine write_r8_array(ifile, num_items, array, fform, context)
-
-integer,          intent(in) :: ifile, num_items
-real(r8),         intent(in) :: array(:)
-character(len=*), intent(in) :: fform
-character(len=*), intent(in) :: context
-
-integer :: io
-
-if (ascii_file_format(fform)) then
-   write(ifile, *, iostat = io) array(1:num_items)
-else
-   write(ifile, iostat = io) array(1:num_items)
-endif
-if ( io /= 0 ) then
-   call error_handler(E_ERR, 'write_r8_array', context, source)
-endif
-
-end subroutine write_r8_array
-
-!-------------------------------------------------------------------------------
-
 
 end module obs_def_tropomi_hcho_total_col_mod
 

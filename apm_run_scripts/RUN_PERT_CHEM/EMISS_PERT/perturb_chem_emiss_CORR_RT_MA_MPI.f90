@@ -883,6 +883,10 @@ character(len=*), parameter :: revdate  = ''
                                std=sqrt(sum(pers)/real(num_mem-1))
                                chem_data3d_mean(i,j,k)=mean
                                chem_data3d_sprd(i,j,k)=std
+                               if(mean.eq.0.) then
+                                  print *, 'mean std ',mean,std
+                                  cycle
+                               endif
                                chem_data3d_frac(i,j,k)=std/mean
                             enddo
                          enddo
@@ -1033,6 +1037,10 @@ character(len=*), parameter :: revdate  = ''
                                std=sqrt(sum(pers)/real(num_mem-1))
                                chem_data3d_mean(i,j,k)=mean
                                chem_data3d_sprd(i,j,k)=std
+                               if(mean.eq.0.) then
+                                  print *, 'mean std ',mean,std
+                                  cycle
+                               endif
                                chem_data3d_frac(i,j,k)=std/mean
                             enddo
                          enddo
@@ -1178,6 +1186,10 @@ character(len=*), parameter :: revdate  = ''
                                std=sqrt(sum(pers)/real(num_mem-1))
                                chem_data3d_mean(i,j,k)=mean
                                chem_data3d_sprd(i,j,k)=std
+                               if(mean.eq.0.) then
+                                  print *, 'mean std ',mean,std
+                                  cycle
+                               endif
                                chem_data3d_frac(i,j,k)=std/mean
                             enddo
                          enddo

@@ -13,7 +13,6 @@ MODEL=wrf_chem
 LOCATION=threed_sphere
 EXCLUDE=experiments
 
-
 programs=(
 closest_member_tool
 filter
@@ -36,6 +35,7 @@ obs_seq_coverage
 obs_seq_to_netcdf
 obs_seq_verify
 obs_sequence_tool
+obs_impact_tool
 )
 
 

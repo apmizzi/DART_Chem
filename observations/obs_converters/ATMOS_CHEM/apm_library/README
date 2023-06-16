@@ -1,4 +1,0 @@
-To build the library:
-   1.  run 'ifort -c xxxx.f90' on each fortran file.
-   2.  run 'ar crv libapmcode.a xxxx.o yyyy.o zzzz.o' for all object files.
-

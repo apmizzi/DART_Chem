@@ -1,4 +1,4 @@
-!/bin/ksh -aux
+#!/bin/ksh -aux
 #
 # Copyright 2019 University Corporation for Atmospheric Research and 
 # Colorado Department of Public Health and Environment.
@@ -30,10 +30,10 @@ export FIRST_FILTER_DATE=2014071518
 export FIRST_DART_INFLATE_DATE=2014071518
 export FIRST_EMISS_INV_DATE=2014071518
 #
-export INITIAL_DATE=2014072612
-export FIRST_FILTER_DATE=2014072618
-export FIRST_DART_INFLATE_DATE=2014072618
-export FIRST_EMISS_INV_DATE=2014072618
+#export INITIAL_DATE=2014072612
+#export FIRST_FILTER_DATE=2014072618
+#export FIRST_DART_INFLATE_DATE=2014072618
+#export FIRST_EMISS_INV_DATE=2014072618
 #
 #export INITIAL_DATE=2020071000
 #export FIRST_FILTER_DATE=2020071006
@@ -49,13 +49,11 @@ export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
 #
 # START CYCLE DATE-TIME:
 export CYCLE_STR_DATE=2014071518
-export CYCLE_STR_DATE=2014072618
 #export CYCLE_STR_DATE=2010071518
 #export CYCLE_STR_DATE=2022072606
 #
 # END CYCLE DATE-TIME:
 export CYCLE_END_DATE=2014071518
-export CYCLE_END_DATE=2014072618
 #export CYCLE_END_DATE=2010071518
 #export CYCLE_END_DATE=2022072618
 #export CYCLE_END_DATE=${CYCLE_STR_DATE}
@@ -319,7 +317,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export WRFDA_VER=WRFDAv4.3.2_dmpar
    export WRF_VER=WRFv4.3.2_dmpar
    export WRFCHEM_VER=WRFCHEMv4.3.2_dmpar
-   export DART_VER=DART_MERGE/NCAR_DART
+   export DART_VER=DART_MERGE/CHEM_DART
 #
 # ROOT DIRECTORIES:
    export SCRATCH_DIR=/nobackupp11/amizzi/OUTPUT_DATA
@@ -328,7 +326,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # DEPENDENT INPUT DATA DIRECTORIES:
    export EXPERIMENT_DIR=${SCRATCH_DIR}
-   export RUN_DIR=${EXPERIMENT_DIR}/real_TRACER_1_ALLCHEM
+   export RUN_DIR=${EXPERIMENT_DIR}/real_TRACER_1_ALLCHEM_NEW
    export TRUNK_DIR=${WORK_DIR}/TRUNK
    export WPS_DIR=${TRUNK_DIR}/${WPS_VER}
    export WPS_GEOG_DIR=${INPUT_DATA_DIR}/${WPS_GEOG_VER}
@@ -340,11 +338,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export WRFCHEM_DART_WORK_DIR=${DART_DIR}/models/wrf_chem/work
    export JOB_CONTROL_SCRIPTS_DIR=${DART_DIR}/models/wrf_chem/job_control_scripts
    export NAMELIST_SCRIPTS_DIR=${DART_DIR}/models/wrf_chem/namelist_scripts
-   export ADJUST_EMISS_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_EMISS_INV
-   export WES_COLDENS_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_WES_COLDENS
-   export MEGAN_BIO_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_MEGAN_BIO
-   export FINN_FIRE_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_FINN_FIRE
-   export BIAS_CORR_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_BIAS_CORR
+   export ADJUST_EMISS_DIR=${DART_DIR}/apm_run_scripts/RUN_EMISS_INV
+   export WES_COLDENS_DIR=${DART_DIR}/apm_run_scripts/RUN_WES_COLDENS
+   export MEGAN_BIO_DIR=${DART_DIR}/apm_run_scripts/RUN_MEGAN_BIO
+   export FINN_FIRE_DIR=${DART_DIR}/apm_run_scripts/RUN_FINN_FIRE
+   export BIAS_CORR_DIR=${DART_DIR}/apm_run_scripts/RUN_BIAS_CORR
    export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_REAL_TIME_DATA
    export EXPERIMENT_MEXICO_DATA_DIR=${INPUT_DATA_DIR}/MEXICO_REAL_TIME_DATA
 #   export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FIREX_REAL_TIME_DATA
@@ -396,9 +394,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export EXPERIMENT_HIST_IO_DIR=${EXPERIMENT_DATA_DIR}/hist_io_files
    export VTABLE_DIR=${WPS_DIR}/ungrib/Variable_Tables
    export BE_DIR=${WRFDA_DIR}/var/run
-   export PERT_CHEM_INPUT_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_PERT_CHEM/ICBC_PERT
-   export PERT_CHEM_EMISS_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_PERT_CHEM/EMISS_PERT
-   export RUN_BAND_DEPTH_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_BAND_DEPTH
+   export PERT_CHEM_INPUT_DIR=${DART_DIR}/apm_run_scripts/RUN_PERT_CHEM/ICBC_PERT
+   export PERT_CHEM_EMISS_DIR=${DART_DIR}/apm_run_scripts/RUN_PERT_CHEM/EMISS_PERT
+   export RUN_BAND_DEPTH_DIR=${DART_DIR}/apm_run_scripts/RUN_BAND_DEPTH
 #
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
    cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
@@ -516,7 +514,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_OMI_O3_PROFILE_OBS=false # (done)
       export RUN_OMI_O3_CPSR_OBS=false
       export RUN_OMI_NO2_TOTAL_COL_OBS=false
-      export RUN_OMI_NO2_TROP_COL_OBS=true # (done)
+      export RUN_OMI_NO2_TROP_COL_OBS=false # (done)
       export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
       export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false # (done)
       export RUN_OMI_SO2_TOTAL_COL_OBS=false
@@ -595,7 +593,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_PANDA_PM25_OBS=false
       export RUN_MEXICO_AQS_CO_OBS=false
       export RUN_MET_OBS=false
-      export RUN_COMBINE_OBS=true
+      export RUN_COMBINE_OBS=false
 #
       if [[ ${DATE} -eq ${INITIAL_DATE}  ]]; then
          export RUN_PREPROCESS_OBS=false
@@ -609,20 +607,20 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_BAND_DEPTH=false
          export RUN_WRFCHEM_CYCLE_FR=false
          export RUN_ENSMEAN_CYCLE_FR=false
-         export RUN_ENSEMBLE_MEAN_OUTPUT=false
+         export RUN_ENSEMBLE_MEAN_OUTPUT=true
       else
-         export RUN_PREPROCESS_OBS=true
+         export RUN_PREPROCESS_OBS=false
          export RUN_WRFCHEM_INITIAL=false
          export RUN_LOCALIZATION=false
          export RUN_DART_FILTER=true
          export RUN_BIAS_CORRECTION=false
-         export RUN_UPDATE_BC=false
-         export RUN_ENSEMBLE_MEAN_INPUT=false
-         export RUN_WRFCHEM_CYCLE_CR=false
+         export RUN_UPDATE_BC=true
+         export RUN_ENSEMBLE_MEAN_INPUT=true
+         export RUN_WRFCHEM_CYCLE_CR=true
          export RUN_BAND_DEPTH=false
          export RUN_WRFCHEM_CYCLE_FR=false
          export RUN_ENSMEAN_CYCLE_FR=false
-         export RUN_ENSEMBLE_MEAN_OUTPUT=false
+         export RUN_ENSEMBLE_MEAN_OUTPUT=true
       fi
    else
       export RUN_GEOGRID=false
@@ -1122,7 +1120,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export BAND_DEPTH_DIR=${RUN_DIR}/${DATE}/band_depth
    export ENSEMBLE_MEAN_INPUT_DIR=${RUN_DIR}/${DATE}/ensemble_mean_input
    export ENSEMBLE_MEAN_OUTPUT_DIR=${RUN_DIR}/${DATE}/ensemble_mean_output
-   export REAL_TIME_DIR=${DART_DIR}/models/wrf_chem/run_scripts/RUN_REAL_TIME
+   export REAL_TIME_DIR=${DART_DIR}/apm_run_scripts/RUN_REAL_TIME
 #
 # WPS PARAMETERS:
    export SINGLE_FILE=false
@@ -1766,7 +1764,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
           'hno3',  'QTY_HNO3',                 'TYPE_HNO3', 'UPDATE','999',
           'nh3',   'QTY_NH3',                  'TYPE_NH3', 'UPDATE','999',
           'pan',   'QTY_PAN',                  'TYPE_PAN', 'UPDATE','999',
-          'co2',   'QTY_CO2',                  'TYPE_CO2', 'UPDATE','999',
           'ch4',   'QTY_CH4',                  'TYPE_CH4', 'UPDATE','999'"
 #
 # Both of these need kind and type definitions.
@@ -1844,7 +1841,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
           'hno3',  '0.0','NULL','CLAMP',
           'nh3',   '0.0','NULL','CLAMP',
           'pan',   '0.0','NULL','CLAMP',
-          'co2',   '0.0','NULL','CLAMP',
           'ch4',   '0.0','NULL','CLAMP',
           'E_CO','0.0','NULL','CLAMP',
           'E_NO','0.0','NULL','CLAMP',
@@ -2465,8 +2461,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export FORW_FILE_FR=FW_met_em.d${FR_DOMAIN}.${P_FORW_FILE_DATE}.nc
          export OUTFILE_CR=met_em.d${CR_DOMAIN}.${P_FILE_DATE}.nc
          export OUTFILE_FR=met_em.d${FR_DOMAIN}.${P_FILE_DATE}.nc
-         export TIME_INTERP_DIR1=${DART_DIR}/models/wrf_chem
-         export TIME_INTERP_DIR2=run_scripts/RUN_TIME_INTERP/work
+         export TIME_INTERP_DIR1=${DART_DIR}/
+         export TIME_INTERP_DIR2=apm_run_scripts/RUN_TIME_INTERP/work
          export FIX_TIME_FILE=${TIME_INTERP_DIR1}/${TIME_INTERP_DIR2}/fix_time_stamp.exe
          export NUM_FIX_DATES=1
          cp ${FIX_TIME_FILE} ./.
@@ -2564,8 +2560,8 @@ EOF
          export BDYFILE_CR=wrfbdy_d${CR_DOMAIN}_${P_FILE_DATE}
          export OUTFILE_CR=wrfinput_d${CR_DOMAIN}_${P_FILE_DATE}
          export OUTFILE_FR=wrfinput_d${FR_DOMAIN}_${P_FILE_DATE}
-         export TIME_INTERP_DIR1=${DART_DIR}/models/wrf_chem
-         export TIME_INTERP_DIR2=run_scripts/RUN_TIME_INTERP/work
+         export TIME_INTERP_DIR1=${DART_DIR}/
+         export TIME_INTERP_DIR2=apm_run_scripts/RUN_TIME_INTERP/work
          export FIX_TIME_FILE=${TIME_INTERP_DIR1}/${TIME_INTERP_DIR2}/fix_time_stamp.exe
          let NUM_FIX_DATES=${FCST_PERIOD}/${LBC_FREQ}
          ((FX_IDX=0)) 
@@ -2611,8 +2607,8 @@ file_sw=1
 EOF
          ncflint -w ${BACK_WT} ${BACK_BDYF_CR} ${FORW_BDYF_CR} ${BDYFILE_CR}
          ./fix_time_stamp.exe
-         export TIME_INTERP_DIR1=${DART_DIR}/models/wrf_chem
-         export TIME_INTERP_DIR2=run_scripts/RUN_TIME_INTERP/work
+         export TIME_INTERP_DIR1=${DART_DIR}/
+         export TIME_INTERP_DIR2=apm_run_scripts/RUN_TIME_INTERP/work
          export FIX_TIME_FILE=${TIME_INTERP_DIR1}/${TIME_INTERP_DIR2}/fix_time_stamp.exe
          cp ${FIX_TIME_FILE} ./.
 #
@@ -2633,8 +2629,8 @@ file_sw=0
 EOF
          ncflint -w ${BACK_WT} ${BACK_FILE_CR} ${FORW_FILE_CR} ${OUTFILE_CR}
          ./fix_time_stamp.exe
-         export TIME_INTERP_DIR1=${DART_DIR}/models/wrf_chem
-         export TIME_INTERP_DIR2=run_scripts/RUN_TIME_INTERP/work
+         export TIME_INTERP_DIR1=${DART_DIR}/
+         export TIME_INTERP_DIR2=apm_run_scripts/RUN_TIME_INTERP/work
          export FIX_TIME_FILE=${TIME_INTERP_DIR1}/${TIME_INTERP_DIR2}/fix_time_stamp.exe
          cp ${FIX_TIME_FILE} ./.
 #
@@ -19023,14 +19019,14 @@ EOF
 #
 # GET DART input.nml
       rm -rf input.nml
-      cp ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/work/input.nml ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/NCEP/prep_bufr/work/input.nml ./.
 #
 # RUN_PREPBUFR TO ASCII CONVERTER
-      ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/work/prepbufr_RT.csh ${D_YYYY} ${DD_MM} ${DD_DD} ${DD_DD} ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/exe > index.file 2>&1
+      ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/NCEP/prep_bufr/work/prepbufr_RT.csh ${D_YYYY} ${DD_MM} ${DD_DD} ${DD_DD} ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/NCEP/prep_bufr/exe > index.file 2>&1
 #
 # RUN ASCII TO OBS_SEQ CONVERTER
       ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_ncep_ascii_to_obs_input_nml_RT.ksh
-      ${DART_DIR}/observations/obs_converters/NCEP/ascii_to_obs/work/create_real_obs > index_create 2>&1
+      ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/NCEP/ascii_to_obs/work/create_real_obs > index_create 2>&1
 #
       mv obs_seq${D_DATE} obs_seq_prep_${DATE}.out
    fi
@@ -20018,12 +20014,7 @@ EOF
       qsub -Wblock=true job.ksh
       mv obs_seq.new obs_seq_comb_filtered_${DATE}.out 
    fi
-
-
-exit
-
-
-   #
+#
 #########################################################################
 #
 # RUN WRF-CHEM INITAL (NO CYCLING-BASED FIRST GUESS FOR DART)
@@ -20813,13 +20804,7 @@ EOF
       ncea -n ${NUM_MEMBERS},3,1 wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrfchemi_d${CR_DOMAIN}_post_mean
       ncea -n ${NUM_MEMBERS},3,1 wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrffirechemi_d${CR_DOMAIN}_post_mean
    fi
-
-
-
-exit
-
-
-   #
+#
 #########################################################################
 #
 # RUN BIAS CORRECTION
