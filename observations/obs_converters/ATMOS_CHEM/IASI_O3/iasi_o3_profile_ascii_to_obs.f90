@@ -121,7 +121,7 @@ program iasi_o3_profile_ascii_to_obs
    integer                 :: i, j, k, l, kk, ik, ikk, k1, k2, kstr 
    integer                 :: line_count, index, nlev, nlevp, prs_idx
    integer                 :: seconds, days, which_vert, old_ob
-   integer                 :: spc_vloc,iasi_co_vloc,iasi_o3_vloc,kmax,itrm
+   integer                 :: kmax,itrm
    integer,dimension(max_num_obs)             :: qc_iasi, qc_thinning
    integer,dimension(12)                      :: days_in_month=(/ &
                                               31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
@@ -197,7 +197,7 @@ program iasi_o3_profile_ascii_to_obs
    namelist /create_iasi_obs_nml/filedir,filename,year,month,day,hour,bin_beg, bin_end, &
             IASI_CO_retrieval_type,IASI_O3_retrieval_type,fac_obs_error,use_log_co,use_log_o3, &
             use_cpsr_co_trunc,cpsr_co_trunc_lim,use_cpsr_o3_trunc,cpsr_o3_trunc_lim, &
-            iasi_co_vloc,iasi_o3_vloc,lon_min,lon_max,lat_min,lat_max
+            lon_min,lon_max,lat_min,lat_max
 !
 ! Set constants
    log10e=log10(exp(1.0))
@@ -213,8 +213,6 @@ program iasi_o3_profile_ascii_to_obs
    minute_lst=-9999
    second_lst=-9999 
    fac=1.0
-   iasi_co_vloc=0
-   iasi_o3_vloc=0
    lon_min=-9999
    lon_max=-9999
    lat_min=-9999
@@ -1171,18 +1169,7 @@ program iasi_o3_profile_ascii_to_obs
 ! Use each mixing ratio as a separate obs
 !--------------------------------------------------------
 !
-           spc_vloc=iasi_o3_vloc
-           if(spc_vloc.eq.1) then
-              call vertical_locate(prs_loc,kmax,xg_prs(i,j,kstr:ias_dim), &
-              avgker(k,1:xg_nlvls(i,j)),xg_nlvls(i,j),xg_nlvls(i,j))
-              if(irot.eq.1) then
-                 level=prs_loc*100.
-                 which_vert=2       ! pressure surface
-              elseif(irot.eq.0) then
-                 level=prs_loc*100.
-                 which_vert=2       ! pressure surface
-              endif
-           elseif(irot.eq.1) then
+           if(irot.eq.1) then
               level=1
               which_vert=-2         ! undefined
            elseif(irot.eq.0) then  

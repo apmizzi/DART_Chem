@@ -27,7 +27,7 @@ use obs_def_mod,      only : get_obs_def_type_of_obs, obs_def_type
 use obs_kind_mod,     only : MOPITT_CO_TOTAL_COL, MOPITT_CO_PROFILE, MOPITT_CO_CPSR, &
                              IASI_CO_TOTAL_COL, IASI_CO_PROFILE, IASI_CO_CPSR, &
                              IASI_CO_TOTAL_COL, IASI_O3_PROFILE, IASI_O3_CPSR, &
-                             MODIS_AOD_TOTAL_COL, &
+                             MODIS_AOD_TOTAL_COL, MODIS_LEAF_AREA_INDEX, MODIS_FPAR, &
                              OMI_O3_TOTAL_COL, OMI_O3_TROP_COL, OMI_O3_PROFILE, OMI_O3_CPSR, &
                              OMI_NO2_TOTAL_COL, OMI_NO2_TROP_COL, &
                              OMI_NO2_DOMINO_TOTAL_COL, OMI_NO2_DOMINO_TROP_COL, &
@@ -440,6 +440,18 @@ select case (this_obs_type)
          failed_outlier = .false.
       endif
    case (MODIS_AOD_TOTAL_COL)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (MODIS_LEAF_AREA_INDEX)
+      if (ratio > special_outlier_threshold) then
+         failed_outlier = .true.
+      else
+         failed_outlier = .false.
+      endif
+   case (MODIS_FPAR)
       if (ratio > special_outlier_threshold) then
          failed_outlier = .true.
       else

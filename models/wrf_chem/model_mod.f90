@@ -282,7 +282,6 @@ character(len = 72) :: adv_mod_command = ''
 !
 ! APM +++
 logical :: add_emiss = .false.
-logical :: use_varloc = .true., use_indep_chem_assim =.false.
 ! APM ---
 !
 namelist /model_nml/ num_moist_vars, &
@@ -297,8 +296,7 @@ namelist /model_nml/ num_moist_vars, &
 !
 ! APM +++                     
                      conv_state_variables, emiss_chemi_variables, &
-                     emiss_firechemi_variables,add_emiss, &
-                     use_varloc,use_indep_chem_assim
+                     emiss_firechemi_variables,add_emiss
 ! APM ---
 !
 ! if you need to check backwards compatibility, set this to .true.

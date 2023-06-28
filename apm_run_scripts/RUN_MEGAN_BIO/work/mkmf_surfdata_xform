@@ -4,9 +4,9 @@
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
 
-    ../../../../../build_templates/mkmf -p surfdata_xform.exe \
--t  ../../../../../build_templates/mkmf.template \
--a "../../../../.." path_names_surfdata_xform
+    ../../../build_templates/mkmf -p surfdata_xform.exe \
+-t  ../../../build_templates/mkmf.template \
+-a "../../../" path_names_surfdata_xform
 
 exit $status
 

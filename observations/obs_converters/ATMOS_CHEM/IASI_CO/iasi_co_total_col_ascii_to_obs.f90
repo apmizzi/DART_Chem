@@ -103,7 +103,6 @@ program iasi_co_total_col_ascii_to_obs
    integer                         :: nlay_obs,nlev_obs,ilv
    integer                         :: seconds,days,which_vert
    integer                         :: seconds_last,days_last
-   integer                         :: iasi_co_vloc,iasi_o3_vloc
    integer                         :: cpsr_co_trunc_lim,cpsr_o3_trunc_lim
 !
    integer,dimension(12)           :: days_in_month=(/ &
@@ -142,7 +141,7 @@ program iasi_co_total_col_ascii_to_obs
    namelist /create_iasi_obs_nml/bin_beg_sec,bin_end_sec,filedir,filename, &
    fileout,IASI_CO_retrieval_type,IASI_O3_retrieval_type,fac_obs_error, &
    use_log_co,use_log_o3,use_cpsr_co_trunc,cpsr_co_trunc_lim, &
-   use_cpsr_o3_trunc,cpsr_o3_trunc_lim,iasi_co_vloc,iasi_o3_vloc, &
+   use_cpsr_o3_trunc,cpsr_o3_trunc_lim, &
    lon_min,lon_max,lat_min,lat_max,year,month,day,hour
 !
 ! Set constants

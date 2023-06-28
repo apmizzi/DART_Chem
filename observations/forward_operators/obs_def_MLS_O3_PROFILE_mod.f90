@@ -434,9 +434,7 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
             exit
          endif
       enddo
-      if(interp_new.eq.0) then
-         exit
-      endif    
+      if(interp_new.eq.0) exit
    enddo
 
 !   write(string1, *)'APM: o3 lower bound 1 ',o3_mdl_1
@@ -473,9 +471,7 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
             exit
          endif
       enddo
-      if(interp_new.eq.0) then
-         exit
-      endif    
+      if(interp_new.eq.0) exit
    enddo
 
 !   write(string1, *)'APM: o3 upper bound 1 ',o3_mdl_n
@@ -546,8 +542,8 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
 !
 ! Convert units for o3 from ppmv
       o3_val(:,k) = o3_val(:,k) * 1.e-6_r8
-      o3_mdl_1(:)=o3_mdl_1(:) * 1.e-6_r8
-      o3_mdl_n(:)=o3_mdl_n(:) * 1.e-6_r8
+      o3_mdl_1(:)= o3_mdl_1(:) * 1.e-6_r8
+      o3_mdl_n(:)= o3_mdl_n(:) * 1.e-6_r8
    enddo
 !
 ! Use large scale o3 data above the regional model top
@@ -594,11 +590,6 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
    do imem=1,ens_size
       flg=0
       do k=1,layer_mls    
-!         if(key.eq.1 .and. imem.eq.1) then
-!            write(string1, *) &
-!            'APM: o3 values: imem,k,o3 ',imem,k,o3_val(imem,k)
-!            call error_handler(E_MSG, routine, string1, source)
-!         endif
          if(o3_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             flg=1   

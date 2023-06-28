@@ -91,7 +91,8 @@ program omi_no2_trop_col_ascii_to_obs
    integer                         :: nx_model,ny_model,nz_model
    integer                         :: reject,k,kend
    integer                         :: i_min,j_min
-   integer                         :: sum_reject,sum_accept,sum_total
+   integer                         :: sum_reject,sum_accept,sum_total,num_thin
+   integer                         :: obs_accept,obs_o3_reten_freq,obs_no2_reten_freq
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
@@ -220,7 +221,7 @@ program omi_no2_trop_col_ascii_to_obs
    tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
    no2_fld(:,:,:)=no2_fld(:,:,:)*1.e-6
 !
-! Open TROPOMI NO2 binary file
+! Open OMI NO2 binary file
    fileid=100
    write(6,*)'opening ',TRIM(TRIM(filedir)//TRIM(filename))
    open(unit=fileid,file=TRIM(TRIM(filedir)//TRIM(filename)), &
@@ -229,7 +230,6 @@ program omi_no2_trop_col_ascii_to_obs
 ! Read OMI NO2
    line_count = 0
    read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!   print *, trim(data_type), obs_id, i_min, j_min
    do while (ios == 0)
       sum_total=sum_total+1
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
@@ -296,7 +296,8 @@ program omi_no2_trop_col_ascii_to_obs
       call set_obs_def_location(obs_def, obs_location)
       call set_obs_def_time(obs_def, obs_time)
       call set_obs_def_error_variance(obs_def, obs_err_var)
-      call set_obs_def_omi_no2_trop_col(qc_count, prs_obs_r8, scat_wt_r8, prs_trop_r8, kend, nlay_obs)
+      call set_obs_def_omi_no2_trop_col(qc_count, prs_obs_r8, &
+      scat_wt_r8, prs_trop_r8, kend, nlay_obs)
       call set_obs_def_key(obs_def, qc_count)
       call set_obs_values(obs, obs_val, 1)
       call set_qc(obs, omi_qc, num_qc)

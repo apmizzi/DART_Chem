@@ -14,7 +14,7 @@ LOCATION=threed_sphere
 
 
 programs=(
-MOD15A_to_obs.f90
+MOD15A2_to_obs
 modis_aod_total_col_ascii_to_obs
 obs_sequence_tool
 advance_time

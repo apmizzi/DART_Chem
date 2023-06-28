@@ -107,6 +107,8 @@ program omi_o3_profile_ascii_to_obs
    integer                         :: reject,i,j,k,icnt,klev,kend
    integer                         :: i_min,j_min,flg
    integer                         :: sum_reject,sum_accept,sum_total
+   integer                         :: obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq, &
+                                      obs_hcho_reten_freq
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
@@ -132,7 +134,7 @@ program omi_o3_profile_ascii_to_obs
    character*129                   :: data_type,cmd
    character*129                   :: path_model,file_model,file_in
 !
-   logical                         :: use_log_o3,use_log_no2,use_log_so2
+   logical                         :: use_log_o3,use_log_no2,use_log_so2,use_log_hcho
 !
 ! Species-specific variables
    real                            :: prs_loc,prs_mdl_top
@@ -149,8 +151,9 @@ program omi_o3_profile_ascii_to_obs
    real,allocatable,dimension(:,:,:)   :: o3_fld,qmr_fld
 !
    namelist /create_omi_obs_nml/filedir,filename,fileout,year,month,day,hour, &
-   bin_beg_sec,bin_end_sec,fac_obs_error,use_log_o3,use_log_no2,use_log_so2, &
-   lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model,ny_model,nz_model
+   bin_beg_sec,bin_end_sec,fac_obs_error,use_log_o3,use_log_no2,use_log_so2,use_log_hcho, &
+   lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model,ny_model,nz_model, &
+   obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq,obs_hcho_reten_freq
 !
 ! Set constants
    du2molpm2=4.4615e-4
@@ -211,28 +214,28 @@ program omi_o3_profile_ascii_to_obs
    call set_calendar_type(calendar_type)
 !
 ! Read model data
-   allocate(lon(nx_model,ny_model))
-   allocate(lat(nx_model,ny_model))
-   allocate(psfc_fld(nx_model,ny_model))
-   allocate(prs_prt(nx_model,ny_model,nz_model))
-   allocate(prs_bas(nx_model,ny_model,nz_model))
-   allocate(prs_fld(nx_model,ny_model,nz_model))
-   allocate(tmp_prt(nx_model,ny_model,nz_model))
-   allocate(tmp_fld(nx_model,ny_model,nz_model))
-   allocate(qmr_fld(nx_model,ny_model,nz_model))
-   allocate(o3_fld(nx_model,ny_model,nz_model))
-   file_in=trim(path_model)//'/'//trim(file_model)
-   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'PSFC',psfc_fld,nx_model,ny_model,1,1)   
-   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(file_in,'o3',o3_fld,nx_model,ny_model,nz_model,1)
-   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-   o3_fld(:,:,:)=o3_fld(:,:,:)*1.e-6
+!   allocate(lon(nx_model,ny_model))
+!   allocate(lat(nx_model,ny_model))
+!   allocate(psfc_fld(nx_model,ny_model))
+!   allocate(prs_prt(nx_model,ny_model,nz_model))
+!   allocate(prs_bas(nx_model,ny_model,nz_model))
+!   allocate(prs_fld(nx_model,ny_model,nz_model))
+!   allocate(tmp_prt(nx_model,ny_model,nz_model))
+!   allocate(tmp_fld(nx_model,ny_model,nz_model))
+!   allocate(qmr_fld(nx_model,ny_model,nz_model))
+!   allocate(o3_fld(nx_model,ny_model,nz_model))
+!   file_in=trim(path_model)//'/'//trim(file_model)
+!   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'PSFC',psfc_fld,nx_model,ny_model,1,1)   
+!   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(file_in,'o3',o3_fld,nx_model,ny_model,nz_model,1)
+!   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
+!   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
+!   o3_fld(:,:,:)=o3_fld(:,:,:)*1.e-6
 !
 ! Open OMI O3 binary file
    fileid=100
@@ -413,16 +416,16 @@ program omi_o3_profile_ascii_to_obs
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
-   deallocate(lon)
-   deallocate(lat)
-   deallocate(psfc_fld)
-   deallocate(prs_prt)
-   deallocate(prs_bas)
-   deallocate(prs_fld)
-   deallocate(tmp_prt)
-   deallocate(tmp_fld)
-   deallocate(qmr_fld)
-   deallocate(o3_fld)
+!   deallocate(lon)
+!   deallocate(lat)
+!   deallocate(psfc_fld)
+!   deallocate(prs_prt)
+!   deallocate(prs_bas)
+!   deallocate(prs_fld)
+!   deallocate(tmp_prt)
+!   deallocate(tmp_fld)
+!   deallocate(qmr_fld)
+!   deallocate(o3_fld)
 !
    print *, 'total obs ',sum_total
    print *, 'accepted ',sum_accept

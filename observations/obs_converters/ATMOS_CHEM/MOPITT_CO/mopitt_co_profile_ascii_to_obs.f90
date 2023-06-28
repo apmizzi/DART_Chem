@@ -122,7 +122,7 @@ integer                 :: lon_qc, lat_qc
 integer                 :: i, j, k, l, kk, ik, ikk, k1, k2, kstr 
 integer                 :: line_count, index, nlev, nlevp, prs_idx
 integer                 :: seconds, days, which_vert, old_ob
-integer                 :: spc_vloc,mopitt_co_vloc,kmax,itrm
+integer                 :: kmax,itrm
 integer,dimension(max_num_obs)             :: qc_mopitt, qc_thinning
 integer,dimension(12)                      :: days_in_month=(/ &
                                            31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
@@ -192,7 +192,7 @@ logical                 :: use_cpsr_co_trunc
 !
 namelist /create_mopitt_obs_nml/filedir,filename,fileout,year,month,day,hour, &
          bin_beg_sec, bin_end_sec ,MOPITT_CO_retrieval_type,fac_obs_error, &
-         use_log_co,use_cpsr_co_trunc,cpsr_co_trunc_lim,mopitt_co_vloc, &
+         use_log_co,use_cpsr_co_trunc,cpsr_co_trunc_lim, &
          lon_min,lon_max,lat_min,lat_max
 !
 ! Set constants
@@ -209,7 +209,6 @@ hour_lst=-9999
 minute_lst=-9999
 second_lst=-9999 
 fac=1.0
-mopitt_co_vloc=0
 lon_min=-9999
 lon_max=-9999
 lat_min=-9999
@@ -1113,18 +1112,7 @@ allocate (xg_prs(nlon_qc,nlat_qc,mop_dimp),xg_prs_norm(nlon_qc,nlat_qc,mop_dimp)
 ! Use each mixing ratio as a separate obs
 !--------------------------------------------------------
 !
-           spc_vloc=mopitt_co_vloc
-           if(spc_vloc.eq.1) then
-              call vertical_locate(prs_loc,kmax,xg_prs(i,j,kstr:mop_dim), &
-              avgker(k,1:xg_nlvls(i,j)),xg_nlvls(i,j),xg_nlvls(i,j))
-              if(irot.eq.1) then
-                 level=prs_loc*100.
-                 which_vert=2       ! pressure surface
-              elseif(irot.eq.0) then
-                 level=prs_loc*100.
-                 which_vert=2       ! pressure surface
-              endif
-           elseif(irot.eq.1) then
+           if(irot.eq.1) then
               level=1
               which_vert=-2         ! undefined
            elseif(irot.eq.0) then  

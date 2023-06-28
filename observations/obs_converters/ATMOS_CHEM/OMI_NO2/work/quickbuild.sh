@@ -14,9 +14,9 @@ LOCATION=threed_sphere
 
 
 programs=(
+omi_no2_domino_trop_col_ascii_to_obs
 omi_no2_total_col_ascii_to_obs
 omi_no2_trop_col_ascii_to_obs
-omi_no2_domino_trop_col_ascii_to_obs
 obs_sequence_tool
 advance_time
 )

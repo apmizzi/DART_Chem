@@ -8,6 +8,7 @@
 
 \rm -f *.o *.mod Makefile
 
+set DART = "/nobackupp11/amizzi/TRUNK/DART_MERGE/CHEM_DART"
 set MODEL = "WRF-Chem/DART RUN_WES_COLDENS"
 
 @ n = 0

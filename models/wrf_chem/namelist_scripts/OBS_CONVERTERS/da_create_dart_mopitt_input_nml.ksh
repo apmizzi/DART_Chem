@@ -30,7 +30,6 @@ cat > input.nml << EOF
    use_log_co                  = ${NL_USE_LOG_CO}
    use_cpsr_co_trunc           = ${NL_USE_CPSR_CO_TRUNC}
    cpsr_co_trunc_lim           = ${NL_CPSR_CO_TRUNC_LIM}
-   mopitt_co_vloc              = ${NL_MOPITT_CO_VLOC}
    lon_min                     = ${NNL_MIN_LON}
    lon_max                     = ${NNL_MAX_LON}
    lat_min                     = ${NNL_MIN_LAT}

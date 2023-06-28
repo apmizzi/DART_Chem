@@ -1,4 +1,4 @@
-! Copyright 2019 University Corporation for Atmospheric Research and 
+ Copyright 2019 University Corporation for Atmospheric Research and 
 ! Colorado Department of Public Health and Environment.
 !
 ! Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
@@ -111,8 +111,8 @@ integer :: nlayer_gome2a = -9999
 integer :: nlayer_gome2a_no2_total_col = -9999
 integer :: nlayer_gome2a_no2_trop_col = -9999
 
-namelist /obs_def_GOME2A_NO2_nml/ use_log_no2, nlayer_model, nlayer_gome2a_no2_total_col, &
-nlayer_gome2a_no2_trop_col
+namelist /obs_def_GOME2A_NO2_nml/ use_log_no2, nlayer_model, &
+nlayer_gome2a_no2_total_col, nlayer_gome2a_no2_trop_col
 
 !-------------------------------------------------------------------------------
 contains
@@ -167,7 +167,7 @@ integer,          intent(out)          :: key
 integer,          intent(in)           :: ifile
 character(len=*), intent(in), optional :: fform
 
-! gome2arary arrays to hold buffer till we decide if we have enough room
+! temporary arrays to hold buffer till we decide if we have enough room
 
 integer               :: keyin
 integer               :: nlayer_1

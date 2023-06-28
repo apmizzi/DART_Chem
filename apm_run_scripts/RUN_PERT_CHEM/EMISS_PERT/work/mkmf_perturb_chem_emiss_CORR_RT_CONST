@@ -4,8 +4,8 @@
 # by UCAR, "as is", without charge, subject to all terms of use at
 # http://www.image.ucar.edu/DAReS/DART/DART_download
 
-../../../../../../build_templates/mkmf -p perturb_chem_emiss_CORR_RT_CONST.exe -t ../../../../../../build_templates/mkmf.template \
- -a "../../../../../.." path_names_perturb_chem_emiss_CORR_RT_CONST
+../../../../build_templates/mkmf -p perturb_chem_emiss_CORR_RT_CONST.exe -t ../../../../build_templates/mkmf.template \
+ -a "../../../../" path_names_perturb_chem_emiss_CORR_RT_CONST
 
 exit $status
 

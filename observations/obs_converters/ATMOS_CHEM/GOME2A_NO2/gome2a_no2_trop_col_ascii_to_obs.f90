@@ -19,66 +19,52 @@
 program gome2a_no2_trop_col_ascii_to_obs
 !
 !=============================================
-! GOME2A NO2 column obs
+! GOME2A NO2 trop column obs
 !=============================================
-   use utilities_mod, only          : timestamp,                  &
-                                      register_module,            &
-                                      open_file,                  &
-                                      close_file,                 &
-                                      initialize_utilities,       &
-                                      find_namelist_in_file,      &
-                                      check_namelist_read,        &
-                                      error_handler,              &
-                                      E_ERR,                      & 
-                                      E_WARN,                     & 
-                                      E_MSG,                      &
-                                      E_DBG
+ use        types_mod, only       : r8  
+ use time_manager_mod, only       : set_date,                   &
+                                    set_calendar_type,          &
+                                    time_type,                  &
+                                    get_time
+ use utilities_mod, only          : timestamp,                  &
+                                    register_module,            &
+                                    open_file,                  &
+                                    close_file,                 &
+                                    initialize_utilities,       &
+                                    find_namelist_in_file,      &
+                                    check_namelist_read,        &
+                                    error_handler,              &
+                                    E_ERR,                      & 
+                                    E_WARN,                     & 
+                                    E_MSG,                      &
+                                    E_DBG
+ use     location_mod, only       : location_type,              &
+                                    set_location
 
-   use obs_sequence_mod, only       : obs_sequence_type,          &
-                                      interactive_obs,            &
-                                      write_obs_seq,              &
-                                      interactive_obs_sequence,   &
-                                      static_init_obs_sequence,   &
-                                      init_obs_sequence,          &
-                                      init_obs,                   &
-                                      set_obs_values,             &
-                                      set_obs_def,                &
-                                      set_qc,                     &
-                                      set_qc_meta_data,           &
-                                      set_copy_meta_data,         &
-                                      insert_obs_in_seq,          &
-                                      obs_type
+ use obs_sequence_mod, only       : obs_sequence_type,          &
+                                    interactive_obs,            &
+                                    write_obs_seq,              &
+                                    static_init_obs_sequence,   &
+                                    init_obs_sequence,          &
+                                    init_obs,                   &
+                                    set_obs_values,             &
+                                    set_obs_def,                &
+                                    set_qc,                     &
+                                    set_qc_meta_data,           &
+                                    set_copy_meta_data,         &
+                                    insert_obs_in_seq,          &
+                                    obs_type
+ use obs_def_mod, only            : set_obs_def_location,       &
+                                    set_obs_def_time,           &
+                                    set_obs_def_key,            &
+                                    set_obs_def_error_variance, &
+                                    obs_def_type,               &
+                                    set_obs_def_type_of_obs
+ use obs_def_gome2a_no2_trop_col_mod, only : set_obs_def_gome2a_no2_trop_col
+ use obs_kind_mod, only           : GOME2A_NO2_TROP_COL
 
-   use obs_def_mod, only            : set_obs_def_location,       &
-                                      set_obs_def_time,           &
-                                      set_obs_def_key,            &
-                                      set_obs_def_error_variance, &
-                                      obs_def_type,               &
-                                      set_obs_def_type_of_obs
+ implicit none
 
-   use obs_def_gome2a_no2_trop_col_mod, only     : set_obs_def_gome2a_no2_trop_col
-
-   use assim_model_mod, only        : static_init_assim_model
-
-   use location_mod, only           : location_type,              &
-                                      set_location
-
-   use time_manager_mod, only       : set_date,                   &
-                                      set_calendar_type,          &
-                                      time_type,                  &
-                                      get_time
-
-   use obs_kind_mod, only           : QTY_NO2,                     &
-                                      GOME2A_NO2_TROP_COL,              &
-                                      get_type_of_obs_from_menu
-
-   use random_seq_mod, only         : random_seq_type,            &
-                                      init_random_seq,            &
-                                      random_uniform
-
-   use sort_mod, only               : index_sort
-   implicit none
-!
 ! version controlled file description for error handling, do not edit
    character(len=*), parameter     :: source   = 'gome2a_no2_trop_col_ascii_to_obs.f90'
    character(len=*), parameter     :: revision = ''
@@ -117,7 +103,6 @@ program gome2a_no2_trop_col_ascii_to_obs
    real                            :: fac_obs_error,fac_err
    real                            :: pi,rad2deg,re,level_crit
    real                            :: x_observ,y_observ,dofs
-   real                            :: prs_loc,obs_sum
    real*8                          :: obs_err_var,level
 !
    real*8,dimension(num_qc)        :: gome2a_qc
@@ -212,26 +197,26 @@ program gome2a_no2_trop_col_ascii_to_obs
    call set_calendar_type(calendar_type)
 !
 ! Read model data
-   allocate(lon(nx_model,ny_model))
-   allocate(lat(nx_model,ny_model))
-   allocate(prs_prt(nx_model,ny_model,nz_model))
-   allocate(prs_bas(nx_model,ny_model,nz_model))
-   allocate(prs_fld(nx_model,ny_model,nz_model))
-   allocate(tmp_prt(nx_model,ny_model,nz_model))
-   allocate(tmp_fld(nx_model,ny_model,nz_model))
-   allocate(qmr_fld(nx_model,ny_model,nz_model))
-   allocate(no2_fld(nx_model,ny_model,nz_model))
-   file_in=trim(path_model)//'/'//trim(file_model)
-   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(file_in,'no2',no2_fld,nx_model,ny_model,nz_model,1)
-   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-   no2_fld(:,:,:)=no2_fld(:,:,:)*1.e-6
+!   allocate(lon(nx_model,ny_model))
+!   allocate(lat(nx_model,ny_model))
+!   allocate(prs_prt(nx_model,ny_model,nz_model))
+!   allocate(prs_bas(nx_model,ny_model,nz_model))
+!   allocate(prs_fld(nx_model,ny_model,nz_model))
+!   allocate(tmp_prt(nx_model,ny_model,nz_model))
+!   allocate(tmp_fld(nx_model,ny_model,nz_model))
+!   allocate(qmr_fld(nx_model,ny_model,nz_model))
+!   allocate(no2_fld(nx_model,ny_model,nz_model))
+!   file_in=trim(path_model)//'/'//trim(file_model)
+!   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(file_in,'no2',no2_fld,nx_model,ny_model,nz_model,1)
+!   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
+!   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
+!   no2_fld(:,:,:)=no2_fld(:,:,:)*1.e-6
 !
 ! Open GOME2A NO2 binary file
    fileid=100
@@ -283,7 +268,6 @@ program gome2a_no2_trop_col_ascii_to_obs
          obs_val(:)=no2_trop_col_obs*amf_trop_obs
          obs_err_var=(fac_obs_error*fac_err*no2_trop_col_obs*amf_trop_obs)**2.
          gome2a_qc(:)=0
-         print *, yr_obs, mn_obs, dy_obs, hh_obs, mm_obs, ss_obs
          obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
          call get_time(obs_time, seconds, days)
 !       
@@ -292,9 +276,9 @@ program gome2a_no2_trop_col_ascii_to_obs
 !         which_vert=1       ! level
 !         which_vert=2       ! pressure surface
 !       
-         level=0
          obs_kind = GOME2A_NO2_TROP_COL
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90) 
+         level=0.
          obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
 !
          call set_obs_def_type_of_obs(obs_def, obs_kind)
@@ -337,15 +321,15 @@ program gome2a_no2_trop_col_ascii_to_obs
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
-   deallocate(lon)
-   deallocate(lat)
-   deallocate(prs_prt)
-   deallocate(prs_bas)
-   deallocate(prs_fld)
-   deallocate(tmp_prt)
-   deallocate(tmp_fld)
-   deallocate(qmr_fld)
-   deallocate(no2_fld)
+!   deallocate(lon)
+!   deallocate(lat)
+!   deallocate(prs_prt)
+!   deallocate(prs_bas)
+!   deallocate(prs_fld)
+!   deallocate(tmp_prt)
+!   deallocate(tmp_fld)
+!   deallocate(qmr_fld)
+!   deallocate(no2_fld)
 !
    print *, 'total obs ',sum_total
    print *, 'accepted ',sum_accept

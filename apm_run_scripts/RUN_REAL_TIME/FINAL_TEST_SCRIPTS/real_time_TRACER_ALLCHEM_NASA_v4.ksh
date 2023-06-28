@@ -220,19 +220,6 @@ fi
    export NL_USE_CPSR_O3_TRUNC=.false.
    export NL_CPSR_O3_TRUNC_LIM=4
 #
-# Vertical localizaton flag (0 - retrieval locations; 1 - averaging kernel locations)
-   export NL_MOPITT_CO_VLOC=0
-   export NL_IASI_CO_VLOC=0
-   export NL_IASI_O3_VLOC=0
-#
-# If VARLOC = true, then INDEP_CHEM_ASIM = false
-# If INDEP_CHEM_ASIM = true, then VARLOC = false
-# VARLOC and INDEP_CHEM_ASIM may both be false but
-# they may not both be true
-#
-export VARLOC=.false.
-export INDEP_CHEM_ASIM=.true.
-#
 export ADD_EMISS=false
 export EMISS_DAMP_CYCLE=1.0
 export EMISS_DAMP_INTRA_CYCLE=1.0
@@ -317,7 +304,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export WRFDA_VER=WRFDAv4.3.2_dmpar
    export WRF_VER=WRFv4.3.2_dmpar
    export WRFCHEM_VER=WRFCHEMv4.3.2_dmpar
-   export DART_VER=DART_MERGE/CHEM_DART
+   export DART_VER=DART_REPO/CHEM_DART
 #
 # ROOT DIRECTORIES:
    export SCRATCH_DIR=/nobackupp11/amizzi/OUTPUT_DATA
@@ -882,7 +869,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    fi
 #
 # FORECAST PARAMETERS:
-   export USE_DART_INFL=true
+   export USE_DART_INFL=false   ### APM_TEST
    export FCST_PERIOD=6
    (( CYCLE_PERIOD_SEC=${CYCLE_PERIOD}*60*60 ))
    export NUM_MEMBERS=10
@@ -1687,9 +1674,15 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #   MET SFC 0.05
 # &assim_tools_nml
    export NL_CUTOFF=0.1
-   export NL_SPECIAL_LOCALIZATION_OBS_TYPES="'MOPITT_CO_TOTAL_COL','MOPITT_CO_PROFILE','MOPITT_CO_CPSR','IASI_CO_TOTAL_COL','IASI_CO_PROFILE','IASI_CO_CPSR','TROPOMI_CO_TOTAL_COL','AIRNOW_CO','IASI_O3_PROFILE','IASI_O3_CPSR','OMI_O3_TOTAL_COL','OMI_O3_TROP_COL','OMI_O3_PROFILE','OMI_O3_CPSR','TROPOMI_O3_TOTAL_COL','TROPOMI_O3_TROP_COL','TROPOMI_O3_PROFILE','TROPOMI_O3_CPSR','TEMPO_O3_TOTAL_COL','TEMPO_O3_TROP_COL','TEMPO_O3_PROFILE','TEMPO_O3_CPSR','AIRNOW_O3','OMI_NO2_TOTAL_COL','OMI_NO2_TROP_COL','TROPOMI_NO2_TOTAL_COL','TROPOMI_NO2_TROP_COL','TEMPO_NO2_TOTAL_COL','TEMPO_NO2_TROP_COL','AIRNOW_NO2','OMI_SO2_TOTAL_COL','OMI_SO2_PBL_COL','TROPOMI_SO2_TOTAL_COL','TROPOMI_SO2_PBL_COL','AIRNOW_SO2','MODIS_AOD_TOTAL_COL','AIRNOW_PM10','AIRNOW_PM25','LAND_SFC_U_WIND_COMPONENT','LAND_SFC_V_WIND_COMPONENT','LAND_SFC_SPECIFIC_HUMIDITY'"
+#   export NL_SPECIAL_LOCALIZATION_OBS_TYPES="'MOPITT_CO_TOTAL_COL','MOPITT_CO_PROFILE','MOPITT_CO_CPSR','IASI_CO_TOTAL_COL','IASI_CO_PROFILE','IASI_CO_CPSR','TROPOMI_CO_TOTAL_COL','AIRNOW_CO','IASI_O3_PROFILE','IASI_O3_CPSR','OMI_O3_TOTAL_COL','OMI_O3_TROP_COL','OMI_O3_PROFILE','OMI_O3_CPSR','TROPOMI_O3_TOTAL_COL','TROPOMI_O3_TROP_COL','TROPOMI_O3_PROFILE','TROPOMI_O3_CPSR','TEMPO_O3_TOTAL_COL','TEMPO_O3_TROP_COL','TEMPO_O3_PROFILE','TEMPO_O3_CPSR','AIRNOW_O3','OMI_NO2_TOTAL_COL','OMI_NO2_TROP_COL','TROPOMI_NO2_TOTAL_COL','TROPOMI_NO2_TROP_COL','TEMPO_NO2_TOTAL_COL','TEMPO_NO2_TROP_COL','AIRNOW_NO2','OMI_SO2_TOTAL_COL','OMI_SO2_PBL_COL','TROPOMI_SO2_TOTAL_COL','TROPOMI_SO2_PBL_COL','AIRNOW_SO2','MODIS_AOD_TOTAL_COL','AIRNOW_PM10','AIRNOW_PM25','LAND_SFC_U_WIND_COMPONENT','LAND_SFC_V_WIND_COMPONENT','LAND_SFC_SPECIFIC_HUMIDITY'"
+#   export NL_SPECIAL_LOCALIZATION_CUTOFFS=0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.1,0.1,0.1,0.1,0.1,0.05,0.05,0.05,0.05,0.05,0.05
+
+# APM_TEST
+   export NL_SPECIAL_LOCALIZATION_OBS_TYPES="'MOPITT_CO_TOTAL_COL'"
+   export NL_SPECIAL_LOCALIZATION_CUTOFFS=0.1
+# APM_TEST
+   
    export NL_SAMPLING_ERROR_CORRECTION=.true.
-   export NL_SPECIAL_LOCALIZATION_CUTOFFS=0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.1,0.1,0.1,0.1,0.1,0.05,0.05,0.05,0.05,0.05,0.05
    export NL_ADAPTIVE_LOCALIZATION_THRESHOLD=2000
 #
 # &ensemble_manager_nml
@@ -1701,8 +1694,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # &model_nml
    export NL_ADD_EMISS=.${L_ADD_EMISS}.
-   export NL_USE_VARLOC=${VARLOC}
-   export NL_USE_INDEP_CHEM_ASSIM=${INDEP_CHEM_ASIM}
    export NL_DEFAULT_STATE_VARIABLES=.false.
    export NL_CONV_STATE_VARIABLES="'U',     'QTY_U_WIND_COMPONENT',     'TYPE_U',  'UPDATE','999',
           'V',     'QTY_V_WIND_COMPONENT',     'TYPE_V',  'UPDATE','999',
@@ -2096,7 +2087,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # APM: NEED TO ADD NEW CHEMISTRY OBSERVATIONS HERE AND HORIZONTAL LOCALIZATION  
    
 # &location_nml
-   export NL_HORIZ_DIST_ONLY=.false.
+   export NL_HORIZ_DIST_ONLY=.true.    ### APM_TEST
    export NL_VERT_NORMALIZATION_PRESSURE=100000.0
    export NL_VERT_NORMALIZATION_HEIGHT=10000.0
    export NL_VERT_NORMALIZATION_LEVELS=20.0
@@ -19019,14 +19010,14 @@ EOF
 #
 # GET DART input.nml
       rm -rf input.nml
-      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/NCEP/prep_bufr/work/input.nml ./.
+      cp ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/work/input.nml ./.
 #
 # RUN_PREPBUFR TO ASCII CONVERTER
-      ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/NCEP/prep_bufr/work/prepbufr_RT.csh ${D_YYYY} ${DD_MM} ${DD_DD} ${DD_DD} ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/NCEP/prep_bufr/exe > index.file 2>&1
+      ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/work/prepbufr_RT.csh ${D_YYYY} ${DD_MM} ${DD_DD} ${DD_DD} ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/exe > index.file 2>&1
 #
 # RUN ASCII TO OBS_SEQ CONVERTER
       ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_ncep_ascii_to_obs_input_nml_RT.ksh
-      ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/NCEP/ascii_to_obs/work/create_real_obs > index_create 2>&1
+      ${DART_DIR}/observations/obs_converters/NCEP/ascii_to_obs/work/create_real_obs > index_create 2>&1
 #
       mv obs_seq${D_DATE} obs_seq_prep_${DATE}.out
    fi
@@ -20614,6 +20605,10 @@ EOF
       else
          cd ${RUN_DIR}/${DATE}/dart_filter
       fi
+# APM_TEST
+   export RUN_THIS=false
+   if ${RUN_THIS}; then
+      
 #
 # Construct background file name/date
       export LL_DATE=${DATE}
@@ -20773,11 +20768,15 @@ EOF
          qsub -Wblock=true job.ksh
       fi
 #
-# Check whether DART worked properly
-      if [[ ! -f output_postinf_mean.nc || ! -f output_mean.nc || ! -f output_postinf_sd.nc || ! -f output_sd.nc || ! -f obs_seq.final ]]; then
-         echo APM: ERROR in DART FILTER EXIT
-         exit
-      fi
+# Check whether DART worked properly APM_TEST
+#      if [[ ! -f output_postinf_mean.nc || ! -f output_mean.nc || ! -f output_postinf_sd.nc || ! -f output_sd.nc || ! -f obs_seq.final ]]; then
+#         echo APM: ERROR in DART FILTER EXIT
+#         exit
+#      fi
+
+
+# APM_TEST
+    fi
 #
 # Remove emissions fields from the DART output files and copy to the emissions input files
       let MEM=1
@@ -20804,6 +20803,11 @@ EOF
       ncea -n ${NUM_MEMBERS},3,1 wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrfchemi_d${CR_DOMAIN}_post_mean
       ncea -n ${NUM_MEMBERS},3,1 wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrffirechemi_d${CR_DOMAIN}_post_mean
    fi
+
+
+exit
+
+   
 #
 #########################################################################
 #

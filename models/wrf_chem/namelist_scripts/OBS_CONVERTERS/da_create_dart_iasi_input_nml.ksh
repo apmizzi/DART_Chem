@@ -30,8 +30,6 @@ cat > input.nml << EOF
    cpsr_co_trunc_lim           = ${NL_CPSR_CO_TRUNC_LIM}
    use_cpsr_o3_trunc           = ${NL_USE_CPSR_O3_TRUNC}
    cpsr_o3_trunc_lim           = ${NL_CPSR_O3_TRUNC_LIM}
-   iasi_co_vloc                = ${NL_IASI_CO_VLOC}
-   iasi_o3_vloc                = ${NL_IASI_O3_VLOC}
    lon_min                     = ${NNL_MIN_LON}
    lon_max                     = ${NNL_MAX_LON}
    lat_min                     = ${NNL_MIN_LAT}

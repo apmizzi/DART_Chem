@@ -54,7 +54,6 @@ C$$$
       CHARACTER(len=80) :: infile
       INTEGER(4)        :: narg,iargc,JSTAT(100)
       integer           :: i, KBYTES, rc
-      integer           :: STAT
 
 C
 c liu 03/16/2005

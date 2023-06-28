@@ -14,7 +14,7 @@ LOCATION=threed_sphere
 
 
 programs=(
-gome2a_trop_col_ascii_to_obs
+gome2a_no2_trop_col_ascii_to_obs
 obs_sequence_tool
 advance_time
 )

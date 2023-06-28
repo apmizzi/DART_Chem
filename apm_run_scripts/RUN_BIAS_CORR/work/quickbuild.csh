@@ -8,7 +8,7 @@
 
 \rm -f *.o *.mod Makefile
 
-set MODEL = "WRF-Chem/DART RUN_PERT_CHEM/EMISS_PERT"
+set MODEL = "WRF-Chem/DART TUN_BIAS_CORRECTION"
 
 @ n = 0
 

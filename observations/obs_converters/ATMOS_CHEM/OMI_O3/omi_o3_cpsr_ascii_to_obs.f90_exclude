@@ -107,6 +107,8 @@ program omi_o3_cpsr_ascii_to_obs
    integer                         :: reject,i,j,k,kk,icnt,imds,klev,kend
    integer                         :: i_min,j_min,flg,cnt,nmodes
    integer                         :: sum_reject,sum_accept,sum_total
+   integer                         :: obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq, &
+                                      obs_hcho_reten_freq
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
@@ -153,7 +155,8 @@ program omi_o3_cpsr_ascii_to_obs
    real,allocatable,dimension(:,:)     :: avgk_shift,cov_shift
    namelist /create_omi_obs_nml/filedir,filename,fileout,year,month,day,hour, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_o3,use_log_no2,use_log_so2, &
-   lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model,ny_model,nz_model
+   lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model,ny_model,nz_model,
+   obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq,obs_hcho_reten_freq   
 !
 ! Set constants
    du2molpm2=4.4615e-4
