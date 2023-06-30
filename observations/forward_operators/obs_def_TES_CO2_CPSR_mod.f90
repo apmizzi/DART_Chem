@@ -115,7 +115,7 @@ module obs_def_tes_co2_cpsr_mod
 ! Namelist with default values
    logical :: use_log_co2   = .false.
    integer :: nlayer_model = -9999
-   integer :: nlayer_tempo = -9999
+   integer :: nlayer_tes = -9999
    integer :: nlayer_tes_co2_total_col = -9999
    integer :: nlayer_tes_co2_trop_col = -9999
    integer :: nlayer_tes_co2_profile = -9999
@@ -148,24 +148,24 @@ subroutine initialize_module
    if (do_nml_term()) write(     *     , nml=obs_def_TES_CO2_nml)
 
 ! Check for valid values
-   nlayer_tempo=nlayer_tes_co2_profile
+   nlayer_tes=nlayer_tes_co2_profile
 
    if (nlayer_model < 1) then
       write(string1,*)'obs_def_TES_CO2_nml:nlayer_model must be > 0, it is ',nlayer_model
       call error_handler(E_ERR,'initialize_module',string1,source)
    endif
    
-   if (nlayer_tempo < 1) then
-      write(string1,*)'obs_def_TES_CO2_nml:nlayer_tempo must be > 0, it is ',nlayer_tempo
+   if (nlayer_tes < 1) then
+      write(string1,*)'obs_def_TES_CO2_nml:nlayer_tes must be > 0, it is ',nlayer_tes
       call error_handler(E_ERR,'initialize_module',string1,source)
    endif
    
    allocate(    nlayer(max_tes_co2_obs))
    allocate(    klev(max_tes_co2_obs))
    allocate(    kend(max_tes_co2_obs))
-   allocate(  pressure(max_tes_co2_obs,nlayer_tempo+1))
-   allocate(avg_kernel(max_tes_co2_obs,nlayer_tempo))
-   allocate(     prior(max_tes_co2_obs,nlayer_tempo))
+   allocate(  pressure(max_tes_co2_obs,nlayer_tes+1))
+   allocate(avg_kernel(max_tes_co2_obs,nlayer_tes))
+   allocate(     prior(max_tes_co2_obs,nlayer_tes))
    
 end subroutine initialize_module
 
@@ -213,7 +213,7 @@ subroutine read_tes_co2_cpsr(key, ifile, fform)
    key     = counts1
    
    if(counts1 > max_tes_co2_obs) then
-      write(string1, *)'Not enough space for tempo co2 obs.'
+      write(string1, *)'Not enough space for tes co2 obs.'
       write(string2, *)'Can only have max_tes_co2_obs (currently ',max_tes_co2_obs,')'
       call error_handler(E_ERR,'read_tes_co2_cpsr',string1,source,text2=string2)
    endif
@@ -266,7 +266,7 @@ subroutine interactive_tes_co2_cpsr(key)
    call error_handler(E_ERR, 'interactive_tes_co2_cpsr', string1, source)
    
    if(num_tes_co2_obs >= max_tes_co2_obs) then
-      write(string1, *)'Not enough space for an tempo co2 obs.'
+      write(string1, *)'Not enough space for an tes co2 obs.'
       write(string2, *)'Can only have max_tes_co2_obs (currently ',max_tes_co2_obs,')'
       call error_handler(E_ERR, 'interactive_tes_co2_cpsr', string1, &
                  source, text2=string2)
@@ -296,9 +296,12 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
    real(r8),            intent(out) :: expct_val(:)
    
    character(len=*), parameter :: routine = 'get_expected_tes_co2_cpsr'
+   character(len=120)          :: data_file
+   character(len=*),parameter  :: model = 'MOZART'
+   character(len=*),parameter  :: fld = 'CO2_VMR_inst'
    type(location_type) :: loc2
    
-   integer :: layer_tempo,level_tempo, klev_tempo, kend_tempo
+   integer :: layer_tes,level_tes, klev_tes, kend_tes
    integer :: layer_mdl,level_mdl
    integer :: k,kk,imem,imemm,flg
    integer :: interp_new
@@ -320,10 +323,10 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
    real(r8), dimension(ens_size) :: co2_mdl_tmp, tmp_mdl_tmp, qmr_mdl_tmp, prs_mdl_tmp
    real(r8), dimension(ens_size) :: prs_sfc,rec_co2_val,rec_tmp_val,rec_qmr_val
    
-   real(r8), allocatable, dimension(:)   :: thick, prs_tempo, prs_tempo_mem
+   real(r8), allocatable, dimension(:)   :: thick, prs_tes, prs_tes_mem
    real(r8), allocatable, dimension(:,:) :: co2_val, tmp_val, qmr_val
    real(r8), allocatable, dimension(:)   :: co2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl
-   real(r8), allocatable, dimension(:)   :: prs_tempo_top   
+   real(r8), allocatable, dimension(:)   :: prs_tes_top   
    logical  :: return_now,co2_return_now,tmp_return_now,qmr_return_now
    
    if ( .not. module_initialized ) call initialize_module
@@ -345,7 +348,7 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
 ! 
 ! WACCM - MMR
 ! WRFChem - VMR ppmv
-! TEMPO CO2 - DU   
+! TES CO2 - DU   
 !
 ! to convert from mass mixing ratio (MMR) to volume mixing ratio (VMR) multiply by
 ! the molar mass of dry air (28.9644 g) and divide by the molar mass of the constituent
@@ -363,18 +366,18 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
       co2_min = log(co2_min)
    endif
    
-! Assign vertical grid information (TEMPO CO2 grid is top to bottom)
+! Assign vertical grid information (TES CO2 grid is top to bottom)
 
-   layer_tempo = nlayer(key)
-   level_tempo = nlayer(key)+1
-   klev_tempo  = klev(key)
-   kend_tempo  = kend(key)
+   layer_tes = nlayer(key)
+   level_tes = nlayer(key)+1
+   klev_tes  = klev(key)
+   kend_tes  = kend(key)
    layer_mdl   = nlayer_model
    level_mdl   = nlayer_model+1
 
-   allocate(prs_tempo(level_tempo))
-   allocate(prs_tempo_mem(level_tempo))
-   prs_tempo(1:level_tempo)=pressure(key,1:level_tempo)
+   allocate(prs_tes(level_tes))
+   allocate(prs_tes_mem(level_tes))
+   prs_tes(1:level_tes)=pressure(key,1:level_tes)
 
 ! Get location infomation
 
@@ -500,15 +503,15 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
 !   write(string1, *) 'APM: prs upper bound ',key,prs_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
 
-! Get cpsrs at TEMPO pressure levels
+! Get cpsrs at TES pressure levels
 
-   allocate(co2_val(ens_size,level_tempo))
-   allocate(tmp_val(ens_size,level_tempo))
-   allocate(qmr_val(ens_size,level_tempo))
+   allocate(co2_val(ens_size,level_tes))
+   allocate(tmp_val(ens_size,level_tes))
+   allocate(qmr_val(ens_size,level_tes))
 
-   do k=1,level_tempo
+   do k=1,level_tes
       zstatus=0
-      loc2 = set_location(mloc(1), mloc(2), prs_tempo(k), VERTISPRESSURE)
+      loc2 = set_location(mloc(1), mloc(2), prs_tes(k), VERTISPRESSURE)
       call interpolate(state_handle, ens_size, loc2, QTY_CO2, co2_val(:,k), zstatus)  
       zstatus=0
       call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_val(:,k), zstatus)  
@@ -517,14 +520,14 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
 !
 ! Correcting for expected failures near the surface
       do imem=1,ens_size
-         if (prs_tempo(k).ge.prs_mdl_1(imem)) then
+         if (prs_tes(k).ge.prs_mdl_1(imem)) then
             co2_val(imem,k) = co2_mdl_1(imem)
             tmp_val(imem,k) = tmp_mdl_1(imem)
             qmr_val(imem,k) = qmr_mdl_1(imem)
          endif
 !
 ! Correcting for expected failures near the top
-         if (prs_tempo(k).le.prs_mdl_n(imem)) then
+         if (prs_tes(k).le.prs_mdl_n(imem)) then
             co2_val(imem,k) = co2_mdl_n(imem)
             tmp_val(imem,k) = tmp_mdl_n(imem)
             qmr_val(imem,k) = qmr_mdl_n(imem)
@@ -562,29 +565,30 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
    enddo
 !
 ! Use large scale ozone data above the regional model top
-! TEMPO vertical is from top to bottom   
+! TES vertical is from top to bottom   
    kstart(:)=-1
    do imem=1,ens_size
-      if (prs_tempo(1).lt.prs_mdl_n(imem)) then
-         do k=1,level_tempo
-            if (prs_tempo(k).ge.prs_mdl_n(imem)) then
+      if (prs_tes(1).lt.prs_mdl_n(imem)) then
+         do k=1,level_tes
+            if (prs_tes(k).ge.prs_mdl_n(imem)) then
                kstart(imem)=k-1
                exit
             endif
          enddo
          ncnt=kstart(imem)
-         allocate(prs_tempo_top(ncnt))
+         allocate(prs_tes_top(ncnt))
          allocate(co2_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
          do k=1,kstart(imem)
-            prs_tempo_top(k)=prs_tempo(k)
+            prs_tes_top(k)=prs_tes(k)
          enddo
-         prs_tempo_top(:)=prs_tempo_top(:)/100.
+         prs_tes_top(:)=prs_tes_top(:)/100.
 !
          lon_obs=mloc(1)/rad2deg
          lat_obs=mloc(2)/rad2deg
          call get_time(obs_time,datesec_obs,date_obs)
 !
-         call get_upper_bdy_co2(lon_obs,lat_obs,prs_tempo_top,ncnt, &
+         data_file='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mozart_forecasts/h0004.nc'
+         call get_upper_bdy_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs,prs_tes_top,ncnt, &
          co2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
 !
 ! Impose ensemble perturbations from level kstart(imem)+1      
@@ -597,7 +601,7 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
             qmr_val(imem,k)=qmr_prf_mdl(k)*qmr_val(imem,kstart(imem)+1)/ &
             (sum(qmr_val(:,kstart(imem)+1))/real(ens_size))
          enddo
-         deallocate(prs_tempo_top)
+         deallocate(prs_tes_top)
          deallocate(co2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
       endif             
    enddo
@@ -605,7 +609,7 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
 ! Check full cpsr for negative values
    do imem=1,ens_size
       flg=0
-      do k=1,level_tempo   
+      do k=1,level_tes   
          if(co2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             flg=1   
@@ -614,9 +618,9 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
             call error_handler(E_ALLMSG, routine, string1, source)
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
             if(k.le.kstart(imem)) then
-               do kk=1,level_tempo
+               do kk=1,level_tes
                   write(string1, *) &
-                  'APM: prs, co2, tmp, qmr',key,imem,prs_tempo(kk),co2_val(imem,kk), &
+                  'APM: prs, co2, tmp, qmr',key,imem,prs_tes(kk),co2_val(imem,kk), &
                   tmp_val(imem,kk),qmr_val(imem,kk)
                   call error_handler(E_ALLMSG, routine, string1, source)
                enddo
@@ -630,36 +634,36 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
    istatus(:)=0
    zstatus(:)=0.
    expct_val(:)=0.0
-   allocate(thick(layer_tempo))
+   allocate(thick(layer_tes))
 
    do imem=1,ens_size
-! Adjust the TEMPO pressure for WRF-Chem lower/upper boudary pressure
-! (TEMPO CO2 vertical grid is top to bottom)
-      prs_tempo_mem(:)=prs_tempo(:)
-      if (prs_sfc(imem).gt.prs_tempo_mem(level_tempo)) then
-         prs_tempo_mem(level_tempo)=prs_sfc(imem)
+! Adjust the TES pressure for WRF-Chem lower/upper boudary pressure
+! (TES CO2 vertical grid is top to bottom)
+      prs_tes_mem(:)=prs_tes(:)
+      if (prs_sfc(imem).gt.prs_tes_mem(level_tes)) then
+         prs_tes_mem(level_tes)=prs_sfc(imem)
       endif   
 
 ! Calculate the thicknesses
 
       thick(:)=0.
-      do k=1,layer_tempo
-         lnpr_mid=(log(prs_tempo_mem(k+1))+log(prs_tempo_mem(k)))/2.
-         up_wt=log(prs_tempo_mem(k+1))-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_tempo_mem(k))
+      do k=1,layer_tes
+         lnpr_mid=(log(prs_tes_mem(k+1))+log(prs_tes_mem(k)))/2.
+         up_wt=log(prs_tes_mem(k+1))-lnpr_mid
+         dw_wt=lnpr_mid-log(prs_tes_mem(k))
          tl_wt=up_wt+dw_wt
          tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
          tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
          thick(k)   = Rd*(dw_wt*tmp_vir_kp + up_wt*tmp_vir_k)/tl_wt/grav* &
-         log(prs_tempo_mem(k+1)/prs_tempo_mem(k))
+         log(prs_tes_mem(k+1)/prs_tes_mem(k))
       enddo
 
 ! Process the vertical summation
 
-      do k=1,layer_tempo
+      do k=1,layer_tes
          if(prior(key,k).lt.0.) then
             write(string1, *) &
-            'APM: TEMPO Prior is negative. Level may be below surface. Key,Layer: ',key,k
+            'APM: TES Prior is negative. Level may be below surface. Key,Layer: ',key,k
             call error_handler(E_MSG, routine, string1, source)
             write(string1, *) &
             'APM: Key ',key,' Prior: ',prior(key,k),' Avgk ',avg_kernel(key,k)
@@ -667,33 +671,33 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
             cycle
          endif
 !         
-         lnpr_mid=(log(prs_tempo_mem(k+1))+log(prs_tempo_mem(k)))/2.
-         up_wt=log(prs_tempo_mem(k+1))-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_tempo_mem(k))
+         lnpr_mid=(log(prs_tes_mem(k+1))+log(prs_tes_mem(k)))/2.
+         up_wt=log(prs_tes_mem(k+1))-lnpr_mid
+         dw_wt=lnpr_mid-log(prs_tes_mem(k))
          tl_wt=up_wt+dw_wt
    
 ! Convert from VMR to molar density (mol/m^3)
          if(use_log_co2) then
             co2_val_conv = (dw_wt*exp(co2_val(imem,k+1))+up_wt*exp(co2_val(imem,k)))/tl_wt * &
-            (dw_wt*prs_tempo_mem(k+1)+up_wt*prs_tempo_mem(k)) / &
+            (dw_wt*prs_tes_mem(k+1)+up_wt*prs_tes_mem(k)) / &
             (Ru*(dw_wt*tmp_val(imem,k+1)+up_wt*tmp_val(imem,k)))
          else
             co2_val_conv = (dw_wt*co2_val(imem,k+1)+up_wt*co2_val(imem,k))/tl_wt * &
-            (dw_wt*prs_tempo_mem(k+1)+up_wt*prs_tempo_mem(k)) / &
+            (dw_wt*prs_tes_mem(k+1)+up_wt*prs_tes_mem(k)) / &
             (Ru*(dw_wt*tmp_val(imem,k+1)+up_wt*tmp_val(imem,k)))
          endif
  
 ! Get expected observation
 
          prior_term=-1.*avg_kernel(key,k)
-         if(k.eq.klev_tempo) prior_term=(1.0_r8 - avg_kernel(key,k)) 
+         if(k.eq.klev_tes) prior_term=(1.0_r8 - avg_kernel(key,k)) 
 
          expct_val(imem) = expct_val(imem) + thick(k) * co2_val_conv * &
          avg_kernel(key,k) + prior_term * prior(key,k)
          
 !         write(string1, *) &
 !         'APM: Mem ',imem,' Key ',key,' Expct Val Terms: prs ',k, &
-!         (prs_tempo_mem(k)+prs_tempo_mem(k+1))/2.,' expct val ',expct_val(imem), &
+!         (prs_tes_mem(k)+prs_tes_mem(k+1))/2.,' expct val ',expct_val(imem), &
 !         'avgk*thick*co2_conv ', avg_kernel(key,k)*thick(k)*co2_val_conv, &
 !         'prior_term*prior ', prior_term*prior(key,k)
 !         call error_handler(E_MSG, routine, string1, source)
@@ -711,7 +715,7 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
          zstatus(imem)=20
          expct_val(:)=missing_r8
          write(string1, *) &
-         'APM NOTICE: TEMPO CO2 expected value is NaN '
+         'APM NOTICE: TES CO2 expected value is NaN '
          call error_handler(E_MSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
@@ -721,7 +725,7 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
          zstatus(imem)=20
          expct_val(:)=missing_r8
          write(string1, *) &
-         'APM NOTICE: TEMPO CO2 expected value is negative '
+         'APM NOTICE: TES CO2 expected value is negative '
          call error_handler(E_MSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
@@ -731,444 +735,9 @@ subroutine get_expected_tes_co2_cpsr(state_handle, ens_size, location, key, obs_
 ! Clean up and return
    deallocate(co2_val, tmp_val, qmr_val)
    deallocate(thick)
-   deallocate(prs_tempo, prs_tempo_mem)
+   deallocate(prs_tes, prs_tes_mem)
 
 end subroutine get_expected_tes_co2_cpsr
-
-!-------------------------------------------------------------------------------
-
-subroutine get_upper_bdy_co2(lon_obs,lat_obs,prs_obs,nprs_obs, &
-co2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
-  
-   implicit none
-! mozart
-!   integer,parameter                                :: nx=17
-!   integer,parameter                                :: ny=13
-!   integer,parameter                                :: nz=56
-!   integer,parameter                                :: ntim=368
-! mozart
-   integer,parameter                                :: nx=17
-   integer,parameter                                :: ny=16
-   integer,parameter                                :: nz=88
-   integer,parameter                                :: ntim=69
-
-   integer,                           intent(in)    :: nprs_obs
-   real(r8),                          intent(in)    :: lon_obs,lat_obs
-   real(r8),dimension(nprs_obs),      intent(in)    :: prs_obs
-   real(r8),dimension(nprs_obs),      intent(out)   :: co2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl
-   integer                                          :: i,j,k,kk,itim
-   integer                                          :: indx,jndx,kndx
-   integer                                          :: date_obs,datesec_obs
-   integer                                          :: itim_sav,year,month,day,hour,minute,second
-   type(time_type)                                  :: time_var
-   integer                                          :: jdate_obs,jdate_bck,jdate_fwd,yrleft,jday
-   integer,dimension(ntim)                          :: date,datesec
-   real                                             :: pi,rad2deg
-   real                                             :: bck_xwt,fwd_xwt
-   real                                             :: bck_ywt,fwd_ywt
-   real                                             :: zwt_up,zwt_dw
-   real                                             :: twtx,twty,twt
-   real                                             :: ztrp_jbck,ztrp_jfwd
-   real                                             :: wt_bck,wt_fwd   
-   real,dimension(nx)                               :: lon_glb
-   real,dimension(ny)                               :: lat_glb
-   real,dimension(nz)                               :: prs_glb,ztrp_co2,ztrp_tmp,ztrp_qmr
-   real,dimension(nz)                               :: co2_glb_xmym,co2_glb_xpym,co2_glb_xmyp,co2_glb_xpyp
-   real,dimension(nz)                               :: tmp_glb_xmym,tmp_glb_xpym,tmp_glb_xmyp,tmp_glb_xpyp
-   real,dimension(nz)                               :: qmr_glb_xmym,qmr_glb_xpym,qmr_glb_xmyp,qmr_glb_xpyp
-   real,dimension(nx,ny,nz,ntim)                    :: co2_glb,tmp_glb,qmr_glb
-   character(len=120)                               :: data_file
-   character(len=*), parameter                      :: routine = 'get_upper_bdy_co2'
-!
-!______________________________________________________________________________________________   
-!
-! Read the upper boundary large scale data (do this once)
-!______________________________________________________________________________________________   
-!
-   pi=4.*atan(1.)
-   rad2deg=360./(2.*pi)
-   data_file='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mozart_forecasts/h0004.nc'
-   data_file='/nobackupp11/amizzi/INPUT_DATA/FIREX_REAL_TIME_DATA/cam_chem_forecasts/waccm_0001.nc'
-   co2_prf_mdl(:)=0.
-   tmp_prf_mdl(:)=0.
-   qmr_prf_mdl(:)=0.
-!
-   call get_MOZART_INT_DATA(data_file,'date',ntim,1,1,1,date)
-   call get_MOZART_INT_DATA(data_file,'datesec',ntim,1,1,1,datesec)
-   call get_MOZART_REAL_DATA(data_file,'lev',nz,1,1,1,prs_glb)
-   call get_MOZART_REAL_DATA(data_file,'lat',ny,1,1,1,lat_glb)
-   call get_MOZART_REAL_DATA(data_file,'lon',nx,1,1,1,lon_glb)
-! mozart
-!   call get_MOZART_REAL_DATA(data_file,'CO2_VMR_inst',nx,ny,nz,ntim,co2_glb)
-! waccm
-   call get_MOZART_REAL_DATA(data_file,'CO2',nx,ny,nz,ntim,co2_glb)
-   call get_MOZART_REAL_DATA(data_file,'T',nx,ny,nz,ntim,tmp_glb)
-   call get_MOZART_REAL_DATA(data_file,'Q',nx,ny,nz,ntim,qmr_glb)
-   lon_glb(:)=lon_glb(:)/rad2deg
-   lat_glb(:)=lat_glb(:)/rad2deg
-!
-!______________________________________________________________________________________________   
-!
-! Find large scale data correspondeing to the observation time
-!______________________________________________________________________________________________   
-!
-   jdate_obs=date_obs*24*60*60+datesec_obs   
-   year=date(1)/10000
-   yrleft=mod(date(1),10000)
-   month=yrleft/100
-   day=mod(yrleft,100)
-   time_var=set_date(year,month,day,0,0,0)
-   call get_time(time_var,second,jday)
-   jdate_bck=jday*24*60*60+datesec(1)
-!
-   year=date(2)/10000
-   yrleft=mod(date(2),10000)
-   month=yrleft/100
-   day=mod(yrleft,100)
-   time_var=set_date(year,month,day,0,0,0)
-   call get_time(time_var,second,jday)
-   jdate_fwd=jday*24*60*60+datesec(2)
-!   
-   wt_bck=0
-   wt_fwd=0
-   itim_sav=0
-   do itim=1,ntim-1
-      if(jdate_obs.gt.jdate_bck .and. jdate_obs.le.jdate_fwd) then
-         wt_bck=real(jdate_fwd-jdate_obs)
-         wt_fwd=real(jdate_obs-jdate_bck)
-         itim_sav=itim
-         exit
-      endif
-      jdate_bck=jdate_fwd
-      year=date(itim+1)/10000
-      yrleft=mod(date(itim+1),10000)
-      month=yrleft/100
-      day=mod(yrleft,100)
-      time_var=set_date(year,month,day,0,0,0)
-      call get_time(time_var,second,jday)
-      jdate_fwd=jday*24*60*60+datesec(itim+1)
-   enddo
-   if(itim_sav.eq.0) then
-      write(string1, *) 'APM: upper bdy data not found for this time '
-      call error_handler(E_MSG, routine, string1, source)
-      call exit_all(-77)
-   endif
-!______________________________________________________________________________________________   
-!
-! Find large scale grid box containing the observation location
-!______________________________________________________________________________________________   
-!
-   indx=-9999   
-   do i=1,nx-1
-      if(lon_obs .le. lon_glb(1)) then
-         indx=1
-         bck_xwt=1.
-         fwd_xwt=0.
-         twtx=bck_xwt+fwd_xwt
-         exit
-      elseif(lon_obs .ge. lon_glb(nx)) then
-         indx=nx-1
-         bck_xwt=0.
-         fwd_xwt=1.
-         twtx=bck_xwt+fwd_xwt
-         exit
-      elseif(lon_obs.gt.lon_glb(i) .and. &
-         lon_obs.le.lon_glb(i+1)) then
-         indx=i
-         bck_xwt=lon_glb(i+1)-lon_obs
-         fwd_xwt=lon_obs-lon_glb(i)
-         twtx=bck_xwt+fwd_xwt
-         exit
-      endif
-   enddo
-   if(indx.lt.0) then
-      write(string1, *) 'APM: Obs E/W location outside large scale domain'
-      call error_handler(E_MSG, routine, string1, source)
-      call exit_all(-77)
-   endif
-!
-   jndx=-9999   
-   do j=1,ny-1
-      if(lat_obs .le. lat_glb(1)) then
-         jndx=1
-         bck_ywt=1.
-         fwd_ywt=0.
-         twty=bck_ywt+fwd_ywt
-         exit
-      elseif(lat_obs .ge. lat_glb(ny)) then
-         jndx=ny-1
-         bck_ywt=0.
-         fwd_ywt=1.
-         twty=bck_ywt+fwd_ywt
-         exit
-      elseif(lat_obs.gt.lat_glb(j) .and. &
-         lat_obs.le.lat_glb(j+1)) then
-         jndx=j
-         bck_ywt=lat_glb(j+1)-lat_obs
-         fwd_ywt=lat_obs-lat_glb(j)
-         twty=bck_ywt+fwd_ywt
-         exit
-      endif
-   enddo
-   if(jndx.lt.0) then
-      write(string1, *) 'APM: Obs N/S location outside large scale domain'
-      call error_handler(E_MSG, routine, string1, source)
-      call exit_all(-77)
-   endif
-!
-!______________________________________________________________________________________________   
-!
-! Interpolate large scale field to observation location
-!______________________________________________________________________________________________   
-!
-! Temporal
-   do k=1,nz
-      co2_glb_xmym(k)=(wt_bck*co2_glb(indx,jndx,k,itim_sav) + &
-      wt_fwd*co2_glb(indx,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
-      co2_glb_xpym(k)=(wt_bck*co2_glb(indx+1,jndx,k,itim_sav) + &
-      wt_fwd*co2_glb(indx+1,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
-      co2_glb_xmyp(k)=(wt_bck*co2_glb(indx,jndx+1,k,itim_sav) + &
-      wt_fwd*co2_glb(indx,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
-      co2_glb_xpyp(k)=(wt_bck*co2_glb(indx+1,jndx+1,k,itim_sav) + &
-      wt_fwd*co2_glb(indx+1,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
-!
-      tmp_glb_xmym(k)=(wt_bck*tmp_glb(indx,jndx,k,itim_sav) + &
-      wt_fwd*tmp_glb(indx,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
-      tmp_glb_xpym(k)=(wt_bck*tmp_glb(indx+1,jndx,k,itim_sav) + &
-      wt_fwd*tmp_glb(indx+1,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
-      tmp_glb_xmyp(k)=(wt_bck*tmp_glb(indx,jndx+1,k,itim_sav) + &
-      wt_fwd*tmp_glb(indx,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
-      tmp_glb_xpyp(k)=(wt_bck*tmp_glb(indx+1,jndx+1,k,itim_sav) + &
-      wt_fwd*tmp_glb(indx+1,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
-!
-      qmr_glb_xmym(k)=(wt_bck*qmr_glb(indx,jndx,k,itim_sav) + &
-      wt_fwd*qmr_glb(indx,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
-      qmr_glb_xpym(k)=(wt_bck*qmr_glb(indx+1,jndx,k,itim_sav) + &
-      wt_fwd*qmr_glb(indx+1,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
-      qmr_glb_xmyp(k)=(wt_bck*qmr_glb(indx,jndx+1,k,itim_sav) + &
-      wt_fwd*qmr_glb(indx,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
-      qmr_glb_xpyp(k)=(wt_bck*qmr_glb(indx+1,jndx+1,k,itim_sav) + &
-      wt_fwd*qmr_glb(indx+1,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
-   enddo
-!
-! Horizontal   
-   do k=1,nz
-      ztrp_jbck=(bck_xwt*co2_glb_xmym(k) + fwd_xwt*co2_glb_xpym(k))/twtx
-      ztrp_jfwd=(bck_xwt*co2_glb_xmyp(k) + fwd_xwt*co2_glb_xpyp(k))/twtx
-      ztrp_co2(k)=(bck_ywt*ztrp_jbck + fwd_ywt*ztrp_jfwd)/twty
-!      
-      ztrp_jbck=(bck_xwt*tmp_glb_xmym(k) + fwd_xwt*tmp_glb_xpym(k))/twtx
-      ztrp_jfwd=(bck_xwt*tmp_glb_xmyp(k) + fwd_xwt*tmp_glb_xpyp(k))/twtx
-      ztrp_tmp(k)=(bck_ywt*ztrp_jbck + fwd_ywt*ztrp_jfwd)/twty
-!      
-      ztrp_jbck=(bck_xwt*qmr_glb_xmym(k) + fwd_xwt*qmr_glb_xmyp(k))/twtx
-      ztrp_jfwd=(bck_xwt*qmr_glb_xmyp(k) + fwd_xwt*qmr_glb_xpyp(k))/twtx
-      ztrp_qmr(k)=(bck_ywt*ztrp_jbck + fwd_ywt*ztrp_jfwd)/twty      
-   enddo
-!
-! Vertical   
-   do k=1,nprs_obs
-      kndx=-9999
-      do kk=1,nz-1
-         if(prs_obs(k).le.prs_glb(kk)) then
-            kndx=1
-            zwt_up=1.            
-            zwt_dw=0.            
-            twt=zwt_up+zwt_dw
-            exit
-         elseif(prs_obs(k).ge.prs_glb(nz)) then
-            kndx=nz-1
-            zwt_up=0.            
-            zwt_dw=1.            
-            twt=zwt_up+zwt_dw
-            exit
-         elseif(prs_obs(k).gt.prs_glb(kk) .and. &
-         prs_obs(k).le.prs_glb(kk+1)) then
-            kndx=kk
-            zwt_up=prs_glb(kk+1)-prs_obs(k)            
-            zwt_dw=prs_obs(k)-prs_glb(kk)
-            twt=zwt_up+zwt_dw
-            exit
-         endif
-      enddo
-      if(kndx.le.0) then
-         write(string1, *) 'APM: Obs vertical location outside large scale domain' 
-         call error_handler(E_MSG, routine, string1, source)
-         call exit_all(-77)
-      endif
-      co2_prf_mdl(k)=(zwt_up*ztrp_co2(kndx) + zwt_dw*ztrp_co2(kndx+1))/twt
-      tmp_prf_mdl(k)=(zwt_up*ztrp_tmp(kndx) + zwt_dw*ztrp_tmp(kndx+1))/twt
-      qmr_prf_mdl(k)=(zwt_up*ztrp_qmr(kndx) + zwt_dw*ztrp_qmr(kndx+1))/twt
-   enddo
- end subroutine get_upper_bdy_co2
-
-!-------------------------------------------------------------------------------
-
-subroutine get_MOZART_INT_DATA(file,name,nx,ny,nz,ntim,fld)
-   implicit none
-   include 'netcdf.inc'
-   integer,parameter                                :: maxdim=7000
-   integer                                          :: nx,ny,nz,ntim
-   integer                                          :: i,rc
-   integer                                          :: f_id
-   integer                                          :: v_id,v_ndim,typ,natts
-   integer,dimension(maxdim)                        :: one
-   integer,dimension(maxdim)                        :: v_dimid
-   integer,dimension(maxdim)                        :: v_dim
-   integer,dimension(ntim)                          :: fld
-   character(len=*)                                 :: file
-   character(len=*)                                 :: name
-   character(len=120)                               :: v_nam
-!
-! open netcdf data file
-   rc = nf_open(trim(file),NF_NOWRITE,f_id)
-!
-   if(rc.ne.0) then
-      print *, 'nf_open error ',trim(file)
-      stop
-   endif
-!
-! get variables identifiers
-   rc = nf_inq_varid(f_id,trim(name),v_id)
-!   print *, v_id
-   if(rc.ne.0) then
-      print *, 'nf_inq_varid error ', v_id
-      stop
-   endif
-!
-! get dimension identifiers
-   v_dimid=0
-   rc = nf_inq_var(f_id,v_id,v_nam,typ,v_ndim,v_dimid,natts)
-!   print *, v_dimid
-   if(rc.ne.0) then
-      print *, 'nf_inq_var error ', v_dimid
-      stop
-   endif
-!
-! get dimensions
-   v_dim(:)=1
-   do i=1,v_ndim
-      rc = nf_inq_dimlen(f_id,v_dimid(i),v_dim(i))
-   enddo
-!   print *, v_dim
-   if(rc.ne.0) then
-      print *, 'nf_inq_dimlen error ', v_dim
-      stop
-   endif
-!
-! check dimensions
-   if(nx.ne.v_dim(1)) then
-      print *, 'ERROR: nx dimension conflict ',nx,v_dim(1)
-      stop
-   else if(ny.ne.v_dim(2)) then
-      print *, 'ERROR: ny dimension conflict ',ny,v_dim(2)
-      stop
-   else if(nz.ne.v_dim(3)) then             
-      print *, 'ERROR: nz dimension conflict ','1',v_dim(3)
-      stop
-   else if(ntim.ne.v_dim(4)) then             
-      print *, 'ERROR: time dimension conflict ',1,v_dim(4)
-      stop
-   endif
-!
-! get data
-   one(:)=1
-   rc = nf_get_vara_int(f_id,v_id,one,v_dim,fld)
-   if(rc.ne.0) then
-      print *, 'nf_get_vara_real ', fld(1)
-      stop
-   endif
-   rc = nf_close(f_id)
-   return
-     
-end subroutine get_MOZART_INT_DATA
-
-!-------------------------------------------------------------------------------
-
-subroutine get_MOZART_REAL_DATA(file,name,nx,ny,nz,ntim,fld)
-   implicit none
-   include 'netcdf.inc'   
-   integer,parameter                                :: maxdim=7000
-   integer                                          :: nx,ny,nz,ntim
-   integer                                          :: i,rc
-   integer                                          :: f_id
-   integer                                          :: v_id,v_ndim,typ,natts
-   integer,dimension(maxdim)                        :: one
-   integer,dimension(maxdim)                        :: v_dimid
-   integer,dimension(maxdim)                        :: v_dim
-   real,dimension(nx,ny,nz,ntim)                    :: fld
-   character(len=*)                                 :: file
-   character(len=*)                                 :: name
-   character(len=120)                               :: v_nam
-!
-! open netcdf data file
-   rc = nf_open(trim(file),NF_NOWRITE,f_id)
-!   print *, 'f_id ',f_id
-!
-   if(rc.ne.0) then
-      print *, 'nf_open error ',trim(file)
-      stop
-   endif
-!
-! get variables identifiers
-   rc = nf_inq_varid(f_id,trim(name),v_id)
-!   print *, 'v_id ',v_id
-!
-   if(rc.ne.0) then
-      print *, 'nf_inq_varid error ', v_id
-      stop
-   endif
-   !
-! get dimension identifiers
-   v_dimid=0
-   rc = nf_inq_var(f_id,v_id,v_nam,typ,v_ndim,v_dimid,natts)
-!   print *, 'v_dimid ',v_dimid
-!
-   if(rc.ne.0) then
-      print *, 'nf_inq_var error ', v_dimid
-      stop
-   endif
-!
-! get dimensions
-   v_dim(:)=1
-   do i=1,v_ndim
-      rc = nf_inq_dimlen(f_id,v_dimid(i),v_dim(i))
-   enddo
-!   print *, 'v_dim ',v_dim
-!
-   if(rc.ne.0) then
-      print *, 'nf_inq_dimlen error ', v_dim
-      stop
-   endif
-!
-! check dimensions
-   if(nx.ne.v_dim(1)) then
-      print *, 'ERROR: nx dimension conflict ',nx,v_dim(1)
-      stop
-   else if(ny.ne.v_dim(2)) then
-      print *, 'ERROR: ny dimension conflict ',ny,v_dim(2)
-      stop
-   else if(nz.ne.v_dim(3)) then             
-      print *, 'ERROR: nz dimension conflict ','1',v_dim(3)
-      stop
-   else if(ntim.ne.v_dim(4)) then             
-      print *, 'ERROR: time dimension conflict ',1,v_dim(4)
-      stop
-   endif
-!
-! get data
-   one(:)=1
-   rc = nf_get_vara_real(f_id,v_id,one,v_dim,fld)
-!   print *, 'fld ', fld(1,1,1,1),fld(nx/2,ny/2,nz/2,ntim/2),fld(nx,ny,nz,ntim)
-!
-   if(rc.ne.0) then
-      print *, 'nf_get_vara_real ', fld(1,1,1,1)
-      stop
-   endif
-   rc = nf_close(f_id)
-   return
-     
-end subroutine get_MOZART_REAL_DATA
 
 !-------------------------------------------------------------------------------
 
@@ -1183,7 +752,7 @@ co2_nlayer, co2_klev, co2_kend)
    if ( .not. module_initialized ) call initialize_module
    
    if(num_tes_co2_obs >= max_tes_co2_obs) then
-      write(string1, *)'Not enough space for tempo co2 obs.'
+      write(string1, *)'Not enough space for tes co2 obs.'
       write(string2, *)'Can only have max_tes_co2_obs (currently ',max_tes_co2_obs,')'
       call error_handler(E_ERR,'set_obs_def_tes_co2_cpsr',string1,source,revision, &
       revdate,text2=string2)

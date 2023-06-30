@@ -222,8 +222,8 @@ fi
 export SKIP_FILTER=false
 #
 # Run WRF-Chem for failed forecasts (will not work with adaptive time step)
-export RUN_SPECIAL_FORECAST=false
-export NUM_SPECIAL_FORECAST=10
+export RUN_SPECIAL_FORECAST=true
+export NUM_SPECIAL_FORECAST=0
 export SPECIAL_FORECAST_FAC=1./2.
 export SPECIAL_FORECAST_FAC=2./3.
 export SPECIAL_FORECAST_FAC=1.
@@ -580,7 +580,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_PREPROCESS_OBS=false
          export RUN_WRFCHEM_INITIAL=false
          export RUN_LOCALIZATION=false
-         export RUN_DART_FILTER=true
+         export RUN_DART_FILTER=false
          export RUN_BIAS_CORRECTION=false
          export RUN_UPDATE_BC=true
          export RUN_ENSEMBLE_MEAN_INPUT=true
@@ -719,7 +719,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_DART_FILTER=false
          export RUN_BIAS_CORRECTION=false
          export RUN_UPDATE_BC=false
-         export RUN_ENSEMBLE_MEAN_INPUT=true
+         export RUN_ENSEMBLE_MEAN_INPUT=false
          export RUN_WRFCHEM_CYCLE_CR=true
          export RUN_BAND_DEPTH=false
          export RUN_WRFCHEM_CYCLE_FR=false

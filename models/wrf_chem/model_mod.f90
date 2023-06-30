@@ -1057,6 +1057,7 @@ WRFDomains : do id=1,num_domains
    wrf%dom(id)%type_o3 = get_type_ind_from_type_string(id,'o3')
    wrf%dom(id)%type_no  = get_type_ind_from_type_string(id,'no')
    wrf%dom(id)%type_no2 = get_type_ind_from_type_string(id,'no2')
+   wrf%dom(id)%type_hno3 = get_type_ind_from_type_string(id,'hno3')
    wrf%dom(id)%type_so2 = get_type_ind_from_type_string(id,'so2')
    wrf%dom(id)%type_so4 = get_type_ind_from_type_string(id,'sulf')
    wrf%dom(id)%type_hcho = get_type_ind_from_type_string(id,'hcho')
@@ -3521,6 +3522,45 @@ else
          enddo
       endif
 !
+! 4.zd NITRIC ACID (HNO3)
+   else if( obs_kind == QTY_HNO3 ) then
+      if ( wrf%dom(id)%type_hno3 >= 0 ) then
+         do uk = 1, count
+            if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_hno3 ) .and. &
+            boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_hno3 ) .and. &
+            boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_hno3 ) ) then
+               call getCorners(i, j, id, wrf%dom(id)%type_hno3, ll, ul, lr, ur, rc )
+               if ( rc .ne. 0 ) then
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners HNO3 rc = ', rc
+                  call exit_all (-77)
+               endif
+!
+! Interpolation for the HNO3 field at level k
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_hno3)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_hno3)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_hno3)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id),wrf%dom(id)%type_hno3)
+               x_ill = get_state(ill, state_handle)
+               x_iul = get_state(iul, state_handle)
+               x_ilr = get_state(ilr, state_handle)
+               x_iur = get_state(iur, state_handle)
+               call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+!
+! Interpolation for the HNO3 field at level k+1
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_hno3)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_hno3)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_hno3)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_hno3)
+               x_ill = get_state(ill, state_handle)
+               x_iul = get_state(iul, state_handle)
+               x_ilr = get_state(ilr, state_handle)
+               x_iur = get_state(iur, state_handle)
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))               
+            endif
+         enddo
+      endif
 !-----------------------------------------------------
 !5.ze SULFUR DIOXIDE (SO2); SULFATE (SO4)
    elseif ( obs_kind == QTY_SO2 .or. obs_kind == QTY_SO4 ) then

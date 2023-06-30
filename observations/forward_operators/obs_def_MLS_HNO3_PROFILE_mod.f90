@@ -296,6 +296,9 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
    real(r8),            intent(out) :: expct_val(:)
    
    character(len=*), parameter :: routine = 'get_expected_mls_hno3_profile'
+   character(len=120)          :: data_file
+   character(len=*),parameter  :: model = 'MOZART'
+   character(len=*),parameter  :: fld = 'HNO3_VMR_inst'
    type(location_type) :: loc2
    
    integer :: layer_mls,level_mls, klev_mls, kend_mls
@@ -317,7 +320,6 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
 
    real(r8), dimension(ens_size) :: hno3_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
    real(r8), dimension(ens_size) :: hno3_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
-   real(r8), dimension(ens_size) :: hno3_mdl_tmp, tmp_mdl_tmp, qmr_mdl_tmp, prs_mdl_tmp
    real(r8), dimension(ens_size) :: prs_sfc,rec_hno3_val,rec_tmp_val,rec_qmr_val
    
    real(r8), allocatable, dimension(:)   :: thick, prs_mls, prs_mls_mem
@@ -347,6 +349,8 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
    tmp_max  = 600.
    del_prs  = 5000.
    VMR_conv = 28.9644/47.9982
+   bdy_coef = 0.95
+   prs_del  = 1000.         ! Pa  
 ! 
 ! WACCM - MMR
 ! WRFChem - VMR ppmv
@@ -368,7 +372,7 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
       hno3_min = log(hno3_min)
    endif
    
-! Assign vertical grid information (MLS HNO3 grid is top to bottom)
+! Assign vertical grid information (MLS HNO3 grid is bottom to top)
 
    layer_mls = nlayer(key)
    level_mls = nlayer(key)+1
@@ -406,27 +410,27 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
    call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus) 
 
-   hno3_mdl_tmp(:)=missing_r8
-   tmp_mdl_tmp(:)=missing_r8
-   qmr_mdl_tmp(:)=missing_r8
-   prs_mdl_tmp(:)=missing_r8
+   hno3_mdl_1(:)=missing_r8
+   tmp_mdl_1(:)=missing_r8
+   qmr_mdl_1(:)=missing_r8
+   prs_mdl_1(:)=missing_r8
 
    do k=1,layer_mdl
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-      call interpolate(state_handle, ens_size, loc2, QTY_HNO3, hno3_mdl_tmp, zstatus) ! ppmv 
+      call interpolate(state_handle, ens_size, loc2, QTY_HNO3, hno3_mdl_1, zstatus) ! ppmv 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_tmp, zstatus) ! K 
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_1, zstatus) ! K 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_tmp, zstatus) ! kg / kg 
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg / kg 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_tmp, zstatus) ! Pa
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
 !
       interp_new=0
       do imem=1,ens_size
-         if(hno3_mdl_tmp(imem).eq.missing_r8 .or. tmp_mdl_tmp(imem).eq.missing_r8 .or. &
-         qmr_mdl_tmp(imem).eq.missing_r8 .or. prs_mdl_tmp(imem).eq.missing_r8) then
+         if(hno3_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
+         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
             interp_new=1
             exit
          endif
@@ -452,18 +456,18 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-      call interpolate(state_handle, ens_size, loc2, QTY_HNO3, hno3_mdl_tmp, zstatus) 
+      call interpolate(state_handle, ens_size, loc2, QTY_HNO3, hno3_mdl_n, zstatus) 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_tmp, zstatus) 
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_n, zstatus) 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_tmp, zstatus) 
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, zstatus) 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_tmp, zstatus) 
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, zstatus) 
 !
       interp_new=0
       do imem=1,ens_size
-         if(hno3_mdl_tmp(imem).eq.missing_r8 .or. tmp_mdl_tmp(imem).eq.missing_r8 .or. &
-         qmr_mdl_tmp(imem).eq.missing_r8 .or. prs_mdl_tmp(imem).eq.missing_r8) then
+         if(hno3_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
+         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
             interp_new=1
             exit
          endif
@@ -485,7 +489,7 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
    allocate(hno3_val(ens_size,layer_mls))
    allocate(tmp_val(ens_size,layer_mls))
    allocate(qmr_val(ens_size,layer_mls))
-
+   
    do k=1,layer_mls
       zstatus=0
       loc2 = set_location(mloc(1), mloc(2), prs_mls(k), VERTISPRESSURE)
@@ -522,17 +526,17 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
       do imem=1,ens_size
          if(hno3_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
          qmr_val(imem,k).eq.missing_r8) then
+!            do imemm=1,ens_size
+!               write(string1, *) &
+!               'APM: Model profile values: hno3,tmp,qmr',key,imem,k,hno3_val(imemm,k), &
+!               tmp_val(imemm,k),qmr_val(imemm,k)     
+!               call error_handler(E_ALLMSG, routine, string1, source)
+!            enddo
             zstatus(:)=20
             expct_val(:)=missing_r8
             write(string1, *) 'APM: Model profile data has missing values for obs, level ',key,k
             call error_handler(E_ALLMSG, routine, string1, source)
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            do imemm=1,ens_size
-               write(string1, *) &
-               'APM: Model profile values: hno3,tmp,qmr',key,imem,k,hno3_val(imemm,k), &
-               tmp_val(imemm,k),qmr_val(imemm,k)     
-               call error_handler(E_ALLMSG, routine, string1, source)
-            enddo
             return
          endif
       enddo
@@ -540,26 +544,25 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
 ! Convert units for hno3 from ppmv
       hno3_val(:,k) = hno3_val(:,k) * 1.e-6_r8
       hno3_mdl_1(:) = hno3_mdl_1(:) * 1.e-6_r8
-      hno3_mdl_n(:) = hno3_mdl_n(:) * 1.e-6_r8
-      
+      hno3_mdl_n(:) = hno3_mdl_n(:) * 1.e-6_r8      
    enddo
 !
 ! Use large scale hno3 data above the regional model top
-! MLS vertical is from top to bottom   
+! MLS vertical is from bottom to top   
    kstart=-1
    do imem=1,ens_size
-      if (prs_mls(1).lt.prs_mdl_n(imem)) then
+      if (prs_mls(layer_mls).lt.prs_mdl_n(imem)) then
          do k=1,layer_mls
-            if (prs_mls(k).ge.prs_mdl_n(imem)) then
+            if (prs_mls(k).le.prs_mdl_n(imem)) then
                kstart=k
                exit
             endif
          enddo
-         ncnt=layer_mls-kstart
+         ncnt=layer_mls-kstart+1
          allocate(prs_mls_top(ncnt))
          allocate(hno3_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
          do k=kstart,layer_mls
-            prs_mls_top(k)=prs_mls(k)
+            prs_mls_top(k-kstart+1)=prs_mls(k)
          enddo
          prs_mls_top(:)=prs_mls_top(:)/100.
 !
@@ -567,18 +570,26 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
          lat_obs=mloc(2)/rad2deg
          call get_time(obs_time,datesec_obs,date_obs)
 !
-         call get_upper_bdy_hno3(lon_obs,lat_obs,prs_mls_top,ncnt, &
-         hno3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+         data_file='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mozart_forecasts/h0004.nc'   
+         call get_upper_bdy_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs, &
+         prs_mls_top,ncnt,hno3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+!
+         do k=1,ncnt
+            write(string1, *) &
+            'APM: Raw upper bdy vals: k,prs,hno3,tmp,qmr',k,prs_mls_top(k),hno3_prf_mdl(k), &
+            tmp_prf_mdl(k),qmr_prf_mdl(k)     
+            call error_handler(E_MSG, routine, string1, source)
+         enddo
 !
 ! Impose ensemble perturbations from level kstart+1      
 !         hno3_prf_mdl(:)=hno3_prf_mdl(:)*VMR_conv
          do k=kstart,layer_mls 
-            hno3_val(imem,k)=hno3_prf_mdl(k)*hno3_val(imem,kstart+1)/ &
-            (sum(hno3_val(:,kstart+1))/real(ens_size))
-            tmp_val(imem,k)=tmp_prf_mdl(k)*tmp_val(imem,kstart+1)/ &
-            (sum(tmp_val(:,kstart+1))/real(ens_size))
-            qmr_val(imem,k)=qmr_prf_mdl(k)*qmr_val(imem,kstart+1)/ &
-            (sum(qmr_val(:,kstart+1))/real(ens_size))
+            hno3_val(imem,k)=hno3_prf_mdl(k-kstart+1)*hno3_val(imem,kstart-1)/ &
+            (sum(hno3_val(:,kstart-1))/real(ens_size))
+            tmp_val(imem,k)=tmp_prf_mdl(k-kstart+1)*tmp_val(imem,kstart-1)/ &
+            (sum(tmp_val(:,kstart-1))/real(ens_size))
+            qmr_val(imem,k)=qmr_prf_mdl(k-kstart+1)*qmr_val(imem,kstart-1)/ &
+            (sum(qmr_val(:,kstart-1))/real(ens_size))
          enddo
          deallocate(prs_mls_top)
          deallocate(hno3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
@@ -588,7 +599,12 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
 ! Check full profile for negative values
    do imem=1,ens_size
       flg=0
-      do k=1,layer_mls   
+      do k=1,layer_mls
+!         write(string1, *) &
+!         'APM: k, prs, hno3, tmp, qmr ',k,prs_mls(k),hno3_val(imem,k), &
+!         tmp_val(imem,k),qmr_val(imem,k)
+!         call error_handler(E_MSG, routine, string1, source)
+         
          if(hno3_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             flg=1   
@@ -744,441 +760,6 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
    deallocate(prs_mls, prs_mls_mem)
 
 end subroutine get_expected_mls_hno3_profile
-
-!-------------------------------------------------------------------------------
-
-subroutine get_upper_bdy_hno3(lon_obs,lat_obs,prs_obs,nprs_obs, &
-hno3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
-  
-   implicit none
-! mozart
-!   integer,parameter                                :: nx=17
-!   integer,parameter                                :: ny=13
-!   integer,parameter                                :: nz=56
-!   integer,parameter                                :: ntim=368
-! mozart
-   integer,parameter                                :: nx=17
-   integer,parameter                                :: ny=16
-   integer,parameter                                :: nz=88
-   integer,parameter                                :: ntim=69
-
-   integer,                           intent(in)    :: nprs_obs
-   real(r8),                          intent(in)    :: lon_obs,lat_obs
-   real(r8),dimension(nprs_obs),      intent(in)    :: prs_obs
-   real(r8),dimension(nprs_obs),      intent(out)   :: hno3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl
-   integer                                          :: i,j,k,kk,itim
-   integer                                          :: indx,jndx,kndx
-   integer                                          :: date_obs,datesec_obs
-   integer                                          :: itim_sav,year,month,day,hour,minute,second
-   type(time_type)                                  :: time_var
-   integer                                          :: jdate_obs,jdate_bck,jdate_fwd,yrleft,jday
-   integer,dimension(ntim)                          :: date,datesec
-   real                                             :: pi,rad2deg
-   real                                             :: bck_xwt,fwd_xwt
-   real                                             :: bck_ywt,fwd_ywt
-   real                                             :: zwt_up,zwt_dw
-   real                                             :: twtx,twty,twt
-   real                                             :: ztrp_jbck,ztrp_jfwd
-   real                                             :: wt_bck,wt_fwd   
-   real,dimension(nx)                               :: lon_glb
-   real,dimension(ny)                               :: lat_glb
-   real,dimension(nz)                               :: prs_glb,ztrp_hno3,ztrp_tmp,ztrp_qmr
-   real,dimension(nz)                               :: hno3_glb_xmym,hno3_glb_xpym,hno3_glb_xmyp,hno3_glb_xpyp
-   real,dimension(nz)                               :: tmp_glb_xmym,tmp_glb_xpym,tmp_glb_xmyp,tmp_glb_xpyp
-   real,dimension(nz)                               :: qmr_glb_xmym,qmr_glb_xpym,qmr_glb_xmyp,qmr_glb_xpyp
-   real,dimension(nx,ny,nz,ntim)                    :: hno3_glb,tmp_glb,qmr_glb
-   character(len=120)                               :: data_file
-   character(len=*), parameter                      :: routine = 'get_upper_bdy_hno3'
-!
-!______________________________________________________________________________________________   
-!
-! Read the upper boundary large scale data (do this once)
-!______________________________________________________________________________________________   
-!
-   pi=4.*atan(1.)
-   rad2deg=360./(2.*pi)
-   data_file='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mozart_forecasts/h0004.nc'
-   data_file='/nobackupp11/amizzi/INPUT_DATA/FIREX_REAL_TIME_DATA/cam_chem_forecasts/waccm_0001.nc'
-   hno3_prf_mdl(:)=0.
-   tmp_prf_mdl(:)=0.
-   qmr_prf_mdl(:)=0.
-!
-   call get_MOZART_INT_DATA(data_file,'date',ntim,1,1,1,date)
-   call get_MOZART_INT_DATA(data_file,'datesec',ntim,1,1,1,datesec)
-   call get_MOZART_REAL_DATA(data_file,'lev',nz,1,1,1,prs_glb)
-   call get_MOZART_REAL_DATA(data_file,'lat',ny,1,1,1,lat_glb)
-   call get_MOZART_REAL_DATA(data_file,'lon',nx,1,1,1,lon_glb)
-! mozart
-!   call get_MOZART_REAL_DATA(data_file,'HNO3_VMR_inst',nx,ny,nz,ntim,hno3_glb)
-! waccm
-   call get_MOZART_REAL_DATA(data_file,'HNO3',nx,ny,nz,ntim,hno3_glb)
-   call get_MOZART_REAL_DATA(data_file,'T',nx,ny,nz,ntim,tmp_glb)
-   call get_MOZART_REAL_DATA(data_file,'Q',nx,ny,nz,ntim,qmr_glb)
-   lon_glb(:)=lon_glb(:)/rad2deg
-   lat_glb(:)=lat_glb(:)/rad2deg
-!
-!______________________________________________________________________________________________   
-!
-! Find large scale data correspondeing to the observation time
-!______________________________________________________________________________________________   
-!
-   jdate_obs=date_obs*24*60*60+datesec_obs   
-   year=date(1)/10000
-   yrleft=mod(date(1),10000)
-   month=yrleft/100
-   day=mod(yrleft,100)
-   time_var=set_date(year,month,day,0,0,0)
-   call get_time(time_var,second,jday)
-   jdate_bck=jday*24*60*60+datesec(1)
-!
-   year=date(2)/10000
-   yrleft=mod(date(2),10000)
-   month=yrleft/100
-   day=mod(yrleft,100)
-   time_var=set_date(year,month,day,0,0,0)
-   call get_time(time_var,second,jday)
-   jdate_fwd=jday*24*60*60+datesec(2)
-!   
-   wt_bck=0
-   wt_fwd=0
-   itim_sav=0
-   do itim=1,ntim-1
-      if(jdate_obs.gt.jdate_bck .and. jdate_obs.le.jdate_fwd) then
-         wt_bck=real(jdate_fwd-jdate_obs)
-         wt_fwd=real(jdate_obs-jdate_bck)
-         itim_sav=itim
-         exit
-      endif
-      jdate_bck=jdate_fwd
-      year=date(itim+1)/10000
-      yrleft=mod(date(itim+1),10000)
-      month=yrleft/100
-      day=mod(yrleft,100)
-      time_var=set_date(year,month,day,0,0,0)
-      call get_time(time_var,second,jday)
-      jdate_fwd=jday*24*60*60+datesec(itim+1)
-   enddo
-   if(itim_sav.eq.0) then
-      write(string1, *) 'APM: upper bdy data not found for this time '
-      call error_handler(E_MSG, routine, string1, source)
-      call exit_all(-77)
-   endif
-!______________________________________________________________________________________________   
-!
-! Find large scale grid box containing the observation location
-!______________________________________________________________________________________________   
-!
-   indx=-9999   
-   do i=1,nx-1
-      if(lon_obs .le. lon_glb(1)) then
-         indx=1
-         bck_xwt=1.
-         fwd_xwt=0.
-         twtx=bck_xwt+fwd_xwt
-         exit
-      elseif(lon_obs .ge. lon_glb(nx)) then
-         indx=nx-1
-         bck_xwt=0.
-         fwd_xwt=1.
-         twtx=bck_xwt+fwd_xwt
-         exit
-      elseif(lon_obs.gt.lon_glb(i) .and. &
-         lon_obs.le.lon_glb(i+1)) then
-         indx=i
-         bck_xwt=lon_glb(i+1)-lon_obs
-         fwd_xwt=lon_obs-lon_glb(i)
-         twtx=bck_xwt+fwd_xwt
-         exit
-      endif
-   enddo
-   if(indx.lt.0) then
-      write(string1, *) 'APM: Obs E/W location outside large scale domain'
-      call error_handler(E_MSG, routine, string1, source)
-      call exit_all(-77)
-   endif
-!
-   jndx=-9999   
-   do j=1,ny-1
-      if(lat_obs .le. lat_glb(1)) then
-         jndx=1
-         bck_ywt=1.
-         fwd_ywt=0.
-         twty=bck_ywt+fwd_ywt
-         exit
-      elseif(lat_obs .ge. lat_glb(ny)) then
-         jndx=ny-1
-         bck_ywt=0.
-         fwd_ywt=1.
-         twty=bck_ywt+fwd_ywt
-         exit
-      elseif(lat_obs.gt.lat_glb(j) .and. &
-         lat_obs.le.lat_glb(j+1)) then
-         jndx=j
-         bck_ywt=lat_glb(j+1)-lat_obs
-         fwd_ywt=lat_obs-lat_glb(j)
-         twty=bck_ywt+fwd_ywt
-         exit
-      endif
-   enddo
-   if(jndx.lt.0) then
-      write(string1, *) 'APM: Obs N/S location outside large scale domain'
-      call error_handler(E_MSG, routine, string1, source)
-      call exit_all(-77)
-   endif
-!
-!______________________________________________________________________________________________   
-!
-! Interpolate large scale field to observation location
-!______________________________________________________________________________________________   
-!
-! Tesral
-   do k=1,nz
-      hno3_glb_xmym(k)=(wt_bck*hno3_glb(indx,jndx,k,itim_sav) + &
-      wt_fwd*hno3_glb(indx,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
-      hno3_glb_xpym(k)=(wt_bck*hno3_glb(indx+1,jndx,k,itim_sav) + &
-      wt_fwd*hno3_glb(indx+1,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
-      hno3_glb_xmyp(k)=(wt_bck*hno3_glb(indx,jndx+1,k,itim_sav) + &
-      wt_fwd*hno3_glb(indx,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
-      hno3_glb_xpyp(k)=(wt_bck*hno3_glb(indx+1,jndx+1,k,itim_sav) + &
-      wt_fwd*hno3_glb(indx+1,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
-!
-      tmp_glb_xmym(k)=(wt_bck*tmp_glb(indx,jndx,k,itim_sav) + &
-      wt_fwd*tmp_glb(indx,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
-      tmp_glb_xpym(k)=(wt_bck*tmp_glb(indx+1,jndx,k,itim_sav) + &
-      wt_fwd*tmp_glb(indx+1,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
-      tmp_glb_xmyp(k)=(wt_bck*tmp_glb(indx,jndx+1,k,itim_sav) + &
-      wt_fwd*tmp_glb(indx,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
-      tmp_glb_xpyp(k)=(wt_bck*tmp_glb(indx+1,jndx+1,k,itim_sav) + &
-      wt_fwd*tmp_glb(indx+1,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
-!
-      qmr_glb_xmym(k)=(wt_bck*qmr_glb(indx,jndx,k,itim_sav) + &
-      wt_fwd*qmr_glb(indx,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
-      qmr_glb_xpym(k)=(wt_bck*qmr_glb(indx+1,jndx,k,itim_sav) + &
-      wt_fwd*qmr_glb(indx+1,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
-      qmr_glb_xmyp(k)=(wt_bck*qmr_glb(indx,jndx+1,k,itim_sav) + &
-      wt_fwd*qmr_glb(indx,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
-      qmr_glb_xpyp(k)=(wt_bck*qmr_glb(indx+1,jndx+1,k,itim_sav) + &
-      wt_fwd*qmr_glb(indx+1,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
-   enddo
-!
-! Horizontal   
-   do k=1,nz
-      ztrp_jbck=(bck_xwt*hno3_glb_xmym(k) + fwd_xwt*hno3_glb_xpym(k))/twtx
-      ztrp_jfwd=(bck_xwt*hno3_glb_xmyp(k) + fwd_xwt*hno3_glb_xpyp(k))/twtx
-      ztrp_hno3(k)=(bck_ywt*ztrp_jbck + fwd_ywt*ztrp_jfwd)/twty
-!      
-      ztrp_jbck=(bck_xwt*tmp_glb_xmym(k) + fwd_xwt*tmp_glb_xpym(k))/twtx
-      ztrp_jfwd=(bck_xwt*tmp_glb_xmyp(k) + fwd_xwt*tmp_glb_xpyp(k))/twtx
-      ztrp_tmp(k)=(bck_ywt*ztrp_jbck + fwd_ywt*ztrp_jfwd)/twty
-!      
-      ztrp_jbck=(bck_xwt*qmr_glb_xmym(k) + fwd_xwt*qmr_glb_xmyp(k))/twtx
-      ztrp_jfwd=(bck_xwt*qmr_glb_xmyp(k) + fwd_xwt*qmr_glb_xpyp(k))/twtx
-      ztrp_qmr(k)=(bck_ywt*ztrp_jbck + fwd_ywt*ztrp_jfwd)/twty      
-   enddo
-!
-! Vertical   
-   do k=1,nprs_obs
-      kndx=-9999
-      do kk=1,nz-1
-         if(prs_obs(k).le.prs_glb(kk)) then
-            kndx=1
-            zwt_up=1.            
-            zwt_dw=0.            
-            twt=zwt_up+zwt_dw
-            exit
-         elseif(prs_obs(k).ge.prs_glb(nz)) then
-            kndx=nz-1
-            zwt_up=0.            
-            zwt_dw=1.            
-            twt=zwt_up+zwt_dw
-            exit
-         elseif(prs_obs(k).gt.prs_glb(kk) .and. &
-         prs_obs(k).le.prs_glb(kk+1)) then
-            kndx=kk
-            zwt_up=prs_glb(kk+1)-prs_obs(k)            
-            zwt_dw=prs_obs(k)-prs_glb(kk)
-            twt=zwt_up+zwt_dw
-            exit
-         endif
-      enddo
-      if(kndx.le.0) then
-         write(string1, *) 'APM: Obs vertical location outside large scale domain' 
-         call error_handler(E_MSG, routine, string1, source)
-         call exit_all(-77)
-      endif
-      hno3_prf_mdl(k)=(zwt_up*ztrp_hno3(kndx) + zwt_dw*ztrp_hno3(kndx+1))/twt
-      tmp_prf_mdl(k)=(zwt_up*ztrp_tmp(kndx) + zwt_dw*ztrp_tmp(kndx+1))/twt
-      qmr_prf_mdl(k)=(zwt_up*ztrp_qmr(kndx) + zwt_dw*ztrp_qmr(kndx+1))/twt
-   enddo
- end subroutine get_upper_bdy_hno3
-
-!-------------------------------------------------------------------------------
-
-subroutine get_MOZART_INT_DATA(file,name,nx,ny,nz,ntim,fld)
-   implicit none
-   include 'netcdf.inc'
-   integer,parameter                                :: maxdim=7000
-   integer                                          :: nx,ny,nz,ntim
-   integer                                          :: i,rc
-   integer                                          :: f_id
-   integer                                          :: v_id,v_ndim,typ,natts
-   integer,dimension(maxdim)                        :: one
-   integer,dimension(maxdim)                        :: v_dimid
-   integer,dimension(maxdim)                        :: v_dim
-   integer,dimension(ntim)                          :: fld
-   character(len=*)                                 :: file
-   character(len=*)                                 :: name
-   character(len=120)                               :: v_nam
-!
-! open netcdf data file
-   rc = nf_open(trim(file),NF_NOWRITE,f_id)
-!
-   if(rc.ne.0) then
-      print *, 'nf_open error ',trim(file)
-      stop
-   endif
-!
-! get variables identifiers
-   rc = nf_inq_varid(f_id,trim(name),v_id)
-!   print *, v_id
-   if(rc.ne.0) then
-      print *, 'nf_inq_varid error ', v_id
-      stop
-   endif
-!
-! get dimension identifiers
-   v_dimid=0
-   rc = nf_inq_var(f_id,v_id,v_nam,typ,v_ndim,v_dimid,natts)
-!   print *, v_dimid
-   if(rc.ne.0) then
-      print *, 'nf_inq_var error ', v_dimid
-      stop
-   endif
-!
-! get dimensions
-   v_dim(:)=1
-   do i=1,v_ndim
-      rc = nf_inq_dimlen(f_id,v_dimid(i),v_dim(i))
-   enddo
-!   print *, v_dim
-   if(rc.ne.0) then
-      print *, 'nf_inq_dimlen error ', v_dim
-      stop
-   endif
-!
-! check dimensions
-   if(nx.ne.v_dim(1)) then
-      print *, 'ERROR: nx dimension conflict ',nx,v_dim(1)
-      stop
-   else if(ny.ne.v_dim(2)) then
-      print *, 'ERROR: ny dimension conflict ',ny,v_dim(2)
-      stop
-   else if(nz.ne.v_dim(3)) then             
-      print *, 'ERROR: nz dimension conflict ','1',v_dim(3)
-      stop
-   else if(ntim.ne.v_dim(4)) then             
-      print *, 'ERROR: time dimension conflict ',1,v_dim(4)
-      stop
-   endif
-!
-! get data
-   one(:)=1
-   rc = nf_get_vara_int(f_id,v_id,one,v_dim,fld)
-   if(rc.ne.0) then
-      print *, 'nf_get_vara_real ', fld(1)
-      stop
-   endif
-   rc = nf_close(f_id)
-   return
-     
-end subroutine get_MOZART_INT_DATA
-
-!-------------------------------------------------------------------------------
-
-subroutine get_MOZART_REAL_DATA(file,name,nx,ny,nz,ntim,fld)
-   implicit none
-   include 'netcdf.inc'   
-   integer,parameter                                :: maxdim=7000
-   integer                                          :: nx,ny,nz,ntim
-   integer                                          :: i,rc
-   integer                                          :: f_id
-   integer                                          :: v_id,v_ndim,typ,natts
-   integer,dimension(maxdim)                        :: one
-   integer,dimension(maxdim)                        :: v_dimid
-   integer,dimension(maxdim)                        :: v_dim
-   real,dimension(nx,ny,nz,ntim)                    :: fld
-   character(len=*)                                 :: file
-   character(len=*)                                 :: name
-   character(len=120)                               :: v_nam
-!
-! open netcdf data file
-   rc = nf_open(trim(file),NF_NOWRITE,f_id)
-!   print *, 'f_id ',f_id
-!
-   if(rc.ne.0) then
-      print *, 'nf_open error ',trim(file)
-      stop
-   endif
-!
-! get variables identifiers
-   rc = nf_inq_varid(f_id,trim(name),v_id)
-!   print *, 'v_id ',v_id
-!
-   if(rc.ne.0) then
-      print *, 'nf_inq_varid error ', v_id
-      stop
-   endif
-   !
-! get dimension identifiers
-   v_dimid=0
-   rc = nf_inq_var(f_id,v_id,v_nam,typ,v_ndim,v_dimid,natts)
-!   print *, 'v_dimid ',v_dimid
-!
-   if(rc.ne.0) then
-      print *, 'nf_inq_var error ', v_dimid
-      stop
-   endif
-!
-! get dimensions
-   v_dim(:)=1
-   do i=1,v_ndim
-      rc = nf_inq_dimlen(f_id,v_dimid(i),v_dim(i))
-   enddo
-!   print *, 'v_dim ',v_dim
-!
-   if(rc.ne.0) then
-      print *, 'nf_inq_dimlen error ', v_dim
-      stop
-   endif
-!
-! check dimensions
-   if(nx.ne.v_dim(1)) then
-      print *, 'ERROR: nx dimension conflict ',nx,v_dim(1)
-      stop
-   else if(ny.ne.v_dim(2)) then
-      print *, 'ERROR: ny dimension conflict ',ny,v_dim(2)
-      stop
-   else if(nz.ne.v_dim(3)) then             
-      print *, 'ERROR: nz dimension conflict ','1',v_dim(3)
-      stop
-   else if(ntim.ne.v_dim(4)) then             
-      print *, 'ERROR: time dimension conflict ',1,v_dim(4)
-      stop
-   endif
-!
-! get data
-   one(:)=1
-   rc = nf_get_vara_real(f_id,v_id,one,v_dim,fld)
-!   print *, 'fld ', fld(1,1,1,1),fld(nx/2,ny/2,nz/2,ntim/2),fld(nx,ny,nz,ntim)
-!
-   if(rc.ne.0) then
-      print *, 'nf_get_vara_real ', fld(1,1,1,1)
-      stop
-   endif
-   rc = nf_close(f_id)
-   return
-     
-end subroutine get_MOZART_REAL_DATA
 
 !-------------------------------------------------------------------------------
 

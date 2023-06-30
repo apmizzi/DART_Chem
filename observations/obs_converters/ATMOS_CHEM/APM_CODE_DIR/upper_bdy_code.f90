@@ -61,8 +61,9 @@ fld_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
    real,dimension(nz)                               :: tmp_glb_xmym,tmp_glb_xpym,tmp_glb_xmyp,tmp_glb_xpyp
    real,dimension(nz)                               :: qmr_glb_xmym,qmr_glb_xpym,qmr_glb_xmyp,qmr_glb_xpyp
    real,dimension(nx,ny,nz,ntim)                    :: fld_glb,tmp_glb,qmr_glb
-   character(len=50)                                :: fld,model
-   character(len=120)                               :: data_file,string1
+   character(len=120)                               :: string1
+   character(len=*)                                 :: fld,model
+   character(len=*)                                 :: data_file
    character(len=*), parameter                      :: routine = 'get_upper_bdy_fld'
    character(len=*), parameter                      :: source = 'get_upper_bdy_fld.f90'
 !
@@ -82,8 +83,8 @@ fld_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
    call get_MOZART_REAL_DATA(data_file,'lev',nz,1,1,1,prs_glb)
    call get_MOZART_REAL_DATA(data_file,'lat',ny,1,1,1,lat_glb)
    call get_MOZART_REAL_DATA(data_file,'lon',nx,1,1,1,lon_glb)
-   if(trim(model).eq.'mozart' .or. trim(model).eq.'MOZART') then
 ! mozart
+   if(trim(model).eq.'mozart' .or. trim(model).eq.'MOZART') then
       call get_MOZART_REAL_DATA(data_file,trim(fld),nx,ny,nz,ntim,fld_glb)
 ! waccm
    elseif (trim(model).eq.'waccm' .or. trim(model).eq.'WACCM') then
@@ -92,7 +93,6 @@ fld_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
       print *, 'APM: Large scale model type does not exist '
       call exit_all(-77)
    endif
-!
    call get_MOZART_REAL_DATA(data_file,'T',nx,ny,nz,ntim,tmp_glb)
    call get_MOZART_REAL_DATA(data_file,'Q',nx,ny,nz,ntim,qmr_glb)
    lon_glb(:)=lon_glb(:)/rad2deg
