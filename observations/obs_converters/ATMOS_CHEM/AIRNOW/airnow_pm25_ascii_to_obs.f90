@@ -23,7 +23,43 @@ program airnow_pm25_ascii_to_obs
 ! Based from create_obs_sequence.f90
 !=============================================
 !
-      use    utilities_mod, only :    timestamp,                 &
+  use apm_cpsr_mod, only           : cpsr_calculation, &
+                                     mat_prd, &
+                                     mat_tri_prd, &
+                                     vec_to_mat, &
+                                     diag_inv_sqrt, &
+                                     lh_mat_vec_prd, &
+                                     rh_vec_mat_prd, &
+                                     mat_transpose, &
+                                     diag_vec
+  
+  use apm_mapping_mod, only        : w3fb06, &
+                                     w3fb07, &
+                                     w3fb08, &
+                                     w3fb09, &
+                                     w3fb11, &
+                                     w3fb12, &
+                                     w3fb13, &
+                                     w3fb14
+
+  use apm_model_fields_vertloc_mod, only : vertical_locate, &
+                                           get_model_profile, &
+                                           get_DART_diag_data, &
+                                           handle_err, &
+                                           interp_hori_vert, &
+                                           interp_to_obs
+  
+  use apm_time_code_mod, only          : calc_greg_sec
+
+  use apm_upper_bdy_mod, only      : get_upper_bdy_fld, &
+                                     get_MOZART_INT_DATA, &
+                                     get_MOZART_REAL_DATA, &
+                                     wrf_dart_ubval_interp, &
+                                     apm_get_exo_coldens, &
+                                     apm_get_upvals, &
+                                     apm_interpolate
+
+  use    utilities_mod, only :    timestamp,                 &
                                       register_module,           &
                                       initialize_utilities,      &
                                       find_namelist_in_file,     &
@@ -103,7 +139,7 @@ program airnow_pm25_ascii_to_obs
       integer                      :: beg_year,beg_mon,beg_day,beg_hour,beg_min,beg_sec 
       integer                      :: end_year,end_mon,end_day,end_hour,end_min,end_sec
       integer                      :: anal_greg_sec,beg_greg_sec,end_greg_sec
-      integer                      :: save_greg_sec,calc_greg_sec
+      integer                      :: save_greg_sec
       integer                      :: year_temp,month_temp,day_temp,hour_temp,minute_temp, &
                                       data_greg_sec_temp
       integer,dimension(indx_max)  :: year,month,day,hour,minute,data_greg_sec

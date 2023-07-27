@@ -1,3 +1,19 @@
+module apm_model_fields_vertloc_mod
+
+   use apm_mapping_mod, only    : w3fb13
+  
+   implicit none
+   private
+
+   public :: vertical_locate, &
+             get_model_profile, &
+             get_DART_diag_data, &
+             handle_err, &
+             interp_hori_vert, &
+             interp_to_obs
+
+   contains
+  
 subroutine vertical_locate(prs_loc,prs_obs,nlev_obs,locl_prf,nlay_obs,kend)
 !
 ! This subroutine identifies a vertical location for 
@@ -507,3 +523,5 @@ subroutine interp_to_obs(prf_mdl,fld_mdl,prs_mdl,prs_obs,nz_mdl,nlev_obs,kend)
       enddo               
    enddo
 end subroutine interp_to_obs
+
+end module apm_model_fields_vertloc_mod

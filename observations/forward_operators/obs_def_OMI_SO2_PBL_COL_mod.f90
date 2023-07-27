@@ -51,6 +51,14 @@
 
 module obs_def_omi_so2_pbl_col_mod
 
+   use         apm_upper_bdy_mod, only :get_upper_bdy_fld, &
+                                        get_MOZART_INT_DATA, &
+                                        get_MOZART_REAL_DATA, &
+                                        wrf_dart_ubval_interp, &
+                                        apm_get_exo_coldens, &
+                                        apm_get_upvals, &
+                                        apm_interpolate
+
    use         types_mod, only : r8, MISSING_R8
 
    use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, E_ALLMSG, &
@@ -488,7 +496,7 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 !   write(string1, *) 'APM: prs upper bound ',key,prs_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
    
-! Get profiles at OMI pressure levels (Pa)
+! Get values at OMI pressure levels (Pa)
 
    allocate(so2_val(ens_size,level_omi))
    allocate(tmp_val(ens_size,level_omi))
@@ -656,9 +664,9 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          endif
       enddo
       
-      write(string1, *) &
-      'APM: Mem: pbl_index ', pbl_index
-      call error_handler(E_MSG, routine, string1, source)
+!      write(string1, *) &
+!      'APM: Mem: pbl_index ', pbl_index
+!      call error_handler(E_MSG, routine, string1, source)
 
       if(pbl_index.lt.layer_omi/2 .or. pbl_index.ge.layer_omi) then
          zstatus(imem)=20

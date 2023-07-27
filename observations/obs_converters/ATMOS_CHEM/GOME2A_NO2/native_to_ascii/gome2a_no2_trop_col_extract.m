@@ -193,22 +193,22 @@ function gome2a_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
       prs_lev=zeros(npxl,nscan,level);
       prs_lay=zeros(npxl,nscan,layer);
       for ipxl=1:npxl
-         for iscan=1:nscan
-            if(isnan(tm5_prs_sfc(ipxl,iscan)))
+         for ilin=1:nscan
+            if(isnan(tm5_prs_sfc(ipxl,ilin)))
                continue
             end
-            for k=1:layer
-               prs_lev(ipxl,iscan,k)=tm5_prs_a(1,k)+tm5_prs_b(1,k)* ...
-               tm5_prs_sfc(ipxl,iscan);
-               prs_lay(ipxl,iscan,k)=(tm5_prs_a(1,k)+tm5_prs_a(2,k))/2.+ ...
-               (tm5_prs_b(1,k)+tm5_prs_b(2,k))/2.*tm5_prs_sfc(ipxl,iscan);
+            for ilv=1:layer
+               prs_lev(ipxl,ilin,ilv)=tm5_prs_a(1,ilv)+tm5_prs_b(1,ilv)* ...
+               tm5_prs_sfc(ipxl,ilin);
+#               if(prs_lev(ipxl,ilin,ilv)<.1)
+#                  prs_lev(ipxl,ilin,ilv)=.1;
+#               end
+               prs_lay(ipxl,ilin,ilv)=(tm5_prs_a(1,ilv)+tm5_prs_b(1,ilv)* ...
+               tm5_prs_sfc(ipxl,ilin) + tm5_prs_a(2,ilv)+tm5_prs_b(2,ilv)* ...
+               tm5_prs_sfc(ipxl,ilin))/2.;
             end
-            prs_lev(ipxl,iscan,level)=tm5_prs_a(2,layer)+tm5_prs_b(2,layer)* ...
-            tm5_prs_sfc(ipxl,iscan);
-%           for k=1:layer
-%              mid=(prs_lev(ipxl,iscan,k)+prs_lev(ipxl,iscan,k+1))/2.;
-%              fprintf('prs_lay, mid %7.2f, %7.2f \n',prs_lay(ipxl,iscan,k),mid)
-%           end
+            prs_lev(ipxl,ilin,layer+1)=tm5_prs_a(2,layer)+tm5_prs_b(2,layer)* ...
+            tm5_prs_sfc(ipxl,ilin);
          end
       end
 %

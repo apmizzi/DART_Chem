@@ -21,18 +21,54 @@ program omi_no2_domino_trop_col_ascii_to_obs
 !=============================================
 ! OMI NO2 trop column obs
 !=============================================
-   use utilities_mod, only          : timestamp,                  &
-                                      register_module,            &
-                                      open_file,                  &
-                                      close_file,                 &
-                                      initialize_utilities,       &
-                                      find_namelist_in_file,      &
-                                      check_namelist_read,        &
-                                      error_handler,              &
-                                      E_ERR,                      & 
-                                      E_WARN,                     & 
-                                      E_MSG,                      &
-                                      E_DBG
+  use apm_cpsr_mod, only           : cpsr_calculation, &
+                                     mat_prd, &
+                                     mat_tri_prd, &
+                                     vec_to_mat, &
+                                     diag_inv_sqrt, &
+                                     lh_mat_vec_prd, &
+                                     rh_vec_mat_prd, &
+                                     mat_transpose, &
+                                     diag_vec
+  
+  use apm_mapping_mod, only        : w3fb06, &
+                                     w3fb07, &
+                                     w3fb08, &
+                                     w3fb09, &
+                                     w3fb11, &
+                                     w3fb12, &
+                                     w3fb13, &
+                                     w3fb14
+
+  use apm_model_fields_vertloc_mod, only : vertical_locate, &
+                                           get_model_profile, &
+                                           get_DART_diag_data, &
+                                           handle_err, &
+                                           interp_hori_vert, &
+                                           interp_to_obs
+  
+  use apm_time_code_mod, only          : calc_greg_sec
+
+  use apm_upper_bdy_mod, only      : get_upper_bdy_fld, &
+                                     get_MOZART_INT_DATA, &
+                                     get_MOZART_REAL_DATA, &
+                                     wrf_dart_ubval_interp, &
+                                     apm_get_exo_coldens, &
+                                     apm_get_upvals, &
+                                     apm_interpolate
+
+  use utilities_mod, only          : timestamp,                  &
+                                     register_module,            &
+                                     open_file,                  &
+                                     close_file,                 &
+                                     initialize_utilities,       &
+                                     find_namelist_in_file,      &
+                                     check_namelist_read,        &
+                                     error_handler,              &
+                                     E_ERR,                      & 
+                                     E_WARN,                     & 
+                                     E_MSG,                      &
+                                     E_DBG
 
    use obs_sequence_mod, only       : obs_sequence_type,          &
                                       interactive_obs,            &

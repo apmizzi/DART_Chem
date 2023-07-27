@@ -1,3 +1,11 @@
+module apm_time_code_mod
+   implicit none
+   private
+
+   public :: calc_greg_sec
+
+   contains
+   
    integer function calc_greg_sec(year,month,day,hour,minute,sec,days_in_month)
       implicit none
       integer                  :: i,j,k,year,month,day,hour,minute,sec
@@ -19,3 +27,5 @@
       enddo
       calc_greg_sec=calc_greg_sec+sec
    end function calc_greg_sec
+
+   end module apm_time_code_mod

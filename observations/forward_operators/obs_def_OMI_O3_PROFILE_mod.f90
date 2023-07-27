@@ -51,6 +51,14 @@
 
 module obs_def_omi_o3_profile_mod
 
+   use         apm_upper_bdy_mod, only :get_upper_bdy_fld, &
+                                        get_MOZART_INT_DATA, &
+                                        get_MOZART_REAL_DATA, &
+                                        wrf_dart_ubval_interp, &
+                                        apm_get_exo_coldens, &
+                                        apm_get_upvals, &
+                                        apm_interpolate
+
    use             types_mod, only : r8, MISSING_R8
 
    use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, E_ALLMSG, &
@@ -301,7 +309,7 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
    character(len=*), parameter :: routine = 'get_expected_omi_o3_profile'
    character(len=120)          :: data_file
    character(len=*),parameter  :: model = 'MOZART'
-   character(len=*),parameter  :: fld = 'HNO3_VMR_inst'
+   character(len=*),parameter  :: fld = 'O3_VMR_inst'
    type(location_type) :: loc2
    
    integer :: layer_omi,level_omi, klev_omi, kend_omi
@@ -568,6 +576,9 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
 ! OMI vertical is from top to bottom   
    kstart=-1
    do imem=1,ens_size
+!      write(string1, *) &
+!      'APM: Pressure bounds: ',imem,prs_omi(1),prs_mdl_1(imem),prs_mdl_n(imem)
+!      call error_handler(E_MSG, routine, string1, source)
       if (prs_omi(1).lt.prs_mdl_n(imem)) then
          do k=1,level_omi
             if (prs_omi(k).ge.prs_mdl_n(imem)) then
@@ -606,9 +617,15 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
    enddo
 !
 ! Check full profile for negative values
+   flg=0
    do imem=1,ens_size
-      flg=0
-      do k=1,level_omi   
+!      do k=1,level_omi
+!         write(string1, *) &
+!         'APM: prs, o3, tmp, qmr',key,imem,prs_omi(k),o3_val(imem,k), &
+!         tmp_val(imem,k),qmr_val(imem,k)
+!         call error_handler(E_ALLMSG, routine, string1, source)
+!      enddo
+      do k=1,level_omi
          if(o3_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             flg=1   
@@ -616,20 +633,16 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
             'APM: Recentered full profile has negative values for key,imem ',key,imem
             call error_handler(E_ALLMSG, routine, string1, source)
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            if(k.le.kstart) then
-               do kk=1,level_omi
-                  write(string1, *) &
-                  'APM: prs, o3, tmp, qmr',key,imem,prs_omi(kk),o3_val(imem,kk), &
-                  tmp_val(imem,kk),qmr_val(imem,kk)
-                  call error_handler(E_ALLMSG, routine, string1, source)
-               enddo
-               exit
-            endif
          endif
       enddo
-      if(flg.eq.1) exit
    enddo
-   
+   if(flg.eq.1) then
+      zstatus(:)=20
+      expct_val(:)=missing_r8
+      call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+      return
+   endif
+!   
    istatus(:)=0
    zstatus(:)=0.
    expct_val(:)=0.0
@@ -695,16 +708,13 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
 !         write(string1, *) &
 !         'APM: Mem ',imem,' Key ',key,' Expct Val Terms: prs ',k, &
 !         (prs_omi_mem(k)+prs_omi_mem(k+1))/2.,' expct val ',expct_val(imem), &
-!         ' thick ',thick(k),' avgk ',avg_kernel(key,k),'thick*o3_conv ', thick(k)*o3_val_conv, &
-!         'prior ',prior(key,k)
+!         ' avgk ',avg_kernel(key,k), ' thick*o3_val_conv ',thick(k)*o3_val_conv, &
+!         ' prior term ',prior_term, ' prior ',prior(key,k)
 !         call error_handler(E_MSG, routine, string1, source)
       enddo
-!
-      if(expct_val(imem).lt.0.) then
-         write(string1, *) &
-         'APM: Member ',imem,'Key, Final Value ',key,expct_val(imem)
-         call error_handler(E_ALLMSG, routine, string1, source)
-      endif
+      write(string1, *) &
+      'APM: Member ',imem,'Key, Final Value ',key,expct_val(imem)
+      call error_handler(E_MSG, routine, string1, source)
 ! 
       if(isnan(expct_val(imem))) then
          zstatus(imem)=20

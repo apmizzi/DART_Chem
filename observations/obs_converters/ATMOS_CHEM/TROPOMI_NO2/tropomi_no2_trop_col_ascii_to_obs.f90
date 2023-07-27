@@ -21,6 +21,42 @@ program tropomi_no2_trop_col_ascii_to_obs
 !=============================================
 ! TROPOMI NO2 column obs
 !=============================================
+  use apm_cpsr_mod, only           : cpsr_calculation, &
+                                     mat_prd, &
+                                     mat_tri_prd, &
+                                     vec_to_mat, &
+                                     diag_inv_sqrt, &
+                                     lh_mat_vec_prd, &
+                                     rh_vec_mat_prd, &
+                                     mat_transpose, &
+                                     diag_vec
+  
+  use apm_mapping_mod, only        : w3fb06, &
+                                     w3fb07, &
+                                     w3fb08, &
+                                     w3fb09, &
+                                     w3fb11, &
+                                     w3fb12, &
+                                     w3fb13, &
+                                     w3fb14
+
+  use apm_model_fields_vertloc_mod, only : vertical_locate, &
+                                           get_model_profile, &
+                                           get_DART_diag_data, &
+                                           handle_err, &
+                                           interp_hori_vert, &
+                                           interp_to_obs
+  
+  use apm_time_code_mod, only          : calc_greg_sec
+
+  use apm_upper_bdy_mod, only      : get_upper_bdy_fld, &
+                                     get_MOZART_INT_DATA, &
+                                     get_MOZART_REAL_DATA, &
+                                     wrf_dart_ubval_interp, &
+                                     apm_get_exo_coldens, &
+                                     apm_get_upvals, &
+                                     apm_interpolate
+
    use utilities_mod, only          : timestamp,                  &
                                       register_module,            &
                                       open_file,                  &
@@ -338,7 +374,7 @@ program tropomi_no2_trop_col_ascii_to_obs
          call set_obs_def_location(obs_def, obs_location)
          call set_obs_def_time(obs_def, obs_time)
          call set_obs_def_error_variance(obs_def, obs_err_var)
-         call set_obs_def_tropomi_no2_trop_col(qc_count, prs_obs_r8, avgk_obs_r8, amf_trop_obs_r8, trop_indx, nlay_obs)
+         call set_obs_def_tropomi_no2_trop_col(qc_count, prs_obs_r8, avgk_obs_r8, trop_indx, nlay_obs)
          call set_obs_def_key(obs_def, qc_count)
          call set_obs_values(obs, obs_val, 1)
          call set_qc(obs, tropomi_qc, num_qc)

@@ -1,3 +1,20 @@
+module apm_cpsr_mod
+  
+   implicit none
+   private
+
+   public :: cpsr_calculation, &
+             mat_prd, &
+             mat_tri_prd, &
+             vec_to_mat, &
+             diag_inv_sqrt, &
+             lh_mat_vec_prd, &
+             rh_vec_mat_prd, &
+             mat_transpose, &
+             diag_vec
+
+   contains
+  
 subroutine cpsr_calculation(nlayer_trc,nlayer,spec_cpsr,avgk_cpsr,prior_cpsr,spec_obs,prior_obs,avgk_obs,cov_obs,cnt) 
    real,parameter                               :: eps_tol=1.e-3
    integer                                      :: k,kk,cnt
@@ -383,3 +400,5 @@ subroutine diag_vec(A_mat,a_vec,n)
       a_vec(i)=A_mat(i,i) 
    enddo
 end subroutine diag_vec
+
+end module apm_cpsr_mod

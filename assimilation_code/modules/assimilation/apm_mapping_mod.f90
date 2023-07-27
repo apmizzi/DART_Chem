@@ -1,3 +1,18 @@
+module apm_mapping_mod
+   implicit none
+   private
+
+   public :: w3fb06, &
+             w3fb07, &
+             w3fb08, &
+             w3fb09, &
+             w3fb11, &
+             w3fb12, &
+             w3fb13, &
+             w3fb14
+
+   contains
+             
       SUBROUTINE W3FB06(ALAT,ALON,ALAT1,ALON1,DX,ALONV,XI,XJ)
 !$$$   SUBPROGRAM  DOCUMENTATION  BLOCK
 !
@@ -100,7 +115,7 @@
          XJ  = POLEJ + H * RM * SIN(ALO)
 !
       RETURN
-      END
+      END SUBROUTINE W3FB06
 
 !-------------------------------------------------------------------------------
 
@@ -224,7 +239,7 @@
          IF (ALON.LT.0) ALON = ALON + 360.
 !
       RETURN
-      END
+      END SUBROUTINE W3FB07
 
 !-------------------------------------------------------------------------------
 
@@ -294,7 +309,7 @@
                DELLON - DJEO
 !
       RETURN
-      END
+      END SUBROUTINE W3FB08
 
 !-------------------------------------------------------------------------------
 
@@ -364,7 +379,7 @@
          ALON = (XI-1.) * DELLON * DEGPR + ALON1
 !
       RETURN
-      END
+      END SUBROUTINE W3FB09
 
 !-------------------------------------------------------------------------------
 
@@ -492,7 +507,7 @@
          IF (XJ.LT.1.)  XJ = XJ - 1.
 !
       RETURN
-      END
+      END SUBROUTINE W3FB11
 
 !-------------------------------------------------------------------------------
 
@@ -673,7 +688,7 @@
            IERR = 2
          ENDIF
       RETURN
-      END
+      END SUBROUTINE W3FB12
 
 !-------------------------------------------------------------------------------
 
@@ -811,8 +826,8 @@
          IF (NINT(XI).LT.1)  XI = XI - 1.
          IF (NINT(XJ).LT.1)  XJ = XJ - 1.
 !
-      RETURN 
-      END
+         RETURN         
+      END SUBROUTINE W3FB13
 
 !-------------------------------------------------------------------------------
 
@@ -1009,4 +1024,6 @@
            IERR = 2
          ENDIF
          RETURN   
-         END
+       END SUBROUTINE W3FB14
+       
+end module apm_mapping_mod

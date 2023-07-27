@@ -51,6 +51,14 @@
 
 module obs_def_omi_no2_trop_col_mod
 
+use         apm_upper_bdy_mod, only :get_upper_bdy_fld, &
+                                     get_MOZART_INT_DATA, &
+                                     get_MOZART_REAL_DATA, &
+                                     wrf_dart_ubval_interp, &
+                                     apm_get_exo_coldens, &
+                                     apm_get_upvals, &
+                                     apm_interpolate
+
 use             types_mod, only : r8, MISSING_R8
 
 use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, E_ALLMSG, &
@@ -513,7 +521,6 @@ subroutine get_expected_omi_no2_trop_col(state_handle, ens_size, location, key, 
 ! Convert units for no2 from ppmv
       no2_val(:,k) = no2_val(:,k) * 1.e-6_r8
    enddo
-   
 !
 ! Get model values at trop_prs(key)
    allocate (no2_trop(ens_size))   

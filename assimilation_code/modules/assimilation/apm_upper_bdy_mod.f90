@@ -1,5 +1,5 @@
-subroutine get_upper_bdy_fld(fld,model,data_file,nx,ny,nz,ntim,lon_obs,lat_obs,prs_obs,nprs_obs, &
-fld_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)  
+module apm_upper_bdy_mod
+  
    use        types_mod, only     : r8  
    use time_manager_mod, only     : set_date,                   &
                                     set_calendar_type,          &
@@ -20,20 +20,21 @@ fld_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
    use     location_mod, only     : location_type,              &
                                     set_location
 
-   use obs_sequence_mod, only     : obs_sequence_type,          &
-                                    write_obs_seq,              &
-                                    static_init_obs_sequence,   &
-                                    init_obs_sequence,          &
-                                    init_obs,                   &
-                                    set_obs_values,             &
-                                    set_obs_def,                &
-                                    set_qc,                     &
-                                    set_qc_meta_data,           &
-                                    set_copy_meta_data,         &
-                                    insert_obs_in_seq,          &
-                                    obs_type
-
    implicit none
+   private
+
+   public :: get_upper_bdy_fld, &
+             get_MOZART_INT_DATA, &
+             get_MOZART_REAL_DATA, &
+             wrf_dart_ubval_interp, &
+             apm_get_exo_coldens, &
+             apm_get_upvals, &
+             apm_interpolate
+   
+   contains
+   
+subroutine get_upper_bdy_fld(fld,model,data_file,nx,ny,nz,ntim,lon_obs,lat_obs,prs_obs,nprs_obs, &
+fld_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)  
 
    integer,                           intent(in)    :: nx,ny,nz,ntim
    integer,                           intent(in)    :: nprs_obs
@@ -524,7 +525,7 @@ subroutine wrf_dart_ubval_interp(obs_val,del_prs,domain,species,lon,lat,lev,im2,
 ! select upper boundary data from ubvals_b40.20th.track1_1996-2005.nc
    if (use_interp_1) then
       imn1=6
-      call apm_get_ubvals(fid1,species,imn1,fld1,xlat_tmp1,xlev1)
+      call apm_get_upvals(fid1,species,imn1,fld1,xlat_tmp1,xlev1)
       rc=nf90_close(fid1)
    else
 !
@@ -581,14 +582,14 @@ subroutine wrf_dart_ubval_interp(obs_val,del_prs,domain,species,lon,lat,lev,im2,
             xlat1(i,j)=xlat_tmp1(j)
          enddo
       enddo
-!      print *, 'IN UBVAL SUB: lon,lat,lev ',lon,lat,lev
-!      print *, 'IN UBVAL SUB: xlon,xlat,xlev ',xlon1(1,48),xlat1(1,48)
+!      print *, 'IN UPVAL SUB: lon,lat,lev ',lon,lat,lev
+!      print *, 'IN UPVAL SUB: xlon,xlat,xlev ',xlon1(1,48),xlat1(1,48)
 !      do j=1,nz1
-!        print *, 'IN UBVAL SUB: fldd1 ',j,xlev1(j),fldd1(1,48,j)
+!        print *, 'IN UPVAL SUB: fldd1 ',j,xlev1(j),fldd1(1,48,j)
 !      enddo
       call apm_interpolate(obs_val,del_prs,lon,lat,lev,xlon1,xlat1,xlev1, &
       fldd1,nx1,ny1,nz1,istatus)
-!      print *, 'IN UBVAL SUB: obs_val,del_prs ',obs_val,del_prs
+!      print *, 'IN UPVAL SUB: obs_val,del_prs ',obs_val,del_prs
    else
       do k=1,nz2
          prs_tmp2(nz2-k+1)=xlev2(k)
@@ -668,7 +669,7 @@ subroutine apm_get_exo_coldens(fid,fldname,dataf,nx,ny,nz,nm)
    rc = nf90_get_var(fid,v_id,dataf,one,v_dim)
 end subroutine apm_get_exo_coldens
 !
-subroutine apm_get_ubvals(fid,species,imn,dataf,lats,levs)
+subroutine apm_get_upvals(fid,species,imn,dataf,lats,levs)
    use netcdf
    implicit none
    integer,parameter                                 :: maxdim=4
@@ -891,7 +892,7 @@ subroutine apm_get_ubvals(fid,species,imn,dataf,lats,levs)
          dataf(i,j)=vmrs(i,idx,imn,j)
       enddo
    enddo
-end subroutine apm_get_ubvals
+end subroutine apm_get_upvals
 !
 subroutine apm_interpolate(obs_val,del_prs,lon,lat,lev,xlon,xlat,xlev,dataf,nx,ny,nz,istatus)
 !
@@ -1150,6 +1151,4 @@ subroutine apm_interpolate(obs_val,del_prs,lon,lat,lev,xlon,xlat,xlev,dataf,nx,n
    del_prs=xlev(k_lw)-xlev(k_up)
 end subroutine apm_interpolate
 
-
-
-
+end module apm_upper_bdy_mod

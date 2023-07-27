@@ -1,0 +1,12 @@
+To run WRF-Chem/DART, you need to do the builds in:
+
+RUN_FINN_FIRE
+RUN_MEGAN_BIO
+RUN_PERT_CHEM/ICBC_PERT
+RUN_PERT_CHEM/EMISS_PERT
+RUN_EMISS_INV
+RUN_WES_COLDENS
+RUN_BIAS_CORR
+
+'cd' to the appropriate 'work' directory and run './quickbuild.csh'
+

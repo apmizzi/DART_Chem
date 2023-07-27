@@ -167,15 +167,26 @@ function gome2a_no2_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
       prs_sfc=ncread(file_in,field);
       Eta_A=ncreadatt(file_in,field,'Eta_A');
       Eta_B=ncreadatt(file_in,field,'Eta_B');
-      for i=1:ntrk;
-         for j=1:nstep;
-            for k=1:level;
-               prs_lev(k,i,j)=Eta_A(k)+(Eta_B(k)*prs_sfc(i,j));
+%
+% GOME2A grid is bottom to top
+      prs_lev=zeros(level,ntrk,nstep);
+      prs_lay=zeros(layer,ntrk,nstep);
+      for ipxl=1:ntrk
+         for ilin=1:nstep
+            if(isnan(prs_sfc(ipxl,ilin)))
+               continue
             end
-            for k=1:layer;
-               prs_lay(k,i,j)=(prs_lev(k,i,j)+prs_lev(k+1,i,j))/2.;
+            for ilv=1:level
+               prs_lev(ilv,ipxl,ilin)=Eta_A(ilv)+Eta_B(ilv)* ...
+               prs_sfc(ipxl,ilin);
+#               if(prs_lev(ipxl,ilin,ilv)<.1)
+#                  prs_lev(ipxl,ilin,ilv)=.1;
+#               end
+	    end
+            for ilv=1:layer	    
+               prs_lay(ilv,ipxl,ilin)=(prs_lev(ilv,ipxl,ilin)+prs_lev(ilv+1,ipxl,ilin))/2.;
             end
-	 end
+         end
       end
 %
 % prs_trop (ntrk,nstep)

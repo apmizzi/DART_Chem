@@ -51,6 +51,14 @@
 
 module obs_def_tropomi_hcho_trop_col_mod
 
+use         apm_upper_bdy_mod, only :get_upper_bdy_fld, &
+                                     get_MOZART_INT_DATA, &
+                                     get_MOZART_REAL_DATA, &
+                                     wrf_dart_ubval_interp, &
+                                     apm_get_exo_coldens, &
+                                     apm_get_upvals, &
+                                     apm_interpolate
+
 use             types_mod, only : r8, MISSING_R8
 
 use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &
@@ -154,7 +162,7 @@ endif
 allocate(    nlayer(max_tropomi_hcho_obs))
 allocate(    trop_indx(max_tropomi_hcho_obs))
 allocate(    amf_trop(max_tropomi_hcho_obs))
-allocate(  pressure(max_tropomi_hcho_obs,nlayer_tropomi))
+allocate(  pressure(max_tropomi_hcho_obs,nlayer_tropomi+1))
 allocate(avg_kernel(max_tropomi_hcho_obs,nlayer_tropomi))
 
 end subroutine initialize_module
@@ -189,10 +197,10 @@ nlayer_1 = read_int_scalar( ifile, fileformat, 'nlayer_1')
 trop_indx_1 = read_int_scalar( ifile, fileformat, 'trop_indx_1')
 amf_trop_1 = read_r8_scalar( ifile, fileformat, 'amf_trop_1')
 
-allocate(  pressure_1(nlayer_1))
+allocate(  pressure_1(nlayer_1+1))
 allocate(avg_kernel_1(nlayer_1))
 
-call read_r8_array(ifile, nlayer_1, pressure_1,   fileformat, 'pressure_1')
+call read_r8_array(ifile, nlayer_1+1, pressure_1,   fileformat, 'pressure_1')
 call read_r8_array(ifile, nlayer_1,   avg_kernel_1, fileformat, 'avg_kernel_1')
 keyin = read_int_scalar(ifile, fileformat, 'keyin')
 
@@ -232,7 +240,7 @@ if(present(fform)) fileformat = adjustl(fform)
 call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
 call write_int_scalar(ifile,                     trop_indx(key), fileformat,'trop_indx')
 call write_r8_scalar( ifile,                     amf_trop(key), fileformat,'amf_trop')
-call write_r8_array(  ifile, nlayer(key),        pressure(key,:), fileformat,'pressure')
+call write_r8_array(  ifile, nlayer(key)+1,      pressure(key,:), fileformat,'pressure')
 call write_r8_array(  ifile, nlayer(key),        avg_kernel(key,:), fileformat,'avg_kernel')
 call write_int_scalar(ifile,                     key, fileformat,'key')
 
@@ -332,7 +340,7 @@ subroutine get_expected_tropomi_hcho_trop_col(state_handle, ens_size, location, 
    
    allocate(prs_tropomi(level_tropomi))
    allocate(prs_tropomi_mem(level_tropomi))
-   prs_tropomi(1:layer_tropomi)=pressure(key,1:layer_tropomi)
+   prs_tropomi(1:layer_tropomi)=pressure(key,1:layer_tropomi+1)
 
 ! Get location infomation
 
@@ -570,7 +578,7 @@ subroutine set_obs_def_tropomi_hcho_trop_col(key, hcho_pressure, hcho_avg_kernel
 integer,                           intent(in)   :: key, hcho_nlayer
 integer,                           intent(in)   :: hcho_trop_indx
 real(r8),                          intent(in)   :: hcho_amf_trop
-real(r8), dimension(hcho_nlayer),  intent(in)   :: hcho_pressure
+real(r8), dimension(hcho_nlayer+1), intent(in)   :: hcho_pressure
 real(r8), dimension(hcho_nlayer),    intent(in)   :: hcho_avg_kernel
 
 if ( .not. module_initialized ) call initialize_module
@@ -585,7 +593,7 @@ endif
 nlayer(key) = hcho_nlayer
 trop_indx(key) = hcho_trop_indx
 amf_trop(key) = hcho_amf_trop
-pressure(key,1:hcho_nlayer)   = hcho_pressure(1:hcho_nlayer)
+pressure(key,1:hcho_nlayer+1) = hcho_pressure(1:hcho_nlayer+1)
 avg_kernel(key,1:hcho_nlayer) = hcho_avg_kernel(1:hcho_nlayer)
 
 end subroutine set_obs_def_tropomi_hcho_trop_col

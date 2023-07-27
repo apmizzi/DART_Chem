@@ -56,6 +56,13 @@
 !
 ! BEGIN DART PREPROCESS MODULE CODE
 module obs_def_IASI_O3_PROFILE_mod
+use         apm_upper_bdy_mod, only :get_upper_bdy_fld, &
+                                     get_MOZART_INT_DATA, &
+                                     get_MOZART_REAL_DATA, &
+                                     wrf_dart_ubval_interp, &
+                                     apm_get_exo_coldens, &
+                                     apm_get_upvals, &
+                                     apm_interpolate
 
 use        types_mod, only : r8, missing_r8
 use    utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &

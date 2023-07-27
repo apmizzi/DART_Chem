@@ -51,6 +51,14 @@
 
 module obs_def_omi_hcho_total_col_mod
 
+use         apm_upper_bdy_mod, only :get_upper_bdy_fld, &
+                                     get_MOZART_INT_DATA, &
+                                     get_MOZART_REAL_DATA, &
+                                     wrf_dart_ubval_interp, &
+                                     apm_get_exo_coldens, &
+                                     apm_get_upvals, &
+                                     apm_interpolate
+
 use             types_mod, only : r8, MISSING_R8
 
 use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, E_ALLMSG, &
@@ -97,7 +105,6 @@ integer,  allocatable :: nlayer(:)
 integer,  allocatable :: kend(:)
 real(r8), allocatable :: pressure(:,:)
 real(r8), allocatable :: scat_wt(:,:)
-real(r8), allocatable :: prs_trop(:)
 ! version controlled file description for error handling, do not edit
 character(len=*), parameter :: source   = 'obs_def_omi_hcho_total_col_mod.f90'
 character(len=*), parameter :: revision = ''
@@ -158,7 +165,6 @@ allocate(   nlayer(max_omi_hcho_obs))
 allocate(   kend(max_omi_hcho_obs))
 allocate( pressure(max_omi_hcho_obs,nlayer_omi))
 allocate(  scat_wt(max_omi_hcho_obs,nlayer_omi))
-allocate( prs_trop(max_omi_hcho_obs))
 
 end subroutine initialize_module
 
@@ -177,7 +183,6 @@ integer               :: nlayer_1
 integer               :: kend_1
 real(r8), allocatable :: pressure_1(:)
 real(r8), allocatable :: scat_wt_1(:)
-real(r8)              :: prs_trop_1
 character(len=32)     :: fileformat
 
 integer, SAVE :: counts1 = 0
@@ -190,7 +195,6 @@ if(present(fform)) fileformat = adjustl(fform)
 ! Need to know how many layers for this one
 nlayer_1   = read_int_scalar( ifile, fileformat, 'nlayer_1')
 kend_1     = read_int_scalar( ifile, fileformat, 'kend_1')
-prs_trop_1 = read_r8_scalar( ifile, fileformat, 'prs_trop_1')
 
 allocate( pressure_1(nlayer_1))
 allocate(  scat_wt_1(nlayer_1))
@@ -208,7 +212,7 @@ if(counts1 > max_omi_hcho_obs) then
    call error_handler(E_ERR,'read_omi_hcho_total_col',string1,source,text2=string2)
 endif
 
-call set_obs_def_omi_hcho_total_col(key, pressure_1, scat_wt_1, prs_trop_1, kend_1, nlayer_1)
+call set_obs_def_omi_hcho_total_col(key, pressure_1, scat_wt_1, kend_1, nlayer_1)
 
 deallocate(pressure_1, scat_wt_1)
 
@@ -229,12 +233,11 @@ if ( .not. module_initialized ) call initialize_module
 fileformat = "ascii"
 if(present(fform)) fileformat = adjustl(fform)
 
-! nlayer, pressure, scat_wt, and prs_trop are all scoped in this module
+! nlayer, pressure, and scat_wt are all scoped in this module
 ! you can come extend the context strings to include the key if desired.
 
 call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
 call write_int_scalar(ifile,                     kend(key), fileformat,'kend')
-call write_r8_scalar( ifile,                     prs_trop(key), fileformat,'prs_trop')
 call write_r8_array(  ifile, nlayer(key),  pressure(key,:), fileformat,'pressure')
 call write_r8_array(  ifile, nlayer(key),  scat_wt(key,:), fileformat,'scat_wt')
 call write_int_scalar(ifile,                             key, fileformat,'key')
@@ -453,7 +456,7 @@ subroutine get_expected_omi_hcho_total_col(state_handle, ens_size, location, key
 !   write(string1, *)'APM: prs upper bound 1 ',prs_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
 
-! Get profiles at OMI pressure levels
+! Get values at OMI pressure levels
 
    allocate(hcho_val(ens_size,layer_omi))
    allocate(tmp_val(ens_size,layer_omi))
@@ -486,8 +489,8 @@ subroutine get_expected_omi_hcho_total_col(state_handle, ens_size, location, key
          endif
       enddo
 !
-!      write(string1, *)'APM: hcho ',k,hcho_val(1,k)
-!      call error_handler(E_MSG, routine, string1, source)
+      write(string1, *)'APM: hcho ',k,layer_omi,prs_omi(k),hcho_val(1,k)
+      call error_handler(E_MSG, routine, string1, source)
 !      write(string1, *)'APM: tmp ',k,tmp_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
 !      write(string1, *)'APM: qmr ',k,qmr_val(1,k)
@@ -525,37 +528,42 @@ subroutine get_expected_omi_hcho_total_col(state_handle, ens_size, location, key
       if (prs_omi(layer_omi).lt.prs_mdl_n(imem)) then
          do k=1,layer_omi
             if (prs_omi(k).le.prs_mdl_n(imem)) then
-               kstart=k
+               kstart=k-1
                exit
             endif
          enddo
-         ncnt=layer_omi-kstart+1
-         allocate(prs_omi_top(ncnt))
-         allocate(hcho_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
          do k=kstart,layer_omi
-            prs_omi_top(k-kstart+1)=prs_omi(k)
+             hcho_val(imem,k)=hcho_val(imem,kstart-1)
          enddo
-         prs_omi_top(:)=prs_omi_top(:)/100.
 !
-         lon_obs=mloc(1)/rad2deg
-         lat_obs=mloc(2)/rad2deg
-         call get_time(obs_time,datesec_obs,date_obs)
+!         ncnt=layer_omi-kstart+1
+!         allocate(prs_omi_top(ncnt))
+!         allocate(hcho_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
+!         do k=kstart,layer_omi
+!            prs_omi_top(k-kstart+1)=prs_omi(k)
+!         enddo
+!         prs_omi_top(:)=prs_omi_top(:)/100.
 !
-         data_file='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mozart_forecasts/h0004.nc'
-         call get_upper_bdy_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs,prs_omi_top, &
-         ncnt,hcho_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+!         lon_obs=mloc(1)/rad2deg
+!         lat_obs=mloc(2)/rad2deg
+!         call get_time(obs_time,datesec_obs,date_obs)
+!
+! Mozart does not have HCHO          
+!         data_file='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mozart_forecasts/h0004.nc'
+!         call get_upper_bdy_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs,prs_omi_top, &
+!         ncnt,hcho_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
 !
 ! Impose ensemble perturbations from level kstart-1      
-         do k=kstart,layer_omi 
-            hcho_val(imem,k)=hcho_prf_mdl(k-kstart+1)*hcho_val(imem,kstart-1)/ &
-            (sum(hcho_val(:,kstart-1))/real(ens_size))
-            tmp_val(imem,k)=tmp_prf_mdl(k-kstart+1)*tmp_val(imem,kstart-1)/ &
-            (sum(tmp_val(:,kstart-1))/real(ens_size))
-            qmr_val(imem,k)=qmr_prf_mdl(k-kstart+1)*qmr_val(imem,kstart-1)/ &
-            (sum(qmr_val(:,kstart-1))/real(ens_size))
-         enddo
-         deallocate(prs_omi_top)
-         deallocate(hcho_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
+!         do k=kstart,layer_omi 
+!            hcho_val(imem,k)=hcho_prf_mdl(k-kstart+1)*hcho_val(imem,kstart-1)/ &
+!            (sum(hcho_val(:,kstart-1))/real(ens_size))
+!            tmp_val(imem,k)=tmp_prf_mdl(k-kstart+1)*tmp_val(imem,kstart-1)/ &
+!            (sum(tmp_val(:,kstart-1))/real(ens_size))
+!            qmr_val(imem,k)=qmr_prf_mdl(k-kstart+1)*qmr_val(imem,kstart-1)/ &
+!            (sum(qmr_val(:,kstart-1))/real(ens_size))
+!         enddo
+!         deallocate(prs_omi_top)
+!         deallocate(hcho_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
       endif
    enddo
 !
@@ -563,11 +571,9 @@ subroutine get_expected_omi_hcho_total_col(state_handle, ens_size, location, key
    do imem=1,ens_size
       flg=0
       do k=1,layer_omi    
-         if(key.eq.1 .and. imem.eq.1) then
-            write(string1, *) &
-            'APM: hcho values: imem,k,hcho ',imem,k,hcho_val(imem,k)
-            call error_handler(E_MSG, routine, string1, source)
-         endif
+         write(string1, *) &
+         'APM: hcho values: imem,k,hcho ',imem,k,hcho_val(imem,k)
+         call error_handler(E_MSG, routine, string1, source)
          if(hcho_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             flg=1   
@@ -577,7 +583,12 @@ subroutine get_expected_omi_hcho_total_col(state_handle, ens_size, location, key
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          endif
       enddo
-      if(flg.eq.1) exit
+      if(flg.eq.1) then
+         zstatus(imem)=20
+         expct_val(:)=missing_r8
+         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         return
+      endif   
    enddo
 !
 ! Calculate the expected retrievals
@@ -752,13 +763,12 @@ end subroutine get_expected_omi_hcho_total_col
 
 !-------------------------------------------------------------------------------
 
-subroutine set_obs_def_omi_hcho_total_col(key, hcho_pressure, hcho_scat_wt, hcho_prs_trop, hcho_kend, hcho_nlayer)
+subroutine set_obs_def_omi_hcho_total_col(key, hcho_pressure, hcho_scat_wt, hcho_kend, hcho_nlayer)
 
 integer,                            intent(in)   :: key, hcho_nlayer
 integer,                            intent(in)   :: hcho_kend
 real(r8), dimension(hcho_nlayer),  intent(in)   :: hcho_pressure
 real(r8), dimension(hcho_nlayer),    intent(in)   :: hcho_scat_wt
-real(r8),                           intent(in)   :: hcho_prs_trop
 
 if ( .not. module_initialized ) call initialize_module
 
@@ -773,7 +783,6 @@ nlayer(key) = hcho_nlayer
 kend(key) = hcho_kend
 pressure(key,1:hcho_nlayer) = hcho_pressure(1:hcho_nlayer)
 scat_wt(key,1:hcho_nlayer) = hcho_scat_wt(1:hcho_nlayer)
-prs_trop(key) = hcho_prs_trop
 
 end subroutine set_obs_def_omi_hcho_total_col
 

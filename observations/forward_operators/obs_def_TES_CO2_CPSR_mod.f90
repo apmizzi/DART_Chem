@@ -1,3 +1,4 @@
+
 ! Copyright 2019 University Corporation for Atmospheric Research and 
 ! Colorado Department of Public Health and Environment.
 !
@@ -50,6 +51,14 @@
 ! BEGIN DART PREPROCESS MODULE CODE
 
 module obs_def_tes_co2_cpsr_mod
+
+   use         apm_upper_bdy_mod, only :get_upper_bdy_fld, &
+                                        get_MOZART_INT_DATA, &
+                                        get_MOZART_REAL_DATA, &
+                                        wrf_dart_ubval_interp, &
+                                        apm_get_exo_coldens, &
+                                        apm_get_upvals, &
+                                        apm_interpolate
 
    use             types_mod, only : r8, MISSING_R8
    

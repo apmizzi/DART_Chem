@@ -51,6 +51,14 @@
 
 module obs_def_tropomi_no2_trop_col_mod
 
+use         apm_upper_bdy_mod, only :get_upper_bdy_fld, &
+                                     get_MOZART_INT_DATA, &
+                                     get_MOZART_REAL_DATA, &
+                                     wrf_dart_ubval_interp, &
+                                     apm_get_exo_coldens, &
+                                     apm_get_upvals, &
+                                     apm_interpolate
+
 use             types_mod, only : r8, MISSING_R8
 
 use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &
@@ -91,9 +99,8 @@ integer, parameter    :: max_tropomi_no2_obs = 10000000
 integer               :: num_tropomi_no2_obs = 0
 integer,  allocatable :: nlayer(:)
 integer,  allocatable :: trop_indx(:)
-real(r8), allocatable :: amf_trop(:)
 real(r8), allocatable :: pressure(:,:)
-real(r8), allocatable :: avg_kernel(:,:)
+real(r8), allocatable :: scat_wts(:,:)
 
 ! version controlled file description for error handling, do not edit
 character(len=*), parameter :: source   = 'obs_def_tropomi_no2_trop_col_mod.f90'
@@ -153,9 +160,8 @@ endif
 
 allocate(    nlayer(max_tropomi_no2_obs))
 allocate(    trop_indx(max_tropomi_no2_obs))
-allocate(    amf_trop(max_tropomi_no2_obs))
 allocate(  pressure(max_tropomi_no2_obs,nlayer_tropomi+1))
-allocate(avg_kernel(max_tropomi_no2_obs,nlayer_tropomi))
+allocate(scat_wts(max_tropomi_no2_obs,nlayer_tropomi))
 
 end subroutine initialize_module
 
@@ -172,9 +178,8 @@ character(len=*), intent(in), optional :: fform
 integer               :: keyin
 integer               :: nlayer_1
 integer               :: trop_indx_1
-real(r8)              :: amf_trop_1
 real(r8), allocatable :: pressure_1(:)
-real(r8), allocatable :: avg_kernel_1(:)
+real(r8), allocatable :: scat_wts_1(:)
 character(len=32)     :: fileformat
 
 integer, SAVE :: counts1 = 0
@@ -187,13 +192,12 @@ if(present(fform)) fileformat = adjustl(fform)
 ! Need to know how many layers for this one
 nlayer_1 = read_int_scalar( ifile, fileformat, 'nlayer_1')
 trop_indx_1 = read_int_scalar( ifile, fileformat, 'trop_indx_1')
-amf_trop_1 = read_r8_scalar( ifile, fileformat, 'amf_trop_1')
 
 allocate(  pressure_1(nlayer_1+1))
-allocate(avg_kernel_1(nlayer_1))
+allocate(scat_wts_1(nlayer_1))
 
 call read_r8_array(ifile, nlayer_1+1, pressure_1,   fileformat, 'pressure_1')
-call read_r8_array(ifile, nlayer_1,   avg_kernel_1, fileformat, 'avg_kernel_1')
+call read_r8_array(ifile, nlayer_1,   scat_wts_1, fileformat, 'scat_wts_1')
 keyin = read_int_scalar(ifile, fileformat, 'keyin')
 
 counts1 = counts1 + 1
@@ -205,9 +209,9 @@ if(counts1 > max_tropomi_no2_obs) then
    call error_handler(E_ERR,'read_tropomi_no2_trop_col',string1,source,text2=string2)
 endif
 
-call set_obs_def_tropomi_no2_trop_col(key, pressure_1, avg_kernel_1, amf_trop_1, trop_indx_1, nlayer_1)
+call set_obs_def_tropomi_no2_trop_col(key, pressure_1, scat_wts_1, trop_indx_1, nlayer_1)
 
-deallocate(pressure_1, avg_kernel_1)
+deallocate(pressure_1, scat_wts_1)
 
 end subroutine read_tropomi_no2_trop_col
 
@@ -226,14 +230,13 @@ if ( .not. module_initialized ) call initialize_module
 fileformat = "ascii"
 if(present(fform)) fileformat = adjustl(fform)
 
-! nlayer, amf_trop, trop_indx, pressure, and avg_kernel are all scoped in this module
+! nlayer, trop_indx, pressure, and scat_wts are all scoped in this module
 ! you can come extend the context strings to include the key if desired.
 
 call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
 call write_int_scalar(ifile,                     trop_indx(key), fileformat,'trop_indx')
-call write_r8_scalar( ifile,                     amf_trop(key), fileformat,'amf_trop')
 call write_r8_array(  ifile, nlayer(key)+1,      pressure(key,:), fileformat,'pressure')
-call write_r8_array(  ifile, nlayer(key),        avg_kernel(key,:), fileformat,'avg_kernel')
+call write_r8_array(  ifile, nlayer(key),        scat_wts(key,:), fileformat,'scat_wts')
 call write_int_scalar(ifile,                     key, fileformat,'key')
 
 end subroutine write_tropomi_no2_trop_col
@@ -293,7 +296,7 @@ subroutine get_expected_tropomi_no2_trop_col(state_handle, ens_size, location, k
    real(r8) :: level,del_prs
    real(r8) :: tmp_vir_k, tmp_vir_kp
    real(r8) :: mloc(3)
-   real(r8) :: no2_val_conv,amf
+   real(r8) :: no2_val_conv
    real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
    real(r8), dimension(ens_size) :: no2_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
    real(r8), dimension(ens_size) :: no2_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
@@ -328,7 +331,6 @@ subroutine get_expected_tropomi_no2_trop_col(state_handle, ens_size, location, k
    kend_tropomi  = trop_indx(key)
    layer_mdl = nlayer_model
    level_mdl = nlayer_model+1
-   amf       = amf_trop(key)
    
    allocate(prs_tropomi(level_tropomi))
    allocate(prs_tropomi_mem(level_tropomi))
@@ -542,7 +544,7 @@ subroutine get_expected_tropomi_no2_trop_col(state_handle, ens_size, location, k
 ! Get expected observation
 
          expct_val(imem) = expct_val(imem) + thick(k) * no2_val_conv * &
-         avg_kernel(key,k) * amf
+         scat_wts(key,k)
       enddo
 
       if(expct_val(imem).lt.0) then
@@ -565,13 +567,12 @@ end subroutine get_expected_tropomi_no2_trop_col
 
 !-------------------------------------------------------------------------------
 
-subroutine set_obs_def_tropomi_no2_trop_col(key, no2_pressure, no2_avg_kernel, no2_amf_trop, no2_trop_indx, no2_nlayer)
+subroutine set_obs_def_tropomi_no2_trop_col(key, no2_pressure, no2_scat_wts, no2_trop_indx, no2_nlayer)
 
 integer,                           intent(in)   :: key, no2_nlayer
 integer,                           intent(in)   :: no2_trop_indx
-real(r8),                          intent(in)   :: no2_amf_trop
 real(r8), dimension(no2_nlayer+1),  intent(in)   :: no2_pressure
-real(r8), dimension(no2_nlayer),    intent(in)   :: no2_avg_kernel
+real(r8), dimension(no2_nlayer),    intent(in)   :: no2_scat_wts
 
 if ( .not. module_initialized ) call initialize_module
 
@@ -584,9 +585,8 @@ endif
 
 nlayer(key) = no2_nlayer
 trop_indx(key) = no2_trop_indx
-amf_trop(key) = no2_amf_trop
 pressure(key,1:no2_nlayer+1) = no2_pressure(1:no2_nlayer+1)
-avg_kernel(key,1:no2_nlayer) = no2_avg_kernel(1:no2_nlayer)
+scat_wts(key,1:no2_nlayer) = no2_scat_wts(1:no2_nlayer)
 
 end subroutine set_obs_def_tropomi_no2_trop_col
 

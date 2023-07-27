@@ -446,7 +446,7 @@ domain_loop : &
 !---------------------------------------------------------------------
 
    use area_mapper, only : area_interp
-   use constants_module, only : rad_per_deg, earth_radius_m
+   use megan_constants_module, only : rad_per_deg, earth_radius_m
    use bio_types
 
 !---------------------------------------------------------------------

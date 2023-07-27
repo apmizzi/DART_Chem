@@ -51,6 +51,14 @@
 
 module obs_def_tropomi_o3_profile_mod
 
+   use         apm_upper_bdy_mod, only :get_upper_bdy_fld, &
+                                        get_MOZART_INT_DATA, &
+                                        get_MOZART_REAL_DATA, &
+                                        wrf_dart_ubval_interp, &
+                                        apm_get_exo_coldens, &
+                                        apm_get_upvals, &
+                                        apm_interpolate
+
    use             types_mod, only : r8, MISSING_R8
 
    use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &
@@ -555,7 +563,7 @@ subroutine get_expected_tropomi_o3_profile(state_handle, ens_size, location, key
       call get_time(obs_time,datesec_obs,date_obs)
 !
       data_file='/nobackupp11/amizzi/INPUT_DATA/FIREX_REAL_TIME_DATA/waccm_forecasts/waccm-20210316112829081188.nc'
-      call get_upper_bdy_fld(fld,model,data_file,25,21,88,57,lon_obs,lon_obs,lat_obs,prs_tropomi_top,ncnt, &
+      call get_upper_bdy_fld(fld,model,data_file,25,21,88,57,lon_obs,lat_obs,prs_tropomi_top,ncnt, &
       o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
 !
       o3_prf_mdl(:)=o3_prf_mdl(:)*VMR_conv
