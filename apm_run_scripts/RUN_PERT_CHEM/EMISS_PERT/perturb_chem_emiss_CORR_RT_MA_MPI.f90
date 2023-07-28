@@ -878,13 +878,14 @@ character(len=*), parameter :: revdate  = ''
                          do j=1,ny
                             do k=1,nz_chem
                                mems(:)=chem_data3d_sav(i,j,k,1:num_mem)
-                               mean=sum(mems)/real(num_mem)
+                               mean=sum(mems)/real(num_mem)                                  
                                pers(:)=(mems(:)-mean)*(mems(:)-mean)
                                std=sqrt(sum(pers)/real(num_mem-1))
                                chem_data3d_mean(i,j,k)=mean
                                chem_data3d_sprd(i,j,k)=std
                                if(mean.eq.0.) then
-                                  print *, 'mean std ',mean,std
+!                                  print *, 'mean std ',mean,std
+                                  chem_data3d_frac(i,j,k)=0.                                  
                                   cycle
                                endif
                                chem_data3d_frac(i,j,k)=std/mean
@@ -1038,7 +1039,8 @@ character(len=*), parameter :: revdate  = ''
                                chem_data3d_mean(i,j,k)=mean
                                chem_data3d_sprd(i,j,k)=std
                                if(mean.eq.0.) then
-                                  print *, 'mean std ',mean,std
+!                                  print *, 'mean std ',mean,std
+                                  chem_data3d_frac(i,j,k)=0.
                                   cycle
                                endif
                                chem_data3d_frac(i,j,k)=std/mean
@@ -1187,7 +1189,8 @@ character(len=*), parameter :: revdate  = ''
                                chem_data3d_mean(i,j,k)=mean
                                chem_data3d_sprd(i,j,k)=std
                                if(mean.eq.0.) then
-                                  print *, 'mean std ',mean,std
+!                                  print *, 'mean std ',mean,std
+                                  chem_data3d_frac(i,j,k)=0.
                                   cycle
                                endif
                                chem_data3d_frac(i,j,k)=std/mean
