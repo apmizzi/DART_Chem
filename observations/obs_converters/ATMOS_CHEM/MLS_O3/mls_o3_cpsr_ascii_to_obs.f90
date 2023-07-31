@@ -19,7 +19,7 @@
 program mls_o3_cpsr_ascii_to_obs
 !
 !=============================================
-! MLS O3 column obs
+! MLS O3 cpsr obs
 !=============================================
   use apm_cpsr_mod, only           : cpsr_calculation, &
                                      mat_prd, &
@@ -129,6 +129,7 @@ program mls_o3_cpsr_ascii_to_obs
    type(location_type)             :: obs_location
    type(time_type)                 :: obs_time
 !
+   integer                         :: k,kk   
    integer                         :: obs_kind
    integer                         :: obs_key
    integer                         :: year,month,day,hour,sec
@@ -136,14 +137,14 @@ program mls_o3_cpsr_ascii_to_obs
    integer                         :: calendar_type,qc_count
    integer                         :: line_count,fileid,nlevels
    integer                         :: obs_id,yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs
-   integer                         :: nlay_obs,nlev_obs,ilv
+   integer                         :: nlay_obs,nlev_obs,ret_nlay,tru_nlay,ilv
    integer                         :: seconds,days,which_vert
    integer                         :: seconds_last,days_last
    integer                         :: nx_model,ny_model,nz_model
-   integer                         :: reject,k,l,kk,klev,kend,ilay
-   integer                         :: i_min,j_min
+   integer                         :: reject,l,klev,kend,ilay
+   integer                         :: i_min,j_min,icol,reject_ak
    integer                         :: sum_reject,sum_accept,sum_total
-   integer                         :: obs_accept,obs_o3_reten_freq,obs_no2_reten_freq
+   integer                         :: obs_accept,obs_o3_reten_freq,obs_hno3_reten_freq
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
@@ -153,8 +154,8 @@ program mls_o3_cpsr_ascii_to_obs
    real                            :: fac_obs_error,fac_err
    real                            :: pi,rad2deg,re,level_crit
    real                            :: x_observ,y_observ,dofs
-   real                            :: prs_loc,obs_sum
    real*8                          :: obs_err_var,level
+   real                            :: prs_loc,obs_sum
 !
    real*8,dimension(num_qc)        :: mls_qc
    real*8,dimension(num_copies)    :: obs_val
@@ -167,43 +168,34 @@ program mls_o3_cpsr_ascii_to_obs
    character*129                   :: data_type,cmd
    character*129                   :: path_model,file_model,file_in
 !
-   logical                         :: use_log_co,use_log_o3,use_log_no2,use_log_so2
+   logical                         :: use_log_o3,use_log_hno3
 !
 ! Species-specific variables
-   real                              :: col_amt_obs,col_amt_err_obs
-   real                              :: lat_obs,lon_obs
-   real*8                            :: lat_obs_r8,lon_obs_r8
-   real,allocatable,dimension(:,:)   :: avgk_obs,cov_obs
-   real,allocatable,dimension(:)     :: prior_obs,o3_obs
+   real                              :: o3_col_obs,o3_col_obs_err,prior_err
+   real                              :: lat_obs,lon_obs,dofs_obs,trop_prs
+   real*8                            :: lat_obs_r8,lon_obs_r8,prior_cpsr_r8
+   real,allocatable,dimension(:,:)   :: avgk_obs,cov_obs,cov_total
+   real,allocatable,dimension(:)     :: prior_obs,o3_obs,o3_obs_err
+   real*8,allocatable,dimension(:)   :: prs_obs_r8
    real*8,allocatable,dimension(:)   :: avgk_obs_r8
    real*8,allocatable,dimension(:,:) :: cov_obs_r8
-   real*8,allocatable,dimension(:)   :: o3_obs_r8
-   real,allocatable,dimension(:)     :: prs_obs
-   real*8,allocatable,dimension(:)   :: prs_obs_r8
-   real,allocatable,dimension(:)     :: prf_locl,prf_full
-   real                              :: trop_sum,strat_sum
+   real*8,allocatable,dimension(:)   :: prior_obs_r8,o3_obs_r8
+   real,allocatable,dimension(:)     :: prs_obs,ret_lay_obs,tru_lay_obs
    real,allocatable,dimension(:,:)   :: lon,lat
    real,allocatable,dimension(:,:,:) :: prs_prt,prs_bas,prs_fld
    real,allocatable,dimension(:,:,:) :: tmp_prt,tmp_fld,vtmp_fld
    real,allocatable,dimension(:,:,:) :: o3_fld,qmr_fld
 
-   real                              :: col_amt_total_obs,col_amt_trop_obs
-   real                              :: trop_index,cov_total,cov_trop,wt1_sum,wt2_sum
-   real                              :: avgk_term, sum_o3_obs
-   real*8                            :: prior_total_r8
-   real*8,allocatable,dimension(:)   :: avgk_total_obs_r8
-
    integer                           :: nlayer,cnt,flg,nmodes,i,imds
-   real*8                            :: prior_obs_r8
    real,allocatable,dimension(:)     :: o3_cpsr,prior_cpsr
    real,allocatable,dimension(:,:)   :: avgk_cpsr
    real,allocatable,dimension(:)     :: o3_shift,prior_shift
    real,allocatable,dimension(:,:)   :: avgk_shift,cov_shift
 !
    namelist /create_mls_obs_nml/filedir,filename,fileout, &
-   bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
-   lon_min,lon_max,lat_min,lat_max, &
-   path_model,file_model,nx_model,ny_model,nz_model,obs_o3_reten_freq,obs_no2_reten_freq
+   bin_beg_sec,bin_end_sec,fac_obs_error,use_log_o3,use_log_hno3, &
+   lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model,ny_model, &
+   nz_model,obs_o3_reten_freq,obs_hno3_reten_freq
 !
 ! Set constants
    pi=4.*atan(1.)
@@ -294,110 +286,158 @@ program mls_o3_cpsr_ascii_to_obs
       read(fileid,*,iostat=ios) lat_obs,lon_obs
       if(lon_obs.lt.0.) lon_obs=lon_obs+360.
       read(fileid,*,iostat=ios) nlay_obs,nlev_obs
-      read(fileid,*,iostat=ios) trop_index
-      allocate(prs_obs(nlev_obs))
+      read(fileid,*,iostat=ios) ret_nlay,tru_nlay
+!
+! Check layer variables
+      reject=0      
+      if(nlay_obs.ne.ret_nlay .or. nlay_obs.ne.tru_nlay .or. &
+      ret_nlay.ne.tru_nlay) reject=1
+!
+      allocate(prs_obs(nlay_obs))
       allocate(o3_obs(nlay_obs))
+      allocate(o3_obs_err(nlay_obs))
       allocate(prior_obs(nlay_obs))
-      allocate(avgk_total_obs_r8(nlay_obs))
-      allocate(avgk_obs(nlay_obs,nlay_obs))
-      allocate(cov_obs(nlay_obs,nlay_obs))
-      allocate(prs_obs_r8(nlev_obs))
-      allocate(avgk_obs_r8(nlay_obs))
-      allocate(prf_locl(nlay_obs))
-      allocate(prf_full(nlay_obs))
+      allocate(ret_lay_obs(ret_nlay))
+      allocate(tru_lay_obs(tru_nlay))
+      allocate(avgk_obs(ret_nlay,tru_nlay))
+      allocate(cov_obs(ret_nlay,tru_nlay))
+      allocate(prior_obs_r8(nlay_obs))
+      allocate(prs_obs_r8(nlay_obs))
+      allocate(avgk_obs_r8(tru_nlay))
+  
+      allocate(o3_shift(nlay_obs))
+      allocate(prior_shift(nlay_obs))
+      allocate(avgk_shift(nlay_obs,nlay_obs))
+      allocate(cov_shift(nlay_obs,nlay_obs))
       allocate(o3_cpsr(nlay_obs))
       allocate(prior_cpsr(nlay_obs))
       allocate(avgk_cpsr(nlay_obs,nlay_obs))
-      allocate(o3_shift(nlay_obs),prior_shift(nlay_obs))
-      allocate(avgk_shift(nlay_obs,nlay_obs),cov_shift(nlay_obs,nlay_obs))
-
-      read(fileid,*,iostat=ios) prs_obs(1:nlev_obs)
-      read(fileid,*,iostat=ios) o3_obs(1:nlay_obs)
-      read(fileid,*,iostat=ios) prior_obs(1:nlay_obs)
-      do k=1,nlay_obs
-         read(fileid,*,iostat=ios) (avgk_obs(k,l),l=1,nlay_obs)
-      enddo
-      do k=1,nlay_obs
-         read(fileid,*,iostat=ios) (cov_obs(k,l),l=1,nlay_obs)
-      enddo
-      read(fileid,*,iostat=ios) col_amt_trop_obs
-      read(fileid,*,iostat=ios) col_amt_total_obs
 !
-      flg=0
-      if(any(isnan(cov_obs(:,:)))) flg=1
-      do i=1,nlay_obs
-         if(cov_obs(i,i).lt.0.) then
-            flg=1
-            print *, 'mls_variance is NaN or negative ',cov_obs(i,i)
-            exit
+! MLS prs_obs, ret_lay_obs, and tru_lay_obs are all the same
+      read(fileid,*,iostat=ios) prs_obs(1:nlay_obs)
+      read(fileid,*,iostat=ios) ret_lay_obs(1:ret_nlay)
+      read(fileid,*,iostat=ios) tru_lay_obs(1:tru_nlay)
+      read(fileid,*,iostat=ios) o3_obs(1:nlay_obs)
+      read(fileid,*,iostat=ios) o3_obs_err(1:nlay_obs)
+!
+! APM: Temporary fixes to address negative values      
+      do k=1,nlay_obs
+         if(o3_obs(k).lt.0.) then
+            o3_obs(k)=1.e-8
          endif
+      enddo   
+      cov_obs(:,:)=0.
+      do k=1,nlay_obs
+         cov_obs(k,k)=o3_obs_err(k)*o3_obs_err(k)
       enddo
-      if(flg.eq.1) then
+      read(fileid,*,iostat=ios) prior_obs(1:nlay_obs)
+      read(fileid,*,iostat=ios) prior_err
+      do k=1,ret_nlay
+         read(fileid,*,iostat=ios) (avgk_obs(k,l),l=1,tru_nlay)
+      enddo
+      read(fileid,*,iostat=ios) o3_col_obs
+      read(fileid,*,iostat=ios) o3_col_obs_err
+      if(reject.eq.1) then
          deallocate(prs_obs) 
          deallocate(o3_obs) 
+         deallocate(o3_obs_err) 
          deallocate(prior_obs)
-         deallocate(avgk_total_obs_r8)
+         deallocate(ret_lay_obs)
+         deallocate(tru_lay_obs)
          deallocate(avgk_obs)
          deallocate(cov_obs)
+         deallocate(prior_obs_r8)
          deallocate(prs_obs_r8) 
          deallocate(avgk_obs_r8)
-         deallocate(prf_locl) 
-         deallocate(prf_full)
+         
+         deallocate(o3_shift)
+         deallocate(prior_shift)
+         deallocate(avgk_shift)
+         deallocate(cov_shift)
          deallocate(o3_cpsr)
          deallocate(prior_cpsr)
          deallocate(avgk_cpsr)
-         deallocate(o3_shift,prior_shift)
-         deallocate(avgk_shift,cov_shift)
          read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
          cycle
-      endif           
-!
-      prs_obs(:)=prs_obs(:)*100.
-      prs_obs_r8(:)=prs_obs(:)
-!
-      lon_obs_r8=lon_obs
-      lat_obs_r8=lat_obs
-!
-! Check for layers below the surface pressure      
-      cnt=0
-      do k=nlay_obs/2,nlay_obs
-         if(o3_obs(k).lt.0.) then
-            cnt=cnt+1
-         endif
-      enddo
-      nlayer=nlay_obs-cnt
-!     
-      do k=1,nlayer
-         o3_shift(k)=o3_obs(k)
-         prior_shift(k)=prior_obs(k)
-         do kk=1,nlayer
-            avgk_shift(k,kk)=avgk_obs(k,kk)
-            cov_shift(k,kk)=cov_obs(k,kk)
-         enddo
-      enddo
-!
-!--------------------------------------------------------
-! Find model O3 profile corresponding to the observation
-! MLS O3 and WRF-Chem vertical grids are bottom to top        
-!--------------------------------------------------------
-!      reject=0
-!      call get_model_profile(prf_locl,prf_full,nz_model, &
-!      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
-!      qmr_fld(i_min,j_min,:),o3_fld(i_min,j_min,:), &
-!      nlev_obs,avgk_obs,prior_obs,kend)
+      endif
+      print *, 'MLS O3: Completed data read'      
 !
 ! Obs thinning test
       obs_accept=obs_accept+1
       if(obs_accept/obs_o3_reten_freq*obs_o3_reten_freq.eq.obs_accept) then
+         prs_obs(:)=prs_obs(:)*100.
+         prs_obs_r8(:)=prs_obs(:)
+         prior_obs_r8(:)=prior_obs(:)
+         lon_obs_r8=lon_obs
+         lat_obs_r8=lat_obs
+!      
+! Check whether avgk row is zero.
+         reject_ak=1         
+         do ilay=1,nlay_obs
+            do icol=1,nlay_obs
+               if(avgk_obs(ilay,icol).ne.0.) then
+                  reject_ak=0
+                  exit
+               endif  
+            enddo
+         enddo
 !
-! Calculate CPSRs for this retrieval profile
-         call cpsr_calculation(nmodes,nlayer,o3_cpsr,avgk_cpsr,prior_cpsr,o3_shift,prior_shift, &
+! Check the CPSR input data            
+         if(any(isnan(o3_obs)) .or. any(isnan(prior_obs)) .or. &
+         any(isnan(avgk_obs)) .or. any(isnan(cov_obs))) then
+            print *, 'o3 or prior or avgk or cov contains NaNs'
+            reject_ak=1
+         endif
+         do k=1,nlay_obs
+            if(o3_obs(k).lt.0. .or. prior_obs(k).lt.0. .or. &
+            cov_obs(k,k).lt.0.) then
+               reject_ak=1
+               print *, 'o3, prior, cov < 0 ',k,nlay_obs,o3_obs(k),prior_obs(k),cov_obs(k,k)
+               exit
+            endif
+         enddo
+         if(reject_ak.eq.1) then
+            deallocate(prs_obs) 
+            deallocate(o3_obs) 
+            deallocate(o3_obs_err) 
+            deallocate(prior_obs)
+            deallocate(ret_lay_obs)
+            deallocate(tru_lay_obs)
+            deallocate(avgk_obs)
+            deallocate(cov_obs)
+            deallocate(prior_obs_r8)
+            deallocate(prs_obs_r8) 
+            deallocate(avgk_obs_r8)
+            
+            deallocate(o3_shift)
+            deallocate(prior_shift)
+            deallocate(avgk_shift)
+            deallocate(cov_shift)
+            deallocate(o3_cpsr)
+            deallocate(prior_cpsr)
+            deallocate(avgk_cpsr)
+            read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
+            cycle
+         endif
+!
+! Concduct CPSR transform
+         do k=1,nlay_obs
+            o3_shift(k)=o3_obs(k)
+            prior_shift(k)=prior_obs(k)
+            do kk=1,nlay_obs
+               avgk_shift(k,kk)=avgk_obs(k,kk)
+               cov_shift(k,kk)=cov_obs(k,kk)
+            enddo
+         enddo
+!
+! Call  CPSR transform
+         call cpsr_calculation(nmodes,nlay_obs,o3_cpsr,avgk_cpsr,prior_cpsr,o3_shift,prior_shift, &
          avgk_shift,cov_shift,sum_accept)
 !
-! Loop through the dominant modes (OMI O3 is top to bottom)
+! Loop through the dominant modes
          do imds=1,nmodes
-            avgk_obs_r8(1:nlayer)=avgk_cpsr(imds,1:nlayer)
-            prior_obs_r8=prior_cpsr(imds)
+            avgk_obs_r8(1:nlay_obs)=avgk_cpsr(imds,1:nlay_obs)
+            prior_cpsr_r8=prior_cpsr(imds)
 !
 ! Process accepted observations
             sum_accept=sum_accept+1
@@ -405,7 +445,7 @@ program mls_o3_cpsr_ascii_to_obs
 !
 ! Obs value is a cpsr
             obs_val(:)=o3_cpsr(imds)
-            obs_err_var=(fac_obs_error*fac_err*1.)**2.
+            obs_err_var=1.
             mls_qc(:)=0
             obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
             call get_time(obs_time, seconds, days)
@@ -417,16 +457,17 @@ program mls_o3_cpsr_ascii_to_obs
 !
             obs_kind = MLS_O3_CPSR
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90)
+            klev=imds
+            kend=imds
             level=imds
-            klev=level
-            kend=level
             obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
 !
             call set_obs_def_type_of_obs(obs_def, obs_kind)
             call set_obs_def_location(obs_def, obs_location)
             call set_obs_def_time(obs_def, obs_time)
             call set_obs_def_error_variance(obs_def, obs_err_var)
-            call set_obs_def_mls_o3_cpsr(qc_count, prs_obs_r8(:), avgk_obs_r8(:), prior_obs_r8, nlayer, klev, kend)
+            call set_obs_def_mls_o3_cpsr(qc_count, prs_obs_r8(1:nlay_obs), &
+            avgk_obs_r8(1:nlay_obs), prior_cpsr_r8, nlay_obs, klev, kend)
             call set_obs_def_key(obs_def, qc_count)
             call set_obs_values(obs, obs_val, 1)
             call set_qc(obs, mls_qc, num_qc)
@@ -452,19 +493,23 @@ program mls_o3_cpsr_ascii_to_obs
       endif
       deallocate(prs_obs) 
       deallocate(o3_obs) 
+      deallocate(o3_obs_err) 
       deallocate(prior_obs)
-      deallocate(avgk_total_obs_r8)
+      deallocate(ret_lay_obs)
+      deallocate(tru_lay_obs)
       deallocate(avgk_obs)
       deallocate(cov_obs)
+      deallocate(prior_obs_r8)
       deallocate(prs_obs_r8) 
       deallocate(avgk_obs_r8)
-      deallocate(prf_locl) 
-      deallocate(prf_full)
+      
+      deallocate(o3_shift)
+      deallocate(prior_shift)
+      deallocate(avgk_shift)
+      deallocate(cov_shift)
       deallocate(o3_cpsr)
       deallocate(prior_cpsr)
       deallocate(avgk_cpsr)
-      deallocate(o3_shift,prior_shift)
-      deallocate(avgk_shift,cov_shift)
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    enddo
 !

@@ -68,6 +68,80 @@ function mls_o3_cpsr_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cw
    pole_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','POLE_LAT');  
    pole_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','POLE_LON');
 %
+% Get the averaging kernel data
+   file_avgk_path='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mls_o3_hdf_data/Averaging_Kernels_v4';
+   file_avgk_1d0N='/MLS_v4_1D_AVK_0N.nc4';
+   file_avgk_1d35N='/MLS_v4_1D_AVK_35N.nc4';
+   file_avgk_1d70N='/MLS_v4_1D_AVK_70N.nc4';
+%   file_avgk_2d0N='/MLS_v4_2D_AVK_0N.nc4';
+%   file_avgk_2d35N='/MLS_v4_2D_AVK_35N.nc4';
+%   file_avgk_2d70N='/MLS_v4_2D_AVK_70N.nc4';
+%
+% 1d_0N Data
+   file_in=strcat(file_avgk_path,file_avgk_1d0N);
+   wfid=netcdf.open(file_in,'NC_NOWRITE');
+   gfid=netcdf.inqNcid(wfid,'O3');
+   dimid=netcdf.inqDimID(gfid,'RetrievalLevel');
+   [name,ret_nlay]=netcdf.inqDim(gfid,dimid); % 55
+   dimid=netcdf.inqDimID(gfid,'TruthLevel');
+   [name,tru_nlay]=netcdf.inqDim(gfid,dimid); % 55
+   dimid=netcdf.inqDimID(gfid,'TruthPhi');
+   [name,avk_nlat]=netcdf.inqDim(gfid,dimid);
+%
+% avgk_lay_1d0N(ret_nlay,tru_nlay)   
+   field='/O3/avkv';
+   avgk_lay_1d0N=ncread(file_in,field);
+%
+% ret_lay_0N(ret_nlay)
+   field='/O3/RetrievalLevel';
+   ret_lay_0N=ncread(file_in,field);
+%
+% tru_lay_0N(tru_nlay)
+   field='/O3/TruthLevel';
+   tru_lay_0N=ncread(file_in,field);
+%
+% avk_lat_0N(avk_nlat)
+%   field='/O3/TruthPhi';
+%   avk_lat_0N=ncread(file_in,field)
+%
+% 1d_35N Data
+   file_in=strcat(file_avgk_path,file_avgk_1d35N);
+%
+% avgk_lay_1d35N(ret_nlay,tru_nlay)   
+   field='/O3/avkv';
+   avgk_lay_1d35N=ncread(file_in,field);
+%
+% ret_lay_35N(ret_nlay)
+   field='/O3/RetrievalLevel';
+   ret_lay_35N=ncread(file_in,field);
+%
+% tru_lay_35N(tru_nlay)
+   field='/O3/TruthLevel';
+   tru_lay_35N=ncread(file_in,field);
+%
+% avk_lat_35N(avk_nlat)
+%   field='/O3/TruthPhi';
+%   avk_lat_35N=ncread(file_in,field)
+%
+% 1d_70N Data
+   file_in=strcat(file_avgk_path,file_avgk_1d70N);
+%
+% avgk_lay_1d70N(ret_nlay,tru_nlay)   
+   field='/O3/avkv';
+   avgk_lay_1d70N=ncread(file_in,field);
+%
+% ret_lay_70N(ret_nlay)
+   field='/O3/RetrievalLevel';
+   ret_lay_70N=ncread(file_in,field);
+%
+% tru_lay_70N(tru_nlay)
+   field='/O3/TruthLevel';
+   tru_lay_70N=ncread(file_in,field);
+%
+% avk_lat_70N(avk_nlat)
+%   field='/O3/TruthPhi';
+%   avk_lat_70N=ncread(file_in,field)
+%
 % Process satellite data
    for ifile=1:nfile
       clear time_start time_end
@@ -84,8 +158,14 @@ function mls_o3_cpsr_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cw
       if(isempty(indx))
          continue
       end
-      time_start=ncreadatt(file_in,'/','time_coverage_start');
-      time_end=ncreadatt(file_in,'/','time_coverage_end');
+      field='/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES';
+      day=h5readatt(file_in,field,'GranuleDay');
+      month=h5readatt(file_in,field,'GranuleMonth');
+      year=h5readatt(file_in,field,'GranuleYear');
+      time_start=h5readatt(file_in,field,'StartUTC');
+      time_end=h5readatt(file_in,field,'EndUTC');
+      tai93_0UTC=h5readatt(file_in,field,'TAI93At0zOfGranule');
+%
       file_str_yy=str2double(time_start(1:4));
       file_str_mm=str2double(time_start(6:7));
       file_str_dd=str2double(time_start(9:10));
@@ -100,11 +180,10 @@ function mls_o3_cpsr_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cw
       file_end_ss=str2double(time_end(18:19));
       file_str_secs=file_str_hh*3600 + file_str_mn*60 + file_str_ss;
       file_end_secs=file_end_hh*3600 + file_end_mn*60 + file_end_ss;
-      fprintf('%d %s \n',ifile,file_in);
-      fprintf('file str %d cycle end %d \n',file_str_secs,day_secs_end);
-      fprintf('file end %d cycle str %d \n',file_end_secs,day_secs_beg);
 %       
       if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
+         fprintf('is %d <= %d, then process obs \n',file_str_secs,day_secs_end)
+         fprintf('is %d >= %d, then process obs \n',file_end_secs,day_secs_beg)
          continue
       end
       fprintf('READ MLS DATA \n')
@@ -115,975 +194,262 @@ function mls_o3_cpsr_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cw
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% get dimensions
-      wfid=netcdf.open(file_in,'NC_NOWRITE');
-      [name,nstep]=netcdf.inqDim(wfid,0);
-      [name,ntrk]=netcdf.inqDim(wfid,1);
-      [name,crnr]=netcdf.inqDim(wfid,2);
-      [name,layer]=netcdf.inqDim(wfid,3);
-      [name,level]=netcdf.inqDim(wfid,4);
-      netcdf.close(wfid);
+% Time (ntime)
+      field='/HDFEOS/SWATHS/O3/Geolocation Fields/Time';
+      time=h5read(file_in,field);
+      dmy=size(time);
+      ntime=dmy(1);
 %
-% lat (ntrk,nstep)
-      field='/geolocation/latitude';
-      lat=ncread(file_in,field);
+% O3 Profile (layer,ntime) (VMR)     
+      field='/HDFEOS/SWATHS/O3/Data Fields/L2gpValue';
+      o3_obs=h5read(file_in,field);
+      o3_units=h5readatt(file_in,field,'Units');
+      clear dmy
+      dmy=size(o3_obs);
+      layer=dmy(1);
+      level=layer+1;
 %
-% lon (ntrk,nstep)
-      field='/geolocation/longitude';
-      lon=ncread(file_in,field);
+% O3 Profile Error (layer,ntime)     
+      field='/HDFEOS/SWATHS/O3/Data Fields/L2gpPrecision';
+      o3_obs_err=h5read(file_in,field);
 %
-% zenang (ntrk,nstep)
-      field='/geolocation/solar_zenith_angle';
-      zenang=ncread(file_in,field);
+% O3 Profile Convergence (ntime)      
+      field='/HDFEOS/SWATHS/O3/Data Fields/Convergence';
+      o3_obs_conv=h5read(file_in,field);
 %
-% time_utc (nstep) (seconds since 2001-01-01T12:00:00Z)
-      field='/geolocation/time';
-      time_utc=ncread(file_in,field);
+% O3 Profile Quality (ntime)
+      field='/HDFEOS/SWATHS/O3/Data Fields/Quality';
+      o3_obs_qual=h5read(file_in,field);
 %
-% qa_value (ntrk,nstep)
-%      field='/product/main_data_quality_flag';
-%      qa_value=ncread(file_in,field);
+% O3 Profile Status (ntime)
+      field='/HDFEOS/SWATHS/O3/Data Fields/Status';
+      o3_obs_status=h5read(file_in,field);
 %
-% o3_lay (layer,ntrk,nstep)
-      field='/product/ozone_profile';
-      o3_lay=ncread(file_in,field);
+% lat (ntime)
+      field='/HDFEOS/SWATHS/O3/Geolocation Fields/Latitude';
+      lat=h5read(file_in,field);
 %
-% vert_col_total (ntrk,nstep)
-      field='/product/total_ozone_column';
-      vert_col_total=ncread(file_in,field);%
+% lon (ntime)
+      field='/HDFEOS/SWATHS/O3/Geolocation Fields/Longitude';
+      lon=h5read(file_in,field);
 %
-% vert_col_trop (ntrk,nstep)
-      field='/product/troposphere_ozone_column';
-      vert_col_trop=ncread(file_in,field);
+% prs_lay (layer) (hPa) Pressure is from bottom to top
+      field='/HDFEOS/SWATHS/O3/Geolocation Fields/Pressure';
+      prs_lay=h5read(file_in,field);
+      units=h5readatt(file_in,field,'Units');
 %
-% prior_lay (layer,ntrk,nstep)
-      field='/support_data/ozone_apriori_profile';
-      prior_lay=ncread(file_in,field);
+% zenang (ntime)
+      field='/HDFEOS/SWATHS/O3/Geolocation Fields/SolarZenithAngle';
+      zenang=h5read(file_in,field);
 %
-% prior_err_lay (layer,ntrk,nstep)
-      field='/support_data/ozone_apriori_profile_error';
-      prior_err_lay=ncread(file_in,field);
+% O3 Column (ntime)
+      field='/HDFEOS/SWATHS/O3 column/Data Fields/L2gpValue';
+      o3_col_obs=h5read(file_in,field);
 %
-% prs_lev (level,ntrk,nstep) (hPa)
-      field='/support_data/ozone_profile_pressure';
-      prs_lev=ncread(file_in,field);
+% O3 Column Error (ntime) 
+      field='/HDFEOS/SWATHS/O3 column/Data Fields/L2gpPrecision';
+      o3_col_obs_err=h5read(file_in,field);
 %
-% trop_index (ntrk,nstep)
-      field='/support_data/tropopause_index';
-      trop_index=ncread(file_in,field);
+% O3 Column Convergence (ntime)
+      field='/HDFEOS/SWATHS/O3 column/Data Fields/Convergence';
+      o3_col_obs_conv=h5read(file_in,field);
 %
-% avgk_lay (layer,layer,ntrk,nstep)
-      field='/support_data/ozone_averaging_kernel';
-      avgk_lay=ncread(file_in,field);
+% O3 Column Quality (ntime)
+      field='/HDFEOS/SWATHS/O3 column/Data Fields/Quality';
+      o3_col_obs_qual=h5read(file_in,field);
 %
-% noise_corr (layer,layer,ntrk,nstep)
-      field='/support_data/ozone_noise_correlation_matrix';
-      noise_corr=ncread(file_in,field);
+% O3 Column Status (ntime)
+      field='/HDFEOS/SWATHS/O3 column/Data Fields/Status';
+      o3_col_obs_status=h5read(file_in,field);
 %
-% info_content (ntrk,nstep)
-      field='/support_data/ozone_information_content';
-      info_content=ncread(file_in,field);
+% O3 A Priori (layer,ntime)
+      field='/HDFEOS/SWATHS/O3-APriori/Data Fields/L2gpValue';
+      o3_prior=h5read(file_in,field);
+%
+% O3 Prior Error (ntime)  
+      field='/HDFEOS/SWATHS/O3-APriori/Data Fields/L2gpPrecision';
+      o3_prior_err=h5read(file_in,field);
+%
+% O3 Prior Convergence (ntime)
+      field='/HDFEOS/SWATHS/O3-APriori/Data Fields/Convergence';
+      o3_prior_conv=h5read(file_in,field);
+%
+% O3 Prior Quality (ntime)
+      field='/HDFEOS/SWATHS/O3-APriori/Data Fields/Quality';
+      o3_prior_qual=h5read(file_in,field);
+%
+% O3 Prior Status (ntime)
+      field='/HDFEOS/SWATHS/O3-APriori/Data Fields/Status';
+      o3_prior_status=h5read(file_in,field);
 %
 % Loop through MLS data
       windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
       windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
       icnt=0;
-      for istep=1:nstep
-	  [yyyy_mls,mn_mls,dy_mls,hh_mls,mm_mls,ss_mls]=invert_time(time_utc(istep));
-%         int32(ss_mls)>59)
-%            [yyyy_mls,mn_mls,dy_mls,hh_mls, ...
-%            mm_mls,ss_mls]=incr_time(yyyy_mls, ...
-%     	     mn_mls,dy_mls,hh_mls,mm_mls,ss_mls);
-%         end
-%         fprintf('obs date/time %d %d %d %d %d %d \n',yyyy_mls, ...
-%	 mn_mls,dy_mls,hh_mls,mm_mls,ss_mls)
-	 
+      for itim=1:ntime
+         curr_hrs=fix((time(itim)-tai93_0UTC)/3600);
+         hrs_mod=mod((time(itim)-tai93_0UTC),3600);
+         curr_min=fix(hrs_mod/60);
+         curr_sec=mod(hrs_mod,60);
+%
+         yyyy_mls=year;
+         mn_mls=month;
+         dy_mls=day;
+         hh_mls=curr_hrs;
+         mm_mls=curr_min;
+         ss_mls=round(curr_sec);
          mlsdate=single(convert_time(yyyy_mls,mn_mls, ...
          dy_mls,hh_mls,mm_mls,ss_mls));
-
-%         fprintf('windate_min %d \n',windate_min)
-%         fprintf('mls_dat %d \n',mlsdate)
-%         fprintf('windate_max %d \n',windate_max)
+         if(hh_mls==24 | mm_mls==60 | ss_mls==60)	 
+            yyyy_tp=yyyy_mls;
+            mn_tp=mn_mls;
+            dy_tp=dy_mls;
+            hh_tp=hh_mls;
+            mm_tp=mm_mls;
+            ss_tp=ss_mls;
+            [yyyy_mls,mn_mls,dy_mls,hh_mls,mm_mls,ss_mls]= ...
+            incr_time(yyyy_tp,mn_tp,dy_tp,hh_tp,mm_tp,ss_tp);
+         end
 %
 % Check time
          if(mlsdate<windate_min | mlsdate>windate_max)
+%            fprintf('min %d, mls %d, max %d \n',windate_min,mlsdate,windate_max)
             continue
          end
-	 
-         for ixtrk=1:ntrk
 %
 % QA/QC
 %
-%	    if(qa_value(ixtrk,istep)~=0 | zenang(ixtrk,istep)>=80.0)
-	    if(zenang(ixtrk,istep)>=80.0)
-               continue
-	    end
-            if(isnan(vert_col_total(ixtrk,istep)) | vert_col_total(ixtrk,istep)<=0)
+         if(zenang(itim)>=80.0)
+            fprintf('zenang %6.2f \n',zenang(itim))
+%            continue
+         end
+%         if(isnan(o3_col_obs(itim)))
+%            continue
+%         end
+         for ilay=1:layer	 
+            if(isnan(o3_obs(ilay,itim)))
+	       fprinf('o3_obs is a NaN %d \n',o3_obs(ilay,itim)) 
                continue
             end
-            if(isnan(vert_col_trop(ixtrk,istep)) | vert_col_trop(ixtrk,istep)<=0)
-               continue
-            end
+         end
 %
 % Check domain
 % Input grid needs to be in degrees
 % X coordinate is [0 to 360]
-	    x_obser=lon(ixtrk,istep);
-            y_obser=lat(ixtrk,istep);
-            if(x_obser<0.)
-	       x_obser=360.+x_obser;
-            end
+         x_obser=lon(itim);
+         y_obser=lat(itim);
+         if(x_obser<0.)
+            x_obser=360.+x_obser;
+         end
 %
-	    xmdl_sw=lon_mdl(1,1);
-	    if(xmdl_sw<0.)
-	       xmdl_sw=xmdl_sw+360.;
-            end
+         xmdl_sw=lon_mdl(1,1);
+         if(xmdl_sw<0.)
+            xmdl_sw=xmdl_sw+360.;
+         end
+         xmdl_mx=lon_mdl(nx_mdl,ny_mdl);
+         if(xmdl_mx<0.)
+            xmdl_mx=xmdl_mx+360.;
+         end
 %
-% APM: Need to get this info from model
-	    [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
-	    xmdl_sw,delx,cen_lon,truelat1,truelat2);
-            i_min = round(xi);
-            j_min = round(xj);
-            reject = 0;
+         [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
+	 xmdl_sw,delx,cen_lon,truelat1,truelat2);
+         i_min = round(xi);
+         j_min = round(xj);
+         reject = 0;
 %
 % Check lower bounds
-            if(i_min<1 & round(xi)==0)
-	       i_min=1;
-            elseif(i_min<1 & fix(xi)<0)
-   	       i_min=-9999;
-               j_min=-9999;
-               reject=1;
-            end
-            if(j_min<1 & round(xj)==0)
-               j_min=1;
-            elseif (j_min<1 & fix(xj)<0)
-               i_min=-9999;
-               j_min=-9999;
-               reject=1;
-            end
+         if(i_min<1 & round(xi)==0)
+            i_min=1;
+         elseif(i_min<1 & fix(xi)<0)
+            i_min=-9999;
+            j_min=-9999;
+            reject=1;
+         end
+         if(j_min<1 & round(xj)==0)
+            j_min=1;
+         elseif (j_min<1 & fix(xj)<0)
+            i_min=-9999;
+            j_min=-9999;
+            reject=1;
+         end
 %
 % Check upper bounds
-            if(i_min>nx_mdl & fix(xi)==nx_mdl)
-               i_min=nx_mdl;
-            elseif (i_min>nx_mdl & fix(xi)>nx_mdl)
-               i_min=-9999;
-               j_min=-9999;
-               reject=1;
-            end
-            if(j_min>ny_mdl & fix(xj)==ny_mdl)
-	       j_min=ny_mdl;
-            elseif (j_min>ny_mdl & fix(xj)>ny_mdl)
-               i_min=-9999;
-               j_min=-9999;
-               reject=1;
-            end
-            if(reject==1)
-	       continue
-	    end
-	    if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
-	       continue
-	    end
+         if(i_min>nx_mdl & fix(xi)==nx_mdl)
+            i_min=nx_mdl;
+         elseif (i_min>nx_mdl & fix(xi)>nx_mdl)
+            i_min=-9999;
+            j_min=-9999;
+            reject=1;
+         end
+         if(j_min>ny_mdl & fix(xj)==ny_mdl)
+            j_min=ny_mdl;
+         elseif (j_min>ny_mdl & fix(xj)>ny_mdl)
+            i_min=-9999;
+            j_min=-9999;
+            reject=1;
+         end
+         if(reject==1)
+            fprintf('x_mdl_min, x_obs, x_mdl_max: %6.2f %6.2f %6.2f \n',xmdl_sw, ...
+            x_obser,xmdl_mx)
+            fprintf('y_mdl_min, y_obs, y_mdl_max: %6.2f %6.2f %6.2f \n',lat_mdl(1,1), ...
+            y_obser,lat_mdl(nx_mdl,ny_mdl))
+            fprintf('i_min %d j_min %d \n',i_min,j_min)
+            continue
+         end
+         if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
+            fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
+            continue
+         end
+%
+% Get the averaging kernel
+         x_obser=lon(itim);
+         y_obser=lat(itim);
+         if(y_obser>=0 & y_obser<=35.)
+           swt=35.-y_obser;
+	   nwt=y_obser;
+	   avgk_obs=(swt*avgk_lay_1d0N + nwt*avgk_lay_1d35N)/35.;
+	   ret_lay_obs=(swt*ret_lay_0N + nwt*ret_lay_35N)/35.;
+	   tru_lay_obs=(swt*tru_lay_0N + nwt*tru_lay_35N)/35.;
+	 elseif (y_obser>35 & y_obser<=70.)
+           swt=70.-y_obser;
+	   nwt=y_obser-35.;
+	   avgk_obs=(swt*avgk_lay_1d35N + nwt*avgk_lay_1d70N)/35.;
+	   ret_lay_obs=(swt*ret_lay_35N + nwt*ret_lay_70N)/35.;
+	   tru_lay_obs=(swt*tru_lay_35N + nwt*tru_lay_70N)/35.;
+	 else
+           fprintf('APM: Observation latitude is outside MLS AvgK latitude range \n')
+	   continue
+         end
 %
 % Save data to ascii file
-	    if (icnt==1000)
-	      return
-	    end
-            icnt=icnt+1;
-            fprintf(fid,'MLS_O3_Obs: %d %d %d \n',icnt,i_min,j_min);
-            fprintf(fid,'%d %d %d %d %d %d \n',yyyy_mls, ...
-            mn_mls,dy_mls,hh_mls,mm_mls,ss_mls);
-            fprintf(fid,'%14.8f %14.8f \n',lat(ixtrk,istep),lon(ixtrk,istep));
-            fprintf(fid,'%d %d \n',layer,level);
-            fprintf(fid,'%d \n',trop_index(ixtrk,istep));
-            fprintf(fid,'%14.8g ',prs_lev(1:level,ixtrk,istep));
+         icnt=icnt+1;
+         fprintf(fid,'MLS_O3_Obs: %d %d %d \n',icnt,i_min,j_min);
+         fprintf(fid,'%d %d %d %d %d %d \n',yyyy_mls, ...
+         mn_mls,dy_mls,hh_mls,mm_mls,ss_mls);
+         fprintf(fid,'%14.8f %14.8f \n',lat(itim),lon(itim));
+         fprintf(fid,'%d %d \n',layer,level);
+         fprintf(fid,'%d %d \n',ret_nlay,tru_nlay);
+%
+% MLS prs_lay, ret_lay, and tru_lay are all the same
+	 fprintf(fid,'%14.8g ',prs_lay(1:layer));
+         fprintf(fid,'\n');
+         fprintf(fid,'%14.8g ',ret_lay_obs(1:ret_nlay));
+         fprintf(fid,'\n');
+         fprintf(fid,'%14.8g ',tru_lay_obs(1:tru_nlay));
+         fprintf(fid,'\n');
+         fprintf(fid,'%14.8g ',o3_obs(1:layer,itim));
+         fprintf(fid,'\n');
+         fprintf(fid,'%14.8g ',o3_obs_err(1:layer,itim));
+         fprintf(fid,'\n');
+         fprintf(fid,'%14.8g ',o3_prior(1:layer,itim));
+         fprintf(fid,'\n');
+         fprintf(fid,'%14.8g \n',o3_prior_err(itim));
+         for k=1:ret_nlay
+            fprintf(fid,'%14.8g ',avgk_obs(k,1:tru_nlay));
             fprintf(fid,'\n');
-            fprintf(fid,'%14.8g ',o3_lay(1:layer,ixtrk,istep));
-            fprintf(fid,'\n');
-            fprintf(fid,'%14.8g ',prior_lay(1:layer,ixtrk,istep));
-            fprintf(fid,'\n');
-	    for k=1:layer
-               fprintf(fid,'%14.8g ',avgk_lay(k,1:layer,ixtrk,istep));
-               fprintf(fid,'\n');
-	    end
-	    for k=1:layer
-               fprintf(fid,'%14.8g ',noise_corr(k,1:layer,ixtrk,istep));
-               fprintf(fid,'\n');
-	    end
-            fprintf(fid,'%14.8g \n',vert_col_trop(ixtrk,istep));
-            fprintf(fid,'%14.8g \n',vert_col_total(ixtrk,istep));
 	 end
+         fprintf(fid,'%14.8g \n',o3_col_obs(itim));
+         fprintf(fid,'%14.8g \n',o3_col_obs_err(itim));
       end
-   end
-end
-function [fld_interp]=prs_interp(fld,i_tmp,j_tmp,i_mdl,j_mdl, ...
-   x_tmp,y_tmp,p_tmp,nz_tmp,x_mdl,y_mdl,p_mdl,nz_mdl)
-%
-% Interpolation weights
-   x_wt_m=x_mdl(i_mdl+1)-x_tmp(i_tmp,j_tmp);
-   x_wt_p=x_tmp(i_tmp,j_tmp)-x_mdl(i_mdl);
-   y_wt_m=y_mdl(j_mdl+1)-y_tmp(i_tmp,j_tmp);
-   y_wt_p=y_tmp(i_tmp,j_tmp)-y_mdl(j_mdl);
-%
-   k_mdl_ll=0;
-   for k_tmp=1:nz_tmp
-      fld_interp(k_tmp,i_tmp,j_tmp)=0.;
-%
-% LL corner
-      for k_mdl=1:nz_mdl-1
-	 if(k_mdl==1 & p_mdl(i_mdl,j_mdl,1)>=p_tmp(k_tmp))
-	    k_mdl_ll=1;
-            break
-         end
-	    if(k_mdl==nz_mdl-1 & p_mdl(i_mdl,j_mdl,nz_mdl)<=p_tmp(k_tmp))
-	    k_mdl_ll=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl,j_mdl,k_mdl)<p_tmp(k_tmp) & ...
-	 p_mdl(i_mdl,j_mdl,k_mdl+1)>=p_tmp(k_tmp))
-            k_mdl_ll=k_mdl;
-            break
-         end
-      end
-%
-% LR corner
-      for k_mdl=1:nz_mdl-1
-	 if(k_mdl==1 & p_mdl(i_mdl+1,j_mdl,1)>=p_tmp(k_tmp))
-	    k_mdl_lr=1;
-            break
-         end
-         if(k_mdl==nz_mdl-1 & p_mdl(i_mdl+1,j_mdl,nz_mdl)<=p_tmp(k_tmp))
-	    k_mdl_lr=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl+1,j_mdl,k_mdl)<p_tmp(k_tmp) & ...
-	 p_mdl(i_mdl+1,j_mdl,k_mdl+1)>=p_tmp(k_tmp))
-            k_mdl_lr=k_mdl;
-            break
-         end
-      end
-%
-% UL corner
-      for k_mdl=1:nz_mdl-1
-         if(k_mdl==1 & p_mdl(i_mdl,j_mdl+1,1)>=p_tmp(k_tmp))
-	    k_mdl_ul=1;
-            break
-         end
-         if(k_mdl==nz_mdl-1 & p_mdl(i_mdl,j_mdl+1,nz_mdl)<=p_tmp(k_tmp))
-	    k_mdl_ul=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl,j_mdl+1,k_mdl)<p_tmp(k_tmp) & ...
-	 p_mdl(i_mdl,j_mdl+1,k_mdl+1)>=p_tmp(k_tmp))
-            k_mdl_ul=k_mdl;
-            break
-         end
-      end
-%
-% UR corner
-      for k_mdl=1:nz_mdl-1
-	 if(k_mdl==1 & p_mdl(i_mdl+1,j_mdl+1,1)>=p_tmp(k_tmp))
-	    k_mdl_ur=1;
-            break
-         end
-         if(k_mdl==nz_mdl-1 & p_mdl(i_mdl+1,j_mdl+1,nz_mdl)<=p_tmp(k_tmp))
-	    k_mdl_ur=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl+1,j_mdl+1,k_mdl)<p_tmp(k_tmp) & ...
-	 p_mdl(i_mdl+1,j_mdl+1,k_mdl+1)>=p_tmp(k_tmp))
-            k_mdl_ur=k_mdl;
-            break
-         end
-      end
-%
-      fld_y_m_z_m=(fld(i_mdl,j_mdl,k_mdl_ll)*x_wt_m + fld(i_mdl+1,j_mdl,k_mdl_lr)*x_wt_p)/(x_wt_m+x_wt_p);
-      fld_y_p_z_m=(fld(i_mdl,j_mdl+1,k_mdl_ul)*x_wt_m + fld(i_mdl+1,j_mdl+1,k_mdl_ur)*x_wt_p)/(x_wt_m+x_wt_p);
-      fld_y_m_z_p=(fld(i_mdl,j_mdl,k_mdl_ll+1)*x_wt_m + fld(i_mdl+1,j_mdl,k_mdl_lr+1)*x_wt_p)/(x_wt_m+x_wt_p);
-      fld_y_p_z_p=(fld(i_mdl,j_mdl+1,k_mdl_ul+1)*x_wt_m + fld(i_mdl+1,j_mdl+1,k_mdl_ur+1)*x_wt_p)/(x_wt_m+x_wt_p);
-%
-      prs_y_m_z_m=(p_mdl(i_mdl,j_mdl,k_mdl_ll)*x_wt_m + p_mdl(i_mdl+1,j_mdl,k_mdl_lr)*x_wt_p)/(x_wt_m+x_wt_p);
-      prs_y_p_z_m=(p_mdl(i_mdl,j_mdl+1,k_mdl_ul)*x_wt_m + p_mdl(i_mdl+1,j_mdl+1,k_mdl_ur)*x_wt_p)/(x_wt_m+x_wt_p);
-      prs_y_m_z_p=(p_mdl(i_mdl,j_mdl,k_mdl_ll+1)*x_wt_m + p_mdl(i_mdl+1,j_mdl,k_mdl_lr+1)*x_wt_p)/(x_wt_m+x_wt_p);
-      prs_y_p_z_p=(p_mdl(i_mdl,j_mdl+1,k_mdl_ul+1)*x_wt_m + p_mdl(i_mdl+1,j_mdl+1,k_mdl_ur+1)*x_wt_p) /(x_wt_m+x_wt_p);
-%
-      fld_z_m=(fld_y_m_z_m*y_wt_m + fld_y_p_z_m*y_wt_p)/(y_wt_m+y_wt_p);
-      fld_z_p=(fld_y_m_z_p*y_wt_m + fld_y_p_z_p*y_wt_p)/(y_wt_m+y_wt_p);
-%
-      prs_z_m=(prs_y_m_z_m*y_wt_m + prs_y_p_z_m*y_wt_p)/(y_wt_m+y_wt_p);
-      prs_z_p=(prs_y_m_z_p*y_wt_m + prs_y_p_z_p*y_wt_p)/(y_wt_m+y_wt_p);
-%
-      z_wt_m=prs_z_p-p_tmp(k_tmp);
-      z_wt_p=p_tmp(k_tmp)-prs_z_m;
-%
-      if(prs_z_m>=p_tmp(k_tmp))
-	fld_interp(k_tmp)=fld_z_m;
-      end
-      if(prs_z_p<=p_tmp(k_tmp))
-	fld_interp(k_tmp)=fld_z_p;
-      end
-      if(prs_z_m<p_tmp(k_tmp) & ...
-      prs_z_p>p_tmp(k_tmp))
-	fld_interp(k_tmp)=(fld_z_m*z_wt_m + fld_z_p*z_wt_p)/(z_wt_m+z_wt_p);
-      end
-   end
-end
-%
-function [fld_interp]=prs_interp_top_to_bot(fld,i_tmp,j_tmp,i_mdl,j_mdl, ...
-   x_tmp,y_tmp,p_tmp,nz_tmp,x_mdl,y_mdl,p_mdl,nz_mdl)
-%
-% Model runs top to bottom (nz_mdl)
-% Observation runs top to bottom (nz_tmp)
-%
-% Interpolation weights
-   x_wt_m=x_mdl(i_mdl+1)-x_tmp(i_tmp,j_tmp);
-   x_wt_p=x_tmp(i_tmp,j_tmp)-x_mdl(i_mdl);
-   y_wt_m=y_mdl(j_mdl+1)-y_tmp(i_tmp,j_tmp);
-   y_wt_p=y_tmp(i_tmp,j_tmp)-y_mdl(j_mdl);
-%
-   k_mdl_ll=0;
-   for k_tmp=1:nz_tmp
-      fld_interp(k_tmp,i_tmp,j_tmp)=0.;
-%
-% LL corner
-      for k_mdl=1:nz_mdl-1
-	 if(k_mdl==1 & p_mdl(i_mdl,j_mdl,1)>=p_tmp(k_tmp))
-	    k_mdl_ll=1;
-            break
-         end
-	 if(k_mdl==nz_mdl-1 & p_mdl(i_mdl,j_mdl,nz_mdl)<=p_tmp(k_tmp))
-	    k_mdl_ll=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl,j_mdl,k_mdl)<p_tmp(k_tmp) & ...
-	 p_mdl(i_mdl,j_mdl,k_mdl+1)>=p_tmp(k_tmp))
-            k_mdl_ll=k_mdl;
-            break
-         end
-      end
-%
-% LR corner
-      for k_mdl=1:nz_mdl-1
-	 if(k_mdl==1 & p_mdl(i_mdl+1,j_mdl,1)>=p_tmp(k_tmp))
-	    k_mdl_lr=1;
-            break
-         end
-         if(k_mdl==nz_mdl-1 & p_mdl(i_mdl+1,j_mdl,nz_mdl)<=p_tmp(k_tmp))
-	    k_mdl_lr=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl+1,j_mdl,k_mdl)<p_tmp(k_tmp) & ...
-	 p_mdl(i_mdl+1,j_mdl,k_mdl+1)>=p_tmp(k_tmp))
-            k_mdl_lr=k_mdl;
-            break
-         end
-      end
-%
-% UL corner
-      for k_mdl=1:nz_mdl-1
-         if(k_mdl==1 & p_mdl(i_mdl,j_mdl+1,1)>=p_tmp(k_tmp))
-	    k_mdl_ul=1;
-            break
-         end
-         if(k_mdl==nz_mdl-1 & p_mdl(i_mdl,j_mdl+1,nz_mdl)<=p_tmp(k_tmp))
-	    k_mdl_ul=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl,j_mdl+1,k_mdl)<p_tmp(k_tmp) & ...
-	 p_mdl(i_mdl,j_mdl+1,k_mdl+1)>=p_tmp(k_tmp))
-            k_mdl_ul=k_mdl;
-            break
-         end
-      end
-%
-% UR corner
-      for k_mdl=1:nz_mdl-1
-	 if(k_mdl==1 & p_mdl(i_mdl+1,j_mdl+1,1)>=p_tmp(k_tmp))
-	    k_mdl_ur=1;
-            break
-         end
-         if(k_mdl==nz_mdl-1 & p_mdl(i_mdl+1,j_mdl+1,nz_mdl)<=p_tmp(k_tmp))
-	    k_mdl_ur=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl+1,j_mdl+1,k_mdl)<p_tmp(k_tmp) & ...
-	 p_mdl(i_mdl+1,j_mdl+1,k_mdl+1)>=p_tmp(k_tmp))
-            k_mdl_ur=k_mdl;
-            break
-         end
-      end
-%
-      fld_y_m_z_m=(fld(i_mdl,j_mdl,k_mdl_ll)*x_wt_m + fld(i_mdl+1,j_mdl,k_mdl_lr)*x_wt_p)/(x_wt_m+x_wt_p);
-      fld_y_p_z_m=(fld(i_mdl,j_mdl+1,k_mdl_ul)*x_wt_m + fld(i_mdl+1,j_mdl+1,k_mdl_ur)*x_wt_p)/(x_wt_m+x_wt_p);
-      fld_y_m_z_p=(fld(i_mdl,j_mdl,k_mdl_ll+1)*x_wt_m + fld(i_mdl+1,j_mdl,k_mdl_lr+1)*x_wt_p)/(x_wt_m+x_wt_p);
-      fld_y_p_z_p=(fld(i_mdl,j_mdl+1,k_mdl_ul+1)*x_wt_m + fld(i_mdl+1,j_mdl+1,k_mdl_ur+1)*x_wt_p)/(x_wt_m+x_wt_p);
-%
-      prs_y_m_z_m=(p_mdl(i_mdl,j_mdl,k_mdl_ll)*x_wt_m + p_mdl(i_mdl+1,j_mdl,k_mdl_lr)*x_wt_p)/(x_wt_m+x_wt_p);
-      prs_y_p_z_m=(p_mdl(i_mdl,j_mdl+1,k_mdl_ul)*x_wt_m + p_mdl(i_mdl+1,j_mdl+1,k_mdl_ur)*x_wt_p)/(x_wt_m+x_wt_p);
-      prs_y_m_z_p=(p_mdl(i_mdl,j_mdl,k_mdl_ll+1)*x_wt_m + p_mdl(i_mdl+1,j_mdl,k_mdl_lr+1)*x_wt_p)/(x_wt_m+x_wt_p);
-      prs_y_p_z_p=(p_mdl(i_mdl,j_mdl+1,k_mdl_ul+1)*x_wt_m + p_mdl(i_mdl+1,j_mdl+1,k_mdl_ur+1)*x_wt_p) /(x_wt_m+x_wt_p);
-%
-      fld_z_m=(fld_y_m_z_m*y_wt_m + fld_y_p_z_m*y_wt_p)/(y_wt_m+y_wt_p);
-      fld_z_p=(fld_y_m_z_p*y_wt_m + fld_y_p_z_p*y_wt_p)/(y_wt_m+y_wt_p);
-%
-      prs_z_m=(prs_y_m_z_m*y_wt_m + prs_y_p_z_m*y_wt_p)/(y_wt_m+y_wt_p);
-      prs_z_p=(prs_y_m_z_p*y_wt_m + prs_y_p_z_p*y_wt_p)/(y_wt_m+y_wt_p);
-%
-      z_wt_m=prs_z_p-p_tmp(k_tmp);
-      z_wt_p=p_tmp(k_tmp)-prs_z_m;
-%
-      if(prs_z_m>=p_tmp(k_tmp))
-	fld_interp(k_tmp)=fld_z_m;
-      end
-      if(prs_z_p<=p_tmp(k_tmp))
-	fld_interp(k_tmp)=fld_z_p;
-      end
-      if(prs_z_m<p_tmp(k_tmp) & ...
-      prs_z_p>p_tmp(k_tmp))
-	fld_interp(k_tmp)=(fld_z_m*z_wt_m + fld_z_p*z_wt_p)/(z_wt_m+z_wt_p);
-      end
-   end
-end
-%
-function [fld_interp]=prs_interp_bot_to_top(fld,i_tmp,j_tmp,i_mdl,j_mdl, ...
-   x_tmp,y_tmp,p_tmp,nz_tmp,x_mdl,y_mdl,p_mdl,nz_mdl)
-%
-% Model runs top to bottom (nz_mdl)
-% Observation runs bottom to top (nz_tmp)
-% Reverse the observation profile (top to bottom), interpolate model to the observation grid,
-% and then reverse interpolated model field so it runs bottom to top.
-%
-  for k_tmp=1:nz_tmp
-     kk_tmp=nz_tmp-k_tmp+1;
-     p_tmp_rev(k_tmp)=p_tmp(kk_tmp);
-  end
-%
-% Interpolation weights
-   x_wt_m=x_mdl(i_mdl+1)-x_tmp(i_tmp,j_tmp);
-   x_wt_p=x_tmp(i_tmp,j_tmp)-x_mdl(i_mdl);
-   y_wt_m=y_mdl(j_mdl+1)-y_tmp(i_tmp,j_tmp);
-   y_wt_p=y_tmp(i_tmp,j_tmp)-y_mdl(j_mdl);
-%
-   k_mdl_ll=0;
-   for k_tmp=1:nz_tmp
-      fld_interp(k_tmp,i_tmp,j_tmp)=0.;
-%
-% LL corner
-      for k_mdl=1:nz_mdl-1
-	 if(k_mdl==1 & p_mdl(i_mdl,j_mdl,1)>=p_tmp_rev(k_tmp))
-	    k_mdl_ll=1;
-            break
-         end
-	 if(k_mdl==nz_mdl-1 & p_mdl(i_mdl,j_mdl,nz_mdl)<=p_tmp_rev(k_tmp))
-	    k_mdl_ll=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl,j_mdl,k_mdl)<p_tmp_rev(k_tmp) & ...
-	 p_mdl(i_mdl,j_mdl,k_mdl+1)>=p_tmp_rev(k_tmp))
-            k_mdl_ll=k_mdl;
-            break
-         end
-      end
-%
-% LR corner
-      for k_mdl=1:nz_mdl-1
-	 if(k_mdl==1 & p_mdl(i_mdl+1,j_mdl,1)>=p_tmp_rev(k_tmp))
-	    k_mdl_lr=1;
-            break
-         end
-         if(k_mdl==nz_mdl-1 & p_mdl(i_mdl+1,j_mdl,nz_mdl)<=p_tmp_rev(k_tmp))
-	    k_mdl_lr=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl+1,j_mdl,k_mdl)<p_tmp_rev(k_tmp) & ...
-	 p_mdl(i_mdl+1,j_mdl,k_mdl+1)>=p_tmp_rev(k_tmp))
-            k_mdl_lr=k_mdl;
-            break
-         end
-      end
-%
-% UL corner
-      for k_mdl=1:nz_mdl-1
-         if(k_mdl==1 & p_mdl(i_mdl,j_mdl+1,1)>=p_tmp_rev(k_tmp))
-	    k_mdl_ul=1;
-            break
-         end
-         if(k_mdl==nz_mdl-1 & p_mdl(i_mdl,j_mdl+1,nz_mdl)<=p_tmp_rev(k_tmp))
-	    k_mdl_ul=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl,j_mdl+1,k_mdl)<p_tmp_rev(k_tmp) & ...
-	 p_mdl(i_mdl,j_mdl+1,k_mdl+1)>=p_tmp_rev(k_tmp))
-            k_mdl_ul=k_mdl;
-            break
-         end
-      end
-%
-% UR corner
-      for k_mdl=1:nz_mdl-1
-	 if(k_mdl==1 & p_mdl(i_mdl+1,j_mdl+1,1)>=p_tmp_rev(k_tmp))
-	    k_mdl_ur=1;
-            break
-         end
-         if(k_mdl==nz_mdl-1 & p_mdl(i_mdl+1,j_mdl+1,nz_mdl)<=p_tmp_rev(k_tmp))
-	    k_mdl_ur=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl+1,j_mdl+1,k_mdl)<p_tmp_rev(k_tmp) & ...
-	 p_mdl(i_mdl+1,j_mdl+1,k_mdl+1)>=p_tmp_rev(k_tmp))
-            k_mdl_ur=k_mdl;
-            break
-         end
-      end
-%
-      fld_y_m_z_m=(fld(i_mdl,j_mdl,k_mdl_ll)*x_wt_m + fld(i_mdl+1,j_mdl,k_mdl_lr)*x_wt_p)/(x_wt_m+x_wt_p);
-      fld_y_p_z_m=(fld(i_mdl,j_mdl+1,k_mdl_ul)*x_wt_m + fld(i_mdl+1,j_mdl+1,k_mdl_ur)*x_wt_p)/(x_wt_m+x_wt_p);
-      fld_y_m_z_p=(fld(i_mdl,j_mdl,k_mdl_ll+1)*x_wt_m + fld(i_mdl+1,j_mdl,k_mdl_lr+1)*x_wt_p)/(x_wt_m+x_wt_p);
-      fld_y_p_z_p=(fld(i_mdl,j_mdl+1,k_mdl_ul+1)*x_wt_m + fld(i_mdl+1,j_mdl+1,k_mdl_ur+1)*x_wt_p)/(x_wt_m+x_wt_p);
-%
-      prs_y_m_z_m=(p_mdl(i_mdl,j_mdl,k_mdl_ll)*x_wt_m + p_mdl(i_mdl+1,j_mdl,k_mdl_lr)*x_wt_p)/(x_wt_m+x_wt_p);
-      prs_y_p_z_m=(p_mdl(i_mdl,j_mdl+1,k_mdl_ul)*x_wt_m + p_mdl(i_mdl+1,j_mdl+1,k_mdl_ur)*x_wt_p)/(x_wt_m+x_wt_p);
-      prs_y_m_z_p=(p_mdl(i_mdl,j_mdl,k_mdl_ll+1)*x_wt_m + p_mdl(i_mdl+1,j_mdl,k_mdl_lr+1)*x_wt_p)/(x_wt_m+x_wt_p);
-      prs_y_p_z_p=(p_mdl(i_mdl,j_mdl+1,k_mdl_ul+1)*x_wt_m + p_mdl(i_mdl+1,j_mdl+1,k_mdl_ur+1)*x_wt_p) /(x_wt_m+x_wt_p);
-%
-      fld_z_m=(fld_y_m_z_m*y_wt_m + fld_y_p_z_m*y_wt_p)/(y_wt_m+y_wt_p);
-      fld_z_p=(fld_y_m_z_p*y_wt_m + fld_y_p_z_p*y_wt_p)/(y_wt_m+y_wt_p);
-%
-      prs_z_m=(prs_y_m_z_m*y_wt_m + prs_y_p_z_m*y_wt_p)/(y_wt_m+y_wt_p);
-      prs_z_p=(prs_y_m_z_p*y_wt_m + prs_y_p_z_p*y_wt_p)/(y_wt_m+y_wt_p);
-%
-      z_wt_m=prs_z_p-p_tmp_rev(k_tmp);
-      z_wt_p=p_tmp_rev(k_tmp)-prs_z_m;
-%
-      if(prs_z_m>=p_tmp_rev(k_tmp))
-	fld_interp(k_tmp)=fld_z_m;
-      end
-      if(prs_z_p<=p_tmp_rev(k_tmp))
-	fld_interp(k_tmp)=fld_z_p;
-      end
-      if(prs_z_m<p_tmp_rev(k_tmp) & ...
-      prs_z_p>p_tmp_rev(k_tmp))
-	fld_interp(k_tmp)=(fld_z_m*z_wt_m + fld_z_p*z_wt_p)/(z_wt_m+z_wt_p);
-      end
-   end
-%
-% Reverse the interpolated model field
-  for k_tmp=1:nz_tmp
-     p_tmp_rev(k_tmp)=fld_interp(k_tmp);
-  end
-  for k_tmp=1:nz_tmp
-     kk_tmp=nz_tmp-k_tmp+1;
-     fld_interp(k_tmp)=p_tmp_rev(kk_tmp);
-  end
-end
-%
-function [fld_interp]=prs_interp_col(fld,i_tmp,j_tmp,i_mdl,j_mdl, ...
-   x_tmp,y_tmp,p_tmp,nz_tmp,x_mdl,y_mdl,p_mdl,nz_mdl)
-%
-% Interpolation weights
-   x_wt_m=x_mdl(i_mdl+1)-x_tmp(i_tmp,j_tmp);
-   x_wt_p=x_tmp(i_tmp,j_tmp)-x_mdl(i_mdl);
-   y_wt_m=y_mdl(j_mdl+1)-y_tmp(i_tmp,j_tmp);
-   y_wt_p=y_tmp(i_tmp,j_tmp)-y_mdl(j_mdl);
-%
-   k_mdl_ll=0;
-   for k_tmp=1:nz_tmp
-%
-% LL corner
-      for k_mdl=1:nz_mdl-1
-	 if(k_mdl==1 & p_mdl(i_mdl,j_mdl,1)>=p_tmp(k_tmp))
-	    k_mdl_ll=1;
-            break
-         end
-	    if(k_mdl==nz_mdl-1 & p_mdl(i_mdl,j_mdl,nz_mdl)<=p_tmp(k_tmp))
-	    k_mdl_ll=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl,j_mdl,k_mdl)<p_tmp(k_tmp) & ...
-	 p_mdl(i_mdl,j_mdl,k_mdl+1)>=p_tmp(k_tmp))
-            k_mdl_ll=k_mdl;
-            break
-         end
-      end
-%
-% LR corner
-      for k_mdl=1:nz_mdl-1
-	 if(k_mdl==1 & p_mdl(i_mdl+1,j_mdl,1)>=p_tmp(k_tmp))
-	    k_mdl_lr=1;
-            break
-         end
-         if(k_mdl==nz_mdl-1 & p_mdl(i_mdl+1,j_mdl,nz_mdl)<=p_tmp(k_tmp))
-	    k_mdl_lr=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl+1,j_mdl,k_mdl)<p_tmp(k_tmp) & ...
-	 p_mdl(i_mdl+1,j_mdl,k_mdl+1)>=p_tmp(k_tmp))
-            k_mdl_lr=k_mdl;
-            break
-         end
-      end
-%
-% UL corner
-      for k_mdl=1:nz_mdl-1
-         if(k_mdl==1 & p_mdl(i_mdl,j_mdl+1,1)>=p_tmp(k_tmp))
-	    k_mdl_ul=1;
-            break
-         end
-         if(k_mdl==nz_mdl-1 & p_mdl(i_mdl,j_mdl+1,nz_mdl)<=p_tmp(k_tmp))
-	    k_mdl_ul=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl,j_mdl+1,k_mdl)<p_tmp(k_tmp) & ...
-	 p_mdl(i_mdl,j_mdl+1,k_mdl+1)>=p_tmp(k_tmp))
-            k_mdl_ul=k_mdl;
-            break
-         end
-      end
-%
-% UR corner
-      for k_mdl=1:nz_mdl-1
-	 if(k_mdl==1 & p_mdl(i_mdl+1,j_mdl+1,1)>=p_tmp(k_tmp))
-	    k_mdl_ur=1;
-            break
-         end
-         if(k_mdl==nz_mdl-1 & p_mdl(i_mdl+1,j_mdl+1,nz_mdl)<=p_tmp(k_tmp))
-	    k_mdl_ur=nz_mdl-1;
-            break
-         end
-	 if(p_mdl(i_mdl+1,j_mdl+1,k_mdl)<p_tmp(k_tmp) & ...
-	 p_mdl(i_mdl+1,j_mdl+1,k_mdl+1)>=p_tmp(k_tmp))
-            k_mdl_ur=k_mdl;
-            break
-         end
-      end
-%
-      fld_y_m_z_m=(fld(i_mdl,j_mdl,k_mdl_ll)*x_wt_m + fld(i_mdl+1,j_mdl,k_mdl_lr)*x_wt_p)/(x_wt_m+x_wt_p);
-      fld_y_p_z_m=(fld(i_mdl,j_mdl+1,k_mdl_ul)*x_wt_m + fld(i_mdl+1,j_mdl+1,k_mdl_ur)*x_wt_p)/(x_wt_m+x_wt_p);
-      fld_y_m_z_p=(fld(i_mdl,j_mdl,k_mdl_ll+1)*x_wt_m + fld(i_mdl+1,j_mdl,k_mdl_lr+1)*x_wt_p)/(x_wt_m+x_wt_p);
-      fld_y_p_z_p=(fld(i_mdl,j_mdl+1,k_mdl_ul+1)*x_wt_m + fld(i_mdl+1,j_mdl+1,k_mdl_ur+1)*x_wt_p)/(x_wt_m+x_wt_p);
-%
-      prs_y_m_z_m=(p_mdl(i_mdl,j_mdl,k_mdl_ll)*x_wt_m + p_mdl(i_mdl+1,j_mdl,k_mdl_lr)*x_wt_p)/(x_wt_m+x_wt_p);
-      prs_y_p_z_m=(p_mdl(i_mdl,j_mdl+1,k_mdl_ul)*x_wt_m + p_mdl(i_mdl+1,j_mdl+1,k_mdl_ur)*x_wt_p)/(x_wt_m+x_wt_p);
-      prs_y_m_z_p=(p_mdl(i_mdl,j_mdl,k_mdl_ll+1)*x_wt_m + p_mdl(i_mdl+1,j_mdl,k_mdl_lr+1)*x_wt_p)/(x_wt_m+x_wt_p);
-      prs_y_p_z_p=(p_mdl(i_mdl,j_mdl+1,k_mdl_ul+1)*x_wt_m + p_mdl(i_mdl+1,j_mdl+1,k_mdl_ur+1)*x_wt_p) /(x_wt_m+x_wt_p);
-%
-      fld_z_m=(fld_y_m_z_m*y_wt_m + fld_y_p_z_m*y_wt_p)/(y_wt_m+y_wt_p);
-      fld_z_p=(fld_y_m_z_p*y_wt_m + fld_y_p_z_p*y_wt_p)/(y_wt_m+y_wt_p);
-%
-      prs_z_m=(prs_y_m_z_m*y_wt_m + prs_y_p_z_m*y_wt_p)/(y_wt_m+y_wt_p);
-      prs_z_p=(prs_y_m_z_p*y_wt_m + prs_y_p_z_p*y_wt_p)/(y_wt_m+y_wt_p);
-%
-      z_wt_m=prs_z_p-p_tmp(k_tmp);
-      z_wt_p=p_tmp(k_tmp)-prs_z_m;
-%
-      if(prs_z_m>=p_tmp(k_tmp))
-	fld_interp(k_tmp)=fld_z_m;
-      end
-      if(prs_z_p<=p_tmp(k_tmp))
-	fld_interp(k_tmp)=fld_z_p;
-      end
-      if(prs_z_m<p_tmp(k_tmp) & ...
-      prs_z_p>p_tmp(k_tmp))
-	fld_interp(k_tmp)=(fld_z_m*z_wt_m + fld_z_p*z_wt_p)/(z_wt_m+z_wt_p);
-      end
-   end
-end
-%
-function [jult]=convert_time(year,month,day,hour,minute,second)
-   days_per_mon=[31 28 31 30 31 30 31 31 30 31 30 31]; 
-   ref_year=2010;
-   ref_month=1;
-   ref_day=1;
-   ref_hour=0;
-   ref_minute=0;
-   ref_second=0;
-   secs_year=365.*24.*60.*60.;
-   secs_leap_year=366.*24.*60.*60.;
-   jult=0;
-%
-% NOTE: hours run 0 - 23
-   if(hour>23)
-      'APM: ERROR - hour must be less than or equal to 23'
-      return
-   end
-   if(ref_year>year)
-      'APM: ERROR - year must greater than or equal to 2010'
-      return
-   end
-%
-   for iyear=ref_year:year-1
-      if((mod(int64(iyear),4)==0 & mod(int64(iyear), ...
-      100)~=0) || (mod(int64(iyear),400)==0))
-         jult=jult+secs_leap_year;
-      else
-         jult=jult+secs_year;
-      end
-   end
-   for imon=1:month-1
-      if(imon==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),400)==0)))
-         jult=jult+(days_per_mon(imon)+1)*24.*60.*60.;
-      else
-         jult=jult+days_per_mon(imon)*24.*60.*60.;
-      end
-   end
-   jult=jult+(day-1)*24.*60.*60.;
-   jult=jult+hour*60.*60.+minute*60.+second;
-end
-%
-function [year,month,day,hour,minute,second]=invert_time(jult)
-   days_mon=[31 28 31 30 31 30 31 31 30 31 30 31]; 
-   ref_year=2000;
-   ref_month=1;
-   ref_day=1;
-   ref_hour=0;
-   ref_minute=0;
-   ref_second=0;
-   secs_year=365.*24.*60.*60.;
-   secs_leap_year=366.*24.*60.*60.;
-%
-   if((mod(int64(ref_year),4)==0 & mod(int64(ref_year), ...
-   100)~=0) || (mod(int64(ref_year),400)==0))
-      secs_gone=secs_leap_year;
-   else
-      secs_gone=secs_year;
-   end
-   year=ref_year;
-   while (jult>secs_gone)
-      jult=jult-secs_gone;
-      year=year+1.;
-      if((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),400)==0))
-         secs_gone=secs_leap_year;
-      else
-         secs_gone=secs_year;
-      end
-   end
-   yeart=year;
-   for imon=1:12
-      if(imon==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),400)==0)))
-         secs_gone=(days_mon(imon)+1)*24.*60.*60.;
-      else
-         secs_gone=days_mon(imon)*24.*60.*60.;
-      end
-      if(jult>=secs_gone) 
-	 jult=jult-secs_gone;
-      else
-	 month=imon;
-         break
-      end
-   end
-   montht=month;
-   day=floor(jult/24./60./60.)+1;
-   dayt=day;
-   jult=jult-(day-1)*24.*60.*60.;
-   hour=floor(jult/60./60.);
-   hourt=hour;
-   jult=jult-hour*60.*60.;
-   minute=floor(jult/60.);
-   minutet=minute;
-   second=jult-minute*60.;
-   secondt=second;
-   hourt=hourt+12;
-   [year,month,day,hour,minute,second]=incr_time(yeart, ...
-   montht,dayt,hourt,minutet,secondt);
-end
-%
-function [secs_tai93,rc]=time_tai93(year,month,day,hour,minute,second)
-   days_per_mon=[31 28 31 30 31 30 31 31 30 31 30 31]; 
-   ref_year=1993;
-   ref_month=1;
-   ref_day=1;
-   ref_hour=0;
-   ref_minute=0;
-   ref_second=0;
-   secs_year=365.*24.*60.*60.;
-   secs_leap_year=366.*24.*60.*60.;
-   jult=0;
-%
-% NOTE: hours run 0 - 23
-   if(hour>23)
-      'APM: ERROR - hour must be less than or equal to 23'
-      return
-   end
-   if(ref_year>year)
-      'APM: ERROR - year must greater than or equal to 2010'
-      return
-   end
-%
-   for iyear=ref_year:year-1
-      if((mod(int64(iyear),4)==0 & mod(int64(iyear), ...
-      100)~=0) || (mod(int64(iyear),400)==0))
-         jult=jult+secs_leap_year;
-      else
-         jult=jult+secs_year;
-      end
-   end
-   for imon=1:month-1
-      if(imon==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),400)==0)))
-         jult=jult+(days_per_mon(imon)+1)*24.*60.*60.;
-      else
-         jult=jult+days_per_mon(imon)*24.*60.*60.;
-      end
-   end
-   jult=jult+(day-1)*24.*60.*60.;
-   jult=jult+hour*60.*60.+minute*60.+second;
-%
-   rc=0;
-   secs_tai93=jult;
-end
-%
-function [yyyy,mn,dy,hh,mm,ss]=incr_time(year, ...
-month,day,hour,minute,second);
-   days_per_month=[31,28,31,30,31,30,31,31,30,31,30,31];
-%
-% Check for negative time / date
-   if(second<0)
-      minute=minute-1;
-      second=60+second;
-   end
-   if(minute<0)
-      hour=hour-1;
-      minute=60-minute;
-   end
-   if(hour<0)
-      day=day-1;
-      hour=60-hour;
-   end
-   if(day<=0)
-      if(imon==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-      100)~=0) || (mod(int64(year),400)==0)))
-         days_mon=days_per_month(month)+1;
-      else
-         days_mon=days_per_month(month);
-      end
-      month=month-1;
-      day=day_mon-day;
-   end
-   if(month<=0)
-     month=12;
-     year=year-1;
-   end
-%
-% Check if time / date too large
-
-   if(second>59) 
-      if(second>119)
-         fprintf('APM: Error seconds too large %d \n',int64(second))
-         return
-      end
-      second=second-60;
-      minute=minute+1;
-   end
-   if(minute>59)
-     if(minute>119)
-         fprintf('APM: Error minutes too large %d \n',int64(minute))
-         return
-      end
-      minute=minute-60;
-      hour=hour+1;
-   end
-   if(hour>23)
-      if(hour>47)
-         fprintf('APM: Error hours too large %d \n',int64(hour))
-         return
-      end
-      hour=hour-24;
-      day=day+1;
-   end
-   days_mon=days_per_month(month);
-   if(int64(month)==2 & ((mod(int64(year),4)==0 & mod(int64(year), ...
-   100)~=0) || (mod(int64(year),400)==0)))
-      days_mon=days_mon+1;
-   end
-   if(day>days_mon)
-     if(day>(days_mon+days+mon))
-         fprintf('APM: Error days too large %d \n',day)
-         return
-      end
-      day=day-days_mon;
-      month=month+1;
-   end
-   if(month>12)
-      if(month>24)
-         fprintf('APM: Error month too large %d \n',month)
-         return
-      end
-     month=month-12;
-     year=year+1;
-   end
-   yyyy=year;
-   mn=month;
-   dy=day;
-   hh=hour;
-   mm=minute;
-   ss=second;
-end
-%
-   function [xi,xj]=w3fb13(alat,elon,alat1,elon1, ...
-   dx,elonv,alatan1,alatan2)
-%
-   rerth=6.3712e6;
-   pi=3.14159;
-%
-   if(alatan1>0)
-      h=1;
-   else
-      h=-1;
-   end
-%
-   radpd=pi/180.;
-   rebydx=rerth/dx;
-   alatn1=alatan1*radpd;
-   alatn2=alatan2*radpd;
-   if(alatan1==alatan2)
-      an=h*sin(alatn1);
-   else
-      an=log(cos(alatn1)/cos(alatn2))/ ...
-      log(tan(((h*pi/2.)-alatn1)/2.)/tan(((h*pi/2.)-alatn2)/2.));
-   end
-   cosltn=cos(alatn2);
-%
-   elon1l=elon1;
-   if(elon1-elonv>180)
-      elon1l=elon1-360;
-   end
-   if(elon1-elonv<-180)
-      elon1l=elon1+360;
-   end
-%
-   elonl=elon;
-   if(elon-elonv>180)
-      elonl=elon-360;
-   end
-   if(elon-elonv<-180)
-      elonl=elon+360;
-   end
-%
-   elonvr=elonv*radpd;
-%
-   ala1=alat1*radpd;
-   psi=(rebydx*cosltn)/(an*(tan((pi/4.)-(h*alatn2/2.))^an));
-   rmll=psi*(tan((pi/4.)-(h*ala1/2.))^an);
-%
-   elo1=elon1l*radpd;
-   arg=an*(elo1-elonvr);
-   polei=1.-h*rmll*sin(arg);
-   polej=1+rmll*cos(arg);
-%
-   ala=alat*radpd;
-%
-   rm=psi*(tan((pi/4.)-(h*ala/2.))^an);
-   elo=elonl*radpd;
-   arg=an*(elo-elonvr);
-   xi=polei+h*rm*sin(arg);
-   xj=polej-rm*cos(arg);
-%
-   if(round(xi)<1)
-      xi=xi-1;
-   end
-   if(round(xj)<1)
-      xj=xj-1;
-   end
+   end  
 end

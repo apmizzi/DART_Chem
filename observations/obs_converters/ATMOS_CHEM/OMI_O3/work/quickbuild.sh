@@ -15,6 +15,7 @@ LOCATION=threed_sphere
 
 programs=(
 omi_o3_profile_ascii_to_obs
+omi_o3_cpsr_ascii_to_obs
 obs_sequence_tool
 advance_time
 )

@@ -354,13 +354,9 @@ program omi_o3_profile_ascii_to_obs
 ! Find model O3 profile corresponding to the observation
 ! kend is the OMI index for the top of the model.      
 !--------------------------------------------------------
-      reject=0
-!      call get_model_profile(prf_model,nz_model, &
-!      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
-!      qmr_fld(i_min,j_min,:),o3_fld(i_min,j_min,:),psfc_fld(i_min,j_min), &
-!      nlev_obs,avgk_obs,prior_obs,kend)
 !
 ! Loop through vertical grid (OMI O3 is top to bottom)
+      reject=0
       do ilv=1,nlay_obs
          avgk_obs_r8(1:nlay_obs)=avgk_obs(ilv,1:nlay_obs)
 !
@@ -373,12 +369,6 @@ program omi_o3_profile_ascii_to_obs
             print *, 'APM: Prior ',prior_obs_r8(ilv),'Avgk: ',avgk_obs_r8(ilv)
 !            cycle
          endif
-!
-!--------------------------------------------------------
-! Find vertical location
-!--------------------------------------------------------
-!         call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_model,nlay_obs,kend)
-!         level=prs_loc
 !
 ! Process accepted observations
          sum_accept=sum_accept+1

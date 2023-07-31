@@ -15,11 +15,11 @@ module apm_cpsr_mod
 
    contains
   
-subroutine cpsr_calculation(nlayer_trc,nlayer,spec_cpsr,avgk_cpsr,prior_cpsr,spec_obs,prior_obs,avgk_obs,cov_obs,cnt) 
+subroutine cpsr_calculation(rnlayer_trc,nlayer,spec_cpsr,avgk_cpsr,prior_cpsr,spec_obs,prior_obs,avgk_obs,cov_obs,cnt) 
    real,parameter                               :: eps_tol=1.e-3
-   integer                                      :: k,kk,cnt
-   integer                                      :: info,nlayer,nlayer_trc,qstatus
-   real                                         :: sdof
+   integer                                      :: i,j,k,kk,cnt
+   integer                                      :: info,nlayer,nlayer_trc,rnlayer_trc,qstatus
+   real                                         :: sdof,sum
    integer                                      :: lwrk
    real                                         :: spec_cpsr(nlayer),prior_cpsr(nlayer),avgk_cpsr(nlayer,nlayer)
    real                                         :: spec_obs(nlayer),spec_obs_adj(nlayer),prior_obs(nlayer)
@@ -43,7 +43,8 @@ subroutine cpsr_calculation(nlayer_trc,nlayer,spec_cpsr,avgk_cpsr,prior_cpsr,spe
    allocate(ZL(nlayer,nlayer),ZR(nlayer,nlayer),ZV(nlayer),ZW(nlayer))
    allocate(err2_rs_r(nlayer))
 !
-! Calculate SVD of avgk (Z=U_xxx * SV_xxx * VT_xxx) - COMPRESSION STEP
+! COMPRESSION STEP   
+! Calculate SVD of the averaging kernel (Z=U_xxx * SV_xxx * VT_xxx)
    Z(1:nlayer,1:nlayer)=dble(avgk_obs(1:nlayer,1:nlayer))
    call dgesvd('A','A',nlayer,nlayer,Z,nlayer,SV_cov,U_cov,nlayer,VT_cov,nlayer,wrk,lwrk,info)
    nlayer_trc=0
@@ -60,43 +61,24 @@ subroutine cpsr_calculation(nlayer_trc,nlayer,spec_cpsr,avgk_cpsr,prior_cpsr,spe
          VT_cov(k,:)=0.
       endif 
    enddo
-!   print *,'nlayer_trc ',nlayer_trc
-!   print *, 'SV ',SV_cov(:)
-   
+!
+! Get the transpose      
    call mat_transpose(U_cov,UT_cov,nlayer,nlayer)
    call mat_transpose(VT_cov,V_cov,nlayer,nlayer)
    call vec_to_mat(SV_cov,SV,nlayer)
 !
-! Compress terms in the forward operator
-! Averaging Kernel   
+! Compress the terms in the forward operator
+! Get the compressed averaging kernel (cp_avgk)
    ZL(1:nlayer,1:nlayer)=dble(avgk_obs(1:nlayer,1:nlayer))
    call mat_prd(UT_cov(1:nlayer,1:nlayer),ZL(1:nlayer,1:nlayer), &
    cp_avgk(1:nlayer,1:nlayer),nlayer,nlayer,nlayer,nlayer)
-!   do k=1,nlayer
-!      print *, 'UT ',k,(UT_cov(k,kk),kk=1,nlayer)
-!   enddo
-!   do k=1,nlayer
-!      print *, 'avgk_obs ',k,(avgk_obs(k,kk),kk=1,nlayer)
-!   enddo
-!   do k=1,nlayer
-!      print *, 'cp_avgk ',k,(cp_avgk(k,kk),kk=1,nlayer)
-!   enddo
-   
-! Retrieval Error Covariance
+!   
+! Get the compressed observation error covariance (cp_cov) 
    ZL(1:nlayer,1:nlayer)=dble(cov_obs(1:nlayer,1:nlayer))
    call mat_tri_prd(UT_cov(1:nlayer,1:nlayer),ZL(1:nlayer,1:nlayer),U_cov(1:nlayer,1:nlayer), &
    cp_cov(1:nlayer,1:nlayer),nlayer,nlayer,nlayer,nlayer,nlayer,nlayer)
-!   do k=1,nlayer
-!      print *, 'UT ',k,(UT_cov(k,kk),kk=1,nlayer)
-!   enddo
-!   do k=1,nlayer
-!      print *, 'cov_obs ',k,(cov_obs(k,kk),kk=1,nlayer)
-!   enddo
-!   do k=1,nlayer
-!      print *, 'cp_cov ',k,(cp_cov(k,kk),kk=1,nlayer)
-!   enddo
-   
-! Adjusted retrieval
+!   
+! Get the adjusted avgering kerrnel (avgk_obs_adj) A_adj = (I-A)  
    do k=1,nlayer
       do kk=1,nlayer
          avgk_obs_adj(k,kk)=-1.*avgk_obs(k,kk)
@@ -104,32 +86,22 @@ subroutine cpsr_calculation(nlayer_trc,nlayer,spec_cpsr,avgk_cpsr,prior_cpsr,spe
       avgk_obs_adj(k,k)=avgk_obs_adj(k,k)+1.
    enddo
 !
-! Calcuate the prior term: (I-A) x_p
+! Get the prior term (prior_obs_adj): x_p_adj = (I-A) x_p
    call lh_mat_vec_prd(dble(avgk_obs_adj(1:nlayer,1:nlayer)),dble(prior_obs(1:nlayer)), &
    ZW(1:nlayer),nlayer)
    prior_obs_adj(1:nlayer)=real(ZW(1:nlayer))
 !
-! Calculate the QOR term: x_r - (I-A) x_p
+! Get the quasi-optimal retrieval (QOR) term (spec_obs_adj): x_r_qor = x_r - (I-A) x_p
    spec_obs_adj(1:nlayer)=spec_obs(1:nlayer)-prior_obs_adj(1:nlayer)
-
    ZV(1:nlayer)=dble(spec_obs_adj(1:nlayer))
    call lh_mat_vec_prd(UT_cov(1:nlayer,1:nlayer),ZV(1:nlayer),cp_x_r(1:nlayer),nlayer)
-!   do k=1,nlayer
-!      print *, 'UT ',k,(UT_cov(k,kk),kk=1,nlayer)
-!   enddo
-!   print *, 'spec_obs_adj ',(spec_obs_adj(k),k=1,nlayer)
-!   print *, 'cp_x_r ',(cp_x_r(k),k=1,nlayer)
-!   print *, 'prior_obs_adj ',(prior_obs_adj(k),k=1,nlayer)
-   
+!
+! Get the compressed prior (cp_x_p)   
    ZV(1:nlayer)=dble(prior_obs_adj(1:nlayer))
    call lh_mat_vec_prd(UT_cov(1:nlayer,1:nlayer),ZV(1:nlayer),cp_x_p(1:nlayer),nlayer)
-!   do k=1,nlayer
-!      print *, 'UT ',k,(UT_cov(k,kk),kk=1,nlayer)
-!   enddo
-!   print *, 'spec_obs_adj ',(spec_obs_adj(k),k=1,nlayer)
-!   print *, 'cp_x_p ',(cp_x_p(k),k=1,nlayer)
-   
-! Calculate SVD of cp_cov (Z=U_xxx * SV_xxx * VT_xxx) - ROTATION STEP
+!
+! ROTATION STEP
+! Calculate SVD of compressed error covariance (cp_cov) (Z=U_xxx * SV_xxx * VT_xxx)
    Z(1:nlayer,1:nlayer)=cp_cov(1:nlayer,1:nlayer)
    call dgesvd('A','A',nlayer,nlayer,Z,nlayer,SV_cov,U_cov,nlayer,VT_cov,nlayer,wrk,lwrk,info)
    do k=nlayer_trc+1,nlayer
@@ -138,73 +110,59 @@ subroutine cpsr_calculation(nlayer_trc,nlayer,spec_cpsr,avgk_cpsr,prior_cpsr,spe
       VT_cov(k,:)=0.
    enddo
 !
-! Scale the singular vectors
-   do k=1,nlayer_trc
-      U_cov(:,k)=U_cov(:,k)/sqrt(SV_cov(k))
-   enddo
-!   print *, 'nlayer_trc ',nlayer_trc
-!   print *, 'SV ',SV_cov(:)
-!
+! Get the transpose   
    call mat_transpose(U_cov,UT_cov,nlayer,nlayer)
    call mat_transpose(VT_cov,V_cov,nlayer,nlayer)
    call vec_to_mat(SV_cov,SV,nlayer)
-!   do k=1,nlayer
-!      print *, 'U ',k,(U_cov(k,kk),kk=1,nlayer)
-!   enddo
-!   do k=1,nlayer
-!      print *, 'UT ',k,(UT_cov(k,kk),kk=1,nlayer)
-!   enddo
-
+!
+! Check SVD of the compressed error covariance (cp_cov). It may not be full rank.
+   ZL(1:nlayer,1:nlayer)=cp_cov(1:nlayer,1:nlayer)
+   call mat_tri_prd(UT_cov(1:nlayer,1:nlayer),ZL(1:nlayer,1:nlayer),U_cov(1:nlayer,1:nlayer), &
+   rs_cov(1:nlayer,1:nlayer),nlayer,nlayer,nlayer,nlayer,nlayer,nlayer)
+   rnlayer_trc=0   
+   do k=1,nlayer
+      if(rs_cov(k,k).gt.0) then
+         rnlayer_trc=rnlayer_trc+1
+      endif
+      if(rs_cov(k,k).lt.0) then
+         exit
+      endif   
+   enddo
+   do k=rnlayer_trc+1,nlayer
+      SV_cov(k)=0
+      U_cov(:,k)=0. 
+      VT_cov(k,:)=0.
+   enddo
+!
+! Scale the singular vectors
+   do k=1,rnlayer_trc
+      U_cov(:,k)=U_cov(:,k)/sqrt(SV_cov(k))
+   enddo
+!
+! Get the transpose   
+   call mat_transpose(U_cov,UT_cov,nlayer,nlayer)
+   call mat_transpose(VT_cov,V_cov,nlayer,nlayer)
+   call vec_to_mat(SV_cov,SV,nlayer)
+!
 ! Rotate terms in the forward operator
+! Get the compressed and rotated averaging kernel (rs_avgk)   
    ZL(1:nlayer,1:nlayer)=cp_avgk(1:nlayer,1:nlayer)
    call mat_prd(UT_cov(1:nlayer,1:nlayer),ZL(1:nlayer,1:nlayer), &
    rs_avgk(1:nlayer,1:nlayer),nlayer,nlayer,nlayer,nlayer)
-!   do k=1,nlayer
-!      print *, 'UT ',k,(UT_cov(k,kk),kk=1,nlayer)
-!   enddo
-!   do k=1,nlayer
-!      print *, 'cp_avgk ',k,(cp_avgk(k,kk),kk=1,nlayer)
-!   enddo
-!   do k=1,nlayer
-!      print *, 'rs_avgk ',k,(rs_avgk(k,kk),kk=1,nlayer)
-!   enddo
-   ZL(1:nlayer,1:nlayer)=cp_cov(1:nlayer,1:nlayer)
-
-   call mat_tri_prd(UT_cov(1:nlayer,1:nlayer),ZL(1:nlayer,1:nlayer),U_cov(1:nlayer,1:nlayer), &
-   rs_cov(1:nlayer,1:nlayer),nlayer,nlayer,nlayer,nlayer,nlayer,nlayer)
-   
-!   do k=1,nlayer
-!      print *, 'UT ',k,(UT_cov(k,kk),kk=1,nlayer)
-!   enddo
-!   do k=1,nlayer
-!      print *, 'cp_cov ',k,(cp_cov(k,kk),kk=1,nlayer)
-!   enddo
-!   do k=1,nlayer
-!      print *, 'rs_cov ',k,(rs_cov(k,kk),kk=1,nlayer)
-!   enddo
-
+!
+! Get the compressed and rotated quasi-optimal retrieval (rs_x_r)   
    call lh_mat_vec_prd(UT_cov(1:nlayer,1:nlayer),cp_x_r(1:nlayer),rs_x_r(1:nlayer),nlayer)
-!   do k=1,nlayer
-!      print *, 'UT ',k,(UT_cov(k,kk),kk=1,nlayer)
-!   enddo
-!   print *, 'cp_x_r ',(cp_x_r(k),k=1,nlayer)
-!   print *, 'rs_x_r ',(rs_x_r(k),k=1,nlayer)
-
+!
+! Get the compressed and rotated prior (rs_x_p)   
    call lh_mat_vec_prd(UT_cov(1:nlayer,1:nlayer),cp_x_p(1:nlayer),rs_x_p(1:nlayer),nlayer)
-!   do k=1,nlayer
-!      print *, 'UT ',k,(UT_cov(k,kk),kk=1,nlayer)
-!   enddo
-!   print *, 'cp_x_p ',(cp_x_p(k),k=1,nlayer)
-!   print *, 'rs_x_p ',(rs_x_p(k),k=1,nlayer)
 
-! Get new errors (check if err2_rs_r < 0 the qstatus=1)
-   qstatus=0.0
-   
-   do k=1,nlayer
+! Get new errors. These should all be 1.0 outside the null space and 0.0 in the null space.
+   err2_rs_r(:)=0.
+   do k=1,rnlayer_trc
       err2_rs_r(k)=sqrt(rs_cov(k,k))
    enddo
 !
-! Assign variables to return to calling routine
+! Assign variables for return to the calling routine
    spec_cpsr(1:nlayer)=real(rs_x_r(1:nlayer))
    prior_cpsr(1:nlayer)=real(rs_x_p(1:nlayer))
    avgk_cpsr(1:nlayer,1:nlayer)=real(rs_avgk(1:nlayer,1:nlayer))

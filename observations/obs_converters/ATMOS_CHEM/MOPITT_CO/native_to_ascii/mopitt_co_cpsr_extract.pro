@@ -29,7 +29,7 @@ end
 ; needs calc_avgker_v3, mopitt_v4_apriori.dat and read_aprior_dat_v3 for V3
 ; afa change output_nrows_leading to output_rows_leading
 ;=======================================================================
-pro mopitt_co_profile_extract, inf, outf, bin_beg_sec, bin_end_sec, lon_min, lon_max, lat_min, lat_max 
+pro mopitt_co_cpsr_extract, inf, outf, bin_beg_sec, bin_end_sec, lon_min, lon_max, lat_min, lat_max 
 ;=======================================================================
 ; Code to read MOPITT data V3 or V4
 ; Outputs data to an ascii file for DART input

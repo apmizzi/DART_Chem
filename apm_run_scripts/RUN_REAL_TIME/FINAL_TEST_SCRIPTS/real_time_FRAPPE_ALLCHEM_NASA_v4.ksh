@@ -465,12 +465,12 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_SEASON_WES=false
       export RUN_WRFCHEM_BIO=false
       export RUN_WRFCHEM_FIRE=false
-      export RUN_WRFCHEM_CHEMI=true
+      export RUN_WRFCHEM_CHEMI=false
       export RUN_PERT_WRFCHEM_CHEM_ICBC=false
-      export RUN_PERT_WRFCHEM_CHEM_EMISS=true
+      export RUN_PERT_WRFCHEM_CHEM_EMISS=false
       export RUN_MOPITT_CO_TOTAL_COL_OBS=false
       export RUN_MOPITT_CO_PROFILE_OBS=false # (done)
-      export RUN_MOPITT_CO_CPSR_OBS=false
+      export RUN_MOPITT_CO_CPSR_OBS=false # (done)
       export RUN_IASI_CO_TOTAL_COL_OBS=false
       export RUN_IASI_CO_PROFILE_OBS=false # (done)
       export RUN_IASI_CO_CPSR_OBS=false
@@ -480,7 +480,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_OMI_O3_TOTAL_COL_OBS=false
       export RUN_OMI_O3_TROP_COL_OBS=false
       export RUN_OMI_O3_PROFILE_OBS=false # (done)
-      export RUN_OMI_O3_CPSR_OBS=false
+      export RUN_OMI_O3_CPSR_OBS=false # (works)
       export RUN_OMI_NO2_TOTAL_COL_OBS=false
       export RUN_OMI_NO2_TROP_COL_OBS=false # (done)
       export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
@@ -579,7 +579,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          export RUN_PREPROCESS_OBS=true
          export RUN_WRFCHEM_INITIAL=false
-         export RUN_LOCALIZATION=true
+         export RUN_LOCALIZATION=false
          export RUN_DART_FILTER=true
          export RUN_BIAS_CORRECTION=false
          export RUN_UPDATE_BC=true
@@ -934,14 +934,14 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export BIO_TIME_LIMIT=00:20:00
    export BIO_NODES=1
    export BIO_TASKS=1
-#   export FILTER_JOB_CLASS=normal
-#   export FILTER_TIME_LIMIT=07:30:00
+   export FILTER_JOB_CLASS=normal
+   export FILTER_TIME_LIMIT=05:30:00
+   export FILTER_NODES=3
+   export FILTER_TASKS=16
+#   export FILTER_JOB_CLASS=devel
+#   export FILTER_TIME_LIMIT=01:59:00
 #   export FILTER_NODES=5
 #   export FILTER_TASKS=16
-   export FILTER_JOB_CLASS=devel
-   export FILTER_TIME_LIMIT=01:59:00
-   export FILTER_NODES=5
-   export FILTER_TASKS=16
    export WRFCHEM_JOB_CLASS=normal
    export WRFCHEM_TIME_LIMIT=00:40:00
    export WRFCHEM_NODES=2
@@ -1067,8 +1067,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export GOME2A_NO2_TROP_COL_OBS_DIR=${RUN_DIR}/${DATE}/gome2a_no2_trop_col_obs
    export MLS_O3_TOTAL_COL_OBS_DIR=${RUN_DIR}/${DATE}/mls_o3_total_col_obs
    export MLS_O3_PROFILE_OBS_DIR=${RUN_DIR}/${DATE}/mls_o3_profile_obs
+   export MLS_O3_CPSR_OBS_DIR=${RUN_DIR}/${DATE}/mls_o3_cpsr_obs
    export MLS_HNO3_TOTAL_COL_OBS_DIR=${RUN_DIR}/${DATE}/mls_hno3_total_col_obs
    export MLS_HNO3_PROFILE_OBS_DIR=${RUN_DIR}/${DATE}/mls_hno3_profile_obs
+   export MLS_HNO3_CPSR_OBS_DIR=${RUN_DIR}/${DATE}/mls_hno3_cpsr_obs
    export AIRNOW_CO_OBS_DIR=${RUN_DIR}/${DATE}/airnow_co_obs
    export AIRNOW_O3_OBS_DIR=${RUN_DIR}/${DATE}/airnow_o3_obs
    export AIRNOW_NO2_OBS_DIR=${RUN_DIR}/${DATE}/airnow_no2_obs
@@ -17265,7 +17267,7 @@ EOF
 #
 ########################################################################
 #
-# RUN MLS O3 TROP COL OBSERVATIONS
+# RUN MLS O3 PROFILE COL OBSERVATIONS
 #
 ########################################################################
 #
@@ -17424,6 +17426,174 @@ EOF
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_O3/work/mls_o3_profile_ascii_to_obs ./.
       ./mls_o3_profile_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ -s ${NL_FILEOUT} ]]; then
+         touch NO_MLS_O3_${DATE}
+      fi
+   fi
+#
+########################################################################
+#
+# RUN MLS O3 CPSR COL OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_MLS_O3_CPSR_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/mls_o3_cpsr_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/mls_o3_cpsr_obs
+         cd ${RUN_DIR}/${DATE}/mls_o3_cpsr_obs
+      else
+         cd ${RUN_DIR}/${DATE}/mls_o3_cpsr_obs
+      fi
+#
+# SET MLS PARAMETERS
+      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
+      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export MLS_FILE_PRE=MLS-Aura_L2GP-O3_v04-20-c01_
+      export MLS_FILE_EXT=.hdr
+      export OUTFILE=TEMP_FILE.dat
+      export TMP_OUTFILE=MLS_O3_${DATE}.dat
+      rm -rf ${OUTFILE}
+      rm -rf ${TMP_OUTFILE}
+#
+# SET OBS_WINDOW
+      export BIN_BEG_YY=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_YY=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1 
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
+         export BIN_BEG_MM=${ASIM_MX_MM}
+         export BIN_BEG_DD=${ASIM_MX_DD}
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET MLS INPUT DATA DIR
+      export TMP_INFILE=\'${EXPERIMENT_MLS_O3_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${MLS_FILE_PRE}\'
+#
+# COPY EXECUTABLE
+      export FILE=mls_o3_cpsr_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_O3/native_to_ascii/${FILE} ./.
+      mcc -m mls_o3_cpsr_extract.m -o mls_o3_cpsr_extract
+      ./run_mls_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TMP_OUTFILE}
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then	 
+         export BIN_BEG_YY=${ASIM_MIN_YYYY}
+         export BIN_BEG_MM=${ASIM_MIN_MM}
+         export BIN_BEG_DD=${ASIM_MIN_DD}
+         export BIN_BEG_HH=${ASIM_MIN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_YY=${ASIM_MIN_YYYY}
+         export BIN_END_MM=${ASIM_MIN_MM}
+         export BIN_END_DD=${ASIM_MIN_DD}
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         export TMP_INFILE=\'${EXPERIMENT_MLS_O3_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${MLS_FILE_PRE}\'
+#
+# COPY EXECUTABLE
+         export FILE=mls_o3_cpsr_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_O3/native_to_ascii/${FILE} ./.
+         mcc -m mls_o3_cpsr_extract.m -o mls_o3_cpsr_extract
+         ./run_mls_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
+#
+      fi
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TMP_OUTFILE}
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+      if [[ ! -e ${TMP_OUTFILE} ]]; then
+         touch NO_MLS_O3_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT MLS O3 ASCII TO OBS_SEQ 
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=\'${TMP_OUTFILE}\'
+      export NL_FILEOUT=\'obs_seq_mls_o3_cpsr_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_MLS_O3}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_HNO3=${USE_LOG_HNO3_LOGIC}
+#
+# MODEL PROFILE SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
+#
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#      
+# USE MLS DATA 
+      rm -rf input.nml
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_mls_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_O3/work/mls_o3_cpsr_ascii_to_obs ./.
+      ./mls_o3_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ -s ${NL_FILEOUT} ]]; then
@@ -17759,6 +17929,173 @@ EOF
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/work/mls_hno3_profile_ascii_to_obs ./.
       ./mls_hno3_profile_ascii_to_obs > index.html 2>&1
+#
+# COPY OUTPUT TO ARCHIVE LOCATION
+      if [[ -s ${NL_FILEOUT} ]]; then
+         touch NO_MLS_HNO3_${DATE}
+      fi
+   fi
+#
+########################################################################
+#
+# RUN MLS HNO3 CPSR COL OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_MLS_HNO3_CPSR_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/mls_hno3_cpsr_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/mls_hno3_cpsr_obs
+         cd ${RUN_DIR}/${DATE}/mls_hno3_cpsr_obs
+      else
+         cd ${RUN_DIR}/${DATE}/mls_hno3_cpsr_obs
+      fi
+#
+# SET MLS PARAMETERS
+      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
+      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export MLS_FILE_PRE=MLS-Aura_L2GP-HNO3_v04-20-c01_
+      export MLS_FILE_EXT=.he5
+      export OUTFILE=TEMP_FILE.dat
+      export TMP_OUTFILE=MLS_HNO3_${DATE}.dat
+      rm -rf ${OUTFILE}
+      rm -rf ${TMP_OUTFILE}
+#
+# SET OBS_WINDOW
+      export BIN_BEG_YY=${ASIM_MN_YYYY}
+      export BIN_BEG_MM=${ASIM_MN_MM}
+      export BIN_BEG_DD=${ASIM_MN_DD}
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_YY=${ASIM_MX_YYYY}
+      export BIN_END_MM=${ASIM_MX_MM}
+      export BIN_END_DD=${ASIM_MX_DD}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      export FLG=0
+      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
+         export FLG=1 
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
+         export BIN_BEG_MM=${ASIM_MX_MM}
+         export BIN_BEG_DD=${ASIM_MX_DD}
+         export BIN_BEG_HH=0
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+      fi
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+#
+# SET MLS INPUT DATA DIR
+      export TMP_INFILE=\'${EXPERIMENT_MLS_HNO3_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${MLS_FILE_PRE}\'
+#
+# COPY EXECUTABLE
+      export FILE=mls_hno3_cpsr_extract.m
+      rm -rf ${FILE}
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/native_to_ascii/${FILE} ./.
+      mcc -m mls_hno3_cpsr_extract.m -o mls_hno3_cpsr_extract
+      ./run_mls_hno3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} >> index_mat1.html 2>&1
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TMP_OUTFILE}
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+#
+# END OF PREVIOUS DAY (hours 21 to 24 obs)
+      if [[ ${FLG} -eq 1 ]]; then	 
+         export BIN_BEG_YY=${ASIM_MIN_YYYY}
+         export BIN_BEG_MM=${ASIM_MIN_MM}
+         export BIN_BEG_DD=${ASIM_MIN_DD}
+         export BIN_BEG_HH=${ASIM_MIN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         export BIN_END_YY=${ASIM_MIN_YYYY}
+         export BIN_END_MM=${ASIM_MIN_MM}
+         export BIN_END_DD=${ASIM_MIN_DD}
+         export BIN_END_HH=23
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         export TMP_INFILE=\'${EXPERIMENT_MLS_HNO3_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${MLS_FILE_PRE}\'
+#
+# COPY EXECUTABLE
+         export FILE=mls_hno3_cpsr_extract.m
+         rm -rf ${FILE}
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/native_to_ascii/${FILE} ./.
+         mcc -m mls_hno3_cpsr_extract.m -o mls_hno3_cpsr_extract
+         ./run_mls_hno3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
+#
+      fi
+#
+# CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
+      if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         touch ${TMP_OUTFILE}
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      elif [[ -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
+         cat ${OUTFILE} >> ${TMP_OUTFILE}
+         rm -rf ${OUTFILE}
+      fi
+      if [[ ! -e ${TMP_OUTFILE} ]]; then
+         touch NO_MLS_HNO3_${DATE}_DATA
+      fi
+#
+# SET NAMELIST TO CONVERT MLS HNO3 ASCII TO OBS_SEQ 
+      export NL_FILEDIR=\'./\' 
+      export NL_FILENAME=\'${TMP_OUTFILE}\'
+      export NL_FILEOUT=\'obs_seq_mls_hno3_cpsr_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_MLS_HNO3}
+      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      export NL_USE_LOG_HNO3=${USE_LOG_HNO3_LOGIC}
+#
+# MODEL PROFILE SETTINGS
+      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
+      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_NX_MODEL=${NNXP_CR}
+      export NL_NY_MODEL=${NNYP_CR}
+      export NL_NZ_MODEL=${NNZP_CR}
+#
+      export BIN_BEG_HH=${ASIM_MN_HH}
+      export BIN_BEG_MN=0
+      export BIN_BEG_SS=0
+      let HH_END=${ASIM_MX_HH}
+      let HHM_END=${HH_END}-1
+      export BIN_END_HH=${HHM_END}
+      export BIN_END_MN=59
+      export BIN_END_SS=59
+      let HH_BEG=${BIN_BEG_HH}
+      let MN_BEG=${BIN_BEG_MN}
+      let SS_BEG=${BIN_BEG_SS}
+      let HH_END=${BIN_END_HH}
+      let MN_END=${BIN_END_MN}
+      let SS_END=${BIN_END_SS}
+      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+      export NL_BIN_END_SEC=${BIN_END_SEC}
+#      
+# USE MLS DATA 
+      rm -rf input.nml
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_mls_input_nml.ksh
+#
+# GET EXECUTABLE
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/work/mls_hno3_cpsr_ascii_to_obs ./.
+      ./mls_hno3_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ -s ${NL_FILEOUT} ]]; then
@@ -19501,6 +19838,13 @@ EOF
          export FILE_LIST[${NUM_FILES}]=obs_seq_MLS_O3_PROFILE_${DATE}.out
       fi
 #
+# MLS O3 CPSR
+      if [[ -s ${MLS_O3_CPSR_OBS_DIR}/obs_seq_mls_o3_cpsr_${DATE}.out && ${RUN_MLS_O3_CPSR_OBS} ]]; then 
+         cp ${MLS_O3_CPSR_OBS_DIR}/obs_seq_mls_o3_cpsr_${DATE}.out ./obs_seq_MLS_O3_CPSR_${DATE}.out
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_MLS_O3_CPSR_${DATE}.out
+      fi
+#
 # MLS HNO3 TOTAL COL
       if [[ -s ${MLS_HNO3_TOTAL_COL_OBS_DIR}/obs_seq_mls_hno3_total_col_${DATE}.out && ${RUN_MLS_HNO3_TOTAL_COL_OBS} ]]; then 
          cp ${MLS_HNO3_TOTAL_COL_OBS_DIR}/obs_seq_mls_hno3_total_col_${DATE}.out ./obs_seq_MLS_HNO3_TOTAL_COL_${DATE}.out   
@@ -19513,6 +19857,13 @@ EOF
          cp ${MLS_HNO3_PROFILE_OBS_DIR}/obs_seq_mls_hno3_profile_${DATE}.out ./obs_seq_MLS_HNO3_PROFILE_${DATE}.out
          (( NUM_FILES=${NUM_FILES}+1 ))
          export FILE_LIST[${NUM_FILES}]=obs_seq_MLS_HNO3_PROFILE_${DATE}.out
+      fi
+#
+# MLS HNO3 CPSR
+      if [[ -s ${MLS_HNO3_CPSR_OBS_DIR}/obs_seq_mls_hno3_cpsr_${DATE}.out && ${RUN_MLS_HNO3_CPSR_OBS} ]]; then 
+         cp ${MLS_HNO3_CPSR_OBS_DIR}/obs_seq_mls_hno3_cpsr_${DATE}.out ./obs_seq_MLS_HNO3_CPSR_${DATE}.out
+         (( NUM_FILES=${NUM_FILES}+1 ))
+         export FILE_LIST[${NUM_FILES}]=obs_seq_MLS_HNO3_CPSR_${DATE}.out
       fi
 #
 # OMI NO2 DOMINO TOTAL COL
@@ -19573,7 +19924,11 @@ EOF
       export NL_NUM_INPUT_FILES=${NUM_FILES}
 #
 # All files present
-      if [[ ${NL_NUM_INPUT_FILES} -eq 95 ]]; then
+      if [[ ${NL_NUM_INPUT_FILES} -eq 97 ]]; then
+          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\',\'${FILE_LIST[32]}\',\'${FILE_LIST[33]}\',\'${FILE_LIST[34]}\',\'${FILE_LIST[35]}\',\'${FILE_LIST[36]}\',\'${FILE_LIST[37]}\',\'${FILE_LIST[38]}\',\'${FILE_LIST[39]}\',\'${FILE_LIST[40]}\',\'${FILE_LIST[41]}\',\'${FILE_LIST[42]}\',\'${FILE_LIST[43]}\',\'${FILE_LIST[44]}\',\'${FILE_LIST[45]}\',\'${FILE_LIST[46]}\',\'${FILE_LIST[47]}\',\'${FILE_LIST[48]}\',\'${FILE_LIST[49]}\',\'${FILE_LIST[50]}\',\'${FILE_LIST[51]}\',\'${FILE_LIST[52]}\',\'${FILE_LIST[53]}\',\'${FILE_LIST[54]}\',\'${FILE_LIST[55]}\',\'${FILE_LIST[56]}\',\'${FILE_LIST[57]}\',\'${FILE_LIST[58]}\',\'${FILE_LIST[59]}\',\'${FILE_LIST[60]}\',\'${FILE_LIST[61]}\',\'${FILE_LIST[62]}\',\'${FILE_LIST[63]}\',\'${FILE_LIST[64]}\',\'${FILE_LIST[65]}\',\'${FILE_LIST[66]}\',\'${FILE_LIST[67]}\',\'${FILE_LIST[68]}\',\'${FILE_LIST[69]}\',\'${FILE_LIST[70]}\',\'${FILE_LIST[71]}\',\'${FILE_LIST[72]}\',\'${FILE_LIST[73]}\',\'${FILE_LIST[74]}\',\'${FILE_LIST[75]}\',\'${FILE_LIST[76]}\',\'${FILE_LIST[77]}\',\'${FILE_LIST[78]}\',\'${FILE_LIST[79]}\',\'${FILE_LIST[80]}\',\'${FILE_LIST[81]}\',\'${FILE_LIST[82]}\',\'${FILE_LIST[83]}\',\'${FILE_LIST[84]}\',\'${FILE_LIST[85]}\',\'${FILE_LIST[86]}\',\'${FILE_LIST[87]}\',\'${FILE_LIST[88]}\',\'${FILE_LIST[89]}\',\'${FILE_LIST[90]}\',\'${FILE_LIST[91]}\',\'${FILE_LIST[92]}\',\'${FILE_LIST[93]}\',\'${FILE_LIST[94]}\',\'${FILE_LIST[95]}\',\'${FILE_LIST[96]}\',\'${FILE_LIST[97]}\'
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 96 ]]; then
+          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\',\'${FILE_LIST[32]}\',\'${FILE_LIST[33]}\',\'${FILE_LIST[34]}\',\'${FILE_LIST[35]}\',\'${FILE_LIST[36]}\',\'${FILE_LIST[37]}\',\'${FILE_LIST[38]}\',\'${FILE_LIST[39]}\',\'${FILE_LIST[40]}\',\'${FILE_LIST[41]}\',\'${FILE_LIST[42]}\',\'${FILE_LIST[43]}\',\'${FILE_LIST[44]}\',\'${FILE_LIST[45]}\',\'${FILE_LIST[46]}\',\'${FILE_LIST[47]}\',\'${FILE_LIST[48]}\',\'${FILE_LIST[49]}\',\'${FILE_LIST[50]}\',\'${FILE_LIST[51]}\',\'${FILE_LIST[52]}\',\'${FILE_LIST[53]}\',\'${FILE_LIST[54]}\',\'${FILE_LIST[55]}\',\'${FILE_LIST[56]}\',\'${FILE_LIST[57]}\',\'${FILE_LIST[58]}\',\'${FILE_LIST[59]}\',\'${FILE_LIST[60]}\',\'${FILE_LIST[61]}\',\'${FILE_LIST[62]}\',\'${FILE_LIST[63]}\',\'${FILE_LIST[64]}\',\'${FILE_LIST[65]}\',\'${FILE_LIST[66]}\',\'${FILE_LIST[67]}\',\'${FILE_LIST[68]}\',\'${FILE_LIST[69]}\',\'${FILE_LIST[70]}\',\'${FILE_LIST[71]}\',\'${FILE_LIST[72]}\',\'${FILE_LIST[73]}\',\'${FILE_LIST[74]}\',\'${FILE_LIST[75]}\',\'${FILE_LIST[76]}\',\'${FILE_LIST[77]}\',\'${FILE_LIST[78]}\',\'${FILE_LIST[79]}\',\'${FILE_LIST[80]}\',\'${FILE_LIST[81]}\',\'${FILE_LIST[82]}\',\'${FILE_LIST[83]}\',\'${FILE_LIST[84]}\',\'${FILE_LIST[85]}\',\'${FILE_LIST[86]}\',\'${FILE_LIST[87]}\',\'${FILE_LIST[88]}\',\'${FILE_LIST[89]}\',\'${FILE_LIST[90]}\',\'${FILE_LIST[91]}\',\'${FILE_LIST[92]}\',\'${FILE_LIST[93]}\',\'${FILE_LIST[94]}\',\'${FILE_LIST[95]}\',\'${FILE_LIST[96]}\'
+      elif [[ ${NL_NUM_INPUT_FILES} -eq 95 ]]; then
           export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\',\'${FILE_LIST[32]}\',\'${FILE_LIST[33]}\',\'${FILE_LIST[34]}\',\'${FILE_LIST[35]}\',\'${FILE_LIST[36]}\',\'${FILE_LIST[37]}\',\'${FILE_LIST[38]}\',\'${FILE_LIST[39]}\',\'${FILE_LIST[40]}\',\'${FILE_LIST[41]}\',\'${FILE_LIST[42]}\',\'${FILE_LIST[43]}\',\'${FILE_LIST[44]}\',\'${FILE_LIST[45]}\',\'${FILE_LIST[46]}\',\'${FILE_LIST[47]}\',\'${FILE_LIST[48]}\',\'${FILE_LIST[49]}\',\'${FILE_LIST[50]}\',\'${FILE_LIST[51]}\',\'${FILE_LIST[52]}\',\'${FILE_LIST[53]}\',\'${FILE_LIST[54]}\',\'${FILE_LIST[55]}\',\'${FILE_LIST[56]}\',\'${FILE_LIST[57]}\',\'${FILE_LIST[58]}\',\'${FILE_LIST[59]}\',\'${FILE_LIST[60]}\',\'${FILE_LIST[61]}\',\'${FILE_LIST[62]}\',\'${FILE_LIST[63]}\',\'${FILE_LIST[64]}\',\'${FILE_LIST[65]}\',\'${FILE_LIST[66]}\',\'${FILE_LIST[67]}\',\'${FILE_LIST[68]}\',\'${FILE_LIST[69]}\',\'${FILE_LIST[70]}\',\'${FILE_LIST[71]}\',\'${FILE_LIST[72]}\',\'${FILE_LIST[73]}\',\'${FILE_LIST[74]}\',\'${FILE_LIST[75]}\',\'${FILE_LIST[76]}\',\'${FILE_LIST[77]}\',\'${FILE_LIST[78]}\',\'${FILE_LIST[79]}\',\'${FILE_LIST[80]}\',\'${FILE_LIST[81]}\',\'${FILE_LIST[82]}\',\'${FILE_LIST[83]}\',\'${FILE_LIST[84]}\',\'${FILE_LIST[85]}\',\'${FILE_LIST[86]}\',\'${FILE_LIST[87]}\',\'${FILE_LIST[88]}\',\'${FILE_LIST[89]}\',\'${FILE_LIST[90]}\',\'${FILE_LIST[91]}\',\'${FILE_LIST[92]}\',\'${FILE_LIST[93]}\',\'${FILE_LIST[94]}\',\'${FILE_LIST[95]}\'
       elif [[ ${NL_NUM_INPUT_FILES} -eq 94 ]]; then
           export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\',\'${FILE_LIST[32]}\',\'${FILE_LIST[33]}\',\'${FILE_LIST[34]}\',\'${FILE_LIST[35]}\',\'${FILE_LIST[36]}\',\'${FILE_LIST[37]}\',\'${FILE_LIST[38]}\',\'${FILE_LIST[39]}\',\'${FILE_LIST[40]}\',\'${FILE_LIST[41]}\',\'${FILE_LIST[42]}\',\'${FILE_LIST[43]}\',\'${FILE_LIST[44]}\',\'${FILE_LIST[45]}\',\'${FILE_LIST[46]}\',\'${FILE_LIST[47]}\',\'${FILE_LIST[48]}\',\'${FILE_LIST[49]}\',\'${FILE_LIST[50]}\',\'${FILE_LIST[51]}\',\'${FILE_LIST[52]}\',\'${FILE_LIST[53]}\',\'${FILE_LIST[54]}\',\'${FILE_LIST[55]}\',\'${FILE_LIST[56]}\',\'${FILE_LIST[57]}\',\'${FILE_LIST[58]}\',\'${FILE_LIST[59]}\',\'${FILE_LIST[60]}\',\'${FILE_LIST[61]}\',\'${FILE_LIST[62]}\',\'${FILE_LIST[63]}\',\'${FILE_LIST[64]}\',\'${FILE_LIST[65]}\',\'${FILE_LIST[66]}\',\'${FILE_LIST[67]}\',\'${FILE_LIST[68]}\',\'${FILE_LIST[69]}\',\'${FILE_LIST[70]}\',\'${FILE_LIST[71]}\',\'${FILE_LIST[72]}\',\'${FILE_LIST[73]}\',\'${FILE_LIST[74]}\',\'${FILE_LIST[75]}\',\'${FILE_LIST[76]}\',\'${FILE_LIST[77]}\',\'${FILE_LIST[78]}\',\'${FILE_LIST[79]}\',\'${FILE_LIST[80]}\',\'${FILE_LIST[81]}\',\'${FILE_LIST[82]}\',\'${FILE_LIST[83]}\',\'${FILE_LIST[84]}\',\'${FILE_LIST[85]}\',\'${FILE_LIST[86]}\',\'${FILE_LIST[87]}\',\'${FILE_LIST[88]}\',\'${FILE_LIST[89]}\',\'${FILE_LIST[90]}\',\'${FILE_LIST[91]}\',\'${FILE_LIST[92]}\',\'${FILE_LIST[93]}\',\'${FILE_LIST[94]}\'
@@ -19605,7 +19960,7 @@ EOF
       elif [[ ${NL_NUM_INPUT_FILES} -eq 81 ]]; then
           export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\',\'${FILE_LIST[32]}\',\'${FILE_LIST[33]}\',\'${FILE_LIST[34]}\',\'${FILE_LIST[35]}\',\'${FILE_LIST[36]}\',\'${FILE_LIST[37]}\',\'${FILE_LIST[38]}\',\'${FILE_LIST[39]}\',\'${FILE_LIST[40]}\',\'${FILE_LIST[41]}\',\'${FILE_LIST[42]}\',\'${FILE_LIST[43]}\',\'${FILE_LIST[44]}\',\'${FILE_LIST[45]}\',\'${FILE_LIST[46]}\',\'${FILE_LIST[47]}\',\'${FILE_LIST[48]}\',\'${FILE_LIST[49]}\',\'${FILE_LIST[50]}\',\'${FILE_LIST[51]}\',\'${FILE_LIST[52]}\',\'${FILE_LIST[53]}\',\'${FILE_LIST[54]}\',\'${FILE_LIST[55]}\',\'${FILE_LIST[56]}\',\'${FILE_LIST[57]}\',\'${FILE_LIST[58]}\',\'${FILE_LIST[59]}\',\'${FILE_LIST[60]}\',\'${FILE_LIST[61]}\',\'${FILE_LIST[62]}\',\'${FILE_LIST[63]}\',\'${FILE_LIST[64]}\',\'${FILE_LIST[65]}\',\'${FILE_LIST[66]}\',\'${FILE_LIST[67]}\',\'${FILE_LIST[68]}\',\'${FILE_LIST[69]}\',\'${FILE_LIST[70]}\',\'${FILE_LIST[71]}\',\'${FILE_LIST[72]}\',\'${FILE_LIST[73]}\',\'${FILE_LIST[74]}\',\'${FILE_LIST[75]}\',\'${FILE_LIST[76]}\',\'${FILE_LIST[77]}\',\'${FILE_LIST[78]}\',\'${FILE_LIST[79]}\',\'${FILE_LIST[80]}\',\'${FILE_LIST[81]}\'
       elif [[ ${NL_NUM_INPUT_FILES} -eq 80 ]]; then
-          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\',\'${FILE_LIST[32]}\',\'${FILE_LIST[33]}\',\'${FILE_LIST[34]}\',\'${FILE_LIST[35]}\',\'${FILE_LIST[36]}\',\'${FILE_LIST[37]}\',\'${FILE_LIST[38]}\',\'${FILE_LIST[39]}\',\'${FILE_LIST[40]}\',\'${FILE_LIST[41]}\',\'${FILE_LIST[42]}\',\'${FILE_LIST[43]}\',\'${FILE_LIST[44]}\',\'${FILE_LIST[45]}\',\'${FILE_LIST[46]}\',\'${FILE_LIST[47]}\',\'${FILE_LIST[48]}\',\'${FILE_LIST[49]}\',\'${FILE_LIST[50]}\',\'${FILE_LIST[51]}\',\'${FILE_LIST[52]}\',\'${FILE_LIST[53]}\',\'${FILE_LIST[54]}\',\'${FILE_LIST[55]}\',\'${FILE_LIST[56]}\',\'${FILE_LIST[57]}\',\'${FILE_LIST[58]}\',\'${FILE_LIST[59]}\',\'${FILE_LIST[60]}\',\'${FILE_LIST[61]}\',\'${FILE_LIST[62]}\',\'${FILE_LIST[63]}\',\'${FILE_LIST[64]}\',\'${FILE_LIST[65]}\',\'${FILE_LIST[66]}\',\'${FILE_LIST[67]}\',\'${FILE_LIST[68]}\',\'${FILE_LIST[69]}\',\'${FILE_LIST[70]}\',\'${FILE_LIST[71]}\',\'${FILE_LIST[72]}\',\'${FILE_LIST[73]}\',\'${FILE_LIST[74]}\',\'${FILE_LIST[75]}\',\'${FILE_LIST[76]}\',\'${FILE_LIST[77]}\',\'${FILE_LIST[78]}\',\'${FILE_LIST[79]}\',\'${FILE_LIST[80]}\'
+          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\',\'${FILE_LIST[32]}\',\'${FILE_LIST[33]}\',\'${FILE_LIST[34]}\',\'${FILE_LIST[35]}\',\'${FILE_LIST[36]}\',\'${FILE_LIST[37]}\',\'${FILE_LIST[38]}\',\'${FILE_LIST[39]}\',\'${FILE_LIST[40]}\',\'${FILE_LIST[41]}\',\'${FILE_LIST[42]}\',\'${FILE_LIST[43]}\',\'${FILE_LIST[44]}\',\'${FILE_LIST[45]}\',\'${FILE_LIST[46]}\',\'${FILE_LIST[47]}\',\'${FILE_LIST[48]}\',\'${FILE_LIST[49]}\',\'${FILE_LIST[50]}\',\'${FILE_LIST[51]}\',\'${FILE_LIST[52]}\',\'${FILE_LIST[53]}\',\'${FILE_LIST[54]}\',\'${FILE_LIST[55]}\',\'${FILE_LIST[56]}\',\'${FILE_LIST[57]}\',\'${FILE_LIST[58]}\',\'${FILE_LIST[59]}\',\'${FILE_LIST[60]}\',\'${FILE_LIST[61]}\',\'${FILE_LIST[62]}\',\'${FILE_LIST[63]}\',\'${FILE_LIST[64]}\',\'${FILE_LIST[65]}\',\'${FILE_LIST[66]}\',\'${FILE_LIST[67]}\',\'${FILE_LIST[68]}\',\'${FILE_LIST[69]}\'v,\'${FILE_LIST[70]}\',\'${FILE_LIST[71]}\',\'${FILE_LIST[72]}\',\'${FILE_LIST[73]}\',\'${FILE_LIST[74]}\',\'${FILE_LIST[75]}\',\'${FILE_LIST[76]}\',\'${FILE_LIST[77]}\',\'${FILE_LIST[78]}\',\'${FILE_LIST[79]}\',\'${FILE_LIST[80]}\'
       elif [[ ${NL_NUM_INPUT_FILES} -eq 79 ]]; then
           export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\',\'${FILE_LIST[21]}\',\'${FILE_LIST[22]}\',\'${FILE_LIST[23]}\',\'${FILE_LIST[24]},\'${FILE_LIST[25]},\'${FILE_LIST[26]},\'${FILE_LIST[27]},\'${FILE_LIST[28]},\'${FILE_LIST[29]},\'${FILE_LIST[30]},\'${FILE_LIST[31]}\',\'${FILE_LIST[32]}\',\'${FILE_LIST[33]}\',\'${FILE_LIST[34]}\',\'${FILE_LIST[35]}\',\'${FILE_LIST[36]}\',\'${FILE_LIST[37]}\',\'${FILE_LIST[38]}\',\'${FILE_LIST[39]}\',\'${FILE_LIST[40]}\',\'${FILE_LIST[41]}\',\'${FILE_LIST[42]}\',\'${FILE_LIST[43]}\',\'${FILE_LIST[44]}\',\'${FILE_LIST[45]}\',\'${FILE_LIST[46]}\',\'${FILE_LIST[47]}\',\'${FILE_LIST[48]}\',\'${FILE_LIST[49]}\',\'${FILE_LIST[50]}\',\'${FILE_LIST[51]}\',\'${FILE_LIST[52]}\',\'${FILE_LIST[53]}\',\'${FILE_LIST[54]}\',\'${FILE_LIST[55]}\',\'${FILE_LIST[56]}\',\'${FILE_LIST[57]}\',\'${FILE_LIST[58]}\',\'${FILE_LIST[59]}\',\'${FILE_LIST[60]}\',\'${FILE_LIST[61]}\',\'${FILE_LIST[62]}\',\'${FILE_LIST[63]}\',\'${FILE_LIST[64]}\',\'${FILE_LIST[65]}\',\'${FILE_LIST[66]}\',\'${FILE_LIST[67]}\',\'${FILE_LIST[68]}\',\'${FILE_LIST[69]}\',\'${FILE_LIST[70]}\',\'${FILE_LIST[71]}\',\'${FILE_LIST[72]}\',\'${FILE_LIST[73]}\',\'${FILE_LIST[74]}\',\'${FILE_LIST[75]}\',\'${FILE_LIST[76]}\',\'${FILE_LIST[77]}\',\'${FILE_LIST[78]}\',\'${FILE_LIST[79]}\'
       elif [[ ${NL_NUM_INPUT_FILES} -eq 78 ]]; then
@@ -19727,7 +20082,7 @@ EOF
       elif [[ ${NL_NUM_INPUT_FILES} -eq 20 ]]; then
          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]},\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\',\'${FILE_LIST[20]}\'
       elif [[ ${NL_NUM_INPUT_FILES} -eq 19 ]]; then
-         export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]}\',\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\,\'${FILE_LIST[19]}\'
+         export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]}\',\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\',\'${FILE_LIST[19]}\'
       elif [[ ${NL_NUM_INPUT_FILES} -eq 18 ]]; then
          export NL_FILENAME_SEQ=\'${FILE_LIST[1]}\',\'${FILE_LIST[2]}\',\'${FILE_LIST[3]}\',\'${FILE_LIST[4]}\',\'${FILE_LIST[5]}\',\'${FILE_LIST[6]}\',\'${FILE_LIST[7]}\',\'${FILE_LIST[8]}\',\'${FILE_LIST[9]}\',\'${FILE_LIST[10]}\',\'${FILE_LIST[11]}\',\'${FILE_LIST[12]}\',\'${FILE_LIST[13]}\',\'${FILE_LIST[14]}\',\'${FILE_LIST[15]}\',\'${FILE_LIST[16]}\',\'${FILE_LIST[17]}\',\'${FILE_LIST[18]}\'
       elif [[ ${NL_NUM_INPUT_FILES} -eq 17 ]]; then
@@ -20668,7 +21023,12 @@ EOF
       ncea -n ${NUM_MEMBERS},3,1 wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrfchemi_d${CR_DOMAIN}_post_mean
       ncea -n ${NUM_MEMBERS},3,1 wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.e001 wrffirechemi_d${CR_DOMAIN}_post_mean
    fi
-#
+
+
+exit
+
+
+   #
 #########################################################################
 #
 # RUN BIAS CORRECTION
@@ -21006,7 +21366,7 @@ EOF
                export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} +1 2>/dev/null)
             done
          fi
-#
+ #
 # Create WRF-Chem namelist.input 
          export NL_MAX_DOM=1
          export NL_IOFIELDS_FILENAME=\'hist_io_flds_v1\',\'hist_io_flds_v2\'

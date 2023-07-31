@@ -143,8 +143,8 @@ program omi_no2_domino_trop_col_ascii_to_obs
    integer                         :: reject,k,kend
    integer                         :: i_min,j_min
    integer                         :: sum_reject,sum_accept,sum_total
-   integer                         :: obs_accept,obs_o3_reten_freq, &
-                                      obs_no2_reten_freq,obs_so2_reten_freq,obs_hcho_reten_freq
+   integer                         :: obs_accept,obs_o3_reten_freq,obs_no2_reten_freq, &
+                                   obs_so2_reten_freq,obs_hcho_reten_freq
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)

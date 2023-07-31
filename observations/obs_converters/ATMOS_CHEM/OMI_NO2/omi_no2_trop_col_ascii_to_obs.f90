@@ -128,7 +128,8 @@ program omi_no2_trop_col_ascii_to_obs
    integer                         :: reject,k,kend
    integer                         :: i_min,j_min
    integer                         :: sum_reject,sum_accept,sum_total,num_thin
-   integer                         :: obs_accept,obs_o3_reten_freq,obs_no2_reten_freq
+   integer                         :: obs_accept,obs_o3_reten_freq,obs_no2_reten_freq, &
+                                      obs_so2_reten_freq,obs_hcho_reten_freq
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
@@ -175,8 +176,9 @@ program omi_no2_trop_col_ascii_to_obs
 !
    namelist /create_omi_obs_nml/filedir,filename,fileout,year,month,day,hour, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_o3,use_log_no2,use_log_so2, &
-   use_log_hcho,lon_min,lon_max,lat_min,lat_max, &
-   path_model,file_model,nx_model,ny_model,nz_model
+   use_log_hcho,lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model, &
+   ny_model,nz_model,obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq, &
+   obs_hcho_reten_freq
 !
 ! Set constants
    pi=4.*atan(1.)
