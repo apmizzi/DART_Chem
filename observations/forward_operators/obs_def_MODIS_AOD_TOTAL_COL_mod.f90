@@ -384,8 +384,8 @@ subroutine get_expected_modis_aod_total_col(state_handle, ens_size, location, ke
    any(ss2.lt.0) .or. any(ss3.lt.0) .or. any(ss4.lt.0)) then   
       zstatus(:)=20
       val(:)=missing_r8
-      write(string1, *) 'APM: MODIS AOD TOTAL CO FO has missing values '
-      call error_handler(E_MSG, routine, string1, source)
+!      write(string1, *) 'APM: MODIS AOD TOTAL CO FO has missing values '
+!      call error_handler(E_MSG, routine, string1, source)
       call track_status(ens_size, zstatus, val, istatus, return_now)
       return
    endif
@@ -402,8 +402,8 @@ subroutine get_expected_modis_aod_total_col(state_handle, ens_size, location, ke
    if(any(val.lt.0)) then
       zstatus(:)=20
       val(:)=missing_r8
-      write(string1, *) 'APM: MODIS AOD TOTAL COL expected value is negative '
-      call error_handler(E_MSG, 'obs_def_MODIS_AOD_TOTAL_COL', string1, source)
+!      write(string1, *) 'APM: MODIS AOD TOTAL COL expected value is negative '
+!      call error_handler(E_MSG, 'obs_def_MODIS_AOD_TOTAL_COL', string1, source)
       call track_status(ens_size, zstatus, val, istatus, return_now)
       return
    endif

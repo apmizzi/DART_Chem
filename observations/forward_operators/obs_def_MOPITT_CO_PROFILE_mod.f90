@@ -481,9 +481,9 @@ subroutine get_expected_mopitt_co_profile(state_handle, ens_size, location, key,
       if(val(imem).lt.0) then
          zstatus(imem)=20
          val(:)=missing_r8
-         write(string1, *) &
-         'APM NOTICE: MOPITT CO expected value is negative '
-         call error_handler(E_MSG, routine, string1, source)
+!         write(string1, *) &
+!         'APM NOTICE: MOPITT CO expected value is negative '
+!         call error_handler(E_MSG, routine, string1, source)
          call track_status(ens_size, zstatus, val, istatus, return_now)
          return
       endif

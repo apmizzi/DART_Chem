@@ -97,9 +97,9 @@ module obs_def_mls_o3_profile_mod
 
    public :: write_mls_o3_profile, &
              read_mls_o3_profile, &
-          interactive_mls_o3_profile, &
-          get_expected_mls_o3_profile, &
-          set_obs_def_mls_o3_profile
+             interactive_mls_o3_profile, &
+             get_expected_mls_o3_profile, &
+             set_obs_def_mls_o3_profile
 
 ! Storage for the special information required for observations of this type
    integer, parameter    :: max_mls_o3_obs = 10000000
@@ -311,20 +311,20 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
    
    integer :: layer_mls,level_mls, klev_mls, kend_mls
    integer :: layer_mdl,level_mdl
-   integer :: k,kk,imem,imemm
+   integer :: k,kk,imem,imemm,flg
    integer :: interp_new
-   integer :: icnt
+   integer :: icnt,ncnt,kstart
    integer :: date_obs,datesec_obs
    integer, dimension(ens_size) :: zstatus,kbnd_1,kbnd_n
    
    real(r8) :: eps, AvogN, Rd, Ru, Cp, grav, msq2cmsq
    real(r8) :: missing,o3_min,tmp_max
    real(r8) :: level,del_prs,prior_term
-
    real(r8) :: tmp_vir_k, tmp_vir_kp
    real(r8) :: mloc(3),obs_prs
    real(r8) :: o3_val_conv, VMR_conv
    real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
+   real(r8) :: lon_obs,lat_obs,pi,rad2deg
 
    real(r8), dimension(ens_size) :: o3_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
    real(r8), dimension(ens_size) :: o3_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
@@ -335,8 +335,6 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
    logical  :: return_now,o3_return_now,tmp_return_now,qmr_return_now
 !
 ! Upper BC variables
-   integer  :: ncnt,kstart,flg
-   real(r8) :: lon_obs,lat_obs,pi,rad2deg
    real     :: prs_del,delta,bdy_coef
    real     :: o3_bot,prs_bot,tmp_bot,qmr_bot
    real     :: o3_top,prs_top,tmp_top,qmr_top
@@ -412,8 +410,6 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
 
    istatus(:) = 0  ! set this once at the beginning
    return_now=.false.
-   
-! pressure at model surface (Pa)
 
    zstatus=0
    level=0.0_r8
@@ -445,16 +441,18 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
             exit
          endif
       enddo
-      if(interp_new.eq.0) exit
+      if(interp_new.eq.0) then
+         exit
+      endif
    enddo
 
-!   write(string1, *)'APM: o3 lower bound 1 ',o3_mdl_1
+!   write(string1, *) 'APM: o3 lower bound ',key,o3_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: tmp lower bound 1 ',tmp_mdl_1
+!   write(string1, *) 'APM: tmp lower bound ',key,tmp_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: qmr lower bound 1 ',qmr_mdl_1
+!   write(string1, *) 'APM: qmr lower bound ',key,qmr_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: prs lower bound 1 ',prs_mdl_1
+!   write(string1, *) 'APM: prs lower bound ',key,prs_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
 
    o3_mdl_n(:)=missing_r8
@@ -468,9 +466,9 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
       call interpolate(state_handle, ens_size, loc2, QTY_O3, o3_mdl_n, zstatus) ! ppmv
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_n, zstatus) ! K 
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_n, zstatus) ! K
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, zstatus) ! kg / kg 
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, zstatus) ! kg/kg
       zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, zstatus) ! Pa
 !
@@ -482,19 +480,21 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
             exit
          endif
       enddo
-      if(interp_new.eq.0) exit
+      if(interp_new.eq.0) then
+         exit
+      endif
    enddo
 
-!   write(string1, *)'APM: o3 upper bound 1 ',o3_mdl_n
+!   write(string1, *) 'APM: o3 upper bound ',key,o3_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: tmp upper bound 1 ',tmp_mdl_n
+!   write(string1, *) 'APM: tmp upper bound ',key,tmp_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: qmr upper bound 1 ',qmr_mdl_n
+!   write(string1, *) 'APM: qmr upper bound ',key,qmr_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: prs upper bound 1 ',prs_mdl_n
+!   write(string1, *) 'APM: prs upper bound ',key,prs_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
 
-! Get profiles at MLS pressure levels
+! Get profiles at MLS pressure levels (bottom to top)
 
    allocate(o3_val(ens_size,layer_mls))
    allocate(tmp_val(ens_size,layer_mls))
@@ -531,40 +531,21 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
 !      call error_handler(E_MSG, routine, string1, source)
 !      write(string1, *)'APM: qmr ',key,k,qmr_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
-
-! Check data for missing values      
-      do imem=1,ens_size
-         if(o3_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
-         qmr_val(imem,k).eq.missing_r8) then
-            zstatus(:)=20
-            expct_val(:)=missing_r8
-            write(string1, *) 'APM: Input data has missing values '
-            call error_handler(E_MSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            do imemm=1,ens_size
-               write(string1, *) &
-               'APM: Model profile values: o3,tmp,qmr',key,imem,k,o3_val(imemm,k), &
-               tmp_val(imemm,k),qmr_val(imemm,k)     
-               call error_handler(E_ALLMSG, routine, string1, source)
-            enddo
-            return
-         endif
-      enddo
 !
 ! Convert units for o3 from ppmv
       o3_val(:,k) = o3_val(:,k) * 1.e-6_r8
-      o3_mdl_1(:)= o3_mdl_1(:) * 1.e-6_r8
-      o3_mdl_n(:)= o3_mdl_n(:) * 1.e-6_r8
    enddo
+   o3_mdl_1(:) = o3_mdl_1(:) * 1.e-6_r8
+   o3_mdl_n(:) = o3_mdl_n(:) * 1.e-6_r8
 !
 ! Use large scale o3 data above the regional model top
-! MLS vertical grid is from bottom to top   
+! MLS vertical grid is from bottom to top
    kstart=-1
    do imem=1,ens_size
       if (prs_mls(layer_mls).lt.prs_mdl_n(imem)) then
          do k=1,layer_mls
             if (prs_mls(k).le.prs_mdl_n(imem)) then
-               kstart=k
+               kstart=k-1
                exit
             endif
          enddo
@@ -572,7 +553,8 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
          allocate(prs_mls_top(ncnt))
          allocate(o3_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
          do k=kstart,layer_mls
-            prs_mls_top(k-kstart+1)=prs_mls(k)
+            kk=k-kstart+1
+            prs_mls_top(kk)=prs_mls(k)
          enddo
          prs_mls_top(:)=prs_mls_top(:)/100.
 !
@@ -584,13 +566,14 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
          call get_upper_bdy_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs, &
          prs_mls_top,ncnt,o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
 !
-! Impose ensemble perturbations from level kstart-1      
-         do k=kstart,layer_mls 
-            o3_val(imem,k)=o3_prf_mdl(k-kstart+1)*o3_val(imem,kstart-1)/ &
+! Impose ensemble perturbations from level kstart-1
+         do k=kstart,layer_mls
+            kk=k-kstart+1
+            o3_val(imem,k)=o3_prf_mdl(kk)*o3_val(imem,kstart-1)/ &
             (sum(o3_val(:,kstart-1))/real(ens_size))
-            tmp_val(imem,k)=tmp_prf_mdl(k-kstart+1)*tmp_val(imem,kstart-1)/ &
+            tmp_val(imem,k)=tmp_prf_mdl(kk)*tmp_val(imem,kstart-1)/ &
             (sum(tmp_val(:,kstart-1))/real(ens_size))
-            qmr_val(imem,k)=qmr_prf_mdl(k-kstart+1)*qmr_val(imem,kstart-1)/ &
+            qmr_val(imem,k)=qmr_prf_mdl(kk)*qmr_val(imem,kstart-1)/ &
             (sum(qmr_val(:,kstart-1))/real(ens_size))
          enddo
          deallocate(prs_mls_top)
@@ -601,21 +584,24 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
 ! Check full profile for negative values
    do imem=1,ens_size
       flg=0
-      do k=1,layer_mls    
+      do k=1,layer_mls
          if(o3_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             flg=1   
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
-            call error_handler(E_ALLMSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+            call error_handler(E_MSG, routine, string1, source)
          endif
       enddo
-      if(flg.eq.1) exit
+      if(flg.eq.1) then
+         zstatus(imem)=20
+         expct_val(:)=missing_r8
+         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         return
+      endif
    enddo
 !
 ! Calculate the expected retrievals
-   
    istatus(:)=0
    zstatus(:)=0
    expct_val(:)=0.0
@@ -675,8 +661,8 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
          else
             o3_val_conv = (dw_wt*o3_bot+up_wt*o3_val(imem,k+1))/tl_wt
          endif
-         prior_term=avg_kernel(key,k)
-         if(k.eq.klev_mls) prior_term=1.-prior_term
+         prior_term=-avg_kernel(key,k)
+         if(k.eq.klev_mls) prior_term=1.-avg_kernel(key,k)
 ! expected retrieval sum
          expct_val(imem) = expct_val(imem) + o3_val_conv * &
          avg_kernel(key,k) + prior_term*prior(key,k)
@@ -697,8 +683,8 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
          else
             o3_val_conv = (dw_wt*o3_val(imem,k)+up_wt*o3_top)/tl_wt
          endif
-         prior_term=avg_kernel(key,k)
-         if(k.eq.klev_mls) prior_term=1.-prior_term
+         prior_term=-avg_kernel(key,k)
+         if(k.eq.klev_mls) prior_term=1.-avg_kernel(key,k)
 ! expected retrieval sum
          expct_val(imem) = expct_val(imem) + o3_val_conv * &
          avg_kernel(key,k) + prior_term*prior(key,k)
@@ -727,8 +713,8 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
          else
             o3_val_conv = (dw_wt*o3_bot+up_wt*o3_top)/tl_wt
          endif
-         prior_term=avg_kernel(key,k)
-         if(k.eq.klev_mls) prior_term=1.-prior_term
+         prior_term=-avg_kernel(key,k)
+         if(k.eq.klev_mls) prior_term=1.-avg_kernel(key,k)
 ! expected retrieval
          expct_val(imem) = expct_val(imem) + o3_val_conv * &
          avg_kernel(key,k) + prior_term*prior(key,k)
@@ -737,15 +723,15 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
 !         avg_kernel(key,k), prior(key,k)
 !         call error_handler(E_MSG, routine, string1, source)
       enddo       
-      write(string1, *)'APM: FINAL EXPECTED VALUE ',expct_val(imem)
-      call error_handler(E_MSG, routine, string1, source)
-      write(string1, *)'  '
-      call error_handler(E_MSG, routine, string1, source)
+!      write(string1, *)'APM: FINAL EXPECTED VALUE ',expct_val(imem)
+!      call error_handler(E_MSG, routine, string1, source)
+!      write(string1, *)'  '
+!      call error_handler(E_MSG, routine, string1, source)
       if(expct_val(imem).lt.0) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
-         write(string1, *) 'APM NOTICE: MLS O3 expected value is negative '
-         call error_handler(E_MSG, routine, string1, source)
+!         write(string1, *) 'APM NOTICE: MLS O3 expected value is negative '
+!         call error_handler(E_MSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
@@ -780,7 +766,7 @@ o3_nlayer, o3_klev, o3_kend)
    nlayer(key) = o3_nlayer
    klev(key) = o3_klev
    kend(key) = o3_kend
-   pressure(key,1:o3_nlayer) = o3_pressure(1:o3_nlayer)
+   pressure(key,1:o3_nlayer)   = o3_pressure(1:o3_nlayer)
    avg_kernel(key,1:o3_nlayer) = o3_avg_kernel(1:o3_nlayer)
    prior(key,1:o3_nlayer)      = o3_prior(1:o3_nlayer)
    

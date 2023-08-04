@@ -58,10 +58,10 @@ module obs_def_omi_o3_cpsr_mod
                                         apm_get_exo_coldens, &
                                         apm_get_upvals, &
                                         apm_interpolate
-  
+
    use             types_mod, only : r8, MISSING_R8
 
-   use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &
+   use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, E_ALLMSG, &
                                   nmlfileunit, check_namelist_read, &
                                   find_namelist_in_file, do_nml_file, do_nml_term, &
                                   ascii_file_format, &
@@ -85,7 +85,10 @@ module obs_def_omi_o3_cpsr_mod
 
    use obs_def_utilities_mod, only : track_status
 
+   use     mpi_utilities_mod, only : my_task_id
+
    use      time_manager_mod, only : time_type, get_date, set_date, get_time, set_time
+
 ! get_date gets year, month, day, hour, minute, second from time_type
 ! get_time gets julian day and seconds from time_type
 ! set_date sets time_type from year, month, day, hour, minute, second
@@ -95,18 +98,18 @@ module obs_def_omi_o3_cpsr_mod
    private
 
    public :: write_omi_o3_cpsr, &
-          read_omi_o3_cpsr, &
-          interactive_omi_o3_cpsr, &
-          get_expected_omi_o3_cpsr, &
-          set_obs_def_omi_o3_cpsr
+             read_omi_o3_cpsr, &
+             interactive_omi_o3_cpsr, &
+             get_expected_omi_o3_cpsr, &
+             set_obs_def_omi_o3_cpsr
 
 ! Storage for the special information required for observations of this type
    integer, parameter    :: max_omi_o3_obs = 10000000
    integer               :: num_omi_o3_obs = 0
    integer,  allocatable :: nlayer(:)
-   real(r8), allocatable :: prior(:,:)
    real(r8), allocatable :: pressure(:,:)
    real(r8), allocatable :: avg_kernel(:,:)
+   real(r8), allocatable :: prior(:,:)
 
 ! version controlled file description for error handling, do not edit
    character(len=*), parameter :: source   = 'obs_def_omi_o3_cpsr_mod.f90'
@@ -166,9 +169,9 @@ subroutine initialize_module
    endif
 
    allocate(    nlayer(max_omi_o3_obs))
-   allocate(     prior(max_omi_o3_obs,nlayer_omi))
    allocate(  pressure(max_omi_o3_obs,nlayer_omi+1))
    allocate(avg_kernel(max_omi_o3_obs,nlayer_omi))
+   allocate(     prior(max_omi_o3_obs,nlayer_omi))
 
 end subroutine initialize_module
 
@@ -184,9 +187,9 @@ subroutine read_omi_o3_cpsr(key, ifile, fform)
 
    integer               :: keyin
    integer               :: nlayer_1
-   real(r8), allocatable :: prior_1(:)
    real(r8), allocatable :: pressure_1(:)
    real(r8), allocatable :: avg_kernel_1(:)
+   real(r8), allocatable :: prior_1(:)
    character(len=32)     :: fileformat
    
    integer, SAVE :: counts1 = 0
@@ -244,7 +247,7 @@ subroutine write_omi_o3_cpsr(key, ifile, fform)
    call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
    call write_r8_array(  ifile, nlayer(key)+1,  pressure(key,:), fileformat,'pressure')
    call write_r8_array(  ifile, nlayer(key),  avg_kernel(key,:), fileformat,'avg_kernel')
-   call write_r8_array(  ifile, nlayer(key),  prior(key,:), fileformat,'prior')
+   call write_r8_array(  ifile, nlayer(key),       prior(key,:), fileformat,'prior')
    call write_int_scalar(ifile,                             key, fileformat,'key')
    
 end subroutine write_omi_o3_cpsr
@@ -294,36 +297,38 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
    character(len=*), parameter :: routine = 'get_expected_omi_o3_cpsr'
    character(len=120)          :: data_file
    character(len=*),parameter  :: model = 'MOZART'
-   character(len=*),parameter  :: fld = 'HNO3_VMR_inst'
+   character(len=*),parameter  :: fld = 'O3_VMR_inst'
    type(location_type) :: loc2
    
-   integer :: layer_omi,level_omi, klev_omi, kend_omi
+   integer :: layer_omi,level_omi
    integer :: layer_mdl,level_mdl
-   integer :: k,imem
+   integer :: k,kk,imem,imemm,flg
    integer :: interp_new
-   integer :: icnt,ncnt,kkend,kstart
+   integer :: icnt,ncnt,kstart
    integer :: date_obs,datesec_obs
-   integer, dimension(ens_size) :: zstatus
+   integer, dimension(ens_size) :: zstatus,kbnd_1,kbnd_n
    
    real(r8) :: eps, AvogN, Rd, Ru, Cp, grav, msq2cmsq
    real(r8) :: missing,o3_min,tmp_max
    real(r8) :: level,del_prs,prior_term
    real(r8) :: tmp_vir_k, tmp_vir_kp
-   real(r8) :: mloc(3)
+   real(r8) :: mloc(3),obs_prs
    real(r8) :: o3_val_conv, VMR_conv
    real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
    real(r8) :: lon_obs,lat_obs,pi,rad2deg
-   
+
    real(r8), dimension(ens_size) :: o3_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
    real(r8), dimension(ens_size) :: o3_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
    real(r8), dimension(ens_size) :: prs_sfc
-   
+
    real(r8), allocatable, dimension(:)   :: thick, prs_omi, prs_omi_mem
    real(r8), allocatable, dimension(:,:) :: o3_val, tmp_val, qmr_val
+   logical  :: return_now,o3_return_now,tmp_return_now,qmr_return_now
+!
+! Upper BC variables
    real(r8), allocatable, dimension(:)   :: o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl
    real(r8), allocatable, dimension(:)   :: prs_omi_top
-   logical  :: return_now,o3_return_now,tmp_return_now,qmr_return_now
-   
+
    if ( .not. module_initialized ) call initialize_module
 
    pi       = 4.*atan(1.)
@@ -360,7 +365,7 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
       o3_min = log(o3_min)
    endif
    
-! Assign vertical grid information
+! Assign vertical grid information (OMI O3 grid is top to bottom)
 
    layer_omi = nlayer(key)
    level_omi = nlayer(key)+1
@@ -380,9 +385,7 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
    elseif (mloc(2) < -90.0_r8) then
       mloc(2) = -90.0_r8
    endif
-!   write(string1, *) 'APM: observation ',key, ' lon ',mloc(1),' lat ',mloc(2)
-!   call error_handler(E_MSG, routine, string1, source)
-!
+
 ! You could set a unique error code for each condition and then just return
 ! without having to issue a warning message. The error codes would then
 ! show up in the report from 'output_forward_op_errors'
@@ -413,7 +416,7 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg / kg 
       zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
-!
+
       interp_new=0
       do imem=1,ens_size
          if(o3_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
@@ -424,19 +427,17 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
       enddo
       if(interp_new.eq.0) then
          exit
-      endif    
+      endif
    enddo
 
-!   write(string1, *) 'APM: o3 lower bound ',o3_mdl_1
+!   write(string1, *) 'APM: o3 lower bound ',key,o3_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *) 'APM: tmp lower bound ',tmp_mdl_1
+!   write(string1, *) 'APM: tmp lower bound ',key,tmp_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *) 'APM: qmr lower bound ',qmr_mdl_1
+!   write(string1, *) 'APM: qmr lower bound ',key,qmr_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *) 'APM: prs lower bound ',prs_mdl_1
+!   write(string1, *) 'APM: prs lower bound ',key,prs_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
-
-! pressure at model top (Pa)
 
    o3_mdl_n(:)=missing_r8
    tmp_mdl_n(:)=missing_r8
@@ -468,16 +469,16 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
       enddo
       if(interp_new.eq.0) then
          exit
-      endif    
+      endif
    enddo
 
-!   write(string1, *) 'APM: o3 upper bound ',o3_mdl_n
+!   write(string1, *) 'APM: o3 upper bound ',key,o3_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *) 'APM: tmp upper bound ',tmp_mdl_n
+!   write(string1, *) 'APM: tmp upper bound ',key,tmp_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *) 'APM: qmr upper bound ',qmr_mdl_n
+!   write(string1, *) 'APM: qmr upper bound ',key,qmr_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *) 'APM: prs upper bound ',prs_mdl_n
+!   write(string1, *) 'APM: prs upper bound ',key,prs_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
 
 ! Get profiles at OMI pressure levels (Pa)
@@ -501,7 +502,6 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
             o3_val(imem,k) = o3_mdl_1(imem)
             tmp_val(imem,k) = tmp_mdl_1(imem)
             qmr_val(imem,k) = qmr_mdl_1(imem)
-            cycle
          endif
 !
 ! Correcting for expected failures near the top
@@ -509,87 +509,84 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
             o3_val(imem,k) = o3_mdl_n(imem)
             tmp_val(imem,k) = tmp_mdl_n(imem)
             qmr_val(imem,k) = qmr_mdl_n(imem)
-            cycle
          endif
       enddo
-!
-!      write(string1, *)'APM: o3 ',k,o3_val(1,k)
+
+!      write(string1, *)'APM: o3 ',key,k,o3_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
-!      write(string1, *)'APM: tmp ',k,tmp_val(1,k)
+!      write(string1, *)'APM: tmp ',key,k,tmp_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
-!      write(string1, *)'APM: qmr ',k,qmr_val(1,k)
+!      write(string1, *)'APM: qmr ',key,k,qmr_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
-!
-! Check data for missing values      
-      do imem=1,ens_size
-         if(o3_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
-         qmr_val(imem,k).eq.missing_r8) then
-            zstatus(:)=20
-            expct_val(:)=missing_r8
-            write(string1, *) &
-            'APM: Input data has missing values '
-            call error_handler(E_MSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            return
-         endif
-      enddo
 !
 ! Convert units for o3 from ppmv
       o3_val(:,k) = o3_val(:,k) * 1.e-6_r8
    enddo
+   o3_mdl_1(:) = o3_mdl_1(:) * 1.e-6_r8
+   o3_mdl_n(:) = o3_mdl_n(:) * 1.e-6_r8
 !
 ! Use large scale ozone data above the regional model top
 ! OMI vertical is from top to bottom   
    kstart=-1
    do imem=1,ens_size
-      do k=1,level_omi
-         if (prs_omi(k).gt.prs_mdl_n(imem)) then
-            kstart=k-1
-!            write(string1, *) 'APM: imem,k-1,prs,mdl_n ',imem,k-1,prs_omi(k-1), &
-!            prs_mdl_n(imem),prs_omi(k)
-!            call error_handler(E_MSG, routine, string1, source)
-            exit
-         endif
-      enddo
-      ncnt=kstart
-      allocate(prs_omi_top(ncnt))
-      allocate(o3_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
-      do k=1,kstart
-         prs_omi_top(k)=prs_omi(k)
-      enddo
-      prs_omi_top(:)=prs_omi_top(:)/100.
+      if (prs_omi(1).lt.prs_mdl_n(imem)) then
+         do k=1,level_omi
+            if (prs_omi(k).gt.prs_mdl_n(imem)) then
+               kstart=k
+               exit
+            endif
+         enddo
+         ncnt=kstart
+         allocate(prs_omi_top(ncnt))
+         allocate(o3_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
+         do k=1,kstart
+            prs_omi_top(k)=prs_omi(k)
+         enddo
+         prs_omi_top(:)=prs_omi_top(:)/100.
 !
-      lon_obs=mloc(1)/rad2deg
-      lat_obs=mloc(2)/rad2deg
-      call get_time(obs_time,datesec_obs,date_obs)
+         lon_obs=mloc(1)/rad2deg
+         lat_obs=mloc(2)/rad2deg
+         call get_time(obs_time,datesec_obs,date_obs)
 !
-      data_file='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mozart_forecasts/h0004.nc'
-      call get_upper_bdy_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs,prs_omi_top,ncnt, &
-      o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+         data_file='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mozart_forecasts/h0004.nc'
+         call get_upper_bdy_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs,prs_omi_top, &
+         ncnt,o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
 !
 ! Impose ensemble perturbations from level kstart+1      
-      do k=1,kstart 
-         o3_val(imem,k)=o3_prf_mdl(k)*o3_val(imem,kstart+1)/ &
-         (sum(o3_val(:,kstart+1))/real(ens_size))
-         tmp_val(imem,k)=tmp_prf_mdl(k)*tmp_val(imem,kstart+1)/ &
-         (sum(tmp_val(:,kstart+1))/real(ens_size))
-         qmr_val(imem,k)=qmr_prf_mdl(k)*qmr_val(imem,kstart+1)/ &
-         (sum(qmr_val(:,kstart+1))/real(ens_size))
-      enddo
-      deallocate(prs_omi_top)
-      deallocate(o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
+         do k=1,kstart 
+            o3_val(imem,k)=o3_prf_mdl(k)*o3_val(imem,kstart+1)/ &
+            (sum(o3_val(:,kstart+1))/real(ens_size))
+            tmp_val(imem,k)=tmp_prf_mdl(k)*tmp_val(imem,kstart+1)/ &
+            (sum(tmp_val(:,kstart+1))/real(ens_size))
+            qmr_val(imem,k)=qmr_prf_mdl(k)*qmr_val(imem,kstart+1)/ &
+            (sum(qmr_val(:,kstart+1))/real(ens_size))
+         enddo
+         deallocate(prs_omi_top)
+         deallocate(o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
+      endif
    enddo
 !
-!   write(string1, *) 'APM: model pressure top ',prs_mdl_n(1), &
-!   prs_mdl_n(int(ens_size/2)),prs_mdl_n(int(ens_size))     
-!   call error_handler(E_MSG, routine, string1, source)
+! Check full profile for negative values
+   do imem=1,ens_size
+      flg=0
+      do k=1,level_omi
+         if(o3_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         qmr_val(imem,k).lt.0.) then
+            flg=1   
+            write(string1, *) &
+            'APM: Recentered full profile has negative values for key,imem ',key,imem
+            call error_handler(E_ALLMSG, routine, string1, source)
+         endif
+      enddo
+      if(flg.eq.1) then
+         zstatus(:)=20
+         expct_val(:)=missing_r8
+         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         return
+      endif
+   enddo
 !
-!   do k=1,level_omi
-!      write(string1, *) 'APM: k, o3 ',k,prs_omi(k),o3_val(1,k), &
-!      o3_val(int(ens_size/2),k),o3_val(int(ens_size),k)
-!      call error_handler(E_MSG, routine, string1, source)
-!   enddo
-
+! Calculate the expected retrievals
    istatus(:)=0
    zstatus(:)=0.
    expct_val(:)=0.0
@@ -599,12 +596,13 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
 ! Adjust the OMI pressure for WRF-Chem lower/upper boudary pressure
 ! (OMI O3 vertical grid is top to bottom)
       prs_omi_mem(:)=prs_omi(:)
-      if (prs_sfc(imem).gt.prs_omi_mem(level_omi)) then
-         prs_omi_mem(level_omi)=prs_sfc(imem)
+      if (prs_sfc(imem).lt.prs_omi_mem(level_omi)) then
+         prs_sfc(imem)=prs_omi_mem(level_omi)
       endif
       
 ! Calculate the thicknesses
-      
+
+      thick(:)=0.
       do k=1,layer_omi
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
          up_wt=log(prs_omi_mem(k+1))-lnpr_mid
@@ -618,7 +616,14 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
       
 ! Process the vertical summation
 
-      do k=1,layer_omi         
+      do k=1,layer_omi
+         if(prior(key,k).lt.0.) then
+!            write(string1, *) &
+!            'APM: OMI Prior is negative. Level may be below surface. Key,Layer: ',key,k
+!            call error_handler(E_MSG, routine, string1, source)
+            cycle
+         endif
+!
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
          up_wt=log(prs_omi_mem(k+1))-lnpr_mid
          dw_wt=lnpr_mid-log(prs_omi_mem(k))
@@ -633,12 +638,6 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
             o3_val_conv = (up_wt*o3_val(imem,k)+dw_wt*o3_val(imem,k+1))/tl_wt * &
             (up_wt*prs_omi_mem(k)+dw_wt*prs_omi_mem(k+1)) / &
             (Ru*(up_wt*tmp_val(imem,k)+dw_wt*tmp_val(imem,k+1)))
-
-!            write(string1, *) &
-!            'APM: o3_val_conv ',o3_val(imem,k), &
-!            o3_val(imem,k+1),prs_omi_mem(k),prs_omi_mem(k+1), &
-!            tmp_val(imem,k),tmp_val(imem,k+1)
-!            call error_handler(E_MSG, routine, string1, source)
          endif
  
 ! Get expected observation
@@ -646,23 +645,23 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
          expct_val(imem) = expct_val(imem) + thick(k) * o3_val_conv * &
          avg_kernel(key,k)
 
-!         write(string1, *) &
-!         'APM: Expected Value Terms ',expct_val(imem),thick(k)*o3_val_conv* &
-!         avg_kernel(key,k)
-!         call error_handler(E_MSG, routine, string1, source)
-
       enddo
-!
-!      write(string1, *) &
-!      'APM: Member ',imem,'Final Value ',expct_val(imem)
-!      call error_handler(E_MSG, routine, string1, source)
-!      
       if(isnan(expct_val(imem))) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
-         write(string1, *) &
-         'APM NOTICE: OMI O3 expected value is NaN '
-         call error_handler(E_MSG, routine, string1, source)
+!         write(string1, *) &
+!         'APM NOTICE: OMI O3 expected value is NaN'
+!         call error_handler(E_ALLMSG, routine, string1, source)
+         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         return
+      endif
+!
+      if(expct_val(imem).lt.0) then
+         zstatus(imem)=20
+         expct_val(:)=missing_r8
+!         write(string1, *) &
+!         'APM NOTICE: OMI O3 expected value is negative'
+!         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
@@ -681,9 +680,9 @@ subroutine set_obs_def_omi_o3_cpsr(key, o3_pressure, o3_avg_kernel, o3_prior, &
 o3_nlayer)
 
    integer,                           intent(in)   :: key, o3_nlayer
-   real(r8), dimension(o3_nlayer),    intent(in)   :: o3_prior
    real(r8), dimension(o3_nlayer+1),  intent(in)   :: o3_pressure
    real(r8), dimension(o3_nlayer),    intent(in)   :: o3_avg_kernel
+   real(r8), dimension(o3_nlayer),    intent(in)   :: o3_prior
    
    if ( .not. module_initialized ) call initialize_module
    
@@ -694,9 +693,9 @@ o3_nlayer)
       revdate,text2=string2)
    endif
    nlayer(key) = o3_nlayer
-   prior(key,1:o3_nlayer)  = o3_prior(1:o3_nlayer)
    pressure(key,1:o3_nlayer+1) = o3_pressure(1:o3_nlayer+1)
    avg_kernel(key,1:o3_nlayer) = o3_avg_kernel(1:o3_nlayer)
+   prior(key,1:o3_nlayer)      = o3_prior(1:o3_nlayer)
    
 end subroutine set_obs_def_omi_o3_cpsr
 

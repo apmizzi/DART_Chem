@@ -83,7 +83,7 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
       ref_hh=str2double(time_ref(12:13));
       ref_mn=str2double(time_ref(15:16));
       ref_ss=str2double(time_ref(18:19));
-      ref_secs=single(convert_time(ref_yy,ref_mm,ref_dd,ref_hh,ref_mn,ref_ss));
+      ref_secs=single(convert_time_1995(ref_yy,ref_mm,ref_dd,ref_hh,ref_mn,ref_ss));
       file_str_yy=str2double(time_start(1:4));
       file_str_mm=str2double(time_start(6:7));
       file_str_dd=str2double(time_start(9:10));
@@ -265,8 +265,8 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
       units=ncreadatt(file_in,field,'units');
 %
 % Loop through OMI data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_1995(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
+      windate_max=single(convert_time_1995(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
       ocnt=0;
       icnt=0;
       for itim=1:ntim
@@ -275,15 +275,15 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
                continue
             end
             time_cur=ref_secs+delta_time(iscan,itim);
-            [year,month,day,hour,minute,second]=invert_time(time_cur);
+            [year,month,day,hour,minute,second]=invert_time_1995(time_cur);
             yyyy_omi=year;
             mn_omi=month;
             dy_omi=day;
             hh_omi=hour;
             mm_omi=minute;
             ss_omi=second;
-%            [jult]=convert_time(year,month,day,hour,minute,second);
-            omidate=single(convert_time(year,month,day,hour,minute,second));
+%            [jult]=convert_time_1995(year,month,day,hour,minute,second);
+            omidate=single(convert_time_1995(year,month,day,hour,minute,second));
 %
 % Check time
             if(omidate<windate_min | omidate>windate_max)

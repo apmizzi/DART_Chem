@@ -91,12 +91,12 @@ export NL_OMI_NO2_RETEN_FREQ=1
 export NL_OMI_NO2_DOMINO_RETEN_FREQ=1
 export NL_OMI_SO2_RETEN_FREQ=1
 export NL_OMI_HCHO_RETEN_FREQ=1
-export NL_TROPOMI_CO_RETEN_FREQ=2
-export NL_TROPOMI_O3_RETEN_FREQ=2
-export NL_TROPOMI_NO2_RETEN_FREQ=2
-export NL_TROPOMI_SO2_RETEN_FREQ=2
-export NL_TROPOMI_CH4_RETEN_FREQ=2
-export NL_TROPOMI_HCHO_RETEN_FREQ=2
+export NL_TROPOMI_CO_RETEN_FREQ=1
+export NL_TROPOMI_O3_RETEN_FREQ=1
+export NL_TROPOMI_NO2_RETEN_FREQ=1
+export NL_TROPOMI_SO2_RETEN_FREQ=1
+export NL_TROPOMI_CH4_RETEN_FREQ=1
+export NL_TROPOMI_HCHO_RETEN_FREQ=1
 export NL_TEMPO_O3_RETEN_FREQ=4
 export NL_TEMPO_NO2_RETEN_FREQ=4
 export NL_TES_CO_RETEN_FREQ=1
@@ -473,14 +473,14 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_MOPITT_CO_CPSR_OBS=false # (done)
       export RUN_IASI_CO_TOTAL_COL_OBS=false
       export RUN_IASI_CO_PROFILE_OBS=false # (done)
-      export RUN_IASI_CO_CPSR_OBS=false
+      export RUN_IASI_CO_CPSR_OBS=false # (done)
       export RUN_IASI_O3_PROFILE_OBS=false
       export RUN_IASI_O3_CPSR_OBS=false
       export RUN_MODIS_AOD_TOTAL_COL_OBS=false # (done)
       export RUN_OMI_O3_TOTAL_COL_OBS=false
       export RUN_OMI_O3_TROP_COL_OBS=false
       export RUN_OMI_O3_PROFILE_OBS=false # (done)
-      export RUN_OMI_O3_CPSR_OBS=false # (works)
+      export RUN_OMI_O3_CPSR_OBS=true # (works)
       export RUN_OMI_NO2_TOTAL_COL_OBS=false
       export RUN_OMI_NO2_TROP_COL_OBS=false # (done)
       export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
@@ -938,10 +938,16 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export FILTER_TIME_LIMIT=05:30:00
    export FILTER_NODES=3
    export FILTER_TASKS=16
-#   export FILTER_JOB_CLASS=devel
-#   export FILTER_TIME_LIMIT=01:59:00
-#   export FILTER_NODES=5
-#   export FILTER_TASKS=16
+# Sandy Bridge
+   export FILTER_JOB_CLASS=devel
+   export FILTER_TIME_LIMIT=01:59:00
+   export FILTER_NODES=2
+   export FILTER_TASKS=16
+# Haswell
+   export FILTER_JOB_CLASS=devel
+   export FILTER_TIME_LIMIT=01:59:00
+   export FILTER_NODES=2
+   export FILTER_TASKS=24
    export WRFCHEM_JOB_CLASS=normal
    export WRFCHEM_TIME_LIMIT=00:40:00
    export WRFCHEM_NODES=2
@@ -20988,7 +20994,7 @@ EOF
 # Create job script for this member and run it 
          RANDOM=$$
          export JOBRND=${RANDOM}_filter
-         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${FILTER_JOB_CLASS} ${FILTER_TIME_LIMIT} ${FILTER_NODES} ${FILTER_TASKS} filter PARALLEL ${ACCOUNT}
+         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_has.ksh ${JOBRND} ${FILTER_JOB_CLASS} ${FILTER_TIME_LIMIT} ${FILTER_NODES} ${FILTER_TASKS} filter PARALLEL ${ACCOUNT}
          qsub -Wblock=true job.ksh
       fi
 #
@@ -21028,7 +21034,7 @@ EOF
 exit
 
 
-   #
+#
 #########################################################################
 #
 # RUN BIAS CORRECTION

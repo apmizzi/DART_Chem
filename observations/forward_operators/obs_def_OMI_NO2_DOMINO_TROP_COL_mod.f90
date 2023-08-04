@@ -586,9 +586,9 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
 
       enddo
 
-      write(string1, *) &
-      'APM: Member ',imem,'Key, Final Value for ob ',key,expct_val(imem)
-      call error_handler(E_ALLMSG, routine, string1, source)
+!      write(string1, *) &
+!      'APM: Member ',imem,'Key, Final Value for ob ',key,expct_val(imem)
+!      call error_handler(E_ALLMSG, routine, string1, source)
 
       if(isnan(expct_val(imem))) then
          zstatus(imem)=20

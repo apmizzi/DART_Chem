@@ -140,7 +140,7 @@ program mls_hno3_cpsr_ascii_to_obs
    integer                         :: seconds,days,which_vert
    integer                         :: seconds_last,days_last
    integer                         :: nx_model,ny_model,nz_model
-   integer                         :: reject,k,l,kk,kend,klev,ilay
+   integer                         :: reject,k,l,kk,klev,kend,ilay
    integer                         :: i_min,j_min,icol,reject_ak
    integer                         :: sum_reject,sum_accept,sum_total
    integer                         :: obs_accept,obs_o3_reten_freq,obs_hno3_reten_freq
@@ -274,7 +274,7 @@ program mls_hno3_cpsr_ascii_to_obs
 ! Open MLS HNO3 binary file
    fileid=100
    write(6,*)'opening ',TRIM(filedir)//TRIM(filename)
-   open(fileid,file=TRIM(filedir)//TRIM(filename),                     &
+   open(fileid,file=TRIM(filedir)//TRIM(filename), &
    form='formatted', status='old', iostat=ios)
 !
 ! Read MLS HNO3
@@ -419,7 +419,7 @@ program mls_hno3_cpsr_ascii_to_obs
             cycle
          endif
 !
-! Concduct CPSR transform
+! Conduct CPSR transform
          do k=1,nlay_obs
             hno3_shift(k)=hno3_obs(k)
             prior_shift(k)=prior_obs(k)
@@ -429,7 +429,7 @@ program mls_hno3_cpsr_ascii_to_obs
             enddo
          enddo
 !
-! Call  CPSR transform
+! Call CPSR transform
          call cpsr_calculation(nmodes,nlay_obs,hno3_cpsr,avgk_cpsr,prior_cpsr,hno3_shift,prior_shift, &
          avgk_shift,cov_shift,sum_accept)
 !

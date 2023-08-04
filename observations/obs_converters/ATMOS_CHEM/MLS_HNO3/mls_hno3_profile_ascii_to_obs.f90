@@ -201,7 +201,7 @@ program mls_hno3_profile_ascii_to_obs
    sum_accept=0
    sum_total=0
    obs_accept=0
-   fac_err=0.1
+   fac_err=1.0
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
@@ -280,6 +280,12 @@ program mls_hno3_profile_ascii_to_obs
       if(lon_obs.lt.0.) lon_obs=lon_obs+360.
       read(fileid,*,iostat=ios) nlay_obs,nlev_obs
       read(fileid,*,iostat=ios) ret_nlay,tru_nlay
+!
+! Check layer variables
+      reject=0      
+      if(nlay_obs.ne.ret_nlay .or. nlay_obs.ne.tru_nlay .or. &
+      ret_nlay.ne.tru_nlay) reject=1
+!
       allocate(prs_obs(nlay_obs))
       allocate(hno3_obs(nlay_obs))
       allocate(hno3_obs_err(nlay_obs))
@@ -287,6 +293,7 @@ program mls_hno3_profile_ascii_to_obs
       allocate(ret_lay_obs(ret_nlay))
       allocate(tru_lay_obs(tru_nlay))
       allocate(avgk_obs(ret_nlay,tru_nlay))
+      allocate(cov_obs(ret_nlay,tru_nlay))
       allocate(prior_obs_r8(nlay_obs))
       allocate(prs_obs_r8(nlay_obs))
       allocate(avgk_obs_r8(tru_nlay))
@@ -297,6 +304,17 @@ program mls_hno3_profile_ascii_to_obs
       read(fileid,*,iostat=ios) tru_lay_obs(1:tru_nlay)
       read(fileid,*,iostat=ios) hno3_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) hno3_obs_err(1:nlay_obs)
+!
+! APM: Temporary fixes to address negative values      
+      do k=1,nlay_obs
+         if(hno3_obs(k).lt.0.) then
+            hno3_obs(k)=1.e-8
+         endif
+      enddo   
+      cov_obs(:,:)=0.
+      do k=1,nlay_obs
+         cov_obs(k,k)=hno3_obs_err(k)*hno3_obs_err(k)
+      enddo
       read(fileid,*,iostat=ios) prior_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) prior_err
       do k=1,ret_nlay
@@ -304,43 +322,82 @@ program mls_hno3_profile_ascii_to_obs
       enddo
 !      read(fileid,*,iostat=ios) hno3_col_obs
 !      read(fileid,*,iostat=ios) hno3_col_obs_err
+      if(reject.eq.1) then
+         deallocate(prs_obs) 
+         deallocate(hno3_obs) 
+         deallocate(hno3_obs_err) 
+         deallocate(prior_obs)
+         deallocate(ret_lay_obs)
+         deallocate(tru_lay_obs)
+         deallocate(avgk_obs)
+         deallocate(cov_obs)
+         deallocate(prior_obs_r8)
+         deallocate(prs_obs_r8) 
+         deallocate(avgk_obs_r8)
+         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
+         cycle
+      endif
       print *, 'MLS HNO3: Completed data read'      
-!
-      prs_obs(:)=prs_obs(:)*100.
-      prs_obs_r8(:)=prs_obs(:)
-      prior_obs_r8(:)=prior_obs(:)
-      lon_obs_r8=lon_obs
-      lat_obs_r8=lat_obs
 !
 ! Obs thinning test
       obs_accept=obs_accept+1
       if(obs_accept/obs_hno3_reten_freq*obs_hno3_reten_freq.eq.obs_accept) then
+         prs_obs(:)=prs_obs(:)*100.
+         prs_obs_r8(:)=prs_obs(:)
+         prior_obs_r8(:)=prior_obs(:)
+         lon_obs_r8=lon_obs
+         lat_obs_r8=lat_obs
 !      
-! Loop through the profile retrievals
-         do ilay=1,nlay_obs
-!
 ! Check whether avgk row is zero.
-            reject_ak=1
+         reject_ak=1         
+         do ilay=1,nlay_obs
             do icol=1,nlay_obs
                if(avgk_obs(ilay,icol).ne.0.) then
                   reject_ak=0
                   exit
                endif  
             enddo
-            if(reject_ak.eq.1) cycle
+         enddo
 !
-! Process accepted observations
-            sum_accept=sum_accept+1
+! Check the input data            
+         if(any(isnan(hno3_obs)) .or. any(isnan(prior_obs)) .or. &
+         any(isnan(avgk_obs)) .or. any(isnan(cov_obs))) then
+            print *, 'hno3 or prior or avgk or cov contains NaNs'
+            reject_ak=1
+         endif
+         do k=1,nlay_obs
+            if(hno3_obs(k).lt.0. .or. prior_obs(k).lt.0. .or. &
+            cov_obs(k,k).lt.0.) then
+               reject_ak=1
+               print *, 'hno3, prior, cov < 0 ',k,nlay_obs,hno3_obs(k),prior_obs(k),cov_obs(k,k)
+               exit
+            endif
+         enddo
+         if(reject_ak.eq.1) then
+            deallocate(prs_obs) 
+            deallocate(hno3_obs) 
+            deallocate(hno3_obs_err) 
+            deallocate(prior_obs)
+            deallocate(ret_lay_obs)
+            deallocate(tru_lay_obs)
+            deallocate(avgk_obs)
+            deallocate(cov_obs)
+            deallocate(prior_obs_r8)
+            deallocate(prs_obs_r8) 
+            deallocate(avgk_obs_r8)
+            read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
+            cycle
+         endif
+!      
+! Loop through the profile retrievals
+         do ilay=1,nlay_obs
 !
 ! Set data for writing obs_sequence file
+            sum_accept=sum_accept+1
             qc_count=qc_count+1
-            print *, 'APM: qc_count, ilay ',qc_count, ilay
-!
-! Obs value is the tropospheric vertical column
             avgk_obs_r8(1:nlay_obs)=avgk_obs(ilay,1:nlay_obs)         
             obs_val(:)=hno3_obs(ilay)
-!            obs_err_var=(fac_obs_error*fac_err*sqrt(cov_obs(ilay,ilay)))**2
-            obs_err_var=(fac_obs_error*fac_err*hno3_obs(ilay))**2
+            obs_err_var=(fac_obs_error*fac_err*sqrt(cov_obs(ilay,ilay)))**2
             mls_qc(:)=0
             obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
             call get_time(obs_time, seconds, days)
@@ -393,6 +450,7 @@ program mls_hno3_profile_ascii_to_obs
       deallocate(ret_lay_obs)
       deallocate(tru_lay_obs)
       deallocate(avgk_obs)
+      deallocate(cov_obs)
       deallocate(prior_obs_r8)
       deallocate(prs_obs_r8) 
       deallocate(avgk_obs_r8)

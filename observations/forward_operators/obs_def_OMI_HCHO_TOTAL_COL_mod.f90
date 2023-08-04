@@ -489,8 +489,8 @@ subroutine get_expected_omi_hcho_total_col(state_handle, ens_size, location, key
          endif
       enddo
 !
-      write(string1, *)'APM: hcho ',k,layer_omi,prs_omi(k),hcho_val(1,k)
-      call error_handler(E_MSG, routine, string1, source)
+!      write(string1, *)'APM: hcho ',k,layer_omi,prs_omi(k),hcho_val(1,k)
+!      call error_handler(E_MSG, routine, string1, source)
 !      write(string1, *)'APM: tmp ',k,tmp_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
 !      write(string1, *)'APM: qmr ',k,qmr_val(1,k)
@@ -505,12 +505,12 @@ subroutine get_expected_omi_hcho_total_col(state_handle, ens_size, location, key
             write(string1, *) 'APM: Input data has missing values '
             call error_handler(E_MSG, routine, string1, source)
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            do imemm=1,ens_size
-               write(string1, *) &
-               'APM: Model profile values: hcho,tmp,qmr',key,imem,k,hcho_val(imemm,k), &
-               tmp_val(imemm,k),qmr_val(imemm,k)     
-               call error_handler(E_ALLMSG, routine, string1, source)
-            enddo
+!            do imemm=1,ens_size
+!               write(string1, *) &
+!               'APM: Model profile values: hcho,tmp,qmr',key,imem,k,hcho_val(imemm,k), &
+!               tmp_val(imemm,k),qmr_val(imemm,k)     
+!               call error_handler(E_ALLMSG, routine, string1, source)
+!            enddo
             return
          endif
       enddo
@@ -571,9 +571,9 @@ subroutine get_expected_omi_hcho_total_col(state_handle, ens_size, location, key
    do imem=1,ens_size
       flg=0
       do k=1,layer_omi    
-         write(string1, *) &
-         'APM: hcho values: imem,k,hcho ',imem,k,hcho_val(imem,k)
-         call error_handler(E_MSG, routine, string1, source)
+!         write(string1, *) &
+!         'APM: hcho values: imem,k,hcho ',imem,k,hcho_val(imem,k)
+!         call error_handler(E_MSG, routine, string1, source)
          if(hcho_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             flg=1   

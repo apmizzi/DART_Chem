@@ -16,10 +16,10 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 !
-program omi_o3_profile_ascii_to_obs
+program omi_o3_cpsr_ascii_to_obs
 !
 !=============================================
-! OMI O3 profile obs
+! OMI O3 cpsr obs
 !=============================================
   use apm_cpsr_mod, only           : cpsr_calculation, &
                                      mat_prd, &
@@ -92,7 +92,7 @@ program omi_o3_profile_ascii_to_obs
                                       obs_def_type,               &
                                       set_obs_def_type_of_obs
 
-   use obs_def_omi_o3_profile_mod, only     : set_obs_def_omi_o3_profile
+   use obs_def_omi_o3_cpsr_mod, only     : set_obs_def_omi_o3_cpsr
 
    use assim_model_mod, only        : static_init_assim_model
 
@@ -105,7 +105,7 @@ program omi_o3_profile_ascii_to_obs
                                       get_time
 
    use obs_kind_mod, only           : QTY_O3,                     &
-                                      OMI_O3_PROFILE,              &
+                                      OMI_O3_CPSR,                &
                                       get_type_of_obs_from_menu
 
    use random_seq_mod, only         : random_seq_type,            &
@@ -116,7 +116,7 @@ program omi_o3_profile_ascii_to_obs
    implicit none
 !
 ! version controlled file description for error handling, do not edit
-   character(len=*), parameter     :: source   = 'omi_o3_profile_ascii_to_obs.f90'
+   character(len=*), parameter     :: source   = 'omi_o3_cpsr_ascii_to_obs.f90'
    character(len=*), parameter     :: revision = ''
    character(len=*), parameter     :: revdate  = ''
 !
@@ -139,9 +139,9 @@ program omi_o3_profile_ascii_to_obs
    integer                         :: nlay_obs,nlev_obs,ndim_cov,ilv
    integer                         :: seconds,days,which_vert
    integer                         :: seconds_last,days_last
-   integer                         :: nx_model,ny_model,nz_model
-   integer                         :: reject,i,j,k,icnt,klev,kend
-   integer                         :: i_min,j_min,flg
+   integer                         :: nx_model,ny_model,nz_model,nlayer
+   integer                         :: reject,i,j,k,kk,icnt,imds,klev,kend
+   integer                         :: i_min,j_min,flg,cnt,nmodes
    integer                         :: sum_reject,sum_accept,sum_total
    integer                         :: obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq, &
                                       obs_hcho_reten_freq
@@ -166,7 +166,7 @@ program omi_o3_profile_ascii_to_obs
    character*129                   :: copy_meta_data
    character*129                   :: qc_meta_data='OMI O3 QC index'
    character*129                   :: chr_year,chr_month,chr_day
-   character*129                   :: file_name='omi_o3_profile_obs_seq'
+   character*129                   :: file_name='omi_o3_cpsr_obs_seq'
    character*129                   :: data_type,cmd
    character*129                   :: path_model,file_model,file_in
 !
@@ -185,18 +185,20 @@ program omi_o3_profile_ascii_to_obs
    real,allocatable,dimension(:,:,:)   :: prs_prt,prs_bas,prs_fld
    real,allocatable,dimension(:,:,:)   :: tmp_prt,tmp_fld,vtmp_fld
    real,allocatable,dimension(:,:,:)   :: o3_fld,qmr_fld
-!
+   real,allocatable,dimension(:)       :: o3_cpsr,prior_cpsr
+   real,allocatable,dimension(:,:)     :: avgk_cpsr
+   real,allocatable,dimension(:)       :: o3_shift,prior_shift
+   real,allocatable,dimension(:,:)     :: avgk_shift,cov_shift
    namelist /create_omi_obs_nml/filedir,filename,fileout,year,month,day,hour, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_o3,use_log_no2,use_log_so2,use_log_hcho, &
    lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model,ny_model,nz_model, &
-   obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq,obs_hcho_reten_freq
+   obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq,obs_hcho_reten_freq   
 !
 ! Set constants
    du2molpm2=4.4615e-4
    pi=4.*atan(1.)
    rad2deg=360./(2.*pi)
    re=6371000.
-   fac_err=1.0
    fac_err=0.3
    days_last=-9999.
    seconds_last=-9999.
@@ -303,6 +305,11 @@ program omi_o3_profile_ascii_to_obs
       allocate(prior_obs_r8(nlay_obs))
       allocate(avgk_obs_r8(nlay_obs))
       allocate(prf_model(nlay_obs))
+      allocate(o3_cpsr(nlay_obs))
+      allocate(prior_cpsr(nlay_obs))
+      allocate(avgk_cpsr(nlay_obs,nlay_obs))
+      allocate(o3_shift(nlay_obs),prior_shift(nlay_obs))
+      allocate(avgk_shift(nlay_obs,nlay_obs),cov_shift(nlay_obs,nlay_obs))
       read(fileid,*,iostat=ios) prs_obs(1:nlev_obs)
       read(fileid,*,iostat=ios) o3_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) prior_obs(1:nlay_obs)
@@ -320,22 +327,28 @@ program omi_o3_profile_ascii_to_obs
             cov_obs(i,j)=cov_obs_tmp(icnt)
             cov_prior_obs(i,j)=cov_prior_obs_tmp(icnt)
             if(i.ne.j) then
-               cov_obs(j,i)=cov_obs(i,j)
-               cov_prior_obs(j,i)=cov_obs(i,j)
+               cov_obs(j,i)=cov_obs_tmp(icnt)
+               cov_prior_obs(j,i)=cov_prior_obs_tmp(icnt)
             endif
          enddo
       enddo
       flg=0
+      if(any(isnan(cov_obs)) .or. any(isnan(avgk_obs)) .or. &
+      any(isnan(prior_obs)) .or. any(isnan(o3_obs))) then
+         flg=1   
+      endif
       do i=1,nlay_obs
-         if(isnan(cov_obs(i,i)) .or. cov_obs(i,i).lt.0.) then
+         if(cov_obs(i,i).lt.0. .or. prior_obs(i).lt.0. .or. o3_obs(i).lt.0.) then
             flg=1
 !            print *, 'omi_variance is NaN or negative ',cov_obs(i,i)
             exit
          endif
       enddo
       if(flg.eq.1) then
-         deallocate(prs_obs,o3_obs,prior_obs)
-         deallocate(prior_err_obs,avgk_obs,cov_obs)
+         deallocate(prs_obs,o3_obs,o3_cpsr,prior_cpsr,prior_obs)
+         deallocate(prior_err_obs,avgk_obs,avgk_cpsr,cov_obs)
+         deallocate(o3_shift,prior_shift)
+         deallocate(avgk_shift,cov_shift)
          deallocate(cov_prior_obs,cov_obs_tmp)
          deallocate(cov_prior_obs_tmp,prs_obs_r8)
          deallocate(prior_obs_r8,avgk_obs_r8) 
@@ -347,68 +360,62 @@ program omi_o3_profile_ascii_to_obs
       prs_obs(:)=prs_obs(:)*100.
       prs_obs_r8(:)=prs_obs(:)/100.
       prior_obs_r8(:)=prior_obs(:)
-      
+!      
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
 !
-!--------------------------------------------------------
-! Find model O3 profile corresponding to the observation
-! kend is the OMI index for the top of the model.      
-!--------------------------------------------------------
+! The OMI O3 Avgk depends on all levels (even those below the surface)      
+      nlayer=nlay_obs      
+      do k=1,nlayer
+         o3_shift(k)=o3_obs(k)
+         prior_shift(k)=prior_obs(k)
+         do kk=1,nlayer
+            avgk_shift(k,kk)=avgk_obs(k,kk)
+            cov_shift(k,kk)=cov_obs(k,kk)
+         enddo
+      enddo
 !
-! Loop through vertical grid (OMI O3 is top to bottom)
+! Calculate CPSRs for this retrieval profile
       reject=0
-      do ilv=1,nlay_obs
-         avgk_obs_r8(1:nlay_obs)=avgk_obs(ilv,1:nlay_obs)
+!      print *, 'Prs ',sum_total,prs_obs(:)/100.
+!      print *, 'O3 ',o3_obs(:)
+!      print *, 'Prior ',prior_obs(:)
+!      print *, 'Cov ',(cov_obs(k,k),k=1,nlayer)
+!      print *, ' '
+      call cpsr_calculation(nmodes,nlayer,o3_cpsr,avgk_cpsr,prior_cpsr,o3_shift,prior_shift, &
+      avgk_shift,cov_shift,sum_accept)
 !
-! Check whether observation is above model vertical grid
-         if(prs_obs(ilv).le.prs_mdl_top) cycle
+! Loop through the dominant modes (OMI O3 is top to bottom)
+      do imds=1,nmodes
+         avgk_obs_r8(1:nlayer)=avgk_cpsr(imds,1:nlayer)
 !
-! Check whether observation is below the surface based on OMI          
-         if(prior_obs_r8(ilv).lt.0. .or. o3_obs(ilv).lt.0.) then
-            print *, 'APM: OMI Retrieval or Prior is negative. Layer may be below surface. Layer: ',ilv
-            print *, 'APM: Prior ',prior_obs_r8(ilv),'Avgk: ',avgk_obs_r8(ilv)
-!            cycle
-         endif
-!
-! Process observations
-!
-! Obs value is the total vertical column      
-         obs_val(:)=o3_obs(ilv)
-!
-! Assign observation error         
-!         obs_err_var=(fac_obs_error*fac_err*sqrt(cov_obs(ilv,ilv)))**2.
-         if(prior_obs_r8(ilv).gt.0. .and. o3_obs(ilv).gt.0.) then
-            obs_err_var=(fac_obs_error*fac_err*o3_obs(ilv))**2.
-         else
-            obs_err_var=0.
-            cycle
-         endif
+! Process accepted observations
          sum_accept=sum_accept+1
          qc_count=qc_count+1
-         
-         omi_qc(:)=0      
+!
+! Obs value is a CPSR
+         obs_val(:)=o3_cpsr(imds)
+         obs_err_var=(fac_obs_error*fac_err*1.)**2.
+         omi_qc(:)=0
          obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
          call get_time(obs_time, seconds, days)
 !
-!         which_vert=-2      ! undefined
+         which_vert=-2      ! undefined
 !         which_vert=-1      ! surface
 !         which_vert=1       ! level
-         which_vert=2       ! pressure surface
+!         which_vert=2       ! pressure surface
 !
-         obs_kind = OMI_O3_PROFILE
+         obs_kind = OMI_O3_CPSR
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90)
-         klev=ilv
-         kend=ilv
-         level=prs_obs(ilv)   
+         level=imds   
          obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
 !
          call set_obs_def_type_of_obs(obs_def, obs_kind)
          call set_obs_def_location(obs_def, obs_location)
          call set_obs_def_time(obs_def, obs_time)
          call set_obs_def_error_variance(obs_def, obs_err_var)
-         call set_obs_def_omi_o3_profile(qc_count, prs_obs_r8(1:nlay_obs+1), &
-         avgk_obs_r8(1:nlay_obs), prior_obs_r8(1:nlay_obs), nlay_obs, klev, kend)
+         call set_obs_def_omi_o3_cpsr(qc_count, prs_obs_r8(1:nlayer+1), &
+         avgk_obs_r8(1:nlayer), prior_obs_r8(1:nlayer), nlayer)
          call set_obs_def_key(obs_def, qc_count)
          call set_obs_values(obs, obs_val, 1)
          call set_qc(obs, omi_qc, num_qc)
@@ -431,12 +438,14 @@ program omi_o3_profile_ascii_to_obs
          endif
          obs_old=obs
       enddo
-      deallocate(prs_obs,o3_obs,prior_obs)
-      deallocate(prior_err_obs,avgk_obs,cov_obs)
+      deallocate(prs_obs,o3_obs,o3_cpsr,prior_cpsr,prior_obs)
+      deallocate(prior_err_obs,avgk_obs,avgk_cpsr,cov_obs)
+      deallocate(o3_shift,prior_shift)
+      deallocate(avgk_shift,cov_shift)
       deallocate(cov_prior_obs,cov_obs_tmp)
       deallocate(cov_prior_obs_tmp,prs_obs_r8)
-      deallocate(prior_obs_r8,avgk_obs_r8) 
-      deallocate(prf_model)
+      deallocate(avgk_obs_r8,prior_obs_r8) 
+      deallocate(prf_model) 
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    enddo   
 !
@@ -465,6 +474,5 @@ program omi_o3_profile_ascii_to_obs
    cmd='rm -rf '//trim(fileout)
    if(qc_count.eq.0) then
       call execute_command_line(trim(cmd))
-   endif   
-!
-end program omi_o3_profile_ascii_to_obs
+   endif
+end program omi_o3_cpsr_ascii_to_obs
