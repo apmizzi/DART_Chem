@@ -16,7 +16,6 @@ function gome2a_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
    nx_mdl=str2double(cnx_mdl);
    ny_mdl=str2double(cny_mdl);
 %
-% Get file list and number of files
    command=strcat('rm'," ",'-rf'," ",fileout);
    [status]=system(command);
    fid=fopen(fileout,'w');
@@ -31,7 +30,7 @@ function gome2a_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
    Ru=8.316;
    Rd=286.9;
    eps=0.61;
-   molec_wt_no2=.0480;
+   molec_wt_o3=.0480;
    molec_wt_no2=.0460;
    molec_wt_so2=.0641;
    AvogN=6.02214e23;
@@ -45,12 +44,13 @@ function gome2a_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
 %
 % Convert DU to molecules/m^2
    du2molcpm2=2.6867e20;
+%
    day_secs_beg=whh_mn*60.*60. + wmm_mn*60. + wss_mn;
    day_secs_end=whh_mx*60.*60. + wmm_mx*60. + wss_mx;
 %
 % Print input data
-   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
-   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
+%   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
+%   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
 %
 % Read model grid
    lon_mdl=ncread(strcat(path_mdl,'/',file_mdl),'XLONG');
@@ -83,7 +83,7 @@ function gome2a_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
       ref_hh=str2double(time_ref(12:13));
       ref_mn=str2double(time_ref(15:16));
       ref_ss=str2double(time_ref(18:19));
-      ref_secs=single(convert_time(ref_yy,ref_mm,ref_dd,ref_hh,ref_mn,ref_ss));
+      ref_secs=single(convert_time_ref(ref_yy,ref_mm,ref_dd,ref_hh,ref_mn,ref_ss,1995));
       file_str_yy=str2double(time_start(1:4));
       file_str_mm=str2double(time_start(6:7));
       file_str_dd=str2double(time_start(9:10));
@@ -200,9 +200,6 @@ function gome2a_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
             for ilv=1:layer
                prs_lev(ipxl,ilin,ilv)=tm5_prs_a(1,ilv)+tm5_prs_b(1,ilv)* ...
                tm5_prs_sfc(ipxl,ilin);
-#               if(prs_lev(ipxl,ilin,ilv)<.1)
-#                  prs_lev(ipxl,ilin,ilv)=.1;
-#               end
                prs_lay(ipxl,ilin,ilv)=(tm5_prs_a(1,ilv)+tm5_prs_b(1,ilv)* ...
                tm5_prs_sfc(ipxl,ilin) + tm5_prs_a(2,ilv)+tm5_prs_b(2,ilv)* ...
                tm5_prs_sfc(ipxl,ilin))/2.;
@@ -257,8 +254,8 @@ function gome2a_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
       no2_vert_col_err_summed=ncread(file_in,field);
 %
 % Loop through GOME2A data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,1995));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,1995));
       icnt=0;
       for itim=1:ntim
          for iscan=1:nscan
@@ -266,41 +263,68 @@ function gome2a_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
                continue
             end
             time_cur=ref_secs+delta_time(iscan,itim);
-            [year,month,day,hour,minute,second]=invert_time(time_cur);
+            [year,month,day,hour,minute,second]=invert_time_ref(time_cur,1995);
 	    yyyy_gome2a=year;
 	    mn_gome2a=month;
 	    dy_gome2a=day;
 	    hh_gome2a=hour;
 	    mm_gome2a=minute;
 	    ss_gome2a=second;
-%	    [jult]=convert_time(year,month,day,hour,minute,second);
-            gome2adate=single(convert_time(year,month,day,hour,minute,second));
+            gome2adate=single(convert_time_ref(year,month,day,hour,minute,second,1995));
 %
 % Check time
+%            fprintf('APM: min %d, gome2a %d, max %d \n',windate_min,gome2adate,windate_max);
             if(gome2adate<windate_min | gome2adate>windate_max)
-               fprintf('APM: min %d, gome2a %d, max %d \n',windate_min,gome2adate,windate_max);
                continue
             end
 	    for ipxl=1:npxl
 %
 % QA/AC
-               reject=0;
-               for k=1:layer
-                  if(isnan(prs_lay(ipxl,iscan,k)))
-                     reject=1;
-                     break
-                  end
-               end    
-               if(reject==1)
-%                  fprintf('APM: prs_lay has NaNs \n')
+               if(any(isnan(prs_lev(itim,iscan,:))) | any(prs_lev(itim,iscan,:)<0))
                   continue
                end
-               if(zenang(ipxl,iscan,itim)>=80.0)
-%                  fprintf('APM: zenang %6.2f \n',zenang(ipxl,iscan,itim))
+%
+               if(any(isnan(avgk_lay(:,ipxl,iscan,itim)))) 
                   continue
                end
+%
+               if(isnan(trop_index(ipxl,iscan,itim)) | trop_index(ipxl,iscan,itim)<=0)
+                  continue
+               end
+%
                if(isnan(no2_vert_col_trop(ipxl,iscan,itim)) | no2_vert_col_trop(ipxl,iscan,itim)<=0)
-%                  fprintf('APM: no2_trop_col is NaN or negative %6.2f \n',no2_vert_col_trop(ipxl,iscan,itim))
+                  continue
+               end
+%
+               if(isnan(no2_vert_col_err_trop(ipxl,iscan,itim)) | no2_vert_col_err_trop(ipxl,iscan,itim)<=0)
+                  continue
+               end
+%
+               if(isnan(no2_vert_col_total(ipxl,iscan,itim)) | no2_vert_col_total(ipxl,iscan,itim)<=0)
+                  continue
+               end
+%
+               if(isnan(no2_vert_col_err_total(ipxl,iscan,itim)) | no2_vert_col_err_total(ipxl,iscan,itim)<=0)
+                  continue
+               end
+%
+               if(isnan(no2_slnt_col(ipxl,iscan,itim)) | no2_slnt_col(ipxl,iscan,itim)<=0)
+                  continue
+               end
+%
+               if(isnan(no2_slnt_col_err(ipxl,iscan,itim)) | no2_slnt_col_err(ipxl,iscan,itim)<=0)
+                  continue
+               end
+%
+%               if(isnan(o3_slnt_col(ipxl,iscan,itim)) | o3_slnt_col(ipxl,iscan,itim)<=0)
+%                  continue
+%               end
+%
+%               if(isnan(o3_slnt_col_err(ipxl,iscan,itim)) | o3_slnt_col_err(ipxl,iscan,itim)<=0)
+%                  continue
+%               end
+%
+               if(zenang(ipxl,iscan,itim)>=80.0)
                   continue
                end
 %
@@ -361,15 +385,11 @@ function gome2a_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
                   reject=1;
                end
                if(reject==1)
-                  fprintf('x_mdl_min, x_obs, x_mdl_max: %6.2f %6.2f %6.2f \n',xmdl_mn, ...
-                  x_obser,xmdl_mx)
-                  fprintf('y_mdl_min, y_obs, y_mdl_max: %6.2f %6.2f %6.2f \n',lat_mdl(1,1), ...
-                  y_obser,lat_mdl(nx_mdl,ny_mdl))
-                  fprintf('i_min %d j_min %d \n',i_min,j_min)
+%                  fprintf('DOMAIN ISSUE: i_min %d j_min %d \n',i_min,j_min)
                   continue
                end
                if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
-                  fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
+%                  fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
                   continue
                end
 %

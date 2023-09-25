@@ -310,13 +310,13 @@ subroutine get_expected_tes_ch4_profile(state_handle, ens_size, location, key, o
    character(len=*),parameter  :: fld = 'CH4_VMR_inst'
    type(location_type) :: loc2
    
-   integer :: layer_tes,level_tes, klev_tes, kend_tes
+   integer :: layer_tes,level_tes
    integer :: layer_mdl,level_mdl
    integer :: k,kk,imem,imemm,flg
    integer :: interp_new
-   integer :: icnt,ncnt
+   integer :: icnt,ncnt,kstart,klev_tes
    integer :: date_obs,datesec_obs
-   integer, dimension(ens_size) :: zstatus,kbnd_1,kbnd_n,kstart
+   integer, dimension(ens_size) :: zstatus,kbnd_1,kbnd_n
    
    real(r8) :: eps, AvogN, Rd, Ru, Cp, grav, msq2cmsq
    real(r8) :: missing,ch4_min,tmp_max
@@ -329,14 +329,15 @@ subroutine get_expected_tes_ch4_profile(state_handle, ens_size, location, key, o
 
    real(r8), dimension(ens_size) :: ch4_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
    real(r8), dimension(ens_size) :: ch4_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
-   real(r8), dimension(ens_size) :: ch4_mdl_tmp, tmp_mdl_tmp, qmr_mdl_tmp, prs_mdl_tmp
-   real(r8), dimension(ens_size) :: prs_sfc,rec_ch4_val,rec_tmp_val,rec_qmr_val
+   real(r8), dimension(ens_size) :: prs_sfc
    
    real(r8), allocatable, dimension(:)   :: thick, prs_tes, prs_tes_mem
    real(r8), allocatable, dimension(:,:) :: ch4_val, tmp_val, qmr_val
+   logical  :: return_now,ch4_return_now,tmp_return_now,qmr_return_now
+!
+! Upper BC variables
    real(r8), allocatable, dimension(:)   :: ch4_prf_mdl,tmp_prf_mdl,qmr_prf_mdl
    real(r8), allocatable, dimension(:)   :: prs_tes_top   
-   logical  :: return_now,ch4_return_now,tmp_return_now,qmr_return_now
    
    if ( .not. module_initialized ) call initialize_module
    
@@ -357,7 +358,6 @@ subroutine get_expected_tes_ch4_profile(state_handle, ens_size, location, key, o
 ! 
 ! WACCM - MMR
 ! WRFChem - VMR ppmv
-! TES CH4 - DU   
 !
 ! to convert from mass mixing ratio (MMR) to volume mixing ratio (VMR) multiply by
 ! the molar mass of dry air (28.9644 g) and divide by the molar mass of the constituent
@@ -380,12 +380,10 @@ subroutine get_expected_tes_ch4_profile(state_handle, ens_size, location, key, o
    layer_tes = nlayer(key)
    level_tes = nlayer(key)+1
    klev_tes  = klev(key)
-   kend_tes  = kend(key)
    layer_mdl   = nlayer_model
    level_mdl   = nlayer_model+1
 
    allocate(prs_tes(level_tes))
-   allocate(prs_tes_mem(level_tes))
    prs_tes(1:layer_tes)=pressure(key,1:layer_tes)
 
 ! Get location infomation
@@ -397,9 +395,6 @@ subroutine get_expected_tes_ch4_profile(state_handle, ens_size, location, key, o
    elseif (mloc(2) < -90.0_r8) then
       mloc(2) = -90.0_r8
    endif
-   obs_prs=mloc(3)
-!   write(string1, *) 'APM: observation ',key, ' lon ',mloc(1),' lat ',mloc(2)
-!   call error_handler(E_MSG, routine, string1, source)
 !
 ! You could set a unique error code for each condition and then just return
 ! without having to issue a warning message. The error codes would then
@@ -415,108 +410,89 @@ subroutine get_expected_tes_ch4_profile(state_handle, ens_size, location, key, o
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
    call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus) 
 
-   ch4_mdl_tmp(:)=missing_r8
-   tmp_mdl_tmp(:)=missing_r8
-   qmr_mdl_tmp(:)=missing_r8
-   prs_mdl_tmp(:)=missing_r8
+   ch4_mdl_1(:)=missing_r8
+   tmp_mdl_1(:)=missing_r8
+   qmr_mdl_1(:)=missing_r8
+   prs_mdl_1(:)=missing_r8
 
-   kbnd_1(:)=1
    do k=1,layer_mdl
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-      call interpolate(state_handle, ens_size, loc2, QTY_CH4, ch4_mdl_tmp, zstatus) ! ppmv 
+      call interpolate(state_handle, ens_size, loc2, QTY_CH4, ch4_mdl_1, zstatus) ! ppmv 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_tmp, zstatus) ! K 
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_1, zstatus) ! K 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_tmp, zstatus) ! kg / kg 
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg / kg 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_tmp, zstatus) ! Pa
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
 !
       interp_new=0
       do imem=1,ens_size
-         if(ch4_mdl_tmp(imem).eq.missing_r8 .or. tmp_mdl_tmp(imem).eq.missing_r8 .or. &
-         qmr_mdl_tmp(imem).eq.missing_r8 .or. prs_mdl_tmp(imem).eq.missing_r8) then
+         if(ch4_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
+         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
             interp_new=1
-         else
-            kbnd_1(imem)=k
-            ch4_mdl_1(imem)=ch4_mdl_tmp(imem)
-            tmp_mdl_1(imem)=tmp_mdl_tmp(imem)
-            qmr_mdl_1(imem)=qmr_mdl_tmp(imem)
-            prs_mdl_1(imem)=prs_mdl_tmp(imem)
+            exit
          endif
       enddo
-      if(interp_new.eq.0) exit
-   enddo
-!
-! Sometimes the WRF-Chem surface pressure is greater than the
-! first model level pressure. This fixes that problem.   
-   do imem=1,ens_size
-      if(prs_sfc(imem).lt.prs_mdl_1(imem)) prs_mdl_1(imem)=prs_sfc(imem)
+      if(interp_new.eq.0) then
+         exit
+      endif    
    enddo
 
-!   write(string1, *) 'APM: ch4 lower bound ',key,ch4_mdl_1
+!   write(string1, *)'APM: ch4 lower bound 1 ',ch4_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *) 'APM: tmp lower bound ',key,tmp_mdl_1
+!   write(string1, *)'APM: tmp lower bound 1 ',tmp_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *) 'APM: qmr lower bound ',key,qmr_mdl_1
+!   write(string1, *)'APM: qmr lower bound 1 ',qmr_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *) 'APM: prs lower bound ',key,prs_mdl_1
+!   write(string1, *)'APM: prs lower bound 1 ',prs_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
 
-! pressure at model top (Pa)
+   ch4_mdl_n(:)=missing_r8
+   tmp_mdl_n(:)=missing_r8
+   qmr_mdl_n(:)=missing_r8
+   prs_mdl_n(:)=missing_r8
 
-   ch4_mdl_tmp(:)=missing_r8
-   tmp_mdl_tmp(:)=missing_r8
-   qmr_mdl_tmp(:)=missing_r8
-   prs_mdl_tmp(:)=missing_r8
-
-   kbnd_n(:)=layer_mdl
    do k=layer_mdl,1,-1
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-      call interpolate(state_handle, ens_size, loc2, QTY_CH4, ch4_mdl_tmp, zstatus) 
+      call interpolate(state_handle, ens_size, loc2, QTY_CH4, ch4_mdl_n, zstatus) ! ppmv
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_tmp, &
-      zstatus) 
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_n, zstatus) ! K 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_tmp, &
-      zstatus) 
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, zstatus) ! kg / kg 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_tmp, &
-      zstatus) 
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, zstatus) ! Pa
 !
       interp_new=0
       do imem=1,ens_size
-         if(ch4_mdl_tmp(imem).eq.missing_r8 .or. tmp_mdl_tmp(imem).eq.missing_r8 .or. &
-         qmr_mdl_tmp(imem).eq.missing_r8 .or. prs_mdl_tmp(imem).eq.missing_r8) then
+         if(ch4_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
+         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
             interp_new=1
-         else
-            kbnd_n(imem)=k
-            ch4_mdl_n(imem)=ch4_mdl_tmp(imem)
-            tmp_mdl_n(imem)=tmp_mdl_tmp(imem)
-            qmr_mdl_n(imem)=qmr_mdl_tmp(imem)
-            prs_mdl_n(imem)=prs_mdl_tmp(imem)
+            exit
          endif
       enddo
-      if(interp_new.eq.0) exit
+      if(interp_new.eq.0) then
+         exit
+      endif    
    enddo
 
-!   write(string1, *) 'APM: ch4 upper bound ',key,ch4_mdl_n
+!   write(string1, *)'APM: ch4 upper bound 1 ',ch4_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *) 'APM: tmp upper bound ',key,tmp_mdl_n
+!   write(string1, *)'APM: tmp upper bound 1 ',tmp_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *) 'APM: qmr upper bound ',key,qmr_mdl_n
+!   write(string1, *)'APM: qmr upper bound 1 ',qmr_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *) 'APM: prs upper bound ',key,prs_mdl_n
+!   write(string1, *)'APM: prs upper bound 1 ',prs_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
 
 ! Get profiles at TES pressure levels
 
-   allocate(ch4_val(ens_size,level_tes))
-   allocate(tmp_val(ens_size,level_tes))
-   allocate(qmr_val(ens_size,level_tes))
+   allocate(ch4_val(ens_size,layer_tes))
+   allocate(tmp_val(ens_size,layer_tes))
+   allocate(qmr_val(ens_size,layer_tes))
 
    do k=1,layer_tes
       zstatus=0
@@ -549,46 +525,29 @@ subroutine get_expected_tes_ch4_profile(state_handle, ens_size, location, key, o
 !      call error_handler(E_MSG, routine, string1, source)
 !      write(string1, *)'APM: qmr ',key,k,qmr_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
-
-! Check data for missing values      
-      do imem=1,ens_size
-         if(ch4_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
-         qmr_val(imem,k).eq.missing_r8) then
-            zstatus(:)=20
-            expct_val(:)=missing_r8
-            write(string1, *) 'APM: Model profile data has missing values for obs, level ',key,k
-            call error_handler(E_ALLMSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            do imemm=1,ens_size
-               write(string1, *) &
-               'APM: Model profile values: ch4,tmp,qmr',key,imem,k,ch4_val(imemm,k), &
-               tmp_val(imemm,k),qmr_val(imemm,k)     
-               call error_handler(E_ALLMSG, routine, string1, source)
-            enddo
-            return
-         endif
-      enddo
 !
 ! Convert units for ch4 from ppmv
       ch4_val(:,k) = ch4_val(:,k) * 1.e-6_r8
    enddo
+   ch4_mdl_1(:) = ch4_mdl_1(:) * 1.e-6_r8
+   ch4_mdl_n(:) = ch4_mdl_n(:) * 1.e-6_r8
 !
-! Use large scale ozone data above the regional model top
-! TES vertical is from top to bottom   
-   kstart(:)=-1
+! Use large scale ch4 data above the regional model top
+! TES vertical is from bottom to top   
+   kstart=-1
    do imem=1,ens_size
-      if (prs_tes(1).lt.prs_mdl_n(imem)) then
-         do k=1,level_tes
-            if (prs_tes(k).ge.prs_mdl_n(imem)) then
-               kstart(imem)=k-1
+      if (prs_tes(layer_tes).lt.prs_mdl_n(imem)) then
+         do k=1,layer_tes
+            if (prs_tes(k).le.prs_mdl_n(imem)) then
+               kstart=k
                exit
             endif
          enddo
-         ncnt=kstart(imem)
+         ncnt=layer_tes-kstart+1
          allocate(prs_tes_top(ncnt))
          allocate(ch4_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
-         do k=1,kstart(imem)
-            prs_tes_top(k)=prs_tes(k)
+         do k=kstart,layer_tes
+            prs_tes_top(k-kstart+1)=prs_tes(k)
          enddo
          prs_tes_top(:)=prs_tes_top(:)/100.
 !
@@ -600,15 +559,15 @@ subroutine get_expected_tes_ch4_profile(state_handle, ens_size, location, key, o
          call get_upper_bdy_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs,prs_tes_top,ncnt, &
          ch4_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
 !
-! Impose ensemble perturbations from level kstart(imem)+1      
-         ch4_prf_mdl(:)=ch4_prf_mdl(:)*VMR_conv
-         do k=1,kstart(imem) 
-            ch4_val(imem,k)=ch4_prf_mdl(k)*ch4_val(imem,kstart(imem)+1)/ &
-            (sum(ch4_val(:,kstart(imem)+1))/real(ens_size))
-            tmp_val(imem,k)=tmp_prf_mdl(k)*tmp_val(imem,kstart(imem)+1)/ &
-            (sum(tmp_val(:,kstart(imem)+1))/real(ens_size))
-            qmr_val(imem,k)=qmr_prf_mdl(k)*qmr_val(imem,kstart(imem)+1)/ &
-            (sum(qmr_val(:,kstart(imem)+1))/real(ens_size))
+! Impose ensemble perturbations from level kstart(imem)-1      
+         do k=kstart,layer_tes
+            kk=k-kstart+1
+            ch4_val(imem,k)=ch4_prf_mdl(kk)*ch4_val(imem,kstart-1)/ &
+            (sum(ch4_val(:,kstart-1))/real(ens_size))
+            tmp_val(imem,k)=tmp_prf_mdl(kk)*tmp_val(imem,kstart-1)/ &
+            (sum(tmp_val(:,kstart-1))/real(ens_size))
+            qmr_val(imem,k)=qmr_prf_mdl(kk)*qmr_val(imem,kstart-1)/ &
+            (sum(qmr_val(:,kstart-1))/real(ens_size))
          enddo
          deallocate(prs_tes_top)
          deallocate(ch4_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
@@ -616,126 +575,72 @@ subroutine get_expected_tes_ch4_profile(state_handle, ens_size, location, key, o
    enddo
 !
 ! Check full profile for negative values
+
+!   do imem=1,1
+!      do k=1,layer_tes
+!         write(string1, *) &
+!         'APM: prs, ch4, tmp, qmr ',k,prs_tes(k),ch4_val(imem,k), &
+!         tmp_val(imem,k),qmr_val(imem,k)
+!         call error_handler(E_MSG, routine, string1, source)
+!      enddo
+!   enddo      
+!
    do imem=1,ens_size
       flg=0
-      do k=1,level_tes   
+      do k=1,layer_tes   
          if(ch4_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             flg=1   
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
             call error_handler(E_ALLMSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            if(k.le.kstart(imem)) then
-               do kk=1,level_tes
-                  write(string1, *) &
-                  'APM: prs, ch4, tmp, qmr',key,imem,prs_tes(kk),ch4_val(imem,kk), &
-                  tmp_val(imem,kk),qmr_val(imem,kk)
-                  call error_handler(E_ALLMSG, routine, string1, source)
-               enddo
-               exit
-            endif
          endif
       enddo
-      if(flg.eq.1) exit
-   enddo
-
-   istatus(:)=0
-   zstatus(:)=0.
-   expct_val(:)=0.0
-   allocate(thick(layer_tes))
-
-   do imem=1,ens_size
-! Adjust the TES pressure for WRF-Chem lower/upper boudary pressure
-! (TES CH4 vertical grid is top to bottom)
-      prs_tes_mem(:)=prs_tes(:)
-      if (prs_sfc(imem).gt.prs_tes_mem(level_tes)) then
-         prs_tes_mem(level_tes)=prs_sfc(imem)
-      endif   
-
-! Calculate the thicknesses
-
-      thick(:)=0.
-      do k=1,layer_tes
-         lnpr_mid=(log(prs_tes_mem(k+1))+log(prs_tes_mem(k)))/2.
-         up_wt=log(prs_tes_mem(k+1))-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_tes_mem(k))
-         tl_wt=up_wt+dw_wt
-         tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
-         tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
-         thick(k)   = Rd*(dw_wt*tmp_vir_kp + up_wt*tmp_vir_k)/tl_wt/grav* &
-         log(prs_tes_mem(k+1)/prs_tes_mem(k))
-      enddo
-
-! Process the vertical summation
-
-      do k=1,layer_tes
-         if(prior(key,k).lt.0.) then
-            write(string1, *) &
-            'APM: TES Prior is negative. Level may be below surface. Key,Layer: ',key,k
-            call error_handler(E_MSG, routine, string1, source)
-            write(string1, *) &
-            'APM: Key ',key,' Prior: ',prior(key,k),' Avgk ',avg_kernel(key,k)
-            call error_handler(E_MSG, routine, string1, source)
-            cycle
-         endif
-!         
-         lnpr_mid=(log(prs_tes_mem(k+1))+log(prs_tes_mem(k)))/2.
-         up_wt=log(prs_tes_mem(k+1))-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_tes_mem(k))
-         tl_wt=up_wt+dw_wt
-   
-! Convert from VMR to molar density (mol/m^3)
-         if(use_log_ch4) then
-            ch4_val_conv = (dw_wt*exp(ch4_val(imem,k+1))+up_wt*exp(ch4_val(imem,k)))/tl_wt * &
-            (dw_wt*prs_tes_mem(k+1)+up_wt*prs_tes_mem(k)) / &
-            (Ru*(dw_wt*tmp_val(imem,k+1)+up_wt*tmp_val(imem,k)))
-         else
-            ch4_val_conv = (dw_wt*ch4_val(imem,k+1)+up_wt*ch4_val(imem,k))/tl_wt * &
-            (dw_wt*prs_tes_mem(k+1)+up_wt*prs_tes_mem(k)) / &
-            (Ru*(dw_wt*tmp_val(imem,k+1)+up_wt*tmp_val(imem,k)))
-         endif
- 
-! Get expected observation
-
-         prior_term=-1.*avg_kernel(key,k)
-         if(k.eq.klev_tes) prior_term=(1.0_r8 - avg_kernel(key,k)) 
-
-         expct_val(imem) = expct_val(imem) + thick(k) * ch4_val_conv * &
-         avg_kernel(key,k) + prior_term * prior(key,k)
-         
-!         write(string1, *) &
-!         'APM: Mem ',imem,' Key ',key,' Expct Val Terms: prs ',k, &
-!         (prs_tes_mem(k)+prs_tes_mem(k+1))/2.,' expct val ',expct_val(imem), &
-!         'avgk*thick*ch4_conv ', avg_kernel(key,k)*thick(k)*ch4_val_conv, &
-!         'prior_term*prior ', prior_term*prior(key,k)
-!         call error_handler(E_MSG, routine, string1, source)
-      enddo
-
-! call exit_all(-77)
-
-      if(expct_val(imem).lt.0.) then
-         write(string1, *) &
-         'APM: Member ',imem,'Key, Final Value ',key,expct_val(imem)
-         call error_handler(E_ALLMSG, routine, string1, source)
-      endif
-!      
-      if(isnan(expct_val(imem))) then
-         zstatus(imem)=20
+      if(flg.eq.1) then
+         zstatus(:)=20
          expct_val(:)=missing_r8
-         write(string1, *) &
-         'APM NOTICE: TES CH4 expected value is NaN '
-         call error_handler(E_MSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
+   enddo
 !
-      if(expct_val(imem).lt.0) then
+! Calculate the expected retrievals
+   istatus(:)=0
+   zstatus(:)=0.
+   expct_val(:)=0.0
+!      
+! Process the vertical summation
+   do imem=1,ens_size
+      do k=1,layer_tes
+         if(prior(key,k).lt.0.) then
+!            write(string1, *) &
+!            'APM: TES Prior is negative. Level may be below surface. Key,Layer: ',key,k
+!            call error_handler(E_MSG, routine, string1, source)
+            cycle
+         endif
+!
+! Get expected observation
+         prior_term=-1.*avg_kernel(key,k)
+         if(k.eq.klev_tes) prior_term=(1.0_r8 - avg_kernel(key,k)) 
+
+         expct_val(imem) = expct_val(imem) + log(ch4_val(imem,k)) * &
+         avg_kernel(key,k) + prior_term * log(prior(key,k))
+
+!         write(string1, *) 'APM: exp_val, ch4, avgk, prior_trm, prior',imem,k, &
+!         expct_val(imem),ch4_val(imem,k),avg_kernel(key,k),prior_term,prior(key,k)
+!         call error_handler(E_MSG, routine, string1, source)
+      enddo
+
+      expct_val(imem)=exp(expct_val(imem))      
+!      write(string1, *) 'APM: Finished vertical summation loop ',key,imem
+!      call error_handler(E_MSG, routine, string1, source)
+      
+      if(isnan(expct_val(imem))) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
-         write(string1, *) &
-         'APM NOTICE: TES CH4 expected value is negative '
-         call error_handler(E_MSG, routine, string1, source)
+!         write(string1, *) &
+!         'APM NOTICE: TES CH4 expected value is NaN'
+!         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
@@ -743,8 +648,7 @@ subroutine get_expected_tes_ch4_profile(state_handle, ens_size, location, key, o
 
 ! Clean up and return
    deallocate(ch4_val, tmp_val, qmr_val)
-   deallocate(thick)
-   deallocate(prs_tes, prs_tes_mem)
+   deallocate(prs_tes)
 
 end subroutine get_expected_tes_ch4_profile
 

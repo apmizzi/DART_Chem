@@ -282,7 +282,6 @@ program gome2a_no2_trop_col_ascii_to_obs
       read(fileid,*,iostat=ios) amf_total_obs
       read(fileid,*,iostat=ios) no2_slnt_col, no2_slnt_col_err
       read(fileid,*,iostat=ios) o3_slnt_col, o3_slnt_col_err
-      print *, 'slnt col ',o3_slnt_col,o3_slnt_col_err
       prs_obs(:)=prs_obs(:)*100.
       prs_obs_r8(:)=prs_obs(:)
       avgk_obs_r8(:)=avgk_obs(:)
@@ -351,7 +350,6 @@ program gome2a_no2_trop_col_ascii_to_obs
       deallocate(avgk_obs) 
       deallocate(avgk_obs_r8) 
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-      print *, 'sum_accept ',sum_accept
    enddo   
 !
 !----------------------------------------------------------------------

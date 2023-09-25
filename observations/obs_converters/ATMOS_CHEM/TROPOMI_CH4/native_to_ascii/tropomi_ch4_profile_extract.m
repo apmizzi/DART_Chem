@@ -263,74 +263,44 @@ function tropomi_ch4_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
          prs_lay=prs_lay/100.;
 %
 % Loop through TROPOMI data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
       for ilin=1:nscan
-         tropomidate=single(convert_time(file_str_yy,file_str_mm,file_str_dd, ...
-         0,0,0))+time_delt(ilin);
+         tropomidate=single(convert_time_ref(file_str_yy,file_str_mm,file_str_dd, ...
+         0,0,0,2010))+time_delt(ilin);
          [yyyy_tropomi,mn_tropomi,dd_tropomi,hh_tropomi,mm_tropomi,ss_tropomi]= ...
-	 invert_time(tropomidate);
-%         fprintf('windate_min %d \n',windate_min)
-%         fprintf('tropomi_dat %d \n',tropomidate)
-%         fprintf('windate_max %d \n',windate_max)	 
+	 invert_time_ref(tropomidate,2010);
+%
 % Check time
          if(tropomidate<windate_min | tropomidate>windate_max)
-%            fprintf('windate_min, tropomi_date, windate_max %d %d %d \n',windate_min,tropomidate,windate_max)
             continue
          end
          for ipxl=1:npxl
 %
 % QA/AC
-%	    if(qa_value(ipxl,ilin)<0.50 | zenang(ipxl,ilin)>=80.0 | cld_rad_frac(ipxl,ilin) >=.5)
-%               continue
-%	    end
+            if (any(isnan(alt_lev(:,ipxl,ilin))) | any(alt_lev(:,ipxl,ilin)<0.0))
+               continue
+            end
+%
+            if (any(isnan(ch4_prof_prior(:,ipxl,ilin))) | any(ch4_prof_prior(:,ipxl,ilin)<0.0))
+	      continue
+	    end
             if(isnan(ch4_vmr(ipxl,ilin)) | ch4_vmr(ipxl,ilin)<=0)
-%               fprintf('ch4_vmr issue %d \n',ch4_vmr(ipxl,ilin))
                continue
             end
 %
             if(isnan(ch4_vmr_err(ipxl,ilin)) | ch4_vmr_err(ipxl,ilin)<=0)
-%               fprintf('ch4_vmr_err issue %d \n',ch4_vmr_err(ipxl,ilin))
                continue
             end
 %
-            reject=0;
-            for ilay=1:nlay
-               if (isnan(col_avgk_lay(ilay,ipxl,ilin)))
-%                  fprintf('col_avgk_lay issue %d \n',col_avgk_lay(ilay,ipxl,ilin))
-                  reject=1
-                  break
-               end
-            end
-            if(reject==1)
+            if (any(isnan(col_avgk_lay(:,ipxl,ilin)))) 
                continue
-            end  
+            end
 %
-            reject=0;
-            for ilev=1:nlev
-               if (isnan(alt_lev(ilev,ipxl,ilin)))
-%                  fprintf('alt_lev issue %d \n',alt_lev(ilev,ipxl,ilin))
-                  reject=1
-                  break
-               end
-            end
-            if(reject==1)
-               continue
-            end  
-%
-            reject=0;
-            for ilay=1:nlay
-               if (isnan(ch4_prof_prior(ilay,ipxl,ilin)))
-%                  fprintf('ch4_prof_prior issue %d \n',ch4_prof_prior(ilay,ipxl,ilin))
-                  reject=1
-                  break
-               end
-            end
-            if(reject==1)
-               continue
-            end  
-           fprintf('APM: PASSED QA/QC TEST \n')
+%	    if(qa_value(ipxl,ilin)<0.50 | zenang(ipxl,ilin)>=80.0 | cld_rad_frac(ipxl,ilin) >=.5)
+%               continue
+%	    end
 %
 % Check domain
 % Input grid needs to be in degrees
@@ -391,15 +361,9 @@ function tropomi_ch4_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
                reject=1;
             end
             if(reject==1)
-%               fprintf('x_mdl_min, x_obs, x_mdl_max: %6.2f %6.2f %6.2f \n',xmdl_sw, ...
-%               x_obser,xmdl_mx)
-%               fprintf('y_mdl_min, y_obs, y_mdl_max: %6.2f %6.2f %6.2f \n',lat_mdl(1,1), ...
-%               y_obser,lat_mdl(nx_mdl,ny_mdl))
-%               fprintf('i_min %d j_min %d \n',i_min,j_min)
                continue
             end
             if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
-%               fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
                continue
             end
 %

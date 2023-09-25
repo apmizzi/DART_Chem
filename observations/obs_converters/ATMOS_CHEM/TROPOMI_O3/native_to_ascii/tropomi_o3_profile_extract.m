@@ -95,194 +95,167 @@ function tropomi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
       fprintf('%d %s \n',ifile,file_in);
       fprintf('file str %d cycle end %d \n',file_str_secs,day_secs_end);
       fprintf('file end %d cycle str %d \n',file_end_secs,day_secs_beg);
-%       
-      if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
-         continue
-      end
+%
+%%      if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
+%%         continue
+%%      end
       fprintf('READ TROPOMI DATA \n')
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Read TROPOMI data (total vertical column)
+% Read TROPOMI data (profile data)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Read TROPOMI O3 data
 %
 % scanline
-      field='/PRODUCT/scanline';
+      field='/PRODUCT/scanline';   % 835
       temp=ncread(file_in,field);
       units=ncreadatt(file_in,field,'units');  
-      long_name=ncreadatt(file_in,field,'long_name');  
-      scanline=max(temp);
+      scanline=size(temp);
+      nscan=scanline(1);
 % pixel
-      field='/PRODUCT/ground_pixel';
+      field='/PRODUCT/ground_pixel';   % 77
       temp=ncread(file_in,field);
       units=ncreadatt(file_in,field,'units');  
-      long_name=ncreadatt(file_in,field,'long_name');  
-      pixel=max(temp);
+      pixel=size(temp);
+      npxl=pixel(1);
 % time
-      field='/PRODUCT/time';
+      field='/PRODUCT/time';  % 1
       temp=ncread(file_in,field);
       units=ncreadatt(file_in,field,'units');  
-      standard_name=ncreadatt(file_in,field,'standard_name');  
-      long_name=ncreadatt(file_in,field,'long_name');  
       time=double(temp(1));
-% lat(pixel,scanline)
+% nlay
+      field='/PRODUCT/level';  % 33
+      temp=ncread(file_in,field);
+      level=size(temp);
+      nlay=level(1);
+      nlev=nlay+1;
+% lat(npxl,nscan)
       field='/PRODUCT/latitude';
       lat=double(ncread(file_in,field));
-      long_name=ncreadatt(file_in,field,'long_name');   
       units=ncreadatt(file_in,field,'units');
-      standard_name=ncreadatt(file_in,field,'standard_name');
-% lon(pixel,scanline)
+% lon(npxl,nscan)
       field='/PRODUCT/longitude';
       lon=double(ncread(file_in,field));
-      long_name=ncreadatt(file_in,field,'long_name');   
       units=ncreadatt(file_in,field,'units');
-      standard_name=ncreadatt(file_in,field,'standard_name');
-      for ipxl=1:pixel
-         for ilin=1:scanline
+      for ipxl=1:npxl
+         for ilin=1:nscan
             if(lon(ipxl,ilin)<0)
       	       lon(ipxl,ilin)=lon(ipxl,ilin)+360.;
             end
          end
       end
-% time_delta(pixel,scanline)
+% time_delta(nscan)
       field='/PRODUCT/delta_time';
       temp=ncread(file_in,field);
-      units=ncreadatt(file_in,field,'units');  
-      long_name=ncreadatt(file_in,field,'long_name');  
+      units=ncreadatt(file_in,field,'units');
       time_delta=double(temp(:,:))*1.e-3;
-% time_utc(scanline) (APM: this fileld is blank)
+% time_utc(nscan) (APM: this fileld is blank)
       field='/PRODUCT/time_utc';
       time_utc=h5read(file_in,field);
-% qa_value(pixel,scanline)
+% qa_value(npxl,nscan)
       field='/PRODUCT/qa_value';
       qa_value=ncread(file_in,field); 
       units=ncreadatt(file_in,field,'units');  
       scalef=ncreadatt(file_in,field,'scale_factor');
       offset=ncreadatt(file_in,field,'add_offset');
-      long_name=ncreadatt(file_in,field,'long_name');   
-% col_amt(pixel,scanline) (mol m-2)
-      field='/PRODUCT/ozone_total_vertical_column';
-      col_amt=double(ncread(file_in,field));
+% o3_prof(nlay,npxl,nscan) (mol m-3)
+      field='/PRODUCT/ozone_profile';
+      o3_prof=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
-      standard_name=ncreadatt(file_in,field,'standard_name');
-      long_name=ncreadatt(file_in,field,'long_name');   
-% col_amt_err(pixel,scanline) (mol m-2)
-      field='/PRODUCT/ozone_total_vertical_column_precision';
-      col_amt_err=double(ncread(file_in,field));
+% o3_prof_err(nlay,npxl,nscan) (mol m-3)
+      field='/PRODUCT/ozone_profile_precision';
+      o3_prof_err=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
-      standard_name=ncreadatt(file_in,field,'standard_name');
-      long_name=ncreadatt(file_in,field,'long_name');   
-% layer
-      field='/PRODUCT/layer';
-      temp=ncread(file_in,field);
-      layer=max(temp);
-% level
-      field='/PRODUCT/level';
-      temp=ncread(file_in,field);
-      level=max(temp);
-% solar_zenith_angle(pixel,scanline) (degrees)
+% o3_prof_smth_err(nlay,npxl,nscan) (mol m-3)
+      field='/PRODUCT/ozone_profile_smoothing';
+      o3_prof_err=double(ncread(file_in,field));
+      units=ncreadatt(file_in,field,'units');
+% o3_total_col(npxl,nscan) (mol m-3)
+      field='/PRODUCT/ozone_total_column';
+      o3_total_col=double(ncread(file_in,field));
+      units=ncreadatt(file_in,field,'units');
+% o3_total_col_err(npxl,nscan) (mol m-3)
+      field='/PRODUCT/ozone_total_column_precision';
+      o3_total_col_err=double(ncread(file_in,field));
+      units=ncreadatt(file_in,field,'units');
+% o3_trop_col(npxl,nscan) (mol m-3)
+      field='/PRODUCT/ozone_tropospheric_column';
+      o3_trop_col=double(ncread(file_in,field));
+      units=ncreadatt(file_in,field,'units');
+% o3_trop_col_err(npxl,nscan) (mol m-3)
+      field='/PRODUCT/ozone_tropospheric_column_precision';
+      o3_trop_col_err=double(ncread(file_in,field));
+      units=ncreadatt(file_in,field,'units');
+% prs_lay(nlay,npxl,nscan) (Pa) (bottom to top)
+      field='/PRODUCT/pressure';
+      prs_lay=double(ncread(file_in,field));
+      units=ncreadatt(file_in,field,'units');
+      prs_lay=prs_lay/100.;
+% solar_zenith_angle(npxl,nscan) (degrees)
       field='/PRODUCT/SUPPORT_DATA/GEOLOCATIONS/solar_zenith_angle';
       zenang=double(ncread(file_in,field));
-      long_name=ncreadatt(file_in,field,'long_name');   
-      standard_name=ncreadatt(file_in,field,'standard_name');
       units=ncreadatt(file_in,field,'units');
-% prior_lay(layer,pixel,scanline) (m)
-      field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/ozone_profile_apriori';
-      prior_lay=double(ncread(file_in,field));
+% cov_err(nlay,nlay,npxl,nscan) (m)
+      field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/ozone_profile_error_covariance_matrix';
+      cov_err=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
-      long_name=ncreadatt(file_in,field,'long_name');   
-% avgk_lay(layer,pixel,scanline) (m)
+% avgk_lay(nlay,nlay,npxl,nscan) (m)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/averaging_kernel';
       avgk_lay=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
-      long_name=ncreadatt(file_in,field,'long_name');   
-% prs_lev(level,pixel,scanline) (Pa) (bottom to top)
-      field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/pressure_grid';
-      prs_lev=double(ncread(file_in,field));
-      units=ncreadatt(file_in,field,'units');
-      standard_name=ncreadatt(file_in,field,'standard_name');
-      long_name=ncreadatt(file_in,field,'long_name');   
-% dofs(pixel,scanline) (none)
+% dofs(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/degrees_of_freedom';
       dofs=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
-      long_name=ncreadatt(file_in,field,'long_name');   
-% smth_err(pixel,scanline)
-      field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/smoothing_error';
-      smth_err=double(ncread(file_in,field));
+% prior_lay(nlay,npxl,nscan) (mol m-3)
+      field='/PRODUCT/SUPPORT_DATA/INPUT_DATA/ozone_profile_apriori';
+      prior_lay=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
-      long_name=ncreadatt(file_in,field,'long_name');   
+% prs_sfc(npxl,nscan)
+      field='/PRODUCT/SUPPORT_DATA/INPUT_DATA/surface_pressure';
+      prs_sfc=double(ncread(file_in,field));
+      units=ncreadatt(file_in,field,'units');
+% prs_trop(npxl,nscan)
+      field='/PRODUCT/SUPPORT_DATA/INPUT_DATA/pressure_at_tropopause';
+      prs_trop=double(ncread(file_in,field));
+      units=ncreadatt(file_in,field,'units');
       fprintf('BEGIN DATA PROCESSING  \n')
 %
-% Define TROPOMI vertical pressure grid (hPa) (bottom to top)
-      for ipxl=1:pixel
-          for ilin=1:scanline
-            for ilv=2:level
-               prs_lay(ilv-1,ipxl,ilin)=(prs_lev(ilv-1,ipxl,ilin)+ ...
-               prs_lev(ilv,ipxl,ilin))/2.;
-            end
-         end
-      end
-      prs_lev=prs_lev/100.;
-      prs_lay=prs_lay/100.;
-%
 % Loop through TROPOMI data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
-      for ilin=1:scanline
-%         date_str=char(time_utc(ilin));
-%         yyyy_tropomi=str2double(extractBetween(date_str,1,4));
-%         mn_tropomi=str2double(extractBetween(date_str,6,7));
-%         dy_tropomi=str2double(extractBetween(date_str,9,10));
-%         hh_tropomi=str2double(extractBetween(date_str,12,13));
-%         mm_tropomi=str2double(extractBetween(date_str,15,16));
-%         ss_tropomi=str2double(extractBetween(date_str,18,26));
-%         if(int32(hh_tropomi)>23 | int32(mm_tropomi)>59 | ...
-%         int32(ss_tropomi)>59)
-%            [yyyy_tropomi,mn_tropomi,dy_tropomi,hh_tropomi, ...
-%            mm_tropomi,ss_tropomi]=incr_time(yyyy_tropomi, ...
-%     	     mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi);
-%         end
-%         fprintf('obs date/time %d %d %d %d %d %d \n',yyyy_tropomi, ...
-%         mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi)
-%         tropomidate=single(convert_time(yyyy_tropomi,mn_tropomi, ...
-%         dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi));
-%         fprintf('windate_min %d \n',windate_min)
-%         fprintf('tropomi_dat %d \n',tropomidate)
-%         fprintf('windate_max %d \n',windate_max)
+      for ilin=1:nscan
 %
 % Check time
-%         if(tropomidate<windate_min | tropomidate>windate_max)
-%            continue
-%         end
-         for ipxl=1:pixel
-      	    tropomidate=single(time+time_delta(ipxl,ilin));
-      	    [yyyy_tropomi,mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi, ...
-      	    ss_tropomi]=invert_time(tropomidate);
-            if(hh_tropomi<0 | mm_tropomi<0 | ss_tropomi<0)
-	      fprintf('%d %d %d \n',single(time),int64(time_delta(ipxl,ilin)),tropomidate)
-               fprintf('%d %d %d %d %d %d \n',yyyy_tropomi,mn_tropomi,dy_tropomi, ...
-     	       hh_tropomi,mm_tropomi,ss_tropomi);
-               exit
-            end
-%           fprintf('%d %d %d \n',windate_min,tropomidate,windate_max)
-            if(tropomidate<windate_min | tropomidate>windate_max)
+      	 tropomidate=single(time+time_delta(ilin));
+         [yyyy_tropomi,mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi, ...
+         ss_tropomi]=invert_time_ref(tropomidate,2010);
+         if(hh_tropomi<0 | mm_tropomi<0 | ss_tropomi<0)
+            fprintf('%d %d %d \n',single(time),int64(time_delta(ipxl,ilin)),tropomidate)
+            fprintf('%d %d %d %d %d %d \n',yyyy_tropomi,mn_tropomi,dy_tropomi, ...
+            hh_tropomi,mm_tropomi,ss_tropomi);
+            exit
+         end
+%
+         if(tropomidate<windate_min | tropomidate>windate_max)
+            continue
+         end
+         for ipxl=1:npxl
+%
+% QA/AC
+%
+            if(any(isnan(o3_prof(:,ipxl,ilin))) | any(o3_prof(:,ipxl,ilin)<=0))
+               fprintf('FAILED QA/QC TEST \n')
                continue
             end
 %
-% QA/AC
 	    if(qa_value(ipxl,ilin)<0.50 | zenang(ipxl,ilin)>=80.0)
                continue
 	    end
-%
-            if(isnan(col_amt(ipxl,ilin)) | col_amt(ipxl,ilin)<=0)
-               continue
-            end
-%           fprintf('PASSED QA/QC TEST \n')
 %
 % Check domain
 % Input grid needs to be in degrees
@@ -353,15 +326,12 @@ function tropomi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
             fprintf(fid,'%d %d %d %d %d %d \n',yyyy_tropomi, ...
             mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi);
             fprintf(fid,'%14.8f %14.8f \n',lat(ipxl,ilin),lon(ipxl,ilin));
-            fprintf(fid,'%d %d \n',layer,level);
-            fprintf(fid,'%14.8g ',prs_lev(1:level,ipxl,ilin));
+            fprintf(fid,'%d %d \n',nlay,nlev);
+            fprintf(fid,'%14.8g ',prs_lay(1:nlay,ipxl,ilin));
             fprintf(fid,'\n');
-            fprintf(fid,'%14.8g ',avgk_lay(1:layer,ipxl,ilin));
+            fprintf(fid,'%14.8g ',avgk_lay(1:nlay,ipxl,ilin));
             fprintf(fid,'\n');
-            fprintf(fid,'%14.8g ',prior_lay(1:layer,ipxl,ilin));
-            fprintf(fid,'\n');
-            fprintf(fid,'%14.8g %14.8g \n',col_amt(ipxl,ilin), ...
-            col_amt_err(ipxl,ilin));
+            fprintf(fid,'%14.8g ',prior_lay(1:nlay,ipxl,ilin));
          end
       end
    end

@@ -105,7 +105,7 @@ module obs_def_tes_co_cpsr_mod
    integer, parameter    :: max_tes_co_obs = 10000000
    integer               :: num_tes_co_obs = 0
    integer,  allocatable :: nlayer(:)
-   integer,  allocatable :: kmodes(:)
+   integer,  allocatable :: klev(:)
    integer,  allocatable :: kend(:)
    real(r8), allocatable :: pressure(:,:)
    real(r8), allocatable :: avg_kernel(:,:)
@@ -169,7 +169,7 @@ subroutine initialize_module
    endif
    
    allocate(    nlayer(max_tes_co_obs))
-   allocate(    kmodes(max_tes_co_obs))
+   allocate(    klev(max_tes_co_obs))
    allocate(    kend(max_tes_co_obs))
    allocate(  pressure(max_tes_co_obs,nlayer_tes))
    allocate(avg_kernel(max_tes_co_obs,nlayer_tes))
@@ -185,11 +185,11 @@ subroutine read_tes_co_cpsr(key, ifile, fform)
    integer,          intent(in)           :: ifile
    character(len=*), intent(in), optional :: fform
 
-! temporary arrays to hold buffer untill we decide if we have enough room
+! tesrary arrays to hold buffer till we decide if we have enough room
 
    integer               :: keyin
    integer               :: nlayer_1
-   integer               :: kmodes_1
+   integer               :: klev_1
    integer               :: kend_1
    real(r8), allocatable :: pressure_1(:)
    real(r8), allocatable :: avg_kernel_1(:)
@@ -205,7 +205,7 @@ subroutine read_tes_co_cpsr(key, ifile, fform)
    
 ! Need to know how many layers for this one
    nlayer_1 = read_int_scalar( ifile, fileformat, 'nlayer_1')
-   kmodes_1 = read_int_scalar( ifile, fileformat, 'kmodes_1')
+   klev_1 = read_int_scalar( ifile, fileformat, 'klev_1')
    kend_1 = read_int_scalar( ifile, fileformat, 'kend_1')
    
    allocate(  pressure_1(nlayer_1))
@@ -227,7 +227,7 @@ subroutine read_tes_co_cpsr(key, ifile, fform)
    endif
    
    call set_obs_def_tes_co_cpsr(key, pressure_1(1:nlayer_1), avg_kernel_1(1:nlayer_1), &
-   prior_1(1:nlayer_1), nlayer_1, kmodes_1, kend_1)
+   prior_1(1:nlayer_1), nlayer_1, klev_1, kend_1)
    
    deallocate(pressure_1, avg_kernel_1, prior_1)
    
@@ -252,7 +252,7 @@ subroutine write_tes_co_cpsr(key, ifile, fform)
 ! you can come extend the context strings to include the key if desired.
 
    call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
-   call write_int_scalar(ifile,                     kmodes(key), fileformat,'kmodes')
+   call write_int_scalar(ifile,                     klev(key), fileformat,'klev')
    call write_int_scalar(ifile,                     kend(key), fileformat,'kend')
    call write_r8_array(  ifile, nlayer(key),  pressure(key,:), fileformat,'pressure')
    call write_r8_array(  ifile, nlayer(key),  avg_kernel(key,:), fileformat,'avg_kernel')
@@ -309,11 +309,11 @@ subroutine get_expected_tes_co_cpsr(state_handle, ens_size, location, key, obs_t
    character(len=*),parameter  :: fld = 'CO_VMR_inst'
    type(location_type) :: loc2
    
-   integer :: layer_tes,level_tes, kmodes_tes, kend_tes
+   integer :: layer_tes,level_tes
    integer :: layer_mdl,level_mdl
-   integer :: k,kk,imem,imemm
+   integer :: k,kk,imem,imemm,flg
    integer :: interp_new
-   integer :: icnt
+   integer :: icnt,ncnt,kstart,klev_tes
    integer :: date_obs,datesec_obs
    integer, dimension(ens_size) :: zstatus,kbnd_1,kbnd_n
    
@@ -324,6 +324,7 @@ subroutine get_expected_tes_co_cpsr(state_handle, ens_size, location, key, obs_t
    real(r8) :: mloc(3),obs_prs
    real(r8) :: co_val_conv, VMR_conv
    real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
+   real(r8) :: lon_obs,lat_obs,pi,rad2deg
 
    real(r8), dimension(ens_size) :: co_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
    real(r8), dimension(ens_size) :: co_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
@@ -334,11 +335,6 @@ subroutine get_expected_tes_co_cpsr(state_handle, ens_size, location, key, obs_t
    logical  :: return_now,co_return_now,tmp_return_now,qmr_return_now
 !
 ! Upper BC variables
-   integer  :: ncnt,kstart,flg
-   real(r8) :: lon_obs,lat_obs,pi,rad2deg
-   real     :: prs_del,delta,bdy_coef
-   real     :: co_bot,prs_bot,tmp_bot,qmr_bot
-   real     :: co_top,prs_top,tmp_top,qmr_top
    real(r8), allocatable, dimension(:)   :: co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl
    real(r8), allocatable, dimension(:)   :: prs_tes_top
    
@@ -358,16 +354,12 @@ subroutine get_expected_tes_co_cpsr(state_handle, ens_size, location, key, obs_t
    tmp_max  = 600.
    del_prs  = 5000.
    VMR_conv = 28.9644/47.9982
-   bdy_coef = 0.95
-   prs_del  = 1000.         ! Pa  
 ! 
 ! WACCM - MMR
 ! WRFChem - VMR ppmv
-! TES CO - DU   
 !
 ! to convert from mass mixing ratio (MMR) to volume mixing ratio (VMR) multiply by
 ! the molar mass of dry air (28.9644 g) and divide by the molar mass of the constituent
-
 ! O3 - 47.9982 g
 ! CO - 28.0101 g
 ! NO2 - 46.0055 g
@@ -383,16 +375,14 @@ subroutine get_expected_tes_co_cpsr(state_handle, ens_size, location, key, obs_t
    endif
    
 ! Assign vertical grid information (TES CO grid is top to bottom)
-
+! klev_tes is the number of modes
    layer_tes   = nlayer(key)
    level_tes   = nlayer(key)+1
-   kmodes_tes  = kmodes(key)
-   kend_tes    = kend(key)
+   klev_tes    = klev(key)
    layer_mdl   = nlayer_model
    level_mdl   = nlayer_model+1
 
    allocate(prs_tes(layer_tes))
-   allocate(prs_tes_mem(layer_tes))
    prs_tes(1:layer_tes)=pressure(key,1:layer_tes)
 
 ! Get location infomation
@@ -404,7 +394,6 @@ subroutine get_expected_tes_co_cpsr(state_handle, ens_size, location, key, obs_t
    elseif (mloc(2) < -90.0_r8) then
       mloc(2) = -90.0_r8
    endif
-   obs_prs=mloc(3)
 !
 ! You could set a unique error code for each condition and then just return
 ! without having to issue a warning message. The error codes would then
@@ -535,39 +524,20 @@ subroutine get_expected_tes_co_cpsr(state_handle, ens_size, location, key, obs_t
 !      call error_handler(E_MSG, routine, string1, source)
 !      write(string1, *)'APM: qmr ',key,k,qmr_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
-
-! Check data for missing values      
-      do imem=1,ens_size
-         if(co_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
-         qmr_val(imem,k).eq.missing_r8) then
-            zstatus(:)=20
-            expct_val(:)=missing_r8
-            write(string1, *) 'APM: Model profile data has missing values for obs, level ',key,k
-            call error_handler(E_ALLMSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            do imemm=1,ens_size
-               write(string1, *) &
-               'APM: Model profile values: co,tmp,qmr',key,imem,k,co_val(imemm,k), &
-               tmp_val(imemm,k),qmr_val(imemm,k)     
-               call error_handler(E_ALLMSG, routine, string1, source)
-            enddo
-            return
-         endif
-      enddo
 !
 ! Convert units for co from ppmv
       co_val(:,k) = co_val(:,k) * 1.e-6_r8
-      co_mdl_1(:)=co_mdl_1(:) * 1.e-6_r8
-      co_mdl_n(:)=co_mdl_n(:) * 1.e-6_r8
    enddo
+   co_mdl_1(:)=co_mdl_1(:) * 1.e-6_r8
+   co_mdl_n(:)=co_mdl_n(:) * 1.e-6_r8
 !
 ! Use large scale co data above the regional model top
 ! TES vertical is from bottom to top   
+   kstart=-1
    do imem=1,ens_size
-      kstart=-1
-      if (prs_tes(layer_tes).le.prs_mdl_n(imem)) then
+      if (prs_tes(layer_tes).lt.prs_mdl_n(imem)) then
          do k=1,layer_tes
-            if (prs_tes(k).lt.prs_mdl_n(imem)) then
+            if (prs_tes(k).le.prs_mdl_n(imem)) then
                kstart=k
                exit
             endif
@@ -589,7 +559,6 @@ subroutine get_expected_tes_co_cpsr(state_handle, ens_size, location, key, obs_t
          co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
 !
 ! Impose ensemble perturbations from level kstart(imem)-1      
-         co_prf_mdl(:)=co_prf_mdl(:)*VMR_conv
          do k=kstart,layer_tes
             kk=k-kstart+1
             co_val(imem,k)=co_prf_mdl(kk)*co_val(imem,kstart-1)/ &
@@ -608,162 +577,49 @@ subroutine get_expected_tes_co_cpsr(state_handle, ens_size, location, key, obs_t
    do imem=1,ens_size
       flg=0
       do k=1,layer_tes   
-
-!         if(key.eq.1 .and. imem.eq.1) then
-!            write(string1, *) &
-!            'APM: co values: imem,k,co ',imem,k,co_val(imem,k)
-!            call error_handler(E_MSG, routine, string1, source)
-!         endif
-
          if(co_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             flg=1   
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
             call error_handler(E_ALLMSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          endif
       enddo
-      if(flg.eq.1) exit
+      if(flg.eq.1) then
+         zstatus(:)=20
+         expct_val(:)=missing_r8
+         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         return
+      endif
    enddo
-
+!
+! Calculate the expected retrievals
    istatus(:)=0
    zstatus(:)=0.
    expct_val(:)=0.0
-   allocate(thick(layer_tes))
-
-   do imem=1,ens_size
-! Define upper and lower values for layer grid
-! (TES CO grid is bottom to top) prs is in Pa
-      prs_tes_mem(:)=prs_tes(:)      
-! Definitions for k=1 or k=layer_tes
-      prs_bot=prs_sfc(imem)
-      if (prs_bot.le.prs_tes_mem(1)) then
-         prs_bot=prs_tes_mem(1)+prs_del
-      endif   
-! Bottom terms
-      co_bot=co_val(imem,1)
-      tmp_bot=tmp_val(imem,1)
-      qmr_bot=qmr_val(imem,1)
-! Top terms
-      prs_top=prs_tes(layer_tes)+(prs_tes(layer_tes)-prs_tes(layer_tes-1))/2.
-      if(prs_top.le.0.) prs_top=bdy_coef*prs_tes(layer_tes)
-! co
-      delta=(co_val(imem,layer_tes)-co_val(imem,layer_tes-1))/ &
-      (prs_tes(layer_tes)-prs_tes(layer_tes-1))
-      co_top=co_val(imem,layer_tes) + delta*(prs_top-prs_tes(layer_tes))
-      if(co_top.le.0.) then
-         if(delta.le.0.) co_top=bdy_coef*co_val(imem,layer_tes)
-         if(delta.gt.0.) co_top=(2.-bdy_coef)*co_val(imem,layer_tes)
-      endif
-! tmp
-      delta=(tmp_val(imem,layer_tes)-tmp_val(imem,layer_tes-1))/ &
-      (prs_tes(layer_tes)-prs_tes(layer_tes-1))
-      tmp_top=tmp_val(imem,layer_tes) + delta*(prs_top-prs_tes(layer_tes))
-      if(tmp_top.le.0.) then
-         if(delta.le.0.) tmp_top=bdy_coef*tmp_val(imem,layer_tes)
-         if(delta.gt.0.) tmp_top=(2.-bdy_coef)*tmp_val(imem,layer_tes)
-      endif
-! qmr
-      delta=(qmr_val(imem,layer_tes)-qmr_val(imem,layer_tes-1))/ &
-      (prs_tes(layer_tes)-prs_tes(layer_tes-1))
-      qmr_top=qmr_val(imem,layer_tes) + delta*(prs_top-prs_tes(layer_tes))
-      if(qmr_top.le.0.) then
-         if(delta.le.0.) qmr_top=bdy_coef*qmr_val(imem,layer_tes)
-         if(delta.gt.0.) qmr_top=(2.-bdy_coef)*qmr_val(imem,layer_tes)
-      endif
-!
-! VERTICAL SUMMATION
-! k=1 term      
-      k=1
-! co term (Units are VMR, calculate layer average)
-         lnpr_mid=(log(prs_tes_mem(k+1))+log(prs_bot))/2.
-         up_wt=log(prs_bot)-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_tes_mem(k+1))
-         tl_wt=up_wt+dw_wt
-         if(use_log_co) then
-            co_val_conv = (dw_wt*exp(co_bot)+up_wt*exp(co_val(imem,k+1)))/tl_wt
-         else
-            co_val_conv = (dw_wt*co_bot+up_wt*co_val(imem,k+1))/tl_wt
-         endif
-         prior_term=avg_kernel(key,k)
-         if(k.eq.kmodes_tes) prior_term=1.-prior_term
-! expected retrieval sum
-         expct_val(imem) = expct_val(imem) + co_val_conv * &
-         avg_kernel(key,k)
-
-         if(key.eq.1 .and. imem.eq.1) then
-            write(string1, *)'APM: expected retr ',k,expct_val(imem), &
-            avg_kernel(key,k), co_val_conv, prior(key,k)
-            call error_handler(E_MSG, routine, string1, source)
-         endif
-!
-! k=layer_tes term
-      k=layer_tes
-         lnpr_mid=(log(prs_top)+log(prs_tes_mem(k)))/2.
-         up_wt=log(prs_tes_mem(k))-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_top)
-         tl_wt=up_wt+dw_wt
-! CO term (Units are VMR, calculate layer average)
-         if(use_log_co) then
-            co_val_conv = (dw_wt*exp(co_val(imem,k))+up_wt*exp(co_top))/tl_wt
-         else
-            co_val_conv = (dw_wt*co_val(imem,k)+up_wt*co_top)/tl_wt
-         endif
-         prior_term=avg_kernel(key,k)
-         if(k.eq.kmodes_tes) prior_term=1.-prior_term
-! expected retrieval sum
-         expct_val(imem) = expct_val(imem) + co_val_conv * &
-         avg_kernel(key,k)
-
-         if(key.eq.1 .and. imem.eq.1) then
-            write(string1, *)'APM: expected retr ',k,expct_val(imem), &
-            avg_kernel(key,k), co_val_conv, prior(key,k)
-            call error_handler(E_MSG, routine, string1, source)
-         endif
 !      
-! remaining terms
-      do k=2,layer_tes-1
-         prs_bot=(prs_tes_mem(k-1)+prs_tes_mem(k))/2.
-         prs_top=(prs_tes_mem(k)+prs_tes_mem(k+1))/2.
-         co_bot=(co_val(imem,k-1)+co_val(imem,k))/2.
-         co_top=(co_val(imem,k)+co_val(imem,k+1))/2.
-         tmp_bot=(tmp_val(imem,k-1)+tmp_val(imem,k))/2.
-         tmp_top=(tmp_val(imem,k)+tmp_val(imem,k+1))/2.
-         qmr_bot=(qmr_val(imem,k-1)+qmr_val(imem,k))/2.
-         qmr_top=(qmr_val(imem,k)+qmr_val(imem,k+1))/2.
-         lnpr_mid=(log(prs_top)+log(prs_tes_mem(k)))/2.
-         up_wt=log(prs_bot)-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_tes_mem(k+1))
-         tl_wt=up_wt+dw_wt
-! co term (Units are VMR, calculate layer average)
-         if(use_log_co) then
-            co_val_conv = (dw_wt*exp(co_bot)+up_wt*exp(co_top))/tl_wt
-         else
-            co_val_conv = (dw_wt*co_bot+up_wt*co_top)/tl_wt
-         endif
-         prior_term=avg_kernel(key,k)
-         if(k.eq.kmodes_tes) prior_term=1.-prior_term
-! expected retrieval
-         expct_val(imem) = expct_val(imem) + co_val_conv * &
-         avg_kernel(key,k) + prior_term*prior(key,k)
+! Process the vertical summation
+   do imem=1,ens_size
+      do k=1,layer_tes
+!
+! Get expected observation
+         expct_val(imem) = expct_val(imem) + log(co_val(imem,k)) * &
+         avg_kernel(key,k)
 
-         if(key.eq.1 .and. imem.eq.1) then
-            write(string1, *)'APM: expected retr ',k,expct_val(imem), &
-            avg_kernel(key,k), co_val_conv, prior(key,k)
-            call error_handler(E_MSG, routine, string1, source)
-         endif
-
+!         write(string1, *) 'APM: exp_val, co, avgk ',imem,k, &
+!         expct_val(imem),co_val(imem,k),avg_kernel(key,k)
+!         call error_handler(E_MSG, routine, string1, source)
       enddo
-      write(string1, *)'APM: FINAL EXPECTED VALUE ',expct_val(imem)
-      call error_handler(E_MSG, routine, string1, source)
-      write(string1, *)'  '
-      call error_handler(E_MSG, routine, string1, source)
-      if(expct_val(imem).lt.0) then
+
+!      write(string1, *) 'APM: Finished vertical summation loop ',key,imem
+!      call error_handler(E_MSG, routine, string1, source)
+      
+      if(isnan(expct_val(imem))) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
-         write(string1, *) 'APM NOTICE: TES CO expected value is negative '
-         call error_handler(E_MSG, routine, string1, source)
+!         write(string1, *) &
+!         'APM NOTICE: TES CO expected value is NaN'
+!         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
@@ -771,17 +627,16 @@ subroutine get_expected_tes_co_cpsr(state_handle, ens_size, location, key, obs_t
 
 ! Clean up and return
    deallocate(co_val, tmp_val, qmr_val)
-   deallocate(thick)
-   deallocate(prs_tes, prs_tes_mem)
+   deallocate(prs_tes)
 
 end subroutine get_expected_tes_co_cpsr
 
 !-------------------------------------------------------------------------------
 
 subroutine set_obs_def_tes_co_cpsr(key, co_pressure, co_avg_kernel, co_prior, &
-co_nlayer, co_kmodes, co_kend)
+co_nlayer, co_klev, co_kend)
 
-   integer,                           intent(in)   :: key, co_nlayer, co_kmodes, co_kend
+   integer,                           intent(in)   :: key, co_nlayer, co_klev, co_kend
    real(r8), dimension(co_nlayer),    intent(in)   :: co_pressure
    real(r8), dimension(co_nlayer),    intent(in)   :: co_avg_kernel
    real(r8), dimension(co_nlayer),    intent(in)   :: co_prior
@@ -796,7 +651,7 @@ co_nlayer, co_kmodes, co_kend)
    endif
    
    nlayer(key) = co_nlayer
-   kmodes(key) = co_kmodes
+   klev(key) = co_klev
    kend(key) = co_kend
    pressure(key,1:co_nlayer)   = co_pressure(1:co_nlayer)
    avg_kernel(key,1:co_nlayer) = co_avg_kernel(1:co_nlayer)

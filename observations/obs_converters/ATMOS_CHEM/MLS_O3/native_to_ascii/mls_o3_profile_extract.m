@@ -16,7 +16,6 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
    nx_mdl=str2double(cnx_mdl);
    ny_mdl=str2double(cny_mdl);
 %
-% Get file list and number of files
    command=strcat('rm'," ",'-rf'," ",fileout);
    [status]=system(command);
    fid=fopen(fileout,'w');
@@ -45,12 +44,13 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %
 % Convert DU to molecules/m^2
    du2molcpm2=2.6867e20;
+
    day_secs_beg=whh_mn*60.*60. + wmm_mn*60. + wss_mn;
    day_secs_end=whh_mx*60.*60. + wmm_mx*60. + wss_mx;
 %
 % Print input data
-   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
-   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
+%   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
+%   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
 %
 % Read model grid
    lon_mdl=ncread(strcat(path_mdl,'/',file_mdl),'XLONG');
@@ -150,7 +150,7 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       clear o3_lay vert_col_total vert_col_trop
       clear prior_lay prior_err_lay prs_lev
       clear trop_indx avgk_lay avgk_diag_lay noise_corr info_content
-      file_in=char(file_list(ifile))
+      file_in=char(file_list(ifile));
       if(isempty(file_in))
          continue
       end
@@ -180,10 +180,12 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       file_end_ss=round(str2double(time_end(18:23)));      
       file_str_secs=file_str_hh*3600 + file_str_mn*60 + file_str_ss;
       file_end_secs=file_end_hh*3600 + file_end_mn*60 + file_end_ss;
+      fprintf('%d %s \n',ifile,file_in);
+%      fprintf('file str secs %d cycle vend secs %d \n',file_secs,day_secs_end);
 %
       if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
-         fprintf('is %d <= %d, then process obs \n',file_str_secs,day_secs_end)
-         fprintf('is %d >= %d, then process obs \n',file_end_secs,day_secs_beg)
+%         fprintf('is %d <= %d, then process obs \n',file_str_secs,day_secs_end)
+%         fprintf('is %d >= %d, then process obs \n',file_end_secs,day_secs_beg)
          continue
       end
       fprintf('READ MLS DATA \n')
@@ -283,8 +285,8 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       o3_prior_status=h5read(file_in,field);
 %
 % Loop through MLS data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
       for itim=1:ntime
          curr_hrs=fix((time(itim)-tai93_0UTC)/3600);
@@ -298,8 +300,8 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          hh_mls=curr_hrs;
          mm_mls=curr_min;
          ss_mls=round(curr_sec);
-         mlsdate=single(convert_time(yyyy_mls,mn_mls, ...
-         dy_mls,hh_mls,mm_mls,ss_mls));
+         mlsdate=single(convert_time_ref(yyyy_mls,mn_mls, ...
+         dy_mls,hh_mls,mm_mls,ss_mls,2010));
          if(hh_mls==24 | mm_mls==60 | ss_mls==60)	 
             yyyy_tp=yyyy_mls;
             mn_tp=mn_mls;
@@ -319,10 +321,10 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %
 % QA/QC
 %
-         if(zenang(itim)>=80.0)
-            fprintf('zenang %6.2f \n',zenang(itim))
+%         if(zenang(itim)>=80.0)
+%            fprintf('zenang %6.2f \n',zenang(itim))
 %            continue
-         end
+%         end
 %         if(isnan(o3_col_obs(itim)))
 %            continue
 %         end
@@ -389,11 +391,11 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
             reject=1;
          end
          if(reject==1)
-            fprintf('x_mdl_min, x_obs, x_mdl_max: %6.2f %6.2f %6.2f \n',xmdl_sw, ...
-            x_obser,xmdl_mx)
-            fprintf('y_mdl_min, y_obs, y_mdl_max: %6.2f %6.2f %6.2f \n',lat_mdl(1,1), ...
-            y_obser,lat_mdl(nx_mdl,ny_mdl))
-            fprintf('i_min %d j_min %d \n',i_min,j_min)
+%            fprintf('x_mdl_min, x_obs, x_mdl_max: %6.2f %6.2f %6.2f \n',xmdl_sw, ...
+%            x_obser,xmdl_mx)
+%            fprintf('y_mdl_min, y_obs, y_mdl_max: %6.2f %6.2f %6.2f \n',lat_mdl(1,1), ...
+%            y_obser,lat_mdl(nx_mdl,ny_mdl))
+%            fprintf('i_min %d j_min %d \n',i_min,j_min)
             continue
          end
          if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)

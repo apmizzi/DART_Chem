@@ -24,7 +24,7 @@ function tropomi_hcho_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,
    command=strcat('ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
-   file_list=squeeze(file_list_b);   
+   file_list=squeeze(file_list_b);
    nfile=size(file_list);
 %
 % Constants
@@ -67,11 +67,16 @@ function tropomi_hcho_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,
    stand_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','STAND_LON');  
    pole_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','POLE_LAT');  
    pole_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','POLE_LON');
+   fprintf('START FILE SEARCH \n')
 %
 % Process satellite data
    for ifile=1:nfile
       file_in=char(file_list(ifile));
       if(isempty(file_in))
+         continue
+      end
+      indx=strfind(file_in,file_pre)-1;
+      if(isempty(indx))
          continue
       end
       time_start=ncreadatt(file_in,'/','time_coverage_start');
@@ -90,10 +95,9 @@ function tropomi_hcho_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,
       file_end_ss=str2double(time_end(18:19));
       file_str_secs=file_str_hh*60.*60. + file_str_mn*60. + file_str_ss;
       file_end_secs=file_end_hh*60.*60. + file_end_mn*60. + file_end_ss;
-%      fprintf('%d %s \n',ifile,file_in);
-%      fprintf('file str %d cycle end %d \n',file_str_secs,day_secs_end);
-%      fprintf('file end %d cycle str %d \n',file_end_secs,day_secs_beg);
-%       
+      fprintf('%d %s \n',ifile,file_in);
+      fprintf('file str %d cycle end %d \n',file_str_secs,day_secs_end);
+      fprintf('file end %d cycle str %d \n',file_end_secs,day_secs_beg);
       if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
          continue
       end
@@ -202,11 +206,11 @@ function tropomi_hcho_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,
       long_name=ncreadatt(file_in,field,'long_name');   
       standard_name=ncreadatt(file_in,field,'standard_name');
       units=ncreadatt(file_in,field,'units');
-% tm5_a(nlay) (Pa)
+% tm5_a(nlay) (Pa) (bottom pressure levels)
       field='/PRODUCT/SUPPORT_DATA/INPUT_DATA/tm5_constant_a';
       tm5_a=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
-% tm5_b(nlay) (none)
+% tm5_b(nlay) (none) (bottom pressure levels)
       field='/PRODUCT/SUPPORT_DATA/INPUT_DATA/tm5_constant_b';
       tm5_b=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
@@ -215,15 +219,13 @@ function tropomi_hcho_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,
       for ipxl=1:npxl
          for ilin=1:nscan
             for ilv=1:nlay
-               prs_lay(ilv,ipxl,ilin)=tm5_a(ilv)+tm5_b(ilv)* ...
+               prs_lev(ilv,ipxl,ilin)=tm5_a(ilv)+tm5_b(ilv)* ...
                prs_sfc(ipxl,ilin);
-#              if(prs_lay(ilv,ipxl,ilin)<.1)
-#                 prs_lay(ilv,ipxl,ilin)=.1;
-#              end
 	    end
-	    prs_lev(1,ipxl,ilin)=prs_sfc(ipxl,ilin)
-	    for ilv=2:nlev
-               prs_lev(ilv,ipxl,ilin)=2.*prs_lay(ilv-1,ipxl,ilin)-prs_lev(ilv-1,ipxl,ilin)
+	    prs_lev(nlev,ipxl,ilin)=prs_lev(nlay,ipxl,ilin)/2.;
+	    for ilv=1:nlay
+               prs_lay(ilv,ipxl,ilin)=(prs_lev(ilv+1,ipxl,ilin)+ ...
+               prs_lev(ilv,ipxl,ilin))/2.;
             end
         end
       end
@@ -306,31 +308,35 @@ function tropomi_hcho_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,
 %      time_utc(1)
 %      long_name=ncreadatt(file_in,field,'long_name');   
 %
-      fprintf('BEGIN DATA PROCESSING \n')
-%
 % Loop through TROPOMI data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
       for ipxl=1:npxl
          for ilin=1:nscan
-            tropomidate=single(convert_time(file_str_yy,file_str_mm,file_str_dd, ...
-            0,0,0))+time_delt(ipxl,ilin);
+            tropomidate=single(convert_time_ref(file_str_yy,file_str_mm,file_str_dd, ...
+            0,0,0,2010))+time_delt(ipxl,ilin);
             [yyyy_tropomi,mn_tropomi,dd_tropomi,hh_tropomi,mm_tropomi,ss_tropomi]= ...
-	    invert_time(tropomidate);
-%            fprintf('windate_min %d \n',windate_min)
-%            fprintf('tropomi_dat %d \n',tropomidate)
-%            fprintf('windate_max %d \n',windate_max)
+	    invert_time_ref(tropomidate,2010);
 %
 % Check time
             if(tropomidate<windate_min | tropomidate>windate_max)
                continue
-            end
+            end	    
 %
 % QA/AC
-%	    if(qa_value(ipxl,ilin)<0.50 | zenang(ipxl,ilin)>=80.0 | cld_rad_frac(ipxl,ilin) >=.5)
-%               continue
-%	    end
+            if(any(isnan(prs_lev(:,ipxl,ilin))) | any(prs_lev(:,ipxl,ilin)<=0))
+               continue
+            end
+%
+            if(any(isnan(avgk_lay(:,ipxl,ilin))))
+               continue
+            end  
+%
+	    if(any(isnan(hcho_prof_prior(:,ipxl,ilin))) | any(hcho_prof_prior(:,ipxl,ilin)<=0))
+               continue
+            end  
+%
             if(isnan(hcho_trop_col(ipxl,ilin)) | hcho_trop_col(ipxl,ilin)<=0)
                continue
             end
@@ -339,28 +345,17 @@ function tropomi_hcho_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,
                continue
             end
 %
-            reject=0;
-            for ilay=1:nlay
-               if (isnan(avgk_lay(ilay,ipxl,ilin)))
-                  reject=1
-                  break
-               end
-            end
-            if(reject==1)
+            if(isnan(tm5_trop_indx(ipxl,ilin)) | tm5_trop_indx(ipxl,ilin)<=0)
                continue
-            end  
+            end
 %
-            reject=0;
-            for ilay=1:nlay
-               if (isnan(hcho_prof_prior(ilay,ipxl,ilin)))
-                  reject=1
-                  break
-               end
-            end
-            if(reject==1)
+            if(isnan(hcho_amf_trop(ipxl,ilin)) | hcho_amf_trop(ipxl,ilin)<=0)
                continue
-            end  
-%           fprintf('PASSED QA/QC TEST \n')
+            end
+%
+%	    if(qa_value(ipxl,ilin)<0.50 | zenang(ipxl,ilin)>=80.0 | cld_rad_frac(ipxl,ilin) >=.5)
+%               continue
+%	    end
 %
 % Check domain
 % Input grid needs to be in degrees
@@ -421,15 +416,11 @@ function tropomi_hcho_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,
                reject=1;
             end
             if(reject==1)
-%               fprintf('x_mdl_min, x_obs, x_mdl_max: %6.2f %6.2f %6.2f \n',xmdl_sw, ...
-%               x_obser,xmdl_mx)
-%               fprintf('y_mdl_min, y_obs, y_mdl_max: %6.2f %6.2f %6.2f \n',lat_mdl(1,1), ...
-%               y_obser,lat_mdl(nx_mdl,ny_mdl))
-%               fprintf('i_min %d j_min %d \n',i_min,j_min)
+%               fprintf('FAILED DOMAIN TEST \n')
                continue
             end
             if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
-               fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
+%               fprintf('FAILED DOMAIN TEST \n')
                continue
             end
 %

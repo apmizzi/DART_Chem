@@ -322,8 +322,8 @@ function tropomi_no2_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,
          prs_lay=prs_lay/100.;
 %
 % Loop through TROPOMI data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
       for ilin=1:scanline
          date_str=char(time_utc(ilin));
@@ -341,8 +341,8 @@ function tropomi_no2_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,
          end
 %         fprintf('obs date/time %d %d %d %d %d %d \n',yyyy_tropomi, ...
 %         mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi)
-         tropomidate=single(convert_time(yyyy_tropomi,mn_tropomi, ...
-         dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi));
+         tropomidate=single(convert_time_ref(yyyy_tropomi,mn_tropomi, ...
+         dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi,2010));
 %         fprintf('windate_min %d \n',windate_min)
 %         fprintf('tropomi_dat %d \n',tropomidate)
 %         fprintf('windate_max %d \n',windate_max)

@@ -21,8 +21,8 @@ function tempo_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
    [status]=system(command);
    fid=fopen(fileout,'w');
 %
-   command=strcat('ls'," ",'-1'," ",filein,'*.nc')
-   [status,file_list_a]=system(command)
+   command=strcat('ls'," ",'-1'," ",filein,'*.nc');
+   [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);
    nfile=size(file_list);
@@ -31,7 +31,7 @@ function tempo_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
    Ru=8.316;
    Rd=286.9;
    eps=0.61;
-   molec_wt_no2=.0480;
+   molec_wt_o3=.0480;
    molec_wt_no2=.0460;
    molec_wt_so2=.0641;
    AvogN=6.02214e23;
@@ -70,10 +70,14 @@ function tempo_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
 %
 % Process satellite data
    for ifile=1:nfile
-      file_in=char(file_list(ifile))
+     file_in=char(file_list(ifile));
       if(isempty(file_in))
          continue
       end
+      indx=strfind(file_in,file_pre)-1;
+      if(isempty(indx))
+         continue
+      end      
       time_start=ncreadatt(file_in,'/','time_coverage_start');
       time_end=ncreadatt(file_in,'/','time_coverage_end');
       file_str_yy=str2double(time_start(1:4));
@@ -93,7 +97,6 @@ function tempo_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
       fprintf('%d %s \n',ifile,file_in);
       fprintf('file str %d cycle end %d \n',file_str_secs,day_secs_end);
       fprintf('file end %d cycle str %d \n',file_end_secs,day_secs_beg);
-%       
       if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
          continue
       end
@@ -191,45 +194,73 @@ function tempo_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
       no2_vert_col_total_err=ncread(file_in,field);
 %
 % Loop through TEMPO data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2000));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2000));
       icnt=0;
       for istep=1:nstep
-	  [yyyy_tempo,mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo]=invert_time(time_utc(istep));
-%         if(int32(hh_tempo)>23 | int32(mm_tempo)>59 | ...
-%         int32(ss_tempo)>59)
-%            [yyyy_tempo,mn_tempo,dy_tempo,hh_tempo, ...
-%            mm_tempo,ss_tempo]=incr_time(yyyy_tempo, ...
-%      	 mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo);
-%         end
-%         fprintf('obs date/time %d %d %d %d %d %d \n',yyyy_tempo, ...
-%         mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo)
-         tempodate=single(convert_time(yyyy_tempo,mn_tempo, ...
-         dy_tempo,hh_tempo,mm_tempo,ss_tempo));
-%         fprintf('windate_min %d \n',windate_min)
-%         fprintf('tempo_dat %d \n',tempodate)
-%         fprintf('windate_max %d \n',windate_max)
+         [jult]=jult_adjust_ref(time_utc(istep),2000,1,1,12,0,0);
+         [yyyy_tempo,mn_tempo,dd_tempo,hh_tempo,mm_tempo,ss_tempo]=invert_time_ref(jult,2000);
+         tempodate=single(convert_time_ref(yyyy_tempo,mn_tempo, ...
+         dd_tempo,hh_tempo,mm_tempo,ss_tempo,2000));
 %
 % Check time
+%	 fprintf('APM: time check %d %d %d \n',windate_min,tempodate,windate_max)
          if(tempodate<windate_min | tempodate>windate_max)
             continue
          end
 
+%         fprintf('BEGIN QA/QC \n')
 	 for ixtrk=1:ntrk
 %
 % QA/AC
-%	    if(qa_value(ixtrk,istep)~=0 | zenang(ixtrk,istep)>=80.0)
-	    if(zenang(ixtrk,istep)>=80.0)
+%            if(any(isnan(prs_lev(:,ixtrk,istep))) | any(prs_lev(:,ixtrk,istep)<0))
+%               continue
+%            end
+%
+            if(any(isnan(scat_wts(:,ixtrk,istep))))
                continue
-	    end
+            end
+%
+            if(isnan(no2_vert_col_total(ixtrk,istep)) | no2_vert_col_total(ixtrk,istep)<=0)
+               continue
+            end
+%
+%            if(isnan(no2_vert_col_total_err(ixtrk,istep)) | no2_vert_col_total_err(ixtrk,istep)<=0)
+%               continue
+%            end
+%
+            if(isnan(no2_slnt_col(ixtrk,istep)) | no2_slnt_col(ixtrk,istep)<=0)
+               continue
+            end
+%
+%            if(isnan(no2_slnt_col_err(ixtrk,istep)) | no2_slnt_col_err(ixtrk,istep)<=0)
+%               continue
+%            end
+%
             if(isnan(no2_vert_col_trop(ixtrk,istep)) | no2_vert_col_trop(ixtrk,istep)<=0)
                continue
             end
 %
+            if(isnan(amf_trop(ixtrk,istep)) | amf_trop(ixtrk,istep)<=0)
+               continue
+            end
+%
+%            if(isnan(amf_trop_err(ixtrk,istep)) | amf_trop_err(ixtrk,istep)<=0)
+%               continue
+%            end
+%
+            if(isnan(prs_trop(ixtrk,istep)) | prs_trop(ixtrk,istep)<=0)
+               continue
+            end
+%
+%	    if(qa_value(ixtrk,istep)~=0 | zenang(ixtrk,istep)>=80.0)
+	    if(zenang(ixtrk,istep)>=80.0)
+               continue
+	    end
+%
 % Check domain
 % Input grid needs to be in degrees
-% X coordinate is [0 to 360]
-%		 
+% X coordinate is [0 to 360]		 
 	    x_obser=lon(ixtrk,istep);
             y_obser=lat(ixtrk,istep);
             if(x_obser<0.)
@@ -290,7 +321,7 @@ function tempo_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
 	    icnt=icnt+1;
             fprintf(fid,'TEMPO_NO2_Obs: %d %d %d \n',icnt,i_min,j_min);
             fprintf(fid,'%d %d %d %d %d %d \n',yyyy_tempo, ...
-            mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo);
+            mn_tempo,dd_tempo,hh_tempo,mm_tempo,ss_tempo);
             fprintf(fid,'%14.8f %14.8f \n',lat(ixtrk,istep),lon(ixtrk,istep));
             fprintf(fid,'%d %d \n',layer,level);
             fprintf(fid,'%14.8g ',prs_lev(1:level,ixtrk,istep));

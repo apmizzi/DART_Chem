@@ -185,11 +185,11 @@ function tes_co2_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy
       info_content=ncread(file_in,field);
 %
 % Loop through TEMPO data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_2010(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
+      windate_max=single(convert_time_2010(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
       icnt=0;
       for istep=1:nstep
-	  [yyyy_tempo,mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo]=invert_time(time_utc(istep));
+	  [yyyy_tempo,mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo]=invert_time_2010(time_utc(istep));
 %         int32(ss_tempo)>59)
 %            [yyyy_tempo,mn_tempo,dy_tempo,hh_tempo, ...
 %            mm_tempo,ss_tempo]=incr_time(yyyy_tempo, ...
@@ -198,7 +198,7 @@ function tes_co2_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy
 %         fprintf('obs date/time %d %d %d %d %d %d \n',yyyy_tempo, ...
 %	 mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo)
 	 
-         tempodate=single(convert_time(yyyy_tempo,mn_tempo, ...
+         tempodate=single(convert_time_2010(yyyy_tempo,mn_tempo, ...
          dy_tempo,hh_tempo,mm_tempo,ss_tempo));
 
 %         fprintf('windate_min %d \n',windate_min)

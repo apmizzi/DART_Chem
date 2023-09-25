@@ -208,7 +208,7 @@ subroutine read_omi_o3_cpsr(key, ifile, fform)
    
    call read_r8_array(ifile, nlayer_1+1, pressure_1,   fileformat, 'pressure_1')
    call read_r8_array(ifile, nlayer_1,   avg_kernel_1, fileformat, 'avg_kernel_1')
-   call read_r8_array(ifile, nlayer_1,   prior_1, fileformat, 'prior_1')
+   call read_r8_array(ifile, nlayer_1,   prior_1,      fileformat, 'prior_1')
    keyin = read_int_scalar(ifile, fileformat, 'keyin')
    
    counts1 = counts1 + 1
@@ -570,12 +570,15 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
    do imem=1,ens_size
       flg=0
       do k=1,level_omi
+!
+! APM: Need to figure out why some pressures get to this point as negative
+!         
          if(o3_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
-         qmr_val(imem,k).lt.0.) then
+         qmr_val(imem,k).lt.0. .or. prs_omi(k).lt.0.) then
             flg=1   
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
-            call error_handler(E_ALLMSG, routine, string1, source)
+            call error_handler(E_MSG, routine, string1, source)
          endif
       enddo
       if(flg.eq.1) then
@@ -592,14 +595,9 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
    expct_val(:)=0.0
    allocate(thick(layer_omi))
 
+   prs_omi_mem(:)=prs_omi(:)
    do imem=1,ens_size
-! Adjust the OMI pressure for WRF-Chem lower/upper boudary pressure
-! (OMI O3 vertical grid is top to bottom)
-      prs_omi_mem(:)=prs_omi(:)
-      if (prs_sfc(imem).lt.prs_omi_mem(level_omi)) then
-         prs_sfc(imem)=prs_omi_mem(level_omi)
-      endif
-      
+!      
 ! Calculate the thicknesses
 
       thick(:)=0.
@@ -651,16 +649,6 @@ subroutine get_expected_omi_o3_cpsr(state_handle, ens_size, location, key, obs_t
          expct_val(:)=missing_r8
 !         write(string1, *) &
 !         'APM NOTICE: OMI O3 expected value is NaN'
-!         call error_handler(E_ALLMSG, routine, string1, source)
-         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-         return
-      endif
-!
-      if(expct_val(imem).lt.0) then
-         zstatus(imem)=20
-         expct_val(:)=missing_r8
-!         write(string1, *) &
-!         'APM NOTICE: OMI O3 expected value is negative'
 !         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return

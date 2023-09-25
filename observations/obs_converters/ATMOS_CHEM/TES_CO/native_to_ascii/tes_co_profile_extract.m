@@ -1,5 +1,4 @@
 function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,cwss_mn,cwyr_mx,cwmn_mx,cwdy_mx,cwhh_mx,cwmm_mx,cwss_mx,path_mdl,file_mdl,cnx_mdl,cny_mdl)
-  
 %
 % Get file list and number of files
    wyr_mn=str2double(cwyr_mn);
@@ -16,7 +15,6 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
    wss_mx=str2double(cwss_mx);
    nx_mdl=str2double(cnx_mdl);
    ny_mdl=str2double(cny_mdl);
-
 %
 % Get file list and number of files
    command=strcat('rm'," ",'-rf'," ",fileout);
@@ -24,8 +22,7 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
    fid=fopen(fileout,'w');
 %
    command=strcat('ls'," ",'-1'," ",filein,'*');
-   [status,file_list_a]=system(command);
-   
+   [status,file_list_a]=system(command);   
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);
    nfile=size(file_list);
@@ -95,7 +92,6 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       zgrid=h5readatt(file_in,field,'VerticalCoordinate');
 %
 % Read Time
-%      field='/HDFEOS/SWATHS/CONadirSwath/Data Fields/Time';
       field='/HDFEOS/SWATHS/CONadirSwath/Data Fields/UTCTime';
       utc_time=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');
@@ -121,9 +117,9 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       
       file_str_secs=file_str_hh*3600 + file_str_mn*60 + file_str_ss;
       file_end_secs=file_end_hh*3600 + file_end_mn*60 + file_end_ss;
-%      fprintf('%d %s \n',ifile,file_in);
-%      fprintf('If file_str_secs %d <= day_secs_end %d, and \n',file_str_secs,day_secs_end);
-%      fprintf('If file_end_secs %d >= day_secs_beg %d, then process data \n',file_end_secs,day_secs_beg);
+      fprintf('%d %s \n',ifile,file_in);
+      fprintf('If file_str_secs %d <= day_secs_end %d, and \n',file_str_secs,day_secs_end);
+      fprintf('If file_end_secs %d >= day_secs_beg %d, then process data \n',file_end_secs,day_secs_beg);
       if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
          continue
       end
@@ -226,8 +222,8 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       zenang=h5read(file_in,field);
 %
 % Loop through TES data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
       for iobs=1:nobs
          utcc_time=cell2mat(utc_time(iobs));
@@ -237,28 +233,65 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          hh_tes=str2double(utcc_time(12:13));
          mm_tes=str2double(utcc_time(15:16));
          ss_tes=round(str2double(utcc_time(18:23)));
-         tesdate=single(convert_time(yyyy_tes,mn_tes, ...
-         dy_tes,hh_tes,mm_tes,ss_tes));
+         tesdate=single(convert_time_ref(yyyy_tes,mn_tes, ...
+         dy_tes,hh_tes,mm_tes,ss_tes,2010));
 %
 % Check time
-%         fprintf('min_date %d, tes_date %d, max_date %d \n',windate_min,tesdate,windate_max)
+%	 fprintf('APM: Time test - %d %d %d \n',windate_min,tesdate,windate_max)
          if(tesdate<windate_min | tesdate>windate_max)
             continue
          end
 %
 % QA/QC
-         if(zenang(iobs)>=80.0)
-            fprintf('APM: zenang %6.2f \n',zenang(iobs))
+%         if(any(isnan(prs_lay(:,iobs))) | any(prs_lay(:,iobs)<0))
+%            continue
+%         end
+%
+         if(any(isnan(avgk_lay(:,:,iobs))))
             continue
          end
-         for ilay=1:layer
-            if(isnan(co_lay(ilay,iobs)))
-               fprintf('APM: co_lay has NaNs \n')
-               continue
-            end
+%
+         if(any(isnan(err_cov_obs(:,:,iobs))))
+            continue
          end
-         if(isnan(co_total_col(iobs)))
-            fprintf('APM: co_total_col is a NaN \n')
+%
+         if(any(isnan(err_cov_total(:,:,iobs))))
+            continue
+         end
+%
+%         if(any(isnan(co_lay(:,iobs))) | any(co_lay(:,iobs)<=0))
+%            continue
+%         end
+%
+%         if(any(isnan(co_lay_err(:,iobs))) | any(co_lay_err(:,iobs)<=0))
+%            continue
+%         end
+%
+%         if(any(isnan(co_lay_prior(:,iobs))) | any(co_lay_prior(:,iobs)<=0))
+%            continue
+%         end
+%
+         if(isnan(trop_pressure(iobs)) | trop_pressure(iobs)<=0.)
+            continue
+         end
+%
+         if(isnan(dofs(iobs)) | dofs(iobs)<0.)
+            continue
+         end
+%
+         if(isnan(co_total_col(iobs)) | co_total_col(iobs)<=0.)
+            continue
+         end
+%
+         if(isnan(co_total_col_err(iobs)) | co_total_col_err(iobs)<=0.)
+            continue
+         end
+%
+         if(isnan(co_total_col_prior(iobs)) | co_total_col_prior(iobs)<=0.)
+            continue
+         end
+%
+         if(zenang(iobs)>=80.0)
             continue
          end
 %
@@ -318,15 +351,11 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
             reject=1;
          end
          if(reject==1)
-            fprintf('x_mdl_min, x_obs, x_mdl_max: %6.2f %6.2f %6.2f \n',xmdl_sw, ...
-            x_obser,xmdl_mx)
-            fprintf('y_mdl_min, y_obs, y_mdl_max: %6.2f %6.2f %6.2f \n',lat_mdl(1,1), ...
-            y_obser,lat_mdl(nx_mdl,ny_mdl))
-            fprintf('i_min %d j_min %d \n',i_min,j_min)
+%            fprintf('i_min %d j_min %d \n',i_min,j_min)
             continue
          end
          if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
-            fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
+%            fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
             continue
          end
 %

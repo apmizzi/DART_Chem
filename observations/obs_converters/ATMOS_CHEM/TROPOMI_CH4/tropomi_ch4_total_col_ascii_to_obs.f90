@@ -49,7 +49,8 @@ program tropomi_ch4_total_col_ascii_to_obs
   
   use apm_time_code_mod, only          : calc_greg_sec
 
-  use apm_upper_bdy_mod, only      : get_upper_bdy_fld, &
+  use apm_upper_bdy_mod, only      : get_upper_bdy_height, &
+                                     get_upper_bdy_fld, &
                                      get_MOZART_INT_DATA, &
                                      get_MOZART_REAL_DATA, &
                                      wrf_dart_ubval_interp, &
@@ -140,7 +141,7 @@ program tropomi_ch4_total_col_ascii_to_obs
    integer                         :: seconds,days,which_vert
    integer                         :: seconds_last,days_last
    integer                         :: nx_model,ny_model,nz_model
-   integer                         :: reject,k,kk,kend
+   integer                         :: reject,k,kk,kend,ll
    integer                         :: i_min,j_min
    integer                         :: sum_reject,sum_accept,sum_total,num_thin
    integer                         :: obs_accept,obs_co_reten_freq,obs_o3_reten_freq, &
@@ -153,7 +154,7 @@ program tropomi_ch4_total_col_ascii_to_obs
    real                            :: bin_beg_sec,bin_end_sec
    real                            :: lon_min,lon_max,lat_min,lat_max
    real                            :: fac_obs_error,fac_err
-   real                            :: pi,rad2deg,re,level_crit
+   real                            :: pi,rad2deg,grav,re,level_crit
    real                            :: x_observ,y_observ,dofs
    real                            :: prs_loc,obs_sum
    real*8                          :: obs_err_var,level
@@ -179,17 +180,24 @@ program tropomi_ch4_total_col_ascii_to_obs
    real                            :: amf_trop_obs
    real*8                          :: amf_trop_obs_r8
    real                            :: lat_obs,lon_obs
+   real                            :: rad_lat_obs,rad_lon_obs
    real*8                          :: lat_obs_r8,lon_obs_r8
+   real                            :: up_wt,dw_wt,tl_wt
    real,allocatable,dimension(:)   :: avgk_obs,prior_obs
    real*8,allocatable,dimension(:) :: avgk_obs_r8,prior_obs_r8
    real,allocatable,dimension(:)   :: prs_obs,alt_obs
    real*8,allocatable,dimension(:) :: prs_obs_r8,alt_obs_r8
    real,allocatable,dimension(:)   :: prf_locl,prf_full
    real                            :: trop_sum,strat_sum
-   real,allocatable,dimension(:,:)     :: lon,lat
+   real*8                          :: prs_ref,hgt_ref,alt_ref
+   real*8                          :: prs_lcl
+   real,allocatable,dimension(:,:)     :: lon,lat,prs_sfc
    real,allocatable,dimension(:,:,:)   :: prs_prt,prs_bas,prs_fld
+   real,allocatable,dimension(:,:,:)   :: geoht_prt,geoht_bas,geoht_fld
    real,allocatable,dimension(:,:,:)   :: tmp_prt,tmp_fld,vtmp_fld
    real,allocatable,dimension(:,:,:)   :: ch4_fld,qmr_fld
+   character(len=120)                  :: data_file
+   character(len=*),parameter          :: model = 'WACCM'
 !
    namelist /create_tropomi_obs_nml/filedir,filename,fileout, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
@@ -200,6 +208,7 @@ program tropomi_ch4_total_col_ascii_to_obs
 ! Set constants
    pi=4.*atan(1.)
    rad2deg=360./(2.*pi)
+   grav=9.8
    re=6371000.
    days_last=-9999.
    seconds_last=-9999.
@@ -222,7 +231,6 @@ program tropomi_ch4_total_col_ascii_to_obs
    call check_namelist_read(iunit, io, "create_tropomi_obs_nml")
 !
 ! Record the namelist values used for the run ...
-   call error_handler(E_MSG,'init_create_tropomi_obs','create_tropomi_obs_nml values are',' ',' ',' ')
    write(     *     , nml=create_tropomi_obs_nml)
 !
 ! Initialize an obs_sequence structure
@@ -251,26 +259,37 @@ program tropomi_ch4_total_col_ascii_to_obs
    call set_calendar_type(calendar_type)
 !
 ! Read model data
-   allocate(lon(nx_model,ny_model))
-   allocate(lat(nx_model,ny_model))
-   allocate(prs_prt(nx_model,ny_model,nz_model))
-   allocate(prs_bas(nx_model,ny_model,nz_model))
-   allocate(prs_fld(nx_model,ny_model,nz_model))
-   allocate(tmp_prt(nx_model,ny_model,nz_model))
-   allocate(tmp_fld(nx_model,ny_model,nz_model))
-   allocate(qmr_fld(nx_model,ny_model,nz_model))
-   allocate(ch4_fld(nx_model,ny_model,nz_model))
-   file_in=trim(path_model)//'/'//trim(file_model)
-   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(file_in,'ch4',ch4_fld,nx_model,ny_model,nz_model,1)
-   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-   ch4_fld(:,:,:)=ch4_fld(:,:,:)*1.e-6
+!   allocate(lon(nx_model,ny_model))
+!   allocate(lat(nx_model,ny_model))
+!   allocate(prs_sfc(nx_model,ny_model))
+!   allocate(prs_prt(nx_model,ny_model,nz_model))
+!   allocate(prs_bas(nx_model,ny_model,nz_model))
+!   allocate(geoht_prt(nx_model,ny_model,nz_model+1))
+!   allocate(geoht_bas(nx_model,ny_model,nz_model+1))
+!   allocate(prs_fld(nx_model,ny_model,nz_model))
+!   allocate(geoht_fld(nx_model,ny_model,nz_model))
+!   allocate(tmp_prt(nx_model,ny_model,nz_model))
+!   allocate(tmp_fld(nx_model,ny_model,nz_model))
+!   allocate(qmr_fld(nx_model,ny_model,nz_model))
+!   allocate(ch4_fld(nx_model,ny_model,nz_model))
+!   file_in=trim(path_model)//'/'//trim(file_model)
+!   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'PSFC',prs_sfc,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'PH',geoht_prt,nx_model,ny_model,nz_model+1,1)
+!   call get_DART_diag_data(trim(file_in),'PHB',geoht_bas,nx_model,ny_model,nz_model+1,1)
+!   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(file_in,'ch4',ch4_fld,nx_model,ny_model,nz_model,1)
+!   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
+!   do k=1,nz_model
+!      geoht_fld(:,:,k)=((geoht_bas(:,:,k)+geoht_prt(:,:,k))/grav + &
+!      (geoht_bas(:,:,k+1)+geoht_prt(:,:,k+1))/grav)/2.
+!   enddo
+!   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
+!  ch4_fld(:,:,:)=ch4_fld(:,:,:)*1.e-6
 !
 ! Open TROPOMI CH4 binary file
    fileid=100
@@ -287,9 +306,11 @@ program tropomi_ch4_total_col_ascii_to_obs
       read(fileid,*,iostat=ios) lat_obs,lon_obs
       if(lon_obs.lt.0.) lon_obs=lon_obs+360.
       read(fileid,*,iostat=ios) nlay_obs,nlev_obs
+      allocate(prs_obs(nlev_obs))
       allocate(alt_obs(nlev_obs))
       allocate(avgk_obs(nlay_obs))
       allocate(prior_obs(nlay_obs))
+      allocate(prs_obs_r8(nlev_obs))
       allocate(alt_obs_r8(nlev_obs))
       allocate(avgk_obs_r8(nlay_obs))
       allocate(prior_obs_r8(nlay_obs))
@@ -311,8 +332,47 @@ program tropomi_ch4_total_col_ascii_to_obs
          sum_accept=sum_accept+1
          qc_count=qc_count+1
 !
+! Convert TROPOMI vertical height grid to pressure grid (tropomi grid is top to bottom)
+         rad_lon_obs=lon_obs/rad2deg
+         rad_lat_obs=lat_obs/rad2deg
+         obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
+         call get_time(obs_time, seconds, days)
+         data_file='/nobackupp11/amizzi/INPUT_DATA/FIREX_REAL_TIME_DATA/waccm_forecasts/waccm-20210316112829081188.nc'
+         prs_obs(1)=.01
+         do k=1,nlev_obs-1
+            kk=nlev_obs-k+1
+! lower boundary
+            if(alt_obs(kk).le.geoht_fld(i_min,j_min,1)) then
+               up_wt=alt_obs(kk)
+               dw_wt=geoht_fld(i_min,j_min,1)-alt_obs(kk)
+               tl_wt=up_wt+dw_wt
+               prs_obs(kk)=(up_wt*prs_fld(i_min,j_min,1) + dw_wt*prs_sfc(i_min,j_min))/tl_wt
+               cycle
+            endif
+! upper boundary
+            if(alt_obs(kk).gt.geoht_fld(i_min,j_min,nz_model)) then
+               prs_ref=prs_fld(i_min,j_min,nz_model)
+               hgt_ref=geoht_fld(i_min,j_min,nz_model)
+               call get_upper_bdy_height(prs_lcl,prs_ref,hgt_ref,model,data_file,25,21,88,57, &
+               rad_lon_obs,rad_lat_obs,alt_obs(kk),days,seconds)
+               prs_obs(kk)=prs_lcl    
+               cycle
+            endif
+! interior
+            do ll=1,nz_model-1
+               if(alt_obs(kk).gt.geoht_fld(i_min,j_min,ll) .and. &
+               alt_obs(kk).le.geoht_fld(i_min,j_min,ll+1)) then
+                  up_wt=alt_obs(kk)-geoht_fld(i_min,j_min,ll)
+                  dw_wt=geoht_fld(i_min,j_min,ll+1)-alt_obs(kk)
+                  tl_wt=up_wt+dw_wt
+                  prs_obs(kk)=(up_wt*prs_fld(i_min,j_min,ll+1) + &
+                  dw_wt*prs_fld(i_min,j_min,ll))/tl_wt
+                  exit
+               endif
+            enddo
+         enddo
+!
 ! Obs value is the tropospheric vertical column
-! Convert the obs value to tropospheric slant column    
          obs_val(:)=total_col_obs
          obs_err_var=(fac_obs_error*fac_err*total_col_obs_err)**2.
 !        
@@ -350,7 +410,6 @@ program tropomi_ch4_total_col_ascii_to_obs
             days_last=days
             seconds_last=seconds
          endif
-!         print *, 'APM: ',qc_count,days,seconds
          if ( qc_count == 1 .or. old_ob.eq.1) then
             call insert_obs_in_seq(seq, obs)
          else
@@ -358,30 +417,31 @@ program tropomi_ch4_total_col_ascii_to_obs
          endif
          obs_old=obs
       endif
+      deallocate(prs_obs) 
       deallocate(alt_obs) 
       deallocate(avgk_obs)
       deallocate(prior_obs)
+      deallocate(prs_obs_r8) 
       deallocate(alt_obs_r8) 
       deallocate(avgk_obs_r8)
       deallocate(prior_obs_r8)
       deallocate(prf_locl) 
       deallocate(prf_full) 
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!      print *, 'sum_accept ',sum_accept
    enddo   
 !
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
-   deallocate(lon)
-   deallocate(lat)
-   deallocate(prs_prt)
-   deallocate(prs_bas)
-   deallocate(prs_fld)
-   deallocate(tmp_prt)
-   deallocate(tmp_fld)
-   deallocate(qmr_fld)
-   deallocate(ch4_fld)
+!   deallocate(lon)
+!   deallocate(lat)
+!   deallocate(prs_prt)
+!   deallocate(prs_bas)
+!   deallocate(prs_fld)
+!   deallocate(tmp_prt)
+!   deallocate(tmp_fld)
+!   deallocate(qmr_fld)
+!   deallocate(ch4_fld)
 !
    print *, 'total obs ',sum_total
    print *, 'accepted ',sum_accept

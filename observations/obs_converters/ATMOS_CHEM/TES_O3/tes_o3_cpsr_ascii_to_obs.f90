@@ -261,26 +261,26 @@ program tes_o3_cpsr_ascii_to_obs
    call set_calendar_type(calendar_type)
 !
 ! Read model data
-   allocate(lon(nx_model,ny_model))
-   allocate(lat(nx_model,ny_model))
-   allocate(prs_prt(nx_model,ny_model,nz_model))
-   allocate(prs_bas(nx_model,ny_model,nz_model))
-   allocate(prs_fld(nx_model,ny_model,nz_model))
-   allocate(tmp_prt(nx_model,ny_model,nz_model))
-   allocate(tmp_fld(nx_model,ny_model,nz_model))
-   allocate(qmr_fld(nx_model,ny_model,nz_model))
-   allocate(o3_fld(nx_model,ny_model,nz_model))
-   file_in=trim(path_model)//'/'//trim(file_model)
-   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(file_in,'o3',o3_fld,nx_model,ny_model,nz_model,1)
-   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-   o3_fld(:,:,:)=o3_fld(:,:,:)*1.e-6
+!   allocate(lon(nx_model,ny_model))
+!   allocate(lat(nx_model,ny_model))
+!   allocate(prs_prt(nx_model,ny_model,nz_model))
+!   allocate(prs_bas(nx_model,ny_model,nz_model))
+!   allocate(prs_fld(nx_model,ny_model,nz_model))
+!   allocate(tmp_prt(nx_model,ny_model,nz_model))
+!   allocate(tmp_fld(nx_model,ny_model,nz_model))
+!   allocate(qmr_fld(nx_model,ny_model,nz_model))
+!   allocate(o3_fld(nx_model,ny_model,nz_model))
+!   file_in=trim(path_model)//'/'//trim(file_model)
+!   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(file_in,'o3',o3_fld,nx_model,ny_model,nz_model,1)
+!   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
+!   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
+!   o3_fld(:,:,:)=o3_fld(:,:,:)*1.e-6
 !
 ! Open TES O3 binary file
    fileid=100
@@ -378,13 +378,13 @@ program tes_o3_cpsr_ascii_to_obs
          allocate(avgk_cpsr(kend,kend))
          do irow=klev+1,nlay_obs
             irow_sh=irow-klev
-            o3_shift(irow_sh)=o3_obs(irow)
-            prior_shift(irow_sh)=o3_obs_prior(irow)
+            o3_shift(irow_sh)=log(o3_obs(irow))
+            prior_shift(irow_sh)=log(o3_obs_prior(irow))
             do icol=klev+1,nlay_obs
                icol_sh=icol-klev
                avgk_shift(irow_sh,icol_sh)=avgk_obs(irow,icol)
                cov_shift(irow_sh,icol_sh)=fac_obs_error**2 * fac_err**2 * &
-               cov_total(irow,icol)*o3_obs(irow)*o3_obs(icol)
+               cov_total(irow,icol)
             enddo
          enddo
 !
@@ -473,15 +473,15 @@ program tes_o3_cpsr_ascii_to_obs
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
-   deallocate(lon)
-   deallocate(lat)
-   deallocate(prs_prt)
-   deallocate(prs_bas)
-   deallocate(prs_fld)
-   deallocate(tmp_prt)
-   deallocate(tmp_fld)
-   deallocate(qmr_fld)
-   deallocate(o3_fld)
+!   deallocate(lon)
+!   deallocate(lat)
+!   deallocate(prs_prt)
+!   deallocate(prs_bas)
+!   deallocate(prs_fld)
+!   deallocate(tmp_prt)
+!   deallocate(tmp_fld)
+!   deallocate(qmr_fld)
+!   deallocate(o3_fld)
 !
    print *, 'total obs ',sum_total
    print *, 'accepted ',sum_accept

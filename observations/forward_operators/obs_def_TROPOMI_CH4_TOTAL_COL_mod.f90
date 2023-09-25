@@ -98,7 +98,7 @@ public :: write_tropomi_ch4_total_col, &
 integer, parameter    :: max_tropomi_ch4_obs = 10000000
 integer               :: num_tropomi_ch4_obs = 0
 integer,  allocatable :: nlayer(:)
-real(r8), allocatable :: altitude(:,:)
+real(r8), allocatable :: pressure(:,:)
 real(r8), allocatable :: avg_kernel(:,:)
 real(r8), allocatable :: prior(:,:)
 
@@ -160,7 +160,7 @@ if (nlayer_tropomi < 1) then
 endif
 
 allocate(    nlayer(max_tropomi_ch4_obs))
-allocate(  altitude(max_tropomi_ch4_obs,nlayer_tropomi+1))
+allocate(  pressure(max_tropomi_ch4_obs,nlayer_tropomi+1))
 allocate(avg_kernel(max_tropomi_ch4_obs,nlayer_tropomi))
 allocate(     prior(max_tropomi_ch4_obs,nlayer_tropomi))
 
@@ -178,7 +178,7 @@ character(len=*), intent(in), optional :: fform
 
 integer               :: keyin
 integer               :: nlayer_1
-real(r8), allocatable :: altitude_1(:)
+real(r8), allocatable :: pressure_1(:)
 real(r8), allocatable :: avg_kernel_1(:)
 real(r8), allocatable :: prior_1(:)
 character(len=32)     :: fileformat
@@ -193,11 +193,11 @@ if(present(fform)) fileformat = adjustl(fform)
 ! Need to know how many layers for this one
 nlayer_1 = read_int_scalar( ifile, fileformat, 'nlayer_1')
 
-allocate(  altitude_1(nlayer_1+1))
+allocate(  pressure_1(nlayer_1+1))
 allocate(avg_kernel_1(nlayer_1))
 allocate(     prior_1(nlayer_1))
 
-call read_r8_array(ifile, nlayer_1+1, altitude_1,   fileformat, 'altitude_1')
+call read_r8_array(ifile, nlayer_1+1, pressure_1,   fileformat, 'pressure_1')
 call read_r8_array(ifile, nlayer_1,   avg_kernel_1, fileformat, 'avg_kernel_1')
 call read_r8_array(ifile, nlayer_1,   prior_1, fileformat, 'prior_1')
 keyin = read_int_scalar(ifile, fileformat, 'keyin')
@@ -211,9 +211,9 @@ if(counts1 > max_tropomi_ch4_obs) then
    call error_handler(E_ERR,'read_tropomi_ch4_total_col',string1,source,text2=string2)
 endif
 
-call set_obs_def_tropomi_ch4_total_col(key, altitude_1, avg_kernel_1, prior_1, nlayer_1)
+call set_obs_def_tropomi_ch4_total_col(key, pressure_1, avg_kernel_1, prior_1, nlayer_1)
 
-deallocate(altitude_1, avg_kernel_1, prior_1)
+deallocate(pressure_1, avg_kernel_1, prior_1)
 
 end subroutine read_tropomi_ch4_total_col
 
@@ -233,7 +233,7 @@ fileformat = "ascii"
 if(present(fform)) fileformat = adjustl(fform)
 
 call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
-call write_r8_array(  ifile, nlayer(key)+1,      altitude(key,:), fileformat,'altitude')
+call write_r8_array(  ifile, nlayer(key)+1,      pressure(key,:), fileformat,'pressure')
 call write_r8_array(  ifile, nlayer(key),        avg_kernel(key,:), fileformat,'avg_kernel')
 call write_r8_array(  ifile, nlayer(key),        prior(key,:), fileformat,'prior')
 call write_int_scalar(ifile,                     key, fileformat,'key')
@@ -333,7 +333,7 @@ subroutine get_expected_tropomi_ch4_total_col(state_handle, ens_size, location, 
    
    allocate(prs_tropomi(level_tropomi))
    allocate(prs_tropomi_mem(level_tropomi))
-   prs_tropomi(1:level_tropomi)=altitude(key,1:level_tropomi)
+   prs_tropomi(1:level_tropomi)=pressure(key,1:level_tropomi)
 
 ! Get location infomation
 
@@ -501,15 +501,8 @@ subroutine get_expected_tropomi_ch4_total_col(state_handle, ens_size, location, 
    allocate(thick(layer_tropomi))
 
    do imem=1,ens_size
-! Adjust the TROPOMI pressure for WRF-Chem lower/upper boudary pressure
-! (TROPOMI CH4 vertical grid is bottom to top)
-      prs_tropomi_mem(:)=prs_tropomi(:)
-      if (prs_sfc(imem).gt.prs_tropomi_mem(1)) then
-         prs_tropomi_mem(1)=prs_sfc(imem)
-      endif   
-
+!
 ! Calculate the thicknesses
-
       do k=1,kend_tropomi
          lnpr_mid=(log(prs_tropomi_mem(k+1))+log(prs_tropomi_mem(k)))/2.
          up_wt=log(prs_tropomi_mem(k))-lnpr_mid
@@ -566,10 +559,10 @@ end subroutine get_expected_tropomi_ch4_total_col
 
 !-------------------------------------------------------------------------------
 
-subroutine set_obs_def_tropomi_ch4_total_col(key, ch4_altitude, ch4_avg_kernel, ch4_prior, ch4_nlayer)
+subroutine set_obs_def_tropomi_ch4_total_col(key, ch4_pressure, ch4_avg_kernel, ch4_prior, ch4_nlayer)
 
 integer,                            intent(in)  :: key, ch4_nlayer
-real(r8), dimension(ch4_nlayer+1),  intent(in)  :: ch4_altitude
+real(r8), dimension(ch4_nlayer+1),  intent(in)  :: ch4_pressure
 real(r8), dimension(ch4_nlayer),    intent(in)  :: ch4_avg_kernel
 real(r8), dimension(ch4_nlayer),    intent(in)  :: ch4_prior
 
@@ -583,7 +576,7 @@ if(num_tropomi_ch4_obs >= max_tropomi_ch4_obs) then
 endif
 
 nlayer(key) = ch4_nlayer
-altitude(key,1:ch4_nlayer+1) = ch4_altitude(1:ch4_nlayer+1)
+pressure(key,1:ch4_nlayer+1) = ch4_pressure(1:ch4_nlayer+1)
 avg_kernel(key,1:ch4_nlayer) = ch4_avg_kernel(1:ch4_nlayer)
 prior(key,1:ch4_nlayer)      = ch4_prior(1:ch4_nlayer)
 

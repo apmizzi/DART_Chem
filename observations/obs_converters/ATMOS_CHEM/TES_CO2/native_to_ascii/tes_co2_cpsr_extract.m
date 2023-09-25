@@ -73,9 +73,9 @@ function tes_co2_cpsr_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,c
       clear time_start time_end
       clear nstep ntrk crnr layer level
       clear lat lon zenang time_utc
-      clear o3_lay vert_col_total vert_col_trop
+      clear co2_lay vert_col_total vert_col_trop
       clear prior_lay prior_err_lay prs_lev
-      clear trop_indx avgk_lay noise_corr info_content
+      clear trop_indx avgk_lay avgk_diag_lay noise_corr info_content
       file_in=char(file_list(ifile));
       if(isempty(file_in))
          continue
@@ -84,234 +84,315 @@ function tes_co2_cpsr_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,c
       if(isempty(indx))
          continue
       end
-      time_start=ncreadatt(file_in,'/','time_coverage_start');
-      time_end=ncreadatt(file_in,'/','time_coverage_end');
+      field='/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES';
+      day=h5readatt(file_in,field,'GranuleDay');
+      month=h5readatt(file_in,field,'GranuleMonth');
+      year=h5readatt(file_in,field,'GranuleYear');
+%
+% Read Time
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/UTCTime';
+      utc_time=h5read(file_in,field);
+      missing=h5readatt(file_in,field,'MissingValue');
+      title=h5readatt(file_in,field,'Title');
+      defn=h5readatt(file_in,field,'UniqueFieldDefinition');
+      units=h5readatt(file_in,field,'Units');
+      nobs=size(utc_time);  % 14
+      time_start=cell2mat(utc_time(1));
+      time_end=cell2mat(utc_time(nobs(1)));
+
       file_str_yy=str2double(time_start(1:4));
       file_str_mm=str2double(time_start(6:7));
       file_str_dd=str2double(time_start(9:10));
       file_str_hh=str2double(time_start(12:13));
       file_str_mn=str2double(time_start(15:16));
-      file_str_ss=str2double(time_start(18:19));
+      file_str_ss=round(str2double(time_start(18:23)));
       file_end_yy=str2double(time_end(1:4));
       file_end_mm=str2double(time_end(6:7));
       file_end_dd=str2double(time_end(9:10));
       file_end_hh=str2double(time_end(12:13));
       file_end_mn=str2double(time_end(15:16));
-      file_end_ss=str2double(time_end(18:19));
+      file_end_ss=round(str2double(time_end(18:23)));
+      
       file_str_secs=file_str_hh*3600 + file_str_mn*60 + file_str_ss;
       file_end_secs=file_end_hh*3600 + file_end_mn*60 + file_end_ss;
       fprintf('%d %s \n',ifile,file_in);
-      fprintf('file str %d cycle end %d \n',file_str_secs,day_secs_end);
-      fprintf('file end %d cycle str %d \n',file_end_secs,day_secs_beg);
-%       
+      fprintf('If file_str_secs %d <= day_secs_end %d, and \n',file_str_secs,day_secs_end);
+      fprintf('If file_end_secs %d >= day_secs_beg %d, then process data \n',file_end_secs,day_secs_beg);
       if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
          continue
       end
-      fprintf('READ TEMPO DATA \n')
+      fprintf('READ TES DATA \n')
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Read TEMPO data
+% Read TES data
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % get dimensions
-      wfid=netcdf.open(file_in,'NC_NOWRITE');
-      [name,nstep]=netcdf.inqDim(wfid,0);
-      [name,ntrk]=netcdf.inqDim(wfid,1);
-      [name,crnr]=netcdf.inqDim(wfid,2);
-      [name,layer]=netcdf.inqDim(wfid,3);
-      [name,level]=netcdf.inqDim(wfid,4);
-      netcdf.close(wfid);
+%      wfid=netcdf.open(file_in,'NC_NOWRITE');
+%      [name,nstep]=netcdf.inqDim(wfid,0);
+%      [name,ntrk]=netcdf.inqDim(wfid,1);
+%      [name,crnr]=netcdf.inqDim(wfid,2);
+%      [name,layer]=netcdf.inqDim(wfid,3);
+%      [name,level]=netcdf.inqDim(wfid,4);
+%      netcdf.close(wfid);
 %
-% lat (ntrk,nstep)
-      field='/geolocation/latitude';
-      lat=ncread(file_in,field);
+% averaging kernel (layer,layer,nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/AveragingKernel';
+      avgk_lay=h5read(file_in,field);
+      dims=size(avgk_lay);
+      layer=dims(1);           % 67
+      level=layer+1;           % 68
+      nobs=dims(3);            % 34
+      units=h5readatt(file_in,field,'Units');
 %
-% lon (ntrk,nstep)
-      field='/geolocation/longitude';
-      lon=ncread(file_in,field);
+% averaging kernel diagonal (layer,nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/AveragingKernelDiagonal';
+      avgk_diag_lay=h5read(file_in,field);
 %
-% zenang (ntrk,nstep)
-      field='/geolocation/solar_zenith_angle';
-      zenang=ncread(file_in,field);
+% co2_lay (layer,nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/CO2';
+      co2_lay=h5read(file_in,field);
+      units=h5readatt(file_in,field,'Units');
 %
-% time_utc (nstep) (seconds since 2001-01-01T12:00:00Z)
-      field='/geolocation/time';
-      time_utc=ncread(file_in,field);
+% co2_lay_err (layer,nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/CO2Precision';
+      co2_lay_err=h5read(file_in,field);
+      units=h5readatt(file_in,field,'Units');
 %
-% qa_value (ntrk,nstep)
-%      field='/product/main_data_quality_flag';
-%      qa_value=ncread(file_in,field);
+% dofs(nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/DegreesOfFreedomForSignal';
+      dofs=h5read(file_in,field);
 %
-% o3_lay (layer,ntrk,nstep)
-      field='/product/ozone_profile';
-      o3_lay=ncread(file_in,field);
+% co2_lay_prior (layer,nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/Initial';
+      co2_lay_prior=h5read(file_in,field);
+      units=h5readatt(file_in,field,'Units');
 %
-% vert_col_total (ntrk,nstep)
-      field='/product/total_ozone_column';
-      vert_col_total=ncread(file_in,field);%
+% err_cov_mea(layer,layer,nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/MeasurementErrorCovariance';
+      err_cov_mea=h5read(file_in,field);
+%      
+% err_cov_obs(layer,layer,nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/ObservationErrorCovariance';
+      err_cov_obs=h5read(file_in,field);
 %
-% vert_col_trop (ntrk,nstep)
-      field='/product/troposphere_ozone_column';
-      vert_col_trop=ncread(file_in,field);
+% prs_lay (layer,nobs) Pressure is bottom to top (hPa)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/Pressure';
+      prs_lay=h5read(file_in,field);
+      units=h5readatt(file_in,field,'Units');
 %
-% prior_lay (layer,ntrk,nstep)
-      field='/support_data/ozone_apriori_profile';
-      prior_lay=ncread(file_in,field);
+% co2_total_col (nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/TotalColumnDensity';
+      co2_total_col=h5read(file_in,field);
 %
-% prior_err_lay (layer,ntrk,nstep)
-      field='/support_data/ozone_apriori_profile_error';
-      prior_err_lay=ncread(file_in,field);
+% co2_total_col_err (nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/TotalColumnDensityError';
+      co2_total_col_err=h5read(file_in,field);
 %
-% prs_lev (level,ntrk,nstep) (hPa)
-      field='/support_data/ozone_profile_pressure';
-      prs_lev=ncread(file_in,field);
+% co2_total_col_prior (nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/TotalColumnDensityInitial';
+      co2_total_col_prior=h5read(file_in,field);
 %
-% trop_index (ntrk,nstep)
-      field='/support_data/tropopause_index';
-      trop_index=ncread(file_in,field);
+% total_err (layer,nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/TotalError';
+      total_err=h5read(file_in,field);
 %
-% avgk_lay (layer,layer,ntrk,nstep)
-      field='/support_data/ozone_averaging_kernel';
-      avgk_lay=ncread(file_in,field);
+% err_cov_total(layer,layer,nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/TotalErrorCovariance';
+      err_cov_total=h5read(file_in,field);
 %
-% noise_corr (layer,layer,ntrk,nstep)
-      field='/support_data/ozone_noise_correlation_matrix';
-      noise_corr=ncread(file_in,field);
+% tropopause pressure(nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/TropopausePressure';
+      trop_pressure=h5read(file_in,field);
 %
-% info_content (ntrk,nstep)
-      field='/support_data/ozone_information_content';
-      info_content=ncread(file_in,field);
+% lat (nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Geolocation Fields/Latitude';
+      lat=h5read(file_in,field);
 %
-% Loop through TEMPO data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+% lon (nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Geolocation Fields/Longitude';
+      lon=h5read(file_in,field);
+%
+% zenang (nobs)
+      field='/HDFEOS/SWATHS/CO2NadirSwath/Geolocation Fields/SolarZenithAngle';
+      zenang=h5read(file_in,field);
+%
+% Loop through TES data
+      windate_min=single(convert_time_2010(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
+      windate_max=single(convert_time_2010(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
       icnt=0;
-      for istep=1:nstep
-	  [yyyy_tempo,mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo]=invert_time(time_utc(istep));
-%         int32(ss_tempo)>59)
-%            [yyyy_tempo,mn_tempo,dy_tempo,hh_tempo, ...
-%            mm_tempo,ss_tempo]=incr_time(yyyy_tempo, ...
-%     	     mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo);
-%         end
-%         fprintf('obs date/time %d %d %d %d %d %d \n',yyyy_tempo, ...
-%	 mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo)
-	 
-         tempodate=single(convert_time(yyyy_tempo,mn_tempo, ...
-         dy_tempo,hh_tempo,mm_tempo,ss_tempo));
-
-%         fprintf('windate_min %d \n',windate_min)
-%         fprintf('tempo_dat %d \n',tempodate)
-%         fprintf('windate_max %d \n',windate_max)
+      for iobs=1:nobs
+         utcc_time=cell2mat(utc_time(iobs));
+         yyyy_tes=str2double(utcc_time(1:4));
+         mn_tes=str2double(utcc_time(6:7));
+         dy_tes=str2double(utcc_time(9:10));
+         hh_tes=str2double(utcc_time(12:13));
+         mm_tes=str2double(utcc_time(15:16));
+         ss_tes=round(str2double(utcc_time(18:23)));
+         tesdate=single(convert_time_2010(yyyy_tes,mn_tes, ...
+         dy_tes,hh_tes,mm_tes,ss_tes));
 %
 % Check time
-         if(tempodate<windate_min | tempodate>windate_max)
+%	 fprintf('APM: Time test - %d %d %d \n',windate_min,tesdate,windate_max)
+         if(tesdate<windate_min | tesdate>windate_max)
             continue
          end
-	 
-         for ixtrk=1:ntrk
 %
 % QA/QC
+%         if(any(isnan(prs_lay(:,iobs))) | any(prs_lay(:,iobs)<0))
+%            continue
+%         end
 %
-%	    if(qa_value(ixtrk,istep)~=0 | zenang(ixtrk,istep)>=80.0)
-	    if(zenang(ixtrk,istep)>=80.0)
-               continue
-	    end
-            if(isnan(vert_col_total(ixtrk,istep)) | vert_col_total(ixtrk,istep)<=0)
-               continue
-            end
-            if(isnan(vert_col_trop(ixtrk,istep)) | vert_col_trop(ixtrk,istep)<=0)
-               continue
-            end
+         if(any(isnan(avgk_lay(:,:,iobs))))
+            continue
+         end
+%
+         if(any(isnan(err_cov_obs(:,:,iobs))))
+            continue
+         end
+%
+         if(any(isnan(err_cov_total(:,:,iobs))))
+            continue
+         end
+%
+%         if(any(isnan(co2_lay(:,iobs))) | any(co2_lay(:,iobs)<=0))
+%            continue
+%         end
+%
+%         if(any(isnan(co2_lay_err(:,iobs))) | any(co2_lay_err(:,iobs)<=0))
+%            continue
+%         end
+%
+%         if(any(isnan(co2_lay_prior(:,iobs))) | any(co2_lay_prior(:,iobs)<=0))
+%            continue
+%         end
+%
+         if(isnan(trop_pressure(iobs)) | trop_pressure(iobs)<=0.)
+            continue
+         end
+%
+         if(isnan(dofs(iobs)) | dofs(iobs)<0.)
+            continue
+         end
+%
+         if(isnan(co2_total_col(iobs)) | co2_total_col(iobs)<=0.)
+            continue
+         end
+%
+         if(isnan(co2_total_col_err(iobs)) | co2_total_col_err(iobs)<=0.)
+            continue
+         end
+%
+         if(isnan(co2_total_col_prior(iobs)) | co2_total_col_prior(iobs)<=0.)
+            continue
+         end
+%
+         if(zenang(iobs)>=80.0)
+            continue
+         end
 %
 % Check domain
 % Input grid needs to be in degrees
 % X coordinate is [0 to 360]
-	    x_obser=lon(ixtrk,istep);
-            y_obser=lat(ixtrk,istep);
-            if(x_obser<0.)
-	       x_obser=360.+x_obser;
-            end
+         x_obser=lon(iobs);
+         y_obser=lat(iobs);
+         if(x_obser<0.)
+            x_obser=360.+x_obser;
+         end
 %
-	    xmdl_sw=lon_mdl(1,1);
-	    if(xmdl_sw<0.)
-	       xmdl_sw=xmdl_sw+360.;
-            end
+         xmdl_sw=lon_mdl(1,1);
+         if(xmdl_sw<0.)
+            xmdl_sw=xmdl_sw+360.;
+         end
+         xmdl_mx=lon_mdl(nx_mdl,ny_mdl);
+         if(xmdl_mx<0.)
+            xmdl_mx=xmdl_mx+360.;
+         end
 %
-% APM: Need to get this info from model
-	    [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
-	    xmdl_sw,delx,cen_lon,truelat1,truelat2);
-            i_min = round(xi);
-            j_min = round(xj);
-            reject = 0;
+         [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
+	 xmdl_sw,delx,cen_lon,truelat1,truelat2);
+         i_min = round(xi);
+         j_min = round(xj);
+         reject = 0;
 %
 % Check lower bounds
-            if(i_min<1 & round(xi)==0)
-	       i_min=1;
-            elseif(i_min<1 & fix(xi)<0)
-   	       i_min=-9999;
-               j_min=-9999;
-               reject=1;
-            end
-            if(j_min<1 & round(xj)==0)
-               j_min=1;
-            elseif (j_min<1 & fix(xj)<0)
-               i_min=-9999;
-               j_min=-9999;
-               reject=1;
-            end
+         if(i_min<1 & round(xi)==0)
+            i_min=1;
+         elseif(i_min<1 & fix(xi)<0)
+            i_min=-9999;
+            j_min=-9999;
+            reject=1;
+         end
+         if(j_min<1 & round(xj)==0)
+            j_min=1;
+         elseif (j_min<1 & fix(xj)<0)
+            i_min=-9999;
+            j_min=-9999;
+            reject=1;
+         end
 %
 % Check upper bounds
-            if(i_min>nx_mdl & fix(xi)==nx_mdl)
-               i_min=nx_mdl;
-            elseif (i_min>nx_mdl & fix(xi)>nx_mdl)
-               i_min=-9999;
-               j_min=-9999;
-               reject=1;
-            end
-            if(j_min>ny_mdl & fix(xj)==ny_mdl)
-	       j_min=ny_mdl;
-            elseif (j_min>ny_mdl & fix(xj)>ny_mdl)
-               i_min=-9999;
-               j_min=-9999;
-               reject=1;
-            end
-            if(reject==1)
-	       continue
-	    end
-	    if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
-	       continue
-	    end
+         if(i_min>nx_mdl & fix(xi)==nx_mdl)
+            i_min=nx_mdl;
+         elseif (i_min>nx_mdl & fix(xi)>nx_mdl)
+            i_min=-9999;
+            j_min=-9999;
+            reject=1;
+         end
+         if(j_min>ny_mdl & fix(xj)==ny_mdl)
+            j_min=ny_mdl;
+         elseif (j_min>ny_mdl & fix(xj)>ny_mdl)
+            i_min=-9999;
+            j_min=-9999;
+            reject=1;
+         end
+         if(reject==1)
+%            fprintf('i_min %d j_min %d \n',i_min,j_min)
+            continue
+         end
+         if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
+%            fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
+            continue
+         end
 %
 % Save data to ascii file
-	    if (icnt==1000)
-	      return
-	    end
-            icnt=icnt+1;
-            fprintf(fid,'TEMPO_O3_Obs: %d %d %d \n',icnt,i_min,j_min);
-            fprintf(fid,'%d %d %d %d %d %d \n',yyyy_tempo, ...
-            mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo);
-            fprintf(fid,'%14.8f %14.8f \n',lat(ixtrk,istep),lon(ixtrk,istep));
-            fprintf(fid,'%d %d \n',layer,level);
-            fprintf(fid,'%d \n',trop_index(ixtrk,istep));
-            fprintf(fid,'%14.8g ',prs_lev(1:level,ixtrk,istep));
+         icnt=icnt+1;
+         fprintf(fid,'TES_CO2_Obs: %d %d %d \n',icnt,i_min,j_min);
+         fprintf(fid,'%d %d %d %d %d %d \n',yyyy_tes, ...
+         mn_tes,dy_tes,hh_tes,mm_tes,ss_tes);
+         fprintf(fid,'%14.8f %14.8f \n',lat(iobs),lon(iobs));
+         fprintf(fid,'%d %d \n',layer,level);
+         fprintf(fid,'%14.8g ',prs_lay(1:layer,iobs));
+         fprintf(fid,'\n');
+         fprintf(fid,'%14.8g ',trop_pressure(iobs));
+         fprintf(fid,'\n');
+         fprintf(fid,'%14.8g ',co2_lay(1:layer,iobs));
+         fprintf(fid,'\n');
+         fprintf(fid,'%14.8g ',co2_lay_prior(1:layer,iobs));
+         fprintf(fid,'\n');
+         fprintf(fid,'%14.8g ',co2_lay_err(1:layer,iobs));
+         fprintf(fid,'\n');
+         fprintf(fid,'%14.8g ',dofs(iobs));
+         fprintf(fid,'\n');
+         for k=1:layer
+            fprintf(fid,'%14.8g ',avgk_lay(k,1:layer,iobs));
             fprintf(fid,'\n');
-            fprintf(fid,'%14.8g ',o3_lay(1:layer,ixtrk,istep));
-            fprintf(fid,'\n');
-            fprintf(fid,'%14.8g ',prior_lay(1:layer,ixtrk,istep));
-            fprintf(fid,'\n');
-	    for k=1:layer
-               fprintf(fid,'%14.8g ',avgk_lay(k,1:layer,ixtrk,istep));
-               fprintf(fid,'\n');
-	    end
-	    for k=1:layer
-               fprintf(fid,'%14.8g ',noise_corr(k,1:layer,ixtrk,istep));
-               fprintf(fid,'\n');
-	    end
-            fprintf(fid,'%14.8g \n',vert_col_trop(ixtrk,istep));
-            fprintf(fid,'%14.8g \n',vert_col_total(ixtrk,istep));
 	 end
+         fprintf(fid,'%14.8g ',avgk_diag_lay(1:layer,iobs));
+         fprintf(fid,'\n');
+         for k=1:layer
+            fprintf(fid,'%14.8g ',err_cov_obs(k,1:layer,iobs));
+            fprintf(fid,'\n');
+	 end
+         for k=1:layer
+            fprintf(fid,'%14.8g ',err_cov_total(k,1:layer,iobs));
+            fprintf(fid,'\n');
+	 end
+         fprintf(fid,'%14.8g \n',co2_total_col(iobs));
+         fprintf(fid,'%14.8g \n',co2_total_col_prior(iobs));
+         fprintf(fid,'%14.8g \n',co2_total_col_err(iobs));
       end
-   end
+   end  
 end

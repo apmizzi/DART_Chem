@@ -250,26 +250,26 @@ program tempo_no2_trop_col_ascii_to_obs
    call set_calendar_type(calendar_type)
 !
 ! Read model data
-   allocate(lon(nx_model,ny_model))
-   allocate(lat(nx_model,ny_model))
-   allocate(prs_prt(nx_model,ny_model,nz_model))
-   allocate(prs_bas(nx_model,ny_model,nz_model))
-   allocate(prs_fld(nx_model,ny_model,nz_model))
-   allocate(tmp_prt(nx_model,ny_model,nz_model))
-   allocate(tmp_fld(nx_model,ny_model,nz_model))
-   allocate(qmr_fld(nx_model,ny_model,nz_model))
-   allocate(no2_fld(nx_model,ny_model,nz_model))
-   file_in=trim(path_model)//'/'//trim(file_model)
-   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(file_in,'no2',no2_fld,nx_model,ny_model,nz_model,1)
-   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-   no2_fld(:,:,:)=no2_fld(:,:,:)*1.e-6
+!   allocate(lon(nx_model,ny_model))
+!   allocate(lat(nx_model,ny_model))
+!   allocate(prs_prt(nx_model,ny_model,nz_model))
+!   allocate(prs_bas(nx_model,ny_model,nz_model))
+!   allocate(prs_fld(nx_model,ny_model,nz_model))
+!   allocate(tmp_prt(nx_model,ny_model,nz_model))
+!   allocate(tmp_fld(nx_model,ny_model,nz_model))
+!   allocate(qmr_fld(nx_model,ny_model,nz_model))
+!   allocate(no2_fld(nx_model,ny_model,nz_model))
+!   file_in=trim(path_model)//'/'//trim(file_model)
+!   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(file_in,'no2',no2_fld,nx_model,ny_model,nz_model,1)
+!   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
+!   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
+!   no2_fld(:,:,:)=no2_fld(:,:,:)*1.e-6
 !
 ! Open TEMPO NO2 binary file
    fileid=100
@@ -308,31 +308,12 @@ program tempo_no2_trop_col_ascii_to_obs
       lat_obs_r8=lat_obs
       amf_trop_obs_r8=amf_trop_obs
 !
-!      print *, trim(data_type),obs_id,i_min,j_min
-!      print *, yr_obs,mn_obs,dy_obs
-!      print *, hh_obs,mm_obs,ss_obs
-!      print *, lat_obs,lon_obs
-!      print *, nlay_obs,nlev_obs
-!      print *, prs_obs(1:nlev_obs)
-!      print *, scat_wts_obs(1:nlay_obs) 
-!      print *, col_amt_obs,col_amt_obs_err
-!      print *, col_slnt_obs,col_slnt_obs_err
-!      print *, amf_col_obs,amf_col_obs_err
-!      print *, amf_trop_obs
-!      print *, col_amt_trop_obs
-!      print *, prs_trop_obs
-!
-!--------------------------------------------------------
-! Find model NO2 profile corresponding to the observation
-!--------------------------------------------------------
-!
 ! Obs thinning test
       reject=0
       obs_accept=obs_accept+1
       if(obs_accept/obs_no2_reten_freq*obs_no2_reten_freq.eq.obs_accept) then
 !
 ! Process accepted observations
-!         print *, 'localization pressure level (hPa) ',level/100.
          sum_accept=sum_accept+1
 !
 ! Set data for writing obs_sequence file
@@ -341,12 +322,6 @@ program tempo_no2_trop_col_ascii_to_obs
 ! Obs value is the tropospheric vertical column
          obs_val(:)=col_amt_trop_obs*amf_trop_obs
          obs_err_var=(fac_obs_error*fac_err*col_amt_trop_obs*amf_trop_obs)**2.
-!         print *, 'col_amt_tot,err ',col_amt_obs,col_amt_obs_err
-!         print *, 'slnt_col, err ',col_slnt_obs,col_slnt_obs_err
-!         print *, 'col_amt_trop, amf_trop ',col_amt_trop_obs,amf_trop_obs
-!         print *, 'obs_val ',col_amt_trop_obs*amf_trop_obs
-!         print *, 'obs_err_var ',(fac_err*col_amt_trop_obs*amf_trop_obs)**2.
-         tempo_qc(:)=0
          obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
          call get_time(obs_time, seconds, days)
 !       
@@ -395,21 +370,20 @@ program tempo_no2_trop_col_ascii_to_obs
       deallocate(prf_locl) 
       deallocate(prf_full) 
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!      print *, 'sum_accept ',sum_accept
    enddo   
 !
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
-   deallocate(lon)
-   deallocate(lat)
-   deallocate(prs_prt)
-   deallocate(prs_bas)
-   deallocate(prs_fld)
-   deallocate(tmp_prt)
-   deallocate(tmp_fld)
-   deallocate(qmr_fld)
-   deallocate(no2_fld)
+!   deallocate(lon)
+!   deallocate(lat)
+!   deallocate(prs_prt)
+!   deallocate(prs_bas)
+!   deallocate(prs_fld)
+!   deallocate(tmp_prt)
+!   deallocate(tmp_fld)
+!   deallocate(qmr_fld)
+!   deallocate(no2_fld)
 !
    print *, 'total obs ',sum_total
    print *, 'accepted ',sum_accept

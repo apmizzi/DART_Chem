@@ -223,7 +223,6 @@ program tropomi_hcho_trop_col_ascii_to_obs
    call check_namelist_read(iunit, io, "create_tropomi_obs_nml")
 !
 ! Record the namelist values used for the run ...
-   call error_handler(E_MSG,'init_create_tropomi_obs','create_tropomi_obs_nml values are',' ',' ',' ')
    write(     *     , nml=create_tropomi_obs_nml)
 !
 ! Initialize an obs_sequence structure
@@ -252,26 +251,26 @@ program tropomi_hcho_trop_col_ascii_to_obs
    call set_calendar_type(calendar_type)
 !
 ! Read model data
-   allocate(lon(nx_model,ny_model))
-   allocate(lat(nx_model,ny_model))
-   allocate(prs_prt(nx_model,ny_model,nz_model))
-   allocate(prs_bas(nx_model,ny_model,nz_model))
-   allocate(prs_fld(nx_model,ny_model,nz_model))
-   allocate(tmp_prt(nx_model,ny_model,nz_model))
-   allocate(tmp_fld(nx_model,ny_model,nz_model))
-   allocate(qmr_fld(nx_model,ny_model,nz_model))
-   allocate(hcho_fld(nx_model,ny_model,nz_model))
-   file_in=trim(path_model)//'/'//trim(file_model)
-   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(file_in,'hcho',hcho_fld,nx_model,ny_model,nz_model,1)
-   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-   hcho_fld(:,:,:)=hcho_fld(:,:,:)*1.e-6
+!   allocate(lon(nx_model,ny_model))
+!   allocate(lat(nx_model,ny_model))
+!   allocate(prs_prt(nx_model,ny_model,nz_model))
+!   allocate(prs_bas(nx_model,ny_model,nz_model))
+!   allocate(prs_fld(nx_model,ny_model,nz_model))
+!   allocate(tmp_prt(nx_model,ny_model,nz_model))
+!   allocate(tmp_fld(nx_model,ny_model,nz_model))
+!   allocate(qmr_fld(nx_model,ny_model,nz_model))
+!   allocate(hcho_fld(nx_model,ny_model,nz_model))
+!   file_in=trim(path_model)//'/'//trim(file_model)
+!   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(file_in,'hcho',hcho_fld,nx_model,ny_model,nz_model,1)
+!   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
+!   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
+!   hcho_fld(:,:,:)=hcho_fld(:,:,:)*1.e-6
 !
 ! Open TROPOMI HCHO binary file
    fileid=100
@@ -313,18 +312,13 @@ program tropomi_hcho_trop_col_ascii_to_obs
 ! Obs thinning test
       obs_accept=obs_accept+1
       if(obs_accept/obs_hcho_reten_freq*obs_hcho_reten_freq.eq.obs_accept) then
-!
-! Set data for writing obs_sequence file
          sum_accept=sum_accept+1
          qc_count=qc_count+1
 !
 ! Obs value is the tropospheric vertical column
-! Convert the obs value to tropospheric slant column
-!      
+! Convert the obs value to tropospheric slant column      
          obs_val(:)=trop_col_obs * amf_trop_obs
          obs_err_var=(fac_obs_error*fac_err*trop_col_obs_err * amf_trop_obs)**2.
-!         print *, 'obs_val ',trop_col_obs
-!         print *, 'obs_err ',trop_col_obs_err
         
          tropomi_qc(:)=0
          obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
@@ -361,7 +355,6 @@ program tropomi_hcho_trop_col_ascii_to_obs
             days_last=days
             seconds_last=seconds
          endif
-!         print *, 'APM: ',qc_count,days,seconds
          if ( qc_count == 1 .or. old_ob.eq.1) then
             call insert_obs_in_seq(seq, obs)
          else
@@ -378,21 +371,20 @@ program tropomi_hcho_trop_col_ascii_to_obs
       deallocate(prf_locl) 
       deallocate(prf_full) 
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!      print *, 'sum_accept ',sum_accept
    enddo   
 !
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
-   deallocate(lon)
-   deallocate(lat)
-   deallocate(prs_prt)
-   deallocate(prs_bas)
-   deallocate(prs_fld)
-   deallocate(tmp_prt)
-   deallocate(tmp_fld)
-   deallocate(qmr_fld)
-   deallocate(hcho_fld)
+!   deallocate(lon)
+!   deallocate(lat)
+!   deallocate(prs_prt)
+!   deallocate(prs_bas)
+!   deallocate(prs_fld)
+!   deallocate(tmp_prt)
+!   deallocate(tmp_fld)
+!   deallocate(qmr_fld)
+!   deallocate(hcho_fld)
 !
    print *, 'total obs ',sum_total
    print *, 'accepted ',sum_accept

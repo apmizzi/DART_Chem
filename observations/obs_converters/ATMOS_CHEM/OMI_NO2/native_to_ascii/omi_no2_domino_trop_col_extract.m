@@ -83,7 +83,7 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
       ref_hh=str2double(time_ref(12:13));
       ref_mn=str2double(time_ref(15:16));
       ref_ss=str2double(time_ref(18:19));
-      ref_secs=single(convert_time_1995(ref_yy,ref_mm,ref_dd,ref_hh,ref_mn,ref_ss));
+      ref_secs=single(convert_time_ref(ref_yy,ref_mm,ref_dd,ref_hh,ref_mn,ref_ss,1995));
       file_str_yy=str2double(time_start(1:4));
       file_str_mm=str2double(time_start(6:7));
       file_str_dd=str2double(time_start(9:10));
@@ -265,8 +265,8 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
       units=ncreadatt(file_in,field,'units');
 %
 % Loop through OMI data
-      windate_min=single(convert_time_1995(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time_1995(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,1995));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,1995));
       ocnt=0;
       icnt=0;
       for itim=1:ntim
@@ -275,19 +275,19 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
                continue
             end
             time_cur=ref_secs+delta_time(iscan,itim);
-            [year,month,day,hour,minute,second]=invert_time_1995(time_cur);
+            [year,month,day,hour,minute,second]=invert_time_ref(time_cur,1995);
             yyyy_omi=year;
             mn_omi=month;
             dy_omi=day;
             hh_omi=hour;
             mm_omi=minute;
             ss_omi=second;
-%            [jult]=convert_time_1995(year,month,day,hour,minute,second);
-            omidate=single(convert_time_1995(year,month,day,hour,minute,second));
+%            [jult]=convert_time_ref(year,month,day,hour,minute,second,1995);
+            omidate=single(convert_time_ref(year,month,day,hour,minute,second,1995));
 %
 % Check time
             if(omidate<windate_min | omidate>windate_max)
-               fprintf('APM: min %d, omi %d, max %d \n',windate_min,omidate,windate_max);
+%               fprintf('APM: min %d, omi %d, max %d \n',windate_min,omidate,windate_max);
                continue
             end
    	    for ipxl=1:npxl
@@ -387,11 +387,11 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
                   reject=1;
                end
                if(reject==1)
-                  fprintf('x_mdl_min, x_obs, x_mdl_max: %6.2f %6.2f %6.2f \n',xmdl_mn, ...
-                  x_obser,xmdl_mx)
-                  fprintf('y_mdl_min, y_obs, y_mdl_max: %6.2f %6.2f %6.2f \n',lat_mdl(1,1), ...
-                  y_obser,lat_mdl(nx_mdl,ny_mdl))
-                  fprintf('i_min %d j_min %d \n',i_min,j_min)
+%                  fprintf('x_mdl_min, x_obs, x_mdl_max: %6.2f %6.2f %6.2f \n',xmdl_mn, ...
+%                  x_obser,xmdl_mx)
+%                  fprintf('y_mdl_min, y_obs, y_mdl_max: %6.2f %6.2f %6.2f \n',lat_mdl(1,1), ...
+%                  y_obser,lat_mdl(nx_mdl,ny_mdl))
+%                  fprintf('i_min %d j_min %d \n',i_min,j_min)
                   continue
                end
                if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)

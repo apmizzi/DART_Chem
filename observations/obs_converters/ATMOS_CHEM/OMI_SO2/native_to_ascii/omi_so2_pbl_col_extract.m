@@ -20,7 +20,7 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
    [status]=system(command);
    fid=fopen(fileout,'w');
 %
-   command=strcat('ls'," ",'-1'," ",filein,'*')
+   command=strcat('ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);
@@ -70,7 +70,7 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
 %
 % Process satellite data
    for ifile=1:nfile
-      file_in=char(file_list(ifile))
+     file_in=char(file_list(ifile));
       if(isempty(file_in))
          continue
       end
@@ -271,8 +271,8 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       end
 %
 % Loop through OMI data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
       for ilin=1:scanline
          yyyy_omi=double(year);
@@ -285,33 +285,25 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
             [yyyy_omi,mn_omi,dy_omi,hh_omi,mm_omi,ss_omi]=incr_time(yyyy_omi, ...
       	    mn_omi,dy_omi,hh_omi,mm_omi,ss_omi);
          end
-         omidate=single(convert_time(yyyy_omi,mn_omi,dy_omi,hh_omi,mm_omi,ss_omi));
+         omidate=single(convert_time_ref(yyyy_omi,mn_omi,dy_omi,hh_omi,mm_omi,ss_omi,2010));
 %
 % Check time
          if(omidate<windate_min | omidate>windate_max)
             continue
          end
-         omidate=single(convert_time(yyyy_omi,mn_omi,dy_omi,hh_omi,mm_omi,ss_omi));
-%
-% Check time
-         if(omidate<windate_min | omidate>windate_max)
-            continue
-         end
-%         for ipxl=1:pixel
-         for ipxl=5:55
+         for ipxl=1:pixel
 %
 % QA/AC
-%            fprintf(' \n');
-%            fprintf('rowanom  %d saa %d crf %d \n',flg_rowanom(ipxl,ilin),flg_saa(ipxl,ilin),cld_rad_frac(ipxl,ilin));
-%            fprintf('zenang  %d snoice %d amf %d \n',zenang(ipxl,ilin),flg_snoice(ipxl,ilin),amf_total(ipxl,ilin));
-%            fprintf('lat_min  %d lat %d lat_max %d \n',lat_min,lat(ipxl,ilin),lat_max)
-%            fprintf('lon_min  %d lon %d lon_max %d \n',lon_min,lon(ipxl,ilin),lon_max)
+            if((ipxl>=1 & ipxl<=5) | (ipxl>=56 & ipxl<=60))
+	       continue
+	    end
 
             if(flg_rowanom(ipxl,ilin)==1 | flg_saa(ipxl,ilin)==1 | ...
 	       cld_rad_frac(ipxl,ilin)>=0.3 | zenang(ipxl,ilin)>=65.0 | ...
 	       flg_snoice(ipxl,ilin)==2 | amf_total(ipxl,ilin)<=0.3)
                continue
             end
+	    
 	    if(isnan(slnt_col_amt(ipxl,ilin)) | slnt_col_amt(ipxl,ilin)<=0)
                continue
             end
@@ -398,15 +390,6 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
             fprintf(fid,'\n');
             fprintf(fid,'%14.8g ',layer_wt_pbl(1:layer,ipxl,ilin));
             fprintf(fid,'\n');
-
-%for k=1:layer
-%   if(scat_wt(k,ipxl,ilin)==0)
-%      fprintf('%d %d %d \n',ipxl,ilin,k)
-%      fprintf('%14.8g',scat_wt(k:layer,ipxl,ilin))
-%      fprintf(fid,'\n');
-%      return	       
-%   end
-%end
          end
       end
       clear flg_snoice cld_frac cld_prs cld_rad_frac col_amt col_amt_pbl

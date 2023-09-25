@@ -219,14 +219,14 @@ function tropomi_o3_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
       fprintf('BEGIN DATA PROCESSING  \n')
 %
 % Loop through TROPOMI data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
       for ilin=1:scanline
          for ipxl=1:pixel
       	    tropomidate=single(time+time_delta(ipxl,ilin));
       	    [yyyy_tropomi,mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi, ...
-      	    ss_tropomi]=invert_time(tropomidate);
+      	    ss_tropomi]=invert_time_ref(tropomidate,2010);
             if(hh_tropomi<0 | mm_tropomi<0 | ss_tropomi<0)
 	      fprintf('%d %d %d \n',single(time),int64(time_delta(ipxl,ilin)),tropomidate)
                fprintf('%d %d %d %d %d %d \n',yyyy_tropomi,mn_tropomi,dy_tropomi, ...

@@ -144,7 +144,8 @@ program tropomi_no2_trop_col_ascii_to_obs
    integer                         :: i_min,j_min
    integer                         :: sum_reject,sum_accept,sum_total,num_thin
    integer                         :: obs_accept,obs_co_reten_freq,obs_o3_reten_freq, &
-                                      obs_no2_reten_freq,obs_so2_reten_freq
+                                      obs_no2_reten_freq,obs_so2_reten_freq, &
+                                      obs_ch4_reten_freq,obs_hcho_reten_freq
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
@@ -168,7 +169,8 @@ program tropomi_no2_trop_col_ascii_to_obs
    character*129                   :: data_type,cmd
    character*129                   :: path_model,file_model,file_in
 !
-   logical                         :: use_log_co,use_log_o3,use_log_no2,use_log_so2
+   logical                         :: use_log_co,use_log_o3,use_log_no2,use_log_so2, &
+                                      use_log_ch4,use_log_hcho
 !
 ! Species-specific variables
    integer                         :: trop_indx,trop_indx_sp
@@ -190,8 +192,10 @@ program tropomi_no2_trop_col_ascii_to_obs
 !
    namelist /create_tropomi_obs_nml/filedir,filename,fileout, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
+   use_log_ch4,use_log_hcho, &
    lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model,ny_model,nz_model, &
-   obs_co_reten_freq,obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq
+   obs_co_reten_freq,obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq, &
+   obs_ch4_reten_freq,obs_hcho_reten_freq
 !
 ! Set constants
    pi=4.*atan(1.)
@@ -218,7 +222,6 @@ program tropomi_no2_trop_col_ascii_to_obs
    call check_namelist_read(iunit, io, "create_tropomi_obs_nml")
 !
 ! Record the namelist values used for the run ...
-   call error_handler(E_MSG,'init_create_tropomi_obs','create_tropomi_obs_nml values are',' ',' ',' ')
    write(     *     , nml=create_tropomi_obs_nml)
 !
 ! Initialize an obs_sequence structure
@@ -247,26 +250,26 @@ program tropomi_no2_trop_col_ascii_to_obs
    call set_calendar_type(calendar_type)
 !
 ! Read model data
-   allocate(lon(nx_model,ny_model))
-   allocate(lat(nx_model,ny_model))
-   allocate(prs_prt(nx_model,ny_model,nz_model))
-   allocate(prs_bas(nx_model,ny_model,nz_model))
-   allocate(prs_fld(nx_model,ny_model,nz_model))
-   allocate(tmp_prt(nx_model,ny_model,nz_model))
-   allocate(tmp_fld(nx_model,ny_model,nz_model))
-   allocate(qmr_fld(nx_model,ny_model,nz_model))
-   allocate(no2_fld(nx_model,ny_model,nz_model))
-   file_in=trim(path_model)//'/'//trim(file_model)
-   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(file_in,'no2',no2_fld,nx_model,ny_model,nz_model,1)
-   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-   no2_fld(:,:,:)=no2_fld(:,:,:)*1.e-6
+!   allocate(lon(nx_model,ny_model))
+!   allocate(lat(nx_model,ny_model))
+!   allocate(prs_prt(nx_model,ny_model,nz_model))
+!   allocate(prs_bas(nx_model,ny_model,nz_model))
+!   allocate(prs_fld(nx_model,ny_model,nz_model))
+!   allocate(tmp_prt(nx_model,ny_model,nz_model))
+!   allocate(tmp_fld(nx_model,ny_model,nz_model))
+!   allocate(qmr_fld(nx_model,ny_model,nz_model))
+!   allocate(no2_fld(nx_model,ny_model,nz_model))
+!   file_in=trim(path_model)//'/'//trim(file_model)
+!   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(file_in,'no2',no2_fld,nx_model,ny_model,nz_model,1)
+!   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
+!   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
+!   no2_fld(:,:,:)=no2_fld(:,:,:)*1.e-6
 !
 ! Open TROPOMI NO2 binary file
    fileid=100
@@ -301,46 +304,6 @@ program tropomi_no2_trop_col_ascii_to_obs
       lat_obs_r8=lat_obs
       amf_trop_obs_r8=amf_trop_obs
 !
-!      print *, trim(data_type), obs_id
-!      print *, yr_obs,mn_obs,dy_obs
-!      print *, hh_obs,mm_obs,ss_obs
-!      print *, lat_obs,lon_obs
-!      print *, nlay_obs,nlev_obs
-!      print *, prs_obs(1:nlev_obs)
-!      print *, avgk_obs(1:nlay_obs) 
-!      print *, 'trop col ',col_amt_trop_obs
-!      print *, 'trop col err ',col_amt_trop_err_obs
-!      print *, 'trop amf ',amf_trop_obs
-!      print *, 'trop index ',trop_indx
-!      print *, 'prs_obs ',prs_obs(1:nlev_obs)
-!      print *, 'prs_mdl ',prs_fld(i_min,j_min,1:nz_model)
-!
-!--------------------------------------------------------
-! Find model NO2 profile corresponding to the observation
-!--------------------------------------------------------
-      reject=0
-!      call get_model_profile(prf_locl,prf_full,nz_model, &
-!      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
-!      qmr_fld(i_min,j_min,:),no2_fld(i_min,j_min,:), &
-!      nlev_obs,avgk_obs,kend)
-!      print *, 'kend, prs ',kend,prs_obs(nlay_obs-kend+1)
-!
-!--------------------------------------------------------
-! Find vertical location
-!--------------------------------------------------------
-! if kend >= trop_indx then do vertical sum to trop_indx
-! if kend < trop_indx then do vertical sum to kend and adjust the observation
-!
-!      trop_indx_sp=0      
-!      if(kend.lt.trop_indx) then
-!         trop_indx_sp=kend
-!      endif
-!      call vertical_locate(prs_loc,prs_obs,nlev_obs,prf_locl,nlay_obs,kend,trop_indx_sp)
-!      level=prs_loc
-!
-! Process accepted observations
-!      print *, 'localization pressure level (hPa) ',level/100.
-!
 ! Obs thinning test
       obs_accept=obs_accept+1
       if(obs_accept/obs_o3_reten_freq*obs_o3_reten_freq.eq.obs_accept) then
@@ -351,10 +314,6 @@ program tropomi_no2_trop_col_ascii_to_obs
 ! Convert the obs value to tropospheric slant column    
          obs_val(:)=col_amt_trop_obs * amf_trop_obs
          obs_err_var=(fac_obs_error*fac_err*col_amt_trop_err_obs * amf_trop_obs)**2.
-!         obs_val(:)=trop_sum*col_amt_trop_obs/(trop_sum+strat_sum)
-!         obs_err_var=fac_obs_error**fac_err*(trop_sum*col_amt_trop_err_obs/(trop_sum+strat_sum))**2.
-!         print *, 'obs_val ',col_amt_trop_obs
-!         print *, 'obs_err ',col_amt_trop_err_obs
         
          tropomi_qc(:)=0
          obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
@@ -390,7 +349,6 @@ program tropomi_no2_trop_col_ascii_to_obs
             days_last=days
             seconds_last=seconds
          endif
-!         print *, 'APM: ',qc_count,days,seconds
          if ( qc_count == 1 .or. old_ob.eq.1) then
             call insert_obs_in_seq(seq, obs)
          else
@@ -405,21 +363,20 @@ program tropomi_no2_trop_col_ascii_to_obs
       deallocate(prf_locl) 
       deallocate(prf_full) 
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!      print *, 'sum_accept ',sum_accept
    enddo   
 !
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
-   deallocate(lon)
-   deallocate(lat)
-   deallocate(prs_prt)
-   deallocate(prs_bas)
-   deallocate(prs_fld)
-   deallocate(tmp_prt)
-   deallocate(tmp_fld)
-   deallocate(qmr_fld)
-   deallocate(no2_fld)
+!   deallocate(lon)
+!   deallocate(lat)
+!   deallocate(prs_prt)
+!   deallocate(prs_bas)
+!   deallocate(prs_fld)
+!   deallocate(tmp_prt)
+!   deallocate(tmp_fld)
+!   deallocate(qmr_fld)
+!   deallocate(no2_fld)
 !
    print *, 'total obs ',sum_total
    print *, 'accepted ',sum_accept

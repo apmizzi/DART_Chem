@@ -1,0 +1,20 @@
+#!/bin/ksh -aux
+#
+# Run WRF-Chem for failed forecasts (will not work with adaptive time step)
+export RUN_SPECIAL_FORECAST=false
+export NUM_SPECIAL_FORECAST=0
+export SPECIAL_FORECAST_FAC=1./2.
+export SPECIAL_FORECAST_FAC=2./3.
+export SPECIAL_FORECAST_FAC=1.
+#
+export SPECIAL_FORECAST_MEM[1]=1
+export SPECIAL_FORECAST_MEM[2]=2
+export SPECIAL_FORECAST_MEM[3]=3
+export SPECIAL_FORECAST_MEM[4]=4
+export SPECIAL_FORECAST_MEM[5]=5
+export SPECIAL_FORECAST_MEM[6]=6
+export SPECIAL_FORECAST_MEM[7]=7
+export SPECIAL_FORECAST_MEM[8]=8
+export SPECIAL_FORECAST_MEM[9]=9
+export SPECIAL_FORECAST_MEM[10]=10
+#

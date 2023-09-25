@@ -14,6 +14,8 @@ LOCATION=threed_sphere
 
 
 programs=(
+mls_o3_profile_thinner
+mls_o3_cpsr_thinner
 mls_o3_profile_ascii_to_obs
 mls_o3_cpsr_ascii_to_obs
 obs_sequence_tool

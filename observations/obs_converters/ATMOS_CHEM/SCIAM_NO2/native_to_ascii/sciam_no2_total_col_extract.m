@@ -191,11 +191,11 @@ function sciam_no2_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
       no2_vert_col_total_err=ncread(file_in,field);
 %
 % Loop through GOME2A data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2000));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2000));
       icnt=0;
       for istep=1:nstep
-	  [yyyy_gome2a,mn_gome2a,dy_gome2a,hh_gome2a,mm_gome2a,ss_gome2a]=invert_time(time_utc(istep));
+	  [yyyy_gome2a,mn_gome2a,dy_gome2a,hh_gome2a,mm_gome2a,ss_gome2a]=invert_time_ref(time_utc(istep),2000);
 %         if(int32(hh_gome2a)>23 | int32(mm_gome2a)>59 | ...
 %         int32(ss_gome2a)>59)
 %            [yyyy_gome2a,mn_gome2a,dy_gome2a,hh_gome2a, ...
@@ -204,8 +204,8 @@ function sciam_no2_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
 %         end
 %         fprintf('obs date/time %d %d %d %d %d %d \n',yyyy_gome2a, ...
 %         mn_gome2a,dy_gome2a,hh_gome2a,mm_gome2a,ss_gome2a)
-         gome2adate=single(convert_time(yyyy_gome2a,mn_gome2a, ...
-         dy_gome2a,hh_gome2a,mm_gome2a,ss_gome2a));
+         gome2adate=single(convert_time_ref(yyyy_gome2a,mn_gome2a, ...
+         dy_gome2a,hh_gome2a,mm_gome2a,ss_gome2a,2000));
 %         fprintf('windate_min %d \n',windate_min)
 %         fprintf('gome2a_dat %d \n',gome2adate)
 %         fprintf('windate_max %d \n',windate_max)

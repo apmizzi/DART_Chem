@@ -23,16 +23,483 @@ module apm_upper_bdy_mod
    implicit none
    private
 
-   public :: get_upper_bdy_fld, &
+   public :: get_upper_bdy_height, &
+             get_upper_bdy_fld, &
+             get_upper_bdy_single_fld, &
              get_MOZART_INT_DATA, &
              get_MOZART_REAL_DATA, &
              wrf_dart_ubval_interp, &
              apm_get_exo_coldens, &
              apm_get_upvals, &
              apm_interpolate
-   
+
    contains
-   
+
+!-------------------------------------------------------------------------------
+
+subroutine get_upper_bdy_single_fld(fld,model,data_file,nx,ny,nz,ntim,lon_obs, &
+lat_obs,prs_obs,nprs_obs,fld_prf_mdl,date_obs,datesec_obs)  
+
+   integer,                           intent(in)    :: nx,ny,nz,ntim
+   integer,                           intent(in)    :: nprs_obs
+   real*8,                            intent(in)    :: lon_obs,lat_obs
+   real*8,dimension(nprs_obs),        intent(in)    :: prs_obs
+   real*8,dimension(nprs_obs),        intent(out)   :: fld_prf_mdl
+   integer                                          :: i,j,k,kk,itim
+   integer                                          :: indx,jndx,kndx
+   integer                                          :: date_obs,datesec_obs
+   integer                                          :: itim_sav,year,month,day,hour,minute,second
+   type(time_type)                                  :: time_var
+   integer                                          :: jdate_obs,jdate_bck,jdate_fwd,yrleft,jday
+   integer,dimension(ntim)                          :: date,datesec
+   real                                             :: pi,rad2deg
+   real                                             :: bck_xwt,fwd_xwt
+   real                                             :: bck_ywt,fwd_ywt
+   real                                             :: zwt_up,zwt_dw
+   real                                             :: twtx,twty,twt
+   real                                             :: ztrp_jbck,ztrp_jfwd
+   real                                             :: wt_bck,wt_fwd   
+   real,dimension(nx)                               :: lon_glb
+   real,dimension(ny)                               :: lat_glb
+   real,dimension(nz)                               :: prs_glb,ztrp_fld
+   real,dimension(nz)                               :: fld_glb_xmym,fld_glb_xpym,fld_glb_xmyp,fld_glb_xpyp
+   real,dimension(nx,ny,nz,ntim)                    :: fld_glb
+   character(len=120)                               :: string1
+   character(len=*)                                 :: fld,model
+   character(len=*)                                 :: data_file
+   character(len=*), parameter                      :: routine = 'get_upper_bdy_single_fld'
+   character(len=*), parameter                      :: source = 'get_upper_bdy_single_fld.f90'
+!
+!______________________________________________________________________________________________   
+!
+! Read the upper boundary large scale data (do this once)
+!______________________________________________________________________________________________   
+!
+   pi=4.*atan(1.)
+   rad2deg=360./(2.*pi)
+   fld_prf_mdl(:)=0.
+!
+   call get_MOZART_INT_DATA(data_file,'date',ntim,1,1,1,date)
+   call get_MOZART_INT_DATA(data_file,'datesec',ntim,1,1,1,datesec)
+   call get_MOZART_REAL_DATA(data_file,'lev',nz,1,1,1,prs_glb)
+   call get_MOZART_REAL_DATA(data_file,'lat',ny,1,1,1,lat_glb)
+   call get_MOZART_REAL_DATA(data_file,'lon',nx,1,1,1,lon_glb)
+! mozart
+   if(trim(model).eq.'mozart' .or. trim(model).eq.'MOZART') then
+      call get_MOZART_REAL_DATA(data_file,trim(fld),nx,ny,nz,ntim,fld_glb)
+! waccm
+   elseif (trim(model).eq.'waccm' .or. trim(model).eq.'WACCM') then
+      call get_MOZART_REAL_DATA(data_file,trim(fld),nx,ny,nz,ntim,fld_glb)
+   else
+      print *, 'APM: Large scale model type does not exist '
+      call exit_all(-77)
+   endif
+   lon_glb(:)=lon_glb(:)/rad2deg
+   lat_glb(:)=lat_glb(:)/rad2deg
+!
+!______________________________________________________________________________________________   
+!
+! Find large scale data correspondeing to the observation time
+!______________________________________________________________________________________________   
+!
+   jdate_obs=date_obs*24*60*60+datesec_obs   
+   year=date(1)/10000
+   yrleft=mod(date(1),10000)
+   month=yrleft/100
+   day=mod(yrleft,100)
+   time_var=set_date(year,month,day,0,0,0)
+   call get_time(time_var,second,jday)
+   jdate_bck=jday*24*60*60+datesec(1)
+!
+   year=date(2)/10000
+   yrleft=mod(date(2),10000)
+   month=yrleft/100
+   day=mod(yrleft,100)
+   time_var=set_date(year,month,day,0,0,0)
+   call get_time(time_var,second,jday)
+   jdate_fwd=jday*24*60*60+datesec(2)
+!   
+   wt_bck=0
+   wt_fwd=0
+   itim_sav=0
+   do itim=1,ntim-1
+      if(jdate_obs.gt.jdate_bck .and. jdate_obs.le.jdate_fwd) then
+         wt_bck=real(jdate_fwd-jdate_obs)
+         wt_fwd=real(jdate_obs-jdate_bck)
+         itim_sav=itim
+         exit
+      endif
+      jdate_bck=jdate_fwd
+      year=date(itim+1)/10000
+      yrleft=mod(date(itim+1),10000)
+      month=yrleft/100
+      day=mod(yrleft,100)
+      time_var=set_date(year,month,day,0,0,0)
+      call get_time(time_var,second,jday)
+      jdate_fwd=jday*24*60*60+datesec(itim+1)
+   enddo
+   if(itim_sav.eq.0) then
+      write(string1, *) 'APM: upper bdy data not found for this time '
+      call error_handler(E_MSG, routine, string1, source)
+      call exit_all(-77)
+   endif
+!______________________________________________________________________________________________   
+!
+! Find large scale grid box containing the observation location
+!______________________________________________________________________________________________   
+!
+   indx=-9999
+   do i=1,nx-1
+      if(lon_obs .le. lon_glb(1)) then
+         indx=1
+         bck_xwt=1.
+         fwd_xwt=0.
+         twtx=bck_xwt+fwd_xwt
+         exit
+      elseif(lon_obs .ge. lon_glb(nx)) then
+         indx=nx-1
+         bck_xwt=0.
+         fwd_xwt=1.
+         twtx=bck_xwt+fwd_xwt
+         exit
+      elseif(lon_obs.gt.lon_glb(i) .and. &
+         lon_obs.le.lon_glb(i+1)) then
+         indx=i
+         bck_xwt=lon_glb(i+1)-lon_obs
+         fwd_xwt=lon_obs-lon_glb(i)
+         twtx=bck_xwt+fwd_xwt
+         exit
+      endif
+   enddo
+   if(indx.lt.0) then
+      write(string1, *) 'APM: Obs E/W location outside large scale domain'
+      call error_handler(E_MSG, routine, string1, source)
+      call exit_all(-77)
+   endif
+!
+   jndx=-9999   
+   do j=1,ny-1
+      if(lat_obs .le. lat_glb(1)) then
+         jndx=1
+         bck_ywt=1.
+         fwd_ywt=0.
+         twty=bck_ywt+fwd_ywt
+         exit
+      elseif(lat_obs .ge. lat_glb(ny)) then
+         jndx=ny-1
+         bck_ywt=0.
+         fwd_ywt=1.
+         twty=bck_ywt+fwd_ywt
+         exit
+      elseif(lat_obs.gt.lat_glb(j) .and. &
+         lat_obs.le.lat_glb(j+1)) then
+         jndx=j
+         bck_ywt=lat_glb(j+1)-lat_obs
+         fwd_ywt=lat_obs-lat_glb(j)
+         twty=bck_ywt+fwd_ywt
+         exit
+      endif
+   enddo
+   if(jndx.lt.0) then
+      write(string1, *) 'APM: Obs N/S location outside large scale domain'
+      call error_handler(E_MSG, routine, string1, source)
+      call exit_all(-77)
+   endif
+!
+!______________________________________________________________________________________________   
+!
+! Interpolate large scale field to observation location
+!______________________________________________________________________________________________   
+!
+! Temporal
+   do k=1,nz
+      fld_glb_xmym(k)=(wt_bck*fld_glb(indx,jndx,k,itim_sav) + &
+      wt_fwd*fld_glb(indx,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
+      fld_glb_xpym(k)=(wt_bck*fld_glb(indx+1,jndx,k,itim_sav) + &
+      wt_fwd*fld_glb(indx+1,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
+      fld_glb_xmyp(k)=(wt_bck*fld_glb(indx,jndx+1,k,itim_sav) + &
+      wt_fwd*fld_glb(indx,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
+      fld_glb_xpyp(k)=(wt_bck*fld_glb(indx+1,jndx+1,k,itim_sav) + &
+      wt_fwd*fld_glb(indx+1,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
+   enddo
+!
+! Horizontal   
+   do k=1,nz
+      ztrp_jbck=(bck_xwt*fld_glb_xmym(k) + fwd_xwt*fld_glb_xpym(k))/twtx
+      ztrp_jfwd=(bck_xwt*fld_glb_xmyp(k) + fwd_xwt*fld_glb_xpyp(k))/twtx
+      ztrp_fld(k)=(bck_ywt*ztrp_jbck + fwd_ywt*ztrp_jfwd)/twty      
+   enddo
+!
+! Vertical   
+   do k=1,nprs_obs
+      kndx=-9999
+      do kk=1,nz-1
+         if(prs_obs(k).le.prs_glb(kk)) then
+            kndx=1
+            zwt_up=1.            
+            zwt_dw=0.            
+            twt=zwt_up+zwt_dw
+            exit
+         elseif(prs_obs(k).ge.prs_glb(nz)) then
+            kndx=nz-1
+            zwt_up=0.            
+            zwt_dw=1.            
+            twt=zwt_up+zwt_dw
+            exit
+         elseif(prs_obs(k).gt.prs_glb(kk) .and. &
+         prs_obs(k).le.prs_glb(kk+1)) then
+            kndx=kk
+            zwt_up=prs_glb(kk+1)-prs_obs(k)            
+            zwt_dw=prs_obs(k)-prs_glb(kk)
+            twt=zwt_up+zwt_dw
+            exit
+         endif
+      enddo
+      if(kndx.le.0) then
+         write(string1, *) 'APM: Obs vertical location outside large scale domain' 
+         call error_handler(E_MSG, routine, string1, source)
+         call exit_all(-77)
+      endif
+      fld_prf_mdl(k)=(zwt_up*ztrp_fld(kndx) + zwt_dw*ztrp_fld(kndx+1))/twt
+   enddo
+end subroutine get_upper_bdy_single_fld
+
+!-------------------------------------------------------------------------------
+
+subroutine get_upper_bdy_height(prs_model,prs_ref,hgt_ref,model,data_file,nx,ny,nz,ntim, &
+    lon_obs,lat_obs,alt_obs,date_obs,datesec_obs)  
+
+   integer,                           intent(in)    :: nx,ny,nz,ntim
+   integer,                           intent(in)    :: date_obs,datesec_obs
+   real*8,                            intent(in)    :: prs_ref,hgt_ref
+   real,                              intent(in)    :: alt_obs
+   real,                              intent(in)    :: lon_obs,lat_obs
+   real*8,                            intent(out)   :: prs_model
+   integer                                          :: i,j,k,kk,itim
+   integer                                          :: indx,jndx,kndx
+   integer                                          :: itim_sav,year,month,day,hour,minute,second
+   type(time_type)                                  :: time_var
+   integer                                          :: jdate_obs,jdate_bck,jdate_fwd,yrleft,jday
+   integer,dimension(ntim)                          :: date,datesec
+   real                                             :: pi,rad2deg
+   real                                             :: bck_xwt,fwd_xwt
+   real                                             :: bck_ywt,fwd_ywt
+   real                                             :: zwt_up,zwt_dw
+   real                                             :: twtx,twty,twt
+   real                                             :: ztrp_jbck,ztrp_jfwd
+   real                                             :: wt_bck,wt_fwd
+   real                                             :: geoht_model
+   real,dimension(nx)                               :: lon_glb
+   real,dimension(ny)                               :: lat_glb
+   real,dimension(nz)                               :: prs_glb,ztrp_geoht
+   real,dimension(nz)                               :: geoht_glb_xmym,geoht_glb_xpym,geoht_glb_xmyp,geoht_glb_xpyp
+   real,dimension(nx,ny,nz,ntim)                    :: geoht_glb
+   character(len=120)                               :: string1
+   character(len=*)                                 :: model
+   character(len=*)                                 :: data_file
+   character(len=*), parameter                      :: routine = 'get_upper_bdy_height'
+   character(len=*), parameter                      :: source = 'get_upper_bdy_height.f90'
+!
+!______________________________________________________________________________________________   
+!
+! Read the upper boundary large scale data (do this once)
+!______________________________________________________________________________________________   
+!
+   pi=4.*atan(1.)
+   rad2deg=360./(2.*pi)
+!
+   call get_MOZART_INT_DATA(data_file,'date',ntim,1,1,1,date)
+   call get_MOZART_INT_DATA(data_file,'datesec',ntim,1,1,1,datesec)
+   call get_MOZART_REAL_DATA(data_file,'lev',nz,1,1,1,prs_glb)
+   call get_MOZART_REAL_DATA(data_file,'lat',ny,1,1,1,lat_glb)
+   call get_MOZART_REAL_DATA(data_file,'lon',nx,1,1,1,lon_glb)
+! mozart
+   if(trim(model).eq.'mozart' .or. trim(model).eq.'MOZART') then
+      call get_MOZART_REAL_DATA(data_file,'Z3',nx,ny,nz,ntim,geoht_glb)
+! waccm
+   elseif (trim(model).eq.'waccm' .or. trim(model).eq.'WACCM') then
+      call get_MOZART_REAL_DATA(data_file,'Z3',nx,ny,nz,ntim,geoht_glb)
+   else
+      print *, 'APM: Large scale model type does not exist '
+      call exit_all(-77)
+   endif
+
+   lon_glb(:)=lon_glb(:)/rad2deg
+   lat_glb(:)=lat_glb(:)/rad2deg
+!
+!______________________________________________________________________________________________   
+!
+! Find large scale data correspondeing to the observation time
+!______________________________________________________________________________________________   
+!
+   jdate_obs=date_obs*24*60*60+datesec_obs   
+   year=date(1)/10000
+   yrleft=mod(date(1),10000)
+   month=yrleft/100
+   day=mod(yrleft,100)
+   time_var=set_date(year,month,day,0,0,0)
+   print *, 'year.month,day 1 ',year,month,day
+   call get_time(time_var,second,jday)
+   jdate_bck=jday*24*60*60+datesec(1)
+!
+   year=date(2)/10000
+   yrleft=mod(date(2),10000)
+   month=yrleft/100
+   day=mod(yrleft,100)
+   time_var=set_date(year,month,day,0,0,0)
+   print *, 'year.month,day 2 ',year,month,day
+   call get_time(time_var,second,jday)
+   jdate_fwd=jday*24*60*60+datesec(2)
+
+   print *, 'back forward ',jdate_bck,jdate_fwd
+!   
+   wt_bck=0
+   wt_fwd=0
+   itim_sav=0
+   do itim=1,ntim-1
+      if(jdate_obs.gt.jdate_bck .and. jdate_obs.le.jdate_fwd) then
+         wt_bck=real(jdate_fwd-jdate_obs)
+         wt_fwd=real(jdate_obs-jdate_bck)
+         itim_sav=itim
+         exit
+      endif
+      jdate_bck=jdate_fwd
+      year=date(itim+1)/10000
+      yrleft=mod(date(itim+1),10000)
+      month=yrleft/100
+      day=mod(yrleft,100)
+      time_var=set_date(year,month,day,0,0,0)
+      call get_time(time_var,second,jday)
+      jdate_fwd=jday*24*60*60+datesec(itim+1)
+   enddo
+   if(itim_sav.eq.0) then
+      write(string1, *) 'APM: upper bdy data not found for this time '
+      call error_handler(E_MSG, routine, string1, source)
+      call exit_all(-77)
+   endif
+!______________________________________________________________________________________________   
+!
+! Find large scale grid box containing the observation location
+!______________________________________________________________________________________________   
+!
+   indx=-9999
+   do i=1,nx-1
+      if(lon_obs .le. lon_glb(1)) then
+         indx=1
+         bck_xwt=1.
+         fwd_xwt=0.
+         twtx=bck_xwt+fwd_xwt
+         exit
+      elseif(lon_obs .ge. lon_glb(nx)) then
+         indx=nx-1
+         bck_xwt=0.
+         fwd_xwt=1.
+         twtx=bck_xwt+fwd_xwt
+         exit
+      elseif(lon_obs.gt.lon_glb(i) .and. &
+         lon_obs.le.lon_glb(i+1)) then
+         indx=i
+         bck_xwt=lon_glb(i+1)-lon_obs
+         fwd_xwt=lon_obs-lon_glb(i)
+         twtx=bck_xwt+fwd_xwt
+         exit
+      endif
+   enddo
+   if(indx.lt.0) then
+      write(string1, *) 'APM: Obs E/W location outside large scale domain'
+      call error_handler(E_MSG, routine, string1, source)
+      call exit_all(-77)
+   endif
+!
+   jndx=-9999   
+   do j=1,ny-1
+      if(lat_obs .le. lat_glb(1)) then
+         jndx=1
+         bck_ywt=1.
+         fwd_ywt=0.
+         twty=bck_ywt+fwd_ywt
+         exit
+      elseif(lat_obs .ge. lat_glb(ny)) then
+         jndx=ny-1
+         bck_ywt=0.
+         fwd_ywt=1.
+         twty=bck_ywt+fwd_ywt
+         exit
+      elseif(lat_obs.gt.lat_glb(j) .and. &
+         lat_obs.le.lat_glb(j+1)) then
+         jndx=j
+         bck_ywt=lat_glb(j+1)-lat_obs
+         fwd_ywt=lat_obs-lat_glb(j)
+         twty=bck_ywt+fwd_ywt
+         exit
+      endif
+   enddo
+   if(jndx.lt.0) then
+      write(string1, *) 'APM: Obs N/S location outside large scale domain'
+      call error_handler(E_MSG, routine, string1, source)
+      call exit_all(-77)
+   endif
+!
+!______________________________________________________________________________________________   
+!
+! Interpolate large scale field to observation location
+!______________________________________________________________________________________________   
+!
+! Temporal
+   do k=1,nz
+      geoht_glb_xmym(k)=(wt_bck*geoht_glb(indx,jndx,k,itim_sav) + &
+      wt_fwd*geoht_glb(indx,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
+      geoht_glb_xpym(k)=(wt_bck*geoht_glb(indx+1,jndx,k,itim_sav) + &
+      wt_fwd*geoht_glb(indx+1,jndx,k,itim_sav+1))/(wt_bck+wt_fwd)
+      geoht_glb_xmyp(k)=(wt_bck*geoht_glb(indx,jndx+1,k,itim_sav) + &
+      wt_fwd*geoht_glb(indx,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
+      geoht_glb_xpyp(k)=(wt_bck*geoht_glb(indx+1,jndx+1,k,itim_sav) + &
+      wt_fwd*geoht_glb(indx+1,jndx+1,k,itim_sav+1))/(wt_bck+wt_fwd)
+   enddo
+!
+! Horizontal   
+   do k=1,nz
+      ztrp_jbck=(bck_xwt*geoht_glb_xmym(k) + fwd_xwt*geoht_glb_xpym(k))/twtx
+      ztrp_jfwd=(bck_xwt*geoht_glb_xmyp(k) + fwd_xwt*geoht_glb_xpyp(k))/twtx
+      ztrp_geoht(k)=(bck_ywt*ztrp_jbck + fwd_ywt*ztrp_jfwd)/twty
+   enddo
+!
+! Vertical   
+   kndx=-9999
+   do kk=1,nz-1
+      if(alt_obs.le.ztrp_geoht(kk)) then
+         kndx=1
+         zwt_up=1.            
+         zwt_dw=0.            
+         twt=zwt_up+zwt_dw
+         exit
+      elseif(alt_obs.ge.ztrp_geoht(nz)) then
+         kndx=nz-1
+         zwt_up=0.            
+         zwt_dw=1.            
+         twt=zwt_up+zwt_dw
+         exit
+      elseif(alt_obs.gt.ztrp_geoht(kk) .and. &
+      alt_obs.le.ztrp_geoht(kk+1)) then
+         kndx=kk
+         zwt_up=ztrp_geoht(kk+1)-alt_obs            
+         zwt_dw=alt_obs-ztrp_geoht(kk)
+         twt=zwt_up+zwt_dw
+         exit
+      endif
+   enddo
+   if(kndx.le.0) then
+      write(string1, *) 'APM: Obs vertical location outside large scale domain' 
+      call error_handler(E_MSG, routine, string1, source)
+      call exit_all(-77)
+   endif
+! geoht_model should equal alt_obs
+   geoht_model=(zwt_up*ztrp_geoht(kndx) + zwt_dw*ztrp_geoht(kndx+1))/twt
+   prs_model=(zwt_up*prs_glb(kndx) + zwt_dw*prs_glb(kndx+1))/twt
+ end subroutine get_upper_bdy_height
+
+!-------------------------------------------------------------------------------
+      
 subroutine get_upper_bdy_fld(fld,model,data_file,nx,ny,nz,ntim,lon_obs,lat_obs,prs_obs,nprs_obs, &
 fld_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)  
 

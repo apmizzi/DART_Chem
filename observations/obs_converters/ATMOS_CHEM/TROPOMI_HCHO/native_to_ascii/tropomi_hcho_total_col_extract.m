@@ -308,15 +308,15 @@ function tropomi_hcho_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn
       fprintf('BEGIN DATA PROCESSING \n')
 %
 % Loop through TROPOMI data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
       for ipxl=1:npxl
          for ilin=1:nscan
-            tropomidate=single(convert_time(file_str_yy,file_str_mm,file_str_dd, ...
-            0,0,0))+time_delt(ipxl,ilin);
+            tropomidate=single(convert_time_ref(file_str_yy,file_str_mm,file_str_dd, ...
+            0,0,0,2010))+time_delt(ipxl,ilin);
             [yyyy_tropomi,mn_tropomi,dd_tropomi,hh_tropomi,mm_tropomi,ss_tropomi]= ...
-	    invert_time(tropomidate);
+	    invert_time_ref(tropomidate,2010);
 %            fprintf('windate_min %d \n',windate_min)
 %            fprintf('tropomi_dat %d \n',tropomidate)
 %            fprintf('windate_max %d \n',windate_max)

@@ -21,7 +21,7 @@ function tempo_o3_cpsr_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,
    [status]=system(command);
    fid=fopen(fileout,'w');
 %
-   command=strcat('ls'," ",'-1'," ",filein,'*');
+   command=strcat('ls'," ",'-1'," ",filein,'*.nc');
    [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);
@@ -76,6 +76,7 @@ function tempo_o3_cpsr_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,
       clear o3_lay vert_col_total vert_col_trop
       clear prior_lay prior_err_lay prs_lev
       clear trop_indx avgk_lay noise_corr info_content
+%
       file_in=char(file_list(ifile));
       if(isempty(file_in))
          continue
@@ -147,22 +148,27 @@ function tempo_o3_cpsr_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,
 % o3_lay (layer,ntrk,nstep)
       field='/product/ozone_profile';
       o3_lay=ncread(file_in,field);
+      o3_lay=o3_lay*du2molpm2;
 %
 % vert_col_total (ntrk,nstep)
       field='/product/total_ozone_column';
-      vert_col_total=ncread(file_in,field);%
+      vert_col_total=ncread(file_in,field);
+      vert_col_total=vert_col_total*du2molpm2;
 %
 % vert_col_trop (ntrk,nstep)
       field='/product/troposphere_ozone_column';
       vert_col_trop=ncread(file_in,field);
+      vert_col_trop=vert_col_trop*du2molpm2;
 %
 % prior_lay (layer,ntrk,nstep)
       field='/support_data/ozone_apriori_profile';
       prior_lay=ncread(file_in,field);
+      prior_lay=prior_lay*du2molpm2;
 %
 % prior_err_lay (layer,ntrk,nstep)
       field='/support_data/ozone_apriori_profile_error';
       prior_err_lay=ncread(file_in,field);
+      prior_err_lay=prior_err_lay*du2molpm2;
 %
 % prs_lev (level,ntrk,nstep) (hPa)
       field='/support_data/ozone_profile_pressure';
@@ -179,51 +185,59 @@ function tempo_o3_cpsr_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,
 % noise_corr (layer,layer,ntrk,nstep)
       field='/support_data/ozone_noise_correlation_matrix';
       noise_corr=ncread(file_in,field);
+      noise_corr=noise_corr*du2molpm2;
 %
 % info_content (ntrk,nstep)
       field='/support_data/ozone_information_content';
       info_content=ncread(file_in,field);
+      fprintf('FINISH TEMPO DATA READ \n')
 %
 % Loop through TEMPO data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2000));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2000));
       icnt=0;
       for istep=1:nstep
-	  [yyyy_tempo,mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo]=invert_time(time_utc(istep));
-%         int32(ss_tempo)>59)
-%            [yyyy_tempo,mn_tempo,dy_tempo,hh_tempo, ...
-%            mm_tempo,ss_tempo]=incr_time(yyyy_tempo, ...
-%     	     mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo);
-%         end
-%         fprintf('obs date/time %d %d %d %d %d %d \n',yyyy_tempo, ...
-%	 mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo)
-	 
-         tempodate=single(convert_time(yyyy_tempo,mn_tempo, ...
-         dy_tempo,hh_tempo,mm_tempo,ss_tempo));
-
-%         fprintf('windate_min %d \n',windate_min)
-%         fprintf('tempo_dat %d \n',tempodate)
-%         fprintf('windate_max %d \n',windate_max)
+         [jult]=jult_adjust_ref(time_utc(istep),2000,1,1,12,0,0);
+         [yyyy_tempo,mn_tempo,dd_tempo,hh_tempo,mm_tempo,ss_tempo]=invert_time_ref(jult,2000);
+         tempodate=single(convert_time_ref(yyyy_tempo,mn_tempo, ...
+         dd_tempo,hh_tempo,mm_tempo,ss_tempo,2000));
 %
 % Check time
+%	 fprintf('APM: time check %d %d %d \n',windate_min,tempodate,windate_max)
          if(tempodate<windate_min | tempodate>windate_max)
             continue
          end
-	 
          for ixtrk=1:ntrk
 %
 % QA/QC
+            if(any(isnan(prs_lev(:,ixtrk,istep))) | any(prs_lev(:,ixtrk,istep)<0))
+               continue
+            end
 %
+            if(any(isnan(avgk_lay(:,:,ixtrk,istep))))
+               continue
+            end
+%
+            if(any(isnan(prior_lay(:,ixtrk,istep))) | any(prior_lay(:,ixtrk,istep)<0))
+               continue
+            end
+%
+            if(any(isnan(noise_corr(:,:,ixtrk,istep))))
+               continue
+            end
+%
+            if(isnan(vert_col_total(ixtrk,istep)) | vert_col_total(ixtrk,istep)<=0)
+               continue
+            end
+%	 
+            if(isnan(vert_col_trop(ixtrk,istep)) | vert_col_trop(ixtrk,istep)<=0)
+               continue
+            end
+%	 
 %	    if(qa_value(ixtrk,istep)~=0 | zenang(ixtrk,istep)>=80.0)
 	    if(zenang(ixtrk,istep)>=80.0)
                continue
 	    end
-            if(isnan(vert_col_total(ixtrk,istep)) | vert_col_total(ixtrk,istep)<=0)
-               continue
-            end
-            if(isnan(vert_col_trop(ixtrk,istep)) | vert_col_trop(ixtrk,istep)<=0)
-               continue
-            end
 %
 % Check domain
 % Input grid needs to be in degrees
@@ -288,7 +302,7 @@ function tempo_o3_cpsr_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,
             icnt=icnt+1;
             fprintf(fid,'TEMPO_O3_Obs: %d %d %d \n',icnt,i_min,j_min);
             fprintf(fid,'%d %d %d %d %d %d \n',yyyy_tempo, ...
-            mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo);
+            mn_tempo,dd_tempo,hh_tempo,mm_tempo,ss_tempo);
             fprintf(fid,'%14.8f %14.8f \n',lat(ixtrk,istep),lon(ixtrk,istep));
             fprintf(fid,'%d %d \n',layer,level);
             fprintf(fid,'%d \n',trop_index(ixtrk,istep));

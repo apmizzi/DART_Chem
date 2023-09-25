@@ -138,8 +138,8 @@ function cris_ch4_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
       dofs=ncread(file_in,field);
 %
 % Loop through CRIS data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
       for itarg=1:ntarg
          cris_yyyy=date_time(1,itarg);
@@ -148,7 +148,7 @@ function cris_ch4_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
          cris_hh=date_time(4,itarg);
          cris_mn=date_time(5,itarg);
          cris_ss=date_time(6,itarg);
-         cris_time=single(convert_time(cris_yyyy,cris_mm,cris_dd,cris_hh,cris_mn,cris_ss));
+         cris_time=single(convert_time_ref(cris_yyyy,cris_mm,cris_dd,cris_hh,cris_mn,cris_ss,2010));
 %
 % Check time
          if(cris_time<windate_min | cris_time>windate_max)

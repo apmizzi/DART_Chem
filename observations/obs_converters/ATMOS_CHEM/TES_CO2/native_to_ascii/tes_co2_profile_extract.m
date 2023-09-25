@@ -23,7 +23,6 @@ function tes_co2_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
 %
    command=strcat('ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);
-   
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);
    nfile=size(file_list);
@@ -91,7 +90,6 @@ function tes_co2_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       year=h5readatt(file_in,field,'GranuleYear');
 %
 % Read Time
-%      field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/Time';
       field='/HDFEOS/SWATHS/CO2NadirSwath/Data Fields/UTCTime';
       utc_time=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');
@@ -118,8 +116,8 @@ function tes_co2_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       file_str_secs=file_str_hh*3600 + file_str_mn*60 + file_str_ss;
       file_end_secs=file_end_hh*3600 + file_end_mn*60 + file_end_ss;
       fprintf('%d %s \n',ifile,file_in);
-%      fprintf('If file_str_secs %d <= day_secs_end %d, and \n',file_str_secs,day_secs_end);
-%      fprintf('If file_end_secs %d >= day_secs_beg %d, then process data \n',file_end_secs,day_secs_beg);
+      fprintf('If file_str_secs %d <= day_secs_end %d, and \n',file_str_secs,day_secs_end);
+      fprintf('If file_end_secs %d >= day_secs_beg %d, then process data \n',file_end_secs,day_secs_beg);
       if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
          continue
       end
@@ -222,8 +220,8 @@ function tes_co2_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       zenang=h5read(file_in,field);
 %
 % Loop through TES data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_2010(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
+      windate_max=single(convert_time_2010(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
       icnt=0;
       for iobs=1:nobs
          utcc_time=cell2mat(utc_time(iobs));
@@ -233,30 +231,65 @@ function tes_co2_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
          hh_tes=str2double(utcc_time(12:13));
          mm_tes=str2double(utcc_time(15:16));
          ss_tes=round(str2double(utcc_time(18:23)));
-         tesdate=single(convert_time(yyyy_tes,mn_tes, ...
+         tesdate=single(convert_time_2010(yyyy_tes,mn_tes, ...
          dy_tes,hh_tes,mm_tes,ss_tes));
-
 %
 % Check time
-%         fprintf('min_date %d, tes_date %d, max_date %d \n',windate_min,tesdate,windate_max)
+%	 fprintf('APM: Time test - %d %d %d \n',windate_min,tesdate,windate_max)
          if(tesdate<windate_min | tesdate>windate_max)
             continue
          end
 %
 % QA/QC
+%         if(any(isnan(prs_lay(:,iobs))) | any(prs_lay(:,iobs)<0))
+%            continue
+%         end
 %
-         if(zenang(iobs)>=80.0)
-            fprintf('APM: zenang %6.2f \n',zenang(iobs))
+         if(any(isnan(avgk_lay(:,:,iobs))))
             continue
          end
-         for ilay=1:layer
-            if(isnan(co2_lay(ilay,iobs)))
-               fprintf('APM: co2_lay has NaNs \n')
-               continue
-            end
+%
+         if(any(isnan(err_cov_obs(:,:,iobs))))
+            continue
          end
-         if(isnan(co2_total_col(iobs)))
-            fprintf('APM: co2_total_col is a NaN \n')
+%
+         if(any(isnan(err_cov_total(:,:,iobs))))
+            continue
+         end
+%
+%         if(any(isnan(co2_lay(:,iobs))) | any(co2_lay(:,iobs)<=0))
+%            continue
+%         end
+%
+%         if(any(isnan(co2_lay_err(:,iobs))) | any(co2_lay_err(:,iobs)<=0))
+%            continue
+%         end
+%
+%         if(any(isnan(co2_lay_prior(:,iobs))) | any(co2_lay_prior(:,iobs)<=0))
+%            continue
+%         end
+%
+         if(isnan(trop_pressure(iobs)) | trop_pressure(iobs)<=0.)
+            continue
+         end
+%
+         if(isnan(dofs(iobs)) | dofs(iobs)<0.)
+            continue
+         end
+%
+         if(isnan(co2_total_col(iobs)) | co2_total_col(iobs)<=0.)
+            continue
+         end
+%
+         if(isnan(co2_total_col_err(iobs)) | co2_total_col_err(iobs)<=0.)
+            continue
+         end
+%
+         if(isnan(co2_total_col_prior(iobs)) | co2_total_col_prior(iobs)<=0.)
+            continue
+         end
+%
+         if(zenang(iobs)>=80.0)
             continue
          end
 %
@@ -316,15 +349,11 @@ function tes_co2_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
             reject=1;
          end
          if(reject==1)
-            fprintf('x_mdl_min, x_obs, x_mdl_max: %6.2f %6.2f %6.2f \n',xmdl_sw, ...
-            x_obser,xmdl_mx)
-            fprintf('y_mdl_min, y_obs, y_mdl_max: %6.2f %6.2f %6.2f \n',lat_mdl(1,1), ...
-            y_obser,lat_mdl(nx_mdl,ny_mdl))
-            fprintf('i_min %d j_min %d \n',i_min,j_min)
+%            fprintf('i_min %d j_min %d \n',i_min,j_min)
             continue
          end
          if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
-            fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
+%            fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
             continue
          end
 %

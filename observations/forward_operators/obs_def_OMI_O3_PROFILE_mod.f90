@@ -584,12 +584,15 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
    do imem=1,ens_size
       flg=0
       do k=1,level_omi
+!
+! APM: Need to figure out why some pressures get to this point as negative
+!         
          if(o3_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
-         qmr_val(imem,k).lt.0.) then
+         qmr_val(imem,k).lt.0. .or. prs_omi(k).lt.0.) then
             flg=1   
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
-            call error_handler(E_ALLMSG, routine, string1, source)
+            call error_handler(E_MSG, routine, string1, source)
          endif
       enddo
       if(flg.eq.1) then
@@ -606,18 +609,17 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
    expct_val(:)=0.0
    allocate(thick(layer_omi))
 
+   prs_omi_mem(:)=prs_omi(:)
+!   write(string1, *) 'APM: OMI pressures ',(prs_omi_mem(k),k=1,level_omi)
+!   call error_handler(E_ALLMSG, routine, string1, source)
    do imem=1,ens_size
-! Adjust the OMI pressure for WRF-Chem lower/upper boudary pressure
-! (OMI O3 vertical grid is top to bottom)
-      prs_omi_mem(:)=prs_omi(:)
-      if (prs_sfc(imem).lt.prs_omi_mem(level_omi)) then
-         prs_sfc(imem)=prs_omi_mem(level_omi)
-      endif
-      
+!      
 ! Calculate the thicknesses
 
       thick(:)=0.
       do k=1,layer_omi
+!         write(string1, *) 'APM: In thickness loop ',key,imem,k,prs_omi_mem(k+1),prs_omi_mem(k)
+!         call error_handler(E_ALLMSG, routine, string1, source)
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
          up_wt=log(prs_omi_mem(k+1))-lnpr_mid
          dw_wt=lnpr_mid-log(prs_omi_mem(k))
@@ -627,6 +629,8 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
          thick(k)   = Rd*(dw_wt*tmp_vir_kp + up_wt*tmp_vir_k)/tl_wt/grav* &
          log(prs_omi_mem(k+1)/prs_omi_mem(k))
       enddo
+!      write(string1, *) 'APM: Finished thickness loop ',key,imem
+!      call error_handler(E_ALLMSG, routine, string1, source)
       
 ! Process the vertical summation
 
@@ -662,6 +666,9 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
          avg_kernel(key,k) + prior_term * prior(key,k)
 
       enddo
+!      write(string1, *) 'APM: Finished vertical summation loop ',key,imem
+!      call error_handler(E_MSG, routine, string1, source)
+      
       if(isnan(expct_val(imem))) then
          zstatus(imem)=20
          expct_val(:)=missing_r8

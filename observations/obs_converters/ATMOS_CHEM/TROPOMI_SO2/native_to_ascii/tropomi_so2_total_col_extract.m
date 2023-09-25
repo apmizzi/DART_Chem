@@ -345,18 +345,15 @@ function tropomi_so2_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,
 % Define TROPOMI vertical pressure grid (hPa) (bottom to top)
          for ipxl=1:pixel
             for ilin=1:scanline
+               prs_lev(1,ipxl,ilin)=tm5_a(1,1)+tm5_b(1,1)* ...
+               prs_sfc(ipxl,ilin);
                for ilv=1:layer
-                  prs_lev(ilv,ipxl,ilin)=tm5_a(1,ilv)+tm5_b(1,ilv)* ...
+                  prs_lev(ilv+1,ipxl,ilin)=tm5_a(2,ilv)+tm5_b(2,ilv)* ...
                   prs_sfc(ipxl,ilin);
-#                  if(prs_lev(ilv+1,ipxl,ilin)<.1)
-#                     prs_lev(ilv+1,ipxl,ilin)=.1;
-#                  end
                   prs_lay(ilv,ipxl,ilin)=(tm5_a(1,ilv)+tm5_b(1,ilv)* ...
                   prs_sfc(ipxl,ilin) + tm5_a(2,ilv)+tm5_b(2,ilv)* ...
                   prs_sfc(ipxl,ilin))/2.;
                end
-               prs_lev(layer+1,ipxl,ilin)=tm5_a(2,layer)+tm5_b(2,layer)* ...
-               prs_sfc(ipxl,ilin);
             end
          end
          prs_lev=prs_lev/100.;
@@ -364,49 +361,28 @@ function tropomi_so2_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,
 %
 %
 % Loop through TROPOMI data
-         windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-	 windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+         windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+	 windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
       for ilin=1:scanline
          for ipxl=1:pixel
       	    tropomidate=single(time+time_delta(ipxl,ilin));
       	    [yyyy_tropomi,mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi, ...
-      	    ss_tropomi]=invert_time(tropomidate);
-%            fprintf('%d %d %d %d %d %d \n',yyyy_tropomi,mn_tropomi,dy_tropomi, ...
-%     	     hh_tropomi,mm_tropomi,ss_tropomi);
-%            fprintf('%d %d %d \n',windate_min,tropomidate,windate_max)
+      	    ss_tropomi]=invert_time_ref(tropomidate,2010);
             if(tropomidate<windate_min | tropomidate>windate_max)
                continue
             end
-%            fprintf('PASSED DATE/TIME TEST \n')
 %
 % QA/AC (looks like qa_value has already been scaled)
 	    if(qa_value(ipxl,ilin)<0.5 | zenang(ipxl,ilin)>=80.0)
 	       continue
 	    end
-%            if(isnan(col_amt_1km(ipxl,ilin)) | col_amt_1km(ipxl,ilin)<=0 | ...
-%               isnan(col_amt_1km_err(ipxl,ilin)) | col_amt_1km_err(ipxl,ilin)<=0 | ...
-%               isnan(col_amt_1km_sys(ipxl,ilin)) | col_amt_1km_sys(ipxl,ilin)<=0 | ...
-%               isnan(col_amt_7km(ipxl,ilin)) | col_amt_7km(ipxl,ilin)<=0 | ...
-%               isnan(col_amt_7km_err(ipxl,ilin)) | col_amt_7km_err(ipxl,ilin)<=0 | ...
-%               isnan(col_amt_7km_sys(ipxl,ilin)) | col_amt_7km_sys(ipxl,ilin)<=0 | ...
-%               isnan(amf_1km(ipxl,ilin)) | amf_1km(ipxl,ilin)<=0 | ...
-%               isnan(amf_1km_err(ipxl,ilin)) | amf_1km_err(ipxl,ilin)<=0 | ...
-%               isnan(amf_1km_sys(ipxl,ilin)) | amf_1km_sys(ipxl,ilin)<=0 | ...
-%               isnan(amf_1km_clr(ipxl,ilin)) | amf_1km_clr(ipxl,ilin)<=0 | ...
-%               isnan(amf_1km_cld(ipxl,ilin)) | amf_1km_cld(ipxl,ilin)<=0 | ...
-%               isnan(amf_7km(ipxl,ilin)) | amf_7km(ipxl,ilin)<=0 | ...
-%               isnan(amf_7km_err(ipxl,ilin)) | amf_7km_err(ipxl,ilin)<=0 | ...
-%               isnan(amf_7km_sys(ipxl,ilin)) | amf_7km_sys(ipxl,ilin)<=0 | ...
-%               isnan(amf_7km_clr(ipxl,ilin)) | amf_7km_clr(ipxl,ilin)<=0 | ...
-%               isnan(amf_7km_cld(ipxl,ilin)) | amf_7km_cld(ipxl,ilin)<=0)
 	    if(isnan(col_amt(ipxl,ilin)) | col_amt(ipxl,ilin)<0 | ...
                isnan(slnt_col_amt(ipxl,ilin)) | slnt_col_amt(ipxl,ilin)<0 | ...
                isnan(col_amt_err(ipxl,ilin)) | col_amt_err(ipxl,ilin)<0 | ...
 	       isnan(slnt_col_amt_sys(ipxl,ilin)) | slnt_col_amt_sys(ipxl,ilin)<0)
                continue
             end
-%            fprintf('PASSED QA/QC TEST \n')
 %
 % Check domain
 % Input grid needs to be in degrees
@@ -462,14 +438,13 @@ function tropomi_so2_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,
                reject=1;
             end
             if(reject==1)
-%               fprintf('FAILED DOMAIN TEST \n')
+               fprintf('FAILED DOMAIN TEST \n')
 	       continue
 	    end
 	    if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
-%               fprintf('FAILED DOMAIN TEST \n')
+               fprintf('FAILED DOMAIN TEST \n')
 	       continue
 	    end
-            fprintf('PASSED DOMAIN TEST \n')
 %
 % Save data to ascii file
             icnt=icnt+1;

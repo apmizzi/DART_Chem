@@ -31,7 +31,7 @@ function tropomi_ch4_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
    Ru=8.316;
    Rd=286.9;
    eps=0.61;
-   molec_wt_no2=.0480;
+   molec_wt_co=.0480;
    molec_wt_no2=.0460;
    molec_wt_so2=.0641;
    AvogN=6.02214e23;
@@ -297,9 +297,6 @@ function tropomi_ch4_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
                for ilv=1:layer
                   prs_lev(ilv,ipxl,ilin)=tm5_a(1,ilv)+tm5_b(1,ilv)* ...
                   prs_sfc(ipxl,ilin);
-#                  if(prs_lev(ilv+1,ipxl,ilin)<.1)
-#                     prs_lev(ilv+1,ipxl,ilin)=.1;
-#                  end
                   prs_lay(ilv,ipxl,ilin)=(tm5_a(1,ilv)+tm5_b(1,ilv)* ...
                   prs_sfc(ipxl,ilin) + tm5_a(2,ilv)+tm5_b(2,ilv)* ...
                   prs_sfc(ipxl,ilin))/2.;
@@ -312,8 +309,8 @@ function tropomi_ch4_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
          prs_lay=prs_lay/100.;
 %
 % Loop through TROPOMI data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
       for ilin=1:scanline
          date_str=char(time_utc(ilin));
@@ -329,20 +326,17 @@ function tropomi_ch4_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
             mm_tropomi,ss_tropomi]=incr_time(yyyy_tropomi, ...
       	 mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi);
          end
-%         fprintf('obs date/time %d %d %d %d %d %d \n',yyyy_tropomi, ...
-%         mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi)
-         tropomidate=single(convert_time(yyyy_tropomi,mn_tropomi, ...
-         dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi));
-%         fprintf('windate_min %d \n',windate_min)
-%         fprintf('tropomi_dat %d \n',tropomidate)
-%         fprintf('windate_max %d \n',windate_max)
+         tropomidate=single(convert_time_ref(yyyy_tropomi,mn_tropomi, ...
+         dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi,2010));
 %
 % Check time
          if(tropomidate<windate_min | tropomidate>windate_max)
             continue
          end
-%         fprintf('PASSED DATE/TIME TEST \n')
          for ipxl=1:pixel
+            if(any(isnan(prs_lev(:,ipxl,ilin))) | any(prs_lev(:,ipxl,ilin)<=0))
+               continue
+            end
 %
 % QA/AC
 	    if(qa_value(ipxl,ilin)<0.50 | zenang(ipxl,ilin)>=80.0 | cld_rad_frac(ipxl,ilin) >=.5)
@@ -351,7 +345,6 @@ function tropomi_ch4_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
             if(isnan(col_amt_trop(ipxl,ilin)) | col_amt_trop(ipxl,ilin)<=0)
                continue
             end
-%            fprintf('PASSED QA/QC TEST \n')
 %
 % Check domain
 % Input grid needs to be in degrees
@@ -368,7 +361,6 @@ function tropomi_ch4_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
 	       xmdl_sw=xmdl_sw+360.;
             end
 %
-% APM: Need to get this info from model
 	    [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
 	    xmdl_sw,delx,cen_lon,truelat1,truelat2);
             i_min = round(xi);
@@ -414,7 +406,6 @@ function tropomi_ch4_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
 %            fprintf('FAILED DOMAIN TEST \n')
 	       continue
 	    end
-%            fprintf('PASSED DOMAIN TEST \n')
 %
 % Save data to ascii file
 	    icnt=icnt+1;

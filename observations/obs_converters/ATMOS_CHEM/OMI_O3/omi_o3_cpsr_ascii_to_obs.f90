@@ -192,7 +192,7 @@ program omi_o3_cpsr_ascii_to_obs
    namelist /create_omi_obs_nml/filedir,filename,fileout,year,month,day,hour, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_o3,use_log_no2,use_log_so2,use_log_hcho, &
    lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model,ny_model,nz_model, &
-   obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq,obs_hcho_reten_freq   
+   obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq,obs_hcho_reten_freq
 !
 ! Set constants
    du2molpm2=4.4615e-4
@@ -333,17 +333,22 @@ program omi_o3_cpsr_ascii_to_obs
          enddo
       enddo
       flg=0
-      if(any(isnan(cov_obs)) .or. any(isnan(avgk_obs)) .or. &
+      sum_accept=sum_accept+1
+      if(sum_accept/obs_o3_reten_freq*obs_o3_reten_freq .ne. sum_accept) then
+         flg=1
+      elseif(any(isnan(cov_obs)) .or. any(isnan(avgk_obs)) .or. &
       any(isnan(prior_obs)) .or. any(isnan(o3_obs))) then
          flg=1   
+      elseif(flg.eq.0) then
+         do i=1,nlay_obs
+            if(cov_obs(i,i).lt.0. .or. prior_obs(i).lt.0. .or. o3_obs(i).lt.0.) then
+               flg=1
+!               print *, 'omi_variance is NaN or negative ',cov_obs(i,i)
+               exit
+            endif
+         enddo
       endif
-      do i=1,nlay_obs
-         if(cov_obs(i,i).lt.0. .or. prior_obs(i).lt.0. .or. o3_obs(i).lt.0.) then
-            flg=1
-!            print *, 'omi_variance is NaN or negative ',cov_obs(i,i)
-            exit
-         endif
-      enddo
+!      
       if(flg.eq.1) then
          deallocate(prs_obs,o3_obs,o3_cpsr,prior_cpsr,prior_obs)
          deallocate(prior_err_obs,avgk_obs,avgk_cpsr,cov_obs)
@@ -390,7 +395,6 @@ program omi_o3_cpsr_ascii_to_obs
          avgk_obs_r8(1:nlayer)=avgk_cpsr(imds,1:nlayer)
 !
 ! Process accepted observations
-         sum_accept=sum_accept+1
          qc_count=qc_count+1
 !
 ! Obs value is a CPSR

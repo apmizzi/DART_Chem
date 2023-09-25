@@ -230,7 +230,6 @@ program tempo_o3_cpsr_ascii_to_obs
    call check_namelist_read(iunit, io, "create_tempo_obs_nml")
 !
 ! Record the namelist values used for the run ...
-   call error_handler(E_MSG,'init_create_tempo_obs','create_tempo_obs_nml values are',' ',' ',' ')
    write(     *     , nml=create_tempo_obs_nml)
 !
 ! Initialize an obs_sequence structure
@@ -259,26 +258,26 @@ program tempo_o3_cpsr_ascii_to_obs
    call set_calendar_type(calendar_type)
 !
 ! Read model data
-   allocate(lon(nx_model,ny_model))
-   allocate(lat(nx_model,ny_model))
-   allocate(prs_prt(nx_model,ny_model,nz_model))
-   allocate(prs_bas(nx_model,ny_model,nz_model))
-   allocate(prs_fld(nx_model,ny_model,nz_model))
-   allocate(tmp_prt(nx_model,ny_model,nz_model))
-   allocate(tmp_fld(nx_model,ny_model,nz_model))
-   allocate(qmr_fld(nx_model,ny_model,nz_model))
-   allocate(o3_fld(nx_model,ny_model,nz_model))
-   file_in=trim(path_model)//'/'//trim(file_model)
-   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(file_in,'o3',o3_fld,nx_model,ny_model,nz_model,1)
-   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-   o3_fld(:,:,:)=o3_fld(:,:,:)*1.e-6
+!   allocate(lon(nx_model,ny_model))
+!   allocate(lat(nx_model,ny_model))
+!   allocate(prs_prt(nx_model,ny_model,nz_model))
+!   allocate(prs_bas(nx_model,ny_model,nz_model))
+!   allocate(prs_fld(nx_model,ny_model,nz_model))
+!   allocate(tmp_prt(nx_model,ny_model,nz_model))
+!   allocate(tmp_fld(nx_model,ny_model,nz_model))
+!   allocate(qmr_fld(nx_model,ny_model,nz_model))
+!   allocate(o3_fld(nx_model,ny_model,nz_model))
+!   file_in=trim(path_model)//'/'//trim(file_model)
+!   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(file_in,'o3',o3_fld,nx_model,ny_model,nz_model,1)
+!   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
+!   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
+!   o3_fld(:,:,:)=o3_fld(:,:,:)*1.e-6
 !
 ! Open TEMPO O3 binary file
    fileid=100
@@ -376,17 +375,8 @@ program tempo_o3_cpsr_ascii_to_obs
          enddo
       enddo
 !
-!--------------------------------------------------------
-! Find model O3 profile corresponding to the observation
-! TEMPO O3 and WRF-Chem vertical grids are bottom to top        
-!--------------------------------------------------------
-!      reject=0
-!      call get_model_profile(prf_locl,prf_full,nz_model, &
-!      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
-!      qmr_fld(i_min,j_min,:),o3_fld(i_min,j_min,:), &
-!      nlev_obs,avgk_obs,prior_obs,kend)
-!
 ! Obs thinning test
+      reject=0
       obs_accept=obs_accept+1
       if(obs_accept/obs_o3_reten_freq*obs_o3_reten_freq.eq.obs_accept) then
 !
@@ -469,15 +459,15 @@ program tempo_o3_cpsr_ascii_to_obs
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
-   deallocate(lon)
-   deallocate(lat)
-   deallocate(prs_prt)
-   deallocate(prs_bas)
-   deallocate(prs_fld)
-   deallocate(tmp_prt)
-   deallocate(tmp_fld)
-   deallocate(qmr_fld)
-   deallocate(o3_fld)
+!   deallocate(lon)
+!   deallocate(lat)
+!   deallocate(prs_prt)
+!   deallocate(prs_bas)
+!   deallocate(prs_fld)
+!   deallocate(tmp_prt)
+!   deallocate(tmp_fld)
+!   deallocate(qmr_fld)
+!   deallocate(o3_fld)
 !
    print *, 'total obs ',sum_total
    print *, 'accepted ',sum_accept

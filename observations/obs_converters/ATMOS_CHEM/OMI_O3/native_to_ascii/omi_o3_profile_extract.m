@@ -340,7 +340,7 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          if(int32(hh_omi)>23 | int32(mm_omi)>59 | int32(ss_omi)>59)
 %            fprintf('yr %d mn %d dy %d hh %d mm %d ss %d \n', ...
 %	    year,month,day,int32(hh_omi),int32(mm_omi),int32(ss_omi))
-            [yr_nw,mn_nw,dy_nw,hh_nw,mm_nw,ss_nw,rc]=incr_time(year, ...
+            [yr_nw,mn_nw,dy_nw,hh_nw,mm_nw,ss_nw]=incr_time(year, ...
             month,day,int32(hh_omi),int32(mm_omi),int32(ss_omi));
             year=yr_nw;
             month=mn_nw;
@@ -366,12 +366,12 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %	    end
 %
 	    if(zenang(ipxl,ilin)>=75)
-	       fprintf('APM: solar zenith angle issue %d \n ',zenang(ipxl,ilin)) 
+%	       fprintf('APM: solar zenith angle issue %d \n ',zenang(ipxl,ilin)) 
                continue
 	    end
 %
 	    if(RCF_qual(ipxl,ilin)>=30)
-	       fprintf('APM: reflectance cost function issue %d \n ',RCF_qual(ipxl,ilin)) 
+%	       fprintf('APM: reflectance cost function issue %d \n ',RCF_qual(ipxl,ilin)) 
                continue
 	    end
 %

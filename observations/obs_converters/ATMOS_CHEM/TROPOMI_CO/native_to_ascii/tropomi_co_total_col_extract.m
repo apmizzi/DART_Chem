@@ -182,6 +182,11 @@ function tropomi_co_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
       long_name=ncreadatt(file_in,field,'long_name');  
       zenang=double(ncread(file_in,field));
 %
+% prs_sfc(pixel,scanlin)
+      field='/PRODUCT/SUPPORT_DATA/INPUT_DATA/surface_pressure';
+      units=ncreadatt(file_in,field,'units');  
+      long_name=ncreadatt(file_in,field,'long_name');  
+      prs_sfc=double(ncread(file_in,field));
 % prs_lay(layer,pixel,scanline) (Pa)
 % (Top to bottom)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/pressure_levels';
@@ -190,10 +195,12 @@ function tropomi_co_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
       prs_lay=double(ncread(file_in,field));
       for ipxl=1:pixel
          for ilin=1:scanline
-            prs_lev(1:level,ipxl,ilin)=-9999.;
+            prs_lev(1:layer,ipxl,ilin)=prs_lay(1:layer,ipxl,ilin);
+            prs_lev(level,ipxl,ilin)=prs_sfc(ipxl,ilin);
          end
       end
       prs_lay=prs_lay/100.;
+      prs_lev=prs_lev/100.;
 %
 % dofs(pixel,scanline) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/degrees_of_freedom';
@@ -208,8 +215,8 @@ function tropomi_co_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
       avgk_lay=double(ncread(file_in,field));
 %
 % Loop through TROPOMI data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
       for ilin=1:scanline
          date_str=char(time_utc(ilin));
@@ -225,39 +232,32 @@ function tropomi_co_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
             mm_tropomi,ss_tropomi]=incr_time(yyyy_tropomi, ...
    	    mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi);
          end
-%         fprintf('obs date/time %d %d %d %d %d %d \n',yyyy_tropomi, ...
-%         mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi)
-         tropomidate=single(convert_time(yyyy_tropomi,mn_tropomi, ...
-         dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi));
-%         fprintf('windate_min %d \n',windate_min)
-%         fprintf('tropomi_dat %d \n',tropomidate)
-%         fprintf('windate_max %d \n',windate_max)
+         tropomidate=single(convert_time_ref(yyyy_tropomi,mn_tropomi, ...
+         dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi,2010));
 %
 % Check time
          if(tropomidate<windate_min | tropomidate>windate_max)
             continue
          end
-%	 fprintf('PASSED DATA/TIME TEST \n')
          for ipxl=1:pixel
 %
 % QA/AC
-	    if(qa_value(ipxl,ilin)<=0.50 | zenang(ipxl,ilin)>=80.0)
+	    if(any(isnan(prs_lev(:,ipxl,ilin))) | any(prs_lev(:,ipxl,ilin)<=0))
                continue
-	    end
+            end
 %
 	    if(isnan(col_amt(ipxl,ilin)) | col_amt(ipxl,ilin)<=0)
                continue
             end
-            iflg=0;
-	    for ilv=1:layer
-               if(isnan(prs_lay(ilv,ipxl,ilin)))
-                  iflg=1;
-                  break
-               end
-            end
-            if(iflg==1)
+%
+	    if(isnan(col_amt_err(ipxl,ilin)) | col_amt_err(ipxl,ilin)<=0)
                continue
             end
+%
+	    if(qa_value(ipxl,ilin)<=0.50 | zenang(ipxl,ilin)>=80.0)
+               continue
+	    end
+            iflg=0;
 %
 % Check domain
 % Input grid needs to be in degrees
@@ -320,14 +320,8 @@ function tropomi_co_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
 %               fprintf('FAILED DOMAIN TEST \n')
 	       continue
 	    end
-            fprintf('PASSED DOMAIN TEST \n')
 %
 % Save data to ascii file
-%		 fprintf('prs_lay \n')
-%		 fprintf('14.8g ',prs_lay(:,ipxl,ilin))
-%                 fprintf('prs_lev \n')
-%		 fprintf('14.8g ',prs_lev(:,ipxl,ilin))
-%                 fprintf('\n')
             icnt=icnt+1;
             fprintf(fid,'TROPOMI_CO_Obs: %d %d %d \n',icnt,i_min,j_min);
             fprintf(fid,'%d %d %d %d %d %d \n',yyyy_tropomi, ...

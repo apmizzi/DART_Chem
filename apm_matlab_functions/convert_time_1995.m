@@ -16,7 +16,7 @@ function [jult]=convert_time_1995(year,month,day,hour,minute,second)
       return
    end
    if(ref_year>year)
-      'APM: ERROR - year must greater than or equal to 2010'
+      'APM: ERROR - year must greater than or equal to 1995'
       return
    end
 %

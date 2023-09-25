@@ -83,7 +83,7 @@ function sciam_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
       ref_hh=str2double(time_ref(12:13));
       ref_mn=str2double(time_ref(15:16));
       ref_ss=str2double(time_ref(18:19));
-      ref_secs=single(convert_time(ref_yy,ref_mm,ref_dd,ref_hh,ref_mn,ref_ss));
+      ref_secs=single(convert_time_ref(ref_yy,ref_mm,ref_dd,ref_hh,ref_mn,ref_ss,1995));
       file_str_yy=str2double(time_start(1:4));
       file_str_mm=str2double(time_start(6:7));
       file_str_dd=str2double(time_start(9:10));
@@ -257,8 +257,8 @@ function sciam_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
       no2_vert_col_summed_err=ncread(file_in,field);
 %
 % Loop through SCIAM data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,1995));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,1995));
       icnt=0;
       for itim=1:ntim
          for iscan=1:nscan
@@ -266,15 +266,15 @@ function sciam_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
                continue
             end
             time_cur=ref_secs+delta_time(iscan,itim);
-            [year,month,day,hour,minute,second]=invert_time(time_cur);
+            [year,month,day,hour,minute,second]=invert_time_ref(time_cur,1995);
 	    yyyy_sciam=year;
 	    mn_sciam=month;
 	    dy_sciam=day;
 	    hh_sciam=hour;
 	    mm_sciam=minute;
 	    ss_sciam=second;
-%	    [jult]=convert_time(year,month,day,hour,minute,second);
-            sciamdate=single(convert_time(year,month,day,hour,minute,second));
+%	    [jult]=convert_time_ref(year,month,day,hour,minute,second,1995);
+            sciamdate=single(convert_time_ref(year,month,day,hour,minute,second,1995));
 %
 % Check time
             if(sciamdate<windate_min | sciamdate>windate_max)

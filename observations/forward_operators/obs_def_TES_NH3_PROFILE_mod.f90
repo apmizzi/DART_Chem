@@ -52,6 +52,7 @@
 module obs_def_tes_nh3_profile_mod
 
    use         apm_upper_bdy_mod, only :get_upper_bdy_fld, &
+                                        get_upper_bdy_single_fld, &       
                                         get_MOZART_INT_DATA, &
                                         get_MOZART_REAL_DATA, &
                                         wrf_dart_ubval_interp, &
@@ -305,15 +306,16 @@ subroutine get_expected_tes_nh3_profile(state_handle, ens_size, location, key, o
    
    character(len=*), parameter :: routine = 'get_expected_tes_nh3_profile'
    character(len=120)          :: data_file
-   character(len=*),parameter  :: model = 'MOZART'
-   character(len=*),parameter  :: fld = 'NH3_VMR_inst'
+   character(len=120)          :: model = 'MOZART'
+   character(len=120)          :: fld
    type(location_type) :: loc2
    
-   integer :: layer_tes,level_tes, klev_tes, kend_tes
+   integer :: layer_tes,level_tes
    integer :: layer_mdl,level_mdl
-   integer :: k,kk,imem,imemm
+   integer :: k,kk,imem,imemm,flg
    integer :: interp_new
-   integer :: icnt
+   integer :: icnt,ncnt,klev_tes,kstart
+   integer :: kstart_fld,kstart_tmp,kstart_qmr,kstart_prs
    integer :: date_obs,datesec_obs
    integer, dimension(ens_size) :: zstatus,kbnd_1,kbnd_n
    
@@ -324,24 +326,21 @@ subroutine get_expected_tes_nh3_profile(state_handle, ens_size, location, key, o
    real(r8) :: mloc(3),obs_prs
    real(r8) :: nh3_val_conv, VMR_conv
    real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
+   real(r8) :: lon_obs,lat_obs,pi,rad2deg
 
-   real(r8), dimension(ens_size) :: nh3_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
-   real(r8), dimension(ens_size) :: nh3_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
+   real(r8), dimension(ens_size) :: prsn_fld, prsn_tmp, prsn_qmr, prsn_prs
+   real(r8), dimension(ens_size) :: fld_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
+   real(r8), dimension(ens_size) :: fld_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
    real(r8), dimension(ens_size) :: prs_sfc
    
    real(r8), allocatable, dimension(:)   :: thick, prs_tes, prs_tes_mem
-   real(r8), allocatable, dimension(:,:) :: nh3_val, tmp_val, qmr_val
+   real(r8), allocatable, dimension(:,:) :: fld_val, tmp_val, qmr_val
    logical  :: return_now,nh3_return_now,tmp_return_now,qmr_return_now
 !
 ! Upper BC variables
-   integer  :: ncnt,kstart,flg
-   real(r8) :: lon_obs,lat_obs,pi,rad2deg
-   real     :: prs_del,delta,bdy_coef
-   real     :: nh3_bot,prs_bot,tmp_bot,qmr_bot
-   real     :: nh3_top,prs_top,tmp_top,qmr_top
-   real(r8), allocatable, dimension(:)   :: nh3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl
+   real(r8), allocatable, dimension(:)   :: fld_prf_mdl,tmp_prf_mdl,qmr_prf_mdl
    real(r8), allocatable, dimension(:)   :: prs_tes_top
-   
+
    if ( .not. module_initialized ) call initialize_module
    
    pi       = 4.*atan(1.)
@@ -358,16 +357,12 @@ subroutine get_expected_tes_nh3_profile(state_handle, ens_size, location, key, o
    tmp_max  = 600.
    del_prs  = 5000.
    VMR_conv = 28.9644/47.9982
-   bdy_coef = 0.95
-   prs_del  = 1000.         ! Pa  
 ! 
 ! WACCM - MMR
 ! WRFChem - VMR ppmv
-! TES CO - DU   
 !
 ! to convert from mass mixing ratio (MMR) to volume mixing ratio (VMR) multiply by
 ! the molar mass of dry air (28.9644 g) and divide by the molar mass of the constituent
-
 ! O3 - 47.9982 g
 ! CO - 28.0101 g
 ! NO2 - 46.0055 g
@@ -387,12 +382,10 @@ subroutine get_expected_tes_nh3_profile(state_handle, ens_size, location, key, o
    layer_tes   = nlayer(key)
    level_tes   = nlayer(key)+1
    klev_tes  = klev(key)
-   kend_tes    = kend(key)
    layer_mdl   = nlayer_model
    level_mdl   = nlayer_model+1
 
    allocate(prs_tes(layer_tes))
-   allocate(prs_tes_mem(layer_tes))
    prs_tes(1:layer_tes)=pressure(key,1:layer_tes)
 
 ! Get location infomation
@@ -404,7 +397,6 @@ subroutine get_expected_tes_nh3_profile(state_handle, ens_size, location, key, o
    elseif (mloc(2) < -90.0_r8) then
       mloc(2) = -90.0_r8
    endif
-   obs_prs=mloc(3)
 !
 ! You could set a unique error code for each condition and then just return
 ! without having to issue a warning message. The error codes would then
@@ -414,33 +406,39 @@ subroutine get_expected_tes_nh3_profile(state_handle, ens_size, location, key, o
    return_now=.false.
    
 ! pressure at model surface (Pa)
-
    zstatus=0
    level=0.0_r8
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
-   call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus) 
+   call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus)
 
-   nh3_mdl_1(:)=missing_r8
-   tmp_mdl_1(:)=missing_r8
-   qmr_mdl_1(:)=missing_r8
-   prs_mdl_1(:)=missing_r8
-
+! lower bounds
+   fld_mdl_1(:)=missing_r8
    do k=1,layer_mdl
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-      call interpolate(state_handle, ens_size, loc2, QTY_NH3, nh3_mdl_1, zstatus) ! ppmv 
-      zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_1, zstatus) ! K 
-      zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg / kg 
-      zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
-!
+      call interpolate(state_handle, ens_size, loc2, QTY_NH3, fld_mdl_1, zstatus) ! ppmv
       interp_new=0
       do imem=1,ens_size
-         if(nh3_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
-         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
+         if(fld_mdl_1(imem).eq.missing_r8) then
+            interp_new=1
+            exit
+         endif
+      enddo
+      if(interp_new.eq.0) then
+         exit
+      endif
+   enddo
+
+   tmp_mdl_1(:)=missing_r8
+   do k=1,layer_mdl
+      level=real(k)
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_1, zstatus) ! K 
+      interp_new=0
+      do imem=1,ens_size
+         if(tmp_mdl_1(imem).eq.missing_r8) then
             interp_new=1
             exit
          endif
@@ -450,7 +448,43 @@ subroutine get_expected_tes_nh3_profile(state_handle, ens_size, location, key, o
       endif    
    enddo
 
-!   write(string1, *)'APM: nh3 lower bound 1 ',nh3_mdl_1
+   qmr_mdl_1(:)=missing_r8
+   do k=1,layer_mdl
+      level=real(k)
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg / kg 
+      interp_new=0
+      do imem=1,ens_size
+         if(qmr_mdl_1(imem).eq.missing_r8) then
+            interp_new=1
+            exit
+         endif
+      enddo
+      if(interp_new.eq.0) then
+         exit
+      endif    
+   enddo
+
+   prs_mdl_1(:)=missing_r8
+   do k=1,layer_mdl
+      level=real(k)
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
+      interp_new=0
+      do imem=1,ens_size
+         if(prs_mdl_1(imem).eq.missing_r8) then
+            interp_new=1
+            exit
+         endif
+      enddo
+      if(interp_new.eq.0) then
+         exit
+      endif    
+   enddo
+   
+!   write(string1, *)'APM: fld lower bound 1 ',fld_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
 !   write(string1, *)'APM: tmp lower bound 1 ',tmp_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
@@ -459,55 +493,185 @@ subroutine get_expected_tes_nh3_profile(state_handle, ens_size, location, key, o
 !   write(string1, *)'APM: prs lower bound 1 ',prs_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
 
-   nh3_mdl_n(:)=missing_r8
-   tmp_mdl_n(:)=missing_r8
-   qmr_mdl_n(:)=missing_r8
-   prs_mdl_n(:)=missing_r8
-
-   do k=layer_mdl,1,-1
+! upper bounds
+   kstart_fld=layer_mdl-1
+   fld_mdl_n(:)=missing_r8
+   do k=layer_mdl-1,1,-1
+      zstatus(:)=0
       level=real(k)
-      zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-      call interpolate(state_handle, ens_size, loc2, QTY_NH3, nh3_mdl_n, zstatus) ! ppmv
-      zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_n, zstatus) ! K 
-      zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, zstatus) ! kg / kg 
-      zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, zstatus) ! Pa
-!
+      call interpolate(state_handle, ens_size, loc2, QTY_NH3, fld_mdl_n, zstatus) ! ppmv
       interp_new=0
-      do imem=1,ens_size
-         if(nh3_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
-         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
-            interp_new=1
-            exit
+      if(any(fld_mdl_n(:).eq.missing_r8)) then 
+         interp_new=1
+         kstart_fld=k
+         if(k.eq.1) then
+            zstatus(:)=0
+            kstart_fld=1
+            level = real(kstart_fld)
+            loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+            call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prsn_fld, zstatus) ! ppmv
          endif
-      enddo
+         fld_mdl_n(:)=missing_r8
+      endif
       if(interp_new.eq.0) then
+         zstatus(:)=0
+         level = real(kstart_fld)
+         loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+         call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prsn_fld, zstatus) ! ppmv
          exit
       endif    
    enddo
 
-!   write(string1, *)'APM: nh3 upper bound 1 ',nh3_mdl_n
+   kstart_tmp=layer_mdl-1 
+   tmp_mdl_n(:)=missing_r8
+   do k=layer_mdl-1,1,-1
+      zstatus(:)=0
+      level=real(k)
+      loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_n, zstatus) ! K 
+      interp_new=0
+      if(any(tmp_mdl_n(:).eq.missing_r8)) then
+         interp_new=1
+         kstart_tmp=k
+         if(k.eq.1) then
+            zstatus(:)=0
+            kstart_tmp=1
+            level = real(kstart_tmp)
+            loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+            call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prsn_tmp, zstatus) ! ppmv
+         endif
+         tmp_mdl_n(:)=missing_r8
+      endif
+      if(interp_new.eq.0) then
+         zstatus(:)=0
+         level = real(kstart_tmp)
+         loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+         call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prsn_tmp, zstatus) ! ppmv
+         exit
+      endif    
+   enddo
+   
+   kstart_qmr=layer_mdl-1 
+   qmr_mdl_n(:)=missing_r8
+   do k=layer_mdl-1,1,-1
+      zstatus(:)=0
+      level=real(k)
+      loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, zstatus) ! kg / kg 
+      interp_new=0
+      if(any(qmr_mdl_n(:).eq.missing_r8)) then
+         interp_new=1
+         kstart_qmr=k
+         if(k.eq.1) then
+            zstatus(:)=0
+            kstart_qmr=1
+            level = real(kstart_qmr)
+            loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+            call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prsn_qmr, zstatus) ! ppmv
+         endif
+         qmr_mdl_n(:)=missing_r8
+      endif
+      if(interp_new.eq.0) then
+         zstatus(:)=0
+         level = real(kstart_qmr)
+         loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+         call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prsn_qmr, zstatus) ! ppmv
+         exit
+      endif    
+   enddo
+   
+   kstart_prs=layer_mdl-1
+   prs_mdl_n(:)=missing_r8
+   do k=layer_mdl-1,1,-1
+      zstatus(:)=0
+      level=real(k)
+      loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, zstatus) ! Pa
+      interp_new=0
+      if(any(prs_mdl_n(:).eq.missing_r8)) then
+         interp_new=1
+         kstart_prs=k
+         if(k.eq.1) then
+            zstatus(:)=0
+            kstart_prs=1
+            level = real(kstart_prs)
+            loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+            call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prsn_prs, zstatus) ! ppmv
+         endif
+         prs_mdl_n(:)=missing_r8
+      endif
+      if(interp_new.eq.0) then
+         zstatus(:)=0
+         level = real(kstart_prs)
+         loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
+         call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prsn_prs, zstatus) ! ppmv
+         exit
+      endif    
+   enddo
+   
+   write(string1, *)'APM: kstart_fld ',kstart_fld, layer_mdl
+   call error_handler(E_MSG, routine, string1, source)
+   write(string1, *)'APM: fld_mdl_n ',fld_mdl_n
+   call error_handler(E_MSG, routine, string1, source)
+   write(string1, *)'APM: prsn_fld ',prsn_fld(:)
+   call error_handler(E_MSG, routine, string1, source)
+   write(string1, *)'  '
+   call error_handler(E_MSG, routine, string1, source)
+
+   write(string1, *)'APM: kstart_tmp ',kstart_tmp,layer_mdl
+   call error_handler(E_MSG, routine, string1, source)
+   write(string1, *)'APM: tmp_mdl_n ',tmp_mdl_n
+   call error_handler(E_MSG, routine, string1, source)
+   write(string1, *)'APM: prsn_tmp ',prsn_tmp(:)
+   call error_handler(E_MSG, routine, string1, source)
+   write(string1, *)'  '
+   call error_handler(E_MSG, routine, string1, source)
+
+   write(string1, *)'APM: kstart_qmr ',kstart_qmr,layer_mdl
+   call error_handler(E_MSG, routine, string1, source)
+   write(string1, *)'APM: qmr_mdl_n ',qmr_mdl_n
+   call error_handler(E_MSG, routine, string1, source)
+   write(string1, *)'APM: prsn_qmr ',prsn_qmr(:)
+   call error_handler(E_MSG, routine, string1, source)
+   write(string1, *)'  '
+   call error_handler(E_MSG, routine, string1, source)
+
+   write(string1, *)'APM: kstart_prs ',kstart_prs,layer_mdl
+   call error_handler(E_MSG, routine, string1, source)
+   write(string1, *)'APM: prs_mdl_n ',prs_mdl_n
+   call error_handler(E_MSG, routine, string1, source)
+   write(string1, *)'APM: prsn_prs ',prsn_prs(:)
+   call error_handler(E_MSG, routine, string1, source)
+   write(string1, *)'  '
+   call error_handler(E_MSG, routine, string1, source)
+
+   zstatus(:)=20
+   expct_val(:)=-9999.
+   call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+
+return
+
+   
+!   write(string1, *)'APM: fld upper bound n ',fld_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: tmp upper bound 1 ',tmp_mdl_n
+!   write(string1, *)'APM: tmp upper bound n ',tmp_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: qmr upper bound 1 ',qmr_mdl_n
+!   write(string1, *)'APM: qmr upper bound n ',qmr_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: prs upper bound 1 ',prs_mdl_n
+!   write(string1, *)'APM: prs upper bound n ',prs_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
 
 ! Get profiles at TES pressure levels
 
-   allocate(nh3_val(ens_size,layer_tes))
+   allocate(fld_val(ens_size,layer_tes))
    allocate(tmp_val(ens_size,layer_tes))
    allocate(qmr_val(ens_size,layer_tes))
 
    do k=1,layer_tes
       zstatus=0
       loc2 = set_location(mloc(1), mloc(2), prs_tes(k), VERTISPRESSURE)
-      call interpolate(state_handle, ens_size, loc2, QTY_NH3, nh3_val(:,k), zstatus)  
+      call interpolate(state_handle, ens_size, loc2, QTY_NH3, fld_val(:,k), zstatus)  
       zstatus=0
       call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_val(:,k), zstatus)  
       zstatus=0
@@ -516,264 +680,212 @@ subroutine get_expected_tes_nh3_profile(state_handle, ens_size, location, key, o
 ! Correcting for expected failures near the surface
       do imem=1,ens_size
          if (prs_tes(k).ge.prs_mdl_1(imem)) then
-            nh3_val(imem,k) = nh3_mdl_1(imem)
+            fld_val(imem,k) = fld_mdl_1(imem)
             tmp_val(imem,k) = tmp_mdl_1(imem)
             qmr_val(imem,k) = qmr_mdl_1(imem)
-         endif
-!
-! Correcting for expected failures near the top
-         if (prs_tes(k).le.prs_mdl_n(imem)) then
-            nh3_val(imem,k) = nh3_mdl_n(imem)
-            tmp_val(imem,k) = tmp_mdl_n(imem)
-            qmr_val(imem,k) = qmr_mdl_n(imem)
-         endif
-      enddo
-
-!      write(string1, *)'APM: nh3 ',key,k,nh3_val(1,k)
-!      call error_handler(E_MSG, routine, string1, source)
-!      write(string1, *)'APM: tmp ',key,k,tmp_val(1,k)
-!      call error_handler(E_MSG, routine, string1, source)
-!      write(string1, *)'APM: qmr ',key,k,qmr_val(1,k)
-!      call error_handler(E_MSG, routine, string1, source)
-
-! Check data for missing values      
-      do imem=1,ens_size
-         if(nh3_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
-         qmr_val(imem,k).eq.missing_r8) then
-            zstatus(:)=20
-            expct_val(:)=missing_r8
-            write(string1, *) 'APM: Model profile data has missing values for obs, level ',key,k
-            call error_handler(E_ALLMSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            do imemm=1,ens_size
-               write(string1, *) &
-               'APM: Model profile values: nh3,tmp,qmr',key,imem,k,nh3_val(imemm,k), &
-               tmp_val(imemm,k),qmr_val(imemm,k)     
-               call error_handler(E_ALLMSG, routine, string1, source)
-            enddo
-            return
          endif
       enddo
 !
 ! Convert units for nh3 from ppmv
-      nh3_val(:,k) = nh3_val(:,k) * 1.e-6_r8
-      nh3_mdl_1(:)=nh3_mdl_1(:) * 1.e-6_r8
-      nh3_mdl_n(:)=nh3_mdl_n(:) * 1.e-6_r8
+      fld_val(:,k) = fld_val(:,k) * 1.e-6_r8
    enddo
+   fld_mdl_1(:)=fld_mdl_1(:) * 1.e-6_r8
+   fld_mdl_n(:)=fld_mdl_n(:) * 1.e-6_r8
 !
-! Use large scale nh3 data above the regional model top
+! Use large scale data above the regional model top
 ! TES vertical is from bottom to top   
+   lon_obs=mloc(1)/rad2deg
+   lat_obs=mloc(2)/rad2deg
+   data_file='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mozart_forecasts/h0004.nc'
+   call get_time(obs_time,datesec_obs,date_obs)
+
    do imem=1,ens_size
-      kstart=-1
-      if (prs_tes(layer_tes).lt.prs_mdl_n(imem)) then
+      if(prs_tes(layer_tes).lt.prsn_fld(imem)) then
          do k=1,layer_tes
-            if (prs_tes(k).lt.prs_mdl_n(imem)) then
+            if(prs_tes(k).lt.prsn_fld(imem)) then
                kstart=k
                exit
             endif
          enddo
          ncnt=layer_tes-kstart+1
          allocate(prs_tes_top(ncnt))
-         allocate(nh3_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
+         allocate(fld_prf_mdl(ncnt))
          do k=kstart,layer_tes
-            kk=k-kstart+1
-            prs_tes_top(kk)=prs_tes(k)
+            prs_tes_top(k-kstart+1)=prs_tes(k)
          enddo
          prs_tes_top(:)=prs_tes_top(:)/100.
 !
-         lon_obs=mloc(1)/rad2deg
-         lat_obs=mloc(2)/rad2deg
-         call get_time(obs_time,datesec_obs,date_obs)
+         fld = 'NH3_VMR_inst'         
+         call get_upper_bdy_single_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs, &
+         prs_tes_top,ncnt,fld_prf_mdl,date_obs,datesec_obs)
+
 !
-         data_file='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mozart_forecasts/h0004.nc'
-         call get_upper_bdy_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs,prs_tes_top,ncnt, &
-         nh3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+! Impose ensemble perturbations from level kstart-1      
+         if(kstart.gt.1) then 
+            do k=kstart,layer_tes
+                kk=k-kstart+1
+                fld_val(imem,k)=fld_prf_mdl(kk)*fld_val(imem,kstart-1)/ &
+                (sum(fld_val(:,kstart-1))/real(ens_size))
+            enddo
+         else
+            do k=kstart,layer_tes
+                kk=k-kstart+1
+                fld_val(imem,k)=fld_prf_mdl(kk)*abs(1.-0.3*random_stdnormal(1.))
+            enddo
+         endif
+         deallocate(prs_tes_top)
+         deallocate(fld_prf_mdl)
+      endif
+      print *, 'mem, nh3 profile ',fld_val(imem,:)
+      print *, ' '
+   enddo
+
+   return
+
+
+
+
+
+
+
+!
+   do imem=1,ens_size
+      ncnt=layer_tes-kstart_tmp
+      if(ncnt.gt.0) then
+         allocate(prs_tes_top(ncnt))
+         allocate(tmp_prf_mdl(ncnt))
+         do k=kstart_tmp,layer_tes
+            prs_tes_top(k-kstart_tmp+1)=prs_tes(k)
+         enddo
+         prs_tes_top(:)=prs_tes_top(:)/100.
+!
+         fld = 'T'         
+         call get_upper_bdy_single_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs,prs_tes_top,ncnt, &
+         tmp_prf_mdl,date_obs,datesec_obs)
 !
 ! Impose ensemble perturbations from level kstart(imem)-1      
-         nh3_prf_mdl(:)=nh3_prf_mdl(:)*VMR_conv
-         do k=kstart,layer_tes
-            kk=k-kstart+1
-            nh3_val(imem,k)=nh3_prf_mdl(kk)*nh3_val(imem,kstart-1)/ &
-            (sum(nh3_val(:,kstart-1))/real(ens_size))
-            tmp_val(imem,k)=tmp_prf_mdl(kk)*tmp_val(imem,kstart-1)/ &
-            (sum(tmp_val(:,kstart-1))/real(ens_size))
-            qmr_val(imem,k)=qmr_prf_mdl(kk)*qmr_val(imem,kstart-1)/ &
-            (sum(qmr_val(:,kstart-1))/real(ens_size))
-         enddo
+         if(kstart_tmp.gt.1) then 
+            do k=kstart_tmp,layer_tes
+               kk=k-kstart_tmp+1
+               tmp_val(imem,k)=tmp_prf_mdl(kk)*tmp_val(imem,kstart_tmp-1)/ &
+               (sum(tmp_val(:,kstart_tmp-1))/real(ens_size))
+            enddo
+         else
+            do k=kstart_tmp,layer_tes
+               kk=k-kstart_tmp+1
+               tmp_val(imem,k)=tmp_prf_mdl(kk)*abs(1.-0.3*random_stdnormal(1.))
+            enddo
+         endif
          deallocate(prs_tes_top)
-         deallocate(nh3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
-      endif             
+         deallocate(tmp_prf_mdl)
+      endif
+!
+      ncnt=layer_tes-kstart_qmr
+      if(ncnt.gt.0) then
+         allocate(prs_tes_top(ncnt))
+         allocate(qmr_prf_mdl(ncnt))
+         do k=kstart_qmr,layer_tes
+            prs_tes_top(k-kstart_qmr+1)=prs_tes(k)
+         enddo
+         prs_tes_top(:)=prs_tes_top(:)/100.
+!
+         fld = 'Q'         
+         call get_upper_bdy_single_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs,prs_tes_top,ncnt, &
+         qmr_prf_mdl,date_obs,datesec_obs)
+!
+! Impose ensemble perturbations from level kstart(imem)-1      
+         if(kstart_qmr.gt.1) then 
+            do k=kstart_qmr,layer_tes
+               kk=k-kstart_qmr+1
+               tmp_val(imem,k)=tmp_prf_mdl(kk)*tmp_val(imem,kstart_qmr-1)/ &
+               (sum(tmp_val(:,kstart_qmr-1))/real(ens_size))
+            enddo
+         else
+            do k=kstart_qmr,layer_tes
+               kk=k-kstart_qmr+1
+               tmp_val(imem,k)=tmp_prf_mdl(kk)*abs(1.-0.3*random_stdnormal(1.))
+            enddo
+         endif
+         deallocate(prs_tes_top)
+         deallocate(qmr_prf_mdl)
+      endif
    enddo
 !
 ! Check full profile for negative values
+
+!   do imem=1,1
+!      do k=1,layer_tes
+!         write(string1, *) &
+!         'APM: prs, nk3, tmp, qmr ',k,prs_tes(k),fld_val(imem,k), &
+!         tmp_val(imem,k),qmr_val(imem,k)
+!         call error_handler(E_MSG, routine, string1, source)
+!      enddo
+!   enddo
+!
    do imem=1,ens_size
       flg=0
       do k=1,layer_tes   
-
-!         if(key.eq.1 .and. imem.eq.1) then
-!            write(string1, *) &
-!            'APM: nh3 values: imem,k,nh3 ',imem,k,nh3_val(imem,k)
-!            call error_handler(E_MSG, routine, string1, source)
-!         endif
-
-         if(nh3_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         if(fld_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             flg=1   
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
             call error_handler(E_ALLMSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          endif
       enddo
-      if(flg.eq.1) exit
+      if(flg.eq.1) then
+         zstatus(:)=20
+         expct_val(:)=missing_r8
+         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         return
+      endif
    enddo
-
+!
+! Calculate the expected retrievals
    istatus(:)=0
    zstatus(:)=0.
    expct_val(:)=0.0
-   allocate(thick(layer_tes))
-
-   do imem=1,ens_size
-! Define upper and lower values for layer grid
-! (TES NH3 grid is bottom to top) prs is in Pa
-      prs_tes_mem(:)=prs_tes(:)      
-! Definitions for k=1 or k=layer_tes
-      prs_bot=prs_sfc(imem)
-      if (prs_bot.le.prs_tes_mem(1)) then
-         prs_bot=prs_tes_mem(1)+prs_del
-      endif   
-! Bottom terms
-      nh3_bot=nh3_val(imem,1)
-      tmp_bot=tmp_val(imem,1)
-      qmr_bot=qmr_val(imem,1)
-! Top terms
-      prs_top=prs_tes(layer_tes)+(prs_tes(layer_tes)-prs_tes(layer_tes-1))/2.
-      if(prs_top.le.0.) prs_top=bdy_coef*prs_tes(layer_tes)
-! nh3
-      delta=(nh3_val(imem,layer_tes)-nh3_val(imem,layer_tes-1))/ &
-      (prs_tes(layer_tes)-prs_tes(layer_tes-1))
-      nh3_top=nh3_val(imem,layer_tes) + delta*(prs_top-prs_tes(layer_tes))
-      if(nh3_top.le.0.) then
-         if(delta.le.0.) nh3_top=bdy_coef*nh3_val(imem,layer_tes)
-         if(delta.gt.0.) nh3_top=(2.-bdy_coef)*nh3_val(imem,layer_tes)
-      endif
-! tmp
-      delta=(tmp_val(imem,layer_tes)-tmp_val(imem,layer_tes-1))/ &
-      (prs_tes(layer_tes)-prs_tes(layer_tes-1))
-      tmp_top=tmp_val(imem,layer_tes) + delta*(prs_top-prs_tes(layer_tes))
-      if(tmp_top.le.0.) then
-         if(delta.le.0.) tmp_top=bdy_coef*tmp_val(imem,layer_tes)
-         if(delta.gt.0.) tmp_top=(2.-bdy_coef)*tmp_val(imem,layer_tes)
-      endif
-! qmr
-      delta=(qmr_val(imem,layer_tes)-qmr_val(imem,layer_tes-1))/ &
-      (prs_tes(layer_tes)-prs_tes(layer_tes-1))
-      qmr_top=qmr_val(imem,layer_tes) + delta*(prs_top-prs_tes(layer_tes))
-      if(qmr_top.le.0.) then
-         if(delta.le.0.) qmr_top=bdy_coef*qmr_val(imem,layer_tes)
-         if(delta.gt.0.) qmr_top=(2.-bdy_coef)*qmr_val(imem,layer_tes)
-      endif
-!
-! VERTICAL SUMMATION
-! k=1 term      
-      k=1
-! nh3 term (Units are VMR, calculate layer average)
-         lnpr_mid=(log(prs_tes_mem(k+1))+log(prs_bot))/2.
-         up_wt=log(prs_bot)-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_tes_mem(k+1))
-         tl_wt=up_wt+dw_wt
-         if(use_log_nh3) then
-            nh3_val_conv = (dw_wt*exp(nh3_bot)+up_wt*exp(nh3_val(imem,k+1)))/tl_wt
-         else
-            nh3_val_conv = (dw_wt*nh3_bot+up_wt*nh3_val(imem,k+1))/tl_wt
-         endif
-         prior_term=avg_kernel(key,k)
-         if(k.eq.klev_tes) prior_term=1.-prior_term
-! expected retrieval sum
-         expct_val(imem) = expct_val(imem) + nh3_val_conv * &
-         avg_kernel(key,k) + prior_term*prior(key,k)
-
-!         if(key.eq.1 .and. imem.eq.1) then
-!            write(string1, *)'APM: expected retr ',k,expct_val(imem), &
-!            avg_kernel(key,k), nh3_val_conv, prior(key,k)
-!            call error_handler(E_MSG, routine, string1, source)
-!         endif
-!
-! k=layer_tes term
-      k=layer_tes
-         lnpr_mid=(log(prs_top)+log(prs_tes_mem(k)))/2.
-         up_wt=log(prs_tes_mem(k))-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_top)
-         tl_wt=up_wt+dw_wt
-! NH3 term (Units are VMR, calculate layer average)
-         if(use_log_nh3) then
-            nh3_val_conv = (dw_wt*exp(nh3_val(imem,k))+up_wt*exp(nh3_top))/tl_wt
-         else
-            nh3_val_conv = (dw_wt*nh3_val(imem,k)+up_wt*nh3_top)/tl_wt
-         endif
-         prior_term=avg_kernel(key,k)
-         if(k.eq.klev_tes) prior_term=1.-prior_term
-! expected retrieval sum
-         expct_val(imem) = expct_val(imem) + nh3_val_conv * &
-         avg_kernel(key,k) + prior_term*prior(key,k)
-
-!         if(key.eq.1 .and. imem.eq.1) then
-!            write(string1, *)'APM: expected retr ',k,expct_val(imem), &
-!            avg_kernel(key,k), nh3_val_conv, prior(key,k)
-!            call error_handler(E_MSG, routine, string1, source)
-!         endif
 !      
-! remaining terms
-      do k=2,layer_tes-1
-         prs_bot=(prs_tes_mem(k-1)+prs_tes_mem(k))/2.
-         prs_top=(prs_tes_mem(k)+prs_tes_mem(k+1))/2.
-         nh3_bot=(nh3_val(imem,k-1)+nh3_val(imem,k))/2.
-         nh3_top=(nh3_val(imem,k)+nh3_val(imem,k+1))/2.
-         tmp_bot=(tmp_val(imem,k-1)+tmp_val(imem,k))/2.
-         tmp_top=(tmp_val(imem,k)+tmp_val(imem,k+1))/2.
-         qmr_bot=(qmr_val(imem,k-1)+qmr_val(imem,k))/2.
-         qmr_top=(qmr_val(imem,k)+qmr_val(imem,k+1))/2.
-         lnpr_mid=(log(prs_top)+log(prs_tes_mem(k)))/2.
-         up_wt=log(prs_bot)-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_tes_mem(k+1))
-         tl_wt=up_wt+dw_wt
-! nh3 term (Units are VMR, calculate layer average)
-         if(use_log_nh3) then
-            nh3_val_conv = (dw_wt*exp(nh3_bot)+up_wt*exp(nh3_top))/tl_wt
-         else
-            nh3_val_conv = (dw_wt*nh3_bot+up_wt*nh3_top)/tl_wt
-         endif
-         prior_term=avg_kernel(key,k)
-         if(k.eq.klev_tes) prior_term=1.-prior_term
-! expected retrieval
-         expct_val(imem) = expct_val(imem) + nh3_val_conv * &
-         avg_kernel(key,k) + prior_term*prior(key,k)
-
-!         if(key.eq.1 .and. imem.eq.1) then
-!            write(string1, *)'APM: expected retr ',k,expct_val(imem), &
-!            avg_kernel(key,k), nh3_val_conv, prior(key,k)
+! Process the vertical summation
+   do imem=1,ens_size
+      do k=1,layer_tes
+         if(prior(key,k).lt.0.) then
+!            write(string1, *) &
+!            'APM: TES Prior is negative. Level may be below surface. Key,Layer: ',key,k
 !            call error_handler(E_MSG, routine, string1, source)
-!         endif
+            cycle
+         endif
+!
+! Get expected observation
+         prior_term=-1.*avg_kernel(key,k)
+         if(k.eq.klev_tes) prior_term=(1.0_r8 - avg_kernel(key,k)) 
 
+         expct_val(imem) = expct_val(imem) + log(fld_val(imem,k)) * &
+         avg_kernel(key,k) + prior_term * log(prior(key,k))
+
+!         write(string1, *) 'APM: exp_val, nh3, avgk, prior_trm, prior',imem,k, &
+!         expct_val(imem),fld_val(imem,k),avg_kernel(key,k),prior_term,prior(key,k)
+!         call error_handler(E_MSG, routine, string1, source)
       enddo
-!      write(string1, *)'APM: FINAL EXPECTED VALUE ',expct_val(imem)
+
+      expct_val(imem)=exp(expct_val(imem))      
+!      write(string1, *) 'APM: Finished vertical summation loop ',key,imem
 !      call error_handler(E_MSG, routine, string1, source)
-!      write(string1, *)'  '
-      call error_handler(E_MSG, routine, string1, source)
-      if(expct_val(imem).lt.0) then
+      
+      if(isnan(expct_val(imem))) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
-         write(string1, *) 'APM NOTICE: TES NH3 expected value is negative '
-         call error_handler(E_MSG, routine, string1, source)
+!         write(string1, *) &
+!         'APM NOTICE: TES NH3 expected value is NaN'
+!         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
    enddo
 
 ! Clean up and return
-   deallocate(nh3_val, tmp_val, qmr_val)
-   deallocate(thick)
-   deallocate(prs_tes, prs_tes_mem)
+   deallocate(fld_val, tmp_val, qmr_val)
+   deallocate(prs_tes)
 
 end subroutine get_expected_tes_nh3_profile
 
@@ -804,6 +916,20 @@ nh3_nlayer, nh3_klev, nh3_kend)
    prior(key,1:nh3_nlayer)      = nh3_prior(1:nh3_nlayer)
    
 end subroutine set_obs_def_tes_nh3_profile
+
+real function random_stdnormal(x)
+   implicit none
+   real, parameter  :: pi=3.14159265
+   real, intent(in) :: x
+   real             :: u1, u2
+
+   call random_number (u1)
+   u1 = 1. - u1
+   call random_number (u2)
+   u2 = 1. - u2
+
+   random_stdnormal = sqrt(-2.*log(u1))*cos(2.*pi*u2)
+end function random_stdnormal
 
 end module obs_def_tes_nh3_profile_mod
 

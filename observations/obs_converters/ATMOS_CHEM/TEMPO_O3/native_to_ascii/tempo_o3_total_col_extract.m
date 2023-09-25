@@ -185,11 +185,14 @@ function tempo_o3_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
       info_content=ncread(file_in,field);
 %
 % Loop through TEMPO data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2000));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2000));
       icnt=0;
       for istep=1:nstep
-	  [yyyy_tempo,mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo]=invert_time(time_utc(istep));
+         [jult]=jult_adjust_ref(time_utc(istep),2000,1,1,12,0,0);
+         [yyyy_tempo,mn_tempo,dd_tempo,hh_tempo,mm_tempo,ss_tempo]=invert_time_ref(jult,2000);
+         tempodate=single(convert_time_ref(yyyy_tempo,mn_tempo, ...
+         dy_tempo,hh_tempo,mm_tempo,ss_tempo,2000));
 %         int32(ss_tempo)>59)
 %            [yyyy_tempo,mn_tempo,dy_tempo,hh_tempo, ...
 %            mm_tempo,ss_tempo]=incr_time(yyyy_tempo, ...
@@ -198,8 +201,8 @@ function tempo_o3_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
 %         fprintf('obs date/time %d %d %d %d %d %d \n',yyyy_tempo, ...
 %	 mn_tempo,dy_tempo,hh_tempo,mm_tempo,ss_tempo)
 	 
-         tempodate=single(convert_time(yyyy_tempo,mn_tempo, ...
-         dy_tempo,hh_tempo,mm_tempo,ss_tempo));
+         tempodate=single(convert_time_ref(yyyy_tempo,mn_tempo, ...
+         dy_tempo,hh_tempo,mm_tempo,ss_tempo,2000));
 
 %         fprintf('windate_min %d \n',windate_min)
 %         fprintf('tempo_dat %d \n',tempodate)

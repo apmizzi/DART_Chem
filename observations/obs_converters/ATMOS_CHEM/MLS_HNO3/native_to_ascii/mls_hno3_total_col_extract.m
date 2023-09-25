@@ -185,11 +185,11 @@ function mls_hno3_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
       info_content=ncread(file_in,field);
 %
 % Loop through MLS data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
       for istep=1:nstep
-	  [yyyy_mls,mn_mls,dy_mls,hh_mls,mm_mls,ss_mls]=invert_time(time_utc(istep));
+	  [yyyy_mls,mn_mls,dy_mls,hh_mls,mm_mls,ss_mls]=invert_time_ref(time_utc(istep),2010);
 %         int32(ss_mls)>59)
 %            [yyyy_mls,mn_mls,dy_mls,hh_mls, ...
 %            mm_mls,ss_mls]=incr_time(yyyy_mls, ...
@@ -198,8 +198,8 @@ function mls_hno3_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
 %         fprintf('obs date/time %d %d %d %d %d %d \n',yyyy_mls, ...
 %	 mn_mls,dy_mls,hh_mls,mm_mls,ss_mls)
 	 
-         mlsdate=single(convert_time(yyyy_mls,mn_mls, ...
-         dy_mls,hh_mls,mm_mls,ss_mls));
+         mlsdate=single(convert_time_ref(yyyy_mls,mn_mls, ...
+         dy_mls,hh_mls,mm_mls,ss_mls,2010));
 
 %         fprintf('windate_min %d \n',windate_min)
 %         fprintf('mls_dat %d \n',mlsdate)

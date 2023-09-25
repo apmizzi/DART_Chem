@@ -16,10 +16,10 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 !
-program tempo_o3_cpsr_ascii_to_obs
+program tes_co2_cpsr_ascii_to_obs
 !
 !=============================================
-! TEMPO O3 column obs
+! TES CO2 column obs
 !=============================================
   use apm_cpsr_mod, only           : cpsr_calculation, &
                                      mat_prd, &
@@ -92,7 +92,7 @@ program tempo_o3_cpsr_ascii_to_obs
                                       obs_def_type,               &
                                       set_obs_def_type_of_obs
 
-   use obs_def_tempo_o3_cpsr_mod, only     : set_obs_def_tempo_o3_cpsr
+   use obs_def_tes_co2_cpsr_mod, only     : set_obs_def_tes_co2_cpsr
 
    use assim_model_mod, only        : static_init_assim_model
 
@@ -104,8 +104,8 @@ program tempo_o3_cpsr_ascii_to_obs
                                       time_type,                  &
                                       get_time
 
-   use obs_kind_mod, only           : QTY_O3,                     &
-                                      TEMPO_O3_CPSR,              &
+   use obs_kind_mod, only           : QTY_CO2,                     &
+                                      TES_CO2_CPSR,              &
                                       get_type_of_obs_from_menu
 
    use random_seq_mod, only         : random_seq_type,            &
@@ -116,7 +116,7 @@ program tempo_o3_cpsr_ascii_to_obs
    implicit none
 !
 ! version controlled file description for error handling, do not edit
-   character(len=*), parameter     :: source   = 'tempo_o3_cpsr_ascii_to_obs.f90'
+   character(len=*), parameter     :: source   = 'tes_co2_cpsr_ascii_to_obs.f90'
    character(len=*), parameter     :: revision = ''
    character(len=*), parameter     :: revdate  = ''
 !
@@ -140,10 +140,11 @@ program tempo_o3_cpsr_ascii_to_obs
    integer                         :: seconds,days,which_vert
    integer                         :: seconds_last,days_last
    integer                         :: nx_model,ny_model,nz_model
-   integer                         :: reject,k,l,kk,kend,ilay
-   integer                         :: i_min,j_min
+   integer                         :: reject,k,l,kk,klev,kend,ilay
+   integer                         :: i_min,j_min,icol,reject_ak
    integer                         :: sum_reject,sum_accept,sum_total
-   integer                         :: obs_accept,obs_o3_reten_freq,obs_no2_reten_freq
+   integer                         :: obs_accept,obs_o3_reten_freq,obs_co_reten_freq
+   integer                         :: obs_co2_reten_freq,obs_ch4_reten_freq,obs_nh3_reten_freq
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
@@ -156,28 +157,29 @@ program tempo_o3_cpsr_ascii_to_obs
    real                            :: prs_loc,obs_sum
    real*8                          :: obs_err_var,level
 !
-   real*8,dimension(num_qc)        :: tempo_qc
+   real*8,dimension(num_qc)        :: tes_qc
    real*8,dimension(num_copies)    :: obs_val
 !
    character*129                   :: filedir,filename,fileout
    character*129                   :: copy_meta_data
-   character*129                   :: qc_meta_data='TEMPO O3 QC index'
+   character*129                   :: qc_meta_data='TES CO2 QC index'
    character*129                   :: chr_year,chr_month,chr_day
-   character*129                   :: file_name='tempo_o3_cpsr_obs_seq'
+   character*129                   :: file_name='tes_co2_cpsr_obs_seq'
    character*129                   :: data_type,cmd
    character*129                   :: path_model,file_model,file_in
 !
-   logical                         :: use_log_co,use_log_o3,use_log_no2,use_log_so2
+   logical                         :: use_log_o3,use_log_co,use_log_co2,use_log_ch4,use_log_nh3
 !
 ! Species-specific variables
-   real                              :: col_amt_obs,col_amt_err_obs
-   real                              :: lat_obs,lon_obs
+   real                              :: co2_trop_col_obs,co2_trop_col_obs_prior,co2_trop_col_obs_err
+   real                              :: co2_total_col_obs,co2_total_col_obs_prior,co2_total_col_obs_err
+   real                              :: lat_obs,lon_obs,dofs_obs,trop_prs
    real*8                            :: lat_obs_r8,lon_obs_r8
-   real,allocatable,dimension(:,:)   :: avgk_obs,cov_obs
-   real,allocatable,dimension(:)     :: prior_obs,o3_obs
+   real,allocatable,dimension(:,:)   :: avgk_obs,cov_obs,cov_total
+   real,allocatable,dimension(:)     :: avgk_diag_obs,co2_obs,co2_obs_prior,co2_obs_err
    real*8,allocatable,dimension(:)   :: avgk_obs_r8
    real*8,allocatable,dimension(:,:) :: cov_obs_r8
-   real*8,allocatable,dimension(:)   :: o3_obs_r8
+   real*8,allocatable,dimension(:)   :: prior_obs_r8,co2_obs_r8
    real,allocatable,dimension(:)     :: prs_obs
    real*8,allocatable,dimension(:)   :: prs_obs_r8
    real,allocatable,dimension(:)     :: prf_locl,prf_full
@@ -185,25 +187,18 @@ program tempo_o3_cpsr_ascii_to_obs
    real,allocatable,dimension(:,:)   :: lon,lat
    real,allocatable,dimension(:,:,:) :: prs_prt,prs_bas,prs_fld
    real,allocatable,dimension(:,:,:) :: tmp_prt,tmp_fld,vtmp_fld
-   real,allocatable,dimension(:,:,:) :: o3_fld,qmr_fld
+   real,allocatable,dimension(:,:,:) :: co2_fld,qmr_fld
 
-   real                              :: col_amt_total_obs,col_amt_trop_obs
-   real                              :: trop_index,cov_total,cov_trop,wt1_sum,wt2_sum
-   real                              :: avgk_term, sum_o3_obs
+   real                              :: trop_index,cov_trop,wt1_sum,wt2_sum
+   real                              :: avgk_term, sum_co2_obs
    real*8                            :: prior_total_r8
    real*8,allocatable,dimension(:)   :: avgk_total_obs_r8
-
-   integer                           :: nlayer,cnt,flg,nmodes,i,imds
-   real*8                            :: prior_obs_r8
-   real,allocatable,dimension(:)     :: o3_cpsr,prior_cpsr
-   real,allocatable,dimension(:,:)   :: avgk_cpsr
-   real,allocatable,dimension(:)     :: o3_shift,prior_shift
-   real,allocatable,dimension(:,:)   :: avgk_shift,cov_shift
 !
-   namelist /create_tempo_obs_nml/filedir,filename,fileout, &
-   bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
-   lon_min,lon_max,lat_min,lat_max, &
-   path_model,file_model,nx_model,ny_model,nz_model,obs_o3_reten_freq,obs_no2_reten_freq
+   namelist /create_tes_obs_nml/filedir,filename,fileout, &
+   bin_beg_sec,bin_end_sec,fac_obs_error,use_log_o3,use_log_co,use_log_co2,use_log_ch4, &
+   use_log_nh3,lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model,ny_model, &
+   nz_model,obs_o3_reten_freq,obs_co_reten_freq,obs_co2_reten_freq,obs_ch4_reten_freq, &
+   obs_nh3_reten_freq
 !
 ! Set constants
    pi=4.*atan(1.)
@@ -225,13 +220,13 @@ program tempo_o3_cpsr_ascii_to_obs
 ! Initialize the obs_sequence module
    call static_init_obs_sequence()
 !
-   call find_namelist_in_file("input.nml", "create_tempo_obs_nml", iunit)
-   read(iunit, nml = create_tempo_obs_nml, iostat = io)
-   call check_namelist_read(iunit, io, "create_tempo_obs_nml")
+   call find_namelist_in_file("input.nml", "create_tes_obs_nml", iunit)
+   read(iunit, nml = create_tes_obs_nml, iostat = io)
+   call check_namelist_read(iunit, io, "create_tes_obs_nml")
 !
 ! Record the namelist values used for the run ...
-   call error_handler(E_MSG,'init_create_tempo_obs','create_tempo_obs_nml values are',' ',' ',' ')
-   write(     *     , nml=create_tempo_obs_nml)
+   call error_handler(E_MSG,'init_create_tes_obs','create_tes_obs_nml values are',' ',' ',' ')
+   write(     *     , nml=create_tes_obs_nml)
 !
 ! Initialize an obs_sequence structure
    call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)
@@ -241,7 +236,7 @@ program tempo_o3_cpsr_ascii_to_obs
 !
    do icopy =1, num_copies
       if (icopy == 1) then
-         copy_meta_data='TEMPO O3 observation'
+         copy_meta_data='TES CO2 observation'
       else
          copy_meta_data='Truth'
       endif
@@ -250,7 +245,7 @@ program tempo_o3_cpsr_ascii_to_obs
    call set_qc_meta_data(seq, 1, qc_meta_data)
 !
 !-------------------------------------------------------
-! Read TEMPO O3 data
+! Read TES CO2 data
 !-------------------------------------------------------
 !
 ! Set dates and initialize qc_count
@@ -259,34 +254,34 @@ program tempo_o3_cpsr_ascii_to_obs
    call set_calendar_type(calendar_type)
 !
 ! Read model data
-   allocate(lon(nx_model,ny_model))
-   allocate(lat(nx_model,ny_model))
-   allocate(prs_prt(nx_model,ny_model,nz_model))
-   allocate(prs_bas(nx_model,ny_model,nz_model))
-   allocate(prs_fld(nx_model,ny_model,nz_model))
-   allocate(tmp_prt(nx_model,ny_model,nz_model))
-   allocate(tmp_fld(nx_model,ny_model,nz_model))
-   allocate(qmr_fld(nx_model,ny_model,nz_model))
-   allocate(o3_fld(nx_model,ny_model,nz_model))
-   file_in=trim(path_model)//'/'//trim(file_model)
-   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(file_in,'o3',o3_fld,nx_model,ny_model,nz_model,1)
-   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-   o3_fld(:,:,:)=o3_fld(:,:,:)*1.e-6
+!   allocate(lon(nx_model,ny_model))
+!   allocate(lat(nx_model,ny_model))
+!   allocate(prs_prt(nx_model,ny_model,nz_model))
+!   allocate(prs_bas(nx_model,ny_model,nz_model))
+!   allocate(prs_fld(nx_model,ny_model,nz_model))
+!   allocate(tmp_prt(nx_model,ny_model,nz_model))
+!   allocate(tmp_fld(nx_model,ny_model,nz_model))
+!   allocate(qmr_fld(nx_model,ny_model,nz_model))
+!   allocate(co2_fld(nx_model,ny_model,nz_model))
+!   file_in=trim(path_model)//'/'//trim(file_model)
+!   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(file_in,'co2',co2_fld,nx_model,ny_model,nz_model,1)
+!   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
+!   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
+!   co2_fld(:,:,:)=co2_fld(:,:,:)*1.e-6
 !
-! Open TEMPO O3 binary file
+! Open TES CO2 binary file
    fileid=100
    write(6,*)'opening ',TRIM(filedir)//TRIM(filename)
    open(fileid,file=TRIM(filedir)//TRIM(filename),                     &
    form='formatted', status='old', iostat=ios)
 !
-! Read TEMPO O3
+! Read TES CO2
    read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    do while (ios == 0)
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
@@ -294,140 +289,108 @@ program tempo_o3_cpsr_ascii_to_obs
       read(fileid,*,iostat=ios) lat_obs,lon_obs
       if(lon_obs.lt.0.) lon_obs=lon_obs+360.
       read(fileid,*,iostat=ios) nlay_obs,nlev_obs
-      read(fileid,*,iostat=ios) trop_index
-      allocate(prs_obs(nlev_obs))
-      allocate(o3_obs(nlay_obs))
-      allocate(prior_obs(nlay_obs))
+      allocate(prs_obs(nlay_obs))
+      allocate(co2_obs(nlay_obs))
+      allocate(co2_obs_prior(nlay_obs))
+      allocate(co2_obs_err(nlay_obs))
       allocate(avgk_total_obs_r8(nlay_obs))
       allocate(avgk_obs(nlay_obs,nlay_obs))
+      allocate(avgk_diag_obs(nlay_obs))
       allocate(cov_obs(nlay_obs,nlay_obs))
-      allocate(prs_obs_r8(nlev_obs))
+      allocate(cov_total(nlay_obs,nlay_obs))
+      allocate(prs_obs_r8(nlay_obs))
+      allocate(prior_obs_r8(nlay_obs))
       allocate(avgk_obs_r8(nlay_obs))
       allocate(prf_locl(nlay_obs))
       allocate(prf_full(nlay_obs))
-      allocate(o3_cpsr(nlay_obs))
-      allocate(prior_cpsr(nlay_obs))
-      allocate(avgk_cpsr(nlay_obs,nlay_obs))
-      allocate(o3_shift(nlay_obs),prior_shift(nlay_obs))
-      allocate(avgk_shift(nlay_obs,nlay_obs),cov_shift(nlay_obs,nlay_obs))
-
-      read(fileid,*,iostat=ios) prs_obs(1:nlev_obs)
-      read(fileid,*,iostat=ios) o3_obs(1:nlay_obs)
-      read(fileid,*,iostat=ios) prior_obs(1:nlay_obs)
+      read(fileid,*,iostat=ios) prs_obs(1:nlay_obs)
+      read(fileid,*,iostat=ios) trop_prs
+      read(fileid,*,iostat=ios) co2_obs(1:nlay_obs)
+      read(fileid,*,iostat=ios) co2_obs_prior(1:nlay_obs)
+      read(fileid,*,iostat=ios) co2_obs_err(1:nlay_obs)
+      read(fileid,*,iostat=ios) dofs_obs
       do k=1,nlay_obs
          read(fileid,*,iostat=ios) (avgk_obs(k,l),l=1,nlay_obs)
       enddo
+      read(fileid,*,iostat=ios) avgk_diag_obs(1:nlay_obs)
       do k=1,nlay_obs
          read(fileid,*,iostat=ios) (cov_obs(k,l),l=1,nlay_obs)
       enddo
-      read(fileid,*,iostat=ios) col_amt_trop_obs
-      read(fileid,*,iostat=ios) col_amt_total_obs
+      do k=1,nlay_obs
+         read(fileid,*,iostat=ios) (cov_total(k,l),l=1,nlay_obs)
+      enddo
+      read(fileid,*,iostat=ios) co2_total_col_obs
+      read(fileid,*,iostat=ios) co2_total_col_obs_prior
+      read(fileid,*,iostat=ios) co2_total_col_obs_err
+
+      print *, 'TES CO2: Completed data read'
 !
-      flg=0
-      if(any(isnan(cov_obs(:,:)))) flg=1
-      do i=1,nlay_obs
-         if(cov_obs(i,i).lt.0.) then
-            flg=1
-            print *, 'tempo_variance is NaN or negative ',cov_obs(i,i)
+! Find first level above the ground
+      klev=0
+      do ilay=1,nlay_obs
+         if(prs_obs(ilay).lt.0.) then
+            klev=klev+1
+         else
             exit
          endif
       enddo
-      if(flg.eq.1) then
-         deallocate(prs_obs) 
-         deallocate(o3_obs) 
-         deallocate(prior_obs)
-         deallocate(avgk_total_obs_r8)
-         deallocate(avgk_obs)
-         deallocate(cov_obs)
-         deallocate(prs_obs_r8) 
-         deallocate(avgk_obs_r8)
-         deallocate(prf_locl) 
-         deallocate(prf_full)
-         deallocate(o3_cpsr)
-         deallocate(prior_cpsr)
-         deallocate(avgk_cpsr)
-         deallocate(o3_shift,prior_shift)
-         deallocate(avgk_shift,cov_shift)
-         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-         cycle
-      endif           
+      kend=nlay_obs-klev
 !
-      prs_obs(:)=prs_obs(:)*100.
-      prs_obs_r8(:)=prs_obs(:)
-!
+      prs_obs(klev+1:nlay_obs)=prs_obs(klev+1:nlay_obs)*100.
+      prs_obs_r8(1:kend)=prs_obs(klev+1:nlay_obs)
+      prior_obs_r8(1:kend)=co2_obs_prior(klev+1:nlay_obs)
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
 !
-! Check for layers below the surface pressure      
-      cnt=0
-      do k=nlay_obs/2,nlay_obs
-         if(o3_obs(k).lt.0.) then
-            cnt=cnt+1
-         endif
-      enddo
-      nlayer=nlay_obs-cnt
-!     
-      do k=1,nlayer
-         o3_shift(k)=o3_obs(k)
-         prior_shift(k)=prior_obs(k)
-         do kk=1,nlayer
-            avgk_shift(k,kk)=avgk_obs(k,kk)
-            cov_shift(k,kk)=cov_obs(k,kk)
-         enddo
-      enddo
-!
-!--------------------------------------------------------
-! Find model O3 profile corresponding to the observation
-! TEMPO O3 and WRF-Chem vertical grids are bottom to top        
-!--------------------------------------------------------
-!      reject=0
-!      call get_model_profile(prf_locl,prf_full,nz_model, &
-!      prs_obs,prs_fld(i_min,j_min,:),tmp_fld(i_min,j_min,:), &
-!      qmr_fld(i_min,j_min,:),o3_fld(i_min,j_min,:), &
-!      nlev_obs,avgk_obs,prior_obs,kend)
-!
 ! Obs thinning test
       obs_accept=obs_accept+1
-      if(obs_accept/obs_o3_reten_freq*obs_o3_reten_freq.eq.obs_accept) then
+      if(obs_accept/obs_co_reten_freq*obs_co_reten_freq.eq.obs_accept) then
+!      
+! Loop through the profile retrievals
+         do ilay=klev+1,nlay_obs
 !
-! Calculate CPSRs for this retrieval profile
-         call cpsr_calculation(nmodes,nlayer,o3_cpsr,avgk_cpsr,prior_cpsr,o3_shift,prior_shift, &
-         avgk_shift,cov_shift)
-!
-! Loop through the dominant modes (OMI O3 is top to bottom)
-         do imds=1,nmodes
-            avgk_obs_r8(1:nlayer)=avgk_cpsr(imds,1:nlayer)
-            prior_obs_r8=prior_cpsr(imds)
+! Check whether avgk row is zero.
+            reject_ak=1
+            do icol=klev+1,nlay_obs
+               if(avgk_obs(ilay,icol).ne.-999) then
+                  reject_ak=0
+                  exit
+               endif  
+            enddo
+            if(reject_ak.eq.1) cycle
 !
 ! Process accepted observations
             sum_accept=sum_accept+1
             qc_count=qc_count+1
 !
-! Obs value is a cpsr
-            obs_val(:)=o3_cpsr(imds)
-            obs_err_var=(fac_obs_error*fac_err*1.)**2.
-            tempo_qc(:)=0
+! Obs is a profile
+            avgk_obs_r8(1:kend)=avgk_obs(ilay,klev+1:nlay_obs)         
+            obs_val(:)=co2_obs(ilay)
+            obs_err_var=(fac_obs_error*fac_err*co2_obs_err(ilay)*co2_obs(ilay))**2
+!            obs_err_var=(fac_obs_error*fac_err*sqrt(cov_obs(ilay,ilay)))**2
+            tes_qc(:)=0
             obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
             call get_time(obs_time, seconds, days)
 !
-            which_vert=-2      ! undefined
+!            which_vert=-2      ! undefined
 !            which_vert=-1      ! surface
 !            which_vert=1       ! level
-!            which_vert=2       ! pressure
+            which_vert=2       ! pressure
 !
-            obs_kind = TEMPO_O3_CPSR
+            obs_kind = TES_CO2_CPSR
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90)
-            level=imds 
+            level=prs_obs(ilay)
             obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
 !
             call set_obs_def_type_of_obs(obs_def, obs_kind)
             call set_obs_def_location(obs_def, obs_location)
             call set_obs_def_time(obs_def, obs_time)
             call set_obs_def_error_variance(obs_def, obs_err_var)
-            call set_obs_def_tempo_o3_cpsr(qc_count, prs_obs_r8(:), avgk_obs_r8(:), prior_obs_r8, nlayer)
+            call set_obs_def_tes_co2_cpsr(qc_count, prs_obs_r8(1:kend), &
+            avgk_obs_r8(1:kend), prior_obs_r8(1:kend), kend, ilay, nlay_obs)
             call set_obs_def_key(obs_def, qc_count)
             call set_obs_values(obs, obs_val, 1)
-            call set_qc(obs, tempo_qc, num_qc)
+            call set_qc(obs, tes_qc, num_qc)
             call set_obs_def(obs, obs_def)
 !
             old_ob=0
@@ -449,35 +412,34 @@ program tempo_o3_cpsr_ascii_to_obs
          enddo
       endif
       deallocate(prs_obs) 
-      deallocate(o3_obs) 
-      deallocate(prior_obs)
+      deallocate(co2_obs) 
+      deallocate(co2_obs_prior)
+      deallocate(co2_obs_err)
       deallocate(avgk_total_obs_r8)
       deallocate(avgk_obs)
+      deallocate(avgk_diag_obs)
       deallocate(cov_obs)
+      deallocate(cov_total)
       deallocate(prs_obs_r8) 
       deallocate(avgk_obs_r8)
+      deallocate(prior_obs_r8)
       deallocate(prf_locl) 
       deallocate(prf_full)
-      deallocate(o3_cpsr)
-      deallocate(prior_cpsr)
-      deallocate(avgk_cpsr)
-      deallocate(o3_shift,prior_shift)
-      deallocate(avgk_shift,cov_shift)
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    enddo
 !
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
-   deallocate(lon)
-   deallocate(lat)
-   deallocate(prs_prt)
-   deallocate(prs_bas)
-   deallocate(prs_fld)
-   deallocate(tmp_prt)
-   deallocate(tmp_fld)
-   deallocate(qmr_fld)
-   deallocate(o3_fld)
+!   deallocate(lon)
+!   deallocate(lat)
+!   deallocate(prs_prt)
+!   deallocate(prs_bas)
+!   deallocate(prs_fld)
+!   deallocate(tmp_prt)
+!   deallocate(tmp_fld)
+!   deallocate(qmr_fld)
+!   deallocate(co2_fld)
 !
    print *, 'total obs ',sum_total
    print *, 'accepted ',sum_accept
@@ -492,4 +454,4 @@ program tempo_o3_cpsr_ascii_to_obs
       call execute_command_line(trim(cmd))
    endif   
 !
-end program tempo_o3_cpsr_ascii_to_obs
+end program tes_co2_cpsr_ascii_to_obs

@@ -63,7 +63,7 @@ month,day,hour,minute,second);
       days_mon=days_mon+1;
    end
    if(day>days_mon)
-     if(day>(days_mon+days+mon))
+      if(day>(days_mon+days_mon))
          fprintf('APM: Error days too large %d \n',day)
          return
       end

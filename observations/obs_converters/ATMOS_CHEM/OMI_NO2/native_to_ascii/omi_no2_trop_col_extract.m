@@ -354,9 +354,9 @@ function omi_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
          ss_omi=double(int32(secs_day(ilin))-int32(hh_omi*3600+mm_omi*60));
          omidate=single(time(ilin));
          if(int32(hh_omi)>23 | int32(mm_omi)>59 | int32(ss_omi)>59)
-            fprintf('yr %d mn %d dy %d hh %d mm %d ss %d \n', ...
-	    year,month,day,int32(hh_omi),int32(mm_omi),int32(ss_omi))
-            [yr_nw,mn_nw,dy_nw,hh_nw,mm_nw,ss_nw,rc]=incr_time(year, ...
+%            fprintf('yr %d mn %d dy %d hh %d mm %d ss %d \n', ...
+%            year,month,day,int32(hh_omi),int32(mm_omi),int32(ss_omi))
+            [yr_nw,mn_nw,dy_nw,hh_nw,mm_nw,ss_nw]=incr_time(year, ...
             month,day,int32(hh_omi),int32(mm_omi),int32(ss_omi));
             year=yr_nw;
             month=mn_nw;
@@ -377,8 +377,59 @@ function omi_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
 %
 % QA/AC
             if((ipxl>=1 & ipxl<=5) | (ipxl>=56 & ipxl<=60))
-	       fprintf('APM: ipxl issue \n') 
 	       continue
+	    end
+%
+%            if(any(isnan(prs_lev(:,ipxl,ilin))) | any(prs_lev(:,ipxl,ilin)<0))
+%               continue
+%            end
+%
+            if(any(isnan(scat_wt(:,ipxl,ilin))))
+               continue
+            end
+%
+	    if(isnan(col_amt_trop(ipxl,ilin)) | col_amt_trop(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(col_amt_trop_std(ipxl,ilin)) | col_amt_trop_std(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(col_amt(ipxl,ilin)) | col_amt(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(col_amt_std(ipxl,ilin)) | col_amt_std(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(slnt_col_amt(ipxl,ilin)) | slnt_col_amt(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(slnt_col_amt_std(ipxl,ilin)) | slnt_col_amt_std(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(amftrop(ipxl,ilin)) | amftrop(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(amftrop_clr(ipxl,ilin)) | amftrop_clr(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(amftrop_cld(ipxl,ilin)) | amftrop_cld(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(prs_trop(ipxl,ilin)) | prs_trop(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(cld_rad_frac(ipxl,ilin)>=0.5 | terr_refl(ipxl,ilin)>=0.3)
+               continue
 	    end
 %
 %	    if(bitand(vcd_flg(ipxl,ilin),1)~=0 | xtrk_flg(ipxl,ilin)~=0 | ...
@@ -387,25 +438,6 @@ function omi_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
 %               continue
 %	    end
 %
-	    if(cld_rad_frac(ipxl,ilin)>=0.5 | terr_refl(ipxl,ilin)>=0.3)
-	       fprintf('APM: cld_frac or terr_refl issue \n ') 
-               continue
-	    end
-%
-	    if(isnan(slnt_col_amt(ipxl,ilin)) | slnt_col_amt(ipxl,ilin)<=0)
-	       fprintf('APM: slnt_col_amt  issue \n ') 
-               continue
-            end
-%
-	    if(isnan(col_amt_trop(ipxl,ilin)) | col_amt_trop(ipxl,ilin)<=0)
-	       fprintf('APM: col_amt_trop issue issue \n ') 
-               continue
-            end
-%
-	    if(isnan(col_amt_trop_std(ipxl,ilin)) | col_amt_trop_std(ipxl,ilin)<=0)
-	       fprintf('APM: col_amt_trop_err issue \n ') 
-               continue
-            end
 %	    fprintf('APM: processing obs number %d %d \n ',ilin, ipxl)
 %
 % Check domain

@@ -16,10 +16,10 @@
 ! The Summit supercomputer is a joint effort of the University of Colorado Boulder
 ! and Colorado State University.
 !
-program tes_nh3_cpsr_ascii_to_obs
+program tes_ch4_cpsr_ascii_to_obs
 !
 !=============================================
-! TES NH3 column obs
+! TES CH4 column obs
 !=============================================
   use apm_cpsr_mod, only           : cpsr_calculation, &
                                      mat_prd, &
@@ -92,7 +92,7 @@ program tes_nh3_cpsr_ascii_to_obs
                                       obs_def_type,               &
                                       set_obs_def_type_of_obs
 
-   use obs_def_tes_nh3_cpsr_mod, only     : set_obs_def_tes_nh3_cpsr
+   use obs_def_tes_ch4_cpsr_mod, only     : set_obs_def_tes_ch4_cpsr
 
    use assim_model_mod, only        : static_init_assim_model
 
@@ -104,8 +104,8 @@ program tes_nh3_cpsr_ascii_to_obs
                                       time_type,                  &
                                       get_time
 
-   use obs_kind_mod, only           : QTY_NH3,                     &
-                                      TES_NH3_CPSR,              &
+   use obs_kind_mod, only           : QTY_CH4,                     &
+                                      TES_CH4_CPSR,              &
                                       get_type_of_obs_from_menu
 
    use random_seq_mod, only         : random_seq_type,            &
@@ -116,7 +116,7 @@ program tes_nh3_cpsr_ascii_to_obs
    implicit none
 !
 ! version controlled file description for error handling, do not edit
-   character(len=*), parameter     :: source   = 'tes_nh3_cpsr_ascii_to_obs.f90'
+   character(len=*), parameter     :: source   = 'tes_ch4_cpsr_ascii_to_obs.f90'
    character(len=*), parameter     :: revision = ''
    character(len=*), parameter     :: revdate  = ''
 !
@@ -141,7 +141,7 @@ program tes_nh3_cpsr_ascii_to_obs
    integer                         :: seconds_last,days_last
    integer                         :: nx_model,ny_model,nz_model
    integer                         :: reject,k,l,kk,klev,kend,ilay
-   integer                         :: i_min,j_min,reject_ak
+   integer                         :: i_min,j_min,icol,reject_ak
    integer                         :: sum_reject,sum_accept,sum_total
    integer                         :: obs_accept,obs_o3_reten_freq,obs_co_reten_freq
    integer                         :: obs_co2_reten_freq,obs_ch4_reten_freq,obs_nh3_reten_freq
@@ -162,24 +162,24 @@ program tes_nh3_cpsr_ascii_to_obs
 !
    character*129                   :: filedir,filename,fileout
    character*129                   :: copy_meta_data
-   character*129                   :: qc_meta_data='TES NH3 QC index'
+   character*129                   :: qc_meta_data='TES CH4 QC index'
    character*129                   :: chr_year,chr_month,chr_day
-   character*129                   :: file_name='tes_nh3_cpsr_obs_seq'
+   character*129                   :: file_name='tes_ch4_cpsr_obs_seq'
    character*129                   :: data_type,cmd
    character*129                   :: path_model,file_model,file_in
 !
    logical                         :: use_log_o3,use_log_co,use_log_co2,use_log_ch4,use_log_nh3
 !
 ! Species-specific variables
-   real                              :: nh3_trop_col_obs,nh3_trop_col_obs_prior,nh3_trop_col_obs_err
-   real                              :: nh3_total_col_obs,nh3_total_col_obs_prior,nh3_total_col_obs_err
+   real                              :: ch4_trop_col_obs,ch4_trop_col_obs_prior,ch4_trop_col_obs_err
+   real                              :: ch4_total_col_obs,ch4_total_col_obs_prior,ch4_total_col_obs_err
    real                              :: lat_obs,lon_obs,dofs_obs,trop_prs
    real*8                            :: lat_obs_r8,lon_obs_r8
    real,allocatable,dimension(:,:)   :: avgk_obs,cov_obs,cov_total
-   real,allocatable,dimension(:)     :: avgk_diag_obs,nh3_obs,nh3_obs_prior,nh3_obs_err
+   real,allocatable,dimension(:)     :: avgk_diag_obs,ch4_obs,ch4_obs_prior,ch4_obs_err
    real*8,allocatable,dimension(:)   :: avgk_obs_r8
    real*8,allocatable,dimension(:,:) :: cov_obs_r8
-   real*8,allocatable,dimension(:)   :: prior_obs_r8,nh3_obs_r8
+   real*8,allocatable,dimension(:)   :: prior_obs_r8,ch4_obs_r8
    real,allocatable,dimension(:)     :: prs_obs
    real*8,allocatable,dimension(:)   :: prs_obs_r8
    real,allocatable,dimension(:)     :: prf_locl,prf_full
@@ -187,18 +187,18 @@ program tes_nh3_cpsr_ascii_to_obs
    real,allocatable,dimension(:,:)   :: lon,lat
    real,allocatable,dimension(:,:,:) :: prs_prt,prs_bas,prs_fld
    real,allocatable,dimension(:,:,:) :: tmp_prt,tmp_fld,vtmp_fld
-   real,allocatable,dimension(:,:,:) :: nh3_fld,qmr_fld
+   real,allocatable,dimension(:,:,:) :: ch4_fld,qmr_fld
 
    real                              :: trop_index,cov_trop,wt1_sum,wt2_sum
-   real                              :: avgk_term, sum_nh3_obs
+   real                              :: avgk_term, sum_ch4_obs
    real*8                            :: prior_total_r8
    real*8,allocatable,dimension(:)   :: avgk_total_obs_r8
 !
 ! CPSR arrays
-   real,allocatable,dimension(:)     :: nh3_shift,prior_shift
-   real,allocatable,dimension(:)     :: nh3_cpsr,prior_cpsr
+   real,allocatable,dimension(:)     :: ch4_shift,prior_shift
+   real,allocatable,dimension(:)     :: ch4_cpsr,prior_cpsr
    real,allocatable,dimension(:,:)   :: avgk_shift,avgk_cpsr,cov_shift
-   integer                           :: irow,irow_sh,icol,icol_sh
+   integer                           :: irow,irow_sh,icol_sh
    integer                           :: nmodes,imds
 !
    namelist /create_tes_obs_nml/filedir,filename,fileout, &
@@ -243,7 +243,7 @@ program tes_nh3_cpsr_ascii_to_obs
 !
    do icopy =1, num_copies
       if (icopy == 1) then
-         copy_meta_data='TES NH3 observation'
+         copy_meta_data='TES CH4 observation'
       else
          copy_meta_data='Truth'
       endif
@@ -252,7 +252,7 @@ program tes_nh3_cpsr_ascii_to_obs
    call set_qc_meta_data(seq, 1, qc_meta_data)
 !
 !-------------------------------------------------------
-! Read TES NH3 data
+! Read TES CH4 data
 !-------------------------------------------------------
 !
 ! Set dates and initialize qc_count
@@ -261,34 +261,34 @@ program tes_nh3_cpsr_ascii_to_obs
    call set_calendar_type(calendar_type)
 !
 ! Read model data
-   allocate(lon(nx_model,ny_model))
-   allocate(lat(nx_model,ny_model))
-   allocate(prs_prt(nx_model,ny_model,nz_model))
-   allocate(prs_bas(nx_model,ny_model,nz_model))
-   allocate(prs_fld(nx_model,ny_model,nz_model))
-   allocate(tmp_prt(nx_model,ny_model,nz_model))
-   allocate(tmp_fld(nx_model,ny_model,nz_model))
-   allocate(qmr_fld(nx_model,ny_model,nz_model))
-   allocate(nh3_fld(nx_model,ny_model,nz_model))
-   file_in=trim(path_model)//'/'//trim(file_model)
-   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
-   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
-   call get_DART_diag_data(file_in,'nh3',nh3_fld,nx_model,ny_model,nz_model,1)
-   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-   nh3_fld(:,:,:)=nh3_fld(:,:,:)*1.e-6
+!   allocate(lon(nx_model,ny_model))
+!   allocate(lat(nx_model,ny_model))
+!   allocate(prs_prt(nx_model,ny_model,nz_model))
+!   allocate(prs_bas(nx_model,ny_model,nz_model))
+!   allocate(prs_fld(nx_model,ny_model,nz_model))
+!   allocate(tmp_prt(nx_model,ny_model,nz_model))
+!   allocate(tmp_fld(nx_model,ny_model,nz_model))
+!   allocate(qmr_fld(nx_model,ny_model,nz_model))
+!   allocate(ch4_fld(nx_model,ny_model,nz_model))
+!   file_in=trim(path_model)//'/'//trim(file_model)
+!   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
+!   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
+!   call get_DART_diag_data(file_in,'ch4',ch4_fld,nx_model,ny_model,nz_model,1)
+!   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
+!   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
+!   ch4_fld(:,:,:)=ch4_fld(:,:,:)*1.e-6
 !
-! Open TES NH3 binary file
+! Open TES CH4 binary file
    fileid=100
    write(6,*)'opening ',TRIM(filedir)//TRIM(filename)
    open(fileid,file=TRIM(filedir)//TRIM(filename),                     &
    form='formatted', status='old', iostat=ios)
 !
-! Read TES NH3
+! Read TES CH4
    read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    do while (ios == 0)
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
@@ -296,25 +296,25 @@ program tes_nh3_cpsr_ascii_to_obs
       read(fileid,*,iostat=ios) lat_obs,lon_obs
       if(lon_obs.lt.0.) lon_obs=lon_obs+360.
       read(fileid,*,iostat=ios) nlay_obs,nlev_obs
-      allocate(prs_obs(nlay_obs))
-      allocate(nh3_obs(nlay_obs))
-      allocate(nh3_obs_prior(nlay_obs))
-      allocate(nh3_obs_err(nlay_obs))
+      allocate(prs_obs(nlev_obs))
+      allocate(ch4_obs(nlay_obs))
+      allocate(ch4_obs_prior(nlay_obs))
+      allocate(ch4_obs_err(nlay_obs))
       allocate(avgk_total_obs_r8(nlay_obs))
       allocate(avgk_obs(nlay_obs,nlay_obs))
       allocate(avgk_diag_obs(nlay_obs))
       allocate(cov_obs(nlay_obs,nlay_obs))
       allocate(cov_total(nlay_obs,nlay_obs))
-      allocate(prs_obs_r8(nlay_obs))
-      allocate(prior_obs_r8(nlay_obs))
+      allocate(prs_obs_r8(nlev_obs))
+      allocate(prior_obs_r8(nlev_obs))
       allocate(avgk_obs_r8(nlay_obs))
       allocate(prf_locl(nlay_obs))
       allocate(prf_full(nlay_obs))
       read(fileid,*,iostat=ios) prs_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) trop_prs
-      read(fileid,*,iostat=ios) nh3_obs(1:nlay_obs)
-      read(fileid,*,iostat=ios) nh3_obs_prior(1:nlay_obs)
-      read(fileid,*,iostat=ios) nh3_obs_err(1:nlay_obs)
+      read(fileid,*,iostat=ios) ch4_obs(1:nlay_obs)
+      read(fileid,*,iostat=ios) ch4_obs_prior(1:nlay_obs)
+      read(fileid,*,iostat=ios) ch4_obs_err(1:nlay_obs)
       read(fileid,*,iostat=ios) dofs_obs
       do k=1,nlay_obs
          read(fileid,*,iostat=ios) (avgk_obs(k,l),l=1,nlay_obs)
@@ -326,14 +326,11 @@ program tes_nh3_cpsr_ascii_to_obs
       do k=1,nlay_obs
          read(fileid,*,iostat=ios) (cov_total(k,l),l=1,nlay_obs)
       enddo
-      read(fileid,*,iostat=ios) nh3_trop_col_obs
-      read(fileid,*,iostat=ios) nh3_trop_col_obs_prior
-      read(fileid,*,iostat=ios) nh3_trop_col_obs_err
-      read(fileid,*,iostat=ios) nh3_total_col_obs
-      read(fileid,*,iostat=ios) nh3_total_col_obs_prior
-      read(fileid,*,iostat=ios) nh3_total_col_obs_err
+      read(fileid,*,iostat=ios) ch4_total_col_obs
+      read(fileid,*,iostat=ios) ch4_total_col_obs_prior
+      read(fileid,*,iostat=ios) ch4_total_col_obs_err
 
-      print *, 'TES NH3: Completed data read'
+      print *, 'TES CH4: Completed data read'
 !
 ! Find first level above the ground
       klev=0
@@ -348,13 +345,13 @@ program tes_nh3_cpsr_ascii_to_obs
 !
       prs_obs(klev+1:nlay_obs)=prs_obs(klev+1:nlay_obs)*100.
       prs_obs_r8(1:kend)=prs_obs(klev+1:nlay_obs)
-      prior_obs_r8(1:kend)=nh3_obs_prior(klev+1:nlay_obs)
+      prior_obs_r8(1:kend)=ch4_obs_prior(klev+1:nlay_obs)
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
 !
 ! Obs thinning test
       obs_accept=obs_accept+1
-      if(obs_accept/obs_nh3_reten_freq*obs_nh3_reten_freq.eq.obs_accept) then
+      if(obs_accept/obs_ch4_reten_freq*obs_ch4_reten_freq.eq.obs_accept) then
 !
 ! Check whether avgk row is zero.
          do ilay=klev+1,nlay_obs
@@ -369,30 +366,30 @@ program tes_nh3_cpsr_ascii_to_obs
          if(reject_ak.eq.1) cycle
 !
 ! Apply CPSR transform
-         allocate(nh3_shift(kend))
+         allocate(ch4_shift(kend))
          allocate(prior_shift(kend))
          allocate(avgk_shift(kend,kend))
          allocate(cov_shift(kend,kend))
-         allocate(nh3_cpsr(kend))
+         allocate(ch4_cpsr(kend))
          allocate(prior_cpsr(kend))
          allocate(avgk_cpsr(kend,kend))
          do irow=klev+1,nlay_obs
             irow_sh=irow-klev
-            nh3_shift(irow_sh)=nh3_obs(irow)
-            prior_shift(irow_sh)=nh3_obs_prior(irow)
+            ch4_shift(irow_sh)=ch4_obs(irow)
+            prior_shift(irow_sh)=ch4_obs_prior(irow)
             do icol=klev+1,nlay_obs
                icol_sh=icol-klev
                avgk_shift(irow_sh,icol_sh)=avgk_obs(irow,icol)
                cov_shift(irow_sh,icol_sh)=fac_obs_error**2 * fac_err**2 * &
-               cov_total(irow,icol)*nh3_obs(irow)*nh3_obs(icol)
+               cov_total(irow,icol)*ch4_obs(irow)*ch4_obs(icol)
             enddo
          enddo
 !
 ! Calculate CPSRs for this retrieval profile
-         call cpsr_calculation(nmodes,kend,nh3_cpsr,avgk_cpsr,prior_cpsr,nh3_shift,prior_shift, &
+         call cpsr_calculation(nmodes,kend,ch4_cpsr,avgk_cpsr,prior_cpsr,ch4_shift,prior_shift, &
          avgk_shift,cov_shift,sum_accept)
 !
-! Loop through the dominant modes (OMI NH3 is top to bottom)
+! Loop through the dominant modes (OMI O3 is top to bottom)
          do imds=1,nmodes
             avgk_obs_r8(1:kend)=avgk_cpsr(imds,1:kend)
 !
@@ -401,7 +398,7 @@ program tes_nh3_cpsr_ascii_to_obs
             qc_count=qc_count+1
 !
 ! Obs is a CPSR (the compressed and rotated obs errors are unity)
-            obs_val(:)=nh3_cpsr(imds)
+            obs_val(:)=ch4_cpsr(imds)
             obs_err_var=1.
             tes_qc(:)=0
             obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
@@ -412,17 +409,17 @@ program tes_nh3_cpsr_ascii_to_obs
 !            which_vert=1       ! level
 !            which_vert=2       ! pressure
 !
-            obs_kind = TES_NH3_CPSR
+            obs_kind = TES_CH4_CPSR
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90)
-            level=real(imds)
+            level=imds 
             obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
 !
             call set_obs_def_type_of_obs(obs_def, obs_kind)
             call set_obs_def_location(obs_def, obs_location)
             call set_obs_def_time(obs_def, obs_time)
             call set_obs_def_error_variance(obs_def, obs_err_var)
-            call set_obs_def_tes_nh3_cpsr(qc_count, prs_obs_r8(1:kend), &
-            avgk_obs_r8(1:kend), prior_obs_r8(1:kend), kend, nmodes, nlay_obs)
+            call set_obs_def_tes_ch4_cpsr(qc_count, prs_obs_r8(1:kend), &
+	    avgk_obs_r8(1:kend), prior_obs_r8(1:kend), kend, nmodes, nlay_obs)
             call set_obs_def_key(obs_def, qc_count)
             call set_obs_values(obs, obs_val, 1)
             call set_qc(obs, tes_qc, num_qc)
@@ -445,18 +442,18 @@ program tes_nh3_cpsr_ascii_to_obs
             endif
             obs_old=obs
          enddo
-         deallocate(nh3_shift)
+         deallocate(ch4_shift)
          deallocate(prior_shift)
          deallocate(avgk_shift)
          deallocate(cov_shift)
-         deallocate(nh3_cpsr)
+         deallocate(ch4_cpsr)
          deallocate(prior_cpsr)
          deallocate(avgk_cpsr)
       endif
-      deallocate(prs_obs) 
-      deallocate(nh3_obs) 
-      deallocate(nh3_obs_prior)
-      deallocate(nh3_obs_err)
+      deallocate(prs_obs)
+      deallocate(ch4_obs) 
+      deallocate(ch4_obs_prior)
+      deallocate(ch4_obs_err)
       deallocate(avgk_total_obs_r8)
       deallocate(avgk_obs)
       deallocate(avgk_diag_obs)
@@ -464,7 +461,7 @@ program tes_nh3_cpsr_ascii_to_obs
       deallocate(cov_total)
       deallocate(prs_obs_r8) 
       deallocate(avgk_obs_r8)
-      deallocate(prior_obs_r8)
+      deallocate(prior_obs_r8) 
       deallocate(prf_locl) 
       deallocate(prf_full)
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
@@ -473,15 +470,15 @@ program tes_nh3_cpsr_ascii_to_obs
 !----------------------------------------------------------------------
 ! Write the sequence to a file
 !----------------------------------------------------------------------
-   deallocate(lon)
-   deallocate(lat)
-   deallocate(prs_prt)
-   deallocate(prs_bas)
-   deallocate(prs_fld)
-   deallocate(tmp_prt)
-   deallocate(tmp_fld)
-   deallocate(qmr_fld)
-   deallocate(nh3_fld)
+!   deallocate(lon)
+!   deallocate(lat)
+!   deallocate(prs_prt)
+!   deallocate(prs_bas)
+!   deallocate(prs_fld)
+!   deallocate(tmp_prt)
+!   deallocate(tmp_fld)
+!   deallocate(qmr_fld)
+!   deallocate(ch4_fld)
 !
    print *, 'total obs ',sum_total
    print *, 'accepted ',sum_accept
@@ -496,4 +493,4 @@ program tes_nh3_cpsr_ascii_to_obs
       call execute_command_line(trim(cmd))
    endif   
 !
-end program tes_nh3_cpsr_ascii_to_obs
+end program tes_ch4_cpsr_ascii_to_obs

@@ -39,10 +39,10 @@ cat > input.nml << EOF
    nx_model                    = ${NL_NX_MODEL}
    ny_model                    = ${NL_NY_MODEL}
    nz_model                    = ${NL_NZ_MODEL}
-   obs_o3_reten_freq           = ${NL_TROPOMI_O3_RETEN_FREQ}
-   obs_no2_reten_freq          = ${NL_TROPOMI_NO2_RETEN_FREQ}
-   obs_so2_reten_freq          = ${NL_TROPOMI_SO2_RETEN_FREQ}
-   obs_hcho_reten_freq         = ${NL_TROPOMI_HCHO_RETEN_FREQ}
+   obs_o3_reten_freq           = ${NL_OMI_O3_RETEN_FREQ}
+   obs_no2_reten_freq          = ${NL_OMI_NO2_RETEN_FREQ}
+   obs_so2_reten_freq          = ${NL_OMI_SO2_RETEN_FREQ}
+   obs_hcho_reten_freq         = ${NL_OMI_HCHO_RETEN_FREQ}
 /
 &obs_sequence_nml
    write_binary_obs_sequence   = .false.

@@ -1,0 +1,119 @@
+#!/bin/ksh -aux
+#
+# FORECAST PARAMETERS:
+   export USE_DART_INFL=true
+   export FCST_PERIOD=6
+   (( CYCLE_PERIOD_SEC=${CYCLE_PERIOD}*60*60 ))
+   export NUM_MEMBERS=10
+   export MAX_DOMAINS=02
+   export CR_DOMAIN=01
+   export FR_DOMAIN=02
+   export NNXP_CR=179
+   export NNYP_CR=139
+   export NNZP_CR=36
+   export NNXP_FR=320
+   export NNYP_FR=290
+   export NNZP_FR=36
+   (( NNXP_STAG_CR=${NNXP_CR}+1 ))
+   (( NNYP_STAG_CR=${NNYP_CR}+1 ))
+   (( NNZP_STAG_CR=${NNZP_CR}+1 ))
+   (( NNXP_STAG_FR=${NNXP_FR}+1 ))
+   (( NNYP_STAG_FR=${NNYP_FR}+1 ))
+   (( NNZP_STAG_FR=${NNZP_FR}+1 ))
+   export NSPCS=61
+   export NNZ_CHEM=11
+   export NNCHEM_SPC=49
+   export NNFIRE_SPC=31
+   export NNBIO_SPC=1
+   export NZ_CHEMI=${NNZ_CHEM}
+   export NZ_FIRECHEMI=1
+   export NCHEMI_EMISS=8
+   export NFIRECHEMI_EMISS=9
+   export ISTR_CR=1
+   export JSTR_CR=1
+   export ISTR_FR=86
+   export JSTR_FR=35
+   export DX_CR=15000
+   export DX_FR=3000
+   (( LBC_END=2*${FCST_PERIOD} ))
+   export LBC_FREQ=3
+   (( INTERVAL_SECONDS=${LBC_FREQ}*60*60 ))
+   export LBC_START=0
+   export START_DATE=${DATE}
+   export END_DATE=$($BUILD_DIR/da_advance_time.exe ${START_DATE} ${FCST_PERIOD} 2>/dev/null)
+   export START_YEAR=$(echo $START_DATE | cut -c1-4)
+   export START_YEAR_SHORT=$(echo $START_DATE | cut -c3-4)
+   export START_MONTH=$(echo $START_DATE | cut -c5-6)
+   export START_DAY=$(echo $START_DATE | cut -c7-8)
+   export START_HOUR=$(echo $START_DATE | cut -c9-10)
+   export START_FILE_DATE=${START_YEAR}-${START_MONTH}-${START_DAY}_${START_HOUR}:00:00
+   export END_YEAR=$(echo $END_DATE | cut -c1-4)
+   export END_MONTH=$(echo $END_DATE | cut -c5-6)
+   export END_DAY=$(echo $END_DATE | cut -c7-8)
+   export END_HOUR=$(echo $END_DATE | cut -c9-10)
+   export END_FILE_DATE=${END_YEAR}-${END_MONTH}-${END_DAY}_${END_HOUR}:00:00
+#
+# LARGE SCALE FORECAST PARAMETERS:
+   export FG_TYPE=GFS
+   export GRIB_PART1=gfs_4_
+   export GRIB_PART2=.g2.tar
+#
+# COMPUTER PARAMETERS:
+   export PROJ_NUMBER=P93300612
+   export ACCOUNT=s2467
+   export DEBUG_JOB_CLASS=debug
+   export DEBUG_TIME_LIMIT=01:59:00
+   export DEBUG_NODES=2
+   export DEBUG_TASKS=16
+#   export GENERAL_JOB_CLASS=normal
+#   export GENERAL_TIME_LIMIT=00:20:00
+#   export GENERAL_NODES=1
+#   export GENERAL_TASKS=16
+   export GENERAL_JOB_CLASS=devel
+   export GENERAL_TIME_LIMIT=00:20:00
+   export GENERAL_NODES=1
+   export GENERAL_TASKS=16
+   export WRFDA_JOB_CLASS=normal
+   export WRFDA_TIME_LIMIT=00:05:00
+   export WRFDA_NODES=1
+   export WRFDA_TASKS=16
+   export SINGLE_JOB_CLASS=normal
+   export SINGLE_TIME_LIMIT=00:10:00
+   export SINGLE_NODES=1
+   export SINGLE_TASKS=1
+   export BIO_JOB_CLASS=normal
+   export BIO_TIME_LIMIT=00:20:00
+   export BIO_NODES=1
+   export BIO_TASKS=1
+   export FILTER_JOB_CLASS=normal
+   export FILTER_TIME_LIMIT=05:30:00
+   export FILTER_NODES=3
+   export FILTER_TASKS=16
+# Sandy Bridge
+   export FILTER_JOB_CLASS=devel
+   export FILTER_TIME_LIMIT=01:59:00
+   export FILTER_NODES=2
+   export FILTER_TASKS=16
+# Haswell
+   export FILTER_JOB_CLASS=devel
+   export FILTER_TIME_LIMIT=01:59:00
+   export FILTER_NODES=2
+   export FILTER_TASKS=24
+   export WRFCHEM_JOB_CLASS=normal
+   export WRFCHEM_TIME_LIMIT=00:40:00
+   export WRFCHEM_NODES=2
+   export WRFCHEM_TASKS=16
+   export WRFCHEM_JOB_CLASS=devel
+   export WRFCHEM_TIME_LIMIT=01:59:00
+   export WRFCHEM_NODES=2
+   export WRFCHEM_TASKS=16
+   export PERT_JOB_CLASS=normal
+   export PERT_TIME_LIMIT=02:30:00
+   export PERT_NODES=1
+   (( PERT_TASKS=${NUM_MEMBERS}+1 ))
+#   export PERT_JOB_CLASS=devel
+#   export PERT_TIME_LIMIT=01:59:00
+#   export PERT_NODES=1
+#   (( PERT_TASKS=${NUM_MEMBERS}+1 ))
+#
+   

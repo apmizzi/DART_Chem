@@ -31,8 +31,8 @@ function tropomi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
    Ru=8.316;
    Rd=286.9;
    eps=0.61;
-   molec_wt_so2=.0480;
-   molec_wt_so2=.0460;
+   molec_wt_co=.0480;
+   molec_wt_no2=.0460;
    molec_wt_so2=.0641;
    AvogN=6.02214e23;
    msq2cmsq=1.e4;
@@ -49,8 +49,8 @@ function tropomi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
    day_secs_end=whh_mx*60.*60. + wmm_mx*60. + wss_mx;
 %
 % Print input data
-%   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
-%   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
+   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
+   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
 %
 % Read model grid
    lon_mdl=ncread(strcat(path_mdl,'/',file_mdl),'XLONG');
@@ -70,7 +70,7 @@ function tropomi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
 %
 % Process satellite data
    for ifile=1:nfile
-      file_in=char(file_list(ifile))
+      file_in=char(file_list(ifile));
       if(isempty(file_in))
          continue
       end
@@ -92,16 +92,16 @@ function tropomi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
       file_end_ss=str2double(file_in(indx+50:indx+51));
       file_str_secs=file_str_hh*60.*60. + file_str_mn*60. + file_str_ss;
       file_end_secs=file_end_hh*60.*60. + file_end_mn*60. + file_end_ss;
-%      fprintf('%d %s \n',ifile,file_in);
-%      fprintf('file str %d cycle end %d \n',file_str_secs,day_secs_end);
-%      fprintf('file end %d cycle str %d \n',file_end_secs,day_secs_beg);
+      fprintf('%d %s \n',ifile,file_in);
+      fprintf('file str %d cycle end %d \n',file_str_secs,day_secs_end);
+      fprintf('file end %d cycle str %d \n',file_end_secs,day_secs_beg);
 %       
       if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
          continue
       end
       fprintf('READ TROPOMI DATA \n')
-      time_start=ncreadatt(file_in,'/','time_coverage_start')
-      time_end=ncreadatt(file_in,'/','time_coverage_end')
+      time_start=ncreadatt(file_in,'/','time_coverage_start');
+      time_end=ncreadatt(file_in,'/','time_coverage_end');
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -110,53 +110,53 @@ function tropomi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Read TROPOMI SO2 data
-% scanline
+% nscan
       field='/PRODUCT/scanline';
       temp=ncread(file_in,field);
       units=ncreadatt(file_in,field,'units');  
       long_name=ncreadatt(file_in,field,'long_name');  
-      scanline=max(temp);
-% pixel
+      nscan=max(temp);
+% npxl
       field='/PRODUCT/ground_pixel';
       temp=ncread(file_in,field);
       units=ncreadatt(file_in,field,'units');  
       long_name=ncreadatt(file_in,field,'long_name');  
-      pixel=max(temp);
+      npxl=max(temp);
 % time
       field='/PRODUCT/time';
       temp=ncread(file_in,field);
       units=ncreadatt(file_in,field,'units');  
       long_name=ncreadatt(file_in,field,'long_name');  
       time=double(temp(1));
-% lat(pixel,scanline)
+% lat(npxl,nscan)
       field='/PRODUCT/latitude';
       lat=double(ncread(file_in,field));
       long_name=ncreadatt(file_in,field,'long_name');   
       units=ncreadatt(file_in,field,'units');
       standard_name=ncreadatt(file_in,field,'standard_name');
-% lon(pixel,scanline)
+% lon(npxl,nscan)
       field='/PRODUCT/longitude';
       lon=double(ncread(file_in,field));
       long_name=ncreadatt(file_in,field,'long_name');   
       units=ncreadatt(file_in,field,'units');
       standard_name=ncreadatt(file_in,field,'standard_name');
-      for ipxl=1:pixel
-         for ilin=1:scanline
+      for ipxl=1:npxl
+         for ilin=1:nscan
             if(lon(ipxl,ilin)<0)
       	       lon(ipxl,ilin)=lon(ipxl,ilin)+360.;
             end
          end
       end
-% time_delta(pixel,scanline)
+% time_delta(npxl,nscan)
       field='/PRODUCT/delta_time';
       temp=ncread(file_in,field);
       long_name=ncreadatt(file_in,field,'long_name');  
       units=ncreadatt(file_in,field,'units');  
       time_delta=double(temp(:,:))*1.e-3;
-% time_utc(scanline) (APM: these entries are blank)
+% time_utc(nscan) (APM: these entries are blank)
       field='/PRODUCT/time_utc';
       time_utc=h5read(file_in,field);
-% qa_value(pixel,scanline)
+% qa_value(npxl,nscan)
 % if qa_value < 0.5 discard
       field='/PRODUCT/qa_value';
       qa_value=ncread(file_in,field); 
@@ -164,267 +164,298 @@ function tropomi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
       scalef=ncreadatt(file_in,field,'scale_factor');
       offset=ncreadatt(file_in,field,'add_offset');
       long_name=ncreadatt(file_in,field,'long_name');   
-% col_amt(pixel,scanline) (mol m-2)
+% col_amt(npxl,nscan) (mol m-2)
       field='/PRODUCT/sulfurdioxide_total_vertical_column';
       col_amt=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       standard_name=ncreadatt(file_in,field,'standard_name');
       long_name=ncreadatt(file_in,field,'long_name');   
-% col_amt_err(pixel,scanline) (mol m-2)
+% col_amt_err(npxl,nscan) (mol m-2)
       field='/PRODUCT/sulfurdioxide_total_vertical_column_precision';
       col_amt_err=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       standard_name=ncreadatt(file_in,field,'standard_name');
       long_name=ncreadatt(file_in,field,'long_name');   
-% layer
+% nlay
       field='/PRODUCT/layer';
       tmp=ncread(file_in,field);
-      layer=max(tmp);
-      level=layer+1;
-% prs_sfc(pixels,scanline) (Pa)
+      nlay=max(tmp);
+      nlev=nlay+1;
+% prs_sfc(npxls,nscan) (Pa)
       field='/PRODUCT/SUPPORT_DATA/INPUT_DATA/surface_pressure';
       prs_sfc=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       standard_name=ncreadatt(file_in,field,'standard_name');
       long_name=ncreadatt(file_in,field,'long_name');   
-% tm5_a(vertices,layer)
+% tm5_a(nlay)
       field='/PRODUCT/SUPPORT_DATA/INPUT_DATA/tm5_constant_a';
       tm5_a=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
-% tm5_b(vertices,layer)
+% tm5_b(nlay)
       field='/PRODUCT/SUPPORT_DATA/INPUT_DATA/tm5_constant_b';
       tm5_b=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
-% solar_zenith_angle(pixel,scanline) (degrees)
+% solar_zenith_angle(npxl,nscan) (degrees)
       field='/PRODUCT/SUPPORT_DATA/GEOLOCATIONS/solar_zenith_angle';
       zenang=double(ncread(file_in,field));
       long_name=ncreadatt(file_in,field,'long_name');   
       standard_name=ncreadatt(file_in,field,'standard_name');
       units=ncreadatt(file_in,field,'units');
-% col_amt_err(pixel,scanline) (degrees)
+% col_amt_err(npxl,nscan) (degrees)
 %      field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_vertical_column_trueness';
 %      col_amt_err=double(ncread(file_in,field));
 %      units=ncreadatt(file_in,field,'units');
 %      long_name=ncreadatt(file_in,field,'long_name');   
-% slnt_col_amt(pixel,scanline) (mol m-2)
+% slnt_col_amt(npxl,nscan) (mol m-2)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_slant_column_corrected';
       slnt_col_amt=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% slnt_col_amt_sys(pixel,scanline) (mol m-2)
+% slnt_col_amt_sys(npxl,nscan) (mol m-2)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_slant_column_corrected_trueness';
       slnt_col_amt_sys=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% avgk_lay(layer,pixel,scanline) (none)
+% avgk_lay(nlay,npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/averaging_kernel';
       avgk_lay=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');
-% prior_lay(layer,pixel,scanline) (none)
+% prior_lay(nlay,npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_profile_apriori';
       prior_lay=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');
-% amf_plut(pixel,scanline) (none)
+% amf_plut(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_air_mass_factor_polluted';
       amf_plut=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_plut_err(pixel,scanline) (none)
+% amf_plut_err(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_air_mass_factor_polluted_precision';
       amf_plut_err=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_plut_sys(pixel,scanline) (none)
+% amf_plut_sys(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_air_mass_factor_polluted_trueness';
       amf_plut_sys=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_plut_clr(pixel,scanline) (none)
+% amf_plut_clr(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_clear_air_mass_factor_polluted';
       amf_plut_clr=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_plut_cld(pixel,scanline) (none)
+% amf_plut_cld(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_cloudy_air_mass_factor_polluted';
       amf_plut_cld=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% col_amt_1km(pixel,scanline) (none)
+% col_amt_1km(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_vertical_column_1km';
       col_amt_1km=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       standard_name=ncreadatt(file_in,field,'standard_name');   
       long_name=ncreadatt(file_in,field,'long_name');   
-% col_amt_1km_err(pixel,scanline) (none)
+% col_amt_1km_err(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_vertical_column_1km_precision';
       col_amt_1km_err=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       standard_name=ncreadatt(file_in,field,'standard_name');   
       long_name=ncreadatt(file_in,field,'long_name');   
-% col_amt_1km_sys(pixel,scanline) (none)
+% col_amt_1km_sys(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_vertical_column_1km_trueness';
       col_amt_1km_sys=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_plut_err(pixel,scanline) (none)
+% amf_plut_err(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_air_mass_factor_polluted_precision';
       amf_plut_err=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_plut_sys(pixel,scanline) (none)
+% amf_plut_sys(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_air_mass_factor_polluted_trueness';
       amf_plut_sys=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_1km(pixel,scanline) (none)
+% amf_1km(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_air_mass_factor_1km';
       amf_1km=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_1km_err(pixel,scanline) (none)
+% amf_1km_err(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_air_mass_factor_1km_precision';
       amf_1km_err=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_1km_sys(pixel,scanline) (none)
+% amf_1km_sys(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_air_mass_factor_1km_trueness';
       amf_1km_sys=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_1km_clr(pixel,scanline) (none)
+% amf_1km_clr(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_clear_air_mass_factor_1km';
       amf_1km_clr=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_1km_cld(pixel,scanline) (none)
+% amf_1km_cld(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_cloudy_air_mass_factor_1km';
       amf_1km_cld=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% col_amt_7km(pixel,scanline) (none)
+% col_amt_7km(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_vertical_column_7km';
       col_amt_7km=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% col_amt_7km_err(pixel,scanline) (none)
+% col_amt_7km_err(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_vertical_column_7km_precision';
       col_amt_7km_err=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% col_amt_7km_sys(pixel,scanline) (none)
+% col_amt_7km_sys(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_vertical_column_7km_trueness';
       col_amt_7km_sys=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_7km(pixel,scanline) (none)
+% amf_7km(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_air_mass_factor_7km';
       amf_7km=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_7km_err(pixel,scanline) (none)
+% amf_7km_err(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_air_mass_factor_7km_precision';
       amf_7km_err=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_7km_sys(pixel,scanline) (none)
+% amf_7km_sys(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_total_air_mass_factor_1km_trueness';
       amf_7km_sys=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_7km_clr(pixel,scanline) (none)
+% amf_7km_clr(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_clear_air_mass_factor_7km';
       amf_7km_clr=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
-% amf_7km_cld(pixel,scanline) (none)
+% amf_7km_cld(npxl,nscan) (none)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/sulfurdioxide_cloudy_air_mass_factor_7km';
       amf_7km_cld=double(ncread(file_in,field));
       units=ncreadatt(file_in,field,'units');
       long_name=ncreadatt(file_in,field,'long_name');   
 %
 % Define TROPOMI vertical pressure grid (hPa) (bottom to top)
-         for ipxl=1:pixel
-            for ilin=1:scanline
-               for ilv=1:layer
-                  prs_lev(ilv,ipxl,ilin)=tm5_a(1,ilv)+tm5_b(1,ilv)* ...
-                  prs_sfc(ipxl,ilin);
-#                  if(prs_lev(ilv+1,ipxl,ilin)<.1)
-#                     prs_lev(ilv+1,ipxl,ilin)=.1;
-#                  end
-                  prs_lay(ilv,ipxl,ilin)=(tm5_a(1,ilv)+tm5_b(1,ilv)* ...
-                  prs_sfc(ipxl,ilin) + tm5_a(2,ilv)+tm5_b(2,ilv)* ...
-                  prs_sfc(ipxl,ilin))/2.;
-               end
-               prs_lev(layer+1,ipxl,ilin)=tm5_a(2,layer)+tm5_b(2,layer)* ...
+      for ipxl=1:npxl
+         for ilin=1:nscan
+            for ilv=1:nlay
+               prs_lev(ilv,ipxl,ilin)=tm5_a(ilv)+tm5_b(ilv)* ...
                prs_sfc(ipxl,ilin);
             end
+            prs_lev(nlev,ipxl,ilin)=prs_lev(nlay,ipxl,ilin)/2.;
+            for ilv=1:nlay
+               prs_lay(ilv,ipxl,ilin)=(prs_lev(ilv+1,ipxl,ilin)+prs_lev(ilv,ipxl,ilin))/2.;
+            end
          end
-         prs_lev=prs_lev/100.;
-         prs_lay=prs_lay/100.;
+      end
+      prs_lev=prs_lev/100.;
+      prs_lay=prs_lay/100.;
 %
 % Loop through TROPOMI data
-         windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-	 windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       icnt=0;
-      for ilin=1:scanline
-         for ipxl=1:pixel
-      	    tropomidate=single(time+time_delta(ipxl,ilin));
-      	    [yyyy_tropomi,mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi, ...
-      	    ss_tropomi]=invert_time(tropomidate);
-%            fprintf('%d %d %d %d %d %d \n',yyyy_tropomi,mn_tropomi,dy_tropomi, ...
-%     	     hh_tropomi,mm_tropomi,ss_tropomi);
-%            fprintf('%d %d %d \n',windate_min,tropomidate,windate_max)
+      for ilin=1:nscan
+            for ipxl=1:npxl
+            tropomidate=single(time+time_delta(ipxl,ilin));
+	    [yyyy_tropomi,mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi, ...
+            ss_tropomi]=invert_time_ref(tropomidate,2010);
+%
+% Check time
             if(tropomidate<windate_min | tropomidate>windate_max)
                continue
             end
-%            fprintf('PASSED DATE/TIME TEST \n')
 %
-% QA/AC (looks like qa_value has already been scaled)
-	    if(qa_value(ipxl,ilin)<0.5 | zenang(ipxl,ilin)>=80.0)
-	       continue
-	    end
-%            if(isnan(col_amt_1km(ipxl,ilin)) | col_amt_1km(ipxl,ilin)<=0 | ...
-%               isnan(col_amt_1km_err(ipxl,ilin)) | col_amt_1km_err(ipxl,ilin)<=0 | ...
-%               isnan(col_amt_1km_sys(ipxl,ilin)) | col_amt_1km_sys(ipxl,ilin)<=0 | ...
-%               isnan(col_amt_7km(ipxl,ilin)) | col_amt_7km(ipxl,ilin)<=0 | ...
-%               isnan(col_amt_7km_err(ipxl,ilin)) | col_amt_7km_err(ipxl,ilin)<=0 | ...
-%               isnan(col_amt_7km_sys(ipxl,ilin)) | col_amt_7km_sys(ipxl,ilin)<=0 | ...
-%               isnan(amf_1km(ipxl,ilin)) | amf_1km(ipxl,ilin)<=0 | ...
-%               isnan(amf_1km_err(ipxl,ilin)) | amf_1km_err(ipxl,ilin)<=0 | ...
-%               isnan(amf_1km_sys(ipxl,ilin)) | amf_1km_sys(ipxl,ilin)<=0 | ...
-%               isnan(amf_1km_clr(ipxl,ilin)) | amf_1km_clr(ipxl,ilin)<=0 | ...
-%               isnan(amf_1km_cld(ipxl,ilin)) | amf_1km_cld(ipxl,ilin)<=0 | ...
-%               isnan(amf_7km(ipxl,ilin)) | amf_7km(ipxl,ilin)<=0 | ...
-%               isnan(amf_7km_err(ipxl,ilin)) | amf_7km_err(ipxl,ilin)<=0 | ...
-%               isnan(amf_7km_sys(ipxl,ilin)) | amf_7km_sys(ipxl,ilin)<=0 | ...
-%               isnan(amf_7km_clr(ipxl,ilin)) | amf_7km_clr(ipxl,ilin)<=0 | ...
-%               isnan(amf_7km_cld(ipxl,ilin)) | amf_7km_cld(ipxl,ilin)<=0)
-	    if(isnan(col_amt(ipxl,ilin)) | col_amt(ipxl,ilin)<0 | ...
-               isnan(slnt_col_amt(ipxl,ilin)) | slnt_col_amt(ipxl,ilin)<0 | ...
-               isnan(col_amt_err(ipxl,ilin)) | col_amt_err(ipxl,ilin)<0 | ...
-	       isnan(slnt_col_amt_sys(ipxl,ilin)) | slnt_col_amt_sys(ipxl,ilin)<0)
+% QA/AC
+	    if(any(isnan(prs_lev(:,ipxl,ilin))) | any(prs_lev(:,ipxl,ilin)<=0))
                continue
             end
-%            fprintf('PASSED QA/QC TEST \n')
+%
+	    if(any(isnan(avgk_lay(:,ipxl,ilin))))
+               continue
+            end
+%
+	    if(any(isnan(prior_lay(:,ipxl,ilin))) | any(prior_lay(:,ipxl,ilin)<=0))
+               continue
+            end
+%
+	    if(isnan(col_amt(ipxl,ilin)) | col_amt(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(col_amt_err(ipxl,ilin)) | col_amt_err(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(slnt_col_amt(ipxl,ilin)) | slnt_col_amt(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(slnt_col_amt_sys(ipxl,ilin)) | slnt_col_amt_sys(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(col_amt_1km(ipxl,ilin)) | col_amt_1km(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(col_amt_1km_err(ipxl,ilin)) | col_amt_1km_err(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(col_amt_1km_sys(ipxl,ilin)) | col_amt_1km_sys(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(amf_1km(ipxl,ilin)) | amf_1km(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(amf_1km_err(ipxl,ilin)) | amf_1km_err(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(amf_1km_sys(ipxl,ilin)) | amf_1km_sys(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(amf_1km_clr(ipxl,ilin)) | amf_1km_clr(ipxl,ilin)<=0)
+               continue
+            end
+%
+	    if(isnan(amf_1km_cld(ipxl,ilin)) | amf_1km_cld(ipxl,ilin)<=0)
+               continue
+            end
+%
+% (looks like qa_value has already been scaled)
+%           if(qa_value(ipxl,ilin)<0.5 | zenang(ipxl,ilin)>=80.0)
+%              continue
+%           end
 %
 % Check domain
 % Input grid needs to be in degrees
 % X coordinate is [0 to 360]
-%		 
-	    x_obser=lon(ipxl,ilin);
+%	 
+            x_obser=lon(ipxl,ilin);
             y_obser=lat(ipxl,ilin);
             if(x_obser<0.)
 	       x_obser=360.+x_obser;
             end
-%
+%	    
 	    xmdl_sw=lon_mdl(1,1);
 	    if(xmdl_sw<0.)
 	       xmdl_sw=xmdl_sw+360.;
             end
 %
-% APM: Need to get this info from model
 	    [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
 	    xmdl_sw,delx,cen_lon,truelat1,truelat2);
             i_min = round(xi);
@@ -463,14 +494,13 @@ function tropomi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
                reject=1;
             end
             if(reject==1)
-%               fprintf('FAILED DOMAIN TEST \n')
+%               fprintf('FAILED DOMAIN TEST 1 \n')
 	       continue
 	    end
 	    if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
-%               fprintf('FAILED DOMAIN TEST \n')
+%               fprintf('FAILED DOMAIN TEST 2 \n')
 	       continue
 	    end
-%            fprintf('PASSED DOMAIN TEST \n')
 %
 % Save data to ascii file
             icnt=icnt+1;
@@ -478,12 +508,12 @@ function tropomi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
             fprintf(fid,'%d %d %d %d %d %d \n',yyyy_tropomi, ...
    	    mn_tropomi,dy_tropomi,hh_tropomi,mm_tropomi,ss_tropomi);
    	    fprintf(fid,'%14.8f %14.8f \n',lat(ipxl,ilin),lon(ipxl,ilin));
-            fprintf(fid,'%d %d \n',layer,level);
-    	    fprintf(fid,'%14.8g ',prs_lev(1:level));
+            fprintf(fid,'%d %d \n',nlay,nlev);
+    	    fprintf(fid,'%14.8g ',prs_lev(1:nlev,ipxl,ilin));
             fprintf(fid,'\n');
-            fprintf(fid,'%14.8g ',avgk_lay(1:layer,ipxl,ilin));
+            fprintf(fid,'%14.8g ',avgk_lay(1:nlay,ipxl,ilin));
             fprintf(fid,'\n');
-            fprintf(fid,'%14.8g ',prior_lay(1:layer,ipxl,ilin));
+            fprintf(fid,'%14.8g ',prior_lay(1:nlay,ipxl,ilin));
             fprintf(fid,'\n');
             fprintf(fid,'%14.8g %14.8g %14.8g %14.8g \n',col_amt(ipxl,ilin), ...
 	    col_amt_err(ipxl,ilin),slnt_col_amt(ipxl,ilin), ...

@@ -198,8 +198,8 @@ function omi_hcho_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
       xtrk_flg(:,:)=xtrk_flg(:,:)*scalef;
 %
 % Loop through OMI data
-      [windate_min]=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      [windate_max]=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      [windate_min]=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
+      [windate_max]=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
       ocnt=0;
       icnt=0;
       for iscan=1:nscan
@@ -209,7 +209,7 @@ function omi_hcho_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
          hh_omi=single(time(4,iscan));
          mm_omi=single(time(5,iscan));
          ss_omi=single(time(6,iscan));
-         omidate=single(convert_time(yyyy_omi,mn_omi,dy_omi,hh_omi,mm_omi,ss_omi));
+         omidate=single(convert_time_ref(yyyy_omi,mn_omi,dy_omi,hh_omi,mm_omi,ss_omi,2010));
 %
 % Check time
          if(omidate<windate_min | omidate>windate_max)
