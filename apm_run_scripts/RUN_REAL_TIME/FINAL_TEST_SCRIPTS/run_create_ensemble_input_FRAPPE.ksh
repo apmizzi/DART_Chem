@@ -32,10 +32,10 @@ export FIRST_DART_INFLATE_DATE=2014072506
 export FIRST_EMISS_INV_DATE=2014072506
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072500
+export CYCLE_STR_DATE=2014072506
 
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072500
+export CYCLE_END_DATE=2014072506
 export CYCLE_DATE=${CYCLE_STR_DATE}
 #
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'      
@@ -431,39 +431,39 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # SELECT COMPONENT RUN OPTIONS:
    export RUN_GEOGRID=false
-   export RUN_UNGRIB=false
-   export RUN_METGRID=false
-   export RUN_REAL=false
-   export RUN_PERT_WRFCHEM_MET_IC=false
-   export RUN_PERT_WRFCHEM_MET_BC=false
-   export RUN_EXO_COLDENS=false
-   export RUN_SEASON_WES=false
-   export RUN_WRFCHEM_BIO=false
-   export RUN_WRFCHEM_FIRE=false
-   export RUN_WRFCHEM_CHEMI=false
-   export RUN_PERT_WRFCHEM_CHEM_ICBC=false
-   export RUN_PERT_WRFCHEM_CHEM_EMISS=false
-   export RUN_BIAS_CORRECTION=false
+   export RUN_UNGRIB=true
+   export RUN_METGRID=true
+   export RUN_REAL=true
+   export RUN_PERT_WRFCHEM_MET_IC=true
+   export RUN_PERT_WRFCHEM_MET_BC=true
+   export RUN_EXO_COLDENS=true
+   export RUN_SEASON_WES=true
+   export RUN_WRFCHEM_BIO=true
+   export RUN_WRFCHEM_FIRE=true
+   export RUN_WRFCHEM_CHEMI=true
+   export RUN_PERT_WRFCHEM_CHEM_ICBC=true
+   export RUN_PERT_WRFCHEM_CHEM_EMISS=true
+   export RUN_BIAS_CORRECTION=true
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
-   export RUN_MOPITT_CO_PROFILE_OBS=false # (done)
-   export RUN_MOPITT_CO_CPSR_OBS=false # (done)
+   export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
+   export RUN_MOPITT_CO_CPSR_OBS=true # (done)
    export RUN_IASI_CO_TOTAL_COL_OBS=false
-   export RUN_IASI_CO_PROFILE_OBS=false # (done)
-   export RUN_IASI_CO_CPSR_OBS=false # (done)
+   export RUN_IASI_CO_PROFILE_OBS=true # (done)
+   export RUN_IASI_CO_CPSR_OBS=true # (done)
    export RUN_IASI_O3_PROFILE_OBS=false
    export RUN_IASI_O3_CPSR_OBS=false
-   export RUN_MODIS_AOD_TOTAL_COL_OBS=false # (done)
+   export RUN_MODIS_AOD_TOTAL_COL_OBS=true # (done)
    export RUN_OMI_O3_TOTAL_COL_OBS=false
    export RUN_OMI_O3_TROP_COL_OBS=false
-   export RUN_OMI_O3_PROFILE_OBS=false # (done)
-   export RUN_OMI_O3_CPSR_OBS=false # (works)
+   export RUN_OMI_O3_PROFILE_OBS=true # (done)
+   export RUN_OMI_O3_CPSR_OBS=true # (works)
    export RUN_OMI_NO2_TOTAL_COL_OBS=false
-   export RUN_OMI_NO2_TROP_COL_OBS=false # (done)
+   export RUN_OMI_NO2_TROP_COL_OBS=true # (done)
    export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
-   export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false # (works)
+   export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true # (works)
    export RUN_OMI_SO2_TOTAL_COL_OBS=false
-   export RUN_OMI_SO2_PBL_COL_OBS=false # (works)
-   export RUN_OMI_HCHO_TOTAL_COL_OBS=false # (works)
+   export RUN_OMI_SO2_PBL_COL_OBS=true # (works)
+   export RUN_OMI_HCHO_TOTAL_COL_OBS=true # (works)
    export RUN_OMI_HCHO_TROP_COL_OBS=false 
    export RUN_TROPOMI_CO_TOTAL_COL_OBS=false # (done)
    export RUN_TROPOMI_O3_TOTAL_COL_OBS=false
@@ -487,17 +487,17 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_TEMPO_NO2_TOTAL_COL_OBS=false
    export RUN_TEMPO_NO2_TROP_COL_OBS=false # (done)
    export RUN_TES_CO_TOTAL_COL_OBS=false
-   export RUN_TES_CO_PROFILE_OBS=false # (works)
-   export RUN_TES_CO_CPSR_OBS=false # (works)
+   export RUN_TES_CO_PROFILE_OBS=true # (works)
+   export RUN_TES_CO_CPSR_OBS=true # (works)
    export RUN_TES_CO2_TOTAL_COL_OBS=false 
    export RUN_TES_CO2_PROFILE_OBS=false # (works, vertical sum)
    export RUN_TES_CO2_CPSR_OBS=false # (works, vertical sum)
    export RUN_TES_O3_TOTAL_COL_OBS=false
-   export RUN_TES_O3_PROFILE_OBS=false # (works)
-   export RUN_TES_O3_CPSR_OBS=false # (works)
+   export RUN_TES_O3_PROFILE_OBS=true # (works)
+   export RUN_TES_O3_CPSR_OBS=true # (works)
    export RUN_TES_NH3_TOTAL_COL_OBS=false
-   export RUN_TES_NH3_PROFILE_OBS=false # (works, vertical sum)
-   export RUN_TES_NH3_CPSR_OBS=false # (works, vertical sum)
+   export RUN_TES_NH3_PROFILE_OBS=true # (works, vertical sum)
+   export RUN_TES_NH3_CPSR_OBS=true # (works, vertical sum)
    export RUN_TES_CH4_TOTAL_COL_OBS=false
    export RUN_TES_CH4_PROFILE_OBS=false # (works, vertical sum)
    export RUN_TES_CH4_CPSR_OBS=false # (works, vertical sum)
@@ -519,25 +519,25 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_SCIAM_NO2_TOTAL_COL_OBS=false
    export RUN_SCIAM_NO2_TROP_COL_OBS=false # (works, vertical sum)
    export RUN_GOME2A_NO2_TOTAL_COL_OBS=false
-   export RUN_GOME2A_NO2_TROP_COL_OBS=false # (works, vertical sum)
+   export RUN_GOME2A_NO2_TROP_COL_OBS=true # (works, vertical sum)
    export RUN_MLS_O3_TOTAL_COL_OBS=false
-   export RUN_MLS_O3_PROFILE_OBS=false # (works, check)
-   export RUN_MLS_O3_CPSR_OBS=false # (works, vertical sum)
+   export RUN_MLS_O3_PROFILE_OBS=true # (works, check)
+   export RUN_MLS_O3_CPSR_OBS=true # (works, vertical sum)
    export RUN_MLS_HNO3_TOTAL_COL_OBS=false
-   export RUN_MLS_HNO3_PROFILE_OBS=false # (works, vertical sum)
-   export RUN_MLS_HNO3_CPSR_OBS=false # (works, vertical sum)
-   export RUN_AIRNOW_CO_OBS=false # (done)
-   export RUN_AIRNOW_O3_OBS=false # (done)
-   export RUN_AIRNOW_NO2_OBS=false # (done)
-   export RUN_AIRNOW_SO2_OBS=false # (done)
-   export RUN_AIRNOW_PM10_OBS=false # (done)
-   export RUN_AIRNOW_PM25_OBS=false # (done)
+   export RUN_MLS_HNO3_PROFILE_OBS=true # (works, vertical sum)
+   export RUN_MLS_HNO3_CPSR_OBS=true # (works, vertical sum)
+   export RUN_AIRNOW_CO_OBS=true # (done)
+   export RUN_AIRNOW_O3_OBS=true # (done)
+   export RUN_AIRNOW_NO2_OBS=true # (done)
+   export RUN_AIRNOW_SO2_OBS=true # (done)
+   export RUN_AIRNOW_PM10_OBS=true # (done)
+   export RUN_AIRNOW_PM25_OBS=true # (done)
    export RUN_PANDA_CO_OBS=false
    export RUN_PANDA_O3_OBS=false
    export RUN_PANDA_PM25_OBS=false
    export RUN_MEXICO_AQS_CO_OBS=false
-   export RUN_MET_OBS=false # (done)
-   export RUN_COMBINE_OBS=false
+   export RUN_MET_OBS=true # (done)
+   export RUN_COMBINE_OBS=true
    export RUN_PREPROCESS_OBS=true
    export RUN_LOCALIZATION=true
 #
@@ -606,14 +606,14 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export DEBUG_TIME_LIMIT=01:59:00
    export DEBUG_NODES=2
    export DEBUG_TASKS=16
-   export GENERAL_JOB_CLASS=normal
-   export GENERAL_TIME_LIMIT=00:20:00
-   export GENERAL_NODES=1
-   export GENERAL_TASKS=16
-#   export GENERAL_JOB_CLASS=devel
+#   export GENERAL_JOB_CLASS=normal
 #   export GENERAL_TIME_LIMIT=00:20:00
 #   export GENERAL_NODES=1
 #   export GENERAL_TASKS=16
+   export GENERAL_JOB_CLASS=devel
+   export GENERAL_TIME_LIMIT=00:20:00
+   export GENERAL_NODES=1
+   export GENERAL_TASKS=16
    export WRFDA_JOB_CLASS=normal
    export WRFDA_TIME_LIMIT=00:05:00
    export WRFDA_NODES=1
@@ -671,6 +671,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #   (( PERT_TASKS=${NUM_MEMBERS}+1 ))
 #
 # RUN DIRECTORIES
+   export WRFCHEM_TEMPLATE_DIR=${RUN_DIR}/wrfchem_template
+   export WRFCHEM_TEMPLATE_FILE=wrfout_d01_2014071512_mean
    export GEOGRID_DIR=${RUN_DIR}/geogrid
    export METGRID_DIR=${RUN_DIR}/${DATE}/metgrid
    export REAL_DIR=${RUN_DIR}/${DATE}/real
@@ -1798,6 +1800,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       rm -rf index.html
       chmod +x geogrid.exe
       ./geogrid.exe > index.html 2>&1
+#
+# Clean directory
+      rm geogrid.exe geogrid.log namelist.wps
    fi
 #
 #########################################################################
@@ -1841,14 +1846,12 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       FILES=''
       if [[ -e ${EXPERIMENT_GFS_DIR}/${DATE} ]]; then
          if [[ -e ${EXPERIMENT_GFS_DIR}/${DATE}/${GRIB_PART1}${DATE}${GRIB_PART2} ]]; then
-#            cd ${EXPERIMENT_GFS_DIR}/${DATE}
             tar xvfs ${EXPERIMENT_GFS_DIR}/${DATE}/${GRIB_PART1}${DATE}${GRIB_PART2}
-#            cd ${RUN_DIR}/${DATE}/ungrib
          else
             echo 'APM: ERROR - No GRIB files in directory'
             exit
          fi
-         sleep 30
+         sleep 15
 #  
          if [[ ${SINGLE_FILE} == false ]]; then
             export CCHH=${HH}00
@@ -1878,22 +1881,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       chmod +x ungrib.exe
       ./ungrib.exe > index.html 2>&1
 #
-# TAR THE PARENT FORECAST FILES
-#       rm -rf *.grb2
-#      if [[ -e ${EXPERIMENT_GFS_DIR}/${DATE}/${GRIB_PART1}${DATE}${GRIB_PART2} ]]; then
-#         rm -rf ${EXPERIMENT_GFS_DIR}/${DATE}/${GRIB_PART1}*.grb2
-#      else
-#         cd ${EXPERIMENT_GFS_DIR}
-#         tar -cf ${GRIB_PART1}${DATE}${GRIB_PART2} ${DATE}
-#         mv ${GRIB_PART1}${DATE}${GRIB_PART2} ${DATE}/.
-#         if [[ -e ${DATE}/${GRIB_PART1}${DATE}${GRIB_PART2} ]]; then
-#            rm -rf ${DATE}/${GRIB_PART1}*.grb2
-#         else
-#            echo 'APM: Failed to created tar file'
-#            exit
-#         fi
-#         cd ${RUN_DIR}/${DATE}/ungrib
-#      fi
+# Clean directory
+      rm GRIBFILE* rm gfs_4_*      
+      rm namelist.wps ungrib.exe ungrib.log Vtable
    fi
 #
 #########################################################################
@@ -1942,6 +1932,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
      rm -rf index.html
      chmod +x metgrid.exe
      ./metgrid.exe > index.html 2>&1
+#
+# Clean directory
+     rm FILE:* geo_em.d*.nc namelist.wps METGRID.TBL metgrid.exe metgrid.log     
    fi
 #
 #########################################################################
@@ -2019,6 +2012,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #         mv wrfbdy_d${FR_DOMAIN} wrfbdy_d${FR_DOMAIN}_$(${BUILD_DIR}/da_advance_time.exe ${P_DATE} 0 -W 2>/dev/null)
          export P_DATE=$(${BUILD_DIR}/da_advance_time.exe ${P_DATE} ${LBC_FREQ} 2>/dev/null) 
       done
+#
+# Clean directory
+      rm hist_io_flds* namelist.* real.exe met_em.d*
    fi
 #
 #########################################################################
@@ -2485,6 +2481,19 @@ EOF
       export NL_PARENT_GRID_RATIO=1,5
       export NL_I_PARENT_START=${ISTR_CR},${ISTR_FR}
       export NL_J_PARENT_START=${JSTR_CR},${JSTR_FR}
+#
+# Clean directory
+      let MEM=1
+      while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
+         export CMEM=e${MEM}
+         if [[ ${MEM} -lt 100 ]]; then export CMEM=e0${MEM}; fi
+         if [[ ${MEM} -lt 10  ]]; then export CMEM=e00${MEM}; fi
+         mv wrfda_cr_${MEM}/rsl.error.0000 rsl.error.${CMEM}
+         mv wrfda_cr_${MEM}/rsl.out.0000 rsl.out.${CMEM}
+         let MEM=${MEM}+1
+      done
+      rm -rf wrfda_cr_*
+      rm wrfinput_*_new_mean
    fi
 #
 #########################################################################
@@ -2575,6 +2584,10 @@ EOF
       rm mean_diff
 # End Recentering Fix
 #	 
+# Clean directory
+      rm dart_log.* input,nml pert_wrf_bc*
+      rm wrfinput_next_*
+      rm wrfinput_this_*
    fi
 #
 #########################################################################
@@ -2628,6 +2641,9 @@ EOF
       else
          echo EXO_COLDENS SUCCESS
       fi
+#
+# Clean directory
+      rm exo_coldens.exe exo_coldens.inp exo_coldens.nc wrfinput_d*      
    fi
 #
 #########################################################################
@@ -2681,6 +2697,9 @@ EOF
       else
          echo WESELY SUCCESS
       fi
+#
+# Clean directory
+      rm season_wes_usgs.nc wesely.exe wesely.inp wrfinput_d*
    fi
 #
 #########################################################################
@@ -2766,6 +2785,10 @@ EOF
          fi
          export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} 6 2>/dev/null)
       done
+#
+# Clean directory
+      rm btr2001* DSW.nc hrb2001* isoall2000* laiv2003* megan_bio_emiss.* ntr2001*
+      rm shr2001* TAS.nc wrfinput_d* 
    fi
 #
 #########################################################################
@@ -2853,6 +2876,10 @@ EOF
          fi
          export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} 1 2>/dev/null)
       done
+#
+# Clean directory
+      rm fire_emis* GLOBAL_FINNv15* grass_from_img* shrub_from_img* temfor_from_img*
+      rm tropfor_from_img* wrfinput_d*
    fi
 #
 #########################################################################
@@ -3095,6 +3122,12 @@ EOF
 #
          let MEM=MEM+1
       done
+#
+# Clean directory
+      rm *_cr_icbc_pert* job,ksh met_em.d* mozbc* pert_chem_icbc perturb_chem_*
+      rm runICBC_parent_* run_mozbc_rt_* set00 wrfbdy_d01 wrfinput_d01
+      rm wrfbdy_d01_${DATE} wrfinput_do1_${DATE} wrfinput_d01_frac
+      rm wrfinput_d01_mean wrfinput_d01_sprd
    fi
 #
 #########################################################################
@@ -3274,8 +3307,8 @@ EOF
 #         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} perturb_chem_emiss_CORR_RT_MA.exe SERIAL ${ACCOUNT}
 #
 # PARALLEL VERSION
-         export JOBRND=${RANDOM}_cr_emiss_pert
-         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
+#         export JOBRND=${RANDOM}_cr_emiss_pert
+#         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
 #
 #
 # PARALLEL ON HASWELL
@@ -3479,6 +3512,23 @@ EOF
          done
 
       fi
+#
+# Clean directory
+      export L_DATE=${DATE}
+      export LE_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} ${FCST_PERIOD} 2>/dev/null)
+      while [[ ${L_DATE} -le ${LE_DATE} ]] ; do
+         export L_YYYY=$(echo $L_DATE | cut -c1-4)
+         export L_MM=$(echo $L_DATE | cut -c5-6)
+         export L_DD=$(echo $L_DATE | cut -c7-8)
+         export L_HH=$(echo $L_DATE | cut -c9-10)
+         export L_FILE_DATE=${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00
+	 rm wrfbiochemi_d01_${L_FILE_DATE} wrfchemi_d01_${L_FILE_DATE}
+	 rm wrffirechemi_d01_${L_FILE_DATE}
+         export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} 1 2>/dev/null)
+      done
+      rm *_cr_emiss_pert* adjust_chem_* job.ksh pert_chem_emiss perturb_chem_*
+      rm perturb_emiss_* 
+      rm wrffirechemi_d01_${DATE} wrf*_frac wrf*_mean wrf*_sprd wrfinput_d*
    fi
 #
 ########################################################################
@@ -3704,6 +3754,9 @@ EOF
       if [[ ! -s ${NL_MOP_OUTFILE} ]]; then
          touch NO_MOPITT_CO_${DATE}
       fi
+#
+# Clean directory
+      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
    fi
 #
 ########################################################################
@@ -3928,6 +3981,9 @@ EOF
       if [[ ! -s ${NL_MOP_OUTFILE} ]]; then
          touch NO_MOPITT_CO_${DATE}
       fi
+#
+# Clean directory
+      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
    fi
 #
 ########################################################################
@@ -4152,6 +4208,9 @@ EOF
       if [[ ! -s ${NL_MOP_OUTFILE} ]]; then
          touch NO_MOPITT_CO_${DATE}
       fi
+#
+# Clean directory
+      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
    fi
 #
 #########################################################################
@@ -4352,7 +4411,7 @@ EOFF
          done
       fi
       if [[ ! -e ${IAS_OUTFILE_NQ} ]]; then
-         touch NO_MOPITT_CO_${DATE}_DATA
+         touch NO_IASI_CO_${DATE}_DATA
       fi
 #
 # SET NAMELIST TO CONVERT IASI_CO ASCII TO OBS_SEQ 
@@ -4401,6 +4460,9 @@ EOFF
       if [[ ! -s ${NL_IAS_OUTFILE} ]]; then
          touch NO_IASI_CO_${DATE}
       fi
+#
+# Clean directory
+#      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
    fi
 #
 #########################################################################
@@ -4601,7 +4663,7 @@ EOFF
          done
       fi
       if [[ ! -e ${IAS_OUTFILE_NQ} ]]; then
-         touch NO_MOPITT_CO_${DATE}_DATA
+         touch NO_IASI_CO_${DATE}_DATA
       fi
 #
 # SET NAMELIST TO CONVERT IASI_CO ASCII TO OBS_SEQ 
@@ -4650,6 +4712,9 @@ EOFF
       if [[ ! -s ${NL_IAS_OUTFILE} ]]; then
          touch NO_IASI_CO_${DATE}
       fi
+#
+# Clean directory
+#      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
    fi
 #
 #########################################################################
@@ -4850,7 +4915,7 @@ EOFF
          done
       fi
       if [[ ! -e ${IAS_OUTFILE_NQ} ]]; then
-         touch NO_MOPITT_CO_${DATE}_DATA
+         touch NO_IASI_CO_${DATE}_DATA
       fi
 #
 # SET NAMELIST TO CONVERT IASI_CO ASCII TO OBS_SEQ 
@@ -4899,6 +4964,9 @@ EOFF
       if [[ ! -s ${NL_IAS_OUTFILE} ]]; then
          touch NO_IASI_CO_${DATE}
       fi
+#
+# Clean directory
+#      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
    fi
 #
 #########################################################################
@@ -5099,7 +5167,7 @@ EOFF
          done
       fi
       if [[ ! -e ${IAS_OUTFILE_NQ} ]]; then
-         touch NO_MOPITT_CO_${DATE}_DATA
+         touch NO_IASI_CO_${DATE}_DATA
       fi
 #
 # SET NAMELIST TO CONVERT IASI_CO ASCII TO OBS_SEQ 
@@ -5148,6 +5216,9 @@ EOFF
       if [[ ! -s ${NL_IAS_OUTFILE} ]]; then
          touch NO_IASI_CO_${DATE}
       fi
+#
+# Clean directory
+#      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
    fi
 #
 #########################################################################
@@ -5365,6 +5436,9 @@ EOFF
       else
          touch NO_DATA_${D_DATE}
       fi
+#
+# Clean directory
+#      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
    fi
 #
 #########################################################################
@@ -5582,6 +5656,9 @@ EOFF
       else
          touch NO_DATA_${D_DATE}
       fi
+#
+# Clean directory
+#      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
    fi
 #
 #########################################################################
@@ -5701,6 +5778,10 @@ EOFF
       else
          touch NO_MODIS_AOD_${DATE}
       fi
+#
+# Clean directory
+      rm create_modis* dart_log* input.nml job.ksh *.dat modis_aod_total*
+      rm modis_asciidata*
    fi
 #
 #########################################################################
@@ -5718,8 +5799,8 @@ EOFF
       fi
 #
 # SET OMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export OMI_FILE_PRE=OMI-Aura_L2-OMTO3_
@@ -5840,8 +5921,8 @@ EOFF
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -5881,6 +5962,10 @@ EOFF
       if [[ ! -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_O3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* input.nml mccExcluded* *.dat omi_o3_profile* 
+      rm readme.* requiredMCRP* run_omi_o3_*
    fi
 #
 #########################################################################
@@ -5898,8 +5983,8 @@ EOFF
       fi
 #
 # SET OMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export OMI_FILE_PRE=OMI-Aura_L2-OMTO3_
@@ -6020,8 +6105,8 @@ EOFF
       export NL_USE_LOB_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -6061,6 +6146,10 @@ EOFF
       if [[ ! -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_O3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* input.nml mccExcluded* *.dat omi_o3_profile* 
+      rm readme.* requiredMCRP* run_omi_o3_*
    fi
 #
 #########################################################################
@@ -6078,8 +6167,8 @@ EOFF
       fi
 #
 # SET OMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export OMI_FILE_PRE=OMI-Aura_L2-OMO3PR_
@@ -6200,8 +6289,8 @@ EOFF
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -6241,6 +6330,10 @@ EOFF
       if [[ ! -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_O3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* input.nml mccExcluded* *.dat omi_o3_profile* 
+      rm readme.* requiredMCRP* run_omi_o3_*
    fi
 #
 #########################################################################
@@ -6258,8 +6351,8 @@ EOFF
       fi
 #
 # SET OMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export OMI_FILE_PRE=OMI-Aura_L2-OMO3PR_
@@ -6380,8 +6473,8 @@ EOFF
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL CPSR SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -6422,6 +6515,10 @@ EOFF
       if [[ ! -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_O3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* input.nml mccExcluded* *.dat omi_o3_profile* 
+      rm readme.* requiredMCRP* run_omi_o3_*
    fi
 #
 ########################################################################
@@ -6439,8 +6536,8 @@ EOFF
       fi
 #
 # SET OMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export OMI_FILE_PRE=OMI-Aura_L2-OMNO2_
@@ -6561,8 +6658,8 @@ EOFF
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -6602,6 +6699,10 @@ EOFF
       if [[ ! -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_NO2_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* input.nml mccExcluded* *.dat omi_no2_total* 
+      rm readme.* requiredMCRP* run_omi_no2_*
    fi
 #
 ########################################################################
@@ -6619,8 +6720,8 @@ EOFF
       fi
 v#
 # SET OMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export OMI_FILE_PRE=OMI-Aura_L2-OMNO2_
@@ -6741,8 +6842,8 @@ v#
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -6782,6 +6883,10 @@ v#
       if [[ ! -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_NO2_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* input.nml mccExcluded* *.dat omi_no2_trop* 
+      rm readme.* requiredMCRP* run_omi_no2_*
    fi
 #
 ########################################################################
@@ -6799,8 +6904,8 @@ v#
       fi
 #
 # SET OMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export OMI_FILE_PRE=OMI-Aura_L2-OMSO2_
@@ -6921,8 +7026,8 @@ v#
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -6962,6 +7067,10 @@ v#
       if [[ ! -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_SO2_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* input.nml mccExcluded* *.dat omi_no2_total* 
+      rm readme.* requiredMCRP* run_omi_no2_*
    fi
 #
 ########################################################################
@@ -6979,8 +7088,8 @@ v#
       fi
 #
 # SET OMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export OMI_FILE_PRE=OMI-Aura_L2-OMSO2_
@@ -7101,8 +7210,8 @@ v#
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -7142,6 +7251,10 @@ v#
       if [[ ! -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_SO2_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* input.nml mccExcluded* *.dat omi_no2_total* 
+      rm readme.* requiredMCRP* run_omi_no2_*
    fi
 #
 ########################################################################
@@ -7159,8 +7272,8 @@ v#
       fi
 #
 # SET OMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export OMI_FILE_PRE=OMI-Aura_L2-OMHCHO_
@@ -7276,10 +7389,8 @@ v#
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-      export NL_PATH_MODEL=\'${RUN_DIR}/2014${PAST_MM}${PAST_DD}${PAST_HH}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_2014${MM}${DD}${HH}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -7319,6 +7430,10 @@ v#
       if [[ ! -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_HCHO_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* input.nml mccExcluded* *.dat omi_no2_total* 
+      rm readme.* requiredMCRP* run_omi_no2_*
    fi
 #
 ########################################################################
@@ -7336,8 +7451,8 @@ v#
       fi
 #
 # SET OMI PARAMETERS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export OMI_FILE_PRE=OMI-Aura_L2-OMHCHO_
@@ -7455,8 +7570,8 @@ v#
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -7496,6 +7611,10 @@ v#
       if [[ ! -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_HCHO_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* input.nml mccExcluded* *.dat omi_no2_total* 
+      rm readme.* requiredMCRP* run_omi_no2_*
    fi
 #
 ########################################################################
@@ -7513,8 +7632,8 @@ v#
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__CO_____
@@ -7628,8 +7747,8 @@ v#
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -7703,8 +7822,8 @@ EOF
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__O3_____
@@ -7817,8 +7936,8 @@ EOF
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -7871,8 +7990,8 @@ EOF
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__O3_TCL_
@@ -7985,8 +8104,8 @@ EOF
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -8039,8 +8158,8 @@ EOF
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__O3_____
@@ -8153,8 +8272,8 @@ EOF
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -8207,8 +8326,8 @@ EOF
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__O3_____
@@ -8321,8 +8440,8 @@ EOF
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
 #
 # MODEL CPSR SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -8375,8 +8494,8 @@ EOF
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__NO2____
@@ -8490,8 +8609,8 @@ EOF
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -8544,8 +8663,8 @@ EOF
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__NO2____
@@ -8659,8 +8778,8 @@ EOF
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -8713,8 +8832,8 @@ EOF
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__SO2____
@@ -8829,8 +8948,8 @@ EOF
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -8883,8 +9002,8 @@ EOF
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__SO2____
@@ -9001,8 +9120,8 @@ EOF
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -9055,8 +9174,8 @@ EOF
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__CH4____
@@ -9172,8 +9291,8 @@ EOF
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -9226,8 +9345,8 @@ EOF
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__CH4___
@@ -9343,8 +9462,8 @@ EOF
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -9397,8 +9516,8 @@ EOF
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__CH4____
@@ -9514,8 +9633,8 @@ EOF
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -9568,8 +9687,8 @@ EOF
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__CH4___
@@ -9685,8 +9804,8 @@ EOF
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -9739,8 +9858,8 @@ EOF
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__HCHO___
@@ -9856,8 +9975,8 @@ EOF
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -9910,8 +10029,8 @@ EOF
       fi
 #
 # SET TROPOMI PARAMETERS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TROPOMI_FILE_PRE=S5P_OFFL_L2__HCHO___
@@ -10027,8 +10146,8 @@ EOF
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -10081,8 +10200,8 @@ EOF
       fi
 #
 # SET TEMPO PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TEMPO_FILE_PRE=TEMPO_O3PROF-PROXY_L2_V01_
@@ -10194,10 +10313,8 @@ EOF
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -10250,8 +10367,8 @@ EOF
       fi
 #
 # SET TEMPO PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TEMPO_FILE_PRE=TEMPO_O3PROF-PROXY_L2_V01_
@@ -10363,10 +10480,8 @@ EOF
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -10419,8 +10534,8 @@ EOF
       fi
 #
 # SET TEMPO PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TEMPO_FILE_PRE=TEMPO_O3PROF-PROXY_L2_V01_
@@ -10532,10 +10647,8 @@ EOF
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -10588,8 +10701,8 @@ EOF
       fi
 #
 # SET TEMPO PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TEMPO_FILE_PRE=TEMPO_O3PROF-PROXY_L2_V01_
@@ -10701,10 +10814,8 @@ EOF
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
 #
 # MODEL CPSR SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -10757,11 +10868,8 @@ EOF
       fi
 #
 # SET TEMPO PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TEMPO_FILE_PRE=TEMPO_NO2_L2_V01_
@@ -10873,10 +10981,8 @@ EOF
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -10929,11 +11035,8 @@ EOF
       fi
 #
 # SET TEMPO PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TEMPO_FILE_PRE=TEMPO_NO2_L2_V01_
@@ -11045,10 +11148,8 @@ EOF
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -11101,11 +11202,8 @@ EOF
       fi
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES_CO_L2_V01_
@@ -11217,10 +11315,8 @@ EOF
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -11273,9 +11369,8 @@ EOF
       fi
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES-Aura_L2-CO-SO-Nadir_r00000
@@ -11390,8 +11485,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -11446,9 +11541,8 @@ EOF
 
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES-Aura_L2-CO-SO-Nadir_r00000
@@ -11563,8 +11657,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL CPSR SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -11617,11 +11711,8 @@ EOF
       fi
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES_CO2_L2_V01_
@@ -11736,10 +11827,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -11792,9 +11881,8 @@ EOF
       fi
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES-Aura_L2-CO2-SO-Nadir_r00000
@@ -11909,10 +11997,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -11965,9 +12051,8 @@ EOF
       fi
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES-Aura_L2-CO2-SO-Nadir_r00000
@@ -12082,10 +12167,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL CPSR SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -12138,11 +12221,8 @@ EOF
       fi
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES_O3_L2_V01_
@@ -12257,10 +12337,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -12313,9 +12391,8 @@ EOF
       fi
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES-Aura_L2-O3-SO-Nadir_r00000
@@ -12430,8 +12507,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -12484,9 +12561,8 @@ EOF
       fi
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES-Aura_L2-O3-SO-Nadir_r00000
@@ -12602,10 +12678,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL CPSR SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -12658,11 +12732,8 @@ EOF
       fi
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES-Aura_L2-CO-SO-Nadir_r00000
@@ -12778,10 +12849,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -12834,9 +12903,8 @@ EOF
       fi
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES-Aura_L2-NH3-SO-Nadir_r00000
@@ -12952,10 +13020,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -13008,9 +13074,8 @@ EOF
       fi
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES-Aura_L2-NH3-SO-Nadir_r00000
@@ -13126,10 +13191,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL CPSR SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -13182,11 +13245,8 @@ EOF
       fi
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES-Aura_L2-CH4-SO-Nadir_r00000
@@ -13301,10 +13361,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -13357,11 +13415,8 @@ EOF
       fi
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES-Aura_L2-CH4-SO-Nadir_r00000
@@ -13476,10 +13531,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -13532,11 +13585,8 @@ EOF
       fi
 #
 # SET TES PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES-Aura_L2-CH4-SO-Nadir_r00000
@@ -13651,8 +13701,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL CPSR SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -13705,11 +13755,8 @@ EOF
       fi
 #
 # SET CRIS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export CRIS_FILE_PRE=CRIS_CO_L2_V01_
@@ -13821,10 +13868,8 @@ EOF
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -13877,8 +13922,8 @@ EOF
       fi
 #
 # SET CRIS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${YYYY}${MM}${DD}${HH}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export CRIS_FILE_PRE=TROPESS_CrIS-JPSS1_L2_Standard_CO_
@@ -13993,8 +14038,8 @@ EOF
       export NL_USE_LOG_PAN=${USE_LOG_PAN_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -14047,11 +14092,8 @@ EOF
       fi
 #
 # SET CRIS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export CRIS_FILE_PRE=CRIS_CO_L2_V01_
@@ -14166,10 +14208,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL CPSR SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -14222,8 +14262,8 @@ EOF
       fi
 #
 # SET CRIS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${YYYY}${MM}${DD}${HH}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export CRIS_FILE_PRE=CRIS_O3_L2_V01_
@@ -14338,10 +14378,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -14394,8 +14432,8 @@ EOF
       fi
 #
 # SET CRIS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${YYYY}${MM}${DD}${HH}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export CRIS_FILE_PRE=TROPESS_CrIS-JPSS1_L2_Standard_O3_
@@ -14510,8 +14548,8 @@ EOF
       export NL_USE_LOG_PAN=${USE_LOG_PAN_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -14563,11 +14601,8 @@ EOF
       fi
 #
 # SET CRIS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export CRIS_FILE_PRE=CRIS_O3_L2_V01_
@@ -14682,10 +14717,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL CPSR SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -14738,11 +14771,8 @@ EOF
       fi
 #
 # SET CRIS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export CRIS_FILE_PRE=CRIS-Aura_L2-CO-SO-Nadir_r00000
@@ -14858,10 +14888,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -14914,8 +14942,8 @@ EOF
       fi
 #
 # SET CRIS PARAMETERS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export CRIS_FILE_PRE=TROPESS_CrIS-JPSS1_L2_Standard_NH3_
@@ -15030,8 +15058,8 @@ EOF
       export NL_USE_LOG_PAN=${USE_LOG_PAN_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -15083,11 +15111,8 @@ EOF
       fi
 #
 # SET CRIS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export CRIS_FILE_PRE=CRIS-Aura_L2-CH4-SO-Nadir_r00000
@@ -15202,10 +15227,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-#      export NL_PATH_MODEL=\'${RUN_DIR}/${DATE}/wrfchem_chem_icbc\'
-#      export NL_FILE_MODEL=\'wrfinput_d${CR_DOMAIN}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -15258,8 +15281,8 @@ EOF
       fi
 #
 # SET CRIS PARAMETERS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export CRIS_FILE_PRE=TROPESS_CrIS-JPSS1_L2_Standard_CH4_
@@ -15374,8 +15397,8 @@ EOF
       export NL_USE_LOG_PAN=${USE_LOG_PAN_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -15428,11 +15451,8 @@ EOF
       fi
 #
 # SET CRIS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export CRIS_FILE_PRE=CRIS-Aura_L2-CH4-SO-Nadir_r00000
@@ -15547,8 +15567,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL CPSR SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -15601,8 +15621,8 @@ EOF
       fi
 #
 # SET CRIS PARAMETERS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
    
@@ -15718,8 +15738,8 @@ EOF
       export NL_USE_LOG_PAN=${USE_LOG_PAN_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -15772,8 +15792,8 @@ EOF
       fi
 #
 # SET CRIS PARAMETERS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export CRIS_FILE_PRE=TROPESS_CrIS-JPSS1_L2_Standard_PAN_
@@ -15888,8 +15908,8 @@ EOF
       export NL_USE_LOG_PAN=${USE_LOG_PAN_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -15942,11 +15962,8 @@ EOF
       fi
 #
 # SET CRIS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-#      export NL_PATH_MODEL=${RUN_DIR}/${DATE}/ensemble_mean_input
-#      export NL_FILE_MODEL=wrfinput_d${CR_DOMAIN}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export CRIS_FILE_PRE=CRIS-Aura_L2-PAN-SO-Nadir_r00000
@@ -16061,8 +16078,8 @@ EOF
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
 # MODEL CPSR SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -16115,9 +16132,8 @@ EOF
       fi
 #
 # SET SCIAM PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export SCIAM_FILE_PRE=SCIAM_NO2_L2_V01_
@@ -16228,8 +16244,8 @@ EOF
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -16282,8 +16298,8 @@ EOF
       fi
 #
 # SET SCIAM PARAMETERS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export SCIAM_FILE_PRE=QA4ECV_L2_NO2_SCIA_
@@ -16394,10 +16410,8 @@ EOF
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-###      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-###      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
-      export NL_PATH_MODEL=\'${RUN_DIR}/2014${PAST_MM}${PAST_DD}${PAST_HH}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_2014${MM}${DD}${HH}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -16450,9 +16464,8 @@ EOF
       fi
 #
 # SET GOME2A PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export GOME2A_FILE_PRE=GOME2A_NO2_L2_V01_
@@ -16563,8 +16576,8 @@ EOF
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -16617,9 +16630,8 @@ EOF
       fi
 #
 # SET GOME2A PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export GOME2A_FILE_PRE=QA4ECV_L2_NO2_GOME2A_
@@ -16730,8 +16742,8 @@ EOF
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -16784,9 +16796,8 @@ EOF
       fi
 #
 # SET MLS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export MLS_FILE_PRE=QA4ECV_L2_O3_MLS_
@@ -16897,8 +16908,8 @@ EOF
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -16951,9 +16962,8 @@ EOF
       fi
 #
 # SET MLS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export MLS_FILE_PRE=MLS-Aura_L2GP-O3_v04-20-c01_
@@ -17065,8 +17075,8 @@ EOF
       export NL_USE_LOG_HNO3=${USE_LOG_HNO3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -17119,9 +17129,8 @@ EOF
       fi
 #
 # SET MLS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export MLS_FILE_PRE=MLS-Aura_L2GP-O3_v04-20-c01_
@@ -17233,8 +17242,8 @@ EOF
       export NL_USE_LOG_HNO3=${USE_LOG_HNO3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -17287,9 +17296,8 @@ EOF
       fi
 #
 # SET MLS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export MLS_FILE_PRE=QA4ECV_L2_HNO3_MLS_
@@ -17401,8 +17409,8 @@ EOF
       export NL_USE_LOG_HNO3=${USE_LOG_HNO3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -17455,8 +17463,8 @@ EOF
       fi
 #
 # SET MLS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export MLS_FILE_PRE=MLS-Aura_L2GP-HNO3_v04-20-c01_
@@ -17568,8 +17576,8 @@ EOF
       export NL_USE_LOG_HNO3=${USE_LOG_HNO3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -17622,8 +17630,8 @@ EOF
       fi
 #
 # SET MLS PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export MLS_FILE_PRE=MLS-Aura_L2GP-HNO3_v04-20-c01_
@@ -17735,8 +17743,8 @@ EOF
       export NL_USE_LOG_HNO3=${USE_LOG_HNO3_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -17789,9 +17797,8 @@ EOF
       fi
 #
 # SET OMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export OMI_FILE_PRE=QA4ECV_L2_NO2_OMI_
@@ -17902,8 +17909,8 @@ EOF
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -17960,9 +17967,8 @@ EOF
       fi
 #
 # SET OMI PARAMETERS
-      export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
-      export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export OMI_FILE_PRE=QA4ECV_L2_NO2_OMI_
@@ -18076,8 +18082,8 @@ EOF
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
-      export NL_PATH_MODEL=\'${RUN_DIR}/${PAST_DATE}/ensemble_mean_output\'
-      export NL_FILE_MODEL=\'wrfout_d${CR_DOMAIN}_${DATE}_mean\'
+      export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
+      export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export NL_NZ_MODEL=${NNZP_CR}
@@ -18205,7 +18211,10 @@ EOF
          rm ${AIRNOW_OUT_FILE}
       else
          touch NO_DATA_${D_DATE}
-      fi     
+      fi
+#
+# Clean directory
+      airnow_o3_* bias_correct* create_airnow* dart_log* input.nml      
    fi
 #
 #########################################################################
@@ -18295,6 +18304,9 @@ EOF
       else
          touch NO_DATA_${D_DATE}
       fi     
+#
+# Clean directory
+      airnow_co_* bias_correct* create_airnow* dart_log* input.nml      
    fi
 #
 #########################################################################
@@ -18363,6 +18375,9 @@ if ${RUN_AIRNOW_NO2_OBS}; then
       else
          touch NO_DATA_${D_DATE}
       fi     
+#
+# Clean directory
+      airnow_no2_* bias_correct* create_airnow* dart_log* input.nml      
    fi
 #
 #########################################################################
@@ -18431,6 +18446,9 @@ if ${RUN_AIRNOW_SO2_OBS}; then
       else
          touch NO_DATA_${D_DATE}
       fi     
+#
+# Clean directory
+      airnow_so2_* bias_correct* create_airnow* dart_log* input.nml      
    fi
 #
 #########################################################################
@@ -18499,6 +18517,9 @@ if ${RUN_AIRNOW_PM10_OBS}; then
       else
          touch NO_DATA_${D_DATE}
       fi     
+#
+# Clean directory
+      airnow_pm10_* bias_correct* create_airnow* dart_log* input.nml      
    fi
 #
 #########################################################################
@@ -18567,6 +18588,9 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       else
          touch NO_DATA_${D_DATE}
       fi     
+#
+# Clean directory
+      airnow_pm25_* bias_correct* create_airnow* dart_log* input.nml
    fi
 #
 #########################################################################
@@ -18914,6 +18938,9 @@ EOF
       ${DART_DIR}/observations/obs_converters/NCEP/ascii_to_obs/work/create_real_obs > index_create 2>&1
 #
       mv obs_seq${D_DATE} obs_seq_prep_${DATE}.out
+#
+# Clean directory
+      rm dart_log* input.nml mccExcluded* obs_seq2014* prepqm*temp_obs.2014*
    fi
 #
 #########################################################################
@@ -19845,7 +19872,7 @@ EOF
 #      fi
 #
 # GET WRFINPUT TEMPLATE
-      cp ${WRFCHEM_CHEM_ICBC_DIR}/wrfinput_d${CR_DOMAIN}_${DATE}_mean wrfinput_d${CR_DOMAIN}
+      cp ${WRFCHEM_TEMPLATE_DIR}/wrfout_d${CR_DOMAIN}_2014071512_mean wrfinput_d${CR_DOMAIN}
       cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${FILE_DATE}.e001 wrfchemi_d${CR_DOMAIN}
       cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${FILE_DATE}.e001 wrffirechemi_d${CR_DOMAIN}
       cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfbiochemi_d${CR_DOMAIN}_${FILE_DATE}.e001 wrfbiochemi_d${CR_DOMAIN}
@@ -20342,6 +20369,9 @@ EOF
 #
 # Run the obs_impact_tool
       ./obs_impact_tool
+#
+# Clean directory
+      rm dart_log* input.nml obs_impact_tool variable_localization.txt      
    fi
 #
    export CYCLE_DATE=${NEXT_DATE}
