@@ -33,10 +33,10 @@ export FIRST_EMISS_INV_DATE=2014072506
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'      
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072512
+export CYCLE_STR_DATE=2014072600
 
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072518
+export CYCLE_END_DATE=2014072600
 #export CYCLE_END_DATE=${CYCLE_STR_DATE}
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
@@ -238,6 +238,16 @@ export SPECIAL_FORECAST_MEM[7]=7
 export SPECIAL_FORECAST_MEM[8]=8
 export SPECIAL_FORECAST_MEM[9]=9
 export SPECIAL_FORECAST_MEM[10]=10
+export SPECIAL_FORECAST_MEM[11]=11
+export SPECIAL_FORECAST_MEM[12]=12
+export SPECIAL_FORECAST_MEM[13]=13
+export SPECIAL_FORECAST_MEM[14]=14
+export SPECIAL_FORECAST_MEM[15]=15
+export SPECIAL_FORECAST_MEM[16]=16
+export SPECIAL_FORECAST_MEM[17]=17
+export SPECIAL_FORECAST_MEM[18]=18
+export SPECIAL_FORECAST_MEM[19]=19
+export SPECIAL_FORECAST_MEM[20]=20
 #
 # Run temporal interpolation for missing background files
 # RUN_UNGRIB, RUN_METGRID, and RUN_REAL must all be false for the interpolation and for cycling
@@ -456,16 +466,16 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # SELECT COMPONENT RUN OPTIONS:
    if [[ ${RUN_SPECIAL_FORECAST} = "false" ]]; then
       export RUN_GEOGRID=false
-      export RUN_UNGRIB=true
-      export RUN_METGRID=true
-      export RUN_REAL=true
-      export RUN_PERT_WRFCHEM_MET_IC=true
-      export RUN_PERT_WRFCHEM_MET_BC=true
-      export RUN_EXO_COLDENS=true
-      export RUN_SEASON_WES=true
-      export RUN_WRFCHEM_BIO=true
-      export RUN_WRFCHEM_FIRE=true
-      export RUN_WRFCHEM_CHEMI=true
+      export RUN_UNGRIB=false
+      export RUN_METGRID=false
+      export RUN_REAL=false
+      export RUN_PERT_WRFCHEM_MET_IC=false
+      export RUN_PERT_WRFCHEM_MET_BC=false
+      export RUN_EXO_COLDENS=false
+      export RUN_SEASON_WES=false
+      export RUN_WRFCHEM_BIO=false
+      export RUN_WRFCHEM_FIRE=false
+      export RUN_WRFCHEM_CHEMI=false
       export RUN_PERT_WRFCHEM_CHEM_ICBC=true
       export RUN_PERT_WRFCHEM_CHEM_EMISS=true
       export RUN_MOPITT_CO_TOTAL_COL_OBS=false
@@ -971,12 +981,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export PERT_TIME_LIMIT=05:59:00
    export PERT_NODES=3
    export PERT_TASKS=24
-#   (( PERT_TASKS=${NUM_MEMBERS}+1 ))
 #   export PERT_JOB_CLASS=devel
 #   export PERT_TIME_LIMIT=01:59:00
 #   export PERT_NODES=2
 #   export PERT_TASKS=16
-#   (( PERT_TASKS=${NUM_MEMBERS}+1 ))
 #
 # RUN DIRECTORIES
    export GEOGRID_DIR=${RUN_DIR}/geogrid
@@ -3582,16 +3590,13 @@ EOF
 #         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} perturb_chem_emiss_CORR_RT_MA.exe SERIAL ${ACCOUNT}
 #
 # PARALLEL VERSION
-         export JOBRND=${RANDOM}_cr_emiss_pert
-         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
-#
+#         export JOBRND=${RANDOM}_cr_emiss_pert
+#         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
 #
 # PARALLEL ON HASWELL
-      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_has.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
+         export JOBRND=${RANDOM}_cr_emiss_pert
+         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_has.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
 #
-      qsub -Wblock=true job.ksh
-#
-	 
          qsub -Wblock=true job.ksh
 #
 # GET FINE GRID EMISSON FILES FOR THIS MEMBER

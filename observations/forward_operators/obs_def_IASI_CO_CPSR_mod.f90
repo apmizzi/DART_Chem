@@ -403,9 +403,9 @@ subroutine get_expected_iasi_co_cpsr(state_handle, ens_size, location, key, val,
 !   call error_handler(E_MSG, routine, string1, source)
 
 ! Get profile at IASI pressure levels
-    if (prs_mdl_sfc(imem).gt.iasi_psurf(key)) then
-       prs_iasi(1)=(prs_mdl_sfc(imem)+pressure(key,2))/2.
-    endif   
+!    if (prs_mdl_sfc(imem).gt.iasi_psurf(key)) then
+!       prs_iasi(1)=(prs_mdl_sfc(imem)+pressure(key,2))/2.
+!    endif   
 !
    allocate(co_val(ens_size,layer_iasi))
    do k=1,layer_iasi
@@ -427,8 +427,8 @@ subroutine get_expected_iasi_co_cpsr(state_handle, ens_size, location, key, val,
          endif
       enddo
 !
-      write(string1, *)'APM: co ',k,co_val(1,k)
-      call error_handler(E_MSG, routine, string1, source)
+!      write(string1, *)'APM: co ',k,co_val(1,k)
+!      call error_handler(E_MSG, routine, string1, source)
 !
 ! Check data for missing values      
       do imem=1,ens_size
@@ -462,11 +462,11 @@ subroutine get_expected_iasi_co_cpsr(state_handle, ens_size, location, key, val,
             val(imem) = val(imem) + avg_kernel(key,k) * exp(co_val(imem,k))  
          else
             val(imem) = val(imem) + avg_kernel(key,k) * co_val(imem,k)
-            if(imem.eq.1) then
-               write(string1, *) 'APM: imem,k,val,avgk,co_val ',imem,k,val(imem), &
-               avg_kernel(key,k),co_val(imem,k)
-               call error_handler(E_MSG, routine, string1, source)
-            endif
+!            if(imem.eq.1) then
+!               write(string1, *) 'APM: imem,k,val,avgk,co_val ',imem,k,val(imem), &
+!               avg_kernel(key,k),co_val(imem,k)
+!               call error_handler(E_MSG, routine, string1, source)
+!            endif
          endif         
       enddo
 !

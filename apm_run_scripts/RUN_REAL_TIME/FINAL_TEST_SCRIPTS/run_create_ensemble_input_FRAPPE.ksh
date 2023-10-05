@@ -32,10 +32,10 @@ export FIRST_DART_INFLATE_DATE=2014072506
 export FIRST_EMISS_INV_DATE=2014072506
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072506
+export CYCLE_STR_DATE=2014072518
 
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072506
+export CYCLE_END_DATE=2014072518
 export CYCLE_DATE=${CYCLE_STR_DATE}
 #
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'      
@@ -431,10 +431,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # SELECT COMPONENT RUN OPTIONS:
    export RUN_GEOGRID=false
-   export RUN_UNGRIB=true
-   export RUN_METGRID=true
-   export RUN_REAL=true
-   export RUN_PERT_WRFCHEM_MET_IC=true
+   export RUN_UNGRIB=false
+   export RUN_METGRID=false
+   export RUN_REAL=false
+   export RUN_PERT_WRFCHEM_MET_IC=false
    export RUN_PERT_WRFCHEM_MET_BC=true
    export RUN_EXO_COLDENS=true
    export RUN_SEASON_WES=true
@@ -2014,7 +2014,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       done
 #
 # Clean directory
-      rm hist_io_flds* namelist.* real.exe met_em.d*
+      rm hist_io_flds* namelist.* real.exe met_em.d* index.html
    fi
 #
 #########################################################################
@@ -2585,9 +2585,10 @@ EOF
 # End Recentering Fix
 #	 
 # Clean directory
-      rm dart_log.* input,nml pert_wrf_bc*
+      rm dart_log.* input.nml pert_wrf_bc*
       rm wrfinput_next_*
       rm wrfinput_this_*
+      rm wrfbdy_d01_*_new_mean
    fi
 #
 #########################################################################
@@ -2878,7 +2879,7 @@ EOF
       done
 #
 # Clean directory
-      rm fire_emis* GLOBAL_FINNv15* grass_from_img* shrub_from_img* temfor_from_img*
+      rm fire_emis* GLOBAL_FINNv15* grass_from_img* shrub_from_img* tempfor_from_img*
       rm tropfor_from_img* wrfinput_d*
    fi
 #
@@ -3127,7 +3128,8 @@ EOF
       rm *_cr_icbc_pert* job,ksh met_em.d* mozbc* pert_chem_icbc perturb_chem_*
       rm runICBC_parent_* run_mozbc_rt_* set00 wrfbdy_d01 wrfinput_d01
       rm wrfbdy_d01_${DATE} wrfinput_do1_${DATE} wrfinput_d01_frac
-      rm wrfinput_d01_mean wrfinput_d01_sprd
+      rm wrfinput_d01_mean wrfinput_d01_sprd pert_chem_icbc job.ksh
+      rm wrfbdy_d01_*_:00 wrfinput_d01_*_:00
    fi
 #
 #########################################################################
@@ -3312,11 +3314,9 @@ EOF
 #
 #
 # PARALLEL ON HASWELL
-      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_has.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
+         export JOBRND=${RANDOM}_cr_emiss_pert
+         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_has.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
 #
-      qsub -Wblock=true job.ksh
-#
-	 
          qsub -Wblock=true job.ksh
 #
 # GET FINE GRID EMISSON FILES FOR THIS MEMBER
@@ -3611,7 +3611,7 @@ fi
 EOFF
 #      qsub -Wblock=true job.ksh
       chmod +x job.ksh
-      ./job.ksh > index_mat.html 2>&1
+      ./job.ksh > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -3672,7 +3672,7 @@ fi
 EOFF
 #         qsub -Wblock=true job.ksh 
          chmod +x job.ksh
-         ./job.ksh > index_mat.html 2>&1
+         ./job.ksh > index_mat2.html 2>&1
       fi   
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -3756,7 +3756,7 @@ EOF
       fi
 #
 # Clean directory
-      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
+      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_total*      
    fi
 #
 ########################################################################
@@ -3839,7 +3839,7 @@ fi
 EOFF
 #      qsub -Wblock=true job.ksh
       chmod +x job.ksh
-      ./job.ksh > index_mat.html 2>&1
+      ./job.ksh > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -3899,7 +3899,7 @@ fi
 EOFF
 #         qsub -Wblock=true job.ksh 
          chmod +x job.ksh
-         ./job.ksh > index_mat.html 2>&1
+         ./job.ksh > index_mat1.html 2>&1
       fi   
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -4066,7 +4066,7 @@ fi
 EOFF
 #      qsub -Wblock=true job.ksh
       chmod +x job.ksh
-      ./job.ksh > index_mat.html 2>&1
+      ./job.ksh > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${MOP_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -4126,7 +4126,7 @@ fi
 EOFF
 #         qsub -Wblock=true job.ksh 
          chmod +x job.ksh
-         ./job.ksh > index_mat.html 2>&1
+         ./job.ksh > index_mat2.html 2>&1
       fi   
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -4210,7 +4210,7 @@ EOF
       fi
 #
 # Clean directory
-      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
+      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_cpsr*      
    fi
 #
 #########################################################################
@@ -4311,7 +4311,7 @@ fi
 EOFF
 #               qsub -Wblock=true job.ksh 
                chmod +x job.ksh
-               ./job.ksh > index_mat.html 2>&1
+               ./job.ksh > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
                if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -4393,7 +4393,7 @@ fi
 EOFF
 #                  qsub -Wblock=true job.ksh 
                   chmod +x job.ksh
-                  ./job.ksh > index_mat.html 2>&1
+                  ./job.ksh > index_mat2.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
                   if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -4462,7 +4462,7 @@ EOFF
       fi
 #
 # Clean directory
-#      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
+      rm *.dat bias_correct* dart_log* input.nml job.ksh iasi_co_profile*      
    fi
 #
 #########################################################################
@@ -4563,7 +4563,7 @@ fi
 EOFF
 #               qsub -Wblock=true job.ksh 
                chmod +x job.ksh
-               ./job.ksh > index_mat.html 2>&1
+               ./job.ksh > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
                if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -4645,7 +4645,7 @@ fi
 EOFF
 #                  qsub -Wblock=true job.ksh 
                   chmod +x job.ksh
-                  ./job.ksh > index_mat.html 2>&1
+                  ./job.ksh > index_mat2.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
                   if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -4714,7 +4714,7 @@ EOFF
       fi
 #
 # Clean directory
-#      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
+      rm *.dat bias_correct* dart_log* input.nml job.ksh iasi_co_total*      
    fi
 #
 #########################################################################
@@ -4815,7 +4815,7 @@ fi
 EOFF
 #               qsub -Wblock=true job.ksh 
                chmod +x job.ksh
-               ./job.ksh > index_mat.html 2>&1
+               ./job.ksh > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
                if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -4897,7 +4897,7 @@ fi
 EOFF
 #                  qsub -Wblock=true job.ksh 
                   chmod +x job.ksh
-                  ./job.ksh > index_mat.html 2>&1
+                  ./job.ksh > index_mat2.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
                   if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -4966,7 +4966,7 @@ EOFF
       fi
 #
 # Clean directory
-#      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
+      rm *.dat bias_correct* dart_log* input.nml job.ksh iasi_co_profile*      
    fi
 #
 #########################################################################
@@ -5067,7 +5067,7 @@ fi
 EOFF
 #               qsub -Wblock=true job.ksh 
                chmod +x job.ksh
-               ./job.ksh > index_mat.html 2>&1
+               ./job.ksh > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
                if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -5149,7 +5149,7 @@ fi
 EOFF
 #                  qsub -Wblock=true job.ksh 
                   chmod +x job.ksh
-                  ./job.ksh > index_mat.html 2>&1
+                  ./job.ksh > index_mat2.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
                   if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -5218,7 +5218,7 @@ EOFF
       fi
 #
 # Clean directory
-#      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
+      rm *.dat bias_correct* dart_log* input.nml job.ksh iasi_co_cpsr*      
    fi
 #
 #########################################################################
@@ -5363,7 +5363,7 @@ fi
 EOFF
 #            qsub -Wblock=true job.ksh 
             chmod +x job.ksh
-            ./job.ksh > index_mat.html 2>&1
+            ./job.ksh > index_mat1.html 2>&1
 #
 # cat the output file to the assimlation window file
             export ASIM_OUTFILE=${YYYY}${MM}${DD}${HH}.dat
@@ -5438,7 +5438,7 @@ EOFF
       fi
 #
 # Clean directory
-#      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
+      rm *.dat bias_correct* dart_log* input.nml job.ksh iasi_o3_profile*      
    fi
 #
 #########################################################################
@@ -5583,7 +5583,7 @@ fi
 EOFF
 #            qsub -Wblock=true job.ksh 
             chmod +x job.ksh
-            ./job.ksh > index_mat.html 2>&1
+            ./job.ksh > index_mat2.html 2>&1
 #
 # cat the output file to the assimlation window file
             export ASIM_OUTFILE=${YYYY}${MM}${DD}${HH}.dat
@@ -5658,7 +5658,7 @@ EOFF
       fi
 #
 # Clean directory
-#      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
+      rm *.dat bias_correct* dart_log* input.nml job.ksh iasi_o3_cpsr*      
    fi
 #
 #########################################################################
@@ -5721,7 +5721,7 @@ fi
 EOFF
 #      qsub -Wblock=true job.ksh 
       chmod +x job.ksh
-      ./job.ksh > index_mat.html 2>&1
+      ./job.ksh > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${MOD_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -5858,7 +5858,7 @@ EOFF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
       mcc -m omi_o3_total_col_extract.m -o omi_o3_extract_total_col
-      ./run_omi_o3_extract_total_col.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_omi_o3_extract_total_col.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -5894,7 +5894,7 @@ EOFF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
          mcc -m omi_o3_total_col_extract.m -o omi_o3_total_col_extract
-         ./run_omi_o3_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_omi_o3_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
       fi
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -5964,7 +5964,7 @@ EOFF
       fi
 #
 # Clean directory
-      rm dart_log* input.nml mccExcluded* *.dat omi_o3_profile* 
+      rm dart_log* input.nml mccExcluded* *.dat omi_o3_totalpr* 
       rm readme.* requiredMCRP* run_omi_o3_*
    fi
 #
@@ -6042,7 +6042,7 @@ EOFF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
       mcc -m omi_o3_trop_col_extract.m -o omi_o3_trop_col_extract
-      ./run_omi_o3_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_omi_o3_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -6078,7 +6078,7 @@ EOFF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
          mcc -m omi_o3_trop_col_extract.m -o omi_o3_trop_col_extract
-         ./run_omi_o3_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_omi_o3_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
       fi
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -6148,7 +6148,7 @@ EOFF
       fi
 #
 # Clean directory
-      rm dart_log* input.nml mccExcluded* *.dat omi_o3_profile* 
+      rm dart_log* input.nml mccExcluded* *.dat omi_o3_trop* 
       rm readme.* requiredMCRP* run_omi_o3_*
    fi
 #
@@ -6226,7 +6226,7 @@ EOFF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
       mcc -m omi_o3_profile_extract.m -o omi_o3_profile_extract
-      ./run_omi_o3_profile_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_omi_o3_profile_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -6262,7 +6262,7 @@ EOFF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
          mcc -m omi_o3_profile_extract.m -o omi_o3_profile_extract
-         ./run_omi_o3_profile_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_omi_o3_profile_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
       fi
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -6333,7 +6333,7 @@ EOFF
 #
 # Clean directory
       rm dart_log* input.nml mccExcluded* *.dat omi_o3_profile* 
-      rm readme.* requiredMCRP* run_omi_o3_*
+      rm readme.* requiredMCRP* run_omi_o3_* includedSupport* unresolved*
    fi
 #
 #########################################################################
@@ -6410,7 +6410,7 @@ EOFF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
       mcc -m omi_o3_cpsr_extract.m -o omi_o3_cpsr_extract
-      ./run_omi_o3_cpsr_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_omi_o3_cpsr_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -6446,7 +6446,7 @@ EOFF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/native_to_ascii/${FILE} ./.
          mcc -m omi_o3_cpsr_extract.m -o omi_o3_cpsr_extract
-         ./run_omi_o3_cpsr_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_omi_o3_cpsr_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
       fi
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -6517,8 +6517,8 @@ EOFF
       fi
 #
 # Clean directory
-      rm dart_log* input.nml mccExcluded* *.dat omi_o3_profile* 
-      rm readme.* requiredMCRP* run_omi_o3_*
+      rm dart_log* input.nml mccExcluded* *.dat omi_o3_cpsr* 
+      rm readme.* requiredMCRP* run_omi_o3_* includedSupport* unresolved*
    fi
 #
 ########################################################################
@@ -6594,7 +6594,7 @@ EOFF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/native_to_ascii/${FILE} ./.
       mcc -m omi_no2_total_col_extract.m -o omi_no2_total_col_extract
-      ./run_omi_no2_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_omi_no2_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -6630,7 +6630,7 @@ EOFF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/native_to_ascii/${FILE} ./.
          mcc -m omi_no2_total_col_extract.m -o omi_no2_total_col_extract
-         ./run_omi_no2_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_omi_no2_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -6702,7 +6702,7 @@ EOFF
 #
 # Clean directory
       rm dart_log* input.nml mccExcluded* *.dat omi_no2_total* 
-      rm readme.* requiredMCRP* run_omi_no2_*
+      rm readme.* requiredMCRP* run_omi_no2_* includeSupport* unresolved*
    fi
 #
 ########################################################################
@@ -6778,7 +6778,7 @@ v#
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/native_to_ascii/${FILE} ./.
       mcc -m omi_no2_trop_col_extract.m -o omi_no2_trop_col_extract
-      ./run_omi_no2_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_omi_no2_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -6814,7 +6814,7 @@ v#
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/native_to_ascii/${FILE} ./.
          mcc -m omi_no2_trop_col_extract.m -o omi_no2_trop_col_extract
-         ./run_omi_no2_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_omi_no2_trop_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -6886,7 +6886,7 @@ v#
 #
 # Clean directory
       rm dart_log* input.nml mccExcluded* *.dat omi_no2_trop* 
-      rm readme.* requiredMCRP* run_omi_no2_*
+      rm readme.* requiredMCRP* run_omi_no2_* includeSupport* unresolved*
    fi
 #
 ########################################################################
@@ -6962,7 +6962,7 @@ v#
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_SO2/native_to_ascii/${FILE} ./.
       mcc -m omi_so2_total_col_extract.m -o omi_so2_total_col_extract
-      ./run_omi_so2_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_omi_so2_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${ARCHIVE_FILE} && -e ${OUTFILE_NQ} ]]; then
@@ -6998,7 +6998,7 @@ v#
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_SO2/native_to_ascii/${FILE} ./.
          mcc -m omi_so2_total_col_extract.m -o omi_so2_total_col_extract
-         ./run_omi_so2_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_omi_so2_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${OMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -7069,8 +7069,8 @@ v#
       fi
 #
 # Clean directory
-      rm dart_log* input.nml mccExcluded* *.dat omi_no2_total* 
-      rm readme.* requiredMCRP* run_omi_no2_*
+      rm dart_log* input.nml mccExcluded* *.dat omi_so2_total* 
+      rm readme.* requiredMCRP* run_omi_so2_* includedSupport* unresolved*
    fi
 #
 ########################################################################
@@ -7253,8 +7253,8 @@ v#
       fi
 #
 # Clean directory
-      rm dart_log* input.nml mccExcluded* *.dat omi_no2_total* 
-      rm readme.* requiredMCRP* run_omi_no2_*
+      rm dart_log* input.nml mccExcluded* *.dat omi_so2_pbl* 
+      rm readme.* requiredMCRP* run_omi_so2_* includedSupport* unresolved*
    fi
 #
 ########################################################################
@@ -7432,8 +7432,8 @@ v#
       fi
 #
 # Clean directory
-      rm dart_log* input.nml mccExcluded* *.dat omi_no2_total* 
-      rm readme.* requiredMCRP* run_omi_no2_*
+      rm dart_log* input.nml mccExcluded* *.dat omi_hcho_total* 
+      rm readme.* requiredMCRP* run_omi_hcho_* includedSupport* unresolved*
    fi
 #
 ########################################################################
@@ -7613,8 +7613,8 @@ v#
       fi
 #
 # Clean directory
-      rm dart_log* input.nml mccExcluded* *.dat omi_no2_total* 
-      rm readme.* requiredMCRP* run_omi_no2_*
+      rm dart_log* input.nml mccExcluded* *.dat omi_hcho_trop* 
+      rm readme.* requiredMCRP* run_omi_hcho_* includedSupport* unresolved*
    fi
 #
 ########################################################################
@@ -7686,7 +7686,7 @@ v#
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CO/native_to_ascii/${FILE} ./.
       mcc -m tropomi_co_total_col_extract.m -o tropomi_co_total_col_extract
-      ./run_tropomi_co_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tropomi_co_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -7719,7 +7719,7 @@ v#
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CO/native_to_ascii/${FILE} ./.
          mcc -m tropomi_co_total_col_extract.m -o tropomi_co_total_col_extract
-         ./run_tropomi_co_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tropomi_co_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -7876,7 +7876,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
       mcc -m tropomi_o3_total_col_extract.m -o tropomi_o3_total_col_extract
-      ./run_tropomi_o3_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tropomi_o3_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -7909,7 +7909,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
          mcc -m tropomi_o3_total_col_extract.m -o tropomi_o3_total_col_extract
-         ./run_tropomi_o3_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tropomi_o3_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi	
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -8044,7 +8044,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
       mcc -m tropomi_o3_trop_col_extract.m -o tropomi_o3_trop_col_extract
-      ./run_tropomi_o3_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tropomi_o3_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -8077,7 +8077,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
          mcc -m tropomi_o3_trop_col_extract.m -o tropomi_o3_trop_col_extract
-         ./run_tropomi_o3_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tropomi_o3_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi	
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -8212,7 +8212,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
       mcc -m tropomi_o3_profile_extract.m -o tropomi_o3_profile_extract
-      ./run_tropomi_o3_profile_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tropomi_o3_profile_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -8245,7 +8245,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
          mcc -m tropomi_o3_profile_extract.m -o tropomi_o3_profile_extract
-         ./run_tropomi_o3_profile_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tropomi_o3_profile_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi	
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -8380,7 +8380,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
       mcc -m tropomi_o3_cpsr_extract.m -o tropomi_o3_cpsr_extract
-      ./run_tropomi_o3_cpsr_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tropomi_o3_cpsr_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -8413,7 +8413,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/native_to_ascii/${FILE} ./.
          mcc -m tropomi_o3_cpsr_extract.m -o tropomi_o3_cpsr_extract
-         ./run_tropomi_o3_cpsr_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tropomi_o3_cpsr_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi	
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -8548,7 +8548,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_NO2/native_to_ascii/${FILE} ./.
       mcc -m tropomi_no2_total_col_extract.m -o tropomi_no2_total_col_extract
-      ./run_tropomi_no2_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tropomi_no2_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -8581,7 +8581,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_NO2/native_to_ascii/${FILE} ./.
          mcc -m tropomi_no2_total_col_extract.m -o tropomi_total_col_no2_extract
-         ./run_tropomi_no2_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tropomi_no2_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -8717,7 +8717,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_NO2/native_to_ascii/${FILE} ./.
       mcc -m tropomi_no2_trop_col_extract.m -o tropomi_no2_trop_col_extract
-      ./run_tropomi_no2_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tropomi_no2_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -8750,7 +8750,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_NO2/native_to_ascii/${FILE} ./.
          mcc -m tropomi_no2_trop_col_extract.m -o tropomi_trop_col_no2_extract
-         ./run_tropomi_no2_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tropomi_no2_trop_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -10421,7 +10421,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
       mcc -m tempo_o3_trop_col_extract.m -o tempo_o3_trop_col_extract
-      ./run_tempo_o3_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tempo_o3_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -10454,7 +10454,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
          mcc -m tempo_o3_trop_col_extract.m -o tempo_o3_trop_col_extract
-         ./run_tempo_o3_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tempo_o3_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -10588,7 +10588,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
       mcc -m tempo_o3_profile_extract.m -o tempo_o3_profile_extract
-      ./run_tempo_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tempo_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -10621,7 +10621,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
          mcc -m tempo_o3_profile_extract.m -o tempo_o3_profile_extract
-         ./run_tempo_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tempo_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -10755,7 +10755,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
       mcc -m tempo_o3_cpsr_extract.m -o tempo_o3_cpsr_extract
-      ./run_tempo_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tempo_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -10788,7 +10788,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
          mcc -m tempo_o3_cpsr_extract.m -o tempo_o3_cpsr_extract
-         ./run_tempo_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tempo_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -10922,7 +10922,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_NO2/native_to_ascii/${FILE} ./.
       mcc -m tempo_no2_total_col_extract.m -o tempo_no2_total_col_extract
-      ./run_tempo_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tempo_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -10955,7 +10955,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_NO2/native_to_ascii/${FILE} ./.
          mcc -m tempo_no2_total_col_extract.m -o tempo_no2_total_col_extract
-         ./run_tempo_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tempo_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -11089,7 +11089,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_NO2/native_to_ascii/${FILE} ./.
       mcc -m tempo_no2_trop_col_extract.m -o tempo_no2_trop_col_extract
-      ./run_tempo_no2_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tempo_no2_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -11122,7 +11122,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_NO2/native_to_ascii/${FILE} ./.
          mcc -m tempo_no2_trop_col_extract.m -o tempo_no2_trop_col_extract
-         ./run_tempo_no2_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tempo_no2_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -11352,6 +11352,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_CO_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_co* tes_co_total* unresolved*
    fi
 #
 ########################################################################
@@ -11522,6 +11526,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_CO_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_co* tes_co_profile* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -11537,8 +11545,6 @@ EOF
       else
          cd ${RUN_DIR}/${DATE}/tes_co_cpsr_obs
       fi
-
-
 #
 # SET TES PARAMETERS
       export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
@@ -11694,6 +11700,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_CO_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_co* tes_co_cpsr* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -11864,6 +11874,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_CO2_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_co2* tes_co2_total* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -12034,6 +12048,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_CO2_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_co2* tes_co2_profile* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -12204,6 +12222,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_CO2_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_co2* tes_co2_cpsr* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -12374,6 +12396,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_O3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_o3* tes_o3_total* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -12544,6 +12570,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_O3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_o3* tes_o3_profile* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -12715,6 +12745,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_O3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_o3* tes_o3_cpsr* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -12820,7 +12854,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_NH3/native_to_ascii/${FILE} ./.
          mcc -m tes_nh3_total_col_extract.m -o tes_nh3_total_col_extract
-         ./run_tes_nh3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tes_nh3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -12886,6 +12920,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_NH3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_nh3* tes_nh3_total* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -13057,6 +13095,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_NH3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_nh3* tes_nh3_profile* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -13129,7 +13171,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_NH3/native_to_ascii/${FILE} ./.
       mcc -m tes_nh3_cpsr_extract.m -o tes_nh3_cpsr_extract
-      ./run_tes_nh3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tes_nh3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -13162,7 +13204,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_NH3/native_to_ascii/${FILE} ./.
          mcc -m tes_nh3_cpsr_extract.m -o tes_nh3_cpsr_extract
-         ./run_tes_nh3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tes_nh3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -13228,6 +13270,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_NH3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_nh3* tes_nh3_cpsr* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -13299,7 +13345,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CH4/native_to_ascii/${FILE} ./.
       mcc -m tes_ch4_total_col_extract.m -o tes_ch4_total_col_extract
-      ./run_tes_ch4_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tes_ch4_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -13332,7 +13378,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CH4/native_to_ascii/${FILE} ./.
          mcc -m tes_ch4_total_col_extract.m -o tes_ch4_total_col_extract
-         ./run_tes_ch4_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tes_ch4_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -13398,6 +13444,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_CH4_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_ch4* tes_ch4_total* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -13568,6 +13618,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_CH4_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_ch4* tes_ch4_profile* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -13639,7 +13693,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CH4/native_to_ascii/${FILE} ./.
       mcc -m tes_ch4_cpsr_extract.m -o tes_ch4_cpsr_extract
-      ./run_tes_ch4_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_tes_ch4_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -13672,7 +13726,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CH4/native_to_ascii/${FILE} ./.
          mcc -m tes_ch4_cpsr_extract.m -o tes_ch4_cpsr_extract
-         ./run_tes_ch4_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_tes_ch4_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -13738,6 +13792,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TES_CH4_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_tes_ch4* tes_ch4_cpsr* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -14655,7 +14713,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_O3/native_to_ascii/${FILE} ./.
       mcc -m cris_o3_cpsr_extract.m -o cris_o3_cpsr_extract
-      ./run_cris_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_cris_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -14688,7 +14746,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_O3/native_to_ascii/${FILE} ./.
          mcc -m cris_o3_cpsr_extract.m -o cris_o3_cpsr_extract
-         ./run_cris_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_cris_o3_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -14859,7 +14917,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_NH3/native_to_ascii/${FILE} ./.
          mcc -m cris_nh3_total_col_extract.m -o cris_nh3_total_col_extract
-         ./run_cris_nh3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_cris_nh3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -15165,7 +15223,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CH4/native_to_ascii/${FILE} ./.
       mcc -m cris_ch4_total_col_extract.m -o cris_ch4_total_col_extract
-      ./run_cris_ch4_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_cris_ch4_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -15198,7 +15256,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CH4/native_to_ascii/${FILE} ./.
          mcc -m cris_ch4_total_col_extract.m -o cris_ch4_total_col_extract
-         ./run_cris_ch4_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_cris_ch4_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -15505,7 +15563,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CH4/native_to_ascii/${FILE} ./.
       mcc -m cris_ch4_cpsr_extract.m -o cris_ch4_cpsr_extract
-      ./run_cris_ch4_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_cris_ch4_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -15538,7 +15596,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_CH4/native_to_ascii/${FILE} ./.
          mcc -m cris_ch4_cpsr_extract.m -o cris_ch4_cpsr_extract
-         ./run_cris_ch4_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_cris_ch4_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -16016,7 +16074,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_PAN/native_to_ascii/${FILE} ./.
       mcc -m cris_pan_cpsr_extract.m -o cris_pan_cpsr_extract
-      ./run_cris_pan_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_cris_pan_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -16049,7 +16107,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/CRIS_PAN/native_to_ascii/${FILE} ./.
          mcc -m cris_pan_cpsr_extract.m -o cris_pan_cpsr_extract
-         ./run_cris_pan_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_cris_pan_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${CRIS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -16518,7 +16576,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2A_NO2/native_to_ascii/${FILE} ./.
       mcc -m gome2a_no2_total_col_extract.m -o gome2a_no2_total_col_extract
-      ./run_gome2a_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${GOME2A_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_gome2a_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${GOME2A_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -16551,7 +16609,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2A_NO2/native_to_ascii/${FILE} ./.
          mcc -m gome2a_no2_total_col_extract.m -o gome2a_no2_total_col_extract
-         ./run_gome2a_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${GOME2A_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_gome2a_no2_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${GOME2A_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -16613,6 +16671,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_GOME2a_NO2_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_gome2a_no2* gome2a_no2_total* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -16779,6 +16841,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_GOME2A_NO2_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_gome2a_no2* gome2a_no2_trop* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -16850,7 +16916,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_O3/native_to_ascii/${FILE} ./.
       mcc -m mls_o3_total_col_extract.m -o mls_o3_total_col_extract
-      ./run_mls_o3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_mls_o3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -16883,7 +16949,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_O3/native_to_ascii/${FILE} ./.
          mcc -m mls_o3_total_col_extract.m -o mls_o3_total_col_extract
-         ./run_mls_o3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_mls_o3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -16945,6 +17011,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_MLS_O3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_mls_o3* mls_o3_total* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -17112,6 +17182,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_MLS_O3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_mls_o3* mls_o3_total* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -17279,6 +17353,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_MLS_O3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_mls_o3* mls_o3_cpsr* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -17350,7 +17428,7 @@ EOF
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/native_to_ascii/${FILE} ./.
       mcc -m mls_hno3_total_col_extract.m -o mls_hno3_total_col_extract
-      ./run_mls_hno3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+      ./run_mls_hno3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -17383,7 +17461,7 @@ EOF
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/native_to_ascii/${FILE} ./.
          mcc -m mls_hno3_total_col_extract.m -o mls_hno3_total_col_extract
-         ./run_mls_hno3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat.html 2>&1
+         ./run_mls_hno3_total_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -17446,6 +17524,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_MLS_HNO3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_mls_hno3* mls_hno3_total* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -17613,6 +17695,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_MLS_HNO3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_mls_hno3* mls_hno3_profile* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -17780,6 +17866,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_MLS_HNO3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_mls_hno3* mls_hno3_cpsr* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -17950,6 +18040,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_NO2_DOMINO_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_omi_no2_domino* omi_no2_domino_total* unresolved* *.dat
    fi
 #
 ########################################################################
@@ -18123,6 +18217,10 @@ EOF
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_OMI_NO2_DOMINO_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+      rm requiredMCRP* run_omi_no2_domino* omi_no2_domino_trop* unresolved* *.dat
    fi
 #
 #########################################################################

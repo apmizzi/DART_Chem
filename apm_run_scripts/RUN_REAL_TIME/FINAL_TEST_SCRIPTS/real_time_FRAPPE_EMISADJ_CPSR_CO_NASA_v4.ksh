@@ -33,10 +33,10 @@ export FIRST_EMISS_INV_DATE=2014072506
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'      
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072506
+export CYCLE_STR_DATE=2014072518
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072506
+export CYCLE_END_DATE=2014072518
 #export CYCLE_END_DATE=${CYCLE_STR_DATE}
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
@@ -222,22 +222,32 @@ fi
 export SKIP_FILTER=false
 #
 # Run WRF-Chem for failed forecasts (will not work with adaptive time step)
-export RUN_SPECIAL_FORECAST=false
-export NUM_SPECIAL_FORECAST=0
+export RUN_SPECIAL_FORECAST=true
+export NUM_SPECIAL_FORECAST=2
 export SPECIAL_FORECAST_FAC=1./2.
 export SPECIAL_FORECAST_FAC=2./3.
 export SPECIAL_FORECAST_FAC=1.
 #
-export SPECIAL_FORECAST_MEM[1]=1
-export SPECIAL_FORECAST_MEM[2]=2
-export SPECIAL_FORECAST_MEM[3]=3
-export SPECIAL_FORECAST_MEM[4]=4
-export SPECIAL_FORECAST_MEM[5]=5
-export SPECIAL_FORECAST_MEM[6]=6
-export SPECIAL_FORECAST_MEM[7]=7
-export SPECIAL_FORECAST_MEM[8]=8
-export SPECIAL_FORECAST_MEM[9]=9
-export SPECIAL_FORECAST_MEM[10]=10
+export SPECIAL_FORECAST_MEM[1]=10
+export SPECIAL_FORECAST_MEM[2]=9
+export SPECIAL_FORECAST_MEM[3]=18
+export SPECIAL_FORECAST_MEM[4]=17
+export SPECIAL_FORECAST_MEM[5]=16
+export SPECIAL_FORECAST_MEM[6]=15
+export SPECIAL_FORECAST_MEM[7]=14
+export SPECIAL_FORECAST_MEM[8]=13
+export SPECIAL_FORECAST_MEM[9]=12
+export SPECIAL_FORECAST_MEM[10]=11
+export SPECIAL_FORECAST_MEM[11]=10
+export SPECIAL_FORECAST_MEM[12]=09
+export SPECIAL_FORECAST_MEM[13]=13
+export SPECIAL_FORECAST_MEM[14]=14
+export SPECIAL_FORECAST_MEM[15]=15
+export SPECIAL_FORECAST_MEM[16]=16
+export SPECIAL_FORECAST_MEM[17]=17
+export SPECIAL_FORECAST_MEM[18]=18
+export SPECIAL_FORECAST_MEM[19]=19
+export SPECIAL_FORECAST_MEM[20]=20
 #
 # Run temporal interpolation for missing background files
 # RUN_UNGRIB, RUN_METGRID, and RUN_REAL must all be false for the interpolation and for cycling
@@ -466,11 +476,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_WRFCHEM_BIO=false
       export RUN_WRFCHEM_FIRE=false
       export RUN_WRFCHEM_CHEMI=false
-      export RUN_PERT_WRFCHEM_CHEM_ICBC=true
-      export RUN_PERT_WRFCHEM_CHEM_EMISS=true
+      export RUN_PERT_WRFCHEM_CHEM_ICBC=false
+      export RUN_PERT_WRFCHEM_CHEM_EMISS=false
       export RUN_MOPITT_CO_TOTAL_COL_OBS=false
       export RUN_MOPITT_CO_PROFILE_OBS=false # (done)
-      export RUN_MOPITT_CO_CPSR_OBS=true # (done)
+      export RUN_MOPITT_CO_CPSR_OBS=false # (done)
       export RUN_IASI_CO_TOTAL_COL_OBS=false
       export RUN_IASI_CO_PROFILE_OBS=false # (done)
       export RUN_IASI_CO_CPSR_OBS=false # (done)
@@ -550,7 +560,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_MLS_HNO3_TOTAL_COL_OBS=false
       export RUN_MLS_HNO3_PROFILE_OBS=false # (works, vertical sum)
       export RUN_MLS_HNO3_CPSR_OBS=false # (works, vertical sum)
-      export RUN_AIRNOW_CO_OBS=true # (done)
+      export RUN_AIRNOW_CO_OBS=false # (done)
       export RUN_AIRNOW_O3_OBS=false # (done)
       export RUN_AIRNOW_NO2_OBS=false # (done)
       export RUN_AIRNOW_SO2_OBS=false # (done)
@@ -560,8 +570,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_PANDA_O3_OBS=false
       export RUN_PANDA_PM25_OBS=false
       export RUN_MEXICO_AQS_CO_OBS=false
-      export RUN_MET_OBS=true # (done)
-      export RUN_COMBINE_OBS=true
+      export RUN_MET_OBS=false # (done)
+      export RUN_COMBINE_OBS=false
 #
       if [[ ${DATE} -eq ${INITIAL_DATE}  ]]; then
          export RUN_PREPROCESS_OBS=false
@@ -577,9 +587,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_ENSMEAN_CYCLE_FR=false
          export RUN_ENSEMBLE_MEAN_OUTPUT=true
       else
-         export RUN_PREPROCESS_OBS=true
+         export RUN_PREPROCESS_OBS=false
          export RUN_WRFCHEM_INITIAL=false
-         export RUN_LOCALIZATION=true
+         export RUN_LOCALIZATION=false
          export RUN_DART_FILTER=true
          export RUN_BIAS_CORRECTION=false
          export RUN_UPDATE_BC=true
@@ -961,16 +971,20 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #   export WRFCHEM_TIME_LIMIT=01:59:00
 #   export WRFCHEM_NODES=2
 #   export WRFCHEM_TASKS=16
+# Sandy Bridge   
    export PERT_JOB_CLASS=normal
-   export PERT_TIME_LIMIT=02:30:00
+   export PERT_TIME_LIMIT=03:30:00
    export PERT_NODES=2
    export PERT_TASKS=16
-#   (( PERT_TASKS=${NUM_MEMBERS}+1 ))
+# Haswell
+   export PERT_JOB_CLASS=normal
+   export PERT_TIME_LIMIT=05:59:00
+   export PERT_NODES=3
+   export PERT_TASKS=24
 #   export PERT_JOB_CLASS=devel
 #   export PERT_TIME_LIMIT=01:59:00
-#   export PERT_NODES=1
+#   export PERT_NODES=2
 #   export PERT_TASKS=16
-#   (( PERT_TASKS=${NUM_MEMBERS}+1 ))
 #
 # RUN DIRECTORIES
    export GEOGRID_DIR=${RUN_DIR}/geogrid
@@ -3397,7 +3411,10 @@ EOF
 #      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} perturb_chem_icbc_CORR_RT_MA.exe SERIAL ${ACCOUNT}
 #
 # PARALLEL VERSION
-      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_icbc_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
+#      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_icbc_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
+#
+# PARALLEL ON HASWELL
+      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_has.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_icbc_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
 #
       qsub -Wblock=true job.ksh
 #
@@ -3621,8 +3638,12 @@ EOF
 #         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} perturb_chem_emiss_CORR_RT_MA.exe SERIAL ${ACCOUNT}
 #
 # PARALLEL VERSION
+#         export JOBRND=${RANDOM}_cr_emiss_pert
+#         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
+#
+# PARALLEL ON HASWELL
          export JOBRND=${RANDOM}_cr_emiss_pert
-         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
+         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_has.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
 #
          qsub -Wblock=true job.ksh
 #
