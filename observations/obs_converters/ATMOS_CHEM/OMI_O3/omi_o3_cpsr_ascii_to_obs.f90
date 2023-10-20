@@ -336,19 +336,13 @@ program omi_o3_cpsr_ascii_to_obs
       sum_accept=sum_accept+1
       if(sum_accept/obs_o3_reten_freq*obs_o3_reten_freq .ne. sum_accept) then
          flg=1
-      elseif(any(isnan(cov_obs)) .or. any(isnan(avgk_obs)) .or. &
-      any(isnan(prior_obs)) .or. any(isnan(o3_obs))) then
-         flg=1   
-      elseif(flg.eq.0) then
-         do i=1,nlay_obs
-            if(cov_obs(i,i).lt.0. .or. prior_obs(i).lt.0. .or. o3_obs(i).lt.0.) then
-               flg=1
-!               print *, 'omi_variance is NaN or negative ',cov_obs(i,i)
-               exit
-            endif
-         enddo
       endif
-!      
+      do i=1,nlay_obs
+         if(isnan(cov_obs(i,i)) .or. cov_obs(i,i).lt.0.) then
+            flg=1
+            exit
+         endif
+      enddo      
       if(flg.eq.1) then
          deallocate(prs_obs,o3_obs,o3_cpsr,prior_cpsr,prior_obs)
          deallocate(prior_err_obs,avgk_obs,avgk_cpsr,cov_obs)
@@ -379,14 +373,33 @@ program omi_o3_cpsr_ascii_to_obs
             cov_shift(k,kk)=cov_obs(k,kk)
          enddo
       enddo
+      if(any(isnan(cov_shift)) .or. any(isnan(avgk_shift)) .or. &
+      any(isnan(prior_shift)) .or. any(isnan(o3_shift))) then
+         flg=1
+      elseif(flg.eq.0) then
+         do i=1,nlay_obs
+            if(cov_shift(i,i).lt.0. .or. prior_shift(i).lt.0. .or. o3_shift(i).lt.0.) then
+               flg=1
+               exit
+            endif
+         enddo
+      endif
+!      
+      if(flg.eq.1) then
+         deallocate(prs_obs,o3_obs,o3_cpsr,prior_cpsr,prior_obs)
+         deallocate(prior_err_obs,avgk_obs,avgk_cpsr,cov_obs)
+         deallocate(o3_shift,prior_shift)
+         deallocate(avgk_shift,cov_shift)
+         deallocate(cov_prior_obs,cov_obs_tmp)
+         deallocate(cov_prior_obs_tmp,prs_obs_r8)
+         deallocate(prior_obs_r8,avgk_obs_r8) 
+         deallocate(prf_model) 
+         read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
+         cycle
+      endif
 !
 ! Calculate CPSRs for this retrieval profile
       reject=0
-!      print *, 'Prs ',sum_total,prs_obs(:)/100.
-!      print *, 'O3 ',o3_obs(:)
-!      print *, 'Prior ',prior_obs(:)
-!      print *, 'Cov ',(cov_obs(k,k),k=1,nlayer)
-!      print *, ' '
       call cpsr_calculation(nmodes,nlayer,o3_cpsr,avgk_cpsr,prior_cpsr,o3_shift,prior_shift, &
       avgk_shift,cov_shift,sum_accept)
 !
@@ -399,7 +412,7 @@ program omi_o3_cpsr_ascii_to_obs
 !
 ! Obs value is a CPSR
          obs_val(:)=o3_cpsr(imds)
-         obs_err_var=(fac_obs_error*fac_err*1.)**2.
+         obs_err_var=1.
          omi_qc(:)=0
          obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
          call get_time(obs_time, seconds, days)

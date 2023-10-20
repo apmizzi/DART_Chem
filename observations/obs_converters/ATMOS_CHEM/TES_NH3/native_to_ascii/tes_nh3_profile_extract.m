@@ -245,9 +245,8 @@ function tes_nh3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
          hh_tes=str2double(utcc_time(12:13));
          mm_tes=str2double(utcc_time(15:16));
          ss_tes=round(str2double(utcc_time(18:23)));
-         tesdate=single(convert_time_2010(yyyy_tes,mn_tes, ...
-         dy_tes,hh_tes,mm_tes,ss_tes));
-
+         tesdate=single(convert_time_ref(yyyy_tes,mn_tes, ...
+         dy_tes,hh_tes,mm_tes,ss_tes,2010));
 %
 % Check time
 %	 fprintf('APM: Time test - %d %d %d \n',windate_min,tesdate,windate_max)

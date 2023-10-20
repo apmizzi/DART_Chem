@@ -344,7 +344,6 @@ program tes_o3_profile_ascii_to_obs
       prior_obs_r8(1:kend)=o3_obs_prior(klev+1:nlay_obs)
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
-      print *, 'APM: at obs thinning '
 !
 ! Obs thinning test
       obs_accept=obs_accept+1
@@ -356,14 +355,16 @@ program tes_o3_profile_ascii_to_obs
 ! Check whether avgk row is zero.
             reject_ak=1
             do icol=klev+1,nlay_obs
-               if(avgk_obs(ilay,icol).ne.-999) then
+               if(avgk_obs(ilay,icol).ne.-999 .or. cov_total(ilay,icol).ne.-999) then
                   reject_ak=0
                   exit
                endif  
             enddo
-            if(reject_ak.eq.1) cycle
+         enddo
+         if(reject_ak.eq.1) cycle
 !
 ! Process accepted observations
+         do ilay=klev+1,nlay_obs
             sum_accept=sum_accept+1
             qc_count=qc_count+1
 !
@@ -380,9 +381,6 @@ program tes_o3_profile_ascii_to_obs
 !            which_vert=-1      ! surface
 !            which_vert=1       ! level
             which_vert=2       ! pressure
-
-            print *, 'APM: at which vert '
-            
 !
             obs_kind = TES_O3_PROFILE
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90)
@@ -432,9 +430,7 @@ program tes_o3_profile_ascii_to_obs
       deallocate(prior_obs_r8)
       deallocate(prf_locl) 
       deallocate(prf_full)
-      print *, 'obs id 2 ',obs_id
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-      print *, 'obs id ',obs_id
    enddo
 !
 !----------------------------------------------------------------------

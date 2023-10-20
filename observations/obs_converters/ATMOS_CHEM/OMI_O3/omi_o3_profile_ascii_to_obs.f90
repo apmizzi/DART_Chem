@@ -196,7 +196,6 @@ program omi_o3_profile_ascii_to_obs
    pi=4.*atan(1.)
    rad2deg=360./(2.*pi)
    re=6371000.
-   fac_err=1.0
    fac_err=0.3
    days_last=-9999.
    seconds_last=-9999.
