@@ -140,7 +140,7 @@ export RUN_MEXICO_AQS_CO_OBS=false
 export RUN_MET_OBS=true # (done)
 #
 # For emissions estimation
-export ADD_EMISS=false
+export ADD_EMISS=true
 export EMISS_DAMP_CYCLE=1.0
 export EMISS_DAMP_INTRA_CYCLE=1.0
 #
@@ -289,7 +289,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export WORK_DIR=/nobackupp11/amizzi
    export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
    export EXPERIMENT_DIR=${SCRATCH_DIR}
-   export RUN_DIR=${EXPERIMENT_DIR}/real_FRAPPE_ALLCHEM
+   export RUN_DIR=${EXPERIMENT_DIR}/real_FRAPPE_EMISADJ_CO
    export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_FRAPPE
    export EXP_INPUT_OBS=${RUN_INPUT_DIR}/${DATE}/FRAPPE_EXP_OBS
 %
@@ -302,7 +302,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Pars.ksh
    source ${RS_SCRIPTS_DIR}/RS_Observation_Dirs.ksh
    source ${RS_SCRIPTS_DIR}/RS_WRF_Namelists.ksh
-   source ${RS_SCRIPTS_DIR}/RS_DART_Namelists_ALLCHEM.ksh
+   source ${RS_SCRIPTS_DIR}/RS_DART_Namelists_ALLCHEM_CO.ksh
    source ${RS_SCRIPTS_DIR}/RS_Error_Decorrelation_Settings.ksh
 %   
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.

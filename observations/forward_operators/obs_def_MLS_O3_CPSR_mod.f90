@@ -102,7 +102,7 @@ module obs_def_mls_o3_cpsr_mod
              set_obs_def_mls_o3_cpsr
 
 ! Storage for the special information required for observations of this type
-   integer, parameter    :: max_mls_o3_obs = 10000000
+   integer, parameter    :: max_mls_o3_obs = 100000
    integer               :: num_mls_o3_obs = 0
    integer,  allocatable :: nlayer(:)
    integer,  allocatable :: klev(:)

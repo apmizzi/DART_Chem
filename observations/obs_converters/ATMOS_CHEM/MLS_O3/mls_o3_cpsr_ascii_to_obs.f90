@@ -121,7 +121,7 @@ program mls_o3_cpsr_ascii_to_obs
    character(len=*), parameter     :: revdate  = ''
 !
    integer,parameter               :: num_copies=1, num_qc=1
-   integer,parameter               :: max_num_obs=1000000
+   integer,parameter               :: max_num_obs=100000
    type(obs_sequence_type)         :: seq
    type(obs_type)                  :: obs
    type(obs_type)                  :: obs_old

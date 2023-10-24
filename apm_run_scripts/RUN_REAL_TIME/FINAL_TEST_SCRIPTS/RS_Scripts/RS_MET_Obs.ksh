@@ -30,4 +30,4 @@
       mv obs_seq${D_DATE} obs_seq_prep_${DATE}.out
 #
 # Clean directory
-      rm dart_log* input.nml mccExcluded* obs_seq2014* prepqm*temp_obs.2014*
+      rm dart_log* index_create index.file input.nml mccExcluded* prepqm* temp_obs.2014*

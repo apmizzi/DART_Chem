@@ -421,4 +421,4 @@ EOF
       ./obs_impact_tool
 #
 # Clean directory
-      rm dart_log* input.nml obs_impact_tool variable_localization.txt      
+#      rm dart_log* input.nml obs_impact_tool variable_localization.txt      

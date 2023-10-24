@@ -25,5 +25,3 @@
    export BAND_DEPTH_DIR=${RUN_DIR}/${DATE}/band_depth
    export ENSEMBLE_MEAN_INPUT_DIR=${RUN_DIR}/${DATE}/ensemble_mean_input
    export ENSEMBLE_MEAN_OUTPUT_DIR=${RUN_DIR}/${DATE}/ensemble_mean_output
-   export REAL_TIME_DIR=${DART_DIR}/apm_run_scripts/RUN_REAL_TIME
-   export RS_SCRIPTS_DIR=${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS/RS_Scripts
