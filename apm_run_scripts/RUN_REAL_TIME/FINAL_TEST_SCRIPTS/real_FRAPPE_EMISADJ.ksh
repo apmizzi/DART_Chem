@@ -25,6 +25,21 @@
 #
 #########################################################################
 #
+# ROOT DIRECTORIES:
+export DART_VER=/DART_development
+export WORK_DIR=/nobackupp11/amizzi
+export TRUNK_DIR=${WORK_DIR}/TRUNK
+export REAL_TIME_DIR=${TRUNK_DIR}${DART_VER}/apm_run_scripts/RUN_REAL_TIME
+export RS_SCRIPTS_DIR=${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS/RS_Scripts
+export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
+export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
+export EXPERIMENT_DIR=${SCRATCH_DIR}
+export RUN_DIR=${EXPERIMENT_DIR}/FRAPPE_EMISADJ
+export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_FRAPPE
+export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
+export NUM_MEMBERS=10
+#
+# CYCLE TIME SETTINGS
 export INITIAL_DATE=2014072500
 export FIRST_FILTER_DATE=2014072506
 export FIRST_DART_INFLATE_DATE=2014072506
@@ -165,17 +180,17 @@ export SPECIAL_FORECAST_MEM[10]=10
 #
 # Set observation error scaling and
 # retention factors
-source ./RS_Scripts/RS_Fac_Retn_Constants.ksh
+source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
 #
 # Set log transform settings
 export USE_LOG=false
-source ./RS_Scripts/RS_Set_Log_Transformation_Constants.ksh
+source ${RS_SCRIPTS_DIR}/RS_Set_Log_Transformation_Constants.ksh
 #
 # Set CPSR constants
-source ./RS_Scripts/RS_CPSR_Settings.ksh
+source ${RS_SCRIPTS_DIR}/RS_CPSR_Settings.ksh
 #
 # Set miscellaneous constants
-source ./RS_Scripts/RS_Miscellaneous_Constants.ksh
+source ${RS_SCRIPTS_DIR}/RS_Miscellaneous_Constants.ksh
 #
 # Run fine scale forecast only
 export RUN_FINE_SCALE=false
@@ -201,7 +216,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # SELECT COMPONENT RUN OPTIONS:
 # FOR GENERAL CYCLING   
    if [[ ${RUN_SPECIAL_FORECAST} == false ]]; then
-      export RUN_INPUT_OBS=true
+      export RUN_INPUT_OBS=false
       if ${RUN_INPUT_OBS}; then
          export RUN_COMBINE_OBS=true
          export RUN_PREPROCESS_OBS=true
@@ -284,20 +299,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_BAND_DEPTH=false
    fi
 #
-# ROOT DIRECTORIES:
-   export SCRATCH_DIR=/nobackupp11/amizzi/OUTPUT_DATA
-   export WORK_DIR=/nobackupp11/amizzi
-   export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
-   export EXPERIMENT_DIR=${SCRATCH_DIR}
-   export RUN_DIR=${EXPERIMENT_DIR}/real_FRAPPE_EMISADJ
-   export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_FRAPPE
-   export EXP_INPUT_OBS=${RUN_INPUT_DIR}/${DATE}/FRAPPE_EXP_OBS
-%
-   source ./RS_Scripts/RS_Code_Versions.ksh
-   source ./RS_Scripts/RS_Experiment_Dirs.ksh
-   source ./RS_Scripts/RS_Set_Time_Vars.ksh
-   source ./RS_Scripts/RS_Run_Dirs.ksh
-%
+   source ${RS_SCRIPTS_DIR}/RS_Code_Versions.ksh
+   source ${RS_SCRIPTS_DIR}/RS_Experiment_Dirs.ksh
+   source ${RS_SCRIPTS_DIR}/RS_Set_Time_Vars.ksh
+   source ${RS_SCRIPTS_DIR}/RS_Run_Dirs.ksh
    source ${RS_SCRIPTS_DIR}/RS_Computer_Settings.ksh
    source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Pars.ksh
    source ${RS_SCRIPTS_DIR}/RS_Observation_Dirs.ksh
@@ -330,7 +335,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${EXP_INPUT_OBS}
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Generate_Obs_Seq_File.ksh > index.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Generate_Obs_Seq_File.ksh > index.html 2>&1
    fi
 #
 #########################################################################

@@ -237,4 +237,4 @@ EOFF
       fi
 #
 # Clean directory
-#      rm *.dat bias_correct* dart_log* input.nml job.ksh iasi_co_profile*      
+      rm *.dat bias_correct* dart_log* input.nml job.ksh iasi_co_profile*      

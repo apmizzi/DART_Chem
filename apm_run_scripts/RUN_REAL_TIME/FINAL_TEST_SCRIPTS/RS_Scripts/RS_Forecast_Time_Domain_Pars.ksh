@@ -3,7 +3,6 @@
 # FORECAST PARAMETERS:
    export USE_DART_INFL=true
    (( CYCLE_PERIOD_SEC=${CYCLE_PERIOD}*60*60 ))
-   export NUM_MEMBERS=10
    export MAX_DOMAINS=02
    export CR_DOMAIN=01
    export FR_DOMAIN=02

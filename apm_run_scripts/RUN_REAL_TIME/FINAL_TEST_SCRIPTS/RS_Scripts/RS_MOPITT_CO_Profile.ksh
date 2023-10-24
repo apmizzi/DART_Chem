@@ -212,4 +212,4 @@ EOF
       fi
 #
 # Clean directory
-#      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
+      rm *.dat bias_correct* dart_log* input.nml job.ksh mopitt_co_profile*      
