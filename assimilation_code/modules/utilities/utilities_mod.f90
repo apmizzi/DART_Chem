@@ -82,8 +82,17 @@ public :: get_unit, &
           ! these two routines should move up to after get_value_from_string
           ! they shouldn't be grouped with these other low level routines.
           interactive_r, &
-          interactive_i
-
+          interactive_i, &
+!
+! APM +++          
+          read_int_scalar, &
+          write_int_scalar, &       
+          read_r8_scalar, &
+          write_r8_scalar, &
+          read_r8_array, &
+          write_r8_array
+! APM ---
+!         
 ! this routine is either in the null_mpi_utilities_mod.f90, or in
 ! the mpi_utilities_mod.f90 file, but it is not a module subroutine.
 ! the mpi files use this module, and you cannot have circular module
@@ -2957,7 +2966,6 @@ endif
 
 end function interactive_r
 
-
 !----------------------------------------------------------------------
 !> prompt for an integer value, optionally setting min and/or max limits
 !> loops until valid value input.
@@ -3000,7 +3008,144 @@ else ! anything goes ... cannot check
 endif
 
 end function interactive_i
+!
+! APM +++
+integer function read_int_scalar(ifile, fform, context)
 
+   integer,          intent(in) :: ifile
+   character(len=*), intent(in) :: fform
+   character(len=*), intent(in) :: context
+   character(len=*), parameter    :: source = 'forward_operator_code.f90'
+   
+   integer :: io
+   
+   if (ascii_file_format(fform)) then
+      read(ifile, *, iostat = io) read_int_scalar
+   else
+      read(ifile, iostat = io) read_int_scalar
+   endif
+   if ( io /= 0 ) then
+      call error_handler(E_ERR,'read_int_scalar', context, source)
+   endif
+   
+end function read_int_scalar
+
+!-------------------------------------------------------------------------------
+
+subroutine write_int_scalar(ifile, my_scalar, fform, context)
+
+   integer,          intent(in) :: ifile
+   integer,          intent(in) :: my_scalar
+   character(len=*), intent(in) :: fform
+   character(len=*), intent(in) :: context
+   character(len=*), parameter  :: source = 'forward_operator_code.f90'
+   
+   integer :: io
+   
+   if (ascii_file_format(fform)) then
+      write(ifile, *, iostat=io) my_scalar
+   else
+      write(ifile, iostat=io) my_scalar
+   endif
+   if ( io /= 0 ) then
+      call error_handler(E_ERR, 'write_int_scalar', context, source)
+   endif
+
+end subroutine write_int_scalar
+
+!-------------------------------------------------------------------------------
+
+function read_r8_scalar(ifile, fform, context)
+
+   real(r8)                     :: read_r8_scalar
+   integer,          intent(in) :: ifile
+   character(len=*), intent(in) :: fform
+   character(len=*), intent(in) :: context
+   character(len=*), parameter  :: source = 'forward_operator_code.f90'
+   
+   integer :: io
+   
+   if (ascii_file_format(fform)) then
+      read(ifile, *, iostat = io) read_r8_scalar
+   else
+      read(ifile, iostat = io) read_r8_scalar
+   endif
+   if ( io /= 0 ) then
+      call error_handler(E_ERR,'read_r8_scalar', context, source)
+   endif
+   
+end function read_r8_scalar
+
+!-------------------------------------------------------------------------------
+
+subroutine write_r8_scalar(ifile, my_scalar, fform, context)
+
+   integer,          intent(in) :: ifile
+   real(r8),         intent(in) :: my_scalar
+   character(len=*), intent(in) :: fform
+   character(len=*), intent(in) :: context
+   character(len=*), parameter  :: source = 'forward_operator_code.f90'
+   
+   integer :: io
+   
+   if (ascii_file_format(fform)) then
+      write(ifile, *, iostat=io) my_scalar
+   else
+      write(ifile, iostat=io) my_scalar
+   endif
+   if ( io /= 0 ) then
+      call error_handler(E_ERR, 'write_r8_scalar', context, source)
+   endif
+
+end subroutine write_r8_scalar
+
+!-------------------------------------------------------------------------------
+
+subroutine read_r8_array(ifile, num_items, r8_array, fform, context)
+
+   integer,          intent(in)  :: ifile, num_items
+   real(r8),         intent(out) :: r8_array(:)
+   character(len=*), intent(in)  :: fform
+   character(len=*), intent(in)  :: context
+   character(len=*), parameter   ::  source = 'forward_operator_code.f90'
+   
+   integer :: io
+   
+   if (ascii_file_format(fform)) then
+      read(ifile, *, iostat = io) r8_array(1:num_items)
+   else
+      read(ifile, iostat = io) r8_array(1:num_items)
+   endif
+   if ( io /= 0 ) then
+      call error_handler(E_ERR, 'read_r8_array', context, source)
+   endif
+
+end subroutine read_r8_array
+
+!-------------------------------------------------------------------------------
+
+subroutine write_r8_array(ifile, num_items, array, fform, context)
+
+   integer,          intent(in) :: ifile, num_items
+   real(r8),         intent(in) :: array(:)
+   character(len=*), intent(in) :: fform
+   character(len=*), intent(in) :: context
+   character(len=*), parameter  :: source = 'forward_operator_code.f90'
+   
+   integer :: io
+   
+   if (ascii_file_format(fform)) then
+      write(ifile, *, iostat = io) array(1:num_items)
+   else
+      write(ifile, iostat = io) array(1:num_items)
+   endif
+   if ( io /= 0 ) then
+      call error_handler(E_ERR, 'write_r8_array', context, source)
+   endif
+
+end subroutine write_r8_array
+! APM ---
+!
 !=======================================================================
 ! End of utilities_mod
 !=======================================================================

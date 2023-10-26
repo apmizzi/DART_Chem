@@ -1,0 +1,42 @@
+&control
+
+do_ic     = .false.,
+do_bc     = .true.,
+
+domain    = 1,
+
+dir_wrf   = '/glade/scratch/rkumar/AQ_WATCH/20200201/wrf_cams/',
+dir_moz   = '/glade/p/acom/acom-da/rkumar/firex_aq/cams_bc/',
+fn_moz    = 'moz0000.nc',
+moz_var_suffix = ' '
+src_model   = 'ECMWF'
+src_ps_name = 'psurf'
+dbg_i       = 195
+dbg_j       = 132
+dbg_species = 'co'  
+spc_map = 'co -> 28*co',
+          'co_bdry -> 28*co',
+          'o3 -> 48*go3', 
+          'no -> 30*no',
+          'no2 -> 46*no2',
+          'hno3 -> 63*hno3',
+          'ch4 -> 16*ch4_c',
+          'hcho -> 30*hcho',
+          'c2h6 -> 30*c2h6',
+          'pan -> 121*pan',
+          'so2 -> 64*so2',
+          'c3h8 -> 44*c3h8',
+          'BC1 -> aermr10;1e9',
+          'BC2 -> aermr09;1e9',
+          'OC1 -> aermr08;1e9',
+          'OC2 -> aermr07;1e9',
+          'DUST_1 -> aermr04;1e9',
+          'DUST_2 -> aermr05;1e9',
+          'DUST_3 -> 0.10*aermr06;1e9',
+          'DUST_4 -> 0.15*aermr06;1e9',
+          'DUST_5 -> 0.25*aermr06;1e9',
+          'SEAS_1 -> 0.12*aermr01;1e9',
+          'SEAS_2 -> 0.042*aermr02;1e9',
+          'SEAS_3 -> 0.078*aermr02;1e9',
+          'SEAS_4 -> 0.06*aermr03;1e9',
+/

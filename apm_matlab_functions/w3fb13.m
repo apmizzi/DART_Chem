@@ -1,0 +1,67 @@
+%
+   function [xi,xj]=w3fb13(alat,elon,alat1,elon1, ...
+   dx,elonv,alatan1,alatan2)
+%
+   rerth=6.3712e6;
+   pi=3.14159;
+%
+   if(alatan1>0)
+      h=1;
+   else
+      h=-1;
+   end
+%
+   radpd=pi/180.;
+   rebydx=rerth/dx;
+   alatn1=alatan1*radpd;
+   alatn2=alatan2*radpd;
+   if(alatan1==alatan2)
+      an=h*sin(alatn1);
+   else
+      an=log(cos(alatn1)/cos(alatn2))/ ...
+      log(tan(((h*pi/2.)-alatn1)/2.)/tan(((h*pi/2.)-alatn2)/2.));
+   end
+   cosltn=cos(alatn2);
+%
+   elon1l=elon1;
+   if(elon1-elonv>180)
+      elon1l=elon1-360;
+   end
+   if(elon1-elonv<-180)
+      elon1l=elon1+360;
+   end
+%
+   elonl=elon;
+   if(elon-elonv>180)
+      elonl=elon-360;
+   end
+   if(elon-elonv<-180)
+      elonl=elon+360;
+   end
+%
+   elonvr=elonv*radpd;
+%
+   ala1=alat1*radpd;
+   psi=(rebydx*cosltn)/(an*(tan((pi/4.)-(h*alatn2/2.))^an));
+   rmll=psi*(tan((pi/4.)-(h*ala1/2.))^an);
+%
+   elo1=elon1l*radpd;
+   arg=an*(elo1-elonvr);
+   polei=1.-h*rmll*sin(arg);
+   polej=1+rmll*cos(arg);
+%
+   ala=alat*radpd;
+%
+   rm=psi*(tan((pi/4.)-(h*ala/2.))^an);
+   elo=elonl*radpd;
+   arg=an*(elo-elonvr);
+   xi=polei+h*rm*sin(arg);
+   xj=polej-rm*cos(arg);
+%
+   if(round(xi)<1)
+      xi=xi-1;
+   end
+   if(round(xj)<1)
+      xj=xj-1;
+   end
+end

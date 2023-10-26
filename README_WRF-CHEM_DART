@@ -1,0 +1,11 @@
+WRF-Chem/DART build sequence:
+
+1.    Modify ../CHEM_DART/build_templates/mkmf.template' for your computing system as described in the DART documentation.
+
+2.    Go to '../CHEM_DART/observations/obs_converers/ATMOS_CHEM/APM_CODE' and run './build_lib.ksh'. This builds a temporary copy of 'libapm_code.a' so it exists for the '../CHEM_DART/models/wrf_chem' build.
+
+3.    Go to '../CHEM_DART/models/wrf_chem/work' and run './quickbuild.sh.' This builds the DART code for use with WRF-Chem.
+
+4.    Go to '../CHEM_DART/observations/obs_converters/ATMOS_CHEM/APM_LIBRARY/work' and run './quickbuild.sh'. This build the permanent copy of 'libapm_code.a'. This build sequence is necessary because the permanent version of 'libapm_code.a' has DART dependencies while the temporary copy does not. This enable placement of the '-l libapm_code.a' in the 'mkmf' build file for general access with the DART builds.
+
+5.    Once this sequence is complete, one can build the  chemistry obs_converters in '../CHEM_DART/observations/obs_converters/ATMOS_CHEM'.
