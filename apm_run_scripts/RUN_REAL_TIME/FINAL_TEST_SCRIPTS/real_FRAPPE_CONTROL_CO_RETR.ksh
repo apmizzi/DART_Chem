@@ -35,7 +35,7 @@ export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
 export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
 export RUN_DIR=${EXPERIMENT_DIR}/FRAPPE_CONTROL_CO_RETR
-export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_FRAPPE
+export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_FRAPPE_CO
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
 export NUM_MEMBERS=20
 #
@@ -153,6 +153,43 @@ export RUN_PANDA_O3_OBS=false
 export RUN_PANDA_PM25_OBS=false
 export RUN_MEXICO_AQS_CO_OBS=false
 export RUN_MET_OBS=true # (done)
+#
+# Setup DART namelist parameters for which observations to assimilate/evaluate
+# &obs_kind_nml
+export NL_EVALUATE_THESE_OBS_TYPES="'MOPITT_CO_PROFILE',
+                                   'MOPITT_CO_CPSR',
+                                   'IASI_CO_PROFILE',
+                                   'IASI_CO_CPSR',
+                                   'TES_CO_PROFILE',
+                                   'TES_CO_CPSR',
+                                   'AIRNOW_CO'"
+#
+export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
+                                   'RADIOSONDE_U_WIND_COMPONENT',
+                                   'RADIOSONDE_V_WIND_COMPONENT',
+                                   'RADIOSONDE_SPECIFIC_HUMIDITY',
+                                   'RADIOSONDE_SURFACE_ALTIMETER',
+                                   'MARINE_SFC_U_WIND_COMPONENT',
+                                   'MARINE_SFC_V_WIND_COMPONENT',
+                                   'MARINE_SFC_TEMPERATURE',
+                                   'MARINE_SFC_SPECIFIC_HUMIDITY',
+                                   'MARINE_SFC_ALTIMETER',
+                                   'AIRCRAFT_U_WIND_COMPONENT',
+                                   'AIRCRAFT_V_WIND_COMPONENT',
+                                   'AIRCRAFT_TEMPERATURE',
+                                   'ACARS_U_WIND_COMPONENT',
+                                   'ACARS_V_WIND_COMPONENT',
+                                   'ACARS_TEMPERATURE',
+                                   'LAND_SFC_U_WIND_COMPONENT',
+                                   'LAND_SFC_V_WIND_COMPONENT',
+                                   'LAND_SFC_TEMPERATURE',
+                                   'LAND_SFC_SPECIFIC_HUMIDITY',
+                                   'LAND_SFC_ALTIMETER',
+                                   'SAT_U_WIND_COMPONENT',
+                                   'SAT_V_WIND_COMPONENT'"
+#
+# Setup DART namelist parameters for which observations to assimilate/evaluate
+# &obs_kind_nml
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -307,7 +344,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Pars.ksh
    source ${RS_SCRIPTS_DIR}/RS_Observation_Dirs.ksh
    source ${RS_SCRIPTS_DIR}/RS_WRF_Namelists.ksh
-   source ${RS_SCRIPTS_DIR}/RS_DART_Namelists_CONTROL_CO_RETR.ksh
+   source ${RS_SCRIPTS_DIR}/RS_DART_Namelists.ksh
    source ${RS_SCRIPTS_DIR}/RS_Error_Decorrelation_Settings.ksh
 %   
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.

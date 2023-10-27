@@ -47,31 +47,31 @@ export FIRST_EMISS_INV_DATE=2014072506
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'      
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072512
+export CYCLE_STR_DATE=2014072600
 export CYCLE_DATE=${CYCLE_STR_DATE}
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072518
+export CYCLE_END_DATE=2014072612
 #export CYCLE_END_DATE=${CYCLE_STR_DATE}
 #
 # SELECT OBSERVATION OPTIONS:
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
 export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
-export RUN_MOPITT_CO_CPSR_OBS=false # (done)
+export RUN_MOPITT_CO_CPSR_OBS=true # (done)
 export RUN_IASI_CO_TOTAL_COL_OBS=false
 export RUN_IASI_CO_PROFILE_OBS=true # (done)
-export RUN_IASI_CO_CPSR_OBS=false # (done)
+export RUN_IASI_CO_CPSR_OBS=true # (done)
 export RUN_IASI_O3_PROFILE_OBS=false
 export RUN_IASI_O3_CPSR_OBS=false
 export RUN_MODIS_AOD_TOTAL_COL_OBS=true # (done)
 export RUN_OMI_O3_TOTAL_COL_OBS=false
 export RUN_OMI_O3_TROP_COL_OBS=false
 export RUN_OMI_O3_PROFILE_OBS=true # (done)
-export RUN_OMI_O3_CPSR_OBS=false # (works)
+export RUN_OMI_O3_CPSR_OBS=true # (works)
 export RUN_OMI_NO2_TOTAL_COL_OBS=false
 export RUN_OMI_NO2_TROP_COL_OBS=true # (done)
 export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
-export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false # (works)
+export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true # (works)
 export RUN_OMI_SO2_TOTAL_COL_OBS=false
 export RUN_OMI_SO2_PBL_COL_OBS=true # (works)
 export RUN_OMI_HCHO_TOTAL_COL_OBS=true # (works)
@@ -100,7 +100,7 @@ export RUN_TEMPO_NO2_TROP_COL_OBS=false # (done)
 export RUN_TES_CO_TOTAL_COL_OBS=false
 export RUN_TES_CO_TROP_COL_OBS=false
 export RUN_TES_CO_PROFILE_OBS=true # (works)
-export RUN_TES_CO_CPSR_OBS=false # (works)
+export RUN_TES_CO_CPSR_OBS=true # (works)
 export RUN_TES_CO2_TOTAL_COL_OBS=false 
 export RUN_TES_CO2_TROP_COL_OBS=false 
 export RUN_TES_CO2_PROFILE_OBS=false # (works, vertical sum)
@@ -108,11 +108,11 @@ export RUN_TES_CO2_CPSR_OBS=false # (works, vertical sum)
 export RUN_TES_O3_TOTAL_COL_OBS=false
 export RUN_TES_O3_TROP_COL_OBS=false
 export RUN_TES_O3_PROFILE_OBS=true # (works)
-export RUN_TES_O3_CPSR_OBS=false # (works)
+export RUN_TES_O3_CPSR_OBS=true # (works)
 export RUN_TES_NH3_TOTAL_COL_OBS=false
 export RUN_TES_NH3_TROP_COL_OBS=false
 export RUN_TES_NH3_PROFILE_OBS=true # (works, vertical sum)
-export RUN_TES_NH3_CPSR_OBS=false # (works, vertical sum)
+export RUN_TES_NH3_CPSR_OBS=true # (works, vertical sum)
 export RUN_TES_CH4_TOTAL_COL_OBS=false
 export RUN_TES_CH4_TROP_COL_OBS=false
 export RUN_TES_CH4_PROFILE_OBS=false # (works, vertical sum)
@@ -138,10 +138,10 @@ export RUN_GOME2A_NO2_TOTAL_COL_OBS=false
 export RUN_GOME2A_NO2_TROP_COL_OBS=true # (works, vertical sum)
 export RUN_MLS_O3_TOTAL_COL_OBS=false
 export RUN_MLS_O3_PROFILE_OBS=true # (works, check)
-export RUN_MLS_O3_CPSR_OBS=false # (works, vertical sum)
+export RUN_MLS_O3_CPSR_OBS=true # (works, vertical sum)
 export RUN_MLS_HNO3_TOTAL_COL_OBS=false
 export RUN_MLS_HNO3_PROFILE_OBS=true # (works, vertical sum)
-export RUN_MLS_HNO3_CPSR_OBS=false # (works, vertical sum)
+export RUN_MLS_HNO3_CPSR_OBS=true # (works, vertical sum)
 export RUN_AIRNOW_CO_OBS=true # (done)
 export RUN_AIRNOW_O3_OBS=true # (done)
 export RUN_AIRNOW_NO2_OBS=true # (done)
@@ -153,6 +153,84 @@ export RUN_PANDA_O3_OBS=false
 export RUN_PANDA_PM25_OBS=false
 export RUN_MEXICO_AQS_CO_OBS=false
 export RUN_MET_OBS=true # (done)
+#
+# Setup DART namelist parameters for which observations to assimilate/evaluate
+# &obs_kind_nml
+export NL_EVALUATE_THESE_OBS_TYPES="'MOPITT_CO_PROFILE',
+                                   'MOPITT_CO_CPSR',
+                                   'IASI_CO_PROFILE',
+                                   'IASI_CO_CPSR',
+                                   'IASI_O3_PROFILE',
+                                   'IASI_O3_CPSR',
+                                   'MODIS_AOD_TOTAL_COL'
+                                   'OMI_O3_PROFILE',
+                                   'OMI_O3_CPSR',
+                                   'OMI_NO2_TROP_COL',
+                                   'OMI_NO2_DOMINO_TROP_COL',
+                                   'OMI_SO2_PBL_COL',
+                                   'OMI_HCHO_TOTAL_COL',
+                                   'TROPOMI_CO_TOTAL_COL',
+                                   'TROPOMI_O3_PROFILE',
+                                   'TROPOMI_O3_CPSR',
+                                   'TROPOMI_NO2_TROP_COL',
+                                   'TROPOMI_SO2_PBL_COL',
+                                   'TROPOMI_CH4_TOTAL_COL',
+                                   'TROPOMI_HCHO_TOTAL_COL',
+                                   'TES_CO_PROFILE',
+                                   'TES_CO_CPSR',
+                                   'TES_CO2_PROFILE',
+                                   'TES_CO2_CPSR',
+                                   'TES_O3_PROFILE',
+                                   'TES_O3_CPSR',
+                                   'TES_NH3_PROFILE',
+                                   'TES_NH3_CPSR',
+                                   'TES_CH4_PROFILE',
+                                   'TES_CH4_CPSR',
+                                   'CRIS_CO_PROFILE',
+                                   'CRIS_CO_CPSR',
+                                   'CRIS_O3_PROFILE',
+                                   'CRIS_O3_CPSR',
+                                   'CRIS_NH3_PROFILE',
+                                   'CRIS_NH3_CPSR',
+                                   'CRIS_CH4_PROFILE',
+                                   'CRIS_CH4_CPSR',
+                                   'CRIS_PAN_TOTAL_COL',
+                                   'SCIAM_NO2_TROP_COL',
+                                   'GOME2A_NO2_TROP_COL',
+                                   'MLS_O3_PROFILE',
+                                   'MLS_O3_CPSR',
+                                   'MLS_HNO3_PROFILE',
+                                   'MLS_HNO3_CPSR',
+                                   'AIRNOW_CO',
+                                   'AIRNOW_O3',
+                                   'AIRNOW_NO2',
+                                   'AIRNOW_SO2',
+                                   'AIRNOW_PM10',
+                                   'AIRNOW_PM25'"
+#
+export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
+                                   'RADIOSONDE_U_WIND_COMPONENT',
+                                   'RADIOSONDE_V_WIND_COMPONENT',
+                                   'RADIOSONDE_SPECIFIC_HUMIDITY',
+                                   'RADIOSONDE_SURFACE_ALTIMETER',
+                                   'MARINE_SFC_U_WIND_COMPONENT',
+                                   'MARINE_SFC_V_WIND_COMPONENT',
+                                   'MARINE_SFC_TEMPERATURE',
+                                   'MARINE_SFC_SPECIFIC_HUMIDITY',
+                                   'MARINE_SFC_ALTIMETER',
+                                   'AIRCRAFT_U_WIND_COMPONENT',
+                                   'AIRCRAFT_V_WIND_COMPONENT',
+                                   'AIRCRAFT_TEMPERATURE',
+                                   'ACARS_U_WIND_COMPONENT',
+                                   'ACARS_V_WIND_COMPONENT',
+                                   'ACARS_TEMPERATURE',
+                                   'LAND_SFC_U_WIND_COMPONENT',
+                                   'LAND_SFC_V_WIND_COMPONENT',
+                                   'LAND_SFC_TEMPERATURE',
+                                   'LAND_SFC_SPECIFIC_HUMIDITY',
+                                   'LAND_SFC_ALTIMETER',
+                                   'SAT_U_WIND_COMPONENT',
+                                   'SAT_V_WIND_COMPONENT'"
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -307,7 +385,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Pars.ksh
    source ${RS_SCRIPTS_DIR}/RS_Observation_Dirs.ksh
    source ${RS_SCRIPTS_DIR}/RS_WRF_Namelists.ksh
-   source ${RS_SCRIPTS_DIR}/RS_DART_Namelists_CONTROL.ksh
+   source ${RS_SCRIPTS_DIR}/RS_DART_Namelists.ksh
    source ${RS_SCRIPTS_DIR}/RS_Error_Decorrelation_Settings.ksh
 %   
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.

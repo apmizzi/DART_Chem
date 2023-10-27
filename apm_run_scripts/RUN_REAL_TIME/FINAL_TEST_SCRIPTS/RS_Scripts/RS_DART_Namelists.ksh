@@ -388,39 +388,6 @@
                     '${DART_DIR}/observations/forward_operators/obs_def_MLS_HNO3_TOTAL_COL_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_MLS_HNO3_PROFILE_mod.f90'"
 #
-# &obs_kind_nml
-   export NL_EVALUATE_THESE_OBS_TYPES="'MOPITT_CO_PROFILE',
-                                   'MOPITT_CO_CPSR',
-                                   'IASI_CO_PROFILE',
-                                   'IASI_CO_CPSR',
-                                   'TES_CO_PROFILE',
-                                   'TES_CO_CPSR',
-                                   'AIRNOW_CO'"
-#
-   export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
-                                   'RADIOSONDE_U_WIND_COMPONENT',
-                                   'RADIOSONDE_V_WIND_COMPONENT',
-                                   'RADIOSONDE_SPECIFIC_HUMIDITY',
-                                   'RADIOSONDE_SURFACE_ALTIMETER',
-                                   'MARINE_SFC_U_WIND_COMPONENT',
-                                   'MARINE_SFC_V_WIND_COMPONENT',
-                                   'MARINE_SFC_TEMPERATURE',
-                                   'MARINE_SFC_SPECIFIC_HUMIDITY',
-                                   'MARINE_SFC_ALTIMETER',
-                                   'AIRCRAFT_U_WIND_COMPONENT',
-                                   'AIRCRAFT_V_WIND_COMPONENT',
-                                   'AIRCRAFT_TEMPERATURE',
-                                   'ACARS_U_WIND_COMPONENT',
-                                   'ACARS_V_WIND_COMPONENT',
-                                   'ACARS_TEMPERATURE',
-                                   'LAND_SFC_U_WIND_COMPONENT',
-                                   'LAND_SFC_V_WIND_COMPONENT',
-                                   'LAND_SFC_TEMPERATURE',
-                                   'LAND_SFC_SPECIFIC_HUMIDITY',
-                                   'LAND_SFC_ALTIMETER',
-                                   'SAT_U_WIND_COMPONENT',
-                                   'SAT_V_WIND_COMPONENT'"
-#
 # &replace_wrf_fields_nml
    export NL_FIELDNAMES="'SNOWC',
                    'ALBBCK',

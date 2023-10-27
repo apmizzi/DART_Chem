@@ -34,7 +34,7 @@ export RS_SCRIPTS_DIR=${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS/RS_Scripts
 export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
 export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
-export RUN_DIR=${EXPERIMENT_DIR}/FRAPPE_EMISADJ_CO_RETR
+export RUN_DIR=${EXPERIMENT_DIR}/FRAPPE_EMISADJ_CO_IAS_ONLY_CPSR
 export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_FRAPPE_CO
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
 export NUM_MEMBERS=20
@@ -159,6 +159,41 @@ export RUN_MET_OBS=true # (done)
 export NL_EVALUATE_THESE_OBS_TYPES=" "
 #
 export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
+                                   'RADIOSONDE_U_WIND_COMPONENT',
+                                   'RADIOSONDE_V_WIND_COMPONENT',
+                                   'RADIOSONDE_SPECIFIC_HUMIDITY',
+                                   'RADIOSONDE_SURFACE_ALTIMETER',
+                                   'MARINE_SFC_U_WIND_COMPONENT',
+                                   'MARINE_SFC_V_WIND_COMPONENT',
+                                   'MARINE_SFC_TEMPERATURE',
+                                   'MARINE_SFC_SPECIFIC_HUMIDITY',
+                                   'MARINE_SFC_ALTIMETER',
+                                   'AIRCRAFT_U_WIND_COMPONENT',
+                                   'AIRCRAFT_V_WIND_COMPONENT',
+                                   'AIRCRAFT_TEMPERATURE',
+                                   'ACARS_U_WIND_COMPONENT',
+                                   'ACARS_V_WIND_COMPONENT',
+                                   'ACARS_TEMPERATURE',
+                                   'LAND_SFC_U_WIND_COMPONENT',
+                                   'LAND_SFC_V_WIND_COMPONENT',
+                                   'LAND_SFC_TEMPERATURE',
+                                   'LAND_SFC_SPECIFIC_HUMIDITY',
+                                   'LAND_SFC_ALTIMETER',
+                                   'SAT_U_WIND_COMPONENT',
+                                   'SAT_V_WIND_COMPONENT',
+                                   'MOPITT_CO_PROFILE',
+                                   'MOPITT_CO_CPSR',
+                                   'IASI_CO_PROFILE',
+                                   'IASI_CO_CPSR',
+                                   'TES_CO_PROFILE',
+                                   'TES_CO_CPSR',
+                                   'AIRNOW_CO'"
+#
+# Setup DART namelist parameters for which observations to assimilate/evaluate
+# &obs_kind_nml
+   export NL_EVALUATE_THESE_OBS_TYPES=" "
+#
+   export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'RADIOSONDE_U_WIND_COMPONENT',
                                    'RADIOSONDE_V_WIND_COMPONENT',
                                    'RADIOSONDE_SPECIFIC_HUMIDITY',

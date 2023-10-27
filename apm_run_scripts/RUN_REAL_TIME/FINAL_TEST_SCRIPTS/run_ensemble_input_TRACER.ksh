@@ -38,6 +38,7 @@ export EXPERIMENT_DIR=${SCRATCH_DIR}
 export RUN_DIR=${EXPERIMENT_DIR}/INPUT_DATA_TRACER1
 export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_TRACER1
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
+export NUM_MEMBERS=10
 #
 # CYCLE TIME SETTINGS
 export INITIAL_DATE=2014072500
@@ -204,7 +205,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Pars.ksh
    source ${RS_SCRIPTS_DIR}/RS_Observation_Dirs.ksh
    source ${RS_SCRIPTS_DIR}/RS_WRF_Namelists.ksh
-   source ${RS_SCRIPTS_DIR}/RS_DART_Namelists_CONTROL.ksh
+   source ${RS_SCRIPTS_DIR}/RS_DART_Namelists.ksh
    source ${RS_SCRIPTS_DIR}/RS_Error_Decorrelation_Settings.ksh
 #   
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
