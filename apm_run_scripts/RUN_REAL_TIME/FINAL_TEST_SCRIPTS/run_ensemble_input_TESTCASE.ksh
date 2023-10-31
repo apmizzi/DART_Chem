@@ -35,35 +35,34 @@ export RS_SCRIPTS_DIR=${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS/RS_Scripts
 export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
 export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
-export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FIREX_REAL_TIME_DATA
-export RUN_DIR=${EXPERIMENT_DIR}/INPUT_DATA_FIREX
-export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_FIREX
-export EXPERIMENT_INPUT_OBS=FIREX_OBS
+export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_TESTCASE_INPUT_DATA
+export RUN_DIR=${EXPERIMENT_DIR}/INPUT_DATA_TESTCASE
+export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_TESTCASE
+export EXPERIMENT_INPUT_OBS=TESTCASE_OBS
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
-export WRFCHEM_TEMPLATE_FILE=wrfout_d01_2020071318_mean
+export WRFCHEM_TEMPLATE_FILE=wrfout_d01_2014071512_mean
 export NUM_MEMBERS=10
 export CYCLE_PERIOD=6
 export FCST_PERIOD=6
 #
 # CYCLE TIME SETTINGS
-export INITIAL_DATE=2020071000
-export FIRST_FILTER_DATE=2020071006
-export FIRST_DART_INFLATE_DATE=2020071006
-export FIRST_EMISS_INV_DATE=2020071006
+export INITIAL_DATE=2014072612
+export FIRST_FILTER_DATE=2014072618
+export FIRST_DART_INFLATE_DATE=2014072618
+export FIRST_EMISS_INV_DATE=2014072618
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2020071018
+export CYCLE_STR_DATE=2014072612
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2020071018
+export CYCLE_END_DATE=2014072612
 #
 # For emissions estimation
 export ADD_EMISS=false
 export EMISS_DAMP_CYCLE=1.0
 export EMISS_DAMP_INTRA_CYCLE=1.0
 #
-# Set observation error scaling and
-# retention factors
+# Set observation error scaling and retention factors
 source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
 #
 # Set log transform settings
@@ -85,29 +84,29 @@ source ${RS_SCRIPTS_DIR}/RS_Miscellaneous_Constants.ksh
 export CYCLE_DATE=${CYCLE_STR_DATE}
 while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export DATE=${CYCLE_DATE}
-   export EXP_INPUT_OBS=${RUN_INPUT_DIR}/${DATE}/${EXPERIMENT_INPUT_OBS}
+   export EXP_INPUT_OBS=${RUN_INPUT_DIR}/${DATE}/TESTCASE_OBS
    export L_ADD_EMISS=${ADD_EMISS} 
    if [[ ${DATE} -lt ${FIRST_EMISS_INV_DATE} ]]; then
       export L_ADD_EMISS=false
    fi
 #
 # SELECT COMPONENT RUN OPTIONS:
-   export RUN_GEOGRID=false
-   export RUN_UNGRIB=false
-   export RUN_METGRID=false
-   export RUN_REAL=false
-   export RUN_PERT_WRFCHEM_MET_IC=false
-   export RUN_PERT_WRFCHEM_MET_BC=false
-   export RUN_EXO_COLDENS=false
-   export RUN_SEASON_WES=false
-   export RUN_WRFCHEM_BIO=false
-   export RUN_WRFCHEM_FIRE=false
-   export RUN_WRFCHEM_CHEMI=false
-   export RUN_PERT_WRFCHEM_CHEM_ICBC=false
-   export RUN_PERT_WRFCHEM_CHEM_EMISS=false
+   export RUN_GEOGRID=true
+   export RUN_UNGRIB=true
+   export RUN_METGRID=true
+   export RUN_REAL=true
+   export RUN_PERT_WRFCHEM_MET_IC=true
+   export RUN_PERT_WRFCHEM_MET_BC=true
+   export RUN_EXO_COLDENS=true
+   export RUN_SEASON_WES=true
+   export RUN_WRFCHEM_BIO=true
+   export RUN_WRFCHEM_FIRE=true
+   export RUN_WRFCHEM_CHEMI=true
+   export RUN_PERT_WRFCHEM_CHEM_ICBC=true
+   export RUN_PERT_WRFCHEM_CHEM_EMISS=true
    export RUN_BIAS_CORRECTION=false
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
-   export RUN_MOPITT_CO_PROFILE_OBS=false # (done)
+   export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
    export RUN_MOPITT_CO_CPSR_OBS=false # (done)
    export RUN_IASI_CO_TOTAL_COL_OBS=false
    export RUN_IASI_CO_PROFILE_OBS=false # (done)
@@ -117,37 +116,37 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_MODIS_AOD_TOTAL_COL_OBS=false # (done)
    export RUN_OMI_O3_TOTAL_COL_OBS=false
    export RUN_OMI_O3_TROP_COL_OBS=false
-   export RUN_OMI_O3_PROFILE_OBS=true # (done)
-   export RUN_OMI_O3_CPSR_OBS=true # (works)
+   export RUN_OMI_O3_PROFILE_OBS=false # (done)
+   export RUN_OMI_O3_CPSR_OBS=false # (works)
    export RUN_OMI_NO2_TOTAL_COL_OBS=false
-   export RUN_OMI_NO2_TROP_COL_OBS=true # (done)
+   export RUN_OMI_NO2_TROP_COL_OBS=false # (done)
    export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
    export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false # (works)
    export RUN_OMI_SO2_TOTAL_COL_OBS=false
-   export RUN_OMI_SO2_PBL_COL_OBS=true # (works)
-   export RUN_OMI_HCHO_TOTAL_COL_OBS=true # (works)
+   export RUN_OMI_SO2_PBL_COL_OBS=false # (works)
+   export RUN_OMI_HCHO_TOTAL_COL_OBS=false # (works)
    export RUN_OMI_HCHO_TROP_COL_OBS=false
-   export RUN_TROPOMI_CO_TOTAL_COL_OBS=true # (done)
+   export RUN_TROPOMI_CO_TOTAL_COL_OBS=false # (done)
    export RUN_TROPOMI_O3_TOTAL_COL_OBS=false
    export RUN_TROPOMI_O3_TROP_COL_OBS=false
    export RUN_TROPOMI_O3_PROFILE_OBS=false # (not done, no data)
    export RUN_TROPOMI_O3_CPSR_OBS=false
    export RUN_TROPOMI_NO2_TOTAL_COL_OBS=false
-   export RUN_TROPOMI_NO2_TROP_COL_OBS=true # (works)
+   export RUN_TROPOMI_NO2_TROP_COL_OBS=false # (works)
    export RUN_TROPOMI_SO2_TOTAL_COL_OBS=false
-   export RUN_TROPOMI_SO2_PBL_COL_OBS=true # (works, vertical sum)
-   export RUN_TROPOMI_CH4_TOTAL_COL_OBS=true  # (works, vertical sum)
+   export RUN_TROPOMI_SO2_PBL_COL_OBS=false # (works, vertical sum)
+   export RUN_TROPOMI_CH4_TOTAL_COL_OBS=false  # (works, vertical sum)
    export RUN_TROPOMI_CH4_TROP_COL_OBS=false
    export RUN_TROPOMI_CH4_PROFILE_OBS=false
    export RUN_TROPOMI_CH4_CPSR_OBS=false
    export RUN_TROPOMI_HCHO_TOTAL_COL_OBS=false 
-   export RUN_TROPOMI_HCHO_TROP_COL_OBS=true # (works, vertical sum)
+   export RUN_TROPOMI_HCHO_TROP_COL_OBS=false # (works, vertical sum)
    export RUN_TEMPO_O3_TOTAL_COL_OBS=false
    export RUN_TEMPO_O3_TROP_COL_OBS=false
-   export RUN_TEMPO_O3_PROFILE_OBS=true # (done)
-   export RUN_TEMPO_O3_CPSR_OBS=true
+   export RUN_TEMPO_O3_PROFILE_OBS=false # (done)
+   export RUN_TEMPO_O3_CPSR_OBS=false
    export RUN_TEMPO_NO2_TOTAL_COL_OBS=false
-   export RUN_TEMPO_NO2_TROP_COL_OBS=true # (done)
+   export RUN_TEMPO_NO2_TROP_COL_OBS=false # (done)
    export RUN_TES_CO_TOTAL_COL_OBS=false
    export RUN_TES_CO_PROFILE_OBS=false # (works)
    export RUN_TES_CO_CPSR_OBS=false # (works)
@@ -210,8 +209,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    source ${RS_SCRIPTS_DIR}/RS_Computer_Settings.ksh
    source ${RS_SCRIPTS_DIR}/RS_Observation_Dirs.ksh
    source ${RS_SCRIPTS_DIR}/RS_Chemistry_Pert_Params.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Params_FIREX.ksh
-   source ${RS_SCRIPTS_DIR}/RS_WRFChem_Namelists_FIREX.ksh
+   source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Params_FRAPPE.ksh
+   source ${RS_SCRIPTS_DIR}/RS_WRFChem_Namelists_FRAPPE.ksh
    source ${RS_SCRIPTS_DIR}/RS_Forward_Operator_Params.ksh
    source ${RS_SCRIPTS_DIR}/RS_DART_Namelists.ksh
    source ${RS_SCRIPTS_DIR}/RS_Error_Decorrelation_Settings.ksh
@@ -257,7 +256,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/ungrib
       fi
-      export EXPERIMENT_LS_MET=${EXPERIMENT_NAM_DIR}
+      export EXPERIMENT_LS_MET=${EXPERIMENT_GFS_DIR}
       source ${RS_SCRIPTS_DIR}/RS_Ungrib.ksh > index_rs.html 2>&1 
    fi
 #
@@ -306,7 +305,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_met_ic
       fi
-      export GDAS_FILEIN=prepbufr.gdas.${YYYY}${MM}${DD}.t${HH}z.nr.48h
+      export GDAS_FILEIN=prepbufr.gdas.${DATE}.wo40.be
       source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_IC.ksh > index_rs.html 2>&1 
    fi
 #
@@ -387,7 +386,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_fire
       fi
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Fire_FIREX.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Fire.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -419,7 +418,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_chem_icbc
       fi
-      export NL_CHEM_ICBC_SPECIES='o3','no','no2','nh3','hno3','hno4','n2o5','h2o2','ch4','co','ch3ooh','hcho','ch3oh','c2h4','ald','acet','mgly','pan','mpan','macr','mvk','c2h6','c3h6','c3h8','c2h5oh','c10h16','isopr','acetol','mek','bigene','bigalk','tol','benzene','xylenes','cres','dms','so2','BC1','BC2','OC1','OC2','SEAS_1','SEAS_2','SEAS_3','SEAS_4','DUST_1','DUST_2','DUST_3','DUST_4','DUST_5'
+      export NL_CHEM_ICBC_SPECIES='o3','no','no2','no3','nh3','hno3','hno4','n2o5','ho2','h2o2','co','ch4','ch3o2','ch3ooh','hcho','ch3oh','c2h4','ald','ch3cooh','acet','mgly','pan','mpan','macr','mvk','c2h6','c3h6','c3h8','c2h5oh','c10h16','onit','onitr','isopr','isopn','acetol','glyald','hydrald','mek','bigene','open','bigalk','tol','cres','dms','so2','sulf','BC1','BC2','OC1','OC2','SEAS_1','SEAS_2','SEAS_3','SEAS_4','DUST_1','DUST_2','DUST_3','DUST_4','DUST_5','h2','n2o'
       source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Chem_ICBC.ksh > index_rs.html 2>&1
    fi
 #
@@ -436,7 +435,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_chem_emiss
       fi
-      export NL_CHEM_ANTHRO_EMIS='E_CO','E_NO','E_NO2','E_SO2','E_NH3','E_C2H5OH','E_BIGALK','E_BIGENE','E_C2H4','E_C2H6','E_C3H6','E_C3H8','E_CH2O','E_CH3CHO','E_CH3COCH3','E_CH3OH','E_MEK','E_TOLUENE','E_BENZENE','E_XYLENE','E_ISOP','E_APIN','E_sulf','E_C2H2','E_PM_25','E_BC','E_OC','E_PM_10','E_SO4I','E_SO4J','E_ECI','E_ECJ','E_ORGI','E_ORGJ','E_NO3I','E_NO3J','E_NH4I','E_NH4J',
+      export NL_CHEM_ANTHRO_EMIS='E_CO','E_NO','E_NO2','E_BIGALK','E_BIGENE','E_C2H4','E_C2H5OH','E_C2H6','E_C3H6','E_C3H8','E_CH2O','E_CH3CHO','E_CH3COCH3','E_CH3OH','E_MEK','E_SO2','E_TOLUENE','E_NH3','E_ISOP','E_C10H16','E_sulf','E_CO_A','E_CO_BB','E_CO02','E_CO03','E_XNO','E_XNO2','E_BALD','E_C2H2','E_BENZENE','E_XYLENE','E_CRES','E_HONO','E_PM25I','E_PM25J','E_PM_10','E_ECI','E_ECJ','E_ORGI','E_ORGJ','E_SO4I','E_SO4J','E_NO3I','E_NO3J','E_NH4I','E_NH4J','E_PM_25','E_OC','E_BC',
       export NL_CHEM_FIRE_EMIS='ebu_in_co','ebu_in_no','ebu_in_so2','ebu_in_bigalk','ebu_in_bigene','ebu_in_c2h4','ebu_in_c2h5oh','ebu_in_c2h6','ebu_in_c3h8','ebu_in_c3h6','ebu_in_ch2o','ebu_in_ch3cho','ebu_in_ch3coch3','ebu_in_ch3oh','ebu_in_mek','ebu_in_toluene','ebu_in_nh3','ebu_in_no2','ebu_in_open','ebu_in_c10h16','ebu_in_ch3cooh','ebu_in_cres','ebu_in_glyald','ebu_in_mgly','ebu_in_gly','ebu_in_acetol','ebu_in_isop','ebu_in_macr','ebu_in_mvk','ebu_in_oc','ebu_in_bc',
       export NL_CHEM_BIOG_EMIS='MSEBIO_ISOP',
       source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Chem_Emiss.ksh > index_rs.html 2>&1
@@ -471,7 +470,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/mopitt_co_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MOPITT_CO_Profile_FIREX.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MOPITT_CO_Profile_FRAPPE.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -487,7 +486,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/mopitt_co_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MOPITT_CO_CPSR_FIREX.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MOPITT_CO_CPSR_FRAPPE.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -695,7 +694,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/omi_no2_domino_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_OMI_DOMINO_NO2_Total_Col.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_OMI_NO2_DOMINO_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -711,7 +710,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/omi_no2_domino_trop_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_OMI_DOMINO_NO2_Trop_Col.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_OMI_NO2_DOMINO_Trop_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################

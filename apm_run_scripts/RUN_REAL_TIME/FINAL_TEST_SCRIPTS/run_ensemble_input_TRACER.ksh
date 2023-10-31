@@ -35,30 +35,34 @@ export RS_SCRIPTS_DIR=${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS/RS_Scripts
 export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
 export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
-export RUN_DIR=${EXPERIMENT_DIR}/INPUT_DATA_TRACER1
-export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_TRACER1
+export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_REAL_TIME_DATA
+export RUN_DIR=${EXPERIMENT_DIR}/INPUT_DATA_TRACER
+export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_TRACER
+export EXPERIMENT_INPUT_OBS=TRACER_OBS
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
+export WRFCHEM_TEMPLATE_FILE=wrfout_d01_2014071512_mean
 export NUM_MEMBERS=10
+export CYCLE_PERIOD=6
+export FCST_PERIOD=6
 #
 # CYCLE TIME SETTINGS
-export INITIAL_DATE=2014072500
-export FIRST_FILTER_DATE=2014072506
-export FIRST_DART_INFLATE_DATE=2014072506
-export FIRST_EMISS_INV_DATE=2014072506
+export INITIAL_DATE=2014072612
+export FIRST_FILTER_DATE=2014072612
+export FIRST_DART_INFLATE_DATE=2014072612
+export FIRST_EMISS_INV_DATE=2014072612
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072500
+export CYCLE_STR_DATE=2014072612
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072512
+export CYCLE_END_DATE=2014072612
 #
 # For emissions estimation
 export ADD_EMISS=false
 export EMISS_DAMP_CYCLE=1.0
 export EMISS_DAMP_INTRA_CYCLE=1.0
 #
-# Set observation error scaling and
-# retention factors
+# Set observation error scaling and retention factors
 source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
 #
 # Set log transform settings
@@ -80,25 +84,26 @@ source ${RS_SCRIPTS_DIR}/RS_Miscellaneous_Constants.ksh
 export CYCLE_DATE=${CYCLE_STR_DATE}
 while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export DATE=${CYCLE_DATE}
+   export EXP_INPUT_OBS=${RUN_INPUT_DIR}/${DATE}/${EXPERIMENT_INPUT_OBS}
    export L_ADD_EMISS=${ADD_EMISS} 
    if [[ ${DATE} -lt ${FIRST_EMISS_INV_DATE} ]]; then
       export L_ADD_EMISS=false
    fi
 #
 # SELECT COMPONENT RUN OPTIONS:
-   export RUN_GEOGRID=false
-   export RUN_UNGRIB=false
-   export RUN_METGRID=false
-   export RUN_REAL=false
-   export RUN_PERT_WRFCHEM_MET_IC=false
-   export RUN_PERT_WRFCHEM_MET_BC=false
-   export RUN_EXO_COLDENS=false
-   export RUN_SEASON_WES=false
-   export RUN_WRFCHEM_BIO=false
-   export RUN_WRFCHEM_FIRE=false
-   export RUN_WRFCHEM_CHEMI=false
-   export RUN_PERT_WRFCHEM_CHEM_ICBC=false
-   export RUN_PERT_WRFCHEM_CHEM_EMISS=false
+   export RUN_GEOGRID=true
+   export RUN_UNGRIB=true
+   export RUN_METGRID=true
+   export RUN_REAL=true
+   export RUN_PERT_WRFCHEM_MET_IC=true
+   export RUN_PERT_WRFCHEM_MET_BC=true
+   export RUN_EXO_COLDENS=true
+   export RUN_SEASON_WES=true
+   export RUN_WRFCHEM_BIO=true
+   export RUN_WRFCHEM_FIRE=true
+   export RUN_WRFCHEM_CHEMI=true
+   export RUN_PERT_WRFCHEM_CHEM_ICBC=true
+   export RUN_PERT_WRFCHEM_CHEM_EMISS=true
    export RUN_BIAS_CORRECTION=false
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
    export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
@@ -119,8 +124,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true # (works)
    export RUN_OMI_SO2_TOTAL_COL_OBS=false
    export RUN_OMI_SO2_PBL_COL_OBS=true # (works)
-   export RUN_OMI_HCHO_TOTAL_COL_OBS=false # (works)
-   export RUN_OMI_HCHO_TROP_COL_OBS=true
+   export RUN_OMI_HCHO_TOTAL_COL_OBS=true # (works)
+   export RUN_OMI_HCHO_TROP_COL_OBS=false
    export RUN_TROPOMI_CO_TOTAL_COL_OBS=false # (done)
    export RUN_TROPOMI_O3_TOTAL_COL_OBS=false
    export RUN_TROPOMI_O3_TROP_COL_OBS=false
@@ -146,8 +151,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_TES_CO_PROFILE_OBS=true # (works)
    export RUN_TES_CO_CPSR_OBS=true # (works)
    export RUN_TES_CO2_TOTAL_COL_OBS=false 
-   export RUN_TES_CO2_PROFILE_OBS=true # (works, vertical sum)
-   export RUN_TES_CO2_CPSR_OBS=true # (works, vertical sum)
+   export RUN_TES_CO2_PROFILE_OBS=false # (works, vertical sum)
+   export RUN_TES_CO2_CPSR_OBS=false # (works, vertical sum)
    export RUN_TES_O3_TOTAL_COL_OBS=false
    export RUN_TES_O3_PROFILE_OBS=true # (works)
    export RUN_TES_O3_CPSR_OBS=true # (works)
@@ -155,8 +160,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_TES_NH3_PROFILE_OBS=true # (works, vertical sum)
    export RUN_TES_NH3_CPSR_OBS=true # (works, vertical sum)
    export RUN_TES_CH4_TOTAL_COL_OBS=false
-   export RUN_TES_CH4_PROFILE_OBS=true # (works, vertical sum)
-   export RUN_TES_CH4_CPSR_OBS=true # (works, vertical sum)
+   export RUN_TES_CH4_PROFILE_OBS=false # (works, vertical sum)
+   export RUN_TES_CH4_CPSR_OBS=false # (works, vertical sum)
    export RUN_CRIS_CO_TOTAL_COL_OBS=false
    export RUN_CRIS_CO_PROFILE_OBS=false # (works, vertical sum)
    export RUN_CRIS_CO_CPSR_OBS=false # (works, vertical sum)
@@ -202,9 +207,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    source ${RS_SCRIPTS_DIR}/RS_Set_Time_Vars.ksh
    source ${RS_SCRIPTS_DIR}/RS_Run_Dirs.ksh
    source ${RS_SCRIPTS_DIR}/RS_Computer_Settings.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Pars.ksh
    source ${RS_SCRIPTS_DIR}/RS_Observation_Dirs.ksh
-   source ${RS_SCRIPTS_DIR}/RS_WRF_Namelists.ksh
+   source ${RS_SCRIPTS_DIR}/RS_Chemistry_Pert_Params.ksh
+   source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Params_FRAPPE.ksh
+   source ${RS_SCRIPTS_DIR}/RS_WRFChem_Namelists_FRAPPE.ksh
+   source ${RS_SCRIPTS_DIR}/RS_Forward_Operator_Params.ksh
    source ${RS_SCRIPTS_DIR}/RS_DART_Namelists.ksh
    source ${RS_SCRIPTS_DIR}/RS_Error_Decorrelation_Settings.ksh
 #   
@@ -233,7 +240,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/geogrid
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Geogrid.ksh > index.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Geogrid.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################
@@ -249,7 +256,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/ungrib
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Ungrib.ksh > index.html 2>&1 
+      export EXPERIMENT_LS_MET=${EXPERIMENT_GFS_DIR}
+      source ${RS_SCRIPTS_DIR}/RS_Ungrib.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################
@@ -265,7 +273,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/metgrid
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Metgrid.ksh > index.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Metgrid.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################
@@ -281,7 +289,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/real
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Real.ksh > index.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Real.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################
@@ -297,7 +305,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_met_ic
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_IC.ksh > index.html 2>&1 
+      export GDAS_FILEIN=prepbufr.gdas.${DATE}.wo40.be
+      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_IC.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################
@@ -313,7 +322,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_met_bc
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_BC.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_BC.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -329,7 +338,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/exo_coldens
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Exo_Coldens.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_Exo_Coldens.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -345,7 +354,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/seasons_wes
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Seasons_Wes.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_Seasons_Wes.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -361,7 +370,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_bio
       fi
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Bio.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Bio.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -377,8 +386,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_fire
       fi
-      rm index.html
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Fire.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Fire.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -394,7 +402,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_chemi
       fi
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Anthro.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Anthro.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -410,7 +418,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_chem_icbc
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Chem_ICBC.ksh > index.html 2>&1
+      export NL_CHEM_ICBC_SPECIES='o3','no','no2','no3','nh3','hno3','hno4','n2o5','ho2','h2o2','co','ch4','ch3o2','ch3ooh','hcho','ch3oh','c2h4','ald','ch3cooh','acet','mgly','pan','mpan','macr','mvk','c2h6','c3h6','c3h8','c2h5oh','c10h16','onit','onitr','isopr','isopn','acetol','glyald','hydrald','mek','bigene','open','bigalk','tol','cres','dms','so2','sulf','BC1','BC2','OC1','OC2','SEAS_1','SEAS_2','SEAS_3','SEAS_4','DUST_1','DUST_2','DUST_3','DUST_4','DUST_5','h2','n2o'
+      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Chem_ICBC.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -426,7 +435,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_chem_emiss
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Chem_Emiss.ksh > index.html 2>&1
+      export NL_CHEM_ANTHRO_EMIS='E_CO','E_NO','E_NO2','E_BIGALK','E_BIGENE','E_C2H4','E_C2H5OH','E_C2H6','E_C3H6','E_C3H8','E_CH2O','E_CH3CHO','E_CH3COCH3','E_CH3OH','E_MEK','E_SO2','E_TOLUENE','E_NH3','E_ISOP','E_C10H16','E_sulf','E_CO_A','E_CO_BB','E_CO02','E_CO03','E_XNO','E_XNO2','E_BALD','E_C2H2','E_BENZENE','E_XYLENE','E_CRES','E_HONO','E_PM25I','E_PM25J','E_PM_10','E_ECI','E_ECJ','E_ORGI','E_ORGJ','E_SO4I','E_SO4J','E_NO3I','E_NO3J','E_NH4I','E_NH4J','E_PM_25','E_OC','E_BC',
+      export NL_CHEM_FIRE_EMIS='ebu_in_co','ebu_in_no','ebu_in_so2','ebu_in_bigalk','ebu_in_bigene','ebu_in_c2h4','ebu_in_c2h5oh','ebu_in_c2h6','ebu_in_c3h8','ebu_in_c3h6','ebu_in_ch2o','ebu_in_ch3cho','ebu_in_ch3coch3','ebu_in_ch3oh','ebu_in_mek','ebu_in_toluene','ebu_in_nh3','ebu_in_no2','ebu_in_open','ebu_in_c10h16','ebu_in_ch3cooh','ebu_in_cres','ebu_in_glyald','ebu_in_mgly','ebu_in_gly','ebu_in_acetol','ebu_in_isop','ebu_in_macr','ebu_in_mvk','ebu_in_oc','ebu_in_bc',
+      export NL_CHEM_BIOG_EMIS='MSEBIO_ISOP',
+      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Chem_Emiss.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -442,7 +454,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/mopitt_co_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MOPITT_CO_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MOPITT_CO_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -458,7 +470,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/mopitt_co_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MOPITT_CO_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MOPITT_CO_Profile_FRAPPE.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -474,7 +486,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/mopitt_co_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MOPITT_CO_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MOPITT_CO_CPSR_FRAPPE.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -490,7 +502,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/iasi_co_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_IASI_CO_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_IASI_CO_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -506,7 +518,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/iasi_co_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_IASI_CO_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_IASI_CO_Profile.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -522,7 +534,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/iasi_co_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_IASI_CO_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_IASI_CO_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -538,7 +550,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/iasi_o3_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_IASI_O3_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_IASI_O3_Profile.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -554,7 +566,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/iasi_o3_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_IASI_O3_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_IASI_O3_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -570,7 +582,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/modis_aod_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MODIS_AOD_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MODIS_AOD_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -586,7 +598,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/omi_o3_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_OMI_O3_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_OMI_O3_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -602,7 +614,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/omi_o3_trop_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_OMI_O3_Trop_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_OMI_O3_Trop_Col.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -618,7 +630,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/omi_o3_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_OMI_O3_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_OMI_O3_Profile.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -634,7 +646,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/omi_o3_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_OMI_O3_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_OMI_O3_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -650,7 +662,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/omi_no2_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_OMI_NO2_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_OMI_NO2_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -666,7 +678,39 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/omi_no2_trop_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_OMI_NO2_Trop_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_OMI_NO2_Trop_Col.ksh > index_rs.html 2>&1
+   fi
+#
+########################################################################
+#
+# RUN OMI NO2 DOMINO TOTAL COL OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/omi_no2_domino_total_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/omi_no2_domino_total_col_obs
+         cd ${RUN_DIR}/${DATE}/omi_no2_domino_total_col_obs
+      else
+         cd ${RUN_DIR}/${DATE}/omi_no2_domino_total_col_obs
+      fi
+      source ${RS_SCRIPTS_DIR}/RS_OMI_DOMINO_NO2_Total_Col.ksh > index_rs.html 2>&1
+   fi
+#
+########################################################################
+#
+# RUN OMI NO2 DOMINO TROP COL OBSERVATIONS
+#
+########################################################################
+#
+   if ${RUN_OMI_NO2_DOMINO_TROP_COL_OBS}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/omi_no2_domino_trop_col_obs ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/omi_domino_no2_trop_col_obs
+         cd ${RUN_DIR}/${DATE}/omi_no2_domino_trop_col_obs
+      else
+         cd ${RUN_DIR}/${DATE}/omi_no2_domino_trop_col_obs
+      fi
+      source ${RS_SCRIPTS_DIR}/RS_OMI_NO2_DOMINO_Trop_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -682,7 +726,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/omi_so2_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_OMI_SO2_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_OMI_SO2_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -698,7 +742,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/omi_so2_pbl_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_OMI_SO2_PBL_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_OMI_SO2_PBL_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -714,7 +758,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/omi_hcho_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_OMI_HCHO_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_OMI_HCHO_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -730,7 +774,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/omi_hcho_trop_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_OMI_HCHO_Trop_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_OMI_HCHO_Trop_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -746,7 +790,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_co_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_CO_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_CO_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -762,7 +806,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_o3_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_O3_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_O3_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -778,7 +822,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_o3_trop_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_O3_Trop_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_O3_Trop_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -794,7 +838,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_o3_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_O3_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_O3_Profile.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -810,7 +854,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_o3_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_O3_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_O3_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -826,7 +870,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_no2_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_NO2_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_NO2_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -842,7 +886,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_no2_trop_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_NO2_Trop_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_NO2_Trop_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -858,7 +902,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_so2_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_SO2_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_SO2_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -874,7 +918,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_so2_pbl_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_SO2_PBL_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_SO2_PBL_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -890,7 +934,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_ch4_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_CH4_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_CH4_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -906,7 +950,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_ch4_trop_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_CH4_Trop_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_CH4_Trop_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -922,7 +966,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_ch4_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_CH4_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_CH4_Profile.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -938,7 +982,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_ch4_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_CH4_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_CH4_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -954,7 +998,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_hcho_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_HCHO_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_HCHO_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -970,7 +1014,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tropomi_hcho_trop_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_HCHO_Trop_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TROPOMI_HCHO_Trop_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -986,7 +1030,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tempo_o3_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TEMPO_O3_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TEMPO_O3_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1002,7 +1046,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tempo_o3_trop_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TEMPO_O3_Trop_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TEMPO_O3_Trop_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1018,7 +1062,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tempo_o3_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TEMPO_O3_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TEMPO_O3_Profile.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1034,7 +1078,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tempo_o3_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TEMPO_O3_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TEMPO_O3_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1050,7 +1094,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tempo_no2_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TEMPO_NO2_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TEMPO_NO2_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1066,7 +1110,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tempo_no2_trop_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TEMPO_NO2_Trop_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TEMPO_NO2_Trop_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1082,7 +1126,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_co_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_CO_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_CO_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1098,7 +1142,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_co_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_CO_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_CO_Profile.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1114,7 +1158,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_co_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_CO_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_CO_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1130,7 +1174,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_co2_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_CO2_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_CO2_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1146,7 +1190,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_co2_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_CO2_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_CO2_Profile.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1162,7 +1206,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_co2_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_CO2_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_CO2_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1178,7 +1222,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_o3_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_O3_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_O3_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1194,7 +1238,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_o3_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_O3_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_O3_Profile.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1210,7 +1254,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_o3_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_O3_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_O3_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1226,7 +1270,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_nh3_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_NH3_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_NH3_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1242,7 +1286,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_nh3_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_NH3_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_NH3_Profile.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1258,7 +1302,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_nh3_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_NH3_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_NH3_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1274,7 +1318,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_ch4_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_CH4_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_CH4_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1290,7 +1334,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_ch4_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_CH4_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_CH4_Profile.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1306,7 +1350,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/tes_ch4_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_TES_CH4_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_TES_CH4_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1322,7 +1366,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/cris_co_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_CRIS_CO_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_CRIS_CO_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1338,7 +1382,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/cris_co_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_CRIS_CO_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_CRIS_CO_Profile.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1354,7 +1398,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/cris_co_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_CRIS_CO_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_CRIS_CO_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1370,7 +1414,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/cris_o3_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_CRIS_O3_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_CRIS_O3_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1386,7 +1430,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/cris_o3_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_CRIS_O3_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_CRIS_O3_Profile.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1402,7 +1446,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/cris_o3_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_CRIS_O3_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_CRIS_O3_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1418,7 +1462,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/cris_nh3_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_CRIS_NH3_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_CRIS_NH3_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1449,7 +1493,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/cris_ch4_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_CRIS_CH4_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_CRIS_CH4_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1465,7 +1509,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/cris_ch4_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_CRIS_CH4_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_CRIS_CH4_Profile.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1481,7 +1525,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/cris_ch4_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_CRIS_CH4_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_CRIS_CH4_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1497,7 +1541,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/cris_pan_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_CRIS_PAN_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_CRIS_PAN_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1513,7 +1557,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/cris_pan_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_CRIS_PAN_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_CRIS_PAN_Profile.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1529,7 +1573,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/cris_pan_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_CRIS_PAN_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_CRIS_PAN_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1545,7 +1589,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/sciam_no2_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_SCIAM_NO2_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_SCIAM_NO2_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1561,7 +1605,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/sciam_no2_trop_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_SCIAM_NO2_Trop_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_SCIAM_NO2_Trop_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1577,7 +1621,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/gome2a_no2_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_GOME2A_NO2_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_GOME2A_NO2_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1593,7 +1637,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/gome2a_no2_trop_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_GOME2A_NO2_Trop_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_GOME2A_NO2_Trop_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1609,7 +1653,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/mls_o3_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MLS_O3_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MLS_O3_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1625,7 +1669,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/mls_o3_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MLS_O3_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MLS_O3_Profile.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1641,7 +1685,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/mls_o3_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MLS_O3_CPSR.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MLS_O3_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1657,7 +1701,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/mls_hno3_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MLS_HNO3_Total_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MLS_HNO3_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1673,7 +1717,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/mls_hno3_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MLS_HNO3_Profile.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MLS_HNO3_Profile.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1689,39 +1733,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/mls_hno3_cpsr_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MLS_HNO3_CPSR.ksh > index.html 2>&1
-   fi
-#
-########################################################################
-#
-# RUN OMI NO2 DOMINO TOTAL COL OBSERVATIONS
-#
-########################################################################
-#
-   if ${RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS}; then
-      if [[ ! -d ${RUN_DIR}/${DATE}/omi_no2_domino_total_col_obs ]]; then
-         mkdir -p ${RUN_DIR}/${DATE}/omi_no2_domino_total_col_obs
-         cd ${RUN_DIR}/${DATE}/omi_no2_domino_total_col_obs
-      else
-         cd ${RUN_DIR}/${DATE}/omi_no2_domino_total_col_obs
-      fi
-      source ${RS_SCRIPTS_DIR}/RS_OMI_DOMINO_NO2_Total_Col.ksh > index.html 2>&1
-   fi
-#
-########################################################################
-#
-# RUN OMI NO2 DOMINO TROP COL OBSERVATIONS
-#
-########################################################################
-#
-   if ${RUN_OMI_NO2_DOMINO_TROP_COL_OBS}; then
-      if [[ ! -d ${RUN_DIR}/${DATE}/omi_no2_domino_trop_col_obs ]]; then
-         mkdir -p ${RUN_DIR}/${DATE}/omi_no2_domino_trop_col_obs
-         cd ${RUN_DIR}/${DATE}/omi_no2_domino_trop_col_obs
-      else
-         cd ${RUN_DIR}/${DATE}/omi_no2_domino_trop_col_obs
-      fi
-      source ${RS_SCRIPTS_DIR}/RS_OMI_DOMINO_NO2_Trop_Col.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MLS_HNO3_CPSR.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -1737,7 +1749,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/airnow_o3_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_AIRNOW_O3.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_AIRNOW_O3.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -1753,7 +1765,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/airnow_co_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_AIRNOW_CO.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_AIRNOW_CO.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -1769,7 +1781,7 @@ if ${RUN_AIRNOW_NO2_OBS}; then
       else
          cd ${RUN_DIR}/${DATE}/airnow_no2_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_AIRNOW_NO2.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_AIRNOW_NO2.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -1785,7 +1797,7 @@ if ${RUN_AIRNOW_SO2_OBS}; then
       else
          cd ${RUN_DIR}/${DATE}/airnow_so2_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_AIRNOW_SO2.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_AIRNOW_SO2.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -1801,7 +1813,7 @@ if ${RUN_AIRNOW_PM10_OBS}; then
       else
          cd ${RUN_DIR}/${DATE}/airnow_pm10_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_AIRNOW_PM10.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_AIRNOW_PM10.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -1817,7 +1829,7 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       else
          cd ${RUN_DIR}/${DATE}/airnow_pm25_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_AIRNOW_PM25.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_AIRNOW_PM25.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -1833,7 +1845,7 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       else
          cd ${RUN_DIR}/${DATE}/panda_co_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_PANDA_CO.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_PANDA_CO.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -1849,7 +1861,7 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       else
          cd ${RUN_DIR}/${DATE}/panda_o3_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_PANDA_O3.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_PANDA_O3.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -1865,7 +1877,7 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       else
          cd ${RUN_DIR}/${DATE}/panda_pm25_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_PANDA_PM25.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_PANDA_PM25.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -1881,7 +1893,7 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       else
          cd ${RUN_DIR}/${DATE}/mexico_aqs_co_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MEXICO_AQS_CO.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MEXICO_AQS_CO.ksh > index_rs.html 2>&1
    fi
 
 #
@@ -1898,7 +1910,7 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       else
          cd ${RUN_DIR}/${DATE}/prepbufr_met_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MET_Obs.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MET_Obs.ksh > index_rs.html 2>&1
    fi
 #   
 #########################################################################
@@ -1914,8 +1926,8 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       else
          cd ${RUN_DIR}/${DATE}/combine_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Combine_Obs_List.ksh > index.html 2>&1
-      source ${RS_SCRIPTS_DIR}/RS_Combine.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_Combine_Obs_List.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_Combine.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -1933,7 +1945,7 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       fi
       cd ${RUN_DIR}/${DATE}/preprocess_obs
       export COMBINE_OBS_DIR=${RUN_DIR}/${DATE}/combine_obs
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Obs_Preprocess.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Obs_Preprocess.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -1950,7 +1962,7 @@ if ${RUN_AIRNOW_PM25_OBS}; then
          cd ${RUN_DIR}/${DATE}/localization
       fi
       cd ${RUN_DIR}/${DATE}/localization
-      source ${RS_SCRIPTS_DIR}/RS_State_Variable_Localization.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_State_Variable_Localization.ksh > index_rs.html 2>&1
    fi
 #
    export CYCLE_DATE=${NEXT_DATE}  

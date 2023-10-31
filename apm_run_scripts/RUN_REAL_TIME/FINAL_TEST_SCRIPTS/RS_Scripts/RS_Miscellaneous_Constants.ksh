@@ -1,5 +1,4 @@
 #!/bin/ksh -aux
-   export CYCLE_PERIOD=6
    export HISTORY_INTERVAL_HR=1
    (( HISTORY_INTERVAL_MIN = ${HISTORY_INTERVAL_HR} * 60 ))
    export START_IASI_O3_DATA=2014060100

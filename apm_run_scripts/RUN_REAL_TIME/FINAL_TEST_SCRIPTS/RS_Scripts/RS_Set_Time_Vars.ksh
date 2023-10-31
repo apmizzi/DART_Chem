@@ -1,5 +1,4 @@
 #!/bin/ksh -aux
-   export FCST_PERIOD=6
    export YYYY=$(echo $DATE | cut -c1-4)
    export YY=$(echo $DATE | cut -c3-4)
    export MM=$(echo $DATE | cut -c5-6)

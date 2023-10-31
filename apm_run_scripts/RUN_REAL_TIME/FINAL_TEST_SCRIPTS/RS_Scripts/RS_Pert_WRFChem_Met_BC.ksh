@@ -46,7 +46,7 @@ EOF
 #            qsub -Wblock=true job.ksh
             chmod +x pert_wrf_bc
             ./pert_wrf_bc > index.html 2>&1
-            export L_DATE=${NEXT_L_DATE} 
+            export L_DATE=${NEXT_L_DATE}
          done
          ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
          export ANALYSIS_DATE=$(${BUILD_DIR}/da_advance_time.exe ${DATE} 0 -W 2>/dev/null)
