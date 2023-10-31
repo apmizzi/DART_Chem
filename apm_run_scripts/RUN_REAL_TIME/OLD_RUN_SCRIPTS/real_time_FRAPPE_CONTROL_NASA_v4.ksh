@@ -318,7 +318,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #   export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/2010_DATA
    export MOZBC_DATA_DIR=${EXPERIMENT_DATA_DIR}/mozart_forecasts
    export EXPERIMENT_STATIC_FILES=${EXPERIMENT_DATA_DIR}/static_files
-   export EXPERIMENT_WRFCHEMI_DIR=${EXPERIMENT_DATA_DIR}/anthro_emissions_fixed
+   export EXPERIMENT_WRFCHEMI_DIR=${EXPERIMENT_DATA_DIR}/anthro_emissions
    export EXPERIMENT_WRFFIRECHEMI_DIR=${EXPERIMENT_DATA_DIR}/fire_emissions
    export EXPERIMENT_WRFBIOCHEMI_DIR=${EXPERIMENT_DATA_DIR}/bio_emissions
    export EXPERIMENT_COLDENS_DIR=${EXPERIMENT_DATA_DIR}/wes_coldens
@@ -11779,13 +11779,10 @@ EOF
       else
          cd ${RUN_DIR}/${DATE}/tes_co_cpsr_obs
       fi
-
-
 #
 # SET TES PARAMETERS
       export NL_PATH_MODEL=${RUN_DIR}/${PAST_DATE}/ensemble_mean_output
       export NL_FILE_MODEL=wrfout_d${CR_DOMAIN}_${DATE}_mean
-
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
       export TES_FILE_PRE=TES-Aura_L2-CO-SO-Nadir_r00000

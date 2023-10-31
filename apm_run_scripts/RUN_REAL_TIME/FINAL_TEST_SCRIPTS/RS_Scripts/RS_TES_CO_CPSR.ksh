@@ -1,16 +1,16 @@
 #!/bin/ksh -aux
 #
-      cd ${RUN_DIR}/${DATE}/tes_o3_profile_obs
+      cd ${RUN_DIR}/${DATE}/tes_co_cpsr_obs
 #
 # SET TES PARAMETERS
       export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
       export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
-      export TES_FILE_PRE=TES-Aura_L2-O3-SO-Nadir_r00000
+      export TES_FILE_PRE=TES-Aura_L2-CO-SO-Nadir_r00000
       export TES_FILE_EXT=_C01_F08_11.he5
       export OUTFILE=TEMP_FILE.dat
-      export TMP_OUTFILE=TES_O3_${DATE}.dat
+      export TMP_OUTFILE=TES_CO_${DATE}.dat
       rm -rf ${OUTFILE}
       rm -rf ${TMP_OUTFILE}
 #
@@ -50,14 +50,14 @@
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
 #
 # SET TES INPUT DATA DIR
-      export TMP_INFILE=\'${EXPERIMENT_TES_O3_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${TES_FILE_PRE}\'
+      export TMP_INFILE=\'${EXPERIMENT_TES_CO_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${TES_FILE_PRE}\'
 #
 # COPY EXECUTABLE
-      export FILE=tes_o3_profile_extract.m
+      export FILE=tes_co_cpsr_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/native_to_ascii/${FILE} ./.
-      mcc -m tes_o3_profile_extract.m -o tes_o3_profile_extract
-      ./run_tes_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/${FILE} ./.
+      mcc -m tes_co_cpsr_extract.m -o tes_co_cpsr_extract
+      ./run_tes_co_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -83,14 +83,14 @@
          export BIN_END_HH=23
          export BIN_END_MN=59
          export BIN_END_SS=59
-         export TMP_INFILE=\'${EXPERIMENT_TES_O3_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${TES_FILE_PRE}\'
+         export TMP_INFILE=\'${EXPERIMENT_TES_CO_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${TES_FILE_PRE}\'
 #
 # COPY EXECUTABLE
-         export FILE=tes_o3_profile_extract.m
+         export FILE=tes_co_cpsr_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/native_to_ascii/${FILE} ./.
-         mcc -m tes_o3_profile_extract.m -o tes_o3_profile_extract
-         ./run_tes_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/${FILE} ./.
+         mcc -m tes_co_cpsr_extract.m -o tes_co_cpsr_extract
+         ./run_tes_co_cpsr_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -104,21 +104,21 @@
          rm -rf ${OUTFILE}
       fi
       if [[ ! -e ${TMP_OUTFILE} ]]; then
-         touch NO_TES_O3_${DATE}_DATA
+         touch NO_TES_CO_${DATE}_DATA
       fi
 #
-# SET NAMELIST TO CONVERT TES O3 ASCII TO OBS_SEQ 
+# SET NAMELIST TO CONVERT TES CO ASCII TO OBS_SEQ 
       export NL_FILEDIR=\'./\' 
       export NL_FILENAME=\'${TMP_OUTFILE}\'
-      export NL_FILEOUT=\'obs_seq_tes_o3_profile_${DATE}.out\'
-      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TES_O3}
+      export NL_FILEOUT=\'obs_seq_tes_co_cpsr_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TES_CO}
       export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_CO2=${USE_LOG_CO2_LOGIC}
       export NL_USE_LOG_CH4=${USE_LOG_CH4_LOGIC}
       export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
 #
-# MODEL PROFILE SETTINGS
+# MODEL CPSR SETTINGS
       export NL_PATH_MODEL=\'${WRFCHEM_TEMPLATE_DIR}\'
       export NL_FILE_MODEL=\'${WRFCHEM_TEMPLATE_FILE}\'
       export NL_NX_MODEL=${NNXP_CR}
@@ -149,14 +149,12 @@
       ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/work/tes_o3_profile_ascii_to_obs ./.
-      ./tes_o3_profile_ascii_to_obs > index.html 2>&1
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/work/tes_co_cpsr_ascii_to_obs ./.
+      ./tes_co_cpsr_ascii_to_obs > index.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ -s ${NL_FILEOUT} ]]; then
-         touch NO_TES_O3_${DATE}
+         touch NO_TES_CO_${DATE}
       fi
-#
-# Clean directory
       rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
-      rm requiredMCRP* run_tes_o3* tes_o3_profile* unresolved* *.dat
+      rm requiredMCRP* run_tes_co* tes_co_cpsr* unresolved* *.dat

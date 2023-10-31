@@ -9,10 +9,9 @@ set clobber
 
 set startdir=`pwd`
 
-foreach project ( RUN_CHINA_EPA RUN_CLOSEST_MEMBER RUN_EMISS_INV \
-                  RUN_FINN_FIRE RUN_LOCALIZE_OBS_SEQ RUN_MEGAN_BIO \
-                  RUN_PERT_CHEM/EMISS_PERT RUN_PERT_CHEM/ICBC_PERT \
-                  RUN_TIME_INTERP RUN_WES_COLDENS )
+foreach project ( RUN_FINN_FIRE RUN_MEGAN_BIO RUN_PERT_CHEM/ICBC_PERT \
+                  RUN_PERT_CHEM/EMISS_PERT RUN_EMISS_INV RUN_WES_COLDENS \
+                  RUN_WES_COLDENS RUN_TIME_INTERP )
 
    set dir = $project
    set FAILURE = 0

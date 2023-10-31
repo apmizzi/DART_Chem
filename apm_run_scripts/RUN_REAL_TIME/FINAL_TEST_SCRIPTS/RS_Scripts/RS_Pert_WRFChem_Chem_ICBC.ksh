@@ -21,6 +21,10 @@
 #      if [[ ${YYYY} -eq 2014 ]]; then export MOZBC_DATA=/h0003.nc; fi
       if [[ ${YYYY} -eq 2014 ]]; then export MOZBC_DATA=/h0004.nc; fi
 #
+#      if [[ ${YYYY} -eq 2020 ]]; then export MOZBC_DATA=camchem_20201021005113812911.nc; fi
+#      if [[ ${YYYY} -eq 2020 ]]; then export MOZBC_DATA=camchem_0001.nc; fi
+      if [[ ${YYYY} -eq 2020 ]]; then export MOZBC_DATA=waccm_0001.nc; fi
+#
 # CREATE INPUT FILES COARSE DOMAIN
       rm -rf mozbc.ic.inp
       cat << EOF > mozbc.ic.inp
@@ -198,8 +202,8 @@ EOF
       done
 #
 # Clean directory
-      rm *_cr_icbc_pert* job,ksh met_em.d* mozbc* pert_chem_icbc perturb_chem_*
-      rm runICBC_parent_* run_mozbc_rt_* set00 wrfbdy_d01 wrfinput_d01
-      rm wrfbdy_d01_${DATE} wrfinput_do1_${DATE} wrfinput_d01_frac
-      rm wrfinput_d01_mean wrfinput_d01_sprd pert_chem_icbc job.ksh
-      rm wrfbdy_d01_*_:00 wrfinput_d01_*_:00
+#      rm *_cr_icbc_pert* job,ksh met_em.d* mozbc* pert_chem_icbc perturb_chem_*
+#      rm runICBC_parent_* run_mozbc_rt_* set00 wrfbdy_d01 wrfinput_d01
+#      rm wrfbdy_d01_${DATE} wrfinput_do1_${DATE} wrfinput_d01_frac
+#      rm wrfinput_d01_mean wrfinput_d01_sprd pert_chem_icbc job.ksh
+#      rm wrfbdy_d01_*_:00 wrfinput_d01_*_:00

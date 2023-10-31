@@ -120,7 +120,7 @@ export RC=\$?
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
 if [[ -f FAILED ]]; then rm -rf FAILED; fi          
 if [[ \$RC = 0 ]]; then
-k   touch SUCCESS
+   touch SUCCESS
 else
    touch FAILED 
    exit

@@ -31,9 +31,9 @@
 #
 # UNTAR THE PARENT FORECAST FILES
       FILES=''
-      if [[ -e ${EXPERIMENT_GFS_DIR}/${DATE} ]]; then
-         if [[ -e ${EXPERIMENT_GFS_DIR}/${DATE}/${GRIB_PART1}${DATE}${GRIB_PART2} ]]; then
-            tar xvfs ${EXPERIMENT_GFS_DIR}/${DATE}/${GRIB_PART1}${DATE}${GRIB_PART2}
+      if [[ -e ${EXPERIMENT_LS_MET}/${DATE} ]]; then
+         if [[ -e ${EXPERIMENT_LS_MET}/${DATE}/${GRIB_PART1}${DATE}${GRIB_PART2} ]]; then
+            tar xvfs ${EXPERIMENT_LS_MET}/${DATE}/${GRIB_PART1}${DATE}${GRIB_PART2}
          else
             echo 'APM: ERROR - No GRIB files in directory'
             exit
@@ -48,7 +48,7 @@
                if [[ ${LBC_ITR} -lt 100  ]]; then export CFTM=0${LBC_ITR}; fi
                if [[ ${LBC_ITR} -lt 10   ]]; then export CFTM=00${LBC_ITR}; fi
                if [[ ${LBC_ITR} -eq 0    ]]; then export CFTM=000; fi
-#               export FILE=${EXPERIMENT_GFS_DIR}/${DATE}/${GRIB_PART1}${START_YEAR}${START_MONTH}${START_DAY}_${CCHH}_${CFTM}.grb2
+#               export FILE=${EXPERIMENT_LS_MET}/${DATE}/${GRIB_PART1}${START_YEAR}${START_MONTH}${START_DAY}_${CCHH}_${CFTM}.grb2
                export FILE=${GRIB_PART1}${START_YEAR}${START_MONTH}${START_DAY}_${CCHH}_${CFTM}.grb2
                FILES="${FILES} ${FILE}"
                (( LBC_ITR=${LBC_ITR}+${LBC_FREQ} ))

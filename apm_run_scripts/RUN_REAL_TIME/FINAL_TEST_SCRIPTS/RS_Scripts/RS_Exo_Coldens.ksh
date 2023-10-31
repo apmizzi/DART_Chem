@@ -7,8 +7,10 @@
       export FILE_FR=wrfinput_d${FR_DOMAIN}
       rm -rf ${FILE_CR}
       rm -rf ${FILE_FR}
-      ln -sf ${REAL_DIR}/${FILE_CR}_${FILE_DATE} ${FILE_CR}   
-      ln -sf ${REAL_DIR}/${FILE_FR}_${FILE_DATE} ${FILE_FR}   
+      ln -sf ${REAL_DIR}/${FILE_CR}_${FILE_DATE} ${FILE_CR}
+      if [[ ${MAX_DOMAINS} == 2 ]]; then
+         ln -sf ${REAL_DIR}/${FILE_FR}_${FILE_DATE} ${FILE_FR}
+      fi
       export FILE=exo_coldens.nc
       rm -rf ${FILE}
       ln -sf ${EXPERIMENT_COLDENS_DIR}/${FILE} ${FILE}
@@ -21,7 +23,7 @@
       rm -rf ${FILE}
       cat << EOF > ${FILE}
 &control
-domains = 2,
+domains = ${MAX_DOMAINS},
 /
 EOF
 #
@@ -33,7 +35,7 @@ EOF
 # TEST WHETHER OUTPUT EXISTS
       export FILE_CR=exo_coldens_d${CR_DOMAIN}
       export FILE_FR=exo_coldens_d${FR_DOMAIN}
-      if [[ ! -e ${FILE_CR} || ! -e ${FILE_FR} ]]; then
+      if [[ ! -e ${FILE_CR} || (${MAX_DOMAINS} == 2 && ! -e ${FILE_FR}) ]]; then
          echo EXO_COLDENS FAILED
          exit
       else
