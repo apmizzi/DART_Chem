@@ -37,7 +37,8 @@ export EXPERIMENT_DIR=${SCRATCH_DIR}
 export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_REAL_TIME_DATA
 export RUN_DIR=${EXPERIMENT_DIR}/FRAPPE_CONTROL
 export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_FRAPPE
-export EXPERIMENT_INPUT_OBS=FRAPPE_EXP_OBS
+export EXPERIMENT_INPUT_OBS=FRAPPE_OBS
+export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'      
 export NUM_MEMBERS=10
 export CYCLE_PERIOD=6
 export FCST_PERIOD=6
@@ -47,7 +48,6 @@ export INITIAL_DATE=2014072500
 export FIRST_FILTER_DATE=2014072506
 export FIRST_DART_INFLATE_DATE=2014072506
 export FIRST_EMISS_INV_DATE=2014072506
-export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'      
 #
 # START CYCLE DATE-TIME:
 export CYCLE_STR_DATE=2014072500
@@ -68,12 +68,12 @@ export SKIP_FILTER=false
 # SELECT OBSERVATION OPTIONS:
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
 export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
-export RUN_MOPITT_CO_CPSR_OBS=true # (done)
+export RUN_MOPITT_CO_CPSR_OBS=false # (done)
 export RUN_IASI_CO_TOTAL_COL_OBS=false
 export RUN_IASI_CO_PROFILE_OBS=true # (done)
 export RUN_IASI_CO_CPSR_OBS=true # (done)
 export RUN_IASI_O3_PROFILE_OBS=false
-export RUN_IASI_O3_CPSR_OBS=false
+export RUN_IASI_O3_CPSR_OBS=true
 export RUN_MODIS_AOD_TOTAL_COL_OBS=true # (done)
 export RUN_OMI_O3_TOTAL_COL_OBS=false
 export RUN_OMI_O3_TROP_COL_OBS=false
@@ -259,8 +259,7 @@ export SPECIAL_FORECAST_MEM[8]=8
 export SPECIAL_FORECAST_MEM[9]=9
 export SPECIAL_FORECAST_MEM[10]=10
 #
-# Set observation error scaling and
-# retention factors
+# Set observation error scaling and retention factors
 source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
 #
 # Set log transform settings
