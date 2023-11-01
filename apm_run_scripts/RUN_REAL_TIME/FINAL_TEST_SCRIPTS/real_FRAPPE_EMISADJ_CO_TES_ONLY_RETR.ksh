@@ -26,10 +26,10 @@
 #########################################################################
 #
 # ROOT DIRECTORIES:
-export DART_VER=/DART_development
+export DART_VER=DART_development
 export WORK_DIR=/nobackupp11/amizzi
 export TRUNK_DIR=${WORK_DIR}/TRUNK
-export REAL_TIME_DIR=${TRUNK_DIR}${DART_VER}/apm_run_scripts/RUN_REAL_TIME
+export REAL_TIME_DIR=${TRUNK_DIR}/${DART_VER}/apm_run_scripts/RUN_REAL_TIME
 export RS_SCRIPTS_DIR=${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS/RS_Scripts
 export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
 export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
@@ -37,16 +37,17 @@ export EXPERIMENT_DIR=${SCRATCH_DIR}
 export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_REAL_TIME_DATA
 export RUN_DIR=${EXPERIMENT_DIR}/FRAPPE_EMISADJ_CO_TES_ONLY_RETR
 export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_FRAPPE_CO
-export EXP_INPUT_OBS=${RUN_INPUT_DIR}/${DATE}/FRAPPE_EXP_OBS
-export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
+export EXPERIMENT_INPUT_OBS=FRAPPE_CO_OBS
+export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'      
 export NUM_MEMBERS=20
+export CYCLE_PERIOD=6
+export FCST_PERIOD=6
 #
 # CYCLE TIME SETTINGS
 export INITIAL_DATE=2014072500
 export FIRST_FILTER_DATE=2014072506
 export FIRST_DART_INFLATE_DATE=2014072506
 export FIRST_EMISS_INV_DATE=2014072506
-export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'      
 #
 # START CYCLE DATE-TIME:
 export CYCLE_STR_DATE=2014072506
@@ -55,6 +56,14 @@ export CYCLE_DATE=${CYCLE_STR_DATE}
 # END CYCLE DATE-TIME:
 export CYCLE_END_DATE=2014072506
 #export CYCLE_END_DATE=${CYCLE_STR_DATE}
+#
+# For emissions estimation
+export ADD_EMISS=false
+export EMISS_DAMP_CYCLE=1.0
+export EMISS_DAMP_INTRA_CYCLE=1.0
+#
+# Switch to process filter output without calling filter
+export SKIP_FILTER=false
 #
 # SELECT OBSERVATION OPTIONS:
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
@@ -191,14 +200,6 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'TES_CO_CPSR',
                                    'AIRNOW_CO'"
 #
-# For emissions estimation
-export ADD_EMISS=true
-export EMISS_DAMP_CYCLE=1.0
-export EMISS_DAMP_INTRA_CYCLE=1.0
-#
-# Switch to process filter output without calling filter
-export SKIP_FILTER=false
-#
 # Run WRF-Chem for failed forecasts (will not work with adaptive time step)
 export RUN_SPECIAL_FORECAST=false
 export NUM_SPECIAL_FORECAST=0
@@ -215,8 +216,7 @@ export SPECIAL_FORECAST_MEM[8]=8
 export SPECIAL_FORECAST_MEM[9]=9
 export SPECIAL_FORECAST_MEM[10]=10
 #
-# Set observation error scaling and
-# retention factors
+# Set observation error scaling and retention factors
 source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
 #
 # Set log transform settings
@@ -245,6 +245,7 @@ fi
 #
 while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export DATE=${CYCLE_DATE}
+   export EXP_INPUT_OBS=${RUN_INPUT_DIR}/${DATE}/${EXPERIMENT_INPUT_OBS}
    export L_ADD_EMISS=${ADD_EMISS} 
    if [[ ${DATE} -lt ${FIRST_EMISS_INV_DATE} ]]; then
       export L_ADD_EMISS=false
@@ -341,9 +342,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    source ${RS_SCRIPTS_DIR}/RS_Set_Time_Vars.ksh
    source ${RS_SCRIPTS_DIR}/RS_Run_Dirs.ksh
    source ${RS_SCRIPTS_DIR}/RS_Computer_Settings.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Pars.ksh
    source ${RS_SCRIPTS_DIR}/RS_Observation_Dirs.ksh
-   source ${RS_SCRIPTS_DIR}/RS_WRF_Namelists.ksh
+   source ${RS_SCRIPTS_DIR}/RS_Chemistry_Pert_Params.ksh
+   source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Params_FRAPPE.ksh
+   source ${RS_SCRIPTS_DIR}/RS_WRFChem_Namelists_FRAPPE.ksh
+   source ${RS_SCRIPTS_DIR}/RS_Forward_Operator_Params.ksh
    source ${RS_SCRIPTS_DIR}/RS_DART_Namelists.ksh
    source ${RS_SCRIPTS_DIR}/RS_Error_Decorrelation_Settings.ksh
 %   
@@ -372,7 +375,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${EXP_INPUT_OBS}
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Generate_Obs_Seq_File.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_Generate_Obs_Seq_File.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -388,7 +391,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/dart_filter
       fi
-      source ${RS_SCRIPTS_DIR}/RS_DART_Filter.ksh > index.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_DART_Filter.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################
@@ -404,7 +407,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/update_bc
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Update.ksh > index.html 2>&1  
+      source ${RS_SCRIPTS_DIR}/RS_Update.ksh > index_rs.html 2>&1  
   fi
 #
 #########################################################################
@@ -420,7 +423,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/bias_corr
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Bias_Correction.ksh > index.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Bias_Correction.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################
@@ -436,7 +439,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/ensemble_mean_input
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Ensemble_Mean_Input.ksh > index.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Ensemble_Mean_Input.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################
@@ -452,7 +455,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_initial
       fi
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Initial.ksh > index.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Initial.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################
@@ -468,7 +471,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_cycle_cr
       fi
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR.ksh > index.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################
@@ -484,7 +487,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_cycle_fr
       fi
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_FR.ksh > index.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_FR.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################
@@ -500,7 +503,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/ensmean_cycle_fr
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Ensmean_Cycle_FR.ksh > index.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Ensmean_Cycle_FR.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################
@@ -516,7 +519,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/ensemble_mean_output
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Ensemble_Mean_Output.ksh > index.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Ensemble_Mean_Output.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################
@@ -532,7 +535,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/band_depth
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Band_Depth.ksh > index.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Band_Depth.ksh > index_rs.html 2>&1 
    fi
 #
    export CYCLE_DATE=${NEXT_DATE}
