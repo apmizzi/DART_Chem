@@ -27,10 +27,10 @@
 #########################################################################
 #
 # ROOT DIRECTORIES:
-export DART_VER=/DART_development
+export DART_VER=DART_development
 export WORK_DIR=/nobackupp11/amizzi
 export TRUNK_DIR=${WORK_DIR}/TRUNK
-export REAL_TIME_DIR=${TRUNK_DIR}${DART_VER}/apm_run_scripts/RUN_REAL_TIME
+export REAL_TIME_DIR=${TRUNK_DIR}/${DART_VER}/apm_run_scripts/RUN_REAL_TIME
 export RS_SCRIPTS_DIR=${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS/RS_Scripts
 export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
 export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
@@ -52,10 +52,10 @@ export FIRST_DART_INFLATE_DATE=2014072606
 export FIRST_EMISS_INV_DATE=2014072606
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072600
+export CYCLE_STR_DATE=2014072606
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072500
+export CYCLE_END_DATE=2014072618
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -91,7 +91,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    fi
 #
 # SELECT COMPONENT RUN OPTIONS:
-   export RUN_GEOGRID=true
+   export RUN_GEOGRID=false
    export RUN_UNGRIB=true
    export RUN_METGRID=true
    export RUN_REAL=true
@@ -240,7 +240,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/geogrid
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Geogrid.ksh > index_rc.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Geogrid.ksh > index_rc.html 2>&1
    fi
 #
 #########################################################################
@@ -257,7 +257,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          cd ${RUN_DIR}/${DATE}/ungrib
       fi
       export EXPERIMENT_LS_MET=${EXPERIMENT_GFS_DIR}
-      source ${RS_SCRIPTS_DIR}/RS_Ungrib.ksh > index_rc.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Ungrib.ksh > index_rc.html 2>&1
    fi
 #
 #########################################################################
@@ -273,7 +273,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/metgrid
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Metgrid.ksh > index_rc.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Metgrid.ksh > index_rc.html 2>&1
    fi
 #
 #########################################################################
@@ -289,7 +289,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/real
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Real.ksh > index_rc.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Real.ksh > index_rc.html 2>&1
    fi
 #
 #########################################################################
@@ -306,7 +306,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          cd ${RUN_DIR}/${DATE}/wrfchem_met_ic
       fi
       export GDAS_FILEIN=prepbufr.gdas.${DATE}.wo40.be
-      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_IC.ksh > index_rc.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_IC.ksh > index_rc.html 2>&1
    fi
 #
 #########################################################################
