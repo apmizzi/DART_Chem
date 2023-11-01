@@ -8,8 +8,8 @@
       ln -fs ${GEOGRID_DIR}/geo_em.d${CR_DOMAIN}.nc ./.
       ln -fs ${GEOGRID_DIR}/geo_em.d${FR_DOMAIN}.nc ./.
       ln -fs ../ungrib/FILE:* ./.
-      ln -fs ${WPS_DIR}/metgrid/METGRID.TBL.${METGRID_TABLE_TYPE} METGRID.TBL
-      ln -fs ${WPS_DIR}/metgrid.exe .
+      cp ${WPS_DIR}/metgrid/METGRID.TBL.${METGRID_TABLE_TYPE} METGRID.TBL
+      cp ${WPS_DIR}/metgrid.exe .
 #
       export L_FCST_RANGE=${LBC_END}
       export L_START_DATE=${DATE}

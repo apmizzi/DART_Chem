@@ -27,10 +27,10 @@
 #########################################################################
 #
 # ROOT DIRECTORIES:
-export DART_VER=/DART_development
+export DART_VER=DART_development
 export WORK_DIR=/nobackupp11/amizzi
 export TRUNK_DIR=${WORK_DIR}/TRUNK
-export REAL_TIME_DIR=${TRUNK_DIR}${DART_VER}/apm_run_scripts/RUN_REAL_TIME
+export REAL_TIME_DIR=${TRUNK_DIR}/${DART_VER}/apm_run_scripts/RUN_REAL_TIME
 export RS_SCRIPTS_DIR=${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS/RS_Scripts
 export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
 export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
@@ -84,14 +84,14 @@ source ${RS_SCRIPTS_DIR}/RS_Miscellaneous_Constants.ksh
 export CYCLE_DATE=${CYCLE_STR_DATE}
 while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export DATE=${CYCLE_DATE}
-   export EXP_INPUT_OBS=${RUN_INPUT_DIR}/${DATE}/TESTCASE_OBS
+   export EXP_INPUT_OBS=${RUN_INPUT_DIR}/${DATE}/${EXPERIMENT_INPUT_OBS}
    export L_ADD_EMISS=${ADD_EMISS} 
    if [[ ${DATE} -lt ${FIRST_EMISS_INV_DATE} ]]; then
       export L_ADD_EMISS=false
    fi
 #
 # SELECT COMPONENT RUN OPTIONS:
-   export RUN_GEOGRID=true
+   export RUN_GEOGRID=false
    export RUN_UNGRIB=true
    export RUN_METGRID=true
    export RUN_REAL=true
@@ -1926,8 +1926,8 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       else
          cd ${RUN_DIR}/${DATE}/combine_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Combine_Obs_List.ksh > index_rs.html 2>&1
-      source ${RS_SCRIPTS_DIR}/RS_Combine.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_Combine_Obs_List.ksh > index_list.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_Combine.ksh > index_combine.html 2>&1
    fi
 #
 #########################################################################
@@ -1945,7 +1945,7 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       fi
       cd ${RUN_DIR}/${DATE}/preprocess_obs
       export COMBINE_OBS_DIR=${RUN_DIR}/${DATE}/combine_obs
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Obs_Preprocess.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Obs_Preprocess.ksh > index_preprocess.html 2>&1
    fi
 #
 #########################################################################
