@@ -50,14 +50,14 @@
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
 #
 # SET TROPOMI INPUT DATA FILE
-      export TRP_INFILE=\'${EXPERIMENT_TROPOMI_CH4_DIR}/${TROPOMI_FILE_PRE}${YYYY}${MM}${DD}T\'
+      export INFILE=${EXPERIMENT_TROPOMI_CH4_DIR}/${YYYY}${MM}${DD}/${TROPOMI_FILE_PRE}${YYYY}${MM}${DD}T
 #
 # COPY EXECUTABLE
       export FILE=tropomi_ch4_total_col_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CH4/native_to_ascii/${FILE} ./.
       mcc -m tropomi_ch4_total_col_extract.m -o tropomi_ch4_total_col_extract
-      ./run_tropomi_ch4_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
+      ./run_tropomi_ch4_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TRP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -83,14 +83,14 @@
          export BIN_END_HH=23
          export BIN_END_MN=59
          export BIN_END_SS=59
-	 export TRP_INFILE=\'${EXPERIMENT_TROPOMI_CH4_DIR}/${TROPOMI_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
+	 export INFILE=${EXPERIMENT_TROPOMI_CH4_DIR}/${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}/${TROPOMI_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T
 #
 # COPY EXECUTABLE
          export FILE=tropomi_ch4_total_col_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CH4/native_to_ascii/${FILE} ./.
          mcc -m tropomi_ch4_total_col_extract.m -o tropomi_total_col_ch4_extract
-         ./run_tropomi_ch4_total_col_extract.sh ${MATLAB} ${TRP_INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
+         ./run_tropomi_ch4_total_col_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TROPOMI_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -157,3 +157,7 @@
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TROPOMI_CH4_${DATE}
       fi
+#
+# Clean directory
+#      rm dart_log* includedSupport* input.nml mccExcluded* *.dat
+#      rm readme.* requiredMCRP* run_tropomi_ch4_* unresolved* tropomi_ch4_*

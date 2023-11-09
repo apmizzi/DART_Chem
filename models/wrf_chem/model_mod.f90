@@ -506,12 +506,12 @@ if ( default_state_variables ) then
 !
 ! APM +++  
 else
-!                                                                                                             
-! Consolidate all the input variable tables into one 'wrf_state_variables' table.                             
-! Since all the variables of interest are scoped module global, no arguments are needed.                      
-! APM: This combines WRF-Chem conv, chemi, and firechemi variables lists into a single list                   
-! APM: Only add the emission variables if ADD_EMISS is true (otherwise use the                                
-! APM: conv_state_variables list).                                                                            
+!
+! Consolidate all the input variable tables into one 'wrf_state_variables' table.
+! Since all the variables of interest are scoped module global, no arguments are needed.
+! APM: This combines WRF-Chem conv, chemi, and firechemi variables lists into a single list
+! APM: Only add the emission variables if ADD_EMISS is true (otherwise use the
+! APM: conv_state_variables list).
 
    call concatenate_variable_tables()
 ! APM ---
@@ -694,7 +694,6 @@ WRFDomains : do id=1,num_domains
 ! get the total number of wrf variables (conv + chemi + firechemi) wanted in this domain's state vector 
       wrf%dom(id)%number_of_wrf_variables = wrf%dom(id)%number_of_conv_variables + &
       wrf%dom(id)%number_of_emiss_chemi_variables + wrf%dom(id)%number_of_emiss_firechemi_variables
-
 !      write(errstring, '(A,I4)') 'APM: Number of wrf variables ',wrf%dom(id)%number_of_wrf_variables
 !      call error_handler(E_MSG, 'static_init_model: ', errstring)
 !      write(errstring, '(A,I4)') 'APM: Number of conv variables ',wrf%dom(id)%number_of_conv_variables
@@ -800,7 +799,7 @@ WRFDomains : do id=1,num_domains
          print*,'variable size ',trim(wrf_state_variables(1,my_index)),' ',wrf%dom(id)%var_size(:,ind)
       endif
 
-      !  add bounds checking information
+!  add bounds checking information
       call get_variable_bounds(wrf_state_bounds, wrf_state_variables(1,my_index), &
                                wrf%dom(id)%lower_bound(ind), wrf%dom(id)%upper_bound(ind), &
                                wrf%dom(id)%clamp_or_fail(ind))
@@ -3229,7 +3228,7 @@ else
                          dx*real(wrf%dom(id)%land(ur(1), ur(2))) ) - 1
       endif
 !
-! APM +++      
+! APM +++
 !-----------------------------------------------------
 ! 1.za OZONE INTERPOLATION (O3)
    else if( obs_kind == QTY_O3 ) then

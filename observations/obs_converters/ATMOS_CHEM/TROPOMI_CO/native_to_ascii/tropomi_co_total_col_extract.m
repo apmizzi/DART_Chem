@@ -94,8 +94,7 @@ function tropomi_co_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
       file_end_secs=file_end_hh*60.*60. + file_end_mn*60. + file_end_ss;
       fprintf('%d %s \n',ifile,file_in);
       fprintf('file str %d cycle end %d \n',file_str_secs,day_secs_end);
-      fprintf('file end %d cycle str %d \n',file_end_secs,day_secs_beg);
-%       
+      fprintf('file end %d cycle str %d \n',file_end_secs,day_secs_beg);       
       if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
          continue
       end
@@ -274,7 +273,6 @@ function tropomi_co_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
 	       xmdl_sw=xmdl_sw+360.;
             end
 %
-% APM: Need to get this info from model
 	    [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
 	    xmdl_sw,delx,cen_lon,truelat1,truelat2);
             i_min = round(xi);

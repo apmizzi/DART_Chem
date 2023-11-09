@@ -50,14 +50,14 @@
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
 #
 # SET TEMPO INPUT DATA DIR
-      export TMP_INFILE=\'${EXPERIMENT_TEMPO_O3_DIR}/${YYYY}${MM}${DD}/${TEMPO_FILE_PRE}${YYYY}${MM}${DD}T\'
+      export INFILE=${EXPERIMENT_TEMPO_O3_DIR}/${YYYY}${MM}${DD}/${TEMPO_FILE_PRE}${YYYY}${MM}${DD}T
 #
 # COPY EXECUTABLE
       export FILE=tempo_o3_profile_extract.m
       rm -rf ${FILE}
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
       mcc -m tempo_o3_profile_extract.m -o tempo_o3_profile_extract
-      ./run_tempo_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
+      ./run_tempo_o3_profile_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -83,14 +83,14 @@
          export BIN_END_HH=23
          export BIN_END_MN=59
          export BIN_END_SS=59
-         export TMP_INFILE=\'${EXPERIMENT_TEMPO_O3_DIR}/${YYYY}${MM}${DD}/${TEMPO_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}T\'
+         export INFILE=${EXPERIMENT_TEMPO_O3_DIR}/${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}/${TEMPO_FILE_PRE}${ASIM_MN_YYYY}${ASIM_MN_MM}${ASIM_MN_DD}
 #
 # COPY EXECUTABLE
          export FILE=tempo_o3_profile_extract.m
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_O3/native_to_ascii/${FILE} ./.
          mcc -m tempo_o3_profile_extract.m -o tempo_o3_profile_extract
-         ./run_tempo_o3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
+         ./run_tempo_o3_profile_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${TEMPO_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -153,3 +153,7 @@
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TEMPO_O3_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* *.dat
+      rm readme.* requiredMCRP* run_tempo_o3_* unresolved* tempo_o3_*

@@ -50,7 +50,7 @@
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
 #
 # SET TROPOMI INPUT DATA FILE
-      export INFILE=${EXPERIMENT_TROPOMI_SO2_DIR}/${YYYY}${MM}${DD}/${TROPOMI_FILE_PRE}
+      export INFILE=${EXPERIMENT_TROPOMI_HCHO_DIR}/${YYYY}${MM}${DD}/${TROPOMI_FILE_PRE}
 #
 # COPY EXECUTABLE
       export FILE=tropomi_hcho_trop_col_extract.m
@@ -83,7 +83,7 @@
          export BIN_END_HH=23
          export BIN_END_MN=59
          export BIN_END_SS=59
-         export INFILE=${EXPERIMENT_TROPOMI_SO2_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${TROPOMI_FILE_PRE}
+         export INFILE=${EXPERIMENT_TROPOMI_HCHO_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${TROPOMI_FILE_PRE}
 #
 # COPY EXECUTABLE
          export FILE=tropomi_hcho_trop_col_extract.m
@@ -157,3 +157,7 @@
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TROPOMI_HCHO_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* *.dat
+      rm readme.* requiredMCRP* run_tropomi_hcho_* unresolved* tropomi_hcho_*

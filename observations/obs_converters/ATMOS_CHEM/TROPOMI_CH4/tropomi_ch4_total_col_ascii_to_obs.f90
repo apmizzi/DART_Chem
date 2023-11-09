@@ -49,8 +49,7 @@ program tropomi_ch4_total_col_ascii_to_obs
   
   use apm_time_code_mod, only          : calc_greg_sec
 
-  use apm_upper_bdy_mod, only      : get_upper_bdy_height, &
-                                     get_upper_bdy_fld, &
+  use apm_upper_bdy_mod, only      : get_upper_bdy_fld, &
                                      get_MOZART_INT_DATA, &
                                      get_MOZART_REAL_DATA, &
                                      wrf_dart_ubval_interp, &
@@ -261,13 +260,9 @@ program tropomi_ch4_total_col_ascii_to_obs
 ! Read model data
 !   allocate(lon(nx_model,ny_model))
 !   allocate(lat(nx_model,ny_model))
-!   allocate(prs_sfc(nx_model,ny_model))
 !   allocate(prs_prt(nx_model,ny_model,nz_model))
 !   allocate(prs_bas(nx_model,ny_model,nz_model))
-!   allocate(geoht_prt(nx_model,ny_model,nz_model+1))
-!   allocate(geoht_bas(nx_model,ny_model,nz_model+1))
 !   allocate(prs_fld(nx_model,ny_model,nz_model))
-!   allocate(geoht_fld(nx_model,ny_model,nz_model))
 !   allocate(tmp_prt(nx_model,ny_model,nz_model))
 !   allocate(tmp_fld(nx_model,ny_model,nz_model))
 !   allocate(qmr_fld(nx_model,ny_model,nz_model))
@@ -275,21 +270,14 @@ program tropomi_ch4_total_col_ascii_to_obs
 !   file_in=trim(path_model)//'/'//trim(file_model)
 !   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
 !   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
-!   call get_DART_diag_data(trim(file_in),'PSFC',prs_sfc,nx_model,ny_model,1,1)
 !   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
 !   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
-!   call get_DART_diag_data(trim(file_in),'PH',geoht_prt,nx_model,ny_model,nz_model+1,1)
-!   call get_DART_diag_data(trim(file_in),'PHB',geoht_bas,nx_model,ny_model,nz_model+1,1)
 !   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
 !   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
 !   call get_DART_diag_data(file_in,'ch4',ch4_fld,nx_model,ny_model,nz_model,1)
 !   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-!   do k=1,nz_model
-!      geoht_fld(:,:,k)=((geoht_bas(:,:,k)+geoht_prt(:,:,k))/grav + &
-!      (geoht_bas(:,:,k+1)+geoht_prt(:,:,k+1))/grav)/2.
-!   enddo
 !   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-!  ch4_fld(:,:,:)=ch4_fld(:,:,:)*1.e-6
+!   ch4_fld(:,:,:)=ch4_fld(:,:,:)*1.e-6
 !
 ! Open TROPOMI CH4 binary file
    fileid=100
@@ -331,13 +319,15 @@ program tropomi_ch4_total_col_ascii_to_obs
       if(obs_accept/obs_ch4_reten_freq*obs_ch4_reten_freq.eq.obs_accept) then
          sum_accept=sum_accept+1
          qc_count=qc_count+1
-!
-! Convert TROPOMI vertical height grid to pressure grid (tropomi grid is top to bottom)
-         rad_lon_obs=lon_obs/rad2deg
-         rad_lat_obs=lat_obs/rad2deg
+
          obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
          call get_time(obs_time, seconds, days)
+!
+! APM +++ (Check this)         
+! Convert TROPOMI vertical height grid to pressure grid (tropomi grid is top to bottom)
          data_file='/nobackupp11/amizzi/INPUT_DATA/FIREX_REAL_TIME_DATA/waccm_forecasts/waccm-20210316112829081188.nc'
+         rad_lon_obs=lon_obs/rad2deg
+         rad_lat_obs=lat_obs/rad2deg
          prs_obs(1)=.01
          do k=1,nlev_obs-1
             kk=nlev_obs-k+1
@@ -371,6 +361,8 @@ program tropomi_ch4_total_col_ascii_to_obs
                endif
             enddo
          enddo
+! APM ---
+!         
 !
 ! Obs value is the tropospheric vertical column
          obs_val(:)=total_col_obs
