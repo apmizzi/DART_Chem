@@ -52,7 +52,7 @@ export FIRST_DART_INFLATE_DATE=2014072606
 export FIRST_EMISS_INV_DATE=2014072606
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072606
+export CYCLE_STR_DATE=2014072618
 #
 # END CYCLE DATE-TIME:
 export CYCLE_END_DATE=2014072618
@@ -224,8 +224,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 #########################################################################
 #
-   if [[ ! -e ${RUN_DIR} ]]; then mkdir -p ${RUN_DIR}; fi
-   cd ${RUN_DIR}
+   if [[ ! -e ${RUN_DIR}/${DATE} ]]; then mkdir -p ${RUN_DIR}/${DATE}; fi
+   cd ${RUN_DIR}/${DATE}
 #
 #########################################################################
 #

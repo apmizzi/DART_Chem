@@ -115,6 +115,8 @@
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
       export NL_USE_LOG_SO2=${USE_LOG_SO2_LOGIC}
+      export NL_USE_LOG_CH4=${USE_LOG_CH4_LOGIC}
+      export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
 #
 # MODEL PROFILE SETTINGS
       export NL_PATH_MODEL=\'${WRFCHEM_TEMPLATE_DIR}\'
@@ -154,3 +156,8 @@
       if [[ ! -s ${NL_FILEOUT} ]]; then
          touch NO_TROPOMI_O3_${DATE}
       fi
+#
+# Clean directory
+      rm bias_correct*      
+      rm dart_log* includedSupport* input.nml mccExcluded* *.dat
+      rm readme.* requiredMCRP* run_tropomi_o3_* unresolved*

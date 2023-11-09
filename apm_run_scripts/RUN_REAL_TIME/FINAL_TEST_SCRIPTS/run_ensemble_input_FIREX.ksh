@@ -52,10 +52,10 @@ export FIRST_DART_INFLATE_DATE=2020071018
 export FIRST_EMISS_INV_DATE=2020071018
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2020071018
+export CYCLE_STR_DATE=2020071318
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2020071018
+export CYCLE_END_DATE=2020071318
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -93,61 +93,61 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # SELECT COMPONENT RUN OPTIONS:
    export RUN_GEOGRID=false
-   export RUN_UNGRIB=true
-   export RUN_METGRID=true
-   export RUN_REAL=true
-   export RUN_PERT_WRFCHEM_MET_IC=true
-   export RUN_PERT_WRFCHEM_MET_BC=true
-   export RUN_EXO_COLDENS=true
-   export RUN_SEASON_WES=true
-   export RUN_WRFCHEM_BIO=true
-   export RUN_WRFCHEM_FIRE=true
-   export RUN_WRFCHEM_CHEMI=true
-   export RUN_PERT_WRFCHEM_CHEM_ICBC=true
-   export RUN_PERT_WRFCHEM_CHEM_EMISS=true
+   export RUN_UNGRIB=false
+   export RUN_METGRID=false
+   export RUN_REAL=false
+   export RUN_PERT_WRFCHEM_MET_IC=false
+   export RUN_PERT_WRFCHEM_MET_BC=false
+   export RUN_EXO_COLDENS=false
+   export RUN_SEASON_WES=false
+   export RUN_WRFCHEM_BIO=false
+   export RUN_WRFCHEM_FIRE=false
+   export RUN_WRFCHEM_CHEMI=false
+   export RUN_PERT_WRFCHEM_CHEM_ICBC=false
+   export RUN_PERT_WRFCHEM_CHEM_EMISS=false
    export RUN_BIAS_CORRECTION=false
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
-   export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
-   export RUN_MOPITT_CO_CPSR_OBS=true # (done)
+   export RUN_MOPITT_CO_PROFILE_OBS=false # (done)
+   export RUN_MOPITT_CO_CPSR_OBS=false # (done)
    export RUN_IASI_CO_TOTAL_COL_OBS=false
    export RUN_IASI_CO_PROFILE_OBS=false # (done)
    export RUN_IASI_CO_CPSR_OBS=false # (done)
    export RUN_IASI_O3_PROFILE_OBS=false
    export RUN_IASI_O3_CPSR_OBS=false
-   export RUN_MODIS_AOD_TOTAL_COL_OBS=true # (done)
+   export RUN_MODIS_AOD_TOTAL_COL_OBS=false # (done)
    export RUN_OMI_O3_TOTAL_COL_OBS=false
    export RUN_OMI_O3_TROP_COL_OBS=false
-   export RUN_OMI_O3_PROFILE_OBS=true # (done)
-   export RUN_OMI_O3_CPSR_OBS=true # (works)
+   export RUN_OMI_O3_PROFILE_OBS=false # (done)
+   export RUN_OMI_O3_CPSR_OBS=false # (works)
    export RUN_OMI_NO2_TOTAL_COL_OBS=false
-   export RUN_OMI_NO2_TROP_COL_OBS=true # (done)
+   export RUN_OMI_NO2_TROP_COL_OBS=false # (done)
    export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
-   export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true # (works)
+   export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false # (works)
    export RUN_OMI_SO2_TOTAL_COL_OBS=false
-   export RUN_OMI_SO2_PBL_COL_OBS=true # (works)
-   export RUN_OMI_HCHO_TOTAL_COL_OBS=true # (works)
+   export RUN_OMI_SO2_PBL_COL_OBS=false # (works)
+   export RUN_OMI_HCHO_TOTAL_COL_OBS=false # (works)
    export RUN_OMI_HCHO_TROP_COL_OBS=false
-   export RUN_TROPOMI_CO_TOTAL_COL_OBS=true # (done)
+   export RUN_TROPOMI_CO_TOTAL_COL_OBS=false # (done)
    export RUN_TROPOMI_O3_TOTAL_COL_OBS=false
    export RUN_TROPOMI_O3_TROP_COL_OBS=false
    export RUN_TROPOMI_O3_PROFILE_OBS=false # (not done, no data)
    export RUN_TROPOMI_O3_CPSR_OBS=false
    export RUN_TROPOMI_NO2_TOTAL_COL_OBS=false
-   export RUN_TROPOMI_NO2_TROP_COL_OBS=true # (works)
+   export RUN_TROPOMI_NO2_TROP_COL_OBS=false # (works)
    export RUN_TROPOMI_SO2_TOTAL_COL_OBS=false
-   export RUN_TROPOMI_SO2_PBL_COL_OBS=true # (works, vertical sum)
+   export RUN_TROPOMI_SO2_PBL_COL_OBS=false # (works, vertical sum)
    export RUN_TROPOMI_CH4_TOTAL_COL_OBS=true  # (works, vertical sum)
    export RUN_TROPOMI_CH4_TROP_COL_OBS=false
    export RUN_TROPOMI_CH4_PROFILE_OBS=false
    export RUN_TROPOMI_CH4_CPSR_OBS=false
    export RUN_TROPOMI_HCHO_TOTAL_COL_OBS=false 
-   export RUN_TROPOMI_HCHO_TROP_COL_OBS=true # (works, vertical sum)
+   export RUN_TROPOMI_HCHO_TROP_COL_OBS=false # (works, vertical sum)
    export RUN_TEMPO_O3_TOTAL_COL_OBS=false
    export RUN_TEMPO_O3_TROP_COL_OBS=false
-   export RUN_TEMPO_O3_PROFILE_OBS=true # (done)
-   export RUN_TEMPO_O3_CPSR_OBS=true
+   export RUN_TEMPO_O3_PROFILE_OBS=false # (done)
+   export RUN_TEMPO_O3_CPSR_OBS=false # (done)
    export RUN_TEMPO_NO2_TOTAL_COL_OBS=false
-   export RUN_TEMPO_NO2_TROP_COL_OBS=true # (done)
+   export RUN_TEMPO_NO2_TROP_COL_OBS=false # (done)
    export RUN_TES_CO_TOTAL_COL_OBS=false
    export RUN_TES_CO_PROFILE_OBS=false # (works)
    export RUN_TES_CO_CPSR_OBS=false # (works)
@@ -225,8 +225,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 #########################################################################
 #
-   if [[ ! -e ${RUN_DIR} ]]; then mkdir -p ${RUN_DIR}; fi
-   cd ${RUN_DIR}
+   if [[ ! -e ${RUN_DIR}/${DATE} ]]; then mkdir -p ${RUN_DIR}/${DATE}; fi
+   cd ${RUN_DIR}/${DATE}
 #
 #########################################################################
 #
@@ -1113,6 +1113,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       fi
       source ${RS_SCRIPTS_DIR}/RS_TEMPO_NO2_Trop_Col.ksh > index_rs.html 2>&1
    fi
+
+exit
+
+   
 #
 ########################################################################
 #

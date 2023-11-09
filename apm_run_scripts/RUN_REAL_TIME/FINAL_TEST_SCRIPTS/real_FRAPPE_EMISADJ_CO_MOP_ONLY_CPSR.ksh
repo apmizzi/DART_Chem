@@ -39,26 +39,25 @@ export RUN_DIR=${EXPERIMENT_DIR}/FRAPPE_EMISADJ_CO_MOP_ONLY_CPSR
 export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_FRAPPE_CO
 export EXPERIMENT_INPUT_OBS=FRAPPE_CO_OBS
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'      
+export WRFCHEM_TEMPLATE_FILE=wrfout_d01_2014071512_mean
 export NUM_MEMBERS=20
 export CYCLE_PERIOD=6
 export FCST_PERIOD=6
 #
 # CYCLE TIME SETTINGS
-export INITIAL_DATE=2014072500
-export FIRST_FILTER_DATE=2014072506
-export FIRST_DART_INFLATE_DATE=2014072506
-export FIRST_EMISS_INV_DATE=2014072506
+export INITIAL_DATE=2014072600
+export FIRST_FILTER_DATE=2014072606
+export FIRST_DART_INFLATE_DATE=2014072606
+export FIRST_EMISS_INV_DATE=2014072606
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072506
-export CYCLE_DATE=${CYCLE_STR_DATE}
+export CYCLE_STR_DATE=2014072606
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072506
-#export CYCLE_END_DATE=${CYCLE_STR_DATE}
+export CYCLE_END_DATE=2014072606
 #
 # For emissions estimation
-export ADD_EMISS=false
+export ADD_EMISS=true
 export EMISS_DAMP_CYCLE=1.0
 export EMISS_DAMP_INTRA_CYCLE=1.0
 #
@@ -66,6 +65,7 @@ export EMISS_DAMP_INTRA_CYCLE=1.0
 export SKIP_FILTER=false
 #
 # SELECT OBSERVATION OPTIONS:
+export RUN_INPUT_OBS=false
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
 export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
 export RUN_MOPITT_CO_CPSR_OBS=false # (done)
@@ -243,6 +243,7 @@ fi
 #
 #########################################################################
 #
+export CYCLE_DATE=${CYCLE_STR_DATE}
 while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export DATE=${CYCLE_DATE}
    export EXP_INPUT_OBS=${RUN_INPUT_DIR}/${DATE}/${EXPERIMENT_INPUT_OBS}
@@ -254,7 +255,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # SELECT COMPONENT RUN OPTIONS:
 # FOR GENERAL CYCLING   
    if [[ ${RUN_SPECIAL_FORECAST} == false ]]; then
-      export RUN_INPUT_OBS=false
       if ${RUN_INPUT_OBS}; then
          export RUN_COMBINE_OBS=true
          export RUN_PREPROCESS_OBS=true
@@ -349,7 +349,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    source ${RS_SCRIPTS_DIR}/RS_Forward_Operator_Params.ksh
    source ${RS_SCRIPTS_DIR}/RS_DART_Namelists.ksh
    source ${RS_SCRIPTS_DIR}/RS_Error_Decorrelation_Settings.ksh
-%   
+#   
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
    cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
 #
@@ -359,7 +359,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 #########################################################################
 #
-   if [[ ! -e ${RUN_DIR} ]]; then mkdir -p ${RUN_DIR}; fi
+   if [[ ! -e ${RUN_DIR}/${DATE} ]]; then mkdir -p ${RUN_DIR}/${DATE}; fi
    cd ${RUN_DIR}/${DATE}
 #
 #########################################################################

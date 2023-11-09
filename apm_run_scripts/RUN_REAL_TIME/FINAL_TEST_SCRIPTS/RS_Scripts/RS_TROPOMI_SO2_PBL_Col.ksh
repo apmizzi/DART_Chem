@@ -158,3 +158,7 @@
       if [[ -s ${NL_FILEOUT} ]]; then
          touch NO_TROPOMI_SO2_${DATE}
       fi
+#
+# Clean directory
+      rm dart_log* includedSupport* input.nml mccExcluded* *.dat
+      rm readme.* requiredMCRP* run_tropomi_so2_* unresolved* tropomi_so2_*
