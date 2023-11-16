@@ -46,13 +46,13 @@ export CYCLE_PERIOD=6
 export FCST_PERIOD=6
 #
 # CYCLE TIME SETTINGS
-export INITIAL_DATE=2020071012
-export FIRST_FILTER_DATE=2020071018
-export FIRST_DART_INFLATE_DATE=2020071018
-export FIRST_EMISS_INV_DATE=2020071018
+export INITIAL_DATE=2020071312
+export FIRST_FILTER_DATE=2020071318
+export FIRST_DART_INFLATE_DATE=2020071318
+export FIRST_EMISS_INV_DATE=2020071318
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2020071318
+export CYCLE_STR_DATE=2020071312
 #
 # END CYCLE DATE-TIME:
 export CYCLE_END_DATE=2020071318
@@ -62,8 +62,7 @@ export ADD_EMISS=false
 export EMISS_DAMP_CYCLE=1.0
 export EMISS_DAMP_INTRA_CYCLE=1.0
 #
-# Set observation error scaling and
-# retention factors
+# Set observation error scaling and retention factors
 source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
 #
 # Set log transform settings
@@ -103,7 +102,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_WRFCHEM_BIO=false
    export RUN_WRFCHEM_FIRE=false
    export RUN_WRFCHEM_CHEMI=false
-   export RUN_PERT_WRFCHEM_CHEM_ICBC=false
+   export RUN_PERT_WRFCHEM_CHEM_ICBC=true
    export RUN_PERT_WRFCHEM_CHEM_EMISS=false
    export RUN_BIAS_CORRECTION=false
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
@@ -136,7 +135,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_TROPOMI_NO2_TROP_COL_OBS=false # (works)
    export RUN_TROPOMI_SO2_TOTAL_COL_OBS=false
    export RUN_TROPOMI_SO2_PBL_COL_OBS=false # (works, vertical sum)
-   export RUN_TROPOMI_CH4_TOTAL_COL_OBS=true  # (works, vertical sum)
+   export RUN_TROPOMI_CH4_TOTAL_COL_OBS=false  # (works, vertical sum)
    export RUN_TROPOMI_CH4_TROP_COL_OBS=false
    export RUN_TROPOMI_CH4_PROFILE_OBS=false
    export RUN_TROPOMI_CH4_CPSR_OBS=false
@@ -188,20 +187,20 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_MLS_HNO3_TOTAL_COL_OBS=false
    export RUN_MLS_HNO3_PROFILE_OBS=false # (works, vertical sum)
    export RUN_MLS_HNO3_CPSR_OBS=false # (works, vertical sum)
-   export RUN_AIRNOW_CO_OBS=true # (done)
-   export RUN_AIRNOW_O3_OBS=true # (done)
-   export RUN_AIRNOW_NO2_OBS=true # (done)
-   export RUN_AIRNOW_SO2_OBS=true # (done)
-   export RUN_AIRNOW_PM10_OBS=true # (done)
-   export RUN_AIRNOW_PM25_OBS=true # (done)
+   export RUN_AIRNOW_CO_OBS=false # (done)
+   export RUN_AIRNOW_O3_OBS=false # (done)
+   export RUN_AIRNOW_NO2_OBS=false # (done)
+   export RUN_AIRNOW_SO2_OBS=false # (done)
+   export RUN_AIRNOW_PM10_OBS=false # (done)
+   export RUN_AIRNOW_PM25_OBS=false # (done)
    export RUN_PANDA_CO_OBS=false
    export RUN_PANDA_O3_OBS=false
    export RUN_PANDA_PM25_OBS=false
    export RUN_MEXICO_AQS_CO_OBS=false
-   export RUN_MET_OBS=true # (done)
-   export RUN_COMBINE_OBS=true
-   export RUN_PREPROCESS_OBS=true
-   export RUN_LOCALIZATION=true
+   export RUN_MET_OBS=false # (done)
+   export RUN_COMBINE_OBS=false
+   export RUN_PREPROCESS_OBS=false
+   export RUN_LOCALIZATION=false
 #
    source ${RS_SCRIPTS_DIR}/RS_Code_Versions.ksh
    source ${RS_SCRIPTS_DIR}/RS_Experiment_Dirs.ksh
@@ -1113,10 +1112,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       fi
       source ${RS_SCRIPTS_DIR}/RS_TEMPO_NO2_Trop_Col.ksh > index_rs.html 2>&1
    fi
-
-exit
-
-   
 #
 ########################################################################
 #

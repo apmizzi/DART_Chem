@@ -58,7 +58,7 @@
 # Haswell
    export WRFCHEM_JOB_CLASS=normal
    export WRFCHEM_TIME_LIMIT=00:30:00
-   export WRFCHEM_NODES=3
+   export WRFCHEM_NODES=2
    export WRFCHEM_TASKS=24
 #
 #   export WRFCHEM_JOB_CLASS=devel
@@ -74,7 +74,7 @@
 # Haswell
    export PERT_JOB_CLASS=normal
    export PERT_TIME_LIMIT=05:59:00
-   export PERT_NODES=3
+   export PERT_NODES=1
    export PERT_TASKS=24
 #
 #   export PERT_JOB_CLASS=devel

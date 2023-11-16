@@ -52,10 +52,10 @@ export FIRST_DART_INFLATE_DATE=2014072618
 export FIRST_EMISS_INV_DATE=2014072618
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072618
+export CYCLE_STR_DATE=2014072700
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072618
+export CYCLE_END_DATE=2014072700
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -102,8 +102,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_WRFCHEM_BIO=false
    export RUN_WRFCHEM_FIRE=false
    export RUN_WRFCHEM_CHEMI=false
-   export RUN_PERT_WRFCHEM_CHEM_ICBC=true
-   export RUN_PERT_WRFCHEM_CHEM_EMISS=true
+   export RUN_PERT_WRFCHEM_CHEM_ICBC=false
+   export RUN_PERT_WRFCHEM_CHEM_EMISS=false
    export RUN_BIAS_CORRECTION=false
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
    export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
@@ -157,8 +157,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_TES_O3_PROFILE_OBS=true # (works)
    export RUN_TES_O3_CPSR_OBS=true # (works)
    export RUN_TES_NH3_TOTAL_COL_OBS=false
-   export RUN_TES_NH3_PROFILE_OBS=true # (works, vertical sum)
-   export RUN_TES_NH3_CPSR_OBS=true # (works, vertical sum)
+   export RUN_TES_NH3_PROFILE_OBS=false # (works, vertical sum)
+   export RUN_TES_NH3_CPSR_OBS=false # (works, vertical sum)
    export RUN_TES_CH4_TOTAL_COL_OBS=false
    export RUN_TES_CH4_PROFILE_OBS=false # (works, vertical sum)
    export RUN_TES_CH4_CPSR_OBS=false # (works, vertical sum)

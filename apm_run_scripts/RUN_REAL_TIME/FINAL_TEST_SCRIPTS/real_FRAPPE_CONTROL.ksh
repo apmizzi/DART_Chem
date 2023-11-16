@@ -54,7 +54,7 @@ export FIRST_EMISS_INV_DATE=2014072618
 export CYCLE_STR_DATE=2014072612
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072612
+export CYCLE_END_DATE=2014072700
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -65,15 +65,15 @@ export EMISS_DAMP_INTRA_CYCLE=1.0
 export SKIP_FILTER=false
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=false
+export RUN_INPUT_OBS=true
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
 export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
-export RUN_MOPITT_CO_CPSR_OBS=false # (done)
+export RUN_MOPITT_CO_CPSR_OBS=true # (done)
 export RUN_IASI_CO_TOTAL_COL_OBS=false
 export RUN_IASI_CO_PROFILE_OBS=true # (done)
 export RUN_IASI_CO_CPSR_OBS=true # (done)
 export RUN_IASI_O3_PROFILE_OBS=false
-export RUN_IASI_O3_CPSR_OBS=true
+export RUN_IASI_O3_CPSR_OBS=false
 export RUN_MODIS_AOD_TOTAL_COL_OBS=true # (done)
 export RUN_OMI_O3_TOTAL_COL_OBS=false
 export RUN_OMI_O3_TROP_COL_OBS=false
@@ -122,8 +122,8 @@ export RUN_TES_O3_PROFILE_OBS=true # (works)
 export RUN_TES_O3_CPSR_OBS=true # (works)
 export RUN_TES_NH3_TOTAL_COL_OBS=false
 export RUN_TES_NH3_TROP_COL_OBS=false
-export RUN_TES_NH3_PROFILE_OBS=true # (works, vertical sum)
-export RUN_TES_NH3_CPSR_OBS=true # (works, vertical sum)
+export RUN_TES_NH3_PROFILE_OBS=false # (works, vertical sum)
+export RUN_TES_NH3_CPSR_OBS=false # (works, vertical sum)
 export RUN_TES_CH4_TOTAL_COL_OBS=false
 export RUN_TES_CH4_TROP_COL_OBS=false
 export RUN_TES_CH4_PROFILE_OBS=false # (works, vertical sum)
@@ -248,8 +248,8 @@ export RUN_SPECIAL_FORECAST=false
 export NUM_SPECIAL_FORECAST=0
 export SPECIAL_FORECAST_FAC=1.
 #
-export SPECIAL_FORECAST_MEM[1]=5
-export SPECIAL_FORECAST_MEM[2]=6
+export SPECIAL_FORECAST_MEM[1]=3
+export SPECIAL_FORECAST_MEM[2]=5
 export SPECIAL_FORECAST_MEM[3]=7
 export SPECIAL_FORECAST_MEM[4]=8
 export SPECIAL_FORECAST_MEM[5]=9
@@ -392,7 +392,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    source ${RS_SCRIPTS_DIR}/RS_Forward_Operator_Params.ksh
    source ${RS_SCRIPTS_DIR}/RS_DART_Namelists.ksh
    source ${RS_SCRIPTS_DIR}/RS_Error_Decorrelation_Settings.ksh
-#   
+#
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
    cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
 #

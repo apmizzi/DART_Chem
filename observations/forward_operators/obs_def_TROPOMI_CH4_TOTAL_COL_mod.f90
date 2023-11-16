@@ -74,12 +74,12 @@ use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, 
 
 use          location_mod, only : location_type, set_location, get_location, &
                                   VERTISPRESSURE, VERTISSURFACE, VERTISLEVEL, &
-                                  VERTISUNDEF
+                                  VERTISUNDEF, VERTISHEIGHT
 
 use       assim_model_mod, only : interpolate
 
 use          obs_kind_mod, only : QTY_CH4, QTY_TEMPERATURE, QTY_SURFACE_PRESSURE, &
-                                  QTY_PRESSURE, QTY_VAPOR_MIXING_RATIO
+                                  QTY_PRESSURE, QTY_VAPOR_MIXING_RATIO, QTY_GEOPOTENTIAL_HEIGHT
 
 use  ensemble_manager_mod, only : ensemble_type
 
@@ -98,9 +98,11 @@ public :: write_tropomi_ch4_total_col, &
 integer, parameter    :: max_tropomi_ch4_obs = 10000000
 integer               :: num_tropomi_ch4_obs = 0
 integer,  allocatable :: nlayer(:)
-real(r8), allocatable :: pressure(:,:)
+real(r8), allocatable :: height(:,:)
 real(r8), allocatable :: avg_kernel(:,:)
 real(r8), allocatable :: prior(:,:)
+real(r8), allocatable :: alt_sfc(:)
+real(r8), allocatable :: prs_sfc(:)
 
 ! version controlled file description for error handling, do not edit
 character(len=*), parameter :: source   = 'obs_def_tropomi_ch4_total_col_mod.f90'
@@ -160,9 +162,11 @@ if (nlayer_tropomi < 1) then
 endif
 
 allocate(    nlayer(max_tropomi_ch4_obs))
-allocate(  pressure(max_tropomi_ch4_obs,nlayer_tropomi+1))
+allocate(    height(max_tropomi_ch4_obs,nlayer_tropomi+1))
 allocate(avg_kernel(max_tropomi_ch4_obs,nlayer_tropomi))
 allocate(     prior(max_tropomi_ch4_obs,nlayer_tropomi))
+allocate(   alt_sfc(max_tropomi_ch4_obs))
+allocate(   prs_sfc(max_tropomi_ch4_obs))
 
 end subroutine initialize_module
 
@@ -178,9 +182,11 @@ character(len=*), intent(in), optional :: fform
 
 integer               :: keyin
 integer               :: nlayer_1
-real(r8), allocatable :: pressure_1(:)
+real(r8), allocatable :: height_1(:)
 real(r8), allocatable :: avg_kernel_1(:)
 real(r8), allocatable :: prior_1(:)
+real(r8)              :: alt_sfc_1
+real(r8)              :: prs_sfc_1
 character(len=32)     :: fileformat
 
 integer, SAVE :: counts1 = 0
@@ -193,13 +199,15 @@ if(present(fform)) fileformat = adjustl(fform)
 ! Need to know how many layers for this one
 nlayer_1 = read_int_scalar( ifile, fileformat, 'nlayer_1')
 
-allocate(  pressure_1(nlayer_1+1))
+allocate(    height_1(nlayer_1+1))
 allocate(avg_kernel_1(nlayer_1))
 allocate(     prior_1(nlayer_1))
 
-call read_r8_array(ifile, nlayer_1+1, pressure_1,   fileformat, 'pressure_1')
+call read_r8_array(ifile, nlayer_1+1, height_1,   fileformat, 'height_1')
 call read_r8_array(ifile, nlayer_1,   avg_kernel_1, fileformat, 'avg_kernel_1')
 call read_r8_array(ifile, nlayer_1,   prior_1, fileformat, 'prior_1')
+alt_sfc_1 = read_r8_scalar(ifile, fileformat, 'alt_sfc_1')
+prs_sfc_1 = read_r8_scalar(ifile, fileformat, 'prs_sfc_1')
 keyin = read_int_scalar(ifile, fileformat, 'keyin')
 
 counts1 = counts1 + 1
@@ -211,9 +219,9 @@ if(counts1 > max_tropomi_ch4_obs) then
    call error_handler(E_ERR,'read_tropomi_ch4_total_col',string1,source,text2=string2)
 endif
 
-call set_obs_def_tropomi_ch4_total_col(key, pressure_1, avg_kernel_1, prior_1, nlayer_1)
+call set_obs_def_tropomi_ch4_total_col(key, alt_sfc_1, prs_sfc_1, height_1, avg_kernel_1, prior_1, nlayer_1)
 
-deallocate(pressure_1, avg_kernel_1, prior_1)
+deallocate(height_1, avg_kernel_1, prior_1)
 
 end subroutine read_tropomi_ch4_total_col
 
@@ -233,9 +241,11 @@ fileformat = "ascii"
 if(present(fform)) fileformat = adjustl(fform)
 
 call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
-call write_r8_array(  ifile, nlayer(key)+1,      pressure(key,:), fileformat,'pressure')
+call write_r8_array(  ifile, nlayer(key)+1,      height(key,:), fileformat,'height')
 call write_r8_array(  ifile, nlayer(key),        avg_kernel(key,:), fileformat,'avg_kernel')
 call write_r8_array(  ifile, nlayer(key),        prior(key,:), fileformat,'prior')
+call write_r8_scalar(ifile,                      alt_sfc(key), fileformat,'alt_sfc')
+call write_r8_scalar(ifile,                      prs_sfc(key), fileformat,'prs_sfc')
 call write_int_scalar(ifile,                     key, fileformat,'key')
 
 end subroutine write_tropomi_ch4_total_col
@@ -286,24 +296,23 @@ subroutine get_expected_tropomi_ch4_total_col(state_handle, ens_size, location, 
    
    integer :: layer_tropomi,level_tropomi
    integer :: layer_mdl,level_mdl
-   integer :: k,imem,kend_tropomi
+   integer :: k,imem
    integer :: interp_new
    integer, dimension(ens_size) :: zstatus
    
    real(r8) :: eps, AvogN, Rd, Ru, Cp, grav, msq2cmsq
-   real(r8) :: missing,ch4_min, tmp_max
-   real(r8) :: level,del_prs
+   real(r8) :: missing,ch4_min
+   real(r8) :: level
    real(r8) :: tmp_vir_k, tmp_vir_kp
    real(r8) :: mloc(3)
-   real(r8) :: ch4_val_conv,amf
-   real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
-   real(r8), dimension(ens_size) :: ch4_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
-   real(r8), dimension(ens_size) :: ch4_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
-   real(r8), dimension(ens_size) :: prs_sfc
+   real(r8) :: ch4_val_conv
+   real(r8) :: up_wt,dw_wt,tl_wt,hgt_mid
+   real(r8), dimension(ens_size) :: ch4_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1, ght_mdl_1
+   real(r8), dimension(ens_size) :: ch4_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n, ght_mdl_n
    
-   real(r8), allocatable, dimension(:)   :: thick, prs_tropomi, prs_tropomi_mem
-   real(r8), allocatable, dimension(:,:) :: ch4_val, tmp_val, qmr_val
-   logical  :: return_now,ch4_return_now,tmp_return_now,qmr_return_now
+   real(r8), allocatable, dimension(:)   :: thick, hgt_tropomi
+   real(r8), allocatable, dimension(:,:) :: ch4_val, tmp_val, qmr_val, prs_val
+   logical  :: return_now
    
    if ( .not. module_initialized ) call initialize_module
    
@@ -316,8 +325,6 @@ subroutine get_expected_tropomi_ch4_total_col(state_handle, ens_size, location, 
    msq2cmsq = 1.e4_r8
    AvogN    = 6.02214e23_r8
    missing  = -888888_r8
-   tmp_max  = 600.
-   del_prs  = 5000.
    
    if(use_log_ch4) then
       ch4_min = log(ch4_min)
@@ -327,13 +334,11 @@ subroutine get_expected_tropomi_ch4_total_col(state_handle, ens_size, location, 
 
    layer_tropomi = nlayer(key)
    level_tropomi = nlayer(key)+1
-   kend_tropomi  = nlayer(key)
    layer_mdl = nlayer_model
    level_mdl = nlayer_model+1
    
-   allocate(prs_tropomi(level_tropomi))
-   allocate(prs_tropomi_mem(level_tropomi))
-   prs_tropomi(1:level_tropomi)=pressure(key,1:level_tropomi)
+   allocate(hgt_tropomi(level_tropomi))
+   hgt_tropomi(1:level_tropomi)=height(key,1:level_tropomi)
 
 ! Get location infomation
 
@@ -352,17 +357,11 @@ subroutine get_expected_tropomi_ch4_total_col(state_handle, ens_size, location, 
    istatus(:) = 0  ! set this once at the beginning
    return_now=.false.
 
-! pressure at model surface (Pa)
-
-   zstatus=0
-   level=0.0_r8
-   loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
-   call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus) 
-
    ch4_mdl_1(:)=missing_r8
    tmp_mdl_1(:)=missing_r8
    qmr_mdl_1(:)=missing_r8
    prs_mdl_1(:)=missing_r8
+   ght_mdl_1(:)=missing_r8
 
    do k=1,layer_mdl
       level=real(k)
@@ -374,12 +373,15 @@ subroutine get_expected_tropomi_ch4_total_col(state_handle, ens_size, location, 
       zstatus=0
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg / kg 
       zstatus=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Ps 
+      zstatus=0
+      call interpolate(state_handle, ens_size, loc2, QTY_GEOPOTENTIAL_HEIGHT, ght_mdl_1, zstatus) ! m
 !
       interp_new=0
       do imem=1,ens_size
          if(ch4_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
-         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
+         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8 .or. &
+         ght_mdl_1(imem).eq.missing_r8) then
             interp_new=1
             exit
          endif
@@ -397,11 +399,14 @@ subroutine get_expected_tropomi_ch4_total_col(state_handle, ens_size, location, 
 !   call error_handler(E_MSG, routine, string1, source)
 !   write(string1, *)'APM: prs lower bound 1 ',prs_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *)'APM: ght lower bound 1 ',ght_mdl_1
+!   call error_handler(E_MSG, routine, string1, source)
 
    ch4_mdl_n(:)=missing_r8
    tmp_mdl_n(:)=missing_r8
    qmr_mdl_n(:)=missing_r8
    prs_mdl_n(:)=missing_r8
+   ght_mdl_n(:)=missing_r8
 
    do k=layer_mdl,1,-1
       level=real(k)
@@ -413,12 +418,15 @@ subroutine get_expected_tropomi_ch4_total_col(state_handle, ens_size, location, 
       zstatus=0
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, zstatus) ! kg / kg 
       zstatus=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, zstatus) ! Pa
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, zstatus) ! Pa 
+      zstatus=0
+      call interpolate(state_handle, ens_size, loc2, QTY_GEOPOTENTIAL_HEIGHT, ght_mdl_n, zstatus) ! m
 !
       interp_new=0
       do imem=1,ens_size
          if(ch4_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
-         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
+         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8 .or. &
+         ght_mdl_n(imem).eq.missing_r8) then
             interp_new=1
             exit
          endif
@@ -436,36 +444,43 @@ subroutine get_expected_tropomi_ch4_total_col(state_handle, ens_size, location, 
 !   call error_handler(E_MSG, routine, string1, source)
 !   write(string1, *)'APM: prs upper bound 1 ',prs_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
+!   write(string1, *)'APM: ght upper bound 1 ',ght_mdl_n
+!   call error_handler(E_MSG, routine, string1, source)
 
-! Get profiles at TROPOMI pressure levels
+! Get profiles at TROPOMI height levels
 
    allocate(ch4_val(ens_size,level_tropomi))
    allocate(tmp_val(ens_size,level_tropomi))
    allocate(qmr_val(ens_size,level_tropomi))
+   allocate(prs_val(ens_size,level_tropomi))
 
    do k=1,level_tropomi
       zstatus=0
-      loc2 = set_location(mloc(1), mloc(2), prs_tropomi(k), VERTISPRESSURE)
+      loc2 = set_location(mloc(1), mloc(2), hgt_tropomi(k), VERTISHEIGHT)
       call interpolate(state_handle, ens_size, loc2, QTY_CH4, ch4_val(:,k), zstatus)  
       zstatus=0
       call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_val(:,k), zstatus)  
       zstatus=0
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_val(:,k), zstatus)  
+      zstatus=0
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_val(:,k), zstatus)  
 !
 ! Correcting for expected failures near the surface
       do imem=1,ens_size
-         if (prs_tropomi(k).ge.prs_mdl_1(imem)) then
+         if (hgt_tropomi(k).le.ght_mdl_1(imem)) then
             ch4_val(imem,k) = ch4_mdl_1(imem)
             tmp_val(imem,k) = tmp_mdl_1(imem)
             qmr_val(imem,k) = qmr_mdl_1(imem)
+            prs_val(imem,k) = prs_mdl_1(imem)
             cycle
          endif
 
 ! Correcting for expected failures near the top
-         if (prs_tropomi(k).le.prs_mdl_n(imem)) then
+         if (hgt_tropomi(k).ge.ght_mdl_n(imem)) then
             ch4_val(imem,k) = ch4_mdl_n(imem)
             tmp_val(imem,k) = tmp_mdl_n(imem)
             qmr_val(imem,k) = qmr_mdl_n(imem)
+            prs_val(imem,k) = prs_mdl_n(imem)
             cycle
          endif
       enddo
@@ -476,11 +491,13 @@ subroutine get_expected_tropomi_ch4_total_col(state_handle, ens_size, location, 
 !      call error_handler(E_MSG, routine, string1, source)
 !      write(string1, *)'APM: qmr ',k,qmr_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
+!      write(string1, *)'APM: prs ',k,prs_val(1,k)
+!      call error_handler(E_MSG, routine, string1, source)
 !
 ! Check data for missing values      
       do imem=1,ens_size
          if(ch4_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
-         qmr_val(imem,k).eq.missing_r8) then
+         qmr_val(imem,k).eq.missing_r8 .or. prs_val(imem,k).eq.missing_r8) then
             zstatus(:)=20
             expct_val(:)=missing_r8
             write(string1, *) &
@@ -502,35 +519,30 @@ subroutine get_expected_tropomi_ch4_total_col(state_handle, ens_size, location, 
 
    do imem=1,ens_size
 !
-! Calculate the thicknesses
-      do k=1,kend_tropomi
-         lnpr_mid=(log(prs_tropomi_mem(k+1))+log(prs_tropomi_mem(k)))/2.
-         up_wt=log(prs_tropomi_mem(k))-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_tropomi_mem(k+1))
-         tl_wt=up_wt+dw_wt      
-         tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
-         tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
-         thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
-         log(prs_tropomi_mem(k)/prs_tropomi_mem(k+1))
+! Calculate the thicknesses (TROPOMI vertical grid is bottom to top)
+      do k=1,layer_tropomi
+         thick(k) = hgt_tropomi(k+1)-hgt_tropomi(k)
       enddo
 
 ! Process the vertical summation
 
-      do k=1,kend_tropomi
-         lnpr_mid=(log(prs_tropomi_mem(k+1))+log(prs_tropomi_mem(k)))/2.
-         up_wt=log(prs_tropomi_mem(k))-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_tropomi_mem(k+1))
+      do k=1,layer_tropomi
+         hgt_mid=(hgt_tropomi(k)+hgt_tropomi(k+1))/2.
+         up_wt=hgt_mid-hgt_tropomi(k)
+         dw_wt=hgt_tropomi(k+1)-hgt_mid
          tl_wt=up_wt+dw_wt
 
 ! Convert from VMR to molar density (mol/m^3)
          if(use_log_ch4) then
-            ch4_val_conv = (dw_wt*exp(ch4_val(imem,k))+up_wt*exp(ch4_val(imem,k+1)))/tl_wt * &
-            (dw_wt*prs_tropomi_mem(k)+up_wt*prs_tropomi_mem(k+1)) / &
-            (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
+            ch4_val_conv = (dw_wt*exp(ch4_val(imem,k))+up_wt* &
+            exp(ch4_val(imem,k+1)))/tl_wt * (dw_wt*prs_val(imem,k)+ &
+            up_wt*prs_val(imem,k+1)) / (Ru*(dw_wt*tmp_val(imem,k)+ &
+            up_wt*tmp_val(imem,k+1)))
          else
-            ch4_val_conv = (dw_wt*ch4_val(imem,k)+up_wt*ch4_val(imem,k+1))/tl_wt * &
-            (dw_wt*prs_tropomi_mem(k)+up_wt*prs_tropomi_mem(k+1)) / &
-            (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
+            ch4_val_conv = (dw_wt*ch4_val(imem,k)+up_wt* &
+            ch4_val(imem,k+1))/tl_wt * (dw_wt*prs_val(imem,k)+up_wt* &
+            prs_val(imem,k+1)) / (Ru*(dw_wt*tmp_val(imem,k)+ &
+            up_wt*tmp_val(imem,k+1)))
          endif
  
 ! Get expected observation
@@ -551,20 +563,22 @@ subroutine get_expected_tropomi_ch4_total_col(state_handle, ens_size, location, 
    enddo
 
 ! Clean up and return
-   deallocate(ch4_val, tmp_val, qmr_val)
+   deallocate(ch4_val, tmp_val, qmr_val, prs_val)
    deallocate(thick)
-   deallocate(prs_tropomi, prs_tropomi_mem)
+   deallocate(hgt_tropomi)
 
 end subroutine get_expected_tropomi_ch4_total_col
 
 !-------------------------------------------------------------------------------
 
-subroutine set_obs_def_tropomi_ch4_total_col(key, ch4_pressure, ch4_avg_kernel, ch4_prior, ch4_nlayer)
+subroutine set_obs_def_tropomi_ch4_total_col(key, ch4_alt_sfc, ch4_prs_sfc, ch4_height, ch4_avg_kernel, ch4_prior, ch4_nlayer)
 
 integer,                            intent(in)  :: key, ch4_nlayer
-real(r8), dimension(ch4_nlayer+1),  intent(in)  :: ch4_pressure
+real(r8), dimension(ch4_nlayer+1),  intent(in)  :: ch4_height
 real(r8), dimension(ch4_nlayer),    intent(in)  :: ch4_avg_kernel
 real(r8), dimension(ch4_nlayer),    intent(in)  :: ch4_prior
+real(r8),                           intent(in)  :: ch4_alt_sfc
+real(r8),                           intent(in)  :: ch4_prs_sfc
 
 if ( .not. module_initialized ) call initialize_module
 
@@ -576,9 +590,11 @@ if(num_tropomi_ch4_obs >= max_tropomi_ch4_obs) then
 endif
 
 nlayer(key) = ch4_nlayer
-pressure(key,1:ch4_nlayer+1) = ch4_pressure(1:ch4_nlayer+1)
+height(key,1:ch4_nlayer+1) = ch4_height(1:ch4_nlayer+1)
 avg_kernel(key,1:ch4_nlayer) = ch4_avg_kernel(1:ch4_nlayer)
 prior(key,1:ch4_nlayer)      = ch4_prior(1:ch4_nlayer)
+alt_sfc(key) = ch4_alt_sfc
+prs_sfc(key) = ch4_prs_sfc
 
 end subroutine set_obs_def_tropomi_ch4_total_col
 

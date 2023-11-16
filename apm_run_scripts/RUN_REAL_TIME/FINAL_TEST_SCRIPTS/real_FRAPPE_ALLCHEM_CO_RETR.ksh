@@ -51,10 +51,10 @@ export FIRST_DART_INFLATE_DATE=2014072606
 export FIRST_EMISS_INV_DATE=2014072606
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072606
+export CYCLE_STR_DATE=2014072618
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072606
+export CYCLE_END_DATE=2014072618
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -201,20 +201,20 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'AIRNOW_CO'"
 #
 # Run WRF-Chem for failed forecasts (will not work with adaptive time step)
-export RUN_SPECIAL_FORECAST=false
-export NUM_SPECIAL_FORECAST=0
+export RUN_SPECIAL_FORECAST=true
+export NUM_SPECIAL_FORECAST=10
 export SPECIAL_FORECAST_FAC=1.
 #
-export SPECIAL_FORECAST_MEM[1]=5
-export SPECIAL_FORECAST_MEM[2]=6
-export SPECIAL_FORECAST_MEM[3]=7
-export SPECIAL_FORECAST_MEM[4]=8
-export SPECIAL_FORECAST_MEM[5]=9
-export SPECIAL_FORECAST_MEM[6]=10
-export SPECIAL_FORECAST_MEM[7]=7
-export SPECIAL_FORECAST_MEM[8]=8
-export SPECIAL_FORECAST_MEM[9]=9
-export SPECIAL_FORECAST_MEM[10]=10
+export SPECIAL_FORECAST_MEM[1]=11
+export SPECIAL_FORECAST_MEM[2]=12
+export SPECIAL_FORECAST_MEM[3]=13
+export SPECIAL_FORECAST_MEM[4]=14
+export SPECIAL_FORECAST_MEM[5]=15
+export SPECIAL_FORECAST_MEM[6]=16
+export SPECIAL_FORECAST_MEM[7]=17
+export SPECIAL_FORECAST_MEM[8]=18
+export SPECIAL_FORECAST_MEM[9]=19
+export SPECIAL_FORECAST_MEM[10]=20
 #
 # Set observation error scaling and retention factors
 source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
@@ -296,7 +296,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_DART_FILTER=false
       export RUN_BIAS_CORRECTION=false
       export RUN_UPDATE_BC=false
-      export RUN_ENSEMBLE_MEAN_INPUT=true
+      export RUN_ENSEMBLE_MEAN_INPUT=false
       if [[ ${DATE} -eq ${INITIAL_DATE}  ]]; then
          export RUN_WRFCHEM_INITIAL=true
          export RUN_WRFCHEM_CYCLE_CR=false
