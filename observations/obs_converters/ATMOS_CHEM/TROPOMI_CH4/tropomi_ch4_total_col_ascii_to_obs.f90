@@ -179,6 +179,8 @@ program tropomi_ch4_total_col_ascii_to_obs
    real                            :: amf_trop_obs
    real*8                          :: amf_trop_obs_r8
    real                            :: lat_obs,lon_obs
+   real                            :: alt_sfc,prs_sfc
+   real*8                          :: alt_sfc_r8,prs_sfc_r8
    real                            :: rad_lat_obs,rad_lon_obs
    real*8                          :: lat_obs_r8,lon_obs_r8
    real                            :: up_wt,dw_wt,tl_wt
@@ -190,7 +192,7 @@ program tropomi_ch4_total_col_ascii_to_obs
    real                            :: trop_sum,strat_sum
    real*8                          :: prs_ref,hgt_ref,alt_ref
    real*8                          :: prs_lcl
-   real,allocatable,dimension(:,:)     :: lon,lat,prs_sfc
+   real,allocatable,dimension(:,:)     :: lon,lat
    real,allocatable,dimension(:,:,:)   :: prs_prt,prs_bas,prs_fld
    real,allocatable,dimension(:,:,:)   :: geoht_prt,geoht_bas,geoht_fld
    real,allocatable,dimension(:,:,:)   :: tmp_prt,tmp_fld,vtmp_fld
@@ -294,6 +296,7 @@ program tropomi_ch4_total_col_ascii_to_obs
       read(fileid,*,iostat=ios) lat_obs,lon_obs
       if(lon_obs.lt.0.) lon_obs=lon_obs+360.
       read(fileid,*,iostat=ios) nlay_obs,nlev_obs
+      read(fileid,*,iostat=ios) alt_sfc,prs_sfc
       allocate(prs_obs(nlev_obs))
       allocate(alt_obs(nlev_obs))
       allocate(avgk_obs(nlay_obs))
@@ -311,6 +314,8 @@ program tropomi_ch4_total_col_ascii_to_obs
       alt_obs_r8(:)=alt_obs(:)
       avgk_obs_r8(:)=avgk_obs(:)
       prior_obs_r8(:)=prior_obs(:)
+      alt_sfc_r8=alt_sfc
+      prs_sfc_r8=prs_sfc
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
 !
@@ -322,47 +327,6 @@ program tropomi_ch4_total_col_ascii_to_obs
 
          obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
          call get_time(obs_time, seconds, days)
-!
-! APM +++ (Check this)         
-! Convert TROPOMI vertical height grid to pressure grid (tropomi grid is top to bottom)
-         data_file='/nobackupp11/amizzi/INPUT_DATA/FIREX_REAL_TIME_DATA/waccm_forecasts/waccm-20210316112829081188.nc'
-         rad_lon_obs=lon_obs/rad2deg
-         rad_lat_obs=lat_obs/rad2deg
-         prs_obs(1)=.01
-         do k=1,nlev_obs-1
-            kk=nlev_obs-k+1
-! lower boundary
-            if(alt_obs(kk).le.geoht_fld(i_min,j_min,1)) then
-               up_wt=alt_obs(kk)
-               dw_wt=geoht_fld(i_min,j_min,1)-alt_obs(kk)
-               tl_wt=up_wt+dw_wt
-               prs_obs(kk)=(up_wt*prs_fld(i_min,j_min,1) + dw_wt*prs_sfc(i_min,j_min))/tl_wt
-               cycle
-            endif
-! upper boundary
-            if(alt_obs(kk).gt.geoht_fld(i_min,j_min,nz_model)) then
-               prs_ref=prs_fld(i_min,j_min,nz_model)
-               hgt_ref=geoht_fld(i_min,j_min,nz_model)
-               call get_upper_bdy_height(prs_lcl,prs_ref,hgt_ref,model,data_file,25,21,88,57, &
-               rad_lon_obs,rad_lat_obs,alt_obs(kk),days,seconds)
-               prs_obs(kk)=prs_lcl    
-               cycle
-            endif
-! interior
-            do ll=1,nz_model-1
-               if(alt_obs(kk).gt.geoht_fld(i_min,j_min,ll) .and. &
-               alt_obs(kk).le.geoht_fld(i_min,j_min,ll+1)) then
-                  up_wt=alt_obs(kk)-geoht_fld(i_min,j_min,ll)
-                  dw_wt=geoht_fld(i_min,j_min,ll+1)-alt_obs(kk)
-                  tl_wt=up_wt+dw_wt
-                  prs_obs(kk)=(up_wt*prs_fld(i_min,j_min,ll+1) + &
-                  dw_wt*prs_fld(i_min,j_min,ll))/tl_wt
-                  exit
-               endif
-            enddo
-         enddo
-! APM ---
-!         
 !
 ! Obs value is the tropospheric vertical column
          obs_val(:)=total_col_obs
@@ -386,7 +350,7 @@ program tropomi_ch4_total_col_ascii_to_obs
          call set_obs_def_location(obs_def, obs_location)
          call set_obs_def_time(obs_def, obs_time)
          call set_obs_def_error_variance(obs_def, obs_err_var)
-         call set_obs_def_tropomi_ch4_total_col(qc_count, alt_obs_r8, avgk_obs_r8, prior_obs_r8, nlay_obs)
+         call set_obs_def_tropomi_ch4_total_col(qc_count, alt_sfc_r8, prs_sfc_r8, alt_obs_r8, avgk_obs_r8, prior_obs_r8, nlay_obs)
          call set_obs_def_key(obs_def, qc_count)
          call set_obs_values(obs, obs_val, 1)
          call set_qc(obs, tropomi_qc, num_qc)

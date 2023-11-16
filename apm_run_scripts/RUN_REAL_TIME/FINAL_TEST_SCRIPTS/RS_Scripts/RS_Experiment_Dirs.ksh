@@ -17,7 +17,7 @@
    export MEGAN_BIO_DIR=${DART_DIR}/apm_run_scripts/RUN_MEGAN_BIO
    export FINN_FIRE_DIR=${DART_DIR}/apm_run_scripts/RUN_FINN_FIRE
    export BIAS_CORR_DIR=${DART_DIR}/apm_run_scripts/RUN_BIAS_CORR
-   export MOZBC_DATA_DIR=${EXPERIMENT_DATA_DIR}/mozart_forecasts
+   export MOZBC_DATA_DIR=${EXPERIMENT_DATA_DIR}/large_scale_chem_forecasts
    export EXPERIMENT_STATIC_FILES=${EXPERIMENT_DATA_DIR}/static_files
    export EXPERIMENT_WRFCHEMI_DIR=${EXPERIMENT_DATA_DIR}/anthro_emissions
    export EXPERIMENT_WRFFIRECHEMI_DIR=${EXPERIMENT_DATA_DIR}/fire_emissions

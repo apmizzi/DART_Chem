@@ -19,11 +19,10 @@
 #
 # SELECT MOZART DATA FILE
 #      if [[ ${YYYY} -eq 2014 ]]; then export MOZBC_DATA=/h0003.nc; fi
+#      if [[ ${YYYY} -eq 2020 ]]; then export MOZBC_DATA=/camchem_20201021005113812911.nc; fi
+#      if [[ ${YYYY} -eq 2020 ]]; then export MOZBC_DATA=/camchem_0001.nc; fi
       if [[ ${YYYY} -eq 2014 ]]; then export MOZBC_DATA=/h0004.nc; fi
-#
-#      if [[ ${YYYY} -eq 2020 ]]; then export MOZBC_DATA=camchem_20201021005113812911.nc; fi
-#      if [[ ${YYYY} -eq 2020 ]]; then export MOZBC_DATA=camchem_0001.nc; fi
-      if [[ ${YYYY} -eq 2020 ]]; then export MOZBC_DATA=waccm_0001.nc; fi
+      if [[ ${YYYY} -eq 2020 ]]; then export MOZBC_DATA=/waccm_0001.nc; fi
 #
 # CREATE INPUT FILES COARSE DOMAIN
       rm -rf mozbc.ic.inp
@@ -127,7 +126,7 @@ EOF
 #
 # These need to match the species in the respective input files
 &perturb_chem_icbc_spcs_nml
-ch_chem_spc='o3','no','no2','no3','nh3','hno3','hno4','n2o5','ho2','h2o2','co','ch4','ch3o2','ch3ooh','hcho','ch3oh','c2h4','ald','ch3cooh','acet','mgly','pan','mpan','macr','mvk','c2h6','c3h6','c3h8','c2h5oh','c10h16','onit','onitr','isopr','isopn','acetol','glyald','hydrald','mek','bigene','open','bigalk','tol','cres','dms','so2','sulf','BC1','BC2','OC1','OC2','SEAS_1','SEAS_2','SEAS_3','SEAS_4','DUST_1','DUST_2','DUST_3','DUST_4','DUST_5','h2','n2o'
+ch_chem_spc=${NL_CHEM_ICBC_SPECIES}
 /
 EOF
 #
@@ -202,7 +201,7 @@ EOF
       done
 #
 # Clean directory
-#      rm *_cr_icbc_pert* job,ksh met_em.d* mozbc* pert_chem_icbc perturb_chem_*
+#      rm *_cr_icbc_pert* job,ksh met_em.d* mozbc* perturb_chem_*
 #      rm runICBC_parent_* run_mozbc_rt_* set00 wrfbdy_d01 wrfinput_d01
 #      rm wrfbdy_d01_${DATE} wrfinput_do1_${DATE} wrfinput_d01_frac
 #      rm wrfinput_d01_mean wrfinput_d01_sprd pert_chem_icbc job.ksh

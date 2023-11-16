@@ -317,6 +317,8 @@ function tropomi_ch4_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,
             mn_tropomi,dd_tropomi,hh_tropomi,mm_tropomi,ss_tropomi);
             fprintf(fid,'%14.8f %14.8f \n',lat(ipxl,ilin),lon(ipxl,ilin));
             fprintf(fid,'%d %d \n',nlay,nlev);
+            fprintf(fid,'%14.8g %14.8g \n',alt_sfc(ipxl,ilin), ...
+            prs_sfc(ipxl,ilin));
             fprintf(fid,'%14.8g ',alt_lev_adj(1:nlev));
             fprintf(fid,'\n');
             fprintf(fid,'%14.8g ',col_avgk_lay(1:nlay,ipxl,ilin));
