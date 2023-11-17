@@ -623,7 +623,7 @@ character(len=*), parameter :: revdate  = ''
                                print *, 'mean, std ',mean,std
                                chem_data3d_frac(i,j,k,1)=0.
                                cycle
-                            endif   
+                            endif
                             chem_data3d_frac(i,j,k,1)=std/mean
                          enddo
                       enddo

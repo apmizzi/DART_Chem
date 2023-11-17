@@ -8,9 +8,9 @@ dir_wrf              = '/data/$USER/WRFCHEM/'
 dir_moz = '/data/$USER/MOZART/'
 fn_moz  = 'ha0004.nc'
 
-spc_map = 'co -> CO', 'o3 -> O3', 'so2 -> SO2', 'no -> NO', 'no2 -> NO2','sulf -> SO4',
+spc_map = 'co -> CO', 'o3 -> O3', 'so2 -> SO2', 'no -> NO', 'no2 -> NO2',
           'h2o2 -> H2O2', 'no3 -> NO3', 'n2o5 -> N2O5', 'hno3 -> HNO3', 'nh3 -> NH3',
-          'hcho -> CH2O', 'pan -> PAN', 'tol -> .75*TOLUENE', 'hno4 -> HO2NO2','iso -> ISOP',
+          'hcho -> CH2O', 'pan -> PAN', 'tol -> .75*TOLUENE', 'hno4 -> HO2NO2',
           'eth -> C2H6', 'par -> C3H6+3*C3H8+2*BIGENE+5*BIGALK', 'ch3oh -> CH3OH',
           'ald -> GLYALD+CH3CHO', 'ket -> MEK+CH3COCH3+HYAC', 'mgly -> CH3COCHO',
           'ol2 -> C2H4', 'olt -> .5*BIGENE', 'oli -> .5*BIGENE', 'xyl -> .25*TOLUENE',

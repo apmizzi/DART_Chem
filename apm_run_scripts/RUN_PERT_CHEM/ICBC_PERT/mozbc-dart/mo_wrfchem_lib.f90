@@ -1,18 +1,3 @@
-! Copyright 2019 NCAR/ACOM
-! 
-! Licensed under the Apache License, Version 2.0 (the "License");
-! you may not use this file except in compliance with the License.
-! You may obtain a copy of the License at
-! 
-!     http://www.apache.org/licenses/LICENSE-2.0
-! 
-! Unless required by applicable law or agreed to in writing, software
-! distributed under the License is distributed on an "AS IS" BASIS,
-! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-! See the License for the specific language governing permissions and
-! limitations under the License.
-!
-! DART $Id: mo_wrfchem_lib.f90 13171 2019-05-09 16:42:36Z thoar@ucar.edu $
 
       module module_wrfchem_lib
 
@@ -112,6 +97,7 @@
       integer :: file
       integer :: xdimid(2),  ydimid(2), zdimid(2), wdimid(2), tdimid(2)
       integer :: dims(4)
+!ggp increase size to 70
       character(len=70) :: attribute
       character(len=200) :: filespec(2)
       character(len=32) :: varname
@@ -428,11 +414,7 @@ any_missing : &
 
       if( file == bc ) then
          ntime = ntime + 1
-         if( ntime > 2 ) then
-           delta_secs = int( 86400. * diffdat( wrf_date(1), wrf_datesec(1), wrf_date(2), wrf_datesec(2) ) )
-         else
-           delta_secs = 21600
-         endif
+         delta_secs = int( 86400. * diffdat( wrf_date(1), wrf_datesec(1), wrf_date(2), wrf_datesec(2) ) )
          write(*,*) 'read_wrf_times: delta_secs = ',delta_secs
          wrf_date(ntime)    = wrf_date(ntime-1)
          wrf_datesec(ntime) = wrf_datesec(ntime-1)

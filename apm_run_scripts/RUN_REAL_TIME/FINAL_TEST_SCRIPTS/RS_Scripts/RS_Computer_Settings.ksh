@@ -9,15 +9,15 @@
    export DEBUG_NODES=2
    export DEBUG_TASKS=16
 #
-#   export GENERAL_JOB_CLASS=normal
-#   export GENERAL_TIME_LIMIT=00:20:00
-#   export GENERAL_NODES=1
-#   export GENERAL_TASKS=16
-#
-   export GENERAL_JOB_CLASS=devel
+   export GENERAL_JOB_CLASS=normal
    export GENERAL_TIME_LIMIT=00:20:00
    export GENERAL_NODES=1
    export GENERAL_TASKS=16
+#
+#   export GENERAL_JOB_CLASS=devel
+#   export GENERAL_TIME_LIMIT=00:20:00
+#   export GENERAL_NODES=1
+#   export GENERAL_TASKS=16
 #   
    export WRFDA_JOB_CLASS=normal
    export WRFDA_TIME_LIMIT=00:05:00

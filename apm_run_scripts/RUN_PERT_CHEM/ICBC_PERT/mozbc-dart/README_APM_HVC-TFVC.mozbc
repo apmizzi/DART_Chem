@@ -1,0 +1,9 @@
+APM NOTE:
+
+The ACOM release version of mozbc does not work properly with the WRF hybrid vertical coordinate (HVC) in WRF v3.9 or greater. It does wotk with the WRF terrain-following vertical coordinate (TFVC) which can be used by setting HYBRID_OPT=0 and FORCE_USE_OLD_DATA=.true. in the WRF namelist.input file. These setting must be used when running the WPS/real.exe and WRF/wrf.exe executables.
+
+A WRFChem user has contributed a code fix so that mozbc works with the WRF HVC. In this repository, the relevenat TFVC files are denoted _TFVC.f90, and the relevant HVC files are denoted _HVC.f90. Currently, mozbc is built with the _HVC.f90 files.
+
+According to the WRFChem user who contributed the bug fix, the _HVC.f90 code fix should revert to the _TFVC.f90 code when the TFVC is used in WRF v3.9 or greater.
+
+Arthur P. Mizzi

@@ -1,18 +1,11 @@
-# DART $Id: README.mozbc 13162 2019-05-03 21:06:16Z thoar@ucar.edu $
+----------------------------------------------------------------------------------------------
+        If you require assistance with compiler and/or netcdf issues please use the
+        discussion forum at:
 
-IMPORTANT: The WRF-Chem build mechanism has been replaced by the DART mkmf mechanism.
-           All that is needed to build mozbc is to run
-           quickbuild.csh   in the  RUN_PERT_CHEM/ICBC_PERT/work directory.
-           The environment from the mkmf.template is used, so there is no further
-           customization needed. As per the WRF-Chem/DART developers policy, the
-           executable has a '.exe' extension, which is an addition to the
-           native naming scheme.
+        https://www2.acom.ucar.edu/wrf-chem/discussion-forum
 
-           For more information, see https://www2.acom.ucar.edu/wrf-chem/wrf-chem-tools-community
-
-           The original README follows.
-
-        ------------------------------------------------------------------------
+        to post messages. You will will need to register before you use a specific forum.
+----------------------------------------------------------------------------------------------
 
 	The WRF utility, mozbc, a single cpu code,  maps species concentrations
         from Mozart datasets to WRF concentrations for initial condition and
@@ -56,8 +49,8 @@ IMPORTANT: The WRF-Chem build mechanism has been replaced by the DART mkmf mecha
         time span.
 
 	The Mozart datasets are interpolated in space; bilinearly in longitude,
-	longitude and linearly in pressure.  And the Mozart datasets are linearly
-	interpolated in time.  If a Mozart dataset with a time matching
+	longitude and linearly in pressure.  However, the Mozart datasets are
+	NOT temporally interpolated.  If a Mozart dataset with a time matching
 	the WRF time can not be found then mozbc error halts.
 
 	Building mozbc
@@ -69,10 +62,44 @@ IMPORTANT: The WRF-Chem build mechanism has been replaced by the DART mkmf mecha
 
 	That's it.  The make_mozbc script is presently setup to compile
 	on either Linux or AIX systems using the Portland Group Fortan90
-	compiler, pgf90, on Linux systems, and the xlf90 compiler on IBM
-	AIX systems.  If you require another compiler send email to :
+	compile, pgf90, on Linux system or the xlf90 compiler on IBM
+	AIX systems.  If you need to use another compiler such as the Intel
+	Fortran90 compiler, ifort, you can set the environment variable
 
-	stacy@ucar.edu
+	FC
+
+	before invoking make_mozbc.  As an example you would issue
+	the command :
+
+	export FC=ifort 
+
+	in the sh, bash, or ksh Linux shells or
+
+	setenv FC ifort
+
+	in the csh or tcsh shells.  Presently the make_mozbc utility recognizes
+        the following FC settings :
+
+        pgf90                 (PGI)
+        gfortran              (GNU)
+        ifort                 (Intel)
+        lf95                  (Lahey)
+        xlf90                 (IBM)
+
+	The mozbc utility requires the netcdf library and make_mozbc
+	will attempt to locate the libnetcdf.a library.  However, this is
+	not a foolproof process and thus you may need to set the environment variable
+	
+	NETCDF_DIR
+
+	to the directory containing the file lib/libnetcdf.a.  As an example
+        in the ksh shell, if you issued the command :
+
+	export NETCDF_DIR=/usr/local/netcdf-3.6.2
+
+	then make_mozbc would look for the file libnetcdf.a in the
+	directory /usr/local/netcdf-3.6.2/lib (make_mozbc automatically
+	appends the /lib string to the NETCDF_DIR string.
 
 	Namelist control variables
         ======== ======= =========
@@ -300,3 +327,6 @@ IMPORTANT: The WRF-Chem build mechanism has been replaced by the DART mkmf mecha
         (Redirected input is required. Redirected output to mozbc.out is optional.
          The mozbc.inp and mozbc.out filenames are for illustration only; you
          may use any valid filename in place of mozbc.inp, mozbc.out)
+
+
+

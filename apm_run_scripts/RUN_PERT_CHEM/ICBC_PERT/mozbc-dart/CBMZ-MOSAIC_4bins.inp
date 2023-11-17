@@ -1,29 +1,36 @@
-
 &control
 
 do_bc     = .true.
-do_ic     = .true.
-domain    = 1
-dir_wrf              = '/data/$USER/WRFCHEM/'
-dir_moz = '/data/$USER/MOZART/'
-fn_moz  = 'ha0004.nc'
+do_ic     = .false.
+domain    = 1,
+dir_wrf              = '/glade/scratch/alma/'
+dir_moz = '/glade/scratch/alma/'
+fn_moz  = 'hb0000.nc'
 
-spc_map =  'co -> CO', 'o3 -> O3', 'so2 -> SO2', 'no -> NO', 'no2 -> NO2','sulf -> SO4',
-          'h2o2 -> H2O2', 'no3 -> NO3', 'n2o5 -> N2O5', 'hno3 -> HNO3', 'nh3 -> NH3',
-          'hcho -> CH2O', 'pan -> PAN', 'tol -> .75*TOLUENE', 'hno4 -> HO2NO2','iso -> ISOP',
-          'eth -> C2H6', 'par -> C3H6+3*C3H8+2*BIGENE+5*BIGALK', 'ch3oh -> CH3OH',
-          'ald -> GLYALD+CH3CHO', 'ket -> MEK+CH3COCH3+HYAC', 'mgly -> CH3COCHO',
-          'ol2 -> C2H4', 'olt -> .5*BIGENE', 'oli -> .5*BIGENE', 'xyl -> .25*TOLUENE',
-          'csl -> CRESOL', 'open -> BIGALD', 'isoprd -> MVK+MACR+HYDRALD', 'onit -> ONIT+ONITR',
-          'ora2 -> CH3COOH', 'op1 -> CH3OOH', 'op2 -> C2H5OOH', 'ch3o2 -> CH3O2', 'c2h5oh -> C2H5OH',
+spc_map = 'o3 -> O3', 'no -> NO',
+          'no2 -> NO2', 'no3 -> NO3', 'nh3 -> NH3', 'hno3 -> HNO3', 'hno4 -> HO2NO2',
+          'n2o5 -> N2O5', 'ho -> OH', 'ho2 -> HO2', 'h2o2 -> H2O2',
+          'ch4 -> CH4', 'co -> CO', 'ch3o2 -> CH3O2', 'ch3ooh -> CH3OOH',
+          'hcho -> CH2O', 'ch3oh -> CH3OH', 'c2h4 -> C2H4',
+          'ald -> CH3CHO', 'ch3cooh -> CH3COOH', 'acet -> CH3COCH3', 'mgly -> CH3COCHO',
+          'paa -> CH3COOOH', 
+          'pan -> PAN', 'mpan -> MPAN', 'macr -> MACR', 
+          'mvk -> MVK', 'c2h6 -> C2H6', 'c3h6 -> C3H6', 'c3h8 -> C3H8',
+          'c2h5oh -> C2H5OH', 
+          'onit -> ONIT', 'onitr -> ONITR', 'isopr -> ISOP',
+          'isopn -> ISOPNO3', 'acetol -> HYAC', 'glyald -> GLYALD',
+          'hydrald -> HYDRALD', 'mek -> MEK',
+          'bigene -> BIGENE', 'open -> BIGALD', 'bigalk -> BIGALK', 
+          'tol -> TOLUENE', 
+          'cres -> CRESOL', 'dms -> DMS', 'so2 -> SO2', 'sulf -> SO4',
           'oc_a01->9.60024e-2*OC1+9.60024e-2*OC2+1.152026*SOA;1.e9'            
           'oc_a02->.254356*OC1+.254356*OC2+3.05226*SOA;1.e9',
           'oc_a03->6.00723e-2*OC1+6.00723e-2*OC2+.720865*SOA;1.e9',
 	  'oc_a04->.00104*OC1+.00104*OC2+.012481*SOA;1.e9',
-          'bc_a01->CB1+CB2;.270629e9',
-          'bc_a02->CB1+CB2;10.5467e7',
-          'bc_a03->CB1+CB2;1.6787e6',
-	  'bc_a04->CB1+CB2;6.9571e2',
+          'bc_a01->6.5325E-01*CB1+6.5325E-01*CB2;0.413793103e9',
+          'bc_a02->2.5458E-01*CB1+2.5458E-01*CB2;0.413793103e9',
+          'bc_a03->4.0521E-03*CB1+4.0521E-03*CB2;0.413793103e9',
+	  'bc_a04->1.6794E-06*CB1+1.6794E-06*CB2;0.413793103e9',
           'so4_a01->2.4433e-2*SO4;3.31423e9',
           'so4_a02->.47111*SO4;3.31423e9',
 	  'so4_a03->.47857*SO4;3.31423e9',
@@ -44,12 +51,12 @@ spc_map =  'co -> CO', 'o3 -> O3', 'so2 -> SO2', 'no -> NO', 'no2 -> NO2','sulf 
           'cl_a02->.6*SA1;1.e9',
           'cl_a03->.3*SA1+1.2*SA2;1.e9',
           'cl_a04->1.2*SA3;1.e9',
-          'oin_a01->1.16516*[DUST1];1.e9',
-          'oin_a02->2.33032*[DUST1];1.e9',
-          'oin_a03->1.16516*[DUST1]+4.66064*[DUST2];1.e9',
-          'oin_a04->4.66064*[DUST3]+4.66064*[DUST4];1.e9',
-          'num_a01->3.40e17*OC1+3.40e17*OC2+4.08e18*SOA+5.64e17*CB1+5.64e17*CB2+1.59e17*SO4+1.33e17*NH4NO3+3.00e16*NH4+3.22e17*SA1+4.83e17*SA1+1.59e18*[DUST1];1.0',
-          'num_a02->4.06e16*OC1+4.06e16*OC2+4.88e17*SOA+9.91e15*CB1+9.91e15*CB2+1.39e17*SO4+1.15e17*NH4NO3+2.60e16*NH4+2.90e16*SA1+4.36e16*SA1+1.43e17*[DUST1];1.0',
-          'num_a03->1.1e14*OC1+1.1e14*OC2+1.3e15*SOA+1.8e12*CB1+1.8e12*CB2+1.6e15*SO4+1.33e15*NH4NO3+3e14*NH4+4.12e14*SA1+1.645e15*SA2+8.11e14*[DUST1]+3.24e15*[DUST2];1',
-          'num_a04->8.70e10*OC1+8.70e10*OC2+1.04e12*SOA+3.42e07*CB1+3.42e07*CB2+3.96e12*SO4+3.30e12*NH4NO3+7.45e11*NH4+7.60e13*SA3+1.50e14*[DUST3]+1.50e14*[DUST4];1.0',
+          'oin_a01->0.5*[DUST1];1.e9',
+          'oin_a02->0.5*[DUST1]+0.24*[DUST2];1.e9',
+          'oin_a03->0.76*[DUST2]+1.0*[DUST3];1.e9',
+          'oin_a04->1.0*[DUST4];1.e9',
+          'num_a01->1.73e17*OC1+1.73e17*OC2+1.73e17*SOA+5.64e17*CB1+5.64e17*CB2+7.67e16*SO4+6.39e16*NH4NO3+1.44e16*NH4+3.22e17*SA1+4.83e17*SA1+0.5*3.93e17*[DUST1];1.0',
+          'num_a02->1.71e16*OC1+1.71e16*OC2+1.71e16*SOA+9.91e15*CB1+9.91e15*CB2+6.06e16*SO4+5.05e16*NH4NO3+1.14e16*NH4+2.90e16*SA1+4.36e16*SA1+0.5*1.17e16*[DUST1]+0.24*1.17e16*[DUST2];1.0',
+          'num_a03->1.13e14*OC1+1.13e14*OC2+1.13e14*SOA+1.80e12*CB1+1.80e12*CB2+2.44e15*SO4+2.03e15*NH4NO3+4.69e14*NH4+4.12e14*SA1+1.64e15*SA2+0.76*9.55e13*[DUST2]+9.55e13*[DUST3];1.0',
+          'num_a04->4.09e10*OC1+4.09e10*OC2+4.09e10*SOA+3.42e07*CB1+3.42e07*CB2+3.25e12*SO4+2.71e12*NH4NO3+6.12e11*NH4+7.60e13*SA3+1.49e12*[DUST4];1.0',
 /
