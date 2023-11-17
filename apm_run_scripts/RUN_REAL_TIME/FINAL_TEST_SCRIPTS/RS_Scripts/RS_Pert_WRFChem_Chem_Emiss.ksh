@@ -381,5 +381,5 @@ EOF
 	 rm wrffirechemi_d01_${L_FILE_DATE}
          export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} 1 2>/dev/null)
       done
-      rm *_cr_emiss_pert* adjust_chem_* job.ksh perturb_chem_*
-      rm wrffirechemi_d01_${DATE} wrf*_frac wrf*_mean wrf*_sprd wrfinput_d*
+#      rm *_cr_emiss_pert* adjust_chem_* job.ksh perturb_chem_*
+#      rm wrffirechemi_d01_${DATE} wrf*_frac wrf*_mean wrf*_sprd wrfinput_d*

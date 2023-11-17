@@ -8,7 +8,7 @@
 
 \rm -f *.o *.mod Makefile
 
-set MODEL = "WRF-Chem/DART RUN_PERT_CHEM/ICBC_PERT"
+set MODEL = "WRF-Chem/DART RUN_PERT_CHEM/ICBC_PERT_v2"
 
 @ n = 0
 

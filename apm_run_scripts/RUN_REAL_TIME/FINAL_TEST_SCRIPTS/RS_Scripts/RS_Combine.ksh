@@ -890,7 +890,6 @@
       export NL_USE_LOG_HNO3=${USE_LOG_HNO3_LOGIC}
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
       export NL_USE_LOG_PAN=${USE_LOG_PAN_LOGIC}
-      ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_dart_input_nml.ksh       
-#
+      ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_dart_input_nml.ksh
       ./obs_sequence_tool > index.html 2>&1
       mv obs_seq.proc obs_seq_comb_${DATE}.out

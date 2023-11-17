@@ -27,6 +27,7 @@
 #
 # ROOT DIRECTORIES:
 export DART_VER=DART_development
+export PERT_CHEM_VER=ICBC_PERT
 export WORK_DIR=/nobackupp11/amizzi
 export TRUNK_DIR=${WORK_DIR}/TRUNK
 export REAL_TIME_DIR=${TRUNK_DIR}/${DART_VER}/apm_run_scripts/RUN_REAL_TIME
@@ -54,7 +55,7 @@ export FIRST_EMISS_INV_DATE=2014072618
 export CYCLE_STR_DATE=2014072612
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072700
+export CYCLE_END_DATE=2014072618
 #
 # For emissions estimation
 export ADD_EMISS=false

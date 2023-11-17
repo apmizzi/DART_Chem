@@ -4,7 +4,6 @@ set OP_SYS=`uname -s`
 if( ! $?FC ) then
   if( $OP_SYS == "Linux" ) then
     setenv FC pgf90
-    setenv FC ifort
   else
     setenv FC xlf90
   endif
@@ -27,7 +26,7 @@ if( ! $?NETCDF_DIR ) then
 #  check for netcdf library
 #------------------------------------------------------------
   set found_ncf_lib = 0
-  foreach tst_dir (/glade/u/apps/ch/opt /usr/local /usr /opt)
+  foreach tst_dir (/usr/local /usr /opt)
     foreach tst_lib (lib64 lib netcdf)
       if( -e $tst_dir/$tst_lib/libnetcdf.a ) then
          set found_ncf_lib = 1
@@ -51,8 +50,6 @@ if( ! $?NETCDF_DIR ) then
       setenv NETCDF_DIR /usr/local
     endif
   endif
-  echo " "
-  echo "Using $FC fortan90 compiler"
 endif
 
 echo "============================================================================="
@@ -71,16 +68,11 @@ if( -e ${NETCDF_DIR}/lib/libnetcdff.a ) then
   set ar_libs = "${ar_libs} -lnetcdff"
 endif
 
-set compflags=-g 
-if( ${FC} == 'gfortran' ) then
-  set compflags = "${compflags} -ffree-line-length-none"
-endif
-
 make clean >& /dev/null
-make FFLAGS="${compflags}" NETCDF_AR_FILES="${ar_libs}" || echo "Failed to build fire_emis" && exit -1
+make AR_FILES="${ar_libs}" || echo "Failed to build fire_emis" && exit -1
+
 echo " "
 make cleanup >& /dev/null
 echo "++++++++++++++"
 echo "mozbc build Ok"
 echo "++++++++++++++"
-

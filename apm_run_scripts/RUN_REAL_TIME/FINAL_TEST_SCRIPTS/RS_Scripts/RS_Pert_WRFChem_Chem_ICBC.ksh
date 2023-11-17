@@ -15,7 +15,7 @@
       cp ${PERT_CHEM_INPUT_DIR}/runICBC_parent_rt_FR.ksh ./.
       cp ${PERT_CHEM_INPUT_DIR}/run_mozbc_rt_CR.csh ./.
       cp ${PERT_CHEM_INPUT_DIR}/run_mozbc_rt_FR.csh ./.
-      cp ${PERT_CHEM_INPUT_DIR}/set00 ./.
+      cp ${PERT_CHEM_INPUT_DIR}/set00_${EXP_SPCS_MAP} ./set00
 #
 # SELECT MOZART DATA FILE
 #      if [[ ${YYYY} -eq 2014 ]]; then export MOZBC_DATA=/h0003.nc; fi
@@ -35,6 +35,7 @@ dir_wrf   = '${RUN_DIR}/${DATE}/wrfchem_chem_icbc/'
 dir_moz   = '${MOZBC_DATA_DIR}'
 fn_moz    = '${MOZBC_DATA}'
 def_missing_var    = .true.
+moz_var_suffix     = '${MOZBC_SUFFIX}'
 met_file_prefix    = 'met_em'
 met_file_suffix    = '.nc'
 met_file_separator = '.'
@@ -49,6 +50,7 @@ dir_wrf   = '${RUN_DIR}/${DATE}/wrfchem_chem_icbc/'
 dir_moz   = '${MOZBC_DATA_DIR}'
 fn_moz    = '${MOZBC_DATA}'
 def_missing_var    = .true.
+moz_var_suffix     = '${MOZBC_SUFFIX}'
 met_file_prefix    = 'met_em'
 met_file_suffix    = '.nc'
 met_file_separator = '.'
@@ -202,7 +204,7 @@ EOF
 #
 # Clean directory
 #      rm *_cr_icbc_pert* job,ksh met_em.d* mozbc* perturb_chem_*
-#      rm runICBC_parent_* run_mozbc_rt_* set00 wrfbdy_d01 wrfinput_d01
+#      rm runICBC_parent_* run_mozbc_rt_* set00* wrfbdy_d01 wrfinput_d01
 #      rm wrfbdy_d01_${DATE} wrfinput_do1_${DATE} wrfinput_d01_frac
 #      rm wrfinput_d01_mean wrfinput_d01_sprd pert_chem_icbc job.ksh
 #      rm wrfbdy_d01_*_:00 wrfinput_d01_*_:00
