@@ -5,7 +5,7 @@
 ! this file except in compliance with the License. You may obtain a copy of the 
 ! License at      http://www.apache.org/licenses/LICENSE-2.0
 !
-! Unless required by applicable law or agreed to in writing, software distributed
+! Unless required by applicable law or agreed to in writing, software distruted
 ! under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
 ! CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 ! specific language governing permissions and limitations under the License.
@@ -117,6 +117,8 @@ module obs_def_cris_pan_cpsr_mod
    character(len=*), parameter :: revdate  = ''
    
    character(len=512) :: string1, string2
+   character(len=200) :: upper_data_file
+   integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
    
    logical, save :: module_initialized = .false.
 
@@ -128,8 +130,9 @@ module obs_def_cris_pan_cpsr_mod
    integer :: nlayer_cris_pan_trop_col = -9999
    integer :: nlayer_cris_pan_profile = -9999
    
-   namelist /obs_def_CRIS_PAN_nml/ use_log_pan, nlayer_model, &
-   nlayer_cris_pan_total_col, nlayer_cris_pan_trop_col, nlayer_cris_pan_profile
+   namelist /obs_def_CRIS_PAN_nml/ upper_data_file, use_log_pan, nlayer_model, &
+   nlayer_cris_pan_total_col, nlayer_cris_pan_trop_col, nlayer_cris_pan_profile, &
+   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 !-------------------------------------------------------------------------------
 contains
@@ -595,9 +598,10 @@ subroutine get_expected_cris_pan_cpsr(state_handle, ens_size, location, key, obs
          lat_obs=mloc(2)/rad2deg
          call get_time(obs_time,datesec_obs,date_obs)
 !
-         data_file='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mozart_forecasts/h0004.nc'
-         call get_upper_bdy_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs,prs_cris_top,ncnt, &
-         pan_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+         data_file=trim(upper_data_file)
+         call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
+         ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_cris_top, &
+         ncnt,pan_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
 !
 ! Impose ensemble perturbations from level kstart(imem)+1      
          pan_prf_mdl(:)=pan_prf_mdl(:)*VMR_conv

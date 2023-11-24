@@ -18,11 +18,7 @@
       cp ${PERT_CHEM_INPUT_DIR}/set00_${EXP_SPCS_MAP} ./set00
 #
 # SELECT MOZART DATA FILE
-#      if [[ ${YYYY} -eq 2014 ]]; then export MOZBC_DATA=/h0003.nc; fi
-#      if [[ ${YYYY} -eq 2020 ]]; then export MOZBC_DATA=/camchem_20201021005113812911.nc; fi
-#      if [[ ${YYYY} -eq 2020 ]]; then export MOZBC_DATA=/camchem_0001.nc; fi
-      if [[ ${YYYY} -eq 2014 ]]; then export MOZBC_DATA=/h0004.nc; fi
-      if [[ ${YYYY} -eq 2020 ]]; then export MOZBC_DATA=/waccm_0001.nc; fi
+      export MOZBC_DATA=${NL_UPPER_DATA_FILE}
 #
 # CREATE INPUT FILES COARSE DOMAIN
       rm -rf mozbc.ic.inp

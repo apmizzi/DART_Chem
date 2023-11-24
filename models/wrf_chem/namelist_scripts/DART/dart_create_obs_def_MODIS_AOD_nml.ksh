@@ -30,6 +30,11 @@ rm -f input.nml_temp
 touch input.nml_temp
 cat > input.nml_temp << EOF
  &obs_def_MODIS_AOD_nml
+   upper_data_file  = ${NL_UPPER_DATA_FILE}
+   ls_chem_dx = ${LS_CHEM_DX}
+   ls_chem_dy = ${LS_CHEM_DY}
+   ls_chem_dz = ${LS_CHEM_DZ}
+   ls_chem_dt = ${LS_CHEM_DT}
    use_log_aod   = ${NL_USE_LOG_AOD:-.false.},
    ptop          = ${NL_P_TOP_REQUESTED:-1000.},
    mdl_nlay      = ${NNZP_CR:-36}

@@ -108,6 +108,8 @@ character(len=*), parameter :: revision = ''
 character(len=*), parameter :: revdate  = ''
 
 character(len=512) :: string1, string2
+character(len=200) :: upper_data_file
+integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 logical, save :: module_initialized = .false.
 
@@ -117,7 +119,8 @@ integer :: nlayer_model = -9999
 integer :: nlayer_tropomi = -9999
 integer :: nlayer_tropomi_co_total_col = -9999
 
-namelist /obs_def_TROPOMI_CO_nml/ use_log_co, nlayer_model, nlayer_tropomi_co_total_col
+namelist /obs_def_TROPOMI_CO_nml/ upper_data_file, use_log_co, nlayer_model, &
+nlayer_tropomi_co_total_col, ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 !-------------------------------------------------------------------------------
 contains
