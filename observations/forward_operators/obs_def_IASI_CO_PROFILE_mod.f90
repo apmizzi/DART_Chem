@@ -101,6 +101,8 @@ module obs_def_IASI_CO_PROFILE_mod
    character(len=*), parameter :: revdate  = ''
 
    character(len=512) :: string1, string2
+   character(len=200) :: upper_data_file
+   integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
    logical, save :: module_initialized = .false.
    integer  :: counts1 = 0
@@ -117,8 +119,9 @@ module obs_def_IASI_CO_PROFILE_mod
 !     RETR - retrievals in retrieval (ppbv) format
 !     QOR  - quasi-optimal retrievals
 !     CPSR - compact phase space retrievals
-   namelist /obs_def_IASI_CO_nml/ IASI_CO_retrieval_type, use_log_co, nlayer_model, &
-   nlayer_iasi_co_total_col, nlayer_iasi_co_profile
+   namelist /obs_def_IASI_CO_nml/ upper_data_file, IASI_CO_retrieval_type, &
+   use_log_co, nlayer_model, nlayer_iasi_co_total_col, nlayer_iasi_co_profile, &
+   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 contains
 

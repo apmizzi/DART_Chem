@@ -110,6 +110,8 @@ character(len=*), parameter :: revision = ''
 character(len=*), parameter :: revdate  = ''
 
 character(len=512) :: string1, string2
+character(len=200) :: upper_data_file
+integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 logical, save :: module_initialized = .false.
 
@@ -117,11 +119,12 @@ logical, save :: module_initialized = .false.
 logical :: use_log_no2   = .false.
 integer :: nlayer_model = -9999
 integer :: nlayer_omi = -9999
-integer :: nlayer_omi_no2_total_col = -9999
-integer :: nlayer_omi_no2_trop_col = -9999
+integer :: nlayer_omi_no2_domino_total_col = -9999
+integer :: nlayer_omi_no2_domino_trop_col = -9999
 
-namelist /obs_def_OMI_NO2_nml/ use_log_no2, nlayer_model, &
-nlayer_omi_no2_total_col, nlayer_omi_no2_trop_col
+namelist /obs_def_OMI_NO2_DOMINO_nml/ upper_data_file, use_log_no2, &
+nlayer_model, nlayer_omi_no2_domino_total_col, nlayer_omi_no2_domino_trop_col, &
+ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 !-------------------------------------------------------------------------------
 contains
@@ -139,24 +142,24 @@ call register_module(source, revision, revdate)
 module_initialized = .true.
 
 ! Read namelist values
-call find_namelist_in_file("input.nml", "obs_def_OMI_NO2_nml", iunit)
-read(iunit, nml = obs_def_OMI_NO2_nml, iostat = rc)
-call check_namelist_read(iunit, rc, "obs_def_OMI_NO2_nml")
+call find_namelist_in_file("input.nml", "obs_def_OMI_NO2_DOMINO_nml", iunit)
+read(iunit, nml = obs_def_OMI_NO2_DOMINO_nml, iostat = rc)
+call check_namelist_read(iunit, rc, "obs_def_OMI_NO2_DOMINO_nml")
 
 ! Record the namelist values
-if (do_nml_file()) write(nmlfileunit, nml=obs_def_OMI_NO2_nml)
-if (do_nml_term()) write(     *     , nml=obs_def_OMI_NO2_nml)
-nlayer_omi=nlayer_omi_no2_trop_col
+if (do_nml_file()) write(nmlfileunit, nml=obs_def_OMI_NO2_DOMINO_nml)
+if (do_nml_term()) write(     *     , nml=obs_def_OMI_NO2_DOMINO_nml)
+nlayer_omi=nlayer_omi_no2_domino_trop_col
 
 ! Check for valid values
 
 if (nlayer_model < 1) then
-   write(string1,*)'obs_def_OMI_NO2_nml:nlayer_model must be > 0, it is ',nlayer_model
+   write(string1,*)'obs_def_OMI_NO2_DOMINO_nml:nlayer_model must be > 0, it is ',nlayer_model
    call error_handler(E_ERR,'initialize_module',string1,source)
 endif
 
 if (nlayer_omi < 1) then
-   write(string1,*)'obs_def_OMI_NO2_nml:nlayer_omi must be > 0, it is ',nlayer_omi
+   write(string1,*)'obs_def_OMI_NO2_DOMINO_nml:nlayer_omi must be > 0, it is ',nlayer_omi
    call error_handler(E_ERR,'initialize_module',string1,source)
 endif
 

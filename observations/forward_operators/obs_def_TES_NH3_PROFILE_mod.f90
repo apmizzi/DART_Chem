@@ -118,6 +118,8 @@ module obs_def_tes_nh3_profile_mod
    character(len=*), parameter :: revdate  = ''
    
    character(len=512) :: string1, string2
+   character(len=200) :: upper_data_file
+   integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
    
    logical, save :: module_initialized = .false.
 
@@ -129,8 +131,9 @@ module obs_def_tes_nh3_profile_mod
    integer :: nlayer_tes_nh3_trop_col = -9999
    integer :: nlayer_tes_nh3_profile = -9999
    
-   namelist /obs_def_TES_NH3_nml/ use_log_nh3, nlayer_model, &
-   nlayer_tes_nh3_total_col, nlayer_tes_nh3_trop_col, nlayer_tes_nh3_profile
+   namelist /obs_def_TES_NH3_nml/ upper_data_file, use_log_nh3, nlayer_model, &
+   nlayer_tes_nh3_total_col, nlayer_tes_nh3_trop_col, nlayer_tes_nh3_profile, &
+   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 !-------------------------------------------------------------------------------
 contains
@@ -696,7 +699,6 @@ return
 ! TES vertical is from bottom to top   
    lon_obs=mloc(1)/rad2deg
    lat_obs=mloc(2)/rad2deg
-   data_file='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mozart_forecasts/h0004.nc'
    call get_time(obs_time,datesec_obs,date_obs)
 
    do imem=1,ens_size
@@ -716,8 +718,10 @@ return
          prs_tes_top(:)=prs_tes_top(:)/100.
 !
          fld = 'NH3_VMR_inst'         
-         call get_upper_bdy_single_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs, &
-         prs_tes_top,ncnt,fld_prf_mdl,date_obs,datesec_obs)
+         data_file=trim(upper_data_file)
+         call get_upper_bdy_single_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
+         ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_tes_top,ncnt,fld_prf_mdl, &
+         date_obs,datesec_obs)
 
 !
 ! Impose ensemble perturbations from level kstart-1      
@@ -759,9 +763,11 @@ return
          enddo
          prs_tes_top(:)=prs_tes_top(:)/100.
 !
-         fld = 'T'         
-         call get_upper_bdy_single_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs,prs_tes_top,ncnt, &
-         tmp_prf_mdl,date_obs,datesec_obs)
+         fld = 'T'
+         data_file=trim(upper_data_file)
+         call get_upper_bdy_single_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
+         ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_tes_top,ncnt,tmp_prf_mdl, &
+         date_obs,datesec_obs)
 !
 ! Impose ensemble perturbations from level kstart(imem)-1      
          if(kstart_tmp.gt.1) then 
@@ -790,8 +796,10 @@ return
          prs_tes_top(:)=prs_tes_top(:)/100.
 !
          fld = 'Q'         
-         call get_upper_bdy_single_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs,prs_tes_top,ncnt, &
-         qmr_prf_mdl,date_obs,datesec_obs)
+         data_file=trim(upper_data_file)
+         call get_upper_bdy_single_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
+         ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_tes_top,ncnt,qmr_prf_mdl, &
+         date_obs,datesec_obs)
 !
 ! Impose ensemble perturbations from level kstart(imem)-1      
          if(kstart_qmr.gt.1) then 

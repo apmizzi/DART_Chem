@@ -99,18 +99,22 @@ character(len=*), parameter :: revision = ''
 character(len=*), parameter :: revdate  = ''
 
 character(len=512) :: string1, string2
+character(len=200) :: upper_data_file
+integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 logical, save :: module_initialized = .false.
 
 ! Namelist with default values
+character(len=129)  :: IASI_CO_retrieval_type
 logical :: use_log_co   = .false.
 integer :: nlayer_model = -9999
 integer :: nlayer_iasi = -9999
 integer :: nlayer_iasi_co_total_col = -9999
 integer :: nlayer_iasi_co_profile = -9999
 
-namelist /obs_def_IASI_CO_nml/ use_log_co, nlayer_model, &
-nlayer_iasi_co_total_col, nlayer_iasi_co_profile
+namelist /obs_def_IASI_CO_nml/ upper_data_file, IASI_CO_retrieval_type, &
+use_log_co, nlayer_model, nlayer_iasi_co_total_col, nlayer_iasi_co_profile, &
+ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 !-------------------------------------------------------------------------------
 contains

@@ -64,6 +64,13 @@ export EMISS_DAMP_INTRA_CYCLE=1.0
 # Switch to process filter output without calling filter
 export SKIP_FILTER=false
 #
+# Set large scale chemisty file
+export NL_UPPER_DATA_FILE=\'/h0004.nc\'
+export LS_CHEM_DX=17
+export LS_CHEM_DY=13
+export LS_CHEM_DZ=56
+export LS_CHEM_DT=368
+#
 # SELECT OBSERVATION OPTIexport RUN_MOPITT_CO_TOTAL_COL_OBS=false
 export RUN_INPUT_OBS=false
 export RUN_MOPITT_CO_PROFILE_OBS=true # (done)

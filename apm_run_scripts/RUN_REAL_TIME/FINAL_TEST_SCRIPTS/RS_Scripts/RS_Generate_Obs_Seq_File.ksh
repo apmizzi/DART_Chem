@@ -19,7 +19,11 @@
          cd ${EXP_INPUT_OBS}/combine_obs
       fi
       cd ${EXP_INPUT_OBS}/combine_obs
-      source ${RS_SCRIPTS_DIR}/RS_Combine.ksh > index.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Combine.ksh > index_combine.html 2>&1
+      sleep 5
+      if [[ ! -f obs_seq_comb_${DATE}.out ]]; then
+          exit
+      fi  
   fi
 #
 #########################################################################
@@ -36,5 +40,9 @@
          cd ${EXP_INPUT_OBS}/preprocess_obs
       fi
       cd ${EXP_INPUT_OBS}/preprocess_obs
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Obs_Preprocess.ksh > index.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Obs_Preprocess.ksh > index_preprocess.html 2>&1
+      sleep 5
+      if [[ ! -f obs_seq_comb_filtered_${DATE}.out ]]; then
+          exit
+      fi  
    fi

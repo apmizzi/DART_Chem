@@ -10,6 +10,11 @@ rm -f input.nml_temp
 touch input.nml_temp
 cat > input.nml_temp << EOF
  &obs_def_TES_CH4_nml
+   upper_data_file  = ${NL_UPPER_DATA_FILE}
+   ls_chem_dx = ${LS_CHEM_DX}
+   ls_chem_dy = ${LS_CHEM_DY}
+   ls_chem_dz = ${LS_CHEM_DZ}
+   ls_chem_dt = ${LS_CHEM_DT}
    use_log_ch4     = ${NL_USE_LOG_CH4:-.false.},
    nlayer_model   = ${NL_NLAYER_MODEL:-36},
    nlayer_tes_ch4_total_col  = ${NL_NLAYER_TES_CH4_TOTAL_COL:-50},

@@ -117,6 +117,8 @@ module obs_def_cris_co_cpsr_mod
    character(len=*), parameter :: revdate  = ''
    
    character(len=512) :: string1, string2
+   character(len=200) :: upper_data_file
+   integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
    
    logical, save :: module_initialized = .false.
 
@@ -128,8 +130,9 @@ module obs_def_cris_co_cpsr_mod
    integer :: nlayer_cris_co_trop_col = -9999
    integer :: nlayer_cris_co_profile = -9999
    
-   namelist /obs_def_CRIS_CO_nml/ use_log_co, nlayer_model, &
-   nlayer_cris_co_total_col, nlayer_cris_co_trop_col, nlayer_cris_co_profile
+   namelist /obs_def_CRIS_CO_nml/ upper_data_file, use_log_co, nlayer_model, &
+   nlayer_cris_co_total_col, nlayer_cris_co_trop_col, nlayer_cris_co_profile, &
+   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 !-------------------------------------------------------------------------------
 contains
@@ -595,9 +598,10 @@ subroutine get_expected_cris_co_cpsr(state_handle, ens_size, location, key, obs_
          lat_obs=mloc(2)/rad2deg
          call get_time(obs_time,datesec_obs,date_obs)
 !
-         data_file='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mozart_forecasts/h0004.nc'
-         call get_upper_bdy_fld(fld,model,data_file,17,13,56,368,lon_obs,lat_obs,prs_cris_top,ncnt, &
-         co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+         data_file=trim(upper_data_file)
+         call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
+         ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_cris_top, &
+         ncnt,co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
 !
 ! Impose ensemble perturbations from level kstart(imem)+1      
          co_prf_mdl(:)=co_prf_mdl(:)*VMR_conv

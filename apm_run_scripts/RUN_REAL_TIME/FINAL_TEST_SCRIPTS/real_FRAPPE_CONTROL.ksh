@@ -52,7 +52,7 @@ export FIRST_DART_INFLATE_DATE=2014072618
 export FIRST_EMISS_INV_DATE=2014072618
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072612
+export CYCLE_STR_DATE=2014072618
 #
 # END CYCLE DATE-TIME:
 export CYCLE_END_DATE=2014072618
@@ -65,8 +65,15 @@ export EMISS_DAMP_INTRA_CYCLE=1.0
 # Switch to process filter output without calling filter
 export SKIP_FILTER=false
 #
+# Set large scale chemisty file
+export NL_UPPER_DATA_FILE=\'/h0004.nc\'
+export LS_CHEM_DX=17
+export LS_CHEM_DY=13
+export LS_CHEM_DZ=56
+export LS_CHEM_DT=368
+#
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=true
+export RUN_INPUT_OBS=false
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
 export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
 export RUN_MOPITT_CO_CPSR_OBS=true # (done)

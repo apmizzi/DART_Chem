@@ -110,10 +110,13 @@ module obs_def_mopitt_v5_co_profile_mod
    character(len=*), parameter :: revdate  = ''
 
    character(len=512) :: string1, string2
+   character(len=200) :: upper_data_file
+   integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
    logical, save :: module_initialized = .false.
 
 ! Namelist with default values
+   character(len=129)  :: MOPITT_CO_retrieval_type
    logical :: use_log_co    = .false.
    integer :: nlayer_model  = -9999
    integer :: nlayer_mopitt = -9999
@@ -121,8 +124,9 @@ module obs_def_mopitt_v5_co_profile_mod
    integer :: nlayer_mopitt_co_trop_col  = -9999
    integer :: nlayer_mopitt_co_profile   = -9999
 
-   namelist /obs_def_MOPITT_CO_nml/ use_log_co, nlayer_model, &
-   nlayer_mopitt_co_total_col, nlayer_mopitt_co_trop_col, nlayer_mopitt_co_profile
+   namelist /obs_def_MOPITT_CO_nml/ upper_data_file, MOPITT_CO_retrieval_type, &
+   use_log_co, nlayer_model, nlayer_mopitt_co_total_col, nlayer_mopitt_co_profile, &
+   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 !-------------------------------------------------------------------------------
 contains

@@ -36,6 +36,7 @@
       export NL_USE_LOG_HCHO=${USE_LOG_HCHO_LOGIC}
       export NL_USE_LOG_PAN=${USE_LOG_PAN_LOGIC}
       ${NAMELIST_SCRIPTS_DIR}/DART/dart_create_input.nml.ksh
+      sleep 10
 #
 # GET INPUT DATA
       rm -rf obs_seq.old
@@ -64,5 +65,6 @@ else
 fi
 EOF
 #
-      qsub -Wblock=true job.ksh
+      ./wrf_dart_obs_preprocess ${DAY_GREG} ${SEC_GREG} > index.html 2>&1
+#      qsub -Wblock=true job.ksh
       mv obs_seq.new obs_seq_comb_filtered_${DATE}.out 
