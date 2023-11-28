@@ -158,10 +158,14 @@
       rm -rf input.nml
       ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_omi_input_nml.ksh
 #
+# DO THINNING
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/work/omi_o3_cpsr_thinner ./.
+      ./omi_o3_cpsr_thinner > index_thinner.html 2>&1
+#
 # GET EXECUTABLE
       rm -rf omi_o3_cpsr_ascii_to_obs
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_O3/work/omi_o3_cpsr_ascii_to_obs ./.
-      ./omi_o3_cpsr_ascii_to_obs > index.html 2>&1
+      ./omi_o3_cpsr_ascii_to_obs > index_ascii.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ ! -s ${NL_FILEOUT} ]]; then

@@ -121,10 +121,11 @@ integer :: nlayer_model = -9999
 integer :: nlayer_omi = -9999
 integer :: nlayer_omi_no2_domino_total_col = -9999
 integer :: nlayer_omi_no2_domino_trop_col = -9999
+integer :: nlayer_omi_no2_domino_profile = -9999
 
 namelist /obs_def_OMI_NO2_DOMINO_nml/ upper_data_file, use_log_no2, &
 nlayer_model, nlayer_omi_no2_domino_total_col, nlayer_omi_no2_domino_trop_col, &
-ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
+nlayer_omi_no2_domino_profile, ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 !-------------------------------------------------------------------------------
 contains

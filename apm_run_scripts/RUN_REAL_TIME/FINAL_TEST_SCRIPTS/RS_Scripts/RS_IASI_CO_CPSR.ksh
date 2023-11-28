@@ -86,7 +86,7 @@ fi
 EOFF
 #               qsub -Wblock=true job.ksh 
                chmod +x job.ksh
-               ./job.ksh > index_mat.html 2>&1
+               ./job.ksh > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
                if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -168,7 +168,7 @@ fi
 EOFF
 #                  qsub -Wblock=true job.ksh 
                   chmod +x job.ksh
-                  ./job.ksh > index_mat.html 2>&1
+                  ./job.ksh > index_mat2.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
                   if [[ ! -e ${IAS_OUTFILE_NQ} && -e ${OUTFILE_NQ} ]]; then
@@ -190,48 +190,51 @@ EOFF
       fi
 #
 # SET NAMELIST TO CONVERT IASI_CO ASCII TO OBS_SEQ 
-      cp IASI_CO_${D_DATE}.dat ${D_DATE}.dat
-      export NL_FILEDIR=\'./\' 
-      export NL_FILENAME=${D_DATE}.dat
       export NL_IAS_OUTFILE=obs_seq_iasi_co_cpsr_${DATE}.out
-      export NL_IASI_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
-      export NL_IASI_O3_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
-      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_IASI_CO}
-      export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
-      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
+      if [[ -s ${IAS_OUTFILE_NQ} ]]; then
+         cp IASI_CO_${D_DATE}.dat ${D_DATE}.dat
+         export NL_FILEDIR=\'./\' 
+         export NL_FILENAME=${D_DATE}.dat
+         export NL_IASI_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
+         export NL_IASI_O3_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
+         export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_IASI_CO}
+         export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
+         export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
 #
-      export NL_YEAR=${D_YYYY}
-      export NL_MONTH=${D_MM}
-      export NL_DAY=${D_DD}
-      export NL_HOUR=${D_HH}
-      export BIN_BEG_HH=${ASIM_MN_HH}
-      export BIN_BEG_MN=0
-      export BIN_BEG_SS=0
-      let HH_END=${ASIM_MX_HH}
-      let HHM_END=${HH_END}-1
-      export BIN_END_HH=${HHM_END}
-      export BIN_END_MN=59
-      export BIN_END_SS=59
-      let HH_BEG=${BIN_BEG_HH}
-      let MN_BEG=${BIN_BEG_MN}
-      let SS_BEG=${BIN_BEG_SS}
-      let HH_END=${BIN_END_HH}
-      let MN_END=${BIN_END_MN}
-      let SS_END=${BIN_END_SS}
-      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
-      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
-      export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
-      export NL_BIN_END_SEC=${BIN_END_SEC}
+         export NL_YEAR=${D_YYYY}
+         export NL_MONTH=${D_MM}
+         export NL_DAY=${D_DD}
+         export NL_HOUR=${D_HH}
+         export BIN_BEG_HH=${ASIM_MN_HH}
+         export BIN_BEG_MN=0
+         export BIN_BEG_SS=0
+         let HH_END=${ASIM_MX_HH}
+         let HHM_END=${HH_END}-1
+         export BIN_END_HH=${HHM_END}
+         export BIN_END_MN=59
+         export BIN_END_SS=59
+         let HH_BEG=${BIN_BEG_HH}
+         let MN_BEG=${BIN_BEG_MN}
+         let SS_BEG=${BIN_BEG_SS}
+         let HH_END=${BIN_END_HH}
+         let MN_END=${BIN_END_MN}
+         let SS_END=${BIN_END_SS}
+         let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
+         let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+         export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
+         export NL_BIN_END_SEC=${BIN_END_SEC}
 #
 # USE IASI DATA 
-      rm -rf input.nml
-      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_iasi_input_nml.ksh
+         rm -rf input.nml
+         ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_iasi_input_nml.ksh
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_CO/work/iasi_co_cpsr_ascii_to_obs ./.
-      ./iasi_co_cpsr_ascii_to_obs > index.html 2>&1
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/IASI_CO/work/iasi_co_cpsr_ascii_to_obs ./.
+         ./iasi_co_cpsr_ascii_to_obs > index.html 2>&1
+      fi
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ ! -s ${NL_IAS_OUTFILE} ]]; then
          touch NO_IASI_CO_${DATE}
       fi
+      rm *.dat *.pro dart_log* input.nml job.ksh iasi_co_profile* 

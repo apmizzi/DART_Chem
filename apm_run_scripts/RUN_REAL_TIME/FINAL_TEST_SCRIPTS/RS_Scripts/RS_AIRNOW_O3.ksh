@@ -77,4 +77,4 @@ EOF
       fi
 #
 # Clean directory
-      airnow_o3_* bias_correct* create_airnow* dart_log* input.nml      
+      rm -rf airnow_o3_* bias_correct* create_airnow* dart_log* input.nml      

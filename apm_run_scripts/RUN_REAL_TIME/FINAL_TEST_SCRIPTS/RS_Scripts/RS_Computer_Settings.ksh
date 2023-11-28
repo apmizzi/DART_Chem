@@ -47,7 +47,7 @@
 #
 #   export FILTER_JOB_CLASS=devel
 #   export FILTER_TIME_LIMIT=01:59:00
-#   export FILTER_NODES=3
+#   export FILTER_NODES=2
 #   export FILTER_TASKS=24
 #
 # Sandy Bridge

@@ -51,10 +51,10 @@ export FIRST_DART_INFLATE_DATE=2014072606
 export FIRST_EMISS_INV_DATE=2014072606
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072612
+export CYCLE_STR_DATE=2014072606
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072612
+export CYCLE_END_DATE=2014072700
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -65,14 +65,14 @@ export EMISS_DAMP_INTRA_CYCLE=1.0
 export SKIP_FILTER=false
 #
 # Set large scale chemisty file
-export NL_UPPER_DATA_FILE=\'/h0004.nc\'
+export NL_UPPER_DATA_FILE=/h0004.nc
 export LS_CHEM_DX=17
 export LS_CHEM_DY=13
 export LS_CHEM_DZ=56
 export LS_CHEM_DT=368
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=false
+export RUN_INPUT_OBS=true
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
 export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
 export RUN_MOPITT_CO_CPSR_OBS=true # (done)
@@ -222,17 +222,17 @@ export SPECIAL_FORECAST_MEM[8]=8
 export SPECIAL_FORECAST_MEM[9]=9
 export SPECIAL_FORECAST_MEM[10]=10
 #
-# Set observation error scaling and retention factors
+# Set observation error scaling and retention factors (assign constants)
 source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
 #
-# Set log transform settings
+# Set log transform settings (assign constants)
 export USE_LOG=false
 source ${RS_SCRIPTS_DIR}/RS_Set_Log_Transformation_Constants.ksh
 #
-# Set CPSR constants
+# Set CPSR constants (assign constants)
 source ${RS_SCRIPTS_DIR}/RS_CPSR_Settings.ksh
 #
-# Set miscellaneous constants
+# Set miscellaneous constants (assign constants)
 source ${RS_SCRIPTS_DIR}/RS_Miscellaneous_Constants.ksh
 #
 # Run fine scale forecast only
@@ -251,6 +251,7 @@ fi
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
 while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
+   cd ${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS 
    export DATE=${CYCLE_DATE}
    export EXP_INPUT_OBS=${RUN_INPUT_DIR}/${DATE}/${EXPERIMENT_INPUT_OBS}
    export L_ADD_EMISS=${ADD_EMISS} 
@@ -302,7 +303,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_DART_FILTER=false
       export RUN_BIAS_CORRECTION=false
       export RUN_UPDATE_BC=false
-      export RUN_ENSEMBLE_MEAN_INPUT=true
+      export RUN_ENSEMBLE_MEAN_INPUT=false
       if [[ ${DATE} -eq ${INITIAL_DATE}  ]]; then
          export RUN_WRFCHEM_INITIAL=true
          export RUN_WRFCHEM_CYCLE_CR=false
@@ -343,18 +344,43 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_BAND_DEPTH=false
    fi
 #
-   source ${RS_SCRIPTS_DIR}/RS_Code_Versions.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Experiment_Dirs.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Set_Time_Vars.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Run_Dirs.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Computer_Settings.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Observation_Dirs.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Chemistry_Pert_Params.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Params_FRAPPE.ksh
-   source ${RS_SCRIPTS_DIR}/RS_WRFChem_Namelists_FRAPPE.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Forward_Operator_Params.ksh
-   source ${RS_SCRIPTS_DIR}/RS_DART_Namelists.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Error_Decorrelation_Settings.ksh
+   rm -rf index_RS_Code_Versions_${DATE}   
+   source ${RS_SCRIPTS_DIR}/RS_Code_Versions.ksh > index_RS_Code_Versions_${DATE} 2>&1
+   rm -rf index_RS_Experiment_Dirs_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Experiment_Dirs.ksh > index_RS_Experiment_Dirs_${DATE} 2>&1
+   rm -rf index_RS_Set_Time_Vars_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Set_Time_Vars.ksh > index_RS_Set_Time_Vars_${DATE} 2>&1
+   rm -rf index_RS_Run_Dirs_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Run_Dirs.ksh > index_RS_Run_Dirs_${DATE} 2>&1
+   rm -rf index_RS_Computer_Settings_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Computer_Settings.ksh > index_RS_Computer_Settings_${DATE} 2>&1
+   rm -rf index_RS_Observation_Dirs_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Observation_Dirs.ksh > index_RS_Observation_Dirs_${DATE} 2>&1
+   rm -rf index_RS_Chemistry_Pert_Params_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Chemistry_Pert_Params.ksh > index_RS_Chemistry_Pert_Params_${DATE} 2>&1
+   rm -rf index_RS_Forecast_Time_Domain_Params_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Params_FRAPPE.ksh > index_RS_Forecast_Time_Domain_Params_${DATE} 2>&1
+   rm -rf index_RS_WRFChem_Namelists_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_WRFChem_Namelists_FRAPPE.ksh > index_RS_WRFChem_Namelists_${DATE} 2>&1
+   rm -rf index_RS_Forward_Operator_Params_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Forward_Operator_Params.ksh > index_RS_Forward_Operator_Params_${DATE} 2>&1
+   rm -rf index_RS_DART_Namelists_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_DART_Namelists.ksh > index_RS_DART_Namelists_${DATE} 2>&1
+   rm -rf index_RS_Error_Decorrelation_Settings_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Error_Decorrelation_Settings.ksh > index_RS_Error_Decorrelation_Settings_${DATE} 2>&1
+   rm -rf index_RS_Code_Versions_${DATE}
+   rm -rf index_RS_Experiment_Dirs_${DATE}
+   rm -rf index_RS_Set_Time_Vars_${DATE}
+   rm -rf index_RS_Run_Dirs_${DATE}
+   rm -rf index_RS_Computer_Settings_${DATE}
+   rm -rf index_RS_Observation_Dirs_${DATE}
+   rm -rf index_RS_Chemistry_Pert_Params_${DATE}
+   rm -rf index_RS_Forecast_Time_Domain_Params_${DATE}
+   rm -rf index_RS_WRFChem_Namelists_${DATE}
+   rm -rf index_RS_Forward_Operator_Params_${DATE}
+   rm -rf index_RS_DART_Namelists_${DATE}
+   rm -rf index_RS_Error_Decorrelation_Settings_${DATE}
+   export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE}\'
 #   
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
    cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
