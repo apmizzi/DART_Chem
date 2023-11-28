@@ -27,7 +27,6 @@
 #
 # ROOT DIRECTORIES:
 export DART_VER=DART_development
-export PERT_CHEM_VER=ICBC_PERT_v2
 export WORK_DIR=/nobackupp11/amizzi
 export TRUNK_DIR=${WORK_DIR}/TRUNK
 export REAL_TIME_DIR=${TRUNK_DIR}/${DART_VER}/apm_run_scripts/RUN_REAL_TIME
@@ -66,7 +65,7 @@ export EMISS_DAMP_INTRA_CYCLE=1.0
 export SKIP_FILTER=false
 #
 # Set large scale chemisty file
-export NL_UPPER_DATA_FILE=\'/waccm_0002.nc\'
+export NL_UPPER_DATA_FILE=/waccm_0002.nc
 export LS_CHEM_DX=25
 export LS_CHEM_DY=21
 export LS_CHEM_DZ=88
@@ -75,47 +74,47 @@ export LS_CHEM_DT=57
 # SELECT OBSERVATION OPTIONS:
 export RUN_INPUT_OBS=true
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
-export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
-export RUN_MOPITT_CO_CPSR_OBS=true # (done)
+export RUN_MOPITT_CO_PROFILE_OBS=false # (done)
+export RUN_MOPITT_CO_CPSR_OBS=false # (done)
 export RUN_IASI_CO_TOTAL_COL_OBS=false
 export RUN_IASI_CO_PROFILE_OBS=false # (done)
 export RUN_IASI_CO_CPSR_OBS=false # (done)
 export RUN_IASI_O3_PROFILE_OBS=false
 export RUN_IASI_O3_CPSR_OBS=false
-export RUN_MODIS_AOD_TOTAL_COL_OBS=true # (done)
+export RUN_MODIS_AOD_TOTAL_COL_OBS=false # (done)
 export RUN_OMI_O3_TOTAL_COL_OBS=false
 export RUN_OMI_O3_TROP_COL_OBS=false
-export RUN_OMI_O3_PROFILE_OBS=true # (done)
-export RUN_OMI_O3_CPSR_OBS=true # (works)
+export RUN_OMI_O3_PROFILE_OBS=false # (done)
+export RUN_OMI_O3_CPSR_OBS=false # (works)
 export RUN_OMI_NO2_TOTAL_COL_OBS=false
-export RUN_OMI_NO2_TROP_COL_OBS=true # (done)
+export RUN_OMI_NO2_TROP_COL_OBS=false # (done)
 export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
 export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false # (works)
 export RUN_OMI_SO2_TOTAL_COL_OBS=false
-export RUN_OMI_SO2_PBL_COL_OBS=true # (works)
-export RUN_OMI_HCHO_TOTAL_COL_OBS=true # (works)
+export RUN_OMI_SO2_PBL_COL_OBS=false # (works)
+export RUN_OMI_HCHO_TOTAL_COL_OBS=false # (works)
 export RUN_OMI_HCHO_TROP_COL_OBS=false 
-export RUN_TROPOMI_CO_TOTAL_COL_OBS=true # (done)
+export RUN_TROPOMI_CO_TOTAL_COL_OBS=false # (done)
 export RUN_TROPOMI_O3_TOTAL_COL_OBS=false
 export RUN_TROPOMI_O3_TROP_COL_OBS=false
 export RUN_TROPOMI_O3_PROFILE_OBS=false # (not done, no data)
 export RUN_TROPOMI_O3_CPSR_OBS=false
 export RUN_TROPOMI_NO2_TOTAL_COL_OBS=false
-export RUN_TROPOMI_NO2_TROP_COL_OBS=true # (works)
+export RUN_TROPOMI_NO2_TROP_COL_OBS=false # (works)
 export RUN_TROPOMI_SO2_TOTAL_COL_OBS=false
-export RUN_TROPOMI_SO2_PBL_COL_OBS=true # (works, vertical sum)
+export RUN_TROPOMI_SO2_PBL_COL_OBS=false # (works, vertical sum)
 export RUN_TROPOMI_CH4_TOTAL_COL_OBS=false  # (works, vertical sum)
 export RUN_TROPOMI_CH4_TROP_COL_OBS=false
 export RUN_TROPOMI_CH4_PROFILE_OBS=false
 export RUN_TROPOMI_CH4_CPSR_OBS=false
 export RUN_TROPOMI_HCHO_TOTAL_COL_OBS=false 
-export RUN_TROPOMI_HCHO_TROP_COL_OBS=true # (works, vertical sum)
+export RUN_TROPOMI_HCHO_TROP_COL_OBS=false # (works, vertical sum)
 export RUN_TEMPO_O3_TOTAL_COL_OBS=false
 export RUN_TEMPO_O3_TROP_COL_OBS=false
-export RUN_TEMPO_O3_PROFILE_OBS=true # (done)
-export RUN_TEMPO_O3_CPSR_OBS=true # (done)
+export RUN_TEMPO_O3_PROFILE_OBS=false # (done)
+export RUN_TEMPO_O3_CPSR_OBS=false # (done)
 export RUN_TEMPO_NO2_TOTAL_COL_OBS=false
-export RUN_TEMPO_NO2_TROP_COL_OBS=true # (done)
+export RUN_TEMPO_NO2_TROP_COL_OBS=false # (done)
 export RUN_TES_CO_TOTAL_COL_OBS=false
 export RUN_TES_CO_TROP_COL_OBS=false
 export RUN_TES_CO_PROFILE_OBS=false # (works)
@@ -171,7 +170,7 @@ export RUN_PANDA_CO_OBS=false
 export RUN_PANDA_O3_OBS=false
 export RUN_PANDA_PM25_OBS=false
 export RUN_MEXICO_AQS_CO_OBS=false
-export RUN_MET_OBS=true # (done)
+export RUN_MET_OBS=false # (done)
 #
 # Setup DART namelist parameters for which observations to assimilate/evaluate
 # &obs_kind_nml
@@ -267,17 +266,17 @@ export SPECIAL_FORECAST_MEM[8]=8
 export SPECIAL_FORECAST_MEM[9]=9
 export SPECIAL_FORECAST_MEM[10]=10
 #
-# Set observation error scaling and retention factors
+# Set observation error scaling and retention factors (assign constants)
 source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
 #
-# Set log transform settings
+# Set log transform settings (assign constants)
 export USE_LOG=false
 source ${RS_SCRIPTS_DIR}/RS_Set_Log_Transformation_Constants.ksh
 #
-# Set CPSR constants
+# Set CPSR constants (assign constants)
 source ${RS_SCRIPTS_DIR}/RS_CPSR_Settings.ksh
 #
-# Set miscellaneous constants
+# Set miscellaneous constants (assign constants)
 source ${RS_SCRIPTS_DIR}/RS_Miscellaneous_Constants.ksh
 #
 # Run fine scale forecast only
@@ -296,6 +295,7 @@ fi
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
 while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
+   cd ${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS 
    export DATE=${CYCLE_DATE}
    export EXP_INPUT_OBS=${RUN_INPUT_DIR}/${DATE}/${EXPERIMENT_INPUT_OBS}
    export L_ADD_EMISS=${ADD_EMISS} 
@@ -388,18 +388,43 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_BAND_DEPTH=false
    fi
 #
-   source ${RS_SCRIPTS_DIR}/RS_Code_Versions.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Experiment_Dirs.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Set_Time_Vars.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Run_Dirs.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Computer_Settings.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Observation_Dirs.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Chemistry_Pert_Params.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Params_FIREX.ksh
-   source ${RS_SCRIPTS_DIR}/RS_WRFChem_Namelists_FIREX.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Forward_Operator_Params.ksh
-   source ${RS_SCRIPTS_DIR}/RS_DART_Namelists.ksh
-   source ${RS_SCRIPTS_DIR}/RS_Error_Decorrelation_Settings.ksh
+   rm -rf index_RS_Code_Versions_${DATE}   
+   source ${RS_SCRIPTS_DIR}/RS_Code_Versions.ksh > index_RS_Code_Versions_${DATE} 2>&1
+   rm -rf index_RS_Experiment_Dirs_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Experiment_Dirs.ksh > index_RS_Experiment_Dirs_${DATE} 2>&1
+   rm -rf index_RS_Set_Time_Vars_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Set_Time_Vars.ksh > index_RS_Set_Time_Vars_${DATE} 2>&1
+   rm -rf index_RS_Run_Dirs_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Run_Dirs.ksh > index_RS_Run_Dirs_${DATE} 2>&1
+   rm -rf index_RS_Computer_Settings_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Computer_Settings.ksh > index_RS_Computer_Settings_${DATE} 2>&1
+   rm -rf index_RS_Observation_Dirs_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Observation_Dirs.ksh > index_RS_Observation_Dirs_${DATE} 2>&1
+   rm -rf index_RS_Chemistry_Pert_Params_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Chemistry_Pert_Params.ksh > index_RS_Chemistry_Pert_Params_${DATE} 2>&1
+   rm -rf index_RS_Forecast_Time_Domain_Params_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Params_FRAPPE.ksh > index_RS_Forecast_Time_Domain_Params_${DATE} 2>&1
+   rm -rf index_RS_WRFChem_Namelists_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_WRFChem_Namelists_FRAPPE.ksh > index_RS_WRFChem_Namelists_${DATE} 2>&1
+   rm -rf index_RS_Forward_Operator_Params_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Forward_Operator_Params.ksh > index_RS_Forward_Operator_Params_${DATE} 2>&1
+   rm -rf index_RS_DART_Namelists_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_DART_Namelists.ksh > index_RS_DART_Namelists_${DATE} 2>&1
+   rm -rf index_RS_Error_Decorrelation_Settings_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Error_Decorrelation_Settings.ksh > index_RS_Error_Decorrelation_Settings_${DATE} 2>&1
+   rm -rf index_RS_Code_Versions_${DATE}
+   rm -rf index_RS_Experiment_Dirs_${DATE}
+   rm -rf index_RS_Set_Time_Vars_${DATE}
+   rm -rf index_RS_Run_Dirs_${DATE}
+   rm -rf index_RS_Computer_Settings_${DATE}
+   rm -rf index_RS_Observation_Dirs_${DATE}
+   rm -rf index_RS_Chemistry_Pert_Params_${DATE}
+   rm -rf index_RS_Forecast_Time_Domain_Params_${DATE}
+   rm -rf index_RS_WRFChem_Namelists_${DATE}
+   rm -rf index_RS_Forward_Operator_Params_${DATE}
+   rm -rf index_RS_DART_Namelists_${DATE}
+   rm -rf index_RS_Error_Decorrelation_Settings_${DATE}
+   export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE}\'
 #
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
    cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.

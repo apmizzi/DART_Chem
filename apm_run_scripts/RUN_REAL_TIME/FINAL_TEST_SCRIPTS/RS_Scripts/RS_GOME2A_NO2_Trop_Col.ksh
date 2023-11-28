@@ -144,9 +144,13 @@
       rm -rf input.nml
       ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_gome2a_input_nml.ksh
 #
+# DO THINNING
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2A_NO2/work/gome2a_no2_trop_col_thinner ./.
+      ./gome2a_no2_trop_col_thinner > index_thinner.html 2>&1
+#
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2A_NO2/work/gome2a_no2_trop_col_ascii_to_obs ./.
-      ./gome2a_no2_trop_col_ascii_to_obs > index.html 2>&1
+      ./gome2a_no2_trop_col_ascii_to_obs > index_ascii.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ -s ${NL_FILEOUT} ]]; then

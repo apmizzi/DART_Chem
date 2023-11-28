@@ -56,4 +56,4 @@
       fi     
 #
 # Clean directory
-      airnow_pm10_* bias_correct* create_airnow* dart_log* input.nml      
+      rm -rf airnow_pm10_* bias_correct* create_airnow* dart_log* input.nml      

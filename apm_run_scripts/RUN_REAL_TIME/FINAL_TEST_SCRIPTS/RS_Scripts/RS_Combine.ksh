@@ -893,3 +893,4 @@
       ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_dart_input_nml.ksh
       ./obs_sequence_tool > index.html 2>&1
       mv obs_seq.proc obs_seq_comb_${DATE}.out
+      rm -rf dart_log* input.nml obs_sequence_tool
