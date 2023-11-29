@@ -269,9 +269,9 @@ export SPECIAL_FORECAST_MEM[10]=10
 # Set observation error scaling and retention factors (assign constants)
 source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
 #
-# Set log transform settings (assign constants)
+# Set log transform settings
 export USE_LOG=false
-source ${RS_SCRIPTS_DIR}/RS_Set_Log_Transformation_Constants.ksh
+source ${RS_SCRIPTS_DIR}/RS_Set_Log_Transformation_Constants.ksh (assign constants)
 #
 # Set CPSR constants (assign constants)
 source ${RS_SCRIPTS_DIR}/RS_CPSR_Settings.ksh
