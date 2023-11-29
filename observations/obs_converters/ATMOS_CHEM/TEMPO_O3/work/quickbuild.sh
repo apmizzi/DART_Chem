@@ -18,6 +18,8 @@ tempo_o3_total_col_ascii_to_obs
 tempo_o3_trop_col_ascii_to_obs
 tempo_o3_profile_ascii_to_obs
 tempo_o3_cpsr_ascii_to_obs
+tempo_o3_profile_thinner
+tempo_o3_cpsr_thinner
 obs_sequence_tool
 advance_time
 )
