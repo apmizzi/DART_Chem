@@ -66,22 +66,23 @@ export SKIP_FILTER=false
 #
 # Set large scale chemisty file
 export NL_UPPER_DATA_FILE=/h0004.nc
+export NL_UPPER_DATA_MODEL=\'MOZART\'
 export LS_CHEM_DX=17
 export LS_CHEM_DY=13
 export LS_CHEM_DZ=56
 export LS_CHEM_DT=368
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=true
+export RUN_INPUT_OBS=false
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
-export RUN_MOPITT_CO_PROFILE_OBS=false # (done)
-export RUN_MOPITT_CO_CPSR_OBS=false # (done)
+export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
+export RUN_MOPITT_CO_CPSR_OBS=true # (done)
 export RUN_IASI_CO_TOTAL_COL_OBS=false
-export RUN_IASI_CO_PROFILE_OBS=false # (done)
-export RUN_IASI_CO_CPSR_OBS=false # (done)
+export RUN_IASI_CO_PROFILE_OBS=true # (done)
+export RUN_IASI_CO_CPSR_OBS=true # (done)
 export RUN_IASI_O3_PROFILE_OBS=false
 export RUN_IASI_O3_CPSR_OBS=false
-export RUN_MODIS_AOD_TOTAL_COL_OBS=false # (done)
+export RUN_MODIS_AOD_TOTAL_COL_OBS=true # (done)
 export RUN_OMI_O3_TOTAL_COL_OBS=false
 export RUN_OMI_O3_TROP_COL_OBS=false
 export RUN_OMI_O3_PROFILE_OBS=false # (done)
@@ -155,11 +156,11 @@ export RUN_SCIAM_NO2_TROP_COL_OBS=false # (works, vertical sum)
 export RUN_GOME2A_NO2_TOTAL_COL_OBS=false
 export RUN_GOME2A_NO2_TROP_COL_OBS=false # (works, vertical sum)
 export RUN_MLS_O3_TOTAL_COL_OBS=false
-export RUN_MLS_O3_PROFILE_OBS=false # (works, check)
-export RUN_MLS_O3_CPSR_OBS=false # (works, vertical sum)
+export RUN_MLS_O3_PROFILE_OBS=true # (works, check)
+export RUN_MLS_O3_CPSR_OBS=true # (works, vertical sum)
 export RUN_MLS_HNO3_TOTAL_COL_OBS=false
-export RUN_MLS_HNO3_PROFILE_OBS=false # (works, vertical sum)
-export RUN_MLS_HNO3_CPSR_OBS=false # (works, vertical sum)
+export RUN_MLS_HNO3_PROFILE_OBS=true # (works, vertical sum)
+export RUN_MLS_HNO3_CPSR_OBS=true # (works, vertical sum)
 export RUN_AIRNOW_CO_OBS=true # (done)
 export RUN_AIRNOW_O3_OBS=true # (done)
 export RUN_AIRNOW_NO2_OBS=true # (done)

@@ -16,6 +16,8 @@ LOCATION=threed_sphere
 programs=(
 tes_co_profile_ascii_to_obs
 tes_co_cpsr_ascii_to_obs
+tes_co_profile_thinner
+tes_co_cpsr_thinner
 obs_sequence_tool
 advance_time
 )

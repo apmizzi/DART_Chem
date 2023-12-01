@@ -111,6 +111,8 @@ module obs_def_mopitt_v5_co_profile_mod
 
    character(len=512) :: string1, string2
    character(len=200) :: upper_data_file
+   character(len=200) :: upper_data_model
+   character(len=200) :: model
    integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
    logical, save :: module_initialized = .false.
@@ -126,7 +128,7 @@ module obs_def_mopitt_v5_co_profile_mod
 
    namelist /obs_def_MOPITT_CO_nml/ upper_data_file, MOPITT_CO_retrieval_type, &
    use_log_co, nlayer_model, nlayer_mopitt_co_total_col, nlayer_mopitt_co_profile, &
-   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
+   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, upper_data_model
 
 !-------------------------------------------------------------------------------
 contains
@@ -780,8 +782,7 @@ co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
 !
    pi=4.*atan(1.)
    rad2deg=360./(2.*pi)
-   data_file='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mozart_forecasts/h0004.nc'
-!   data_file='/nobackupp11/amizzi/INPUT_DATA/FIREX_REAL_TIME_DATA/cam_chem_forecasts/waccm_0001.nc'
+   data_file=trim(upper_data_file)
    co_prf_mdl(:)=0.
    tmp_prf_mdl(:)=0.
    qmr_prf_mdl(:)=0.

@@ -111,6 +111,8 @@ character(len=*), parameter :: revdate  = ''
 
 character(len=512) :: string1, string2
 character(len=200) :: upper_data_file
+character(len=200) :: upper_data_model
+character(len=200) :: model
 integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 logical, save :: module_initialized = .false.
@@ -125,7 +127,8 @@ integer :: nlayer_omi_no2_domino_profile = -9999
 
 namelist /obs_def_OMI_NO2_DOMINO_nml/ upper_data_file, use_log_no2, &
 nlayer_model, nlayer_omi_no2_domino_total_col, nlayer_omi_no2_domino_trop_col, &
-nlayer_omi_no2_domino_profile, ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
+nlayer_omi_no2_domino_profile, ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, &
+upper_data_model
 
 !-------------------------------------------------------------------------------
 contains

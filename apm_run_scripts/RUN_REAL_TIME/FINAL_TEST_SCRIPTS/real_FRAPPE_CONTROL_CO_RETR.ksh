@@ -51,10 +51,10 @@ export FIRST_DART_INFLATE_DATE=2014072606
 export FIRST_EMISS_INV_DATE=2014072606
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072606
+export CYCLE_STR_DATE=2014072618
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072700
+export CYCLE_END_DATE=2014072618
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -66,6 +66,7 @@ export SKIP_FILTER=false
 #
 # Set large scale chemisty file
 export NL_UPPER_DATA_FILE=/h0004.nc
+export NL_UPPER_DATA_MODEL=\'MOZART\'
 export LS_CHEM_DX=17
 export LS_CHEM_DY=13
 export LS_CHEM_DZ=56
