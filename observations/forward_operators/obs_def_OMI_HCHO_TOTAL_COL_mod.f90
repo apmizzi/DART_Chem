@@ -112,6 +112,8 @@ character(len=*), parameter :: revdate  = ''
 
 character(len=512) :: string1, string2
 character(len=200) :: upper_data_file
+character(len=200) :: upper_data_model
+character(len=200) :: model
 integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 logical, save :: module_initialized = .false.
@@ -125,7 +127,7 @@ integer :: nlayer_omi_hcho_trop_col = -9999
 
 namelist /obs_def_OMI_HCHO_nml/ upper_data_file, use_log_hcho, &
 nlayer_model, nlayer_omi_hcho_total_col, nlayer_omi_hcho_trop_col, &
-ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
+ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, upper_data_model
      
 !-------------------------------------------------------------------------------
 contains
@@ -291,7 +293,6 @@ subroutine get_expected_omi_hcho_total_col(state_handle, ens_size, location, key
    
    character(len=*), parameter :: routine = 'get_expected_omi_hcho_total_col'
    character(len=120)          :: data_file
-   character(len=*),parameter  :: model = 'MOZART'
    character(len=*),parameter  :: fld = 'HCHO_VMR_inst'
    type(location_type) :: loc2
    
@@ -553,6 +554,7 @@ subroutine get_expected_omi_hcho_total_col(state_handle, ens_size, location, key
 !
 ! Mozart does not have HCHO          
 !         data_file=trim(upper_data_file)
+!         model=trim(upper_data_model)
 !         call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
 !         ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_omi_top, &
 !         ncnt,hcho_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)

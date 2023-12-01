@@ -118,6 +118,8 @@ module obs_def_mls_hno3_total_col_mod
    
    character(len=512) :: string1, string2
    character(len=200) :: upper_data_file
+   character(len=200) :: upper_data_model
+   character(len=200) :: model
    integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
    
    logical, save :: module_initialized = .false.
@@ -132,7 +134,7 @@ module obs_def_mls_hno3_total_col_mod
    
    namelist /obs_def_MLS_HNO3_nml/ upper_data_file, use_log_hno3, nlayer_model, &
    nlayer_mls_hno3_total_col, nlayer_mls_hno3_trop_col, nlayer_mls_hno3_profile, &
-   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
+   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, upper_data_model
 
 !-------------------------------------------------------------------------------
 contains
@@ -307,7 +309,6 @@ subroutine get_expected_mls_hno3_total_col(state_handle, ens_size, location, key
    
    character(len=*), parameter :: routine = 'get_expected_mls_hno3_total_col'
    character(len=120)          :: data_file
-   character(len=*),parameter  :: model = 'MOZART'
    character(len=*),parameter  :: fld = 'HNO3_VMR_inst'
    type(location_type) :: loc2
    
@@ -598,6 +599,7 @@ subroutine get_expected_mls_hno3_total_col(state_handle, ens_size, location, key
          call get_time(obs_time,datesec_obs,date_obs)
 !
          data_file=trim(upper_data_file)
+         model=trim(upper_data_model)
          call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
          ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_mls_top, &
          ncnt,hno3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)

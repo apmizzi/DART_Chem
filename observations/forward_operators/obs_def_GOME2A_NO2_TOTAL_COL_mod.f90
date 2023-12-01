@@ -102,6 +102,8 @@ character(len=*), parameter :: revdate  = ''
 
 character(len=512) :: string1, string2
 character(len=200) :: upper_data_file
+character(len=200) :: upper_data_model
+character(len=200) :: model
 integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 logical, save :: module_initialized = .false.
@@ -115,7 +117,7 @@ integer :: nlayer_gome2a_no2_trop_col = -9999
 
 namelist /obs_def_GOME2A_NO2_nml/ upper_data_file, use_log_no2, nlayer_model, &
 nlayer_gome2a_no2_total_col, nlayer_gome2a_no2_trop_col, &
-ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
+ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, upper_data_model
 
 !-------------------------------------------------------------------------------
 contains

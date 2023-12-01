@@ -110,6 +110,8 @@ character(len=*), parameter :: revdate  = ''
 
 character(len=512) :: string1, string2
 character(len=200) :: upper_data_file
+character(len=200) :: upper_data_model
+character(len=200) :: model
 integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
 logical, save :: module_initialized = .false.
@@ -123,7 +125,7 @@ integer :: nlayer_tropomi_hcho_trop_col = -9999
 
 namelist /obs_def_TROPOMI_HCHO_nml/ upper_data_file, use_log_hcho, nlayer_model, &
 nlayer_tropomi_hcho_total_col, nlayer_tropomi_hcho_trop_col, &
-ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
+ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, upper_data_model
 
 !-------------------------------------------------------------------------------
 contains

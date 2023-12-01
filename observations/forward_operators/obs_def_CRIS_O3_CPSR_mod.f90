@@ -118,6 +118,8 @@ module obs_def_cris_o3_cpsr_mod
    
    character(len=512) :: string1, string2
    character(len=200) :: upper_data_file
+   character(len=200) :: upper_data_model
+   character(len=200) :: model
    integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
    
    logical, save :: module_initialized = .false.
@@ -132,7 +134,7 @@ module obs_def_cris_o3_cpsr_mod
    
    namelist /obs_def_CRIS_O3_nml/ upper_data_file, use_log_o3, nlayer_model, &
    nlayer_cris_o3_total_col, nlayer_cris_o3_trop_col, nlayer_cris_o3_profile, &
-   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
+   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, upper_data_model
 
 !-------------------------------------------------------------------------------
 contains
@@ -308,7 +310,6 @@ subroutine get_expected_cris_o3_cpsr(state_handle, ens_size, location, key, obs_
    
    character(len=*), parameter :: routine = 'get_expected_cris_o3_cpsr'
    character(len=120)          :: data_file
-   character(len=*),parameter  :: model = 'MOZART'
    character(len=*),parameter  :: fld = 'O3_VMR_inst'
    type(location_type) :: loc2
    
@@ -599,6 +600,7 @@ subroutine get_expected_cris_o3_cpsr(state_handle, ens_size, location, key, obs_
          call get_time(obs_time,datesec_obs,date_obs)
 !
          data_file=trim(upper_data_file)
+         model=trim(upper_data_model)
          call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
          ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_cris_top, &
          ncnt,o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)

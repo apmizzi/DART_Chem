@@ -196,9 +196,8 @@ program tropomi_co_total_col_ascii_to_obs
 !
    namelist /create_tropomi_obs_nml/filedir,filename,fileout, &
    bin_beg_sec,bin_end_sec,fac_obs_error,use_log_co,use_log_o3,use_log_no2,use_log_so2, &
-   use_log_ch4,use_log_hcho, &
-   lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model,ny_model,nz_model, &
-   obs_co_reten_freq,obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq, &
+   use_log_ch4,use_log_hcho,lon_min,lon_max,lat_min,lat_max,path_model,file_model,nx_model, &
+   ny_model,nz_model,obs_co_reten_freq,obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq, &
    obs_ch4_reten_freq,obs_hcho_reten_freq
 !
    namelist /bias_correct_nml/path_filein,does_file_exist,correction_filename,nobs,obs_list

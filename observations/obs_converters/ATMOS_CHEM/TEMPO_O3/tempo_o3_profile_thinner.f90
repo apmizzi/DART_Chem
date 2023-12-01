@@ -89,7 +89,7 @@ program tempo_o3_profile_thinner
       real,allocatable,dimension(:,:)   :: o3_lay
       real,allocatable,dimension(:,:)   :: o3_prior_lay
       real,allocatable,dimension(:,:,:) :: avgk_lay
-      real,allocatable,dimension(:,:)   :: cov_lay
+      real,allocatable,dimension(:,:,:) :: cov_lay
       real,allocatable,dimension(:)     :: o3_col_trop
       real,allocatable,dimension(:)     :: o3_col_total
    end type observation_data

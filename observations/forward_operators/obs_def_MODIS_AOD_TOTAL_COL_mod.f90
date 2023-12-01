@@ -78,6 +78,8 @@ module obs_def_MODIS_AOD_TOTAL_COL_mod
 
    character(len=512) :: string1, string2
    character(len=200) :: upper_data_file
+   character(len=200) :: upper_data_model
+   character(len=200) :: model
    integer            :: ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
 
    logical, save :: module_initialized = .false.
@@ -85,7 +87,7 @@ module obs_def_MODIS_AOD_TOTAL_COL_mod
    real          :: ptop
    integer       :: mdl_nlay
    namelist /obs_def_MODIS_AOD_nml/ upper_data_file, use_log_aod, ptop, mdl_nlay, &
-   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt
+   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, upper_data_model
 
 contains
 
