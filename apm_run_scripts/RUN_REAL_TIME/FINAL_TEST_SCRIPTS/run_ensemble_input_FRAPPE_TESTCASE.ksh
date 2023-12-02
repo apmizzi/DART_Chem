@@ -65,6 +65,7 @@ export EMISS_DAMP_INTRA_CYCLE=1.0
 #
 # Set large scale chemisty file
 export NL_UPPER_DATA_FILE=/h0004.nc
+export NL_UPPER_DATA_MODEL=\'MOZART\'
 export LS_CHEM_DX=17
 export LS_CHEM_DY=13
 export LS_CHEM_DZ=56
