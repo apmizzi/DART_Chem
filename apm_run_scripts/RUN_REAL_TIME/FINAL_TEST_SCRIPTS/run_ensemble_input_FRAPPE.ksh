@@ -53,10 +53,10 @@ export FIRST_DART_INFLATE_DATE=2014072618
 export FIRST_EMISS_INV_DATE=2014072618
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072612
+export CYCLE_STR_DATE=2014072812
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072612
+export CYCLE_END_DATE=2014072812
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -65,6 +65,7 @@ export EMISS_DAMP_INTRA_CYCLE=1.0
 #
 # Set large scale chemisty file
 export NL_UPPER_DATA_FILE=/h0004.nc
+export NL_UPPER_DATA_MODEL=\'MOZART\'
 export LS_CHEM_DX=17
 export LS_CHEM_DY=13
 export LS_CHEM_DZ=56
@@ -112,7 +113,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_WRFCHEM_FIRE=false
    export RUN_WRFCHEM_CHEMI=false
    export RUN_PERT_WRFCHEM_CHEM_ICBC=false
-   export RUN_PERT_WRFCHEM_CHEM_EMISS=true
+   export RUN_PERT_WRFCHEM_CHEM_EMISS=false
    export RUN_BIAS_CORRECTION=false
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
    export RUN_MOPITT_CO_PROFILE_OBS=false # (done)
@@ -208,7 +209,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_MEXICO_AQS_CO_OBS=false
    export RUN_MET_OBS=false # (done)
    export RUN_COMBINE_OBS=false
-   export RUN_PREPROCESS_OBS=false
+   export RUN_PREPROCESS_OBS=true
    export RUN_LOCALIZATION=false
 #
    rm -rf index_RS_Code_Versions_${DATE}   

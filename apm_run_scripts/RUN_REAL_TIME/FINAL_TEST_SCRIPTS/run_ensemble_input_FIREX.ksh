@@ -65,6 +65,7 @@ export EMISS_DAMP_INTRA_CYCLE=1.0
 #
 # Set large scale chemisty file
 export NL_UPPER_DATA_FILE=/waccm_0002.nc
+export NL_UPPER_DATA_MODEL=\'WACCM\'
 export LS_CHEM_DX=25
 export LS_CHEM_DY=21
 export LS_CHEM_DZ=88
