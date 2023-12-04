@@ -1,4 +1,3 @@
-
 #!/bin/ksh -aux
 #      cd ${RUN_DIR}/${DATE}/localization
 #
@@ -65,7 +64,7 @@ else
 fi
 EOF
 #
-      ./wrf_dart_obs_preprocess ${DAY_GREG} ${SEC_GREG} > index.html 2>&1
-#      qsub -Wblock=true job.ksh
+#      ./wrf_dart_obs_preprocess ${DAY_GREG} ${SEC_GREG} > index.html 2>&1
+      qsub -Wblock=true job.ksh
       mv obs_seq.new obs_seq_comb_filtered_${DATE}.out
       rm -rf advance_time dart_log* input.nml job.ksh obs_seq.old wrf*
