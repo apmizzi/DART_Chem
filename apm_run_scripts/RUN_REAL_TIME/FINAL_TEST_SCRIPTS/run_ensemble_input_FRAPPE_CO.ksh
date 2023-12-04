@@ -53,10 +53,10 @@ export FIRST_DART_INFLATE_DATE=2014072606
 export FIRST_EMISS_INV_DATE=2014072606
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072706
+export CYCLE_STR_DATE=2014072806
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072800
+export CYCLE_END_DATE=2014073006
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -102,18 +102,18 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # SELECT COMPONENT RUN OPTIONS
    export RUN_GEOGRID=false
-   export RUN_UNGRIB=false
-   export RUN_METGRID=false
-   export RUN_REAL=false
-   export RUN_PERT_WRFCHEM_MET_IC=false
-   export RUN_PERT_WRFCHEM_MET_BC=false
-   export RUN_EXO_COLDENS=false
-   export RUN_SEASON_WES=false
-   export RUN_WRFCHEM_BIO=false
-   export RUN_WRFCHEM_FIRE=false
-   export RUN_WRFCHEM_CHEMI=false
-   export RUN_PERT_WRFCHEM_CHEM_ICBC=false
-   export RUN_PERT_WRFCHEM_CHEM_EMISS=false
+   export RUN_UNGRIB=true
+   export RUN_METGRID=true
+   export RUN_REAL=true
+   export RUN_PERT_WRFCHEM_MET_IC=true
+   export RUN_PERT_WRFCHEM_MET_BC=true
+   export RUN_EXO_COLDENS=true
+   export RUN_SEASON_WES=true
+   export RUN_WRFCHEM_BIO=true
+   export RUN_WRFCHEM_FIRE=true
+   export RUN_WRFCHEM_CHEMI=true
+   export RUN_PERT_WRFCHEM_CHEM_ICBC=true
+   export RUN_PERT_WRFCHEM_CHEM_EMISS=true
    export RUN_BIAS_CORRECTION=false
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
    export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
@@ -210,7 +210,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_MET_OBS=true # (done)
    export RUN_COMBINE_OBS=true
    export RUN_PREPROCESS_OBS=true
-   export RUN_LOCALIZATION=false
+   export RUN_LOCALIZATION=true
 #
    rm -rf index_RS_Code_Versions_${DATE}   
    source ${RS_SCRIPTS_DIR}/RS_Code_Versions.ksh > index_RS_Code_Versions_${DATE} 2>&1

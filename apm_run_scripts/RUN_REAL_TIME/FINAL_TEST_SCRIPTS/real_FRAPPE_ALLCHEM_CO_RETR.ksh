@@ -54,7 +54,7 @@ export FIRST_EMISS_INV_DATE=2014072606
 export CYCLE_STR_DATE=2014072618
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072618
+export CYCLE_END_DATE=2014072718
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -65,7 +65,8 @@ export EMISS_DAMP_INTRA_CYCLE=1.0
 export SKIP_FILTER=false
 #
 # Set large scale chemisty file
-export NL_UPPER_DATA_FILE=\'/h0004.nc\'
+export NL_UPPER_DATA_FILE=/h0004.nc
+export NL_UPPER_DATA_MODEL=\'MOZART\'
 export LS_CHEM_DX=17
 export LS_CHEM_DY=13
 export LS_CHEM_DZ=56
@@ -208,8 +209,8 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'AIRNOW_CO'"
 #
 # Run WRF-Chem for failed forecasts (will not work with adaptive time step)
-export RUN_SPECIAL_FORECAST=true
-export NUM_SPECIAL_FORECAST=10
+export RUN_SPECIAL_FORECAST=false
+export NUM_SPECIAL_FORECAST=0
 export SPECIAL_FORECAST_FAC=1.
 #
 export SPECIAL_FORECAST_MEM[1]=11
