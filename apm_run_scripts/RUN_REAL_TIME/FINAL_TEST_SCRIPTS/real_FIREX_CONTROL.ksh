@@ -51,10 +51,10 @@ export FIRST_DART_INFLATE_DATE=2020071318
 export FIRST_EMISS_INV_DATE=2020071318
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2020071318
+export CYCLE_STR_DATE=2020071400
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2020071318
+export CYCLE_END_DATE=2020071500
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -65,7 +65,7 @@ export EMISS_DAMP_INTRA_CYCLE=1.0
 export SKIP_FILTER=false
 #
 # Set large scale chemisty file
-export NL_UPPER_DATA_FILE=/waccm_0002.nc
+export NL_UPPER_DATA_FILE_NAME=/waccm_0002.nc
 export NL_UPPER_DATA_MODEL=\'WACCM\'
 export LS_CHEM_DX=25
 export LS_CHEM_DY=21
@@ -75,47 +75,47 @@ export LS_CHEM_DT=57
 # SELECT OBSERVATION OPTIONS:
 export RUN_INPUT_OBS=true
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
-export RUN_MOPITT_CO_PROFILE_OBS=false # (done)
-export RUN_MOPITT_CO_CPSR_OBS=false # (done)
+export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
+export RUN_MOPITT_CO_CPSR_OBS=true # (done)
 export RUN_IASI_CO_TOTAL_COL_OBS=false
 export RUN_IASI_CO_PROFILE_OBS=false # (done)
 export RUN_IASI_CO_CPSR_OBS=false # (done)
 export RUN_IASI_O3_PROFILE_OBS=false
 export RUN_IASI_O3_CPSR_OBS=false
-export RUN_MODIS_AOD_TOTAL_COL_OBS=false # (done)
+export RUN_MODIS_AOD_TOTAL_COL_OBS=true # (done)
 export RUN_OMI_O3_TOTAL_COL_OBS=false
 export RUN_OMI_O3_TROP_COL_OBS=false
-export RUN_OMI_O3_PROFILE_OBS=false # (done)
-export RUN_OMI_O3_CPSR_OBS=false # (works)
+export RUN_OMI_O3_PROFILE_OBS=true # (done)
+export RUN_OMI_O3_CPSR_OBS=true # (works)
 export RUN_OMI_NO2_TOTAL_COL_OBS=false
-export RUN_OMI_NO2_TROP_COL_OBS=false # (done)
+export RUN_OMI_NO2_TROP_COL_OBS=true # (done)
 export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
-export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false # (works)
+export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true # (works)
 export RUN_OMI_SO2_TOTAL_COL_OBS=false
-export RUN_OMI_SO2_PBL_COL_OBS=false # (works)
-export RUN_OMI_HCHO_TOTAL_COL_OBS=false # (works)
+export RUN_OMI_SO2_PBL_COL_OBS=true # (works)
+export RUN_OMI_HCHO_TOTAL_COL_OBS=true # (works)
 export RUN_OMI_HCHO_TROP_COL_OBS=false 
-export RUN_TROPOMI_CO_TOTAL_COL_OBS=false # (done)
+export RUN_TROPOMI_CO_TOTAL_COL_OBS=true # (done)
 export RUN_TROPOMI_O3_TOTAL_COL_OBS=false
 export RUN_TROPOMI_O3_TROP_COL_OBS=false
 export RUN_TROPOMI_O3_PROFILE_OBS=false # (not done, no data)
 export RUN_TROPOMI_O3_CPSR_OBS=false
 export RUN_TROPOMI_NO2_TOTAL_COL_OBS=false
-export RUN_TROPOMI_NO2_TROP_COL_OBS=false # (works)
+export RUN_TROPOMI_NO2_TROP_COL_OBS=true # (works)
 export RUN_TROPOMI_SO2_TOTAL_COL_OBS=false
-export RUN_TROPOMI_SO2_PBL_COL_OBS=false # (works, vertical sum)
+export RUN_TROPOMI_SO2_PBL_COL_OBS=true # (works, vertical sum)
 export RUN_TROPOMI_CH4_TOTAL_COL_OBS=false  # (works, vertical sum)
 export RUN_TROPOMI_CH4_TROP_COL_OBS=false
 export RUN_TROPOMI_CH4_PROFILE_OBS=false
 export RUN_TROPOMI_CH4_CPSR_OBS=false
 export RUN_TROPOMI_HCHO_TOTAL_COL_OBS=false 
-export RUN_TROPOMI_HCHO_TROP_COL_OBS=false # (works, vertical sum)
+export RUN_TROPOMI_HCHO_TROP_COL_OBS=true # (works, vertical sum)
 export RUN_TEMPO_O3_TOTAL_COL_OBS=false
 export RUN_TEMPO_O3_TROP_COL_OBS=false
-export RUN_TEMPO_O3_PROFILE_OBS=false # (done)
-export RUN_TEMPO_O3_CPSR_OBS=false # (done)
+export RUN_TEMPO_O3_PROFILE_OBS=true # (done)
+export RUN_TEMPO_O3_CPSR_OBS=true # (done)
 export RUN_TEMPO_NO2_TOTAL_COL_OBS=false
-export RUN_TEMPO_NO2_TROP_COL_OBS=false # (done)
+export RUN_TEMPO_NO2_TROP_COL_OBS=true # (done)
 export RUN_TES_CO_TOTAL_COL_OBS=false
 export RUN_TES_CO_TROP_COL_OBS=false
 export RUN_TES_CO_PROFILE_OBS=false # (works)
@@ -171,7 +171,7 @@ export RUN_PANDA_CO_OBS=false
 export RUN_PANDA_O3_OBS=false
 export RUN_PANDA_PM25_OBS=false
 export RUN_MEXICO_AQS_CO_OBS=false
-export RUN_MET_OBS=false # (done)
+export RUN_MET_OBS=true # (done)
 #
 # Setup DART namelist parameters for which observations to assimilate/evaluate
 # &obs_kind_nml
@@ -425,7 +425,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    rm -rf index_RS_Forward_Operator_Params_${DATE}
    rm -rf index_RS_DART_Namelists_${DATE}
    rm -rf index_RS_Error_Decorrelation_Settings_${DATE}
-   export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE}\'
+   export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
 #
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
    cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
