@@ -18,7 +18,7 @@
       cp ${PERT_CHEM_INPUT_DIR}/set00_${EXP_SPCS_MAP} ./set00
 #
 # SELECT MOZART DATA FILE
-      export MOZBC_DATA=${NL_UPPER_DATA_FILE}
+      export MOZBC_DATA=${NL_UPPER_DATA_FILE_NAME}
 #
 # CREATE INPUT FILES COARSE DOMAIN
       rm -rf mozbc.ic.inp

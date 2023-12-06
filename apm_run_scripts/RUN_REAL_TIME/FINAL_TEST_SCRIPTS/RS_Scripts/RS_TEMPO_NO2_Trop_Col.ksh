@@ -145,6 +145,10 @@
       rm -rf input.nml
       ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tempo_input_nml.ksh
 #
+# DO THINNING
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_NO2/work/tempo_no2_trop_col_thinner ./.
+      ./tempo_no2_trop_col_thinner > index_thinner.html 2>&1
+#
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_NO2/work/tempo_no2_trop_col_ascii_to_obs ./.
       ./tempo_no2_trop_col_ascii_to_obs > index.html 2>&1

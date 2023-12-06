@@ -53,10 +53,10 @@ export FIRST_DART_INFLATE_DATE=2020071318
 export FIRST_EMISS_INV_DATE=2020071318
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2020071318
+export CYCLE_STR_DATE=2020071400
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2020071318
+export CYCLE_END_DATE=2020071400
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -64,7 +64,7 @@ export EMISS_DAMP_CYCLE=1.0
 export EMISS_DAMP_INTRA_CYCLE=1.0
 #
 # Set large scale chemisty file
-export NL_UPPER_DATA_FILE=/waccm_0002.nc
+export NL_UPPER_DATA_FILE_NAME=/waccm_0002.nc
 export NL_UPPER_DATA_MODEL=\'WACCM\'
 export LS_CHEM_DX=25
 export LS_CHEM_DY=21
@@ -248,10 +248,21 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    rm -rf index_RS_Forward_Operator_Params_${DATE}
    rm -rf index_RS_DART_Namelists_${DATE}
    rm -rf index_RS_Error_Decorrelation_Settings_${DATE}
-   export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE}\'
+   export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
 #   
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
    cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
+#
+#########################################################################
+#
+# LOCAL ENVIRONMENTAL VARIABLE SETTINGS
+#
+#########################################################################
+#
+   export PERT_JOB_CLASS=devel
+   export PERT_TIME_LIMIT=01:59:00
+   export PERT_NODES=2
+   export PERT_TASKS=24
 #
 #########################################################################
 #

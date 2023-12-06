@@ -54,7 +54,7 @@ export FIRST_EMISS_INV_DATE=2014072606
 export CYCLE_STR_DATE=2014072706
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072800
+export CYCLE_END_DATE=2014072706
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -208,7 +208,7 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'SAT_V_WIND_COMPONENT'"
 #
 # Run WRF-Chem for failed forecasts (will not work with adaptive time step)
-export RUN_SPECIAL_FORECAST=false
+export RUN_SPECIAL_FORECAST=true
 export NUM_SPECIAL_FORECAST=0
 export SPECIAL_FORECAST_FAC=1.
 #

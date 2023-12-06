@@ -142,8 +142,8 @@ program tropomi_no2_thinner
          allocate(tropomi_data(i_min,j_min)%lon_obs(max_num_obs))
          allocate(tropomi_data(i_min,j_min)%nlay_obs(max_num_obs))
          allocate(tropomi_data(i_min,j_min)%nlev_obs(max_num_obs))
-         allocate(tropomi_data(i_min,j_min)%no2_col(max_num_obs))
-         allocate(tropomi_data(i_min,j_min)%no2_col_err(max_num_obs))
+         allocate(tropomi_data(i_min,j_min)%no2_trop_col(max_num_obs))
+         allocate(tropomi_data(i_min,j_min)%no2_trop_col_err(max_num_obs))
       endif
 !
       read(fileid,*,iostat=ios) &

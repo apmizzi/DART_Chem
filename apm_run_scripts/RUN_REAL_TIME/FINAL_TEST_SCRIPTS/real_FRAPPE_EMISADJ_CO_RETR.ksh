@@ -51,10 +51,10 @@ export FIRST_DART_INFLATE_DATE=2014072606
 export FIRST_EMISS_INV_DATE=2014072606
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072618
+export CYCLE_STR_DATE=2014072700
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072718
+export CYCLE_END_DATE=2014072706
 #
 # For emissions estimation
 export ADD_EMISS=true
@@ -213,7 +213,7 @@ export RUN_SPECIAL_FORECAST=false
 export NUM_SPECIAL_FORECAST=0
 export SPECIAL_FORECAST_FAC=1.
 #
-export SPECIAL_FORECAST_MEM[1]=5
+export SPECIAL_FORECAST_MEM[1]=4
 export SPECIAL_FORECAST_MEM[2]=6
 export SPECIAL_FORECAST_MEM[3]=7
 export SPECIAL_FORECAST_MEM[4]=8
@@ -305,7 +305,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_DART_FILTER=false
       export RUN_BIAS_CORRECTION=false
       export RUN_UPDATE_BC=false
-      export RUN_ENSEMBLE_MEAN_INPUT=true
+      export RUN_ENSEMBLE_MEAN_INPUT=false
       if [[ ${DATE} -eq ${INITIAL_DATE}  ]]; then
          export RUN_WRFCHEM_INITIAL=true
          export RUN_WRFCHEM_CYCLE_CR=false
