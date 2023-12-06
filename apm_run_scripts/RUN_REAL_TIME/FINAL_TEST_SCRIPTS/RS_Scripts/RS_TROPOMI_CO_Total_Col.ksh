@@ -169,10 +169,13 @@ nobs=1
 obs_list='TROPOMI_CO_TOTAL_COL'
 /
 EOF
+# DO THINNING
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CO/work/tropomi_co_total_col_thinner ./.
+      ./tropomi_co_total_col_thinner > index_thinner.html 2>&1
 #
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_CO/work/tropomi_co_total_col_ascii_to_obs ./.
-      ./tropomi_co_total_col_ascii_to_obs > index.html 2>&1
+      ./tropomi_co_total_col_ascii_to_obs > index_ascii.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ -s ${NL_FILEOUT} ]]; then

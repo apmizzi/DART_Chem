@@ -150,9 +150,13 @@
       rm -rf input.nml
       ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
+# DO THINNING
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_SO2/work/tropomi_so2_pbl_col_thinner ./.
+      ./tropomi_so2_pbl_col_thinner > index_thinner.html 2>&1
+#
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_SO2/work/tropomi_so2_pbl_col_ascii_to_obs ./.
-      ./tropomi_so2_pbl_col_ascii_to_obs > index.html 2>&1
+      ./tropomi_so2_pbl_col_ascii_to_obs > index_ascii.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ -s ${NL_FILEOUT} ]]; then

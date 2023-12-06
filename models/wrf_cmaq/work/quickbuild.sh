@@ -9,59 +9,46 @@ main() {
 export DART=$(git rev-parse --show-toplevel)
 source "$DART"/build_templates/buildfunctions.sh
 
-MODEL=wrf_chem
-LOCATION=threed_sphere
-EXCLUDE=experiments
+MODEL=template_model
+LOCATION=template_location
+
 
 programs=(
 closest_member_tool
 filter
 model_mod_check
 perfect_model_obs
-perturb_single_instance
-wakeup_filter
 )
 
 serial_programs=(
-#radiance_obs_seq_to_netcdf  # needs rttov
-advance_time
 create_fixed_network_seq
 create_obs_sequence
 fill_inflation_restart
+integrate_model
 obs_common_subset
 obs_diag
-obs_selection
-obs_seq_coverage
-obs_seq_to_netcdf
-obs_seq_verify
 obs_sequence_tool
-obs_impact_tool
 )
 
+model_programs=(
+)
 
 model_serial_programs=(
-WRF_DART_utilities/add_pert_where_high_refl
-WRF_DART_utilities/advance_cymdh
-WRF_DART_utilities/convertdate
-WRF_DART_utilities/ensemble_init
-WRF_BC/pert_wrf_bc
-WRF_DART_utilities/replace_wrf_fields
-select
-WRF_BC/update_wrf_bc
-WRF_DART_utilities/wrf_dart_obs_preprocess
-WRF_DART_utilities/extract
-WRF_DART_utilities/grid_refl_obs
 )
 
+# quickbuild arguments
 arguments "$@"
 
 # clean the directory
 \rm -f -- *.o *.mod Makefile .cppdefs
 
+# build any NetCDF files from .cdl files
+cdl_to_netcdf
+
 # build and run preprocess before making any other DART executables
 buildpreprocess
 
-# build DART
+# build 
 buildit
 
 # clean up

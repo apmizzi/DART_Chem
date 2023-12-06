@@ -148,6 +148,10 @@
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2A_NO2/work/gome2a_no2_trop_col_thinner ./.
       ./gome2a_no2_trop_col_thinner > index_thinner.html 2>&1
 #
+# DO THINNING
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2A_NO2/work/gome2a_no2_trop_col_thinner ./.
+      ./gome2a_no2_trop_col_thinner > index_thinner.html 2>&1
+#
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2A_NO2/work/gome2a_no2_trop_col_ascii_to_obs ./.
       ./gome2a_no2_trop_col_ascii_to_obs > index_ascii.html 2>&1

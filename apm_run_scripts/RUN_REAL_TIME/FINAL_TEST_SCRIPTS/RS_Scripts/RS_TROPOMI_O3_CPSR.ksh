@@ -148,6 +148,10 @@
       rm -rf input.nml
       ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tropomi_input_nml.ksh
 #
+# DO THINNING
+#      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/work/tropomi_o3_cpsr_thinner ./.
+#      ./tropomi_o3_cpsr_thinner > index.html 2>&1
+#
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TROPOMI_O3/work/tropomi_o3_cpsr_ascii_to_obs ./.
       ./tropomi_o3_cpsr_ascii_to_obs > index.html 2>&1

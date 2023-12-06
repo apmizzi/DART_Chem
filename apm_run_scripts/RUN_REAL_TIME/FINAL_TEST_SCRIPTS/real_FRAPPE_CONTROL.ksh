@@ -73,94 +73,94 @@ export LS_CHEM_DZ=56
 export LS_CHEM_DT=368
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=true
+export RUN_INPUT_OBS=false
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
-export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
-export RUN_MOPITT_CO_CPSR_OBS=true # (done)
+export RUN_MOPITT_CO_PROFILE_OBS=true # (done, no thinner)
+export RUN_MOPITT_CO_CPSR_OBS=true # (done, no thinner)
 export RUN_IASI_CO_TOTAL_COL_OBS=false
-export RUN_IASI_CO_PROFILE_OBS=true # (done)
-export RUN_IASI_CO_CPSR_OBS=true # (done)
+export RUN_IASI_CO_PROFILE_OBS=true # (done, no thinner)
+export RUN_IASI_CO_CPSR_OBS=true # (done, no thinner)
 export RUN_IASI_O3_PROFILE_OBS=false
 export RUN_IASI_O3_CPSR_OBS=false
-export RUN_MODIS_AOD_TOTAL_COL_OBS=true # (done)
+export RUN_MODIS_AOD_TOTAL_COL_OBS=true # (done, no thinner)
 export RUN_OMI_O3_TOTAL_COL_OBS=false
 export RUN_OMI_O3_TROP_COL_OBS=false
-export RUN_OMI_O3_PROFILE_OBS=true # (done)
-export RUN_OMI_O3_CPSR_OBS=true # (works)
+export RUN_OMI_O3_PROFILE_OBS=true # (done, thinner)
+export RUN_OMI_O3_CPSR_OBS=true # (works, thinner)
 export RUN_OMI_NO2_TOTAL_COL_OBS=false
-export RUN_OMI_NO2_TROP_COL_OBS=true # (done)
+export RUN_OMI_NO2_TROP_COL_OBS=true # (done, thinner)
 export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
-export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true # (works)
+export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true # (works, thinner)
 export RUN_OMI_SO2_TOTAL_COL_OBS=false
-export RUN_OMI_SO2_PBL_COL_OBS=true # (works)
-export RUN_OMI_HCHO_TOTAL_COL_OBS=true # (works)
+export RUN_OMI_SO2_PBL_COL_OBS=true # (works, thinner)
+export RUN_OMI_HCHO_TOTAL_COL_OBS=true # (works, thinner)
 export RUN_OMI_HCHO_TROP_COL_OBS=false 
-export RUN_TROPOMI_CO_TOTAL_COL_OBS=false # (done)
+export RUN_TROPOMI_CO_TOTAL_COL_OBS=false # (done, thinner)
 export RUN_TROPOMI_O3_TOTAL_COL_OBS=false
 export RUN_TROPOMI_O3_TROP_COL_OBS=false
-export RUN_TROPOMI_O3_PROFILE_OBS=false # (not done, no data)
-export RUN_TROPOMI_O3_CPSR_OBS=false
+export RUN_TROPOMI_O3_PROFILE_OBS=false # (not done, no data, no thinner)
+export RUN_TROPOMI_O3_CPSR_OBS=false # (not done, no data, no thinner)
 export RUN_TROPOMI_NO2_TOTAL_COL_OBS=false
-export RUN_TROPOMI_NO2_TROP_COL_OBS=false # (works)
+export RUN_TROPOMI_NO2_TROP_COL_OBS=false # (works, thinner)
 export RUN_TROPOMI_SO2_TOTAL_COL_OBS=false
-export RUN_TROPOMI_SO2_PBL_COL_OBS=false # (works, vertical sum)
-export RUN_TROPOMI_CH4_TOTAL_COL_OBS=false  # (works, vertical sum)
+export RUN_TROPOMI_SO2_PBL_COL_OBS=false # (works, vertical sum, thinner)
+export RUN_TROPOMI_CH4_TOTAL_COL_OBS=false  # (works, vertical sum, thinner)
 export RUN_TROPOMI_CH4_TROP_COL_OBS=false
 export RUN_TROPOMI_CH4_PROFILE_OBS=false
 export RUN_TROPOMI_CH4_CPSR_OBS=false
 export RUN_TROPOMI_HCHO_TOTAL_COL_OBS=false 
-export RUN_TROPOMI_HCHO_TROP_COL_OBS=false # (works, vertical sum)
+export RUN_TROPOMI_HCHO_TROP_COL_OBS=false # (works, vertical sum, thinner)
 export RUN_TEMPO_O3_TOTAL_COL_OBS=false
 export RUN_TEMPO_O3_TROP_COL_OBS=false
-export RUN_TEMPO_O3_PROFILE_OBS=false # (done)
-export RUN_TEMPO_O3_CPSR_OBS=false
+export RUN_TEMPO_O3_PROFILE_OBS=false # (done, thinner)
+export RUN_TEMPO_O3_CPSR_OBS=false # (done, thinner)
 export RUN_TEMPO_NO2_TOTAL_COL_OBS=false
-export RUN_TEMPO_NO2_TROP_COL_OBS=false # (done)
+export RUN_TEMPO_NO2_TROP_COL_OBS=false # (done, thinner)
 export RUN_TES_CO_TOTAL_COL_OBS=false
 export RUN_TES_CO_TROP_COL_OBS=false
-export RUN_TES_CO_PROFILE_OBS=true # (works)
-export RUN_TES_CO_CPSR_OBS=true # (works)
+export RUN_TES_CO_PROFILE_OBS=true # (works, thinner)
+export RUN_TES_CO_CPSR_OBS=true # (works, thinner)
 export RUN_TES_CO2_TOTAL_COL_OBS=false 
 export RUN_TES_CO2_TROP_COL_OBS=false 
-export RUN_TES_CO2_PROFILE_OBS=false # (works, vertical sum)
-export RUN_TES_CO2_CPSR_OBS=false # (works, vertical sum)
+export RUN_TES_CO2_PROFILE_OBS=false # (works, vertical sum, thinner)
+export RUN_TES_CO2_CPSR_OBS=false # (works, vertical sum, thinner)
 export RUN_TES_O3_TOTAL_COL_OBS=false
 export RUN_TES_O3_TROP_COL_OBS=false
-export RUN_TES_O3_PROFILE_OBS=true # (works)
-export RUN_TES_O3_CPSR_OBS=true # (works)
+export RUN_TES_O3_PROFILE_OBS=true # (works, thinner)
+export RUN_TES_O3_CPSR_OBS=true # (works, thinner)
 export RUN_TES_NH3_TOTAL_COL_OBS=false
 export RUN_TES_NH3_TROP_COL_OBS=false
-export RUN_TES_NH3_PROFILE_OBS=false # (works, vertical sum)
-export RUN_TES_NH3_CPSR_OBS=false # (works, vertical sum)
+export RUN_TES_NH3_PROFILE_OBS=false # (works, vertical sum, thinner)
+export RUN_TES_NH3_CPSR_OBS=false # (works, vertical sum, thinner)
 export RUN_TES_CH4_TOTAL_COL_OBS=false
 export RUN_TES_CH4_TROP_COL_OBS=false
-export RUN_TES_CH4_PROFILE_OBS=false # (works, vertical sum)
-export RUN_TES_CH4_CPSR_OBS=false # (works, vertical sum)
+export RUN_TES_CH4_PROFILE_OBS=false # (works, vertical sum, thinner)
+export RUN_TES_CH4_CPSR_OBS=false # (works, vertical sum, thinner)
 export RUN_CRIS_CO_TOTAL_COL_OBS=false
-export RUN_CRIS_CO_PROFILE_OBS=false # (works, vertical sum)
-export RUN_CRIS_CO_CPSR_OBS=false # (works, vertical sum)
+export RUN_CRIS_CO_PROFILE_OBS=false # (works, vertical sum, no thinner)
+export RUN_CRIS_CO_CPSR_OBS=false # (works, vertical sum, no thinner)
 export RUN_CRIS_O3_TOTAL_COL_OBS=false
-export RUN_CRIS_O3_PROFILE_OBS=false # (works, vertical sum)
-export RUN_CRIS_O3_CPSR_OBS=false # (works, vertical sum)
+export RUN_CRIS_O3_PROFILE_OBS=false # (works, vertical sum, no thinner)
+export RUN_CRIS_O3_CPSR_OBS=false # (works, vertical sum, no thinner)
 export RUN_CRIS_NH3_TOTAL_COL_OBS=false
-export RUN_CRIS_NH3_PROFILE_OBS=false # (works, vertical sum)
-export RUN_CRIS_NH3_CPSR_OBS=false # (works, vertical sum)
+export RUN_CRIS_NH3_PROFILE_OBS=false # (works, vertical sum, no thinner)
+export RUN_CRIS_NH3_CPSR_OBS=false # (works, vertical sum, no thinner)
 export RUN_CRIS_CH4_TOTAL_COL_OBS=false
-export RUN_CRIS_CH4_PROFILE_OBS=false # (works, vertical sum)
-export RUN_CRIS_CH4_CPSR_OBS=false # (works, vertical sum)
-export RUN_CRIS_PAN_TOTAL_COL_OBS=false # (works, vertical sum)
+export RUN_CRIS_CH4_PROFILE_OBS=false # (works, vertical sum, no thinner)
+export RUN_CRIS_CH4_CPSR_OBS=false # (works, vertical sum, no thinner)
+export RUN_CRIS_PAN_TOTAL_COL_OBS=false # (works, vertical sum, no thinner)
 export RUN_CRIS_PAN_PROFILE_OBS=false 
 export RUN_CRIS_PAN_CPSR_OBS=false
 export RUN_SCIAM_NO2_TOTAL_COL_OBS=false
-export RUN_SCIAM_NO2_TROP_COL_OBS=false # (works, vertical sum)
+export RUN_SCIAM_NO2_TROP_COL_OBS=false # (works, vertical sum, no thinner)
 export RUN_GOME2A_NO2_TOTAL_COL_OBS=false
-export RUN_GOME2A_NO2_TROP_COL_OBS=false # (works, vertical sum)
+export RUN_GOME2A_NO2_TROP_COL_OBS=false # (works, vertical sum, thinner)
 export RUN_MLS_O3_TOTAL_COL_OBS=false
-export RUN_MLS_O3_PROFILE_OBS=true # (works, check)
-export RUN_MLS_O3_CPSR_OBS=true # (works, vertical sum)
+export RUN_MLS_O3_PROFILE_OBS=true # (works, check, thinner)
+export RUN_MLS_O3_CPSR_OBS=true # (works, vertical sum, thinner)
 export RUN_MLS_HNO3_TOTAL_COL_OBS=false
-export RUN_MLS_HNO3_PROFILE_OBS=true # (works, vertical sum)
-export RUN_MLS_HNO3_CPSR_OBS=true # (works, vertical sum)
+export RUN_MLS_HNO3_PROFILE_OBS=true # (works, vertical sum, thinner)
+export RUN_MLS_HNO3_CPSR_OBS=true # (works, vertical sum, thinner)
 export RUN_AIRNOW_CO_OBS=true # (done)
 export RUN_AIRNOW_O3_OBS=true # (done)
 export RUN_AIRNOW_NO2_OBS=true # (done)
@@ -348,7 +348,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_DART_FILTER=false
       export RUN_BIAS_CORRECTION=false
       export RUN_UPDATE_BC=false
-      export RUN_ENSEMBLE_MEAN_INPUT=true
+      export RUN_ENSEMBLE_MEAN_INPUT=false
       if [[ ${DATE} -eq ${INITIAL_DATE}  ]]; then
          export RUN_WRFCHEM_INITIAL=true
          export RUN_WRFCHEM_CYCLE_CR=false
@@ -429,6 +429,14 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
    cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
+#
+#########################################################################
+#
+# SET LOCAL ENVIRONMENT VARIABLE CHANGES
+#
+#########################################################################
+#
+   export FILTER_TIME_LIMIT=06:59:00   
 #
 #########################################################################
 #
