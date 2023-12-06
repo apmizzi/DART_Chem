@@ -108,15 +108,12 @@ if (do_nml_term()) write(     *     , nml=model_nml)
 ! window.  All observations within +/- 1/2 this interval from the current
 ! model time will be assimilated. If this is not settable at runtime 
 ! feel free to hardcode it and remove from the namelist.
-!
-! APM: commented the next line to remove it
-!assimilation_time_step = set_time(time_step_seconds, &
-!                                  time_step_days)
+assimilation_time_step = set_time(time_step_seconds, &
+                                  time_step_days)
 
 
 ! Define which variables are in the model state
-dom_id = add_domain(template_file, num_vars=2, var_names=(/'NO2', 'NO'/))
-state%model_size=2_i8
+dom_id = add_domain(template_file, num_vars=2, var_names=(/'Temp', 'Wind'/))
 
 end subroutine static_init_model
 
