@@ -224,19 +224,19 @@ EOF
       fi
 #
 # Clean directory
-      let IMEM=1
-      while [[ ${IMEM} -le ${L_NUM_MEMBERS} ]]; do
-         export MEM=${IMEM}
-         export CMEM=e${MEM}
-         export KMEM=${MEM}
-         if [[ ${MEM} -lt 1000 ]]; then export KMEM=0${MEM}; fi
-         if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
-         if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
-	 cd run_${CMEM}
-	 rm *_wrf.o* aerosol* bulk* CAM* capacity* CCN_* clim_* CLM_* coeff_* constants*
-	 rm ETAMPNEW* exo_coldens* freeze* GENPARM* grib* hist_io* HLC* job.ksh kernels*
-	 rm LANDUSE* masses* MPTABLE* namelist* onzone* qr_acr* RRTM* SOILPARM*
-	 rm termvels* tr* ubvals* URBPARM* VEGPARM* wrfapm* wrfbdy* wrfbiochemi* wrfchemi*
-	 rm wrf.exe wrffirechemi* wrfinput* wrf_season*
-         let IMEM=${IMEM}+1
-      done
+#      let IMEM=1
+#      while [[ ${IMEM} -le ${L_NUM_MEMBERS} ]]; do
+#         export MEM=${IMEM}
+#         export CMEM=e${MEM}
+#         export KMEM=${MEM}
+#         if [[ ${MEM} -lt 1000 ]]; then export KMEM=0${MEM}; fi
+#         if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
+#         if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
+#	 cd run_${CMEM}
+#	 rm *_wrf.o* aerosol* bulk* CAM* capacity* CCN_* clim_* CLM_* coeff_* constants*
+#	 rm ETAMPNEW* exo_coldens* freeze* GENPARM* grib* hist_io* HLC* job.ksh kernels*
+#	 rm LANDUSE* masses* MPTABLE* namelist* onzone* qr_acr* RRTM* SOILPARM*
+#	 rm termvels* tr* ubvals* URBPARM* VEGPARM* wrfapm* wrfbdy* wrfbiochemi* wrfchemi*
+#	 rm wrf.exe wrffirechemi* wrfinput* wrf_season*
+#         let IMEM=${IMEM}+1
+#      done

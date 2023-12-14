@@ -40,17 +40,17 @@ obs_sequence_tool
 
 
 model_serial_programs=(
-../../wrf/WRF_DART_utilities/add_pert_where_high_refl
-../../wrf/WRF_DART_utilities/advance_cymdh
-../../wrf/WRF_DART_utilities/convertdate
-../../wrf/WRF_DART_utilities/ensemble_init
+WRF_DART_utilities/add_pert_where_high_refl
+WRF_DART_utilities/advance_cymdh
+WRF_DART_utilities/convertdate
+WRF_DART_utilities/ensemble_init
 WRF_BC/pert_wrf_bc
-../../WRF_DART_utilities/replace_wrf_fields
+WRF_DART_utilities/replace_wrf_fields
 select
 WRF_BC/update_wrf_bc
 WRF_DART_utilities/wrf_dart_obs_preprocess
-../../WRF_DART_utilities/extract
-../../WRF_DART_utilities/grid_refl_obs
+WRF_DART_utilities/extract
+WRF_DART_utilities/grid_refl_obs
 )
 
 arguments "$@"

@@ -51,10 +51,10 @@ export FIRST_DART_INFLATE_DATE=2020071318
 export FIRST_EMISS_INV_DATE=2020071318
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2020071400
+export CYCLE_STR_DATE=2020071318
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2020071500
+export CYCLE_END_DATE=2020071318
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -95,7 +95,7 @@ export RUN_OMI_SO2_TOTAL_COL_OBS=false
 export RUN_OMI_SO2_PBL_COL_OBS=true # (works)
 export RUN_OMI_HCHO_TOTAL_COL_OBS=true # (works)
 export RUN_OMI_HCHO_TROP_COL_OBS=false 
-export RUN_TROPOMI_CO_TOTAL_COL_OBS=true # (done)
+export RUN_TROPOMI_CO_TOTAL_COL_OBS=false # (done)
 export RUN_TROPOMI_O3_TOTAL_COL_OBS=false
 export RUN_TROPOMI_O3_TROP_COL_OBS=false
 export RUN_TROPOMI_O3_PROFILE_OBS=false # (not done, no data)
@@ -103,13 +103,13 @@ export RUN_TROPOMI_O3_CPSR_OBS=false
 export RUN_TROPOMI_NO2_TOTAL_COL_OBS=false
 export RUN_TROPOMI_NO2_TROP_COL_OBS=true # (works)
 export RUN_TROPOMI_SO2_TOTAL_COL_OBS=false
-export RUN_TROPOMI_SO2_PBL_COL_OBS=true # (works, vertical sum)
+export RUN_TROPOMI_SO2_PBL_COL_OBS=false # (works, vertical sum)
 export RUN_TROPOMI_CH4_TOTAL_COL_OBS=false  # (works, vertical sum)
 export RUN_TROPOMI_CH4_TROP_COL_OBS=false
 export RUN_TROPOMI_CH4_PROFILE_OBS=false
 export RUN_TROPOMI_CH4_CPSR_OBS=false
 export RUN_TROPOMI_HCHO_TOTAL_COL_OBS=false 
-export RUN_TROPOMI_HCHO_TROP_COL_OBS=true # (works, vertical sum)
+export RUN_TROPOMI_HCHO_TROP_COL_OBS=true # (works, vertical sum, ???)
 export RUN_TEMPO_O3_TOTAL_COL_OBS=false
 export RUN_TEMPO_O3_TROP_COL_OBS=false
 export RUN_TEMPO_O3_PROFILE_OBS=true # (done)
@@ -256,8 +256,8 @@ export RUN_SPECIAL_FORECAST=false
 export NUM_SPECIAL_FORECAST=0
 export SPECIAL_FORECAST_FAC=1.
 #
-export SPECIAL_FORECAST_MEM[1]=1
-export SPECIAL_FORECAST_MEM[2]=3
+export SPECIAL_FORECAST_MEM[1]=9
+export SPECIAL_FORECAST_MEM[2]=10
 export SPECIAL_FORECAST_MEM[3]=4
 export SPECIAL_FORECAST_MEM[4]=5
 export SPECIAL_FORECAST_MEM[5]=9
@@ -338,13 +338,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # FOR SPECIAL CYCLING       
       export RUN_INPUT_OBS=false
-      if ${RUN_INPUT_OBS}; then
-         export RUN_COMBINE_OBS=true
-         export RUN_PREPROCESS_OBS=true
-      else
-         export RUN_COMBINE_OBS=false
-         export RUN_PREPROCESS_OBS=false
-      fi
+      export RUN_COMBINE_OBS=false
+      export RUN_PREPROCESS_OBS=false
       export RUN_DART_FILTER=false
       export RUN_BIAS_CORRECTION=false
       export RUN_UPDATE_BC=false
@@ -404,9 +399,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    rm -rf index_RS_Chemistry_Pert_Params_${DATE}
    source ${RS_SCRIPTS_DIR}/RS_Chemistry_Pert_Params.ksh > index_RS_Chemistry_Pert_Params_${DATE} 2>&1
    rm -rf index_RS_Forecast_Time_Domain_Params_${DATE}
-   source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Params_FRAPPE.ksh > index_RS_Forecast_Time_Domain_Params_${DATE} 2>&1
+   source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Params_FIREX.ksh > index_RS_Forecast_Time_Domain_Params_${DATE} 2>&1
    rm -rf index_RS_WRFChem_Namelists_${DATE}
-   source ${RS_SCRIPTS_DIR}/RS_WRFChem_Namelists_FRAPPE.ksh > index_RS_WRFChem_Namelists_${DATE} 2>&1
+   source ${RS_SCRIPTS_DIR}/RS_WRFChem_Namelists_FIREX.ksh > index_RS_WRFChem_Namelists_${DATE} 2>&1
    rm -rf index_RS_Forward_Operator_Params_${DATE}
    source ${RS_SCRIPTS_DIR}/RS_Forward_Operator_Params.ksh > index_RS_Forward_Operator_Params_${DATE} 2>&1
    rm -rf index_RS_DART_Namelists_${DATE}
@@ -429,6 +424,21 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
    cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
+#
+#########################################################################
+#
+# SET LOCAL ENVIRONMENT VARIABLE CHANGES
+#
+#########################################################################
+#
+   export GENERAL_JOB_CLASS=devel
+   export GENERAL_TIME_LIMIT=00:20:00
+   export GENERAL_NODES=1
+   export GENERAL_TASKS=16
+#   export FILTER_JOB_CLASS=devel
+#   export FILTER_TIME_LIMIT=01:59:00
+#   export FILTER_NODES=2
+#   export FILTER_TASKS=24
 #
 #########################################################################
 #
@@ -464,7 +474,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    if ${RUN_DART_FILTER}; then
       if [[ ! -d ${RUN_DIR}/${DATE}/dart_filter ]]; then
          mkdir -p ${RUN_DIR}/${DATE}/dart_filter
-
+         cd ${RUN_DIR}/${DATE}/dart_filter
       else
          cd ${RUN_DIR}/${DATE}/dart_filter
       fi
@@ -548,7 +558,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_cycle_cr
       fi
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR.ksh > index_rs.html 2>&1 
+      if [[ ${RUN_SPECIAL_FORECAST} == true ]]; then
+         source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR.ksh > index_rs.html 2>&1
+      else    
+         source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR_Single.ksh > index_rs.html 2>&1
+      fi 
    fi
 #
 #########################################################################

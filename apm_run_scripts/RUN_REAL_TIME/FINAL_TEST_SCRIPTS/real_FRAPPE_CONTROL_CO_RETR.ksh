@@ -51,10 +51,10 @@ export FIRST_DART_INFLATE_DATE=2014072606
 export FIRST_EMISS_INV_DATE=2014072606
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072706
+export CYCLE_STR_DATE=2014072806
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072706
+export CYCLE_END_DATE=2014072816
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -208,7 +208,7 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'SAT_V_WIND_COMPONENT'"
 #
 # Run WRF-Chem for failed forecasts (will not work with adaptive time step)
-export RUN_SPECIAL_FORECAST=true
+export RUN_SPECIAL_FORECAST=false
 export NUM_SPECIAL_FORECAST=0
 export SPECIAL_FORECAST_FAC=1.
 #
@@ -294,13 +294,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # FOR SPECIAL CYCLING       
       export RUN_INPUT_OBS=false
-      if ${RUN_INPUT_OBS}; then
-         export RUN_COMBINE_OBS=true
-         export RUN_PREPROCESS_OBS=true
-      else
-         export RUN_COMBINE_OBS=false
-         export RUN_PREPROCESS_OBS=false
-      fi
+      export RUN_COMBINE_OBS=false
+      export RUN_PREPROCESS_OBS=false
       export RUN_DART_FILTER=false
       export RUN_BIAS_CORRECTION=false
       export RUN_UPDATE_BC=false
@@ -420,7 +415,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    if ${RUN_DART_FILTER}; then
       if [[ ! -d ${RUN_DIR}/${DATE}/dart_filter ]]; then
          mkdir -p ${RUN_DIR}/${DATE}/dart_filter
-
+         cd ${RUN_DIR}/${DATE}/dart_filter
       else
          cd ${RUN_DIR}/${DATE}/dart_filter
       fi

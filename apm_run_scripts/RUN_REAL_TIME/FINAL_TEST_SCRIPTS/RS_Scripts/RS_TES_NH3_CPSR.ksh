@@ -155,7 +155,7 @@
 #
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_NH3/work/tes_nh3_cpsr_ascii_to_obs ./.
-      ./tes_nh3_cpsr_ascii_to_obs > index_thinner.html 2>&1
+      ./tes_nh3_cpsr_ascii_to_obs > index_ascii.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ -s ${NL_FILEOUT} ]]; then

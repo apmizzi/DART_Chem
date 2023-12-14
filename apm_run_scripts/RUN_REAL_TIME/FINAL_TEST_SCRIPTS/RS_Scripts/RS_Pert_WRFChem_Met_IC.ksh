@@ -78,7 +78,7 @@
             export NL_SEED_ARRAY1=$(${BUILD_DIR}/da_advance_time.exe ${DATE} 0 -f hhddmmyycc)
             export NL_SEED_ARRAY2=`echo ${MEM} \* 100000 | bc -l `
             ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wrfda_namelist_v4.ksh
-            cp ${EXPERIMENT_PREPBUFR_DIR}/${DATE}/${GDAS_FILEIN} ob.bufr
+            cp ${EXPERIMENT_PREPBUFR_DIR}/${DATE}/prepbufr.gdas.${YYYY}${MM}${DD}${GDAS_HR_PREFIX}${HH}${GDAS_HR_SUFFIX} ob.bufr
             cp ${DA_INPUT_FILE} fg
             cp ${BE_DIR}/be.dat.cv3 be.dat
             cp ${WRFDA_DIR}/run/LANDUSE.TBL ./.

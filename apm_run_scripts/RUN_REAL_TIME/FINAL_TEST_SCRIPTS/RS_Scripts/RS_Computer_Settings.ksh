@@ -41,7 +41,7 @@
 #   export FILTER_TASKS=16
 # Haswell
    export FILTER_JOB_CLASS=normal
-   export FILTER_TIME_LIMIT=05:59:00
+   export FILTER_TIME_LIMIT=06:59:00
    export FILTER_NODES=2
    export FILTER_TASKS=24
 #
@@ -56,10 +56,15 @@
 #   export WRFCHEM_NODES=2
 #   export WRFCHEM_TASKS=16
 # Haswell
-   export WRFCHEM_JOB_CLASS=normal
+   export WRFCHEM_JOB_CLASS=devel
    export WRFCHEM_TIME_LIMIT=00:30:00
    export WRFCHEM_NODES=2
    export WRFCHEM_TASKS=24
+# Haswell (Single submission for WRFCHEM ensemble)
+   export WRFCHEM_SING_CLASS=normal
+   export WRFCHEM_SING_LIMIT=06:30:00
+   export WRFCHEM_SING_NODES=2
+   export WRFCHEM_SING_TASKS=24
 #
 #   export WRFCHEM_JOB_CLASS=devel
 #   export WRFCHEM_TIME_LIMIT=00:40:00

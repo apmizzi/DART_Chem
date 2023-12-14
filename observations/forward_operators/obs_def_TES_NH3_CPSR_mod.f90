@@ -134,7 +134,7 @@ module obs_def_tes_nh3_cpsr_mod
    
    namelist /obs_def_TES_NH3_nml/ upper_data_file, use_log_nh3, nlayer_model, &
    nlayer_tes_nh3_total_col, nlayer_tes_nh3_trop_col, nlayer_tes_nh3_profile, &
-   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, upper_data_file
+   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, upper_data_model
 
 !-------------------------------------------------------------------------------
 contains

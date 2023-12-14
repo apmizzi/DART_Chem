@@ -392,6 +392,7 @@ program tropomi_co_total_col_ascii_to_obs
       deallocate(prf_locl) 
       deallocate(prf_full) 
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
+      print *, 'APM: ',data_type, obs_id, i_min, j_min
    enddo   
 !
 !----------------------------------------------------------------------
