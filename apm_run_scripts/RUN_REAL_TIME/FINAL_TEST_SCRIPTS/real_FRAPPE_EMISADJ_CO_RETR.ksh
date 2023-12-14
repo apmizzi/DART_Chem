@@ -54,11 +54,11 @@ export FIRST_EMISS_INV_DATE=2014072606
 export CYCLE_STR_DATE=2014072700
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072706
+export CYCLE_END_DATE=2014072718
 #
 # For emissions estimation
 export ADD_EMISS=true
-export EMISS_DAMP_CYCLE=1.0
+export EMISS_DAMP_CYCLE=0.0
 export EMISS_DAMP_INTRA_CYCLE=1.0
 #
 # Switch to process filter output without calling filter
@@ -175,7 +175,9 @@ export RUN_MET_OBS=true # (done)
 #
 # Setup DART namelist parameters for which observations to assimilate/evaluate
 # &obs_kind_nml
-export NL_EVALUATE_THESE_OBS_TYPES=" "
+export NL_EVALUATE_THESE_OBS_TYPES="'MOPITT_CO_CPSR',
+                                   'IASI_CO_CPSR',
+                                   'TES_CO_CPSR'"
 #
 export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'RADIOSONDE_U_WIND_COMPONENT',
@@ -201,11 +203,8 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'SAT_U_WIND_COMPONENT',
                                    'SAT_V_WIND_COMPONENT',
                                    'MOPITT_CO_PROFILE',
-                                   'MOPITT_CO_CPSR',
                                    'IASI_CO_PROFILE',
-                                   'IASI_CO_CPSR',
                                    'TES_CO_PROFILE',
-                                   'TES_CO_CPSR',
                                    'AIRNOW_CO'"
 #
 # Run WRF-Chem for failed forecasts (will not work with adaptive time step)
@@ -213,14 +212,14 @@ export RUN_SPECIAL_FORECAST=false
 export NUM_SPECIAL_FORECAST=0
 export SPECIAL_FORECAST_FAC=1.
 #
-export SPECIAL_FORECAST_MEM[1]=4
-export SPECIAL_FORECAST_MEM[2]=6
-export SPECIAL_FORECAST_MEM[3]=7
-export SPECIAL_FORECAST_MEM[4]=8
-export SPECIAL_FORECAST_MEM[5]=9
-export SPECIAL_FORECAST_MEM[6]=10
-export SPECIAL_FORECAST_MEM[7]=7
-export SPECIAL_FORECAST_MEM[8]=8
+export SPECIAL_FORECAST_MEM[1]=13
+export SPECIAL_FORECAST_MEM[2]=14
+export SPECIAL_FORECAST_MEM[3]=15
+export SPECIAL_FORECAST_MEM[4]=16
+export SPECIAL_FORECAST_MEM[5]=17
+export SPECIAL_FORECAST_MEM[6]=18
+export SPECIAL_FORECAST_MEM[7]=19
+export SPECIAL_FORECAST_MEM[8]=20
 export SPECIAL_FORECAST_MEM[9]=9
 export SPECIAL_FORECAST_MEM[10]=10
 #
@@ -295,13 +294,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # FOR SPECIAL CYCLING       
       export RUN_INPUT_OBS=false
-      if ${RUN_INPUT_OBS}; then
-         export RUN_COMBINE_OBS=true
-         export RUN_PREPROCESS_OBS=true
-      else
-         export RUN_COMBINE_OBS=false
-         export RUN_PREPROCESS_OBS=false
-      fi
+      export RUN_COMBINE_OBS=false
+      export RUN_PREPROCESS_OBS=false
       export RUN_DART_FILTER=false
       export RUN_BIAS_CORRECTION=false
       export RUN_UPDATE_BC=false
@@ -421,7 +415,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    if ${RUN_DART_FILTER}; then
       if [[ ! -d ${RUN_DIR}/${DATE}/dart_filter ]]; then
          mkdir -p ${RUN_DIR}/${DATE}/dart_filter
-
+         cd ${RUN_DIR}/${DATE}/dart_filter
       else
          cd ${RUN_DIR}/${DATE}/dart_filter
       fi
@@ -505,7 +499,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_cycle_cr
       fi
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR.ksh > index_rs.html 2>&1 
+      if [[ ${RUN_SPECIAL_FORECAST} == true ]]; then
+         source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR.ksh > index_rs.html 2>&1
+      else    
+         source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR_Single.ksh > index_rs.html 2>&1
+      fi 
    fi
 #
 #########################################################################

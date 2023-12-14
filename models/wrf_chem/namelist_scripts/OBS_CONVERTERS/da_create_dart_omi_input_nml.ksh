@@ -87,6 +87,12 @@ cat > input.nml << EOF
    nlayer_omi_no2_total_col  = ${NL_NLAYER_OMI_NO2_TOTAL_COL:-35},
    nlayer_omi_no2_trop_col   = ${NL_NLAYER_OMI_NO2_TROP_COL:-35},
 /
+ &obs_def_OMI_NO2_DOMINO_nml
+   use_log_no2   = ${NL_USE_LOG_NO2:-.false.},
+   nlayer_model  = ${NL_NLAYER_MODEL:-36},
+   nlayer_omi_no2_domino_total_col  = ${NL_NLAYER_OMI_NO2_DOMINO_TOTAL_COL:-35},
+   nlayer_omi_no2_domino_trop_col   = ${NL_NLAYER_OMI_NO2_DOMINO_TROP_COL:-35},
+/
  &obs_def_OMI_SO2_nml
    use_log_so2   = ${NL_USE_LOG_SO2:-.false.},
    nlayer_model   = ${NL_NLAYER_MODEL:-36},

@@ -10,28 +10,47 @@
 #
 ############################################################################### 
 #
-#   export START_DATE=2014071506
-#   export END_DATE=2014072318
+   export START_DATE=2014072606
+   export END_DATE=2014072800
 #
-   export START_DATE=2020071006
-   export END_DATE=2020071606
+#   export START_DATE=2020071006
+#   export END_DATE=2020071606
 #
 # Define EXPERIMENT path
 #
-#   export DIR_NAME=real_FRAPPE_CONTROL_NASA_v4
-#   export DIR_NAME=real_FRAPPE_ALLCHEM_NASA_v4
-#   export DIR_NAME=real_FRAPPE_EMISADJ_NASA_v4
+#   export DIR_NAME=FRAPPE_CONTROL
+#   export DIR_NAME=real_FRAPPE_ALLCHEM
+#   export DIR_NAME=real_FRAPPE_EMISADJ
+
+   export DIR_NAME=FRAPPE_CONTROL_CO_RETR
+   export DIR_NAME=FRAPPE_ALLCHEM_CO_RETR
+   export DIR_NAME=FRAPPE_ALLCHEM_CO_CPSR
+   export DIR_NAME=FRAPPE_EMISADJ_CO_RETR
+   export DIR_NAME=FRAPPE_EMISADJ_CO_CPSR
 #
-   export DIR_NAME=real_FIREX_CONTROL_NASA_v4
-#   export DIR_NAME=real_FIREX_ALLCHEM_NASA_v4
-#   export DIR_NAME=real_FIREX_EMISADJ_NASA_v4
+#   export DIR_NAME=FIREX_CONTROL
+#   export DIR_NAME=FIREX_ALLCHEM
+#   export DIR_NAME=FIREX_EMISADJ
+#
+   export NUM_MEMBERS=20
+#
+# Set large scale chemisty file
+   export NL_UPPER_DATA_FILE_NAME=/h0004.nc
+   export NL_UPPER_DATA_MODEL=\'MOZART\'
+   export LS_CHEM_DX=17
+   export LS_CHEM_DY=13
+   export LS_CHEM_DZ=56
+   export LS_CHEM_DT=368
+   export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
+   export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_REAL_TIME_DATA
+   export MOZBC_DATA_DIR=${EXPERIMENT_DATA_DIR}/large_scale_chem_forecasts
+   export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
 #
 # Define FILTER path
    export DART_FILTER=dart_filter
 #
    export DELETE_FLG=true
    export DOMAIN=01
-   export NUM_MEMBERS=10
    export CYCLE_PERIOD=6
    export FCST_PERIOD=6
    export ASIM_PERIOD=3
@@ -40,10 +59,10 @@
    (( CYCLE_PERIOD_SEC=${CYCLE_PERIOD}*60*60 ))
 #
 # Define code versions
-   export DART_VER=DART_chem_upgrade
-   export WRFCHEM_VER=WRFCHEMv3.9.1.1_dmpar
-   export WRF_VER=WRFv3.9.1.1_dmpar
-   export WRFDA_VER=WRFDAv3.9.1.1_dmpar
+   export DART_VER=DART_development
+   export WRFCHEM_VER=WRFCHEMv4.3.2_dmpar
+   export WRF_VER=WRFv4.3.2_dmpar
+   export WRFDA_VER=WRFDAv4.3.2_dmpar
 #
 # Independent path settings
    export SCRATCH_DIR=/nobackupp11/amizzi/OUTPUT_DATA
@@ -417,38 +436,115 @@
    export NL_ADD_EMISS=${ADD_EMISS}
 #
 # &preprocess_nml
-   export NL_INPUT_OBS_KIND_MOD_FILE="'${DART_DIR}/obs_kind/DEFAULT_obs_kind_mod.F90'"
-   export NL_OUTPUT_OBS_KIND_MOD_FILE="'${DART_DIR}/obs_kind/obs_kind_mod.f90'"
-   export NL_INPUT_OBS_DEF_MOD_FILE="'${DART_DIR}/obs_kind/DEFAULT_obs_def_mod.F90'"
-   export NL_OUTPUT_OBS_DEF_MOD_FILE="'${DART_DIR}/obs_kind/obs_def_mod.f90'"
-   export NL_INPUT_FILES="'${DART_DIR}/obs_def/obs_def_reanalysis_bufr_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_radar_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_metar_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_dew_point_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_altimeter_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_gps_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_gts_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_vortex_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_AIRNOW_OBS_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_MOPITT_CO_TOTAL_COL_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_MOPITT_CO_PROFILE_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_MOPITT_CO_CPSR_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_IASI_CO_TOTAL_COL_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_IASI_CO_PROFILE_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_IASI_CO_CPSR_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_IASI_O3_TOTAL_COL_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_IASI_O3_TROP_COL_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_IASI_O3_PROFILE_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_IASI_O3_CPSR_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_MODIS_AOD_TOTAL_COL_mod.f90'"
-                       '${DART_DIR}/obs_def/obs_def_OMI_O3_PROFILE_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_OMI_NO2_TOTAL_COL_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_OMI_NO2_TROP_COL_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_TROPOMI_CO_TOTAL_COL_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_TROPOMI_O3_PROFILE_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_TROPOMI_NO2_TROP_COL_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_TEMPO_O3_PROFILE_mod.f90',
-                       '${DART_DIR}/obs_def/obs_def_TEMPO_NO2_TROP_COL_mod.f90',
+   export NL_INPUT_OBS_QTY_MOD_FILE="'../../../assimilation_code/modules/observations/DEFAULT_obs_kind_mod.F90'",
+   export NL_OUTPUT_OBS_QTY_MOD_FILE="'../../../assimilation_code/modules/observations/obs_kind_mod.f90'",
+   export NL_INPUT_OBS_DEF_MOD_FILE="'../../../observations/forward_operators/DEFAULT_obs_def_mod.F90'",
+   export NL_OUTPUT_OBS_DEF_MOD_FILE="'../../../observations/forward_operators/obs_def_mod.f90'",
+   export NL_QUANTITY_FILES="'../../../assimilation_code/modules/observations/atmosphere_quantities_mod.f90',
+                             '../../../assimilation_code/modules/observations/chemistry_quantities_mod.f90',
+                             '../../../assimilation_code/modules/observations/oned_quantities_mod.f90'",
+   export NL_OBS_TYPE_FILES="'../../../observations/forward_operators/obs_def_reanalysis_bufr_mod.f90',
+                             '../../../observations/forward_operators/obs_def_radar_mod.f90',
+                             '../../../observations/forward_operators/obs_def_metar_mod.f90',
+                             '../../../observations/forward_operators/obs_def_dew_point_mod.f90',
+                             '../../../observations/forward_operators/obs_def_rel_humidity_mod.f90',
+                             '../../../observations/forward_operators/obs_def_altimeter_mod.f90',
+                             '../../../observations/forward_operators/obs_def_gps_mod.f90',
+                             '../../../observations/forward_operators/obs_def_vortex_mod.f90',
+                             '../../../observations/forward_operators/obs_def_gts_mod.f90',
+                             '../../../observations/forward_operators/obs_def_AIRNOW_OBS_mod.f90',
+                             '../../../observations/forward_operators/obs_def_AIRNOW_PM10_mod.f90',
+                             '../../../observations/forward_operators/obs_def_AIRNOW_PM25_mod.f90',
+                             '../../../observations/forward_operators/obs_def_PANDA_OBS_mod.f90',
+                             '../../../observations/forward_operators/obs_def_MODIS_OBS_mod.f90',
+                             '../../../observations/forward_operators/obs_def_MODIS_AOD_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_MOPITT_CO_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_MOPITT_CO_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_MOPITT_V5_CO_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_MOPITT_CO_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_IASI_CO_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_IASI_CO_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_IASI_CO_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_IASI_O3_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_IASI_O3_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_OMI_O3_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_OMI_O3_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_OMI_O3_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_OMI_O3_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_OMI_NO2_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_OMI_NO2_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_OMI_NO2_DOMINO_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_OMI_NO2_DOMINO_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_OMI_SO2_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_OMI_SO2_PBL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_OMI_HCHO_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_OMI_HCHO_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_CO_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_O3_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_O3_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_O3_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_O3_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_NO2_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_NO2_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_SO2_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_SO2_PBL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_CH4_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_CH4_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_CH4_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_CH4_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_HCHO_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TROPOMI_HCHO_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TEMPO_O3_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TEMPO_O3_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TEMPO_O3_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TEMPO_O3_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TEMPO_NO2_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TEMPO_NO2_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_CO_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_CO_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_CO_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_CO_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_CO2_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_CO2_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_CO2_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_CO2_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_O3_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_O3_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_O3_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_O3_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_NH3_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_NH3_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_NH3_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_NH3_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_CH4_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_CH4_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_CH4_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_TES_CH4_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_CO_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_CO_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_CO_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_O3_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_O3_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_O3_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_NH3_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_NH3_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_NH3_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_CH4_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_CH4_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_CH4_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_PAN_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_PAN_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_CRIS_PAN_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_SCIAM_NO2_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_SCIAM_NO2_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_GOME2A_NO2_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_GOME2A_NO2_TROP_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_MLS_O3_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_MLS_O3_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_MLS_O3_CPSR_mod.f90',
+                             '../../../observations/forward_operators/obs_def_MLS_HNO3_TOTAL_COL_mod.f90',
+                             '../../../observations/forward_operators/obs_def_MLS_HNO3_PROFILE_mod.f90',
+                             '../../../observations/forward_operators/obs_def_MLS_HNO3_CPSR_mod.f90'"
 #
 # &obs_kind_nml
    export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',

@@ -318,7 +318,7 @@ program omi_no2_domino_trop_col_ascii_to_obs
 !
 ! Obs thinning test
       obs_accept=obs_accept+1
-      print *, 'APM: at thining ', obs_accept
+      print *, 'APM: at thinning ', obs_accept
       if(obs_accept/obs_no2_reten_freq*obs_no2_reten_freq.eq.obs_accept) then
 !
 ! Set data for writing obs_sequence file

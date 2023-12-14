@@ -428,7 +428,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    if ${RUN_DART_FILTER}; then
       if [[ ! -d ${RUN_DIR}/${DATE}/dart_filter ]]; then
          mkdir -p ${RUN_DIR}/${DATE}/dart_filter
-
+         cd ${RUN_DIR}/${DATE}/dart_filter
       else
          cd ${RUN_DIR}/${DATE}/dart_filter
       fi

@@ -123,7 +123,8 @@
                               '../../../observations/forward_operators/obs_def_gps_mod.f90',
                               '../../../observations/forward_operators/obs_def_vortex_mod.f90',
                               '../../../observations/forward_operators/obs_def_gts_mod.f90',
-                              '../../../observations/forward_operators/obs_def_AIRNOW_OBS_mod.f90',
+
+'../../../observations/forward_operators/obs_def_AIRNOW_OBS_mod.f90',
                               '../../../observations/forward_operators/obs_def_AIRNOW_PM10_mod.f90',
                               '../../../observations/forward_operators/obs_def_AIRNOW_PM25_mod.f90',
                               '../../../observations/forward_operators/obs_def_PANDA_OBS_mod.f90',

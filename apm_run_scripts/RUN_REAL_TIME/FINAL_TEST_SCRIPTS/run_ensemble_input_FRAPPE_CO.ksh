@@ -53,10 +53,10 @@ export FIRST_DART_INFLATE_DATE=2014072606
 export FIRST_EMISS_INV_DATE=2014072606
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072806
+export CYCLE_STR_DATE=2014072600
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014073006
+export CYCLE_END_DATE=2014072700
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -102,18 +102,18 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # SELECT COMPONENT RUN OPTIONS
    export RUN_GEOGRID=false
-   export RUN_UNGRIB=true
-   export RUN_METGRID=true
-   export RUN_REAL=true
-   export RUN_PERT_WRFCHEM_MET_IC=true
-   export RUN_PERT_WRFCHEM_MET_BC=true
-   export RUN_EXO_COLDENS=true
-   export RUN_SEASON_WES=true
-   export RUN_WRFCHEM_BIO=true
-   export RUN_WRFCHEM_FIRE=true
-   export RUN_WRFCHEM_CHEMI=true
-   export RUN_PERT_WRFCHEM_CHEM_ICBC=true
-   export RUN_PERT_WRFCHEM_CHEM_EMISS=true
+   export RUN_UNGRIB=false
+   export RUN_METGRID=false
+   export RUN_REAL=false
+   export RUN_PERT_WRFCHEM_MET_IC=false
+   export RUN_PERT_WRFCHEM_MET_BC=false
+   export RUN_EXO_COLDENS=false
+   export RUN_SEASON_WES=false
+   export RUN_WRFCHEM_BIO=false
+   export RUN_WRFCHEM_FIRE=false
+   export RUN_WRFCHEM_CHEMI=false
+   export RUN_PERT_WRFCHEM_CHEM_ICBC=false
+   export RUN_PERT_WRFCHEM_CHEM_EMISS=false
    export RUN_BIAS_CORRECTION=false
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
    export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
@@ -210,7 +210,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_MET_OBS=true # (done)
    export RUN_COMBINE_OBS=true
    export RUN_PREPROCESS_OBS=true
-   export RUN_LOCALIZATION=true
+   export RUN_LOCALIZATION=false
 #
    rm -rf index_RS_Code_Versions_${DATE}   
    source ${RS_SCRIPTS_DIR}/RS_Code_Versions.ksh > index_RS_Code_Versions_${DATE} 2>&1
@@ -249,9 +249,21 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    rm -rf index_RS_DART_Namelists_${DATE}
    rm -rf index_RS_Error_Decorrelation_Settings_${DATE}
    export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
+   export GDAS_FILEIN=prepbufr.gdas.${DATE}.wo40.be
 #
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
    cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
+#
+#########################################################################
+#
+# LOCAL ENVIRONMENTAL VARIABLE SETTINGS
+#
+#########################################################################
+#
+   export GENERAL_JOB_CLASS=devel
+   export GENERAL_TIME_LIMIT=00:20:00
+   export GENERAL_NODES=1
+   export GENERAL_TASKS=16
 #
 #########################################################################
 #
@@ -340,7 +352,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_met_ic
       fi
-      export GDAS_FILEIN=prepbufr.gdas.${DATE}.wo40.be
       source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_IC.ksh > index_rc.html 2>&1
    fi
 #

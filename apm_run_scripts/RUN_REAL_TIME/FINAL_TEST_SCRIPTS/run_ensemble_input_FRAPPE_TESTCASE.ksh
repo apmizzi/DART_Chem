@@ -249,6 +249,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    rm -rf index_RS_DART_Namelists_${DATE}
    rm -rf index_RS_Error_Decorrelation_Settings_${DATE}
    export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
+   export GDAS_FILEIN=prepbufr.gdas.${DATE}.wo40.be
 #   
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
    cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
@@ -340,7 +341,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_met_ic
       fi
-      export GDAS_FILEIN=prepbufr.gdas.${DATE}.wo40.be
       source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_IC.ksh > index_rs.html 2>&1 
    fi
 #

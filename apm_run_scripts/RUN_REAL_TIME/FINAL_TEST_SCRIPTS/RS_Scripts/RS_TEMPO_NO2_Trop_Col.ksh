@@ -151,7 +151,7 @@
 #
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TEMPO_NO2/work/tempo_no2_trop_col_ascii_to_obs ./.
-      ./tempo_no2_trop_col_ascii_to_obs > index.html 2>&1
+      ./tempo_no2_trop_col_ascii_to_obs > index_ascii.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ -s ${NL_FILEOUT} ]]; then

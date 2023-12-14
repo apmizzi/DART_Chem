@@ -160,11 +160,11 @@ program tropomi_co_thinner
          nlay_obs=tropomi_data(i_min,j_min)%nlay_obs(icnt)
          nlev_obs=tropomi_data(i_min,j_min)%nlev_obs(icnt)
       if(tropomi_data(i_min,j_min)%icnt.eq.1) then
-         allocate(tropomi_data(i_min,j_min)%prs_obs(max_num_obs,nlay_obs))
+         allocate(tropomi_data(i_min,j_min)%prs_obs(max_num_obs,nlev_obs))
          allocate(tropomi_data(i_min,j_min)%avgk_obs(max_num_obs,nlay_obs))
       endif
       read(fileid,*,iostat=ios) &
-         tropomi_data(i_min,j_min)%prs_obs(icnt,1:nlay_obs)
+         tropomi_data(i_min,j_min)%prs_obs(icnt,1:nlev_obs)
       read(fileid,*,iostat=ios) &
          tropomi_data(i_min,j_min)%avgk_obs(icnt,1:nlay_obs)
       read(fileid,*,iostat=ios) &
@@ -271,7 +271,7 @@ program tropomi_co_thinner
                tropomi_data(i,j)%nlay_obs(icnt), &
                tropomi_data(i,j)%nlev_obs(icnt)
             write(fileid,*,iostat=ios) &
-               tropomi_data(i,j)%prs_obs(icnt,1:nlay_obs)
+               tropomi_data(i,j)%prs_obs(icnt,1:nlev_obs)
             write(fileid,*,iostat=ios) &
                tropomi_data(i,j)%avgk_obs(icnt,1:nlay_obs)
             write(fileid,*,iostat=ios) &

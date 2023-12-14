@@ -54,7 +54,7 @@ export FIRST_EMISS_INV_DATE=2014072618
 export CYCLE_STR_DATE=2014072618
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072618
+export CYCLE_END_DATE=2014072718
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -73,7 +73,7 @@ export LS_CHEM_DZ=56
 export LS_CHEM_DT=368
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=false
+export RUN_INPUT_OBS=true
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
 export RUN_MOPITT_CO_PROFILE_OBS=true # (done, no thinner)
 export RUN_MOPITT_CO_CPSR_OBS=true # (done, no thinner)
@@ -154,7 +154,7 @@ export RUN_CRIS_PAN_CPSR_OBS=false
 export RUN_SCIAM_NO2_TOTAL_COL_OBS=false
 export RUN_SCIAM_NO2_TROP_COL_OBS=false # (works, vertical sum, no thinner)
 export RUN_GOME2A_NO2_TOTAL_COL_OBS=false
-export RUN_GOME2A_NO2_TROP_COL_OBS=false # (works, vertical sum, thinner)
+export RUN_GOME2A_NO2_TROP_COL_OBS=true # (works, vertical sum, thinner)
 export RUN_MLS_O3_TOTAL_COL_OBS=false
 export RUN_MLS_O3_PROFILE_OBS=true # (works, check, thinner)
 export RUN_MLS_O3_CPSR_OBS=true # (works, vertical sum, thinner)
@@ -338,13 +338,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # FOR SPECIAL CYCLING       
       export RUN_INPUT_OBS=false
-      if ${RUN_INPUT_OBS}; then
-         export RUN_COMBINE_OBS=true
-         export RUN_PREPROCESS_OBS=true
-      else
-         export RUN_COMBINE_OBS=false
-         export RUN_PREPROCESS_OBS=false
-      fi
+      export RUN_COMBINE_OBS=false
+      export RUN_PREPROCESS_OBS=false
       export RUN_DART_FILTER=false
       export RUN_BIAS_CORRECTION=false
       export RUN_UPDATE_BC=false
@@ -436,6 +431,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 #########################################################################
 #
+   export GENERAL_JOB_CLASS=devel
+   export GENERAL_TIME_LIMIT=00:20:00
+   export GENERAL_NODES=1
+   export GENERAL_TASKS=16
    export FILTER_TIME_LIMIT=06:59:00   
 #
 #########################################################################
@@ -472,7 +471,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    if ${RUN_DART_FILTER}; then
       if [[ ! -d ${RUN_DIR}/${DATE}/dart_filter ]]; then
          mkdir -p ${RUN_DIR}/${DATE}/dart_filter
-
+         cd ${RUN_DIR}/${DATE}/dart_filter
       else
          cd ${RUN_DIR}/${DATE}/dart_filter
       fi
@@ -556,7 +555,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_cycle_cr
       fi
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR.ksh > index_rs.html 2>&1 
+      if [[ ${RUN_SPECIAL_FORECAST} == true ]]; then
+         source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR.ksh > index_rs.html 2>&1
+      else    
+         source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR_Single.ksh > index_rs.html 2>&1
+      fi 
    fi
 #
 #########################################################################

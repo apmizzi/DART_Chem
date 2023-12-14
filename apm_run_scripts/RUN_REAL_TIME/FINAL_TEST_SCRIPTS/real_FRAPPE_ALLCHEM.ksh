@@ -118,7 +118,7 @@ export RUN_TEMPO_NO2_TOTAL_COL_OBS=false
 export RUN_TEMPO_NO2_TROP_COL_OBS=false # (done)
 export RUN_TES_CO_TOTAL_COL_OBS=false
 export RUN_TES_CO_TROP_COL_OBS=false
-export RUN_TES_CO_PROFILE_OBS=true # (works)
+export RUN_TES_CO_PROFILE_OBS=false # (works)
 export RUN_TES_CO_CPSR_OBS=false # (works)
 export RUN_TES_CO2_TOTAL_COL_OBS=false 
 export RUN_TES_CO2_TROP_COL_OBS=false 
@@ -126,11 +126,11 @@ export RUN_TES_CO2_PROFILE_OBS=false # (works, vertical sum)
 export RUN_TES_CO2_CPSR_OBS=false # (works, vertical sum)
 export RUN_TES_O3_TOTAL_COL_OBS=false
 export RUN_TES_O3_TROP_COL_OBS=false
-export RUN_TES_O3_PROFILE_OBS=true # (works)
+export RUN_TES_O3_PROFILE_OBS=false # (works)
 export RUN_TES_O3_CPSR_OBS=false # (works)
 export RUN_TES_NH3_TOTAL_COL_OBS=false
 export RUN_TES_NH3_TROP_COL_OBS=false
-export RUN_TES_NH3_PROFILE_OBS=true # (works, vertical sum)
+export RUN_TES_NH3_PROFILE_OBS=false # (works, vertical sum)
 export RUN_TES_NH3_CPSR_OBS=false # (works, vertical sum)
 export RUN_TES_CH4_TOTAL_COL_OBS=false
 export RUN_TES_CH4_TROP_COL_OBS=false
@@ -339,17 +339,12 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # FOR SPECIAL CYCLING       
       export RUN_INPUT_OBS=false
-      if ${RUN_INPUT_OBS}; then
-         export RUN_COMBINE_OBS=true
-         export RUN_PREPROCESS_OBS=true
-      else
-         export RUN_COMBINE_OBS=false
-         export RUN_PREPROCESS_OBS=false
-      fi
+      export RUN_COMBINE_OBS=false
+      export RUN_PREPROCESS_OBS=false
       export RUN_DART_FILTER=false
       export RUN_BIAS_CORRECTION=false
       export RUN_UPDATE_BC=false
-      export RUN_ENSEMBLE_MEAN_INPUT=true
+      export RUN_ENSEMBLE_MEAN_INPUT=false
       if [[ ${DATE} -eq ${INITIAL_DATE}  ]]; then
          export RUN_WRFCHEM_INITIAL=true
          export RUN_WRFCHEM_CYCLE_CR=false
@@ -433,6 +428,14 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 #########################################################################
 #
+# SET LOCAL ENVIRONMENT VARIABLE CHANGES
+#
+#########################################################################
+#
+   export FILTER_TIME_LIMIT=06:59:00   
+#
+#########################################################################
+#
 # CREATE RUN DIRECTORY
 #
 #########################################################################
@@ -465,7 +468,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    if ${RUN_DART_FILTER}; then
       if [[ ! -d ${RUN_DIR}/${DATE}/dart_filter ]]; then
          mkdir -p ${RUN_DIR}/${DATE}/dart_filter
-
+         cd ${RUN_DIR}/${DATE}/dart_filter
       else
          cd ${RUN_DIR}/${DATE}/dart_filter
       fi
@@ -549,7 +552,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_cycle_cr
       fi
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR.ksh > index_rs.html 2>&1 
+      if [[ ${RUN_SPECIAL_FORECAST} == true ]]; then
+         source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR.ksh > index_rs.html 2>&1
+      else    
+         source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR_Single.ksh > index_rs.html 2>&1
+      fi 
    fi
 #
 #########################################################################
