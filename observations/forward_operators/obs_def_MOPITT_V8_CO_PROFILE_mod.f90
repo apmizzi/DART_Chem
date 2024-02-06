@@ -17,39 +17,39 @@
 ! and Colorado State University.
 !
 ! BEGIN DART PREPROCESS TYPE DEFINITIONS
-! MOPITT_V5_CO_PROFILE, QTY_CO
+! MOPITT_V8_CO_PROFILE, QTY_CO
 ! END DART PREPROCESS TYPE DEFINITIONS
 !
 ! BEGIN DART PREPROCESS USE OF SPECIAL OBS_DEF MODULE
-!   use obs_def_mopitt_v5_co_profile_mod, only : get_expected_mopitt_v5_co_profile, &
-!                                  read_mopitt_v5_co_profile, &
-!                                  write_mopitt_v5_co_profile, &
-!                                  interactive_mopitt_v5_co_profile
+!   use obs_def_mopitt_v8_co_profile_mod, only : get_expected_mopitt_v8_co_profile, &
+!                                  read_mopitt_v8_co_profile, &
+!                                  write_mopitt_v8_co_profile, &
+!                                  interactive_mopitt_v8_co_profile
 ! END DART PREPROCESS USE OF SPECIAL OBS_DEF MODULE
 !
 ! BEGIN DART PREPROCESS GET_EXPECTED_OBS_FROM_DEF
-!      case(MOPITT_V5_CO_PROFILE)                                                           
-!         call get_expected_mopitt_v5_co_profile(state_handle, ens_size, location, obs_def%key, obs_time, expected_obs, istatus)  
+!      case(MOPITT_V8_CO_PROFILE)                                                           
+!         call get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, obs_def%key, obs_time, expected_obs, istatus)  
 ! END DART PREPROCESS GET_EXPECTED_OBS_FROM_DEF
 !
 ! BEGIN DART PREPROCESS READ_OBS_DEF
-!      case(MOPITT_V5_CO_PROFILE)
-!         call read_mopitt_v5_co_profile(obs_def%key, ifile, fileformat)
+!      case(MOPITT_V8_CO_PROFILE)
+!         call read_mopitt_v8_co_profile(obs_def%key, ifile, fileformat)
 ! END DART PREPROCESS READ_OBS_DEF
 !
 ! BEGIN DART PREPROCESS WRITE_OBS_DEF
-!      case(MOPITT_V5_CO_PROFILE)
-!         call write_mopitt_v5_co_profile(obs_def%key, ifile, fileformat)
+!      case(MOPITT_V8_CO_PROFILE)
+!         call write_mopitt_v8_co_profile(obs_def%key, ifile, fileformat)
 ! END DART PREPROCESS WRITE_OBS_DEF
 !
 ! BEGIN DART PREPROCESS INTERACTIVE_OBS_DEF
-!      case(MOPITT_V5_CO_PROFILE)
-!         call interactive_mopitt_v5_co_profile(obs_def%key)
+!      case(MOPITT_V8_CO_PROFILE)
+!         call interactive_mopitt_v8_co_profile(obs_def%key)
 ! END DART PREPROCESS INTERACTIVE_OBS_DEF
 !
 ! BEGIN DART PREPROCESS MODULE CODE
 
-module obs_def_mopitt_v5_co_profile_mod
+module obs_def_mopitt_v8_co_profile_mod
 
    use         apm_upper_bdy_mod, only :get_upper_bdy_fld, &
                                         get_MOZART_INT_DATA, &
@@ -97,23 +97,24 @@ module obs_def_mopitt_v5_co_profile_mod
    implicit none
    private
 
-   public :: write_mopitt_v5_co_profile, &
-          read_mopitt_v5_co_profile, &
-          interactive_mopitt_v5_co_profile, &
-          get_expected_mopitt_v5_co_profile, &
-          set_obs_def_mopitt_v5_co_profile
+   public :: write_mopitt_v8_co_profile, &
+          read_mopitt_v8_co_profile, &
+          interactive_mopitt_v8_co_profile, &
+          get_expected_mopitt_v8_co_profile, &
+          set_obs_def_mopitt_v8_co_profile
 
 ! Storage for the special information required for observations of this type
    integer, parameter    :: max_mopitt_co_obs = 10000000
    integer               :: num_mopitt_co_obs = 0
-   integer,  allocatable :: nlayer(:)
    integer,  allocatable :: klay(:)
+   integer,  allocatable :: nlayer(:)
+   integer,  allocatable :: nlevel(:)
    real(r8), allocatable :: pressure(:,:)
    real(r8), allocatable :: avg_kernel(:,:)
    real(r8), allocatable :: prior(:,:)
 
 ! version controlled file description for error handling, do not edit
-   character(len=*), parameter :: source   = 'obs_def_mopitt_v5_co_profile_mod.f90'
+   character(len=*), parameter :: source   = 'obs_def_mopitt_v8_co_profile_mod.f90'
    character(len=*), parameter :: revision = ''
    character(len=*), parameter :: revdate  = ''
 
@@ -133,7 +134,7 @@ module obs_def_mopitt_v5_co_profile_mod
    integer :: nlayer_mopitt_co_total_col = -9999
    integer :: nlayer_mopitt_co_trop_col  = -9999
    integer :: nlayer_mopitt_co_profile   = -9999
-
+   
    namelist /obs_def_MOPITT_CO_nml/ upper_data_file, use_log_co, nlayer_model, &
    nlayer_mopitt_co_total_col, nlayer_mopitt_co_trop_col, nlayer_mopitt_co_profile, &
    ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, upper_data_model
@@ -171,12 +172,13 @@ subroutine initialize_module
    endif
 
    if (nlayer_mopitt < 1) then
-      write(string1,*) 'obs_def_MOPITT_CO_v5_nml:nlayer_mopitt must be > 0, it is ',nlayer_mopitt
+      write(string1,*) 'obs_def_MOPITT_CO_nml:nlayer_mopitt must be > 0, it is ',nlayer_mopitt
       call error_handler(E_ERR,'initialize_module',string1,source)
    endif
 
-   allocate(    nlayer(max_mopitt_co_obs))
    allocate(    klay(max_mopitt_co_obs))
+   allocate(    nlayer(max_mopitt_co_obs))
+   allocate(    nlevel(max_mopitt_co_obs))
    allocate(  pressure(max_mopitt_co_obs,nlayer_mopitt+1))
    allocate(avg_kernel(max_mopitt_co_obs,nlayer_mopitt))
    allocate(     prior(max_mopitt_co_obs,nlayer_mopitt))
@@ -185,7 +187,7 @@ end subroutine initialize_module
 
 !-------------------------------------------------------------------------------
 
-subroutine read_mopitt_v5_co_profile(key, ifile, fform)
+subroutine read_mopitt_v8_co_profile(key, ifile, fform)
 
    integer,          intent(out)          :: key
    integer,          intent(in)           :: ifile
@@ -194,8 +196,9 @@ subroutine read_mopitt_v5_co_profile(key, ifile, fform)
 ! temporary arrays to hold buffer till we decide if we have enough room
 
    integer               :: keyin
-   integer               :: nlayer_1
    integer               :: klay_1
+   integer               :: nlayer_1
+   integer               :: nlevel_1
    real(r8), allocatable :: pressure_1(:)
    real(r8), allocatable :: avg_kernel_1(:)
    real(r8), allocatable :: prior_1(:)
@@ -209,8 +212,9 @@ subroutine read_mopitt_v5_co_profile(key, ifile, fform)
    if(present(fform)) fileformat = adjustl(fform)
    
 ! Need to know how many layers for this one
+   klay_1   = read_int_scalar( ifile, fileformat, 'klay_1')
    nlayer_1 = read_int_scalar( ifile, fileformat, 'nlayer_1')
-   klay_1 = read_int_scalar( ifile, fileformat, 'klay_1')
+   nlevel_1 = read_int_scalar( ifile, fileformat, 'nlevel_1')
    
    allocate(  pressure_1(nlayer_1+1))
    allocate(avg_kernel_1(nlayer_1))
@@ -227,18 +231,18 @@ subroutine read_mopitt_v5_co_profile(key, ifile, fform)
    if(counts1 > max_mopitt_co_obs) then
       write(string1, *) 'Not enough space for mopitt co profile obs.'
       write(string2, *) 'Can only have max_mopitt_co_obs (currently ',max_mopitt_co_obs,')'
-      call error_handler(E_ERR,'read_mopitt_v5_co_profile',string1,source,text2=string2)
+      call error_handler(E_ERR,'read_mopitt_v8_co_profile',string1,source,text2=string2)
    endif
    
-   call set_obs_def_mopitt_v5_co_profile(key, pressure_1, avg_kernel_1, prior_1, nlayer_1, klay_1)
+   call set_obs_def_mopitt_v8_co_profile(key, pressure_1, avg_kernel_1, prior_1, klay_1, nlayer_1, nlevel_1)
    
    deallocate(pressure_1, avg_kernel_1, prior_1)
    
-end subroutine read_mopitt_v5_co_profile
+end subroutine read_mopitt_v8_co_profile
 
 !-------------------------------------------------------------------------------
 
-subroutine write_mopitt_v5_co_profile(key, ifile, fform)
+subroutine write_mopitt_v8_co_profile(key, ifile, fform)
 
    integer,          intent(in)           :: key
    integer,          intent(in)           :: ifile
@@ -254,31 +258,32 @@ subroutine write_mopitt_v5_co_profile(key, ifile, fform)
 ! nlayer, pressure, avg_kernel, and prior are all scoped in this module
 ! you can come extend the context strings to include the key if desired.
 
+   call write_int_scalar(ifile,                     klay(key),   fileformat,'klay')
    call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
-   call write_int_scalar(ifile,                       klay(key), fileformat,'klay')
+   call write_int_scalar(ifile,                     nlevel(key), fileformat,'klevel')
    call write_r8_array(  ifile, nlayer(key)+1,  pressure(key,:), fileformat,'pressure')
    call write_r8_array(  ifile, nlayer(key),  avg_kernel(key,:), fileformat,'avg_kernel')
    call write_r8_array(  ifile, nlayer(key),       prior(key,:), fileformat,'prior')
    call write_int_scalar(ifile,                             key, fileformat,'key')
    
-end subroutine write_mopitt_v5_co_profile
+end subroutine write_mopitt_v8_co_profile
 
 !-------------------------------------------------------------------------------
 
-subroutine interactive_mopitt_v5_co_profile(key)
+subroutine interactive_mopitt_v8_co_profile(key)
 
    integer, intent(out) :: key
    
    if ( .not. module_initialized ) call initialize_module
    
 ! STOP because routine is not finished.
-   write(string1,*) 'interactive_mopitt_v5_co_profile not yet working.'
-   call error_handler(E_ERR, 'interactive_mopitt_v5_co_profile', string1, source)
+   write(string1,*) 'interactive_mopitt_v8_co_profile not yet working.'
+   call error_handler(E_ERR, 'interactive_mopitt_v8_co_profile', string1, source)
    
    if(num_mopitt_co_obs >= max_mopitt_co_obs) then
       write(string1, *) 'Not enough space for an mopitt co obs.'
       write(string2, *) 'Can only have max_mopitt_co_obs (currently ',max_mopitt_co_obs,')'
-      call error_handler(E_ERR, 'interactive_mopitt_v5_co_profile', string1, &
+      call error_handler(E_ERR, 'interactive_mopitt_v8_co_profile', string1, &
                  source, text2=string2)
    endif
    
@@ -288,14 +293,14 @@ subroutine interactive_mopitt_v5_co_profile(key)
 
 ! Otherwise, prompt for input for the three required beasts
 
-   write(*, *) 'Creating an interactive_mopitt_v5_co_profile observation'
+   write(*, *) 'Creating an interactive_mopitt_v8_co_profile observation'
    write(*, *) 'This featue is not setup '
 
-end subroutine interactive_mopitt_v5_co_profile
+end subroutine interactive_mopitt_v8_co_profile
 
 !-------------------------------------------------------------------------------
 
-subroutine get_expected_mopitt_v5_co_profile(state_handle, ens_size, location, key, obs_time, expct_val, istatus)
+subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, key, obs_time, expct_val, istatus)
 
    type(ensemble_type), intent(in)  :: state_handle
    type(location_type), intent(in)  :: location
@@ -305,14 +310,16 @@ subroutine get_expected_mopitt_v5_co_profile(state_handle, ens_size, location, k
    integer,             intent(out) :: istatus(:)
    real(r8),            intent(out) :: expct_val(:)
    
-   character(len=*), parameter :: routine = 'get_expected_mopitt_v5_co_profile'
+   character(len=*), parameter :: routine = 'get_expected_mopitt_v8_co_profile'
+   character(len=120)          :: data_file
+   character(len=*),parameter  :: fld = 'CO_VMR_inst'
    type(location_type) :: loc2
    
-   integer :: layer_mopitt,level_mopitt
+   integer :: layer_mopitt,level_mopitt,klay_mopitt
    integer :: layer_mdl,level_mdl
-   integer :: k,imem, imemm
+   integer :: k,kk,imem,imemm,flg
    integer :: interp_new
-   integer :: icnt,ncnt,kkend,kstart
+   integer :: icnt,ncnt,kstart
    integer :: date_obs,datesec_obs
    integer, dimension(ens_size) :: zstatus,kbnd_1,kbnd_n
    
@@ -320,21 +327,22 @@ subroutine get_expected_mopitt_v5_co_profile(state_handle, ens_size, location, k
    real(r8) :: missing,co_min,tmp_max
    real(r8) :: level,del_prs,prior_term
    real(r8) :: tmp_vir_k, tmp_vir_kp
-   real(r8) :: mloc(3)
+   real(r8) :: mloc(3),obs_prs
    real(r8) :: co_val_conv, VMR_conv
    real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
    real(r8) :: lon_obs,lat_obs,pi,rad2deg
    
-   real(r8), dimension(ens_size) :: co_mdl_tmp, tmp_mdl_tmp, qmr_mdl_tmp, prs_mdl_tmp
    real(r8), dimension(ens_size) :: co_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
    real(r8), dimension(ens_size) :: co_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
    real(r8), dimension(ens_size) :: prs_sfc
    
    real(r8), allocatable, dimension(:)   :: thick, prs_mopitt, prs_mopitt_mem
    real(r8), allocatable, dimension(:,:) :: co_val, tmp_val, qmr_val
+   logical  :: return_now,co_return_now,tmp_return_now,qmr_return_now
+!
+! Upper BC variables   
    real(r8), allocatable, dimension(:)   :: co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl
    real(r8), allocatable, dimension(:)   :: prs_mopitt_top
-   logical  :: return_now,co_return_now,tmp_return_now,qmr_return_now
    
    if ( .not. module_initialized ) call initialize_module
 
@@ -372,10 +380,11 @@ subroutine get_expected_mopitt_v5_co_profile(state_handle, ens_size, location, k
       co_min = log(co_min)
    endif
    
-! Assign vertical grid information
+! Assign vertical grid information (MOPITT CO is bottom to top)
 
    layer_mopitt = nlayer(key)
-   level_mopitt = nlayer(key)+1
+   level_mopitt = nlevel(key)
+   klay_mopitt  = klay(key)
    layer_mdl = nlayer_model
    level_mdl = nlayer_model+1
    
@@ -392,9 +401,7 @@ subroutine get_expected_mopitt_v5_co_profile(state_handle, ens_size, location, k
    elseif (mloc(2) < -90.0_r8) then
       mloc(2) = -90.0_r8
    endif
-!   write(string1, *) 'APM: observation ',key, ' lon ',mloc(1),' lat ',mloc(2)
-!   call error_handler(E_ALLMSG, routine, string1, source)
-!
+
 ! You could set a unique error code for each condition and then just return
 ! without having to issue a warning message. The error codes would then
 ! show up in the report from 'output_forward_op_errors'
@@ -409,102 +416,87 @@ subroutine get_expected_mopitt_v5_co_profile(state_handle, ens_size, location, k
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
    call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus) 
 
-   co_mdl_tmp(:)=missing_r8
-   tmp_mdl_tmp(:)=missing_r8
-   qmr_mdl_tmp(:)=missing_r8
-   prs_mdl_tmp(:)=missing_r8
+   co_mdl_1(:)=missing_r8
+   tmp_mdl_1(:)=missing_r8
+   qmr_mdl_1(:)=missing_r8
+   prs_mdl_1(:)=missing_r8
 
    kbnd_1(:)=1
    do k=1,layer_mdl
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-      call interpolate(state_handle, ens_size, loc2, QTY_CO, co_mdl_tmp, zstatus) ! ppmv 
+      call interpolate(state_handle, ens_size, loc2, QTY_CO, co_mdl_1, zstatus) ! ppmv 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_tmp, zstatus) ! K 
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_1, zstatus) ! K 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_tmp, zstatus) ! kg / kg 
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg / kg 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_tmp, zstatus) ! Pa
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
 !
       interp_new=0
       do imem=1,ens_size
-         if(co_mdl_tmp(imem).eq.missing_r8 .or. tmp_mdl_tmp(imem).eq.missing_r8 .or. &
-         qmr_mdl_tmp(imem).eq.missing_r8 .or. prs_mdl_tmp(imem).eq.missing_r8) then
+         if(co_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
+         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
             interp_new=1
-         else
-            kbnd_1(imem)=k
-            co_mdl_1(imem)=co_mdl_tmp(imem)
-            tmp_mdl_1(imem)=tmp_mdl_tmp(imem)
-            qmr_mdl_1(imem)=qmr_mdl_tmp(imem)
-            prs_mdl_1(imem)=prs_mdl_tmp(imem)
+            exit
          endif
       enddo
-      if(interp_new.eq.0) exit
+      if(interp_new.eq.0) then
+         exit
+      endif
    enddo
-!
-! Sometimes the WRF-Chem surface pressure is greater than the
-! first model level pressure. This fixes that problem.   
-   do imem=1,ens_size
-      if(prs_sfc(imem).lt.prs_mdl_1(imem)) prs_mdl_1(imem)=prs_sfc(imem)
-   enddo
-!
+
 !   write(string1, *) 'APM: co lower bound ',key,co_mdl_1
-!   call error_handler(E_ALLMSG, routine, string1, source)
+!   call error_handler(E_MSG, routine, string1, source)
 !   write(string1, *) 'APM: tmp lower bound ',key,tmp_mdl_1
-!   call error_handler(E_ALLMSG, routine, string1, source)
+!   call error_handler(E_MSG, routine, string1, source)
 !   write(string1, *) 'APM: qmr lower bound ',key,qmr_mdl_1
-!   call error_handler(E_ALLMSG, routine, string1, source)
+!   call error_handler(E_MSG, routine, string1, source)
 !   write(string1, *) 'APM: prs lower bound ',key,prs_mdl_1
-!   call error_handler(E_ALLMSG, routine, string1, source)
+!   call error_handler(E_MSG, routine, string1, source)
 
-! pressure at model top (Pa)
+   co_mdl_n(:)=missing_r8
+   tmp_mdl_n(:)=missing_r8
+   qmr_mdl_n(:)=missing_r8
+   prs_mdl_n(:)=missing_r8
 
-   co_mdl_tmp(:)=missing_r8
-   tmp_mdl_tmp(:)=missing_r8
-   qmr_mdl_tmp(:)=missing_r8
-   prs_mdl_tmp(:)=missing_r8
-
-   kbnd_n(:)=layer_mdl
    do k=layer_mdl,1,-1
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-      call interpolate(state_handle, ens_size, loc2, QTY_CO, co_mdl_tmp, zstatus) 
+      call interpolate(state_handle, ens_size, loc2, QTY_CO, co_mdl_n, zstatus) 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_tmp, &
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_n, &
       zstatus) 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_tmp, &
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, &
       zstatus) 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_tmp, &
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, &
       zstatus) 
 !
       interp_new=0
       do imem=1,ens_size
-         if(co_mdl_tmp(imem).eq.missing_r8 .or. tmp_mdl_tmp(imem).eq.missing_r8 .or. &
-         qmr_mdl_tmp(imem).eq.missing_r8 .or. prs_mdl_tmp(imem).eq.missing_r8) then
+         if(co_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
+         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
             interp_new=1
-         else
-            kbnd_n(imem)=k
-            co_mdl_n(imem)=co_mdl_tmp(imem)
-            tmp_mdl_n(imem)=tmp_mdl_tmp(imem)
-            qmr_mdl_n(imem)=qmr_mdl_tmp(imem)
-            prs_mdl_n(imem)=prs_mdl_tmp(imem)
+            exit
          endif
       enddo
-      if(interp_new.eq.0) exit
+      if(interp_new.eq.0) then
+         exit
+      endif
    enddo
-!
+
 !   write(string1, *) 'APM: co upper bound ',key,co_mdl_n
-!   call error_handler(E_ALLMSG, routine, string1, source)
+!   call error_handler(E_MSG, routine, string1, source)
 !   write(string1, *) 'APM: tmp upper bound ',key,tmp_mdl_n
-!   call error_handler(E_ALLMSG, routine, string1, source)
+!   call error_handler(E_MSG, routine, string1, source)
 !   write(string1, *) 'APM: qmr upper bound ',key,qmr_mdl_n
-!   call error_handler(E_ALLMSG, routine, string1, source)
+!   call error_handler(E_MSG, routine, string1, source)
 !   write(string1, *) 'APM: prs upper bound ',key,prs_mdl_n
-!   call error_handler(E_ALLMSG, routine, string1, source)
+!   call error_handler(E_MSG, routine, string1, source)
 
 ! Get profiles at MOPITT pressure levels (Pa)
 
@@ -536,156 +528,152 @@ subroutine get_expected_mopitt_v5_co_profile(state_handle, ens_size, location, k
             qmr_val(imem,k) = qmr_mdl_n(imem)
          endif
       enddo
-!
+
 !      write(string1, *)'APM: co ',k,co_val(1,k)
-!      call error_handler(E_ALLMSG, routine, string1, source)
+!      call error_handler(E_MSG, routine, string1, source)
 !      write(string1, *)'APM: tmp ',k,tmp_val(1,k)
-!      call error_handler(E_ALLMSG, routine, string1, source)
+!      call error_handler(E_MSG, routine, string1, source)
 !      write(string1, *)'APM: qmr ',k,qmr_val(1,k)
-!      call error_handler(E_ALLMSG, routine, string1, source)
+!      call error_handler(E_MSG, routine, string1, source)
 !
-! Check data for missing values      
-      do imem=1,ens_size
-         if(co_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
-         qmr_val(imem,k).eq.missing_r8) then
-            zstatus(:)=20
-            expct_val(:)=missing_r8
-            write(string1, *) &
-            'APM: Model profile has missing values for obs, level ',key,k
-            call error_handler(E_ALLMSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            do imemm=1,ens_size
-               write(string1, *) &
-               'APM: Model profile values: co,tmp,qmr',key,imem,k,co_val(imemm,k), &
-               tmp_val(imemm,k),qmr_val(imemm,k)     
-               call error_handler(E_ALLMSG, routine, string1, source)
-            enddo
-            return
-         endif
-      enddo
-!
-! Convert units for co from ppmv to ppbv for MOPITT
-      co_val(:,k) = co_val(:,k) * 1.e3_r8
+! Convert units for co from ppmv
+      co_val(:,k) = co_val(:,k) * 1.e-6_r8
    enddo
+   co_mdl_1(:) = co_mdl_1(:) * 1.e-6_r8
+   co_mdl_n(:) = co_mdl_n(:) * 1.e-6_r8
 !
-! Use large scale ozone data above the regional model top
-! MOPITT vertical is from top to bottom   
-!   kstart=-1
-!   do imem=1,ens_size
-!      do k=1,level_mopitt
-!         if (prs_mopitt(k).gt.prs_mdl_n(imem)) then
-!            kstart=k-1
-!            write(string1, *) 'APM: imem,k-1,prs,mdl_n ',imem,k-1,prs_mopitt(k-1), &
-!            prs_mdl_n(imem),prs_mopitt(k)
-!            call error_handler(E_MSG, routine, string1, source)
-!            exit
-!         endif
-!      enddo
-!       ncnt=kstart
-!      allocate(prs_mopitt_top(ncnt))
-!      allocate(co_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
-!      do k=1,kstart
-!         prs_mopitt_top(k)=prs_mopitt(k)
-!      enddo
-!      prs_mopitt_top(:)=prs_mopitt_top(:)/100.
+! Use large scale carbon monoxide data above the regional model top
+! MOPITT vertical is from bottom to top   
+   kstart=-1
+   do imem=1,ens_size
+      
+      write(string1, *)'APM: imem,prs_mopitt,prs_model ',imem,prs_mopitt(level_mopitt),prs_mdl_n(imem)
+      call error_handler(E_MSG, routine, string1, source)
+      if (prs_mopitt(level_mopitt).lt.prs_mdl_n(imem)) then
+         do k=1,level_mopitt
+            if (prs_mopitt(k).gt.prs_mdl_n(imem)) then
+               kstart=k
+               exit
+            endif
+         enddo
+         ncnt=kstart
+         allocate(prs_mopitt_top(ncnt))
+         allocate(co_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
+         do k=1,kstart
+            prs_mopitt_top(k)=prs_mopitt(k)
+         enddo
+         prs_mopitt_top(:)=prs_mopitt_top(:)/100.
 !
-!      lon_obs=mloc(1)/rad2deg
-!      lat_obs=mloc(2)/rad2deg
-!      call get_time(obs_time,datesec_obs,date_obs)
+         lon_obs=mloc(1)/rad2deg
+         lat_obs=mloc(2)/rad2deg
+         call get_time(obs_time,datesec_obs,date_obs)
 !
-!      call get_upper_bdy_co(lon_obs,lat_obs,prs_mopitt_top,ncnt, &
-!      co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+         data_file=trim(upper_data_file)
+         model=trim(upper_data_model)
+         call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
+         ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_mopitt_top, &
+         ncnt,co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
 !
 ! Impose ensemble perturbations from level kstart+1      
-!      do k=1,kstart 
-!         co_val(imem,k)=co_prf_mdl(k)*co_val(imem,kstart+1)/ &
-!         (sum(co_val(:,kstart+1))/real(ens_size))
-!         tmp_val(imem,k)=tmp_prf_mdl(k)*tmp_val(imem,kstart+1)/ &
-!         (sum(tmp_val(:,kstart+1))/real(ens_size))
-!         qmr_val(imem,k)=qmr_prf_mdl(k)*qmr_val(imem,kstart+1)/ &
-!         (sum(qmr_val(:,kstart+1))/real(ens_size))
-!      enddo
-!      deallocate(prs_mopitt_top)
-!      deallocate(co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
-!   enddo
+         do k=1,kstart 
+            co_val(imem,k)=co_prf_mdl(k)*co_val(imem,kstart+1)/ &
+            (sum(co_val(:,kstart+1))/real(ens_size))
+            tmp_val(imem,k)=tmp_prf_mdl(k)*tmp_val(imem,kstart+1)/ &
+            (sum(tmp_val(:,kstart+1))/real(ens_size))
+            qmr_val(imem,k)=qmr_prf_mdl(k)*qmr_val(imem,kstart+1)/ &
+            (sum(qmr_val(:,kstart+1))/real(ens_size))
+         enddo
+         deallocate(prs_mopitt_top)
+         deallocate(co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
+      endif
+   enddo
 !
-!   write(string1, *) 'APM: model pressure top ',prs_mdl_n(1), &
-!   prs_mdl_n(int(ens_size/2)),prs_mdl_n(int(ens_size))     
-!   call error_handler(E_MSG, routine, string1, source)
+! Check full profile for negative values
+   do imem=1,ens_size
+      flg=0
+      do k=1,level_mopitt
+         if(co_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         qmr_val(imem,k).lt.0. .or. prs_mopitt(k).lt.0.) then
+            flg=1
+            expct_val(:)=missing_r8
+            write(string1, *) &
+            'APM: Recentered full profile has negative values for key,imem ',key,imem
+            call error_handler(E_MSG, routine, string1, source)
+         endif
+      enddo
+      if(flg.eq.1) then
+         do kk=1,level_mopitt
+            write(string1, *)'APM: co ',kk,co_val(1,kk)
+            call error_handler(E_MSG, routine, string1, source)
+            write(string1, *)'APM: tmp ',kk,tmp_val(1,kk)
+            call error_handler(E_MSG, routine, string1, source)
+            write(string1, *)'APM: qmr ',kk,qmr_val(1,kk)
+            call error_handler(E_MSG, routine, string1, source)
+            write(string1, *)'APM: prs ',kk,prs_mopitt(kk)
+            call error_handler(E_MSG, routine, string1, source)
+         enddo
+         zstatus(:)=20
+         expct_val(:)=missing_r8
+         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         call exit_all()
+         return
+      endif
+   enddo
 !
-!   do k=1,level_mopitt
-!      write(string1, *) 'APM: k, co ',k,prs_mopitt(k),co_val(1,k), &
-!      co_val(int(ens_size/2),k),co_val(int(ens_size),k)
-!      call error_handler(E_MSG, routine, string1, source)
-!   enddo
-!
+! Calculate the expected retrievals   
    istatus(:)=0
    zstatus(:)=0.
    expct_val(:)=0.0
    allocate(thick(layer_mopitt))
 
+   prs_mopitt_mem(:)=prs_mopitt(:)
    do imem=1,ens_size
-! Adjust the MOPITT pressure for WRF-Chem lower/upper boudary pressure
-! (MOPITT CO vertical grid is bottom to top)
-      prs_mopitt_mem(:)=prs_mopitt(:)
-      if (prs_sfc(imem).gt.prs_mopitt_mem(level_mopitt)) then
-         prs_mopitt_mem(level_mopitt)=prs_sfc(imem)
-      endif
-      
-! Calculate the thicknesses
 !      
+! Calculate the thicknesses
+!      thick(:)=0.
 !      do k=1,layer_mopitt
-!         lnpr_mid=(log(prs_mopitt_mem(k+1))+log(prs_mopitt_mem(k)))/2.
-!         up_wt=lnpr_mid-log(prs_mopitt_mem(k))
-!         dw_wt=log(prs_mopitt_mem(k+1))-lnpr_mid
+!         lnpr_mid=(log(prs_mopitt_mem(k))+log(prs_mopitt_mem(k+1)))/2.
+!         up_wt=log(prs_mopitt_mem(k))-lnpr_mid
+!         dw_wt=lnpr_mid-log(prs_mopitt_mem(k+1))
 !         tl_wt=up_wt+dw_wt 
 !         tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
 !         tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
 !         thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
-!         log(prs_mopitt_mem(k+1)/prs_mopitt_mem(k))
+!         log(prs_mopitt_mem(k)/prs_mopitt_mem(k+1))
 !      enddo
       
 ! Process the vertical summation
 
       do k=1,layer_mopitt
          if(prior(key,k).lt.0.) then
-            write(string1, *) &
-            'APM: MOPITT Prior is negative for obs ',key, ' Layer: ',k
-            call error_handler(E_ALLMSG, routine, string1, source)
-            write(string1, *) &
-            'APM: Obs ',key,' Prior: ',prior(key,k),'Avgk ',avg_kernel(key,k)
-            call error_handler(E_ALLMSG, routine, string1, source)
+!            write(string1, *) &
+!            'APM: MOPITT Prior is negative. Key,Layer: ',key,k
+!            call error_handler(E_MSG, routine, string1, source)
             cycle
          endif
 !         
-         lnpr_mid=(log(prs_mopitt_mem(k+1))+log(prs_mopitt_mem(k)))/2.
-         up_wt=lnpr_mid-log(prs_mopitt_mem(k))
-         dw_wt=log(prs_mopitt_mem(k+1))-lnpr_mid
+         lnpr_mid=(log(prs_mopitt_mem(k))+log(prs_mopitt_mem(k+1)))/2.
+         up_wt=log(prs_mopitt_mem(k))-lnpr_mid
+         dw_wt=lnpr_mid-log(prs_mopitt_mem(k+1))
          tl_wt=up_wt+dw_wt
 
-! Convert from VMR to molar density (mol/m^3)
+! Convert from VMR to molar density (mol/m^3) (MOPITT retrieval is VMR ppbv)
          if(use_log_co) then
 !            co_val_conv = (dw_wt*exp(co_val(imem,k))+up_wt*exp(co_val(imem,k+1)))/tl_wt * &
 !            (dw_wt*prs_mopitt_mem(k)+up_wt*prs_mopitt_mem(k+1)) / &
 !            (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
-            co_val_conv = (dw_wt*exp(co_val(imem,k))+up_wt*exp(co_val(imem,k+1)))/tl_wt
+            co_val_conv=(dw_wt*exp(co_val(imem,k))+up_wt*exp(co_val(imem,k+1)))/tl_wt*1.e9_r8
          else
 !            co_val_conv = (dw_wt*co_val(imem,k)+up_wt*co_val(imem,k+1))/tl_wt * &
 !            (dw_wt*prs_mopitt_mem(k)+up_wt*prs_mopitt_mem(k+1)) / &
 !            (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
-            co_val_conv = (dw_wt*co_val(imem,k)+up_wt*co_val(imem,k+1))/tl_wt
-!
-!            write(string1, *) &
-!            'APM: co_val_conv ',co_val(imem,k), &
-!            co_val(imem,k+1),prs_mopitt_mem(k),prs_mopitt_mem(k+1), &
-!            tmp_val(imem,k),tmp_val(imem,k+1)
-!            call error_handler(E_ALLMSG, routine, string1, source)
+            co_val_conv = (dw_wt*co_val(imem,k)+up_wt*co_val(imem,k+1))/tl_wt*1.e9_r8
          endif
  
-! Get expected observation
+! Get expected observation (MOPITT prior is VMR ppbv)
 
          prior_term=-1.*avg_kernel(key,k)
-         if(k.eq.klay(key)) prior_term=(1.0_r8 - avg_kernel(key,k)) 
+         if(k.eq.klay_mopitt) prior_term=(1.0_r8 - avg_kernel(key,k)) 
 
          if(use_log_co) then
             expct_val(imem) = expct_val(imem) + log10(exp(co_val_conv)) * &
@@ -694,28 +682,26 @@ subroutine get_expected_mopitt_v5_co_profile(state_handle, ens_size, location, k
             expct_val(imem) = expct_val(imem) + log10(co_val_conv) * &
             avg_kernel(key,k) + prior_term * log10(prior(key,k))
          endif
-         
+
 !         write(string1, *) &
-!         'APM: Expected Value Terms ',k,expct_val(imem),co_val_conv, &
-!         avg_kernel(key,k), prior_term, prior(key,k)     
+!         'APM: CO_TRM.PRIOR_TRM,co_val,prior,avgk,prior,avgk_trm: ', &
+!         k,log10(co_val_conv)*avg_kernel(key,k),prior_term*log10(prior(key,k)), &
+!         co_val_conv,prior(key,k),avg_kernel(key,k),prior_term
 !         call error_handler(E_ALLMSG, routine, string1, source)
 
       enddo
+!   print *, 'APM: at call exit_all '
+!   call exit_all()
 !
-!
-! Convert expected observation to ppmv         
-         expct_val(imem)=10.**expct_val(imem)
-
-!         write(string1, *) &
-!      'APM: Member ',imem,'Final Value ',expct_val(imem)
-!      call error_handler(E_ALLMSG, routine, string1, source)
+! Convert expected observation from log10(ppbv) to ppbv         
+      expct_val(imem)=10.**expct_val(imem)
 
       if(isnan(expct_val(imem))) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
-         write(string1, *) &
-         'APM NOTICE: MOPITT CO expected value is NaN '
-         call error_handler(E_ALLMSG, routine, string1, source)
+!         write(string1, *) &
+!         'APM NOTICE: MOPITT CO expected value is NaN '
+!         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
@@ -723,9 +709,9 @@ subroutine get_expected_mopitt_v5_co_profile(state_handle, ens_size, location, k
       if(expct_val(imem).lt.0) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
-         write(string1, *) &
-         'APM NOTICE: MOPITT CO expected value is negative '
-         call error_handler(E_ALLMSG, routine, string1, source)
+!         write(string1, *) &
+!         'APM NOTICE: MOPITT CO expected value is negative'
+!         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
@@ -736,14 +722,14 @@ subroutine get_expected_mopitt_v5_co_profile(state_handle, ens_size, location, k
    deallocate(thick)
    deallocate(prs_mopitt, prs_mopitt_mem)
 
-end subroutine get_expected_mopitt_v5_co_profile
+end subroutine get_expected_mopitt_v8_co_profile
 
 !-------------------------------------------------------------------------------
 
-subroutine set_obs_def_mopitt_v5_co_profile(key, co_pressure, co_avg_kernel, co_prior, &
-co_nlayer, co_klay)
+subroutine set_obs_def_mopitt_v8_co_profile(key, co_pressure, co_avg_kernel, co_prior, &
+co_klay, co_nlayer, co_nlevel)
 
-   integer,                           intent(in)   :: key, co_nlayer, co_klay
+   integer,                           intent(in)   :: key, co_klay, co_nlayer, co_nlevel
    real(r8), dimension(co_nlayer+1),  intent(in)   :: co_pressure
    real(r8), dimension(co_nlayer),    intent(in)   :: co_avg_kernel
    real(r8), dimension(co_nlayer),    intent(in)   :: co_prior
@@ -753,17 +739,18 @@ co_nlayer, co_klay)
    if(num_mopitt_co_obs >= max_mopitt_co_obs) then
       write(string1, *) 'Not enough space for mopitt co profile obs.'
       write(string2, *) 'Can only have max_mopitt_co_obs (currently ',max_mopitt_co_obs,')'
-      call error_handler(E_ERR,'set_obs_def_mopitt_v5_co_profile',string1,source,revision, &
+      call error_handler(E_ERR,'set_obs_def_mopitt_v8_co_profile',string1,source,revision, &
       revdate,text2=string2)
    endif
+   klay(key)   = co_klay
    nlayer(key) = co_nlayer
-   klay(key) = co_klay
+   nlevel(key) = co_nlevel
    pressure(key,1:co_nlayer+1) = co_pressure(1:co_nlayer+1)
    avg_kernel(key,1:co_nlayer) = co_avg_kernel(1:co_nlayer)
    prior(key,1:co_nlayer) = co_prior(1:co_nlayer)
    
-end subroutine set_obs_def_mopitt_v5_co_profile
+end subroutine set_obs_def_mopitt_v8_co_profile
 
-end module obs_def_mopitt_v5_co_profile_mod
+end module obs_def_mopitt_v8_co_profile_mod
 
 ! END DART PREPROCESS MODULE CODE

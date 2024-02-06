@@ -53,10 +53,10 @@ export FIRST_DART_INFLATE_DATE=2014072606
 export FIRST_EMISS_INV_DATE=2014072606
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072600
+export CYCLE_STR_DATE=2014072606
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072700
+export CYCLE_END_DATE=2014072800
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -197,7 +197,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_MLS_HNO3_TOTAL_COL_OBS=false
    export RUN_MLS_HNO3_PROFILE_OBS=false # (works, vertical sum)
    export RUN_MLS_HNO3_CPSR_OBS=false # (works, vertical sum)
-   export RUN_AIRNOW_CO_OBS=true # (done)
+   export RUN_AIRNOW_CO_OBS=false # (done)
    export RUN_AIRNOW_O3_OBS=false # (done)
    export RUN_AIRNOW_NO2_OBS=false # (done)
    export RUN_AIRNOW_SO2_OBS=false # (done)
@@ -207,7 +207,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_PANDA_O3_OBS=false
    export RUN_PANDA_PM25_OBS=false
    export RUN_MEXICO_AQS_CO_OBS=false
-   export RUN_MET_OBS=true # (done)
+   export RUN_MET_OBS=false # (done)
    export RUN_COMBINE_OBS=true
    export RUN_PREPROCESS_OBS=true
    export RUN_LOCALIZATION=false
@@ -465,7 +465,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          cd ${RUN_DIR}/${DATE}/wrfchem_chem_icbc
       fi
       export NL_CHEM_ICBC_SPECIES='o3','no','no2','no3','nh3','hno3','hno4','n2o5','ho2','h2o2','co','ch4','ch3o2','ch3ooh','hcho','ch3oh','c2h4','ald','ch3cooh','acet','mgly','pan','mpan','macr','mvk','c2h6','c3h6','c3h8','c2h5oh','c10h16','onit','onitr','isopr','isopn','acetol','glyald','hydrald','mek','bigene','open','bigalk','tol','cres','dms','so2','sulf','BC1','BC2','OC1','OC2','SEAS_1','SEAS_2','SEAS_3','SEAS_4','DUST_1','DUST_2','DUST_3','DUST_4','DUST_5','h2','n2o'
-      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Chem_ICBC_FRAPPE.ksh > index_rc.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Chem_ICBC.ksh > index_rc.html 2>&1
    fi
 #
 #########################################################################

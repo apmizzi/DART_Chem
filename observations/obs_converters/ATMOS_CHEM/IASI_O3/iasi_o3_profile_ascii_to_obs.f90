@@ -272,6 +272,8 @@ program iasi_o3_profile_ascii_to_obs
 ! Record the namelist values used for the run ...
    call error_handler(E_MSG,'init_create_iasi_obs','create_iasi_obs_nml values are',' ',' ',' ')
    write(     *     , nml=create_iasi_obs_nml)
+   IASI_CO_retrieval_type='RAWR'
+   IASI_O3_retrieval_type='RAWR'
 !
 ! Initialize an obs_sequence structure
    call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)

@@ -307,7 +307,6 @@ end interface
 
 contains
 
-
 !-------------------------------------------------------------------------------
 !> Given an info_file, reads in a list var_names(num_vars) 
 !> into the state_strucutre. 
@@ -335,6 +334,7 @@ state%num_domains = state%num_domains + 1
 !>@todo dom_id should be a handle.
 dom_id = state%num_domains
 
+! APM THIS IS THE START OF THE SINGLE FILE ASSUMPTION PROBLEM.
 ! save information about the information file
 state%domain(dom_id)%info_file = info_file
 state%domain(dom_id)%method = 'file'

@@ -56,7 +56,7 @@
 #   export WRFCHEM_NODES=2
 #   export WRFCHEM_TASKS=16
 # Haswell
-   export WRFCHEM_JOB_CLASS=devel
+   export WRFCHEM_JOB_CLASS=normal
    export WRFCHEM_TIME_LIMIT=00:30:00
    export WRFCHEM_NODES=2
    export WRFCHEM_TASKS=24

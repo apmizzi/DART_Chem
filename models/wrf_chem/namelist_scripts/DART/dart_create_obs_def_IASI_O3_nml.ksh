@@ -16,10 +16,11 @@ cat > input.nml_temp << EOF
    ls_chem_dy = ${LS_CHEM_DY}
    ls_chem_dz = ${LS_CHEM_DZ}
    ls_chem_dt = ${LS_CHEM_DT}
-   IASI_O3_retrieval_type   = ${NL_IASI_O3_RETRIEVAL_TYPE:-'RAWR'},
    use_log_o3   = ${NL_USE_LOG_O3:-.false.},
    nlayer_model    = ${NL_NLAYER_MODEL:-36},
-   nlayer_iasi_o3_profile   = ${NL_NLAYER_IASI_O3_PROFILE:-41},
+   nlayer_iasi_o3_total_col   = ${NL_NLAYER_IASI_O3_TOTAL_COL:-41},
+   nlayer_iasi_o3_trop_col    = ${NL_NLAYER_IASI_O3_TROP_COL:-41},
+   nlayer_iasi_o3_profile     = ${NL_NLAYER_IASI_O3_PROFILE:-41},
 / 
 EOF
 #

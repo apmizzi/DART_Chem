@@ -1,4 +1,4 @@
-function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,cwss_mn,cwyr_mx,cwmn_mx,cwdy_mx,cwhh_mx,cwmm_mx,cwss_mx,clon_min,clon_max,clat_min,clat_max)
+function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn,cwhh_mn,cwmm_mn,cwss_mn,cwyr_mx,cwmn_mx,cwdy_mx,cwhh_mx,cwmm_mx,cwss_mx,path_mdl,file_mdl,cnx_mdl,cny_mdl)
 %
 % Get file list and number of files
    wyr_mn=str2double(cwyr_mn);
@@ -13,10 +13,8 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
    whh_mx=str2double(cwhh_mx);
    wmm_mx=str2double(cwmm_mx);
    wss_mx=str2double(cwss_mx);
-   lon_min=str2double(clon_min);
-   lon_max=str2double(clon_max);
-   lat_min=str2double(clat_min);
-   lat_max=str2double(clat_max);
+   nx_mdl=str2double(cnx_mdl);
+   ny_mdl=str2double(cny_mdl);
 %
    command=strcat('rm'," ",'-rf'," ",fileout);
    [status]=system(command);
@@ -51,10 +49,26 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
    day_secs_end=whh_mx*60.*60. + wmm_mx*60. + wss_mx;
 %
 % Print input data
-   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
-   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
-%   fprintf('domain bounds %d %d %d %d \n',lat_min,lat_max,lon_min,lon_max)
+%   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
+%   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
 %
+% Read model grid
+   lon_mdl=ncread(strcat(path_mdl,'/',file_mdl),'XLONG');
+   lat_mdl=ncread(strcat(path_mdl,'/',file_mdl),'XLAT');
+   delx=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','DX');  
+   cen_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LAT');  
+   cen_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','CEN_LON');
+   if(cen_lon<0)
+      cen_lon=cen_lon+360.;
+   end
+   truelat1=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','TRUELAT1');
+   truelat2=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','TRUELAT2');
+   moad_cen_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','MOAD_CEN_LAT');
+   stand_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','STAND_LON');
+   pole_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','POLE_LAT');
+   pole_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','POLE_LON');
+%
+% Process satellite data
    for ifile=1:nfile
       file_in=char(file_list(ifile));
       indx=strfind(file_in,file_pre)-1;
@@ -83,203 +97,314 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% For nid: 1 - value; 2 - uncertainty
+% For ntwo: 1 - value; 2 - uncertainty
 % date data
       field='/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/';
-      day=h5readatt(file_in,field,'Day');
       month=h5readatt(file_in,field,'Month');
-      str_time=h5readatt(file_in,field,'StartDateTime');
+      day=h5readatt(file_in,field,'Day');
       year=h5readatt(file_in,field,'Year');
-% prior_prof_lay(nid,layer,numobs) (ppbv)
+      str_time=h5readatt(file_in,field,'StartDateTime');
+%
+%      field='/HDFEOS/SWATHS/MOP02';
+%      nlay=h5read(file_in,field,'nPrs');
+%      nlev=h5read(file_in,field,'nPrs2');
+%      ntim=h5read(file_in,field,'nTime');
+%      ntwo=h5read(file_in,field,'nTwo');
+%
+% prior_prof_lay(ntwo,nlay,ntim) (ppbv)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/APrioriCOMixingRatioProfile';
       prior_prof_lay=h5read(file_in,field);
-      units=h5readatt(file_in,field,'units');  
-      tmp=size(prior_prof_lay);
-      nid=tmp(1);
-      layer=tmp(2);
-      numobs=tmp(3);
-      level=layer+1;
-% prior_sfc(nid,numobs) (ppbv)
+      units=h5readatt(file_in,field,'units');
+      arsize=size(prior_prof_lay);
+      ntim=arsize(3);
+      nlay=arsize(2);
+      nlev=nlay+1;
+      ntwo=arsize(1);
+% prior_sfc(ntwo,ntim) (ppbv)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/APrioriCOSurfaceMixingRatio';
       prior_sfc=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% prior_col_amt(numobs) (ppbv) 
+% prior_col_amt(ntim) (ppbv) 
       field='/HDFEOS/SWATHS/MOP02/Data Fields/APrioriCOTotalColumn';
       prior_col_amt=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% avgk_row_sum_lev(level,numobs) (uses log10 VMR)
+% avgk_row_sum_lev(nlev,ntim) (uses log10 VMR)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/AveragingKernelRowSums';
       avgk_row_sum_lev=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% dofs(numobs) (dimless)
+% dofs(ntim) (dimless)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/DegreesofFreedomforSignal';
       dofs=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% dry_col_amt(numobs) (molec/cm2)
+% dry_col_amt(ntim) (molec/cm2)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/DryAirColumn';
       dry_col_amt=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% cov_m(level,level,numobs) 
+% cov_m(nlev,nlev,ntim) 
       field='/HDFEOS/SWATHS/MOP02/Data Fields/MeasurementErrorCovarianceMatrix';
       cov_m=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% prs_grd(layer) (hPa)
+% prs_grd(nlay) (hPa)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/PressureGrid';
       prs_grd=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% avgk_lev(level,level,numobs) (uses log10 VMR)
+% avgk_lev(nlev,nlev,ntim) (uses log10 VMR)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/RetrievalAveragingKernelMatrix';
       avgk_lev=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% cov_r(level,level,numobs) 
+% cov_r(nlev,nlev,ntim) 
       field='/HDFEOS/SWATHS/MOP02/Data Fields/RetrievalErrorCovarianceMatrix';
       cov_r=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% retr_prof_lay(nid,layer,numobs) (ppbv)
+% retr_prof_lay(ntwo,nlay,ntim) (ppbv)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/RetrievedCOMixingRatioProfile';
       retr_prof_lay=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% retr_sfc(nid,numobs) (ppbv)
+% retr_sfc(ntwo,ntim) (ppbv)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/RetrievedCOSurfaceMixingRatio';
       retr_sfc=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% retr_col_amt(nid,numobs) (molec/cm2)
+% retr_col_amt(ntwo,ntim) (molec/cm2)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/RetrievedCOTotalColumn';
       retr_col_amt=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% cov_s(level,level,numobs) 
+% cov_s(nlev,nlev,ntim) 
       field='/HDFEOS/SWATHS/MOP02/Data Fields/SmoothingErrorCovarianceMatrix';
       cov_s=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% zen_ang(numobs) (deg)
+% zen_ang(ntim) (deg)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/SolarZenithAngle';
       zen_ang=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% prs_sfc(numobs) (hPa)
+% prs_sfc(ntim) (hPa)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/SurfacePressure';
       prs_sfc=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% avgk_dim_col_lev(level,numobs) (uses log10 VMR)
+% avgk_dim_col_lev(nlev,ntim) (uses log10 VMR)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/TotalColumnAveragingKernel';
       avgk_dim_col_lev=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% avgk_ndim_col_lev(level,numobs) (uses partial columns)
+% avgk_ndim_col_lev(nlev,ntim) (uses partial columns)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/TotalColumnAveragingKernelDimless';
       avgk_ndim_col_lev=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% lat(numobs) (degrees)
+% lat(ntim) (degrees)
       field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/Latitude';
       lat=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% lon(numobs) (degrees)
+% lon(ntim) (degrees)
       field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/Longitude';
       lon=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');
-% prs_lay(layer) (hPa)
+% prs_lay(nlay) (hPa)
       field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/Pressure';
       prs_lay=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% prs_lev(layer) (hPa)
+% prs_lev(nlev) (hPa)
       field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/Pressure2';
       prs_lev=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% secs_day(numobs) 
+% secs_day(ntim) 
       field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/SecondsinDay';
       secs_day=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% time(numobs) (TAI time)
+% time(ntim) (TAI time)
       field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/Time';
       time=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
 %
 % Loop through MOPITT data
-      windate_min=single(convert_time(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn));
-      windate_max=single(convert_time(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,1993));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,1993));
       icnt=0;
-%
       yyyy_mop=double(year);
       mn_mop=double(month);
       dy_mop=double(day);
-      for iobs=1:numobs
-         hh_mop=double(idivide(int32(secs_day(iobs)),3600));
-         mm_mop=double(idivide(mod(int32(secs_day(iobs)),3600),60));
-         ss_mop=double(int32(secs_day(iobs))-int32(hh_mop*3600+mm_mop*60));
+      for itim=1:ntim
+         hh_mop=double(idivide(int32(secs_day(itim)),3600));
+         mm_mop=double(idivide(mod(int32(secs_day(itim)),3600),60));
+         ss_mop=double(int32(secs_day(itim))-int32(hh_mop*3600+mm_mop*60));
          if(int32(hh_mop)>23 | int32(mm_mop)>59 | int32(ss_mop)>59)
             [yyyy_mop,mn_mop,dy_mop,hh_mop,mm_mop,ss_mop]=incr_time(yyyy_mop, ...
       	    mn_mop,dy_mop,hh_mop,mm_mop,ss_mop);
          end
-         mopdate=single(convert_time(yyyy_mop,mn_mop,dy_mop,hh_mop,mm_mop,ss_mop));
+         mopdate=single(convert_time_ref(yyyy_mop,mn_mop,dy_mop,hh_mop,mm_mop,ss_mop,1993));
 %
 % Check time
+%         fprintf('min %d date %d max %d \n',windate_min,omidate,windate_max)
          if(mopdate<windate_min | mopdate>windate_max)
-%            fprintf('OUTSIDE DATE RANGE \n')
             continue
          end
 %
 % QA/AC
-         if(isnan(retr_col_amt(1,iobs)) | retr_col_amt(1,iobs)<=0)
+         if(isnan(retr_col_amt(1,itim)) | retr_col_amt(1,itim)<=0)
             continue
          end
-         if(isnan(prior_col_amt(iobs)) | prior_col_amt(iobs)<=0.)
+         if(isnan(prior_col_amt(itim)) | prior_col_amt(itim)<=0.)
+            continue
+         end
+% Check domain
+% Input grid needs to be in degrees
+% X coordinate is [0 to 360]
+%		 
+	 x_obser=lon(itim);
+         y_obser=lat(itim);
+         if(x_obser<0.)
+            x_obser=360.+x_obser;
+         end
+%
+         xmdl_sw=lon_mdl(1,1);
+         if(xmdl_sw<0.)
+            xmdl_sw=xmdl_sw+360.;
+         end
+%
+% APM: Need to get this info from model
+         [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
+         xmdl_sw,delx,cen_lon,truelat1,truelat2);
+         i_min = round(xi);
+         j_min = round(xj);
+         reject = 0;
+%
+% Check lower bounds
+         if(i_min<1 & round(xi)==0)
+            i_min=1;
+         elseif(i_min<1 & fix(xi)<0)
+            i_min=-9999;
+            j_min=-9999;
+            reject=1;
+         end
+         if(j_min<1 & round(xj)==0)
+            j_min=1;
+         elseif (j_min<1 & fix(xj)<0)
+            i_min=-9999;
+            j_min=-9999;
+            reject=1;
+         end
+%
+% Check upper bounds
+         if(i_min>nx_mdl & fix(xi)==nx_mdl)
+            i_min=nx_mdl;
+         elseif (i_min>nx_mdl & fix(xi)>nx_mdl)
+            i_min=-9999;
+            j_min=-9999;
+            reject=1;
+         end
+         if(j_min>ny_mdl & fix(xj)==ny_mdl)
+            j_min=ny_mdl;
+         elseif (j_min>ny_mdl & fix(xj)>ny_mdl)
+            i_min=-9999;
+            j_min=-9999;
+            reject=1;
+         end
+         if(reject==1)
+            continue
+         end
+         if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
             continue
          end
 %
-% Check domain
-	 if(lon(iobs)<0)
-	   lon(iobs)=lon(iobs)+360.;
-	 end
-	 if(lat(iobs)<lat_min | lat(iobs)>lat_max | ...
-	 lon(iobs)<lon_min | lon(iobs)>lon_max)
+% Fix pressure profile for surface pressure
+	 nlevm=nlev;
+	 nlevv=nlev+1;
+	 prs_lev_sft=zeros(nlevv);
+	 prs_lev_sft(1:nlevm)=prs_lev(1:nlevm);
+	 prs_lev_sft(nlevv)=50.;
+         for ilv=2:nlevm
+            if(ilv==2 && prs_sfc(itim)>=prs_lev_sft(ilv))
+               kstr=1;
+               nlev_sft=nlevv;
+               prs_lev_sft(ilv-1)=prs_sfc(itim);     
+               break
+            elseif(prs_sfc(itim)<prs_lev_sft(ilv) && prs_sfc(itim)>=prs_lev_sft(ilv+1))
+               kstr=ilv-1;
+               nlev_sft=nlevv-ilv+1;
+               prs_lev_sft(ilv-1)=prs_sfc(itim);     
+               break	  
+            elseif(ilv==nlevm && prs_sfc(itim)<prs_lev_sft(ilv+1))
+               kstr=nlevv+1;
+               nlev_sft=0;
+               break
+            end
+         end
+         if(nlev_sft==0)
             continue
+         end
+	 nlay_sft=nlev_sft-1;
+         for ilv=1:kstr-1
+            prs_lev_sft(ilv)=-999;
+	 end
+         for ilv=kstr:nlevv
+            prs_lev_sft(ilv-kstr+1)=prs_lev_sft(ilv);
+         end
+%
+% Get shifted layer pressures
+	 for ilv=1:nlev_sft-1
+	   prs_lay_sft(ilv)=(prs_lev_sft(ilv)+prs_lev_sft(ilv+1))/2.;
+         end
+%
+% Shift remaining data	 
+         retr_prof_sft=zeros(ntwo,nlay_sft);
+         prior_prof_sft=zeros(ntwo,nlay_sft);
+         avgk_sft=zeros(nlay_sft,nlay_sft);
+         cov_m_sft=zeros(nlay_sft,nlay_sft);
+         cov_r_sft=zeros(nlay_sft,nlay_sft);
+         cov_s_sft=zeros(nlay_sft,nlay_sft);
+	 for ilv=1:nlay_sft
+	    if(ilv==1) 
+               retr_prof_sft(:,ilv)=retr_sfc(:,itim);
+               prior_prof_sft(:,ilv)=prior_sfc(:,itim);
+	    else
+               retr_prof_sft(:,ilv)=retr_prof_lay(:,ilv+kstr-2,itim);
+               prior_prof_sft(:,ilv)=prior_prof_lay(:,ilv+kstr-2,itim);
+	    end
+	    for ilw=1:nlay_sft
+              avgk_sft(ilv,ilw)=avgk_lev(ilv+kstr-1,ilw+kstr-1,itim);
+              cov_m_sft(ilv,ilw)=cov_m(ilv+kstr-1,ilw+kstr-1,itim);
+              cov_r_sft(ilv,ilw)=cov_r(ilv+kstr-1,ilw+kstr-1,itim);
+              cov_s_sft(ilv,ilw)=cov_s(ilv+kstr-1,ilw+kstr-1,itim);
+            end
          end
 %
 % Save data to ascii file
          icnt=icnt+1;
-         fprintf(fid,'MOPITT_CO_Obs: %d \n',icnt);
+         fprintf(fid,'MOPITT_CO_Obs: %d %d %d \n',icnt,i_min,j_min);
          fprintf(fid,'%d %d %d %d %d %d \n',yyyy_mop, ...
 	 mn_mop,dy_mop,hh_mop,mm_mop,ss_mop);
-	 fprintf(fid,'%14.8f %14.8f \n',lat(iobs),lon(iobs));
-         fprintf(fid,'%d %d \n',layer,level);
- 	 fprintf(fid,'%14.8g \n',dofs(iobs));
- 	 fprintf(fid,'%14.8g \n',prs_sfc(iobs));
-         fprintf(fid,'%14.8g ',prs_lay(1:layer));
+	 fprintf(fid,'%14.8f %14.8f \n',lat(itim),lon(itim));
+         fprintf(fid,'%d %d \n',nlay_sft,nlev_sft);
+ 	 fprintf(fid,'%14.8g \n',dofs(itim));
+ 	 fprintf(fid,'%14.8g \n',prs_sfc(itim));
+         fprintf(fid,'%14.8g ',prs_lay_sft(1:nlay_sft));
          fprintf(fid,'\n');
-         fprintf(fid,'%14.8g ',avgk_row_sum_lev(1:level,iobs));
+         fprintf(fid,'%14.8g ',prs_lev_sft(1:nlev_sft));
          fprintf(fid,'\n');
-	 for k=1:level
-            fprintf(fid,'%14.8g ',avgk_lev(k,1:level,iobs));
+	 for k=1:nlay_sft
+            fprintf(fid,'%14.8g ',avgk_sft(k,1:nlay_sft));
             fprintf(fid,'\n');
 	 end
-	 fprintf(fid,'%14.8g \n',retr_sfc(1,iobs));
-	 fprintf(fid,'%14.8g ',retr_prof_lay(1,1:layer,iobs));
+	 fprintf(fid,'%14.8g ',retr_prof_sft(1,1:nlay_sft));
          fprintf(fid,'\n');
-	 fprintf(fid,'%14.8g \n',retr_sfc(2,iobs));
-	 fprintf(fid,'%14.8g ',retr_prof_lay(2,1:layer,iobs));
+	 fprintf(fid,'%14.8g ',retr_prof_sft(2,1:nlay_sft));
          fprintf(fid,'\n');
-         fprintf(fid,'%14.8g \n',prior_sfc(1,iobs));
-         fprintf(fid,'%14.8g ',prior_prof_lay(1,1:layer,iobs));
+         fprintf(fid,'%14.8g ',prior_prof_sft(1,1:nlay_sft));
          fprintf(fid,'\n');
-         fprintf(fid,'%14.8g \n',prior_sfc(2,iobs));
-	 fprintf(fid,'%14.8g ',prior_prof_lay(2,1:layer,iobs));
+	 fprintf(fid,'%14.8g ',prior_prof_sft(2,1:nlay_sft));
          fprintf(fid,'\n');
-	 for k=1:level
-	    fprintf(fid,'%14.8g ',cov_s(k,1:level,iobs));
+	 for k=1:nlay_sft
+	    fprintf(fid,'%14.8g ',cov_s(k,1:nlay_sft));
             fprintf(fid,'\n');
          end
-	 for k=1:level
-            fprintf(fid,'%14.6g ',cov_r(k,1:level,iobs));
+	 for k=1:nlay_sft
+            fprintf(fid,'%14.6g ',cov_r(k,1:nlay_sft));
             fprintf(fid,'\n');
          end
-	 for k=1:level
-            fprintf(fid,'%14.6g ',cov_m(k,1:level,iobs));
+	 for k=1:nlay_sft
+            fprintf(fid,'%14.6g ',cov_m(k,1:nlay_sft));
             fprintf(fid,'\n');
          end
-         fprintf(fid,'%14.8g ',avgk_dim_col_lev(1:level,iobs));
-	 fprintf(fid,'\n');
-         fprintf(fid,'%14.8g \n',retr_col_amt(1,iobs));
-         fprintf(fid,'%14.8g \n',retr_col_amt(2,iobs));
-         fprintf(fid,'%14.8g \n',prior_col_amt(iobs));
-         fprintf(fid,'%14.8g \n',dry_col_amt(iobs));
+         fprintf(fid,'%14.8g \n',retr_col_amt(1,itim));
+         fprintf(fid,'%14.8g \n',retr_col_amt(2,itim));
+         fprintf(fid,'%14.8g \n',prior_col_amt(itim));
       end
       clear prior_lay cld_prs col_amt rad_cld_frac avgk_lay 
       clear lat lon secs_day zen_ang time 
