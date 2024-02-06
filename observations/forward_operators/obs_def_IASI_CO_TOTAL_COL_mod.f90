@@ -51,6 +51,14 @@
 
 module obs_def_iasi_co_total_col_mod
 
+use         apm_upper_bdy_mod, only :get_upper_bdy_fld, &
+                                     get_MOZART_INT_DATA, &
+                                     get_MOZART_REAL_DATA, &
+                                     wrf_dart_ubval_interp, &
+                                     apm_get_exo_coldens, &
+                                     apm_get_upvals, &
+                                     apm_interpolate
+
 use             types_mod, only : r8, MISSING_R8
 
 use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &
@@ -112,11 +120,12 @@ logical :: use_log_co   = .false.
 integer :: nlayer_model = -9999
 integer :: nlayer_iasi = -9999
 integer :: nlayer_iasi_co_total_col = -9999
+integer :: nlayer_iasi_co_trop_col = -9999
 integer :: nlayer_iasi_co_profile = -9999
 
-namelist /obs_def_IASI_CO_nml/ upper_data_file, IASI_CO_retrieval_type, &
-use_log_co, nlayer_model, nlayer_iasi_co_total_col, nlayer_iasi_co_profile, &
-ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, upper_data_model
+   namelist /obs_def_IASI_CO_nml/upper_data_file, use_log_co, nlayer_model, &
+   nlayer_iasi_co_total_col, nlayer_iasi_co_trop_col, nlayer_iasi_co_profile, &
+   ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, upper_data_model
 
 !-------------------------------------------------------------------------------
 contains

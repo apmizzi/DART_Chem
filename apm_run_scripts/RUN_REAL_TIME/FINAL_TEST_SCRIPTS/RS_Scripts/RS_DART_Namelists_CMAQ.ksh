@@ -90,39 +90,32 @@
    export NL_WRITE_BINARY_RESTART_FILE=.true.
 #
 # &model_nml
-   export NL_ADD_EMISS=.${L_ADD_EMISS}.
    export NL_DEFAULT_STATE_VARIABLES=.false.
-   export NL_CONV_STATE_VARIABLES="
-          'CO',     'QTY_CO',                   'TYPE_CO',    'UPDATE','999',
-          'O3',     'QTY_O3',                   'TYPE_O3',    'UPDATE','999',
-          'NO',     'QTY_NO',                   'TYPE_NO',    'UPDATE','999',
-          'NO2',    'QTY_NO2',                  'TYPE_NO2',   'UPDATE','999',
-          'SO2',    'QTY_SO2',                  'TYPE_SO2',   'UPDATE','999',
-          'SULF',   'QTY_SO4',                  'TYPE_SO4',   'UPDATE','999',
-          'N2O5',   'QTY_N2O5',                 'TYPE_N2O5',  'UPDATE','999',
-          'ACET',   'QTY_ACET',                 'TYPE_ACET',  'UPDATE','999',
-          'TOL',    'QTY_TOL',                  'TYPE_TOL',   'UPDATE','999',
-          'ISOP',   'QTY_ISOPR',                'TYPE_ISOPR', 'UPDATE','999',
-          'FORM',   'QTY_HCHO',                 'TYPE_HCHO',  'UPDATE','999',
-          'HNO3',   'QTY_HNO3',                 'TYPE_HNO3',  'UPDATE','999',
-          'NH3',    'QTY_NH3',                  'TYPE_NH3',   'UPDATE','999',
-          'PAN',    'QTY_PAN',                  'TYPE_PAN',   'UPDATE','999',
-          'ECH4',   'QTY_CH4',                  'TYPE_CH4',   'UPDATE','999'"
-   export NL_WRF_STATE_BOUNDS="
+
+##
+## APM: add PSFC and DENSITY
+   
+   export NL_CONV_STATE_VARIABLES="'ZF',     'QTY_GEOPOTENTIAL_HEIGHT',  'TYPE_GZ',    'NULL','999',
+          'TA',      'QTY_TEMPERATURE',          'TYPE_T',     'NULL',  '999',
+          'QV',      'QTY_VAPOR_MIXING_RATIO',   'TYPE_QV',    'NULL',  '999',
+          'PRES',    'QTY_PRESSURE',             'TYPE_MU',    'NULL',  '999',
+          'CO',      'QTY_CO',                   'TYPE_CO',    'UPDATE','999',
+          'O3',      'QTY_O3',                   'TYPE_O3',    'UPDATE','999',
+          'NO2',     'QTY_NO2',                  'TYPE_NO2',   'UPDATE','999',
+          'NO',      'QTY_NO',                   'TYPE_NO',    'UPDATE','999',
+          'SO2',     'QTY_SO2',                  'TYPE_SO2',   'UPDATE','999',
+          'SULF',    'QTY_SO4',                  'TYPE_SO4',   'UPDATE','999'"
+
+   export NL_CMAQ_STATE_BOUNDS="'ZF',    'NULL',       'NULL',       'CLAMP',
+          'TA',     '0.0',        'NULL',       'CLAMP',
+          'QV',     '0.0',        'NULL',       'CLAMP',
+          'PRES',   '0.0',        'NULL',       'CLAMP',
           'CO',     '${CO_MIN}',  '${CO_MAX}',  'CLAMP',
           'O3',     '${O3_MIN}',  '${O3_MAX}',  'CLAMP',
-          'NO',     '${NO_MIN}',  '${NO_MAX}',  'CLAMP',
           'NO2',    '${NO2_MIN}', '${NO2_MAX}', 'CLAMP',
+          'NO',     '${NO_MIN}',  '${NO_MAX}',  'CLAMP',
           'SO2',    '${SO2_MIN}', '${SO2_MAX}', 'CLAMP',
-          'SULF',   '${SO4_MIN}', '${SO4_MAX}', 'CLAMP',
-          'ACET'    '0.0',        'NULL',       'CLAMP',
-          'TOL',    '0.0',        'NULL',       'CLAMP',
-          'ISOP',   '0.0',        'NULL',       'CLAMP',
-          'FORM'    '0.0',        'NULL',       'CLAMP',
-          'HNO3',   '0.0',        'NULL',       'CLAMP',
-          'NH3',    '0.0',        'NULL',       'CLAMP',
-          'PAN',    '0.0',        'NULL',       'CLAMP',
-          'ECH4',   '0.0',        'NULL',       'CLAMP'"
+          'SULF',   '${SO4_MIN}', '${SO4_MAX}', 'CLAMP'"
    export NL_OUTPUT_STATE_VECTOR=.false.
    export NL_NUM_DOMAINS=${CR_DOMAIN}
    export NL_CALENDAR_TYPE=3

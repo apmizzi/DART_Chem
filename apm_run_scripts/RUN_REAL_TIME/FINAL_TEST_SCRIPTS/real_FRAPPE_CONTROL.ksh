@@ -51,7 +51,7 @@ export FIRST_DART_INFLATE_DATE=2014072618
 export FIRST_EMISS_INV_DATE=2014072618
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072618
+export CYCLE_STR_DATE=2014072718
 #
 # END CYCLE DATE-TIME:
 export CYCLE_END_DATE=2014072718
@@ -73,7 +73,7 @@ export LS_CHEM_DZ=56
 export LS_CHEM_DT=368
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=true
+export RUN_INPUT_OBS=false
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
 export RUN_MOPITT_CO_PROFILE_OBS=true # (done, no thinner)
 export RUN_MOPITT_CO_CPSR_OBS=true # (done, no thinner)
@@ -435,7 +435,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export GENERAL_TIME_LIMIT=00:20:00
    export GENERAL_NODES=1
    export GENERAL_TASKS=16
-   export FILTER_TIME_LIMIT=06:59:00   
+   export FILTER_TIME_LIMIT=07:59:00   
 #
 #########################################################################
 #

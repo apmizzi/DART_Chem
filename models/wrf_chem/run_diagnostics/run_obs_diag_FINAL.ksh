@@ -11,7 +11,7 @@
 ############################################################################### 
 #
    export START_DATE=2014072606
-   export END_DATE=2014072800
+   export END_DATE=2014072718
 #
 #   export START_DATE=2020071006
 #   export END_DATE=2020071606
@@ -22,11 +22,11 @@
 #   export DIR_NAME=real_FRAPPE_ALLCHEM
 #   export DIR_NAME=real_FRAPPE_EMISADJ
 
-   export DIR_NAME=FRAPPE_CONTROL_CO_RETR
-   export DIR_NAME=FRAPPE_ALLCHEM_CO_RETR
+#   export DIR_NAME=FRAPPE_CONTROL_CO_RETR
+#   export DIR_NAME=FRAPPE_ALLCHEM_CO_RETR
    export DIR_NAME=FRAPPE_ALLCHEM_CO_CPSR
-   export DIR_NAME=FRAPPE_EMISADJ_CO_RETR
-   export DIR_NAME=FRAPPE_EMISADJ_CO_CPSR
+#   export DIR_NAME=FRAPPE_EMISADJ_CO_RETR
+#   export DIR_NAME=FRAPPE_EMISADJ_CO_CPSR
 #
 #   export DIR_NAME=FIREX_CONTROL
 #   export DIR_NAME=FIREX_ALLCHEM

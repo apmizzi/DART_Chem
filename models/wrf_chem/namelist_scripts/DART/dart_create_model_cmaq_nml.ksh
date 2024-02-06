@@ -12,7 +12,7 @@ cat > input.nml_temp << EOF
  &model_nml
    default_state_variables     = ${NL_DEFAULT_STATE_VARIABLES:-.false.},
    conv_state_variables        = ${NL_CONV_STATE_VARIABLES:-"null"}
-   wrf_state_bounds            = ${NL_WRF_STATE_BOUNDS:-"null"}
+   cmaq_state_bounds           = ${NL_CMAQ_STATE_BOUNDS:-"null"}
    num_domains                 = ${NL_NUM_DOMAINS:-1},
    calendar_type               = ${NL_CALENDAR_TYPE:-3},
    assimilation_period_seconds = ${NL_ASSIMILATION_PERIOD_SECONDS:-21600},

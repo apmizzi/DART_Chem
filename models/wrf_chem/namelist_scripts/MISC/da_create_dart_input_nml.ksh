@@ -56,23 +56,24 @@ cat > input.nml << EOF
    module_details              = .false.
 /
  &obs_def_MOPITT_CO_nml
-   MOPITT_CO_retrieval_type   = ${NL_MOPITT_CO_RETRIEVAL_TYPE:-'RETR'},
    use_log_co   = ${NL_USE_LOG_CO:-.false.},
    nlayer_model   = ${NL_NLAYER_MODEL:-36},
    nlayer_mopitt_co_total_col   = ${NL_NLAYER_MOPITT_CO_TOTAL_COL:-15},
+   nlayer_mopitt_co_trop_col   = ${NL_NLAYER_MOPITT_CO_TROP_COL:-15},
    nlayer_mopitt_co_profile   = ${NL_NLAYER_MOPITT_CO_PROFILE:-15},
 /
  &obs_def_IASI_CO_nml
-   IASI_CO_retrieval_type   = ${NL_IASI_CO_RETRIEVAL_TYPE:-'RAWR'},
    use_log_co   = ${NL_USE_LOG_CO:-.false.},
    nlayer_model   = ${NL_NLAYER_MODEL:-36},
    nlayer_iasi_co_total_col   = ${NL_NLAYER_IASI_CO_TOTAL_COL:-15},
+   nlayer_iasi_co_trop_col   = ${NL_NLAYER_IASI_CO_TROP_COL:-15},
    nlayer_iasi_co_profile   = ${NL_NLAYER_IASI_CO_PROFILE:-15},
 /
  &obs_def_IASI_O3_nml
-   IASI_O3_retrieval_type   = ${NL_IASI_O3_RETRIEVAL_TYPE:-'RAWR'},
    use_log_o3   = ${NL_USE_LOG_o3:-.false.},
    nlayer_model   = ${NL_NLAYER_MODEL:-36},
+   nlayer_iasi_o3_total_col   = ${NL_NLAYER_IASI_CO_TOTAL_COL:-15},
+   nlayer_iasi_o3_trop_col   = ${NL_NLAYER_IASI_CO_TROP_COL:-15},
    nlayer_iasi_o3_profile   = ${NL_NLAYER_IASI_CO_PROFILE:-15},
 /
  &obs_def_MODIS_AOD_nml

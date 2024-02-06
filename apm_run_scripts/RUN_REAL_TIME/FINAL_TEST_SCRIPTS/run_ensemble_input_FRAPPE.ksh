@@ -53,10 +53,10 @@ export FIRST_DART_INFLATE_DATE=2014072618
 export FIRST_EMISS_INV_DATE=2014072618
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072700
+export CYCLE_STR_DATE=2014072618
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072818
+export CYCLE_END_DATE=2014072618
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -116,25 +116,28 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_PERT_WRFCHEM_CHEM_EMISS=false
    export RUN_BIAS_CORRECTION=false
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
-   export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
-   export RUN_MOPITT_CO_CPSR_OBS=true # (done)
+   export RUN_MOPITT_CO_PROFILE_OBS=false # (done)
+   export RUN_MOPITT_CO_CPSR_OBS=false # (done)
+   export RUN_MOPITT_V8_CO_TOTAL_COL_OBS=false
+   export RUN_MOPITT_V8_CO_PROFILE_OBS=false # (done)
+   export RUN_MOPITT_V8_CO_CPSR_OBS=false # (done)
    export RUN_IASI_CO_TOTAL_COL_OBS=false
-   export RUN_IASI_CO_PROFILE_OBS=true # (done)
-   export RUN_IASI_CO_CPSR_OBS=true # (done)
+   export RUN_IASI_CO_PROFILE_OBS=false # (done)
+   export RUN_IASI_CO_CPSR_OBS=false # (done)
    export RUN_IASI_O3_PROFILE_OBS=false
    export RUN_IASI_O3_CPSR_OBS=false
-   export RUN_MODIS_AOD_TOTAL_COL_OBS=true # (done)
+   export RUN_MODIS_AOD_TOTAL_COL_OBS=false # (done)
    export RUN_OMI_O3_TOTAL_COL_OBS=false
    export RUN_OMI_O3_TROP_COL_OBS=false
-   export RUN_OMI_O3_PROFILE_OBS=true # (done)
-   export RUN_OMI_O3_CPSR_OBS=true # (works)
+   export RUN_OMI_O3_PROFILE_OBS=false # (done)
+   export RUN_OMI_O3_CPSR_OBS=false # (works)
    export RUN_OMI_NO2_TOTAL_COL_OBS=false
-   export RUN_OMI_NO2_TROP_COL_OBS=true # (done)
+   export RUN_OMI_NO2_TROP_COL_OBS=false # (done)
    export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
-   export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true # (works)
+   export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false # (works)
    export RUN_OMI_SO2_TOTAL_COL_OBS=false
-   export RUN_OMI_SO2_PBL_COL_OBS=true # (works)
-   export RUN_OMI_HCHO_TOTAL_COL_OBS=true # (works)
+   export RUN_OMI_SO2_PBL_COL_OBS=false # (works)
+   export RUN_OMI_HCHO_TOTAL_COL_OBS=false # (works)
    export RUN_OMI_HCHO_TROP_COL_OBS=false
    export RUN_TROPOMI_CO_TOTAL_COL_OBS=false # (done)
    export RUN_TROPOMI_O3_TOTAL_COL_OBS=false
@@ -158,17 +161,17 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_TEMPO_NO2_TOTAL_COL_OBS=false
    export RUN_TEMPO_NO2_TROP_COL_OBS=false # (done)
    export RUN_TES_CO_TOTAL_COL_OBS=false
-   export RUN_TES_CO_PROFILE_OBS=true # (works)
-   export RUN_TES_CO_CPSR_OBS=true # (works)
+   export RUN_TES_CO_PROFILE_OBS=false # (works)
+   export RUN_TES_CO_CPSR_OBS=false # (works)
    export RUN_TES_CO2_TOTAL_COL_OBS=false 
    export RUN_TES_CO2_PROFILE_OBS=false # (works, vertical sum)
    export RUN_TES_CO2_CPSR_OBS=false # (works, vertical sum)
    export RUN_TES_O3_TOTAL_COL_OBS=false
-   export RUN_TES_O3_PROFILE_OBS=true # (works)
-   export RUN_TES_O3_CPSR_OBS=true # (works)
+   export RUN_TES_O3_PROFILE_OBS=false # (works)
+   export RUN_TES_O3_CPSR_OBS=false # (works)
    export RUN_TES_NH3_TOTAL_COL_OBS=false
-   export RUN_TES_NH3_PROFILE_OBS=true # (works, vertical sum)
-   export RUN_TES_NH3_CPSR_OBS=true # (works, vertical sum)
+   export RUN_TES_NH3_PROFILE_OBS=false # (works, vertical sum)
+   export RUN_TES_NH3_CPSR_OBS=false # (works, vertical sum)
    export RUN_TES_CH4_TOTAL_COL_OBS=false
    export RUN_TES_CH4_PROFILE_OBS=false # (works, vertical sum)
    export RUN_TES_CH4_CPSR_OBS=false # (works, vertical sum)
@@ -190,24 +193,24 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_SCIAM_NO2_TOTAL_COL_OBS=false
    export RUN_SCIAM_NO2_TROP_COL_OBS=false # (works, vertical sum)
    export RUN_GOME2A_NO2_TOTAL_COL_OBS=false
-   export RUN_GOME2A_NO2_TROP_COL_OBS=true # (works, vertical sum)
+   export RUN_GOME2A_NO2_TROP_COL_OBS=false # (works, vertical sum)
    export RUN_MLS_O3_TOTAL_COL_OBS=false
-   export RUN_MLS_O3_PROFILE_OBS=true # (works, check)
-   export RUN_MLS_O3_CPSR_OBS=true # (works, vertical sum)
+   export RUN_MLS_O3_PROFILE_OBS=false # (works, check)
+   export RUN_MLS_O3_CPSR_OBS=false # (works, vertical sum)
    export RUN_MLS_HNO3_TOTAL_COL_OBS=false
-   export RUN_MLS_HNO3_PROFILE_OBS=true # (works, vertical sum)
-   export RUN_MLS_HNO3_CPSR_OBS=true # (works, vertical sum)
-   export RUN_AIRNOW_CO_OBS=true # (done)
-   export RUN_AIRNOW_O3_OBS=true # (done)
-   export RUN_AIRNOW_NO2_OBS=true # (done)
-   export RUN_AIRNOW_SO2_OBS=true # (done)
-   export RUN_AIRNOW_PM10_OBS=true # (done)
-   export RUN_AIRNOW_PM25_OBS=true # (done)
+   export RUN_MLS_HNO3_PROFILE_OBS=false # (works, vertical sum)
+   export RUN_MLS_HNO3_CPSR_OBS=false # (works, vertical sum)
+   export RUN_AIRNOW_CO_OBS=false # (done)
+   export RUN_AIRNOW_O3_OBS=false # (done)
+   export RUN_AIRNOW_NO2_OBS=false # (done)
+   export RUN_AIRNOW_SO2_OBS=false # (done)
+   export RUN_AIRNOW_PM10_OBS=false # (done)
+   export RUN_AIRNOW_PM25_OBS=false # (done)
    export RUN_PANDA_CO_OBS=false
    export RUN_PANDA_O3_OBS=false
    export RUN_PANDA_PM25_OBS=false
    export RUN_MEXICO_AQS_CO_OBS=false
-   export RUN_MET_OBS=true # (done)
+   export RUN_MET_OBS=false # (done)
    export RUN_COMBINE_OBS=true
    export RUN_PREPROCESS_OBS=true
    export RUN_LOCALIZATION=false
@@ -494,7 +497,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 ########################################################################
 #
-   if ${RUN_MOPITT_CO_TOTAL_COL_OBS}; then
+   if [[ ${RUN_MOPITT_CO_TOTAL_COL_OBS}==true || ${RUN_MOPITT_V8_CO_TOTAL_COL_OBS}==true ]]; then
       if [[ ! -d ${RUN_DIR}/${DATE}/mopitt_co_total_col_obs ]]; then
          mkdir -p ${RUN_DIR}/${DATE}/mopitt_co_total_col_obs
          cd ${RUN_DIR}/${DATE}/mopitt_co_total_col_obs
@@ -510,14 +513,21 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 ########################################################################
 #
-   if ${RUN_MOPITT_CO_PROFILE_OBS}; then
+   if [[ ${RUN_MOPITT_CO_PROFILE_OBS}==true || ${RUN_MOPITT_V8_CO_PROFILE_OBS}==true ]]; then
       if [[ ! -d ${RUN_DIR}/${DATE}/mopitt_co_profile_obs ]]; then
          mkdir -p ${RUN_DIR}/${DATE}/mopitt_co_profile_obs
          cd ${RUN_DIR}/${DATE}/mopitt_co_profile_obs
       else
          cd ${RUN_DIR}/${DATE}/mopitt_co_profile_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MOPITT_CO_Profile_FRAPPE.ksh > index_rs.html 2>&1
+      if ${RUN_MOPITT_CO_PROFILE_OBS}; then  
+        source ${RS_SCRIPTS_DIR}/RS_MOPITT_CO_Profile_FRAPPE.ksh > index_rs.html 2>&1
+      fi	  
+#      
+      if ${RUN_MOPITT_V8_CO_PROFILE_OBS}; then 
+         export  EXPERIMENT_MOPITT_CO_DIR=${EXPERIMENT_DATA_DIR}/mopitt_v8_co_hdf_data      
+         source ${RS_SCRIPTS_DIR}/RS_MOPITT_V8_CO_Profile_FRAPPE.ksh > index_rs.html 2>&1
+      fi
    fi
 #
 ########################################################################

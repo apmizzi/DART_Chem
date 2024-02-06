@@ -141,9 +141,9 @@ integer :: nlayer_iasi_o3_profile = -9999
 !     RETR - retrievals in retrieval (ppbv) format
 !     QOR  - quasi-optimal retrievals
 !     CPSR - compact phase space retrievals
-namelist /obs_def_IASI_O3_nml/ upper_data_file, IASI_O3_retrieval_type, &
-use_log_o3, nlayer_model, nlayer_iasi_o3_profile, &
-ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, upper_data_model
+
+namelist /obs_def_IASI_O3_nml/ upper_data_file, use_log_o3, nlayer_model, &
+nlayer_iasi_o3_profile, ls_chem_dx, ls_chem_dy, ls_chem_dz, ls_chem_dt, upper_data_model
 
 contains
 

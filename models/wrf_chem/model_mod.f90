@@ -351,7 +351,11 @@ TYPE wrf_static_data_for_dart
 
    integer  :: domain_size
    integer  :: localization_coord
-   real(r8), dimension(:),     pointer :: znu, dn, dnw, zs, znw
+!
+! APM; CHH +++
+   real(r8), dimension(:),     pointer :: znu, dn, dnw, zs, znw, c1h, c2h
+! APM; CHH ---
+!
    real(r8), dimension(:,:),   pointer :: mub, hgt
    real(r8), dimension(:,:),   pointer :: latitude, latitude_u, latitude_v
    real(r8), dimension(:,:),   pointer :: longitude, longitude_u, longitude_v
@@ -587,15 +591,11 @@ WRFDomains : do id=1,num_domains
    endif
 
    if(file_exist('wrfinput_d0'//idom)) then
-
-      call nc_check( nf90_open('wrfinput_d0'//idom, NF90_NOWRITE, ncid), &
-                     'static_init_model','open wrfinput_d0'//idom )
-
+      call nc_check(nf90_open('wrfinput_d0'//idom, NF90_NOWRITE, ncid), &
+                   'static_init_model','open wrfinput_d0'//idom )
    else
-
       call error_handler(E_ERR,'static_init_model', &
            'Please put wrfinput_d0'//idom//' in the work directory.', source, revision,revdate)
-
    endif
 
    if(debug) write(*,*) ' ncid is ',ncid
@@ -5555,8 +5555,11 @@ integer :: PERIODIC_XVarID, POLARVarID
 
 integer :: DNVarID, ZNUVarID, DNWVarID, phbVarID, &
      MubVarID, LonVarID, LatVarID, ilevVarID, XlandVarID, hgtVarID , LatuVarID, &
-     LatvVarID, LonuVarID, LonvVarID, ZNWVarID
-
+!
+! APM; CHH +++   
+     LatvVarID, LonuVarID, LonvVarID, ZNWVarID, C1HVarID, C2HVarID
+! APM; CHH ---
+!
 integer :: TimeDimID
 
 ! currently unused, but if needed could be added back in.  these fields
@@ -5608,8 +5611,8 @@ call nc_add_global_attribute(ncid, "model", "wrf")
 ret = nf90_inq_dimid(ncid, "Time", TimeDimID)
 if (ret /= NF90_NOERR) then
    call nc_check(nf90_def_dim(ncid=ncid, name="Time", &
-                 len = 1,  dimid = TimeDimID), &
-                 'nc_write_model_atts','def_dim domain')
+                len = 1,  dimid = TimeDimID), &
+                'nc_write_model_atts','def_dim domain')
 endif
 
 
@@ -5617,36 +5620,36 @@ endif
 !> the first dimension.
 
 call nc_check(nf90_def_dim(ncid=ncid, name='west_east', &
-              len = wrf%dom(id)%we,  dimid = weDimID), &
-              'nc_write_model_atts','def_dim west_east')
+             len = wrf%dom(id)%we,  dimid = weDimID), &
+             'nc_write_model_atts','def_dim west_east')
 call nc_check(nf90_def_dim(ncid=ncid, name='west_east_stag',   &
-              len = wrf%dom(id)%wes, dimid = weStagDimID), &
-              'nc_write_model_atts','def_dim west_east_stag')
+             len = wrf%dom(id)%wes, dimid = weStagDimID), &
+             'nc_write_model_atts','def_dim west_east_stag')
 call nc_check(nf90_def_dim(ncid=ncid, name='south_north',      &
-              len = wrf%dom(id)%sn,  dimid = snDimID), &
-              'nc_write_model_atts','def_dim south_north')
+             len = wrf%dom(id)%sn,  dimid = snDimID), &
+             'nc_write_model_atts','def_dim south_north')
 call nc_check(nf90_def_dim(ncid=ncid, name='south_north_stag', &
-              len = wrf%dom(id)%sns, dimid = snStagDimID), &
-              'nc_write_model_atts','def_dim south_north_stag')
+             len = wrf%dom(id)%sns, dimid = snStagDimID), &
+             'nc_write_model_atts','def_dim south_north_stag')
 call nc_check(nf90_def_dim(ncid=ncid, name='bottom_top',       &
-              len = wrf%dom(id)%bt,  dimid = btDimID), &
-              'nc_write_model_atts','def_dim bottom_top')
+             len = wrf%dom(id)%bt,  dimid = btDimID), &
+             'nc_write_model_atts','def_dim bottom_top')
 call nc_check(nf90_def_dim(ncid=ncid, name='bottom_top_stag',  &
-              len = wrf%dom(id)%bts, dimid = btStagDimID), &
-              'nc_write_model_atts','def_dim bottom_top_stag')
+             len = wrf%dom(id)%bts, dimid = btStagDimID), &
+             'nc_write_model_atts','def_dim bottom_top_stag')
 call nc_check(nf90_def_dim(ncid=ncid, name='soil_layers_stag',  &
-              len = wrf%dom(id)%sls, dimid = slSDimID), &
-              'nc_write_model_atts','def_dim soil_layers_stag')
+             len = wrf%dom(id)%sls, dimid = slSDimID), &
+             'nc_write_model_atts','def_dim soil_layers_stag')
 !
 ! APM +++
    if ( add_emiss ) then
       call nc_check(nf90_def_dim(ncid=ncid, name='emiss_chemi_zdim',       &
-                    len = wrf%dom(id)%e_bt_chemi,  dimid = e_bt_chemi_DimID(id)), &
-                    'nc_write_model_atts','def_dim emiss_chemi_zdim')
+                   len = wrf%dom(id)%e_bt_chemi,  dimid = e_bt_chemi_DimID(id)), &
+                   'nc_write_model_atts','def_dim emiss_chemi_zdim')
 !
       call nc_check(nf90_def_dim(ncid=ncid, name='emiss_firechemi_zdim',       &
-                    len = wrf%dom(id)%e_bt_firechemi,  dimid = e_bt_firechemi_DimID(id)), &
-                    'nc_write_model_atts','def_dim emiss_firechemi_zdim')
+                   len = wrf%dom(id)%e_bt_firechemi,  dimid = e_bt_firechemi_DimID(id)), &
+                   'nc_write_model_atts','def_dim emiss_firechemi_zdim')
    endif
 ! APM ---
 !
@@ -5658,191 +5661,207 @@ call nc_check(nf90_def_dim(ncid=ncid, name='soil_layers_stag',  &
 ! Create the (empty) static variables and their attributes
 ! Commented block is from wrfinput
 !-----------------------------------------------------------------
-
+!
 call nc_check(nf90_def_var(ncid, name='DX', xtype=nf90_real, &
-               varid=DXVarID), &
-              'nc_write_model_atts','def_var DX')
+              varid=DXVarID), &
+             'nc_write_model_atts','def_var DX')
 call nc_check(nf90_put_att(ncid, DXVarID, 'long_name', 'X HORIZONTAL RESOLUTION'), &
-              'nc_write_model_atts','put_att DX long_name')
+             'nc_write_model_atts','put_att DX long_name')
 call nc_check(nf90_put_att(ncid, DXVarID, 'description', 'X HORIZONTAL RESOLUTION'), &
-              'nc_write_model_atts','put_att DX description')
+             'nc_write_model_atts','put_att DX description')
 call nc_check(nf90_put_att(ncid, DXVarID, 'units', 'm'), &
-              'nc_write_model_atts','put_att DX units')
+             'nc_write_model_atts','put_att DX units')
 
 call nc_check(nf90_def_var(ncid, name='DY', xtype=nf90_real, &
-               varid=DYVarID), &
-              'nc_write_model_atts','def_var DY')
+             varid=DYVarID),'nc_write_model_atts','def_var DY')
 call nc_check(nf90_put_att(ncid, DYVarID, 'long_name', 'Y HORIZONTAL RESOLUTION'), &
-              'nc_write_model_atts','put_att DY long_name')
+             'nc_write_model_atts','put_att DY long_name')
 call nc_check(nf90_put_att(ncid, DYVarID, 'description', 'Y HORIZONTAL RESOLUTION'), &
-              'nc_write_model_atts','put_att DY description')
+             'nc_write_model_atts','put_att DY description')
 call nc_check(nf90_put_att(ncid, DYVarID, 'units', 'm'), &
-              'nc_write_model_atts','put_att DY units')
+             'nc_write_model_atts','put_att DY units')
 
 call nc_check(nf90_def_var(ncid, name='TRUELAT1', xtype=nf90_real, &
-               varid=TRUELAT1VarID), &
-              'nc_write_model_atts','def_var TRUELAT1')
+             varid=TRUELAT1VarID),'nc_write_model_atts','def_var TRUELAT1')
 call nc_check(nf90_put_att(ncid, TRUELAT1VarID, 'long_name', &
-              'first standard parallel'), &
-              'nc_write_model_atts','put_att TRUELAT1 long_name')
+             'first standard parallel'), &
+             'nc_write_model_atts','put_att TRUELAT1 long_name')
 call nc_check(nf90_put_att(ncid, TRUELAT1VarID, 'description', &
-              'first standard parallel'), &
-              'nc_write_model_atts','put_att TRUELAT1 description')
+             'first standard parallel'), &
+             'nc_write_model_atts','put_att TRUELAT1 description')
 call nc_check(nf90_put_att(ncid, TRUELAT1VarID, 'units', &
-              'degrees, negative is south'), &
-              'nc_write_model_atts','put_att TRUELAT1 units')
+             'degrees, negative is south'), &
+             'nc_write_model_atts','put_att TRUELAT1 units')
 
 call nc_check(nf90_def_var(ncid, name='TRUELAT2', xtype=nf90_real, &
-               varid=TRUELAT2VarID), &
-              'nc_write_model_atts','def_var TRUELAT2')
+             varid=TRUELAT2VarID), &
+             'nc_write_model_atts','def_var TRUELAT2')
 call nc_check(nf90_put_att(ncid, TRUELAT2VarID, 'long_name', &
-              'second standard parallel'), &
-              'nc_write_model_atts','put_att TRUELAT2 long_name')
+             'second standard parallel'), &
+             'nc_write_model_atts','put_att TRUELAT2 long_name')
 call nc_check(nf90_put_att(ncid, TRUELAT2VarID, 'description', &
-              'second standard parallel'), &
-              'nc_write_model_atts','put_att TRUELAT2 description')
+             'second standard parallel'), &
+             'nc_write_model_atts','put_att TRUELAT2 description')
 call nc_check(nf90_put_att(ncid, TRUELAT2VarID, 'units', &
-              'degrees, negative is south'), &
-              'nc_write_model_atts','put_att TRUELAT2 units')
+             'degrees, negative is south'), &
+             'nc_write_model_atts','put_att TRUELAT2 units')
 
 call nc_check(nf90_def_var(ncid, name='STAND_LON', xtype=nf90_real, &
-               varid=STAND_LONVarID), &
-              'nc_write_model_atts','def_var STAND_LON')
+             varid=STAND_LONVarID), &
+             'nc_write_model_atts','def_var STAND_LON')
 call nc_check(nf90_put_att(ncid, STAND_LONVarID, 'long_name', &
-              'standard longitude'), &
-              'nc_write_model_atts','put_att STAND_LON long_name')
+             'standard longitude'), &
+             'nc_write_model_atts','put_att STAND_LON long_name')
 call nc_check(nf90_put_att(ncid, STAND_LONVarID, 'description', &
-              'standard longitude'), &
-              'nc_write_model_atts','put_att STAND_LON description')
+             'standard longitude'), &
+             'nc_write_model_atts','put_att STAND_LON description')
 call nc_check(nf90_put_att(ncid, STAND_LONVarID, 'units', &
-              'degrees, negative is west'), &
-              'nc_write_model_atts','put_att STAND_LON units')
+             'degrees, negative is west'), &
+             'nc_write_model_atts','put_att STAND_LON units')
 
 call nc_check(nf90_def_var(ncid, name='CEN_LAT', xtype=nf90_real, &
-               varid=CEN_LATVarID), &
-              'nc_write_model_atts','def_var CEN_LAT')
+             varid=CEN_LATVarID), &
+             'nc_write_model_atts','def_var CEN_LAT')
 call nc_check(nf90_put_att(ncid, CEN_LATVarID, 'long_name', &
-              'center latitude'), &
-              'nc_write_model_atts','put_att CEN_LAT long_name')
+             'center latitude'), &
+             'nc_write_model_atts','put_att CEN_LAT long_name')
 call nc_check(nf90_put_att(ncid, CEN_LATVarID, 'description', &
-              'center latitude'), &
-              'nc_write_model_atts','put_att CEN_LAT description')
+             'center latitude'), &
+             'nc_write_model_atts','put_att CEN_LAT description')
 call nc_check(nf90_put_att(ncid, CEN_LATVarID, 'units', &
-              'degrees, negative is south'), &
-              'nc_write_model_atts','put_att CEN_LAT units')
+             'degrees, negative is south'), &
+             'nc_write_model_atts','put_att CEN_LAT units')
 
 call nc_check(nf90_def_var(ncid, name='CEN_LON', xtype=nf90_real, &
-               varid=CEN_LONVarID), &
-              'nc_write_model_atts','def_var CEN_LON')
+             varid=CEN_LONVarID), &
+             'nc_write_model_atts','def_var CEN_LON')
 call nc_check(nf90_put_att(ncid, CEN_LONVarID, 'long_name', &
-              'central longitude'), &
-              'nc_write_model_atts','put_att CEN_LON long_name')
+             'central longitude'), &
+             'nc_write_model_atts','put_att CEN_LON long_name')
 call nc_check(nf90_put_att(ncid, CEN_LONVarID, 'description', &
-              'central longitude'), &
-              'nc_write_model_atts','put_att CEN_LON description')
+             'central longitude'), &
+             'nc_write_model_atts','put_att CEN_LON description')
 call nc_check(nf90_put_att(ncid, CEN_LONVarID, 'units', &
-              'degrees, negative is west'), &
-              'nc_write_model_atts','put_att CEN_LON units')
+             'degrees, negative is west'), &
+             'nc_write_model_atts','put_att CEN_LON units')
 
 call nc_check(nf90_def_var(ncid, name='MAP_PROJ', xtype=nf90_real, &
-               varid=MAP_PROJVarID), &
-              'nc_write_model_atts','def_var MAP_PROJ')
+             varid=MAP_PROJVarID), &
+             'nc_write_model_atts','def_var MAP_PROJ')
 call nc_check(nf90_put_att(ncid, MAP_PROJVarID, 'long_name', &
-              'domain map projection'), &
-              'nc_write_model_atts','put_att MAP_PROJ long_name')
+             'domain map projection'), &
+             'nc_write_model_atts','put_att MAP_PROJ long_name')
 call nc_check(nf90_put_att(ncid, MAP_PROJVarID, 'description', &
-              'domain map projection'), &
-              'nc_write_model_atts','put_att MAP_PROJ description')
+             'domain map projection'), &
+             'nc_write_model_atts','put_att MAP_PROJ description')
 call nc_check(nf90_put_att(ncid, MAP_PROJVarID, 'units', &
-              '0=none, 1=Lambert, 2=polar, 3=Mercator, 5=Cylindrical, 6=Cassini'), &
-              'nc_write_model_atts','put_att MAP_PROJ units')
+             '0=none, 1=Lambert, 2=polar, 3=Mercator, 5=Cylindrical, 6=Cassini'), &
+             'nc_write_model_atts','put_att MAP_PROJ units')
 
 !nc -- we need to add in code here to report the domain values for the 
 !        boundary condition flags periodic_x and polar.  Since these are
 !        carried internally as logicals, they will first need to be 
 !        converted back to integers.
 call nc_check(nf90_def_var(ncid, name='PERIODIC_X', xtype=nf90_int, &
-               varid=PERIODIC_XVarID), &
-              'nc_write_model_atts','def_var PERIODIC_X')
+             varid=PERIODIC_XVarID), &
+             'nc_write_model_atts','def_var PERIODIC_X')
 call nc_check(nf90_put_att(ncid, PERIODIC_XVarID, 'long_name', &
-              'Longitudinal periodic b.c. flag'), &
-              'nc_write_model_atts','put_att PERIODIC_X long_name')
+             'Longitudinal periodic b.c. flag'), &
+             'nc_write_model_atts','put_att PERIODIC_X long_name')
 call nc_check(nf90_put_att(ncid, PERIODIC_XVarID, 'description', &
-              'Longitudinal periodic b.c. flag'), &
-              'nc_write_model_atts','put_att PERIODIC_X desciption')
+             'Longitudinal periodic b.c. flag'), &
+             'nc_write_model_atts','put_att PERIODIC_X desciption')
 call nc_check(nf90_put_att(ncid, PERIODIC_XVarID, 'units', &
-              'logical: 1 = .true., 0 = .false.'), &
-              'nc_write_model_atts','put_att PERIODIC_X units')
+             'logical: 1 = .true., 0 = .false.'), &
+             'nc_write_model_atts','put_att PERIODIC_X units')
 
 call nc_check(nf90_def_var(ncid, name='POLAR', xtype=nf90_int, &
-               varid=POLARVarID), &
-              'nc_write_model_atts','def_var POLAR')
+             varid=POLARVarID), &
+            'nc_write_model_atts','def_var POLAR')
 call nc_check(nf90_put_att(ncid, POLARVarID, 'long_name', &
-              'Polar periodic b.c. flag'), &
-              'nc_write_model_atts','put_att POLAR long_name')
+             'Polar periodic b.c. flag'), &
+             'nc_write_model_atts','put_att POLAR long_name')
 call nc_check(nf90_put_att(ncid, POLARVarID, 'description', &
-              'Polar periodic b.c. flag'), &
-              'nc_write_model_atts','put_att POLAR description')
+             'Polar periodic b.c. flag'), &
+             'nc_write_model_atts','put_att POLAR description')
 call nc_check(nf90_put_att(ncid, POLARVarID, 'units', &
               'logical: 1 = .true., 0 = .false.'), &
               'nc_write_model_atts','put_att POLAR units')
-
-
-
-write( idom , '(I1)') id
-
 call nc_check(nf90_def_var(ncid, name='DN', xtype=nf90_real, &
-                 dimids= btDimID, varid=DNVarID), &
-                 'nc_write_model_atts','def_var DN_do'//idom)
+             dimids= btDimID, varid=DNVarID), &
+             'nc_write_model_atts','def_var DN_do'//idom)
 call nc_check(nf90_put_att(ncid, DNVarID, 'long_name', &
-                 'dn values on half (mass) levels'), &
-                 'nc_write_model_atts','put_att DN_do'//idom//' long_name')
+             'dn values on half (mass) levels'), &
+             'nc_write_model_atts','put_att DN_do'//idom//' long_name')
 call nc_check(nf90_put_att(ncid, DNVarID, 'description', &
-                 'dn values on half (mass) levels'), &
-                 'nc_write_model_atts','put_att DN_do'//idom//' description')
+             'dn values on half (mass) levels'), &
+             'nc_write_model_atts','put_att DN_do'//idom//' description')
 call nc_check(nf90_put_att(ncid, DNVarID, 'units', &
-                 ''), &
-                 'nc_write_model_atts','put_att DN_do'//idom//' units')
+             ''),'nc_write_model_atts','put_att DN_do'//idom//' units')
 
 call nc_check(nf90_def_var(ncid, name='ZNU', xtype=nf90_real, &
-                 dimids= btDimID, varid=ZNUVarID), &
-                 'nc_write_model_atts','def_var ZNU')
+             dimids= btDimID, varid=ZNUVarID), &
+             'nc_write_model_atts','def_var ZNU')
 call nc_check(nf90_put_att(ncid, ZNUVarID, 'long_name', &
-                 'eta values on half (mass) levels'), &
-                 'nc_write_model_atts','put_att ZNU'//' long_name')
+             'eta values on half (mass) levels'), &
+             'nc_write_model_atts','put_att ZNU'//' long_name')
 call nc_check(nf90_put_att(ncid, ZNUVarID, 'description', &
-                 'eta values on half (mass) levels'), &
-                 'nc_write_model_atts','put_att ZNU'//' description')
+             'eta values on half (mass) levels'), &
+             'nc_write_model_atts','put_att ZNU'//' description')
 call nc_check(nf90_put_att(ncid, ZNUVarID, 'units', &
-                 ''), &
-                 'nc_write_model_atts','put_att ZNU'//' units')
+             ''),'nc_write_model_atts','put_att ZNU'//' units')
 
 call nc_check(nf90_def_var(ncid, name='ZNW', xtype=nf90_real, &
-                 dimids= btStagDimID, varid=ZNWVarID), &
-                 'nc_write_model_atts','def_var ZNW')
+             dimids= btStagDimID, varid=ZNWVarID), &
+             'nc_write_model_atts','def_var ZNW')
 call nc_check(nf90_put_att(ncid, ZNWVarID, 'long_name', &
-                 'eta values on full (mass) levels'), &
-                 'nc_write_model_atts','put_att ZNW'//' long_name')
+             'eta values on full (mass) levels'), &
+             'nc_write_model_atts','put_att ZNW'//' long_name')
 call nc_check(nf90_put_att(ncid, ZNWVarID, 'description', &
-                 'eta values on full (mass) levels'), &
-                 'nc_write_model_atts','put_att ZNW'//' description')
+             'eta values on full (mass) levels'), &
+             'nc_write_model_atts','put_att ZNW'//' description')
 call nc_check(nf90_put_att(ncid, ZNWVarID, 'units', &
-                 ''), &
-                 'nc_write_model_atts','put_att ZNW'//' units')
+             ''),'nc_write_model_atts','put_att ZNW'//' units')
 
 call nc_check(nf90_def_var(ncid, name='DNW', xtype=nf90_real, &
-                 dimids= btDimID, varid=DNWVarID), &
+             dimids= btDimID, varid=DNWVarID), &
                  'nc_write_model_atts','def_var DNW')
 call nc_check(nf90_put_att(ncid, DNWVarID, 'long_name', &
-                 'dn values on full (w) levels'), &
-                 'nc_write_model_atts','def_var DNW'//' long_name')
+             'dn values on full (w) levels'), &
+             'nc_write_model_atts','def_var DNW'//' long_name')
 call nc_check(nf90_put_att(ncid, DNWVarID, 'description', &
-                 'dn values on full (w) levels'), &
-                 'nc_write_model_atts','def_var DNW'//' description')
+             'dn values on full (w) levels'), &
+             'nc_write_model_atts','def_var DNW'//' description')
 call nc_check(nf90_put_att(ncid, DNWVarID, 'units', &
-                 ''), &
-                 'nc_write_model_atts','def_var DNW'//' units')
-
+             ''),'nc_write_model_atts','def_var DNW'//' units')
+!
+! APM; CHH +++
+! C1H
+call nc_check(nf90_def_var(ncid, name='C1H', xtype=nf90_real, &
+             dimids= btDimID, varid=C1HVarID), &
+             'nc_write_model_atts','def_var C1H')
+call nc_check(nf90_put_att(ncid, C1HVarID, 'long_name', &
+             'half levels, c1h = d bf / d eta'), &
+             'nc_write_model_atts','def_var C1H'//' long_name')
+call nc_check(nf90_put_att(ncid, C1HVarID, 'description', &
+             'half levels, c1h = d bf / d eta'), &
+             'nc_write_model_atts','def_var C1H'//' description')
+call nc_check(nf90_put_att(ncid, C1HVarID, 'units', &
+             ''),'nc_write_model_atts','def_var C1H'//' units')
+!
+! C2H
+call nc_check(nf90_def_var(ncid, name='C2H', xtype=nf90_real, &
+             dimids= btDimID, varid=C2HVarID), &
+             'nc_write_model_atts','def_var C2H')
+call nc_check(nf90_put_att(ncid, C2HVarID, 'long_name', &
+             'half levels c2h = (1-c1h)*(p0-pt)'), &
+             'nc_write_model_atts','def_var C2H'//' long_name')
+call nc_check(nf90_put_att(ncid, C2HVarID, 'description', &
+             'half levels c2h = (1-c1h)*(p0-pt)'), &
+             'nc_write_model_atts','def_var C2H'//' description')
+call nc_check(nf90_put_att(ncid, C2HVarID, 'units', &
+             ''),'nc_write_model_atts','def_var C2H'//' units')
+! APM; CHH ---
 !
 !    float MUB(Time, south_north, west_east) ;
 !            MUB:FieldType = 104 ;
@@ -5850,19 +5869,19 @@ call nc_check(nf90_put_att(ncid, DNWVarID, 'units', &
 !            MUB:stagger = '' ;
              coordinate_char = 'XLONG'//' XLAT'
 call nc_check(nf90_def_var(ncid, name='MUB', xtype=nf90_real, &
-                 dimids= (/ weDimID, snDimID /), varid=MubVarID), &
-                 'nc_write_model_atts','def_var MUB')
+             dimids= (/ weDimID, snDimID /), varid=MubVarID), &
+             'nc_write_model_atts','def_var MUB')
 call nc_check(nf90_put_att(ncid, MubVarID, 'long_name', &
-                 'base state dry air mass in column'), &
-                 'nc_write_model_atts','put_att MUB'//' long_name')
+             'base state dry air mass in column'), &
+             'nc_write_model_atts','put_att MUB'//' long_name')
 call nc_check(nf90_put_att(ncid, MubVarID, 'description', &
-                 'base state dry air mass in column'), &
-                 'nc_write_model_atts','put_att MUB'//' description')
+             'base state dry air mass in column'), &
+             'nc_write_model_atts','put_att MUB'//' description')
 call nc_check(nf90_put_att(ncid, MubVarID, 'units', 'Pa'), &
-                 'nc_write_model_atts','put_att MUB'//' units')
+             'nc_write_model_atts','put_att MUB'//' units')
 call nc_check(nf90_put_att(ncid, MubVarID, 'coordinates', &
-                 trim(coordinate_char)), &
-                 'nc_write_model_atts','put_att MUB'//' coordinates')
+             trim(coordinate_char)), &
+             'nc_write_model_atts','put_att MUB'//' coordinates')
 
 ! Longitudes
 !      float XLONG(Time, south_north, west_east) ;
@@ -5870,57 +5889,57 @@ call nc_check(nf90_put_att(ncid, MubVarID, 'coordinates', &
 !         XLONG:MemoryOrder = 'XY ' ;
 !         XLONG:stagger = '' ;
    call nc_check(nf90_def_var(ncid, name='XLONG', xtype=nf90_real, &
-                 dimids= (/ weDimID, snDimID /), varid=LonVarID),  &
-                 'nc_write_model_atts','def_var XLONG')
+                dimids= (/ weDimID, snDimID /), varid=LonVarID),  &
+                'nc_write_model_atts','def_var XLONG')
    call nc_check(nf90_put_att(ncid, LonVarID, 'long_name', &
-                 'LONGITUDE, WEST IS NEGATIVE'), &
-                 'nc_write_model_atts','put_att XLONG'//' long_name')
+                'LONGITUDE, WEST IS NEGATIVE'), &
+                'nc_write_model_atts','put_att XLONG'//' long_name')
    call nc_check(nf90_put_att(ncid, LonVarID, 'units', 'degrees_east'), &
-                 'nc_write_model_atts','put_att XLONG'//' units')
+                'nc_write_model_atts','put_att XLONG'//' units')
    call nc_check(nf90_put_att(ncid, LonVarID, 'valid_range', &
-                 (/ -180.0_r8, 180.0_r8 /)), &
-                 'nc_write_model_atts','put_att XLONG'//' valid_range')
+                (/ -180.0_r8, 180.0_r8 /)), &
+                'nc_write_model_atts','put_att XLONG'//' valid_range')
    call nc_check(nf90_put_att(ncid, LonVarID, 'description', &
-                 'LONGITUDE, WEST IS NEGATIVE'), &
-                 'nc_write_model_atts','put_att XLONG'//' description')
+                'LONGITUDE, WEST IS NEGATIVE'), &
+                'nc_write_model_atts','put_att XLONG'//' description')
 
 !      float XLONG_U(Time, south_north, west_east_stag) ;
 !         XLONG:FieldType = 104 ;
 !         XLONG:MemoryOrder = 'XY ' ;
 !         XLONG:stagger = '' ;
    call nc_check(nf90_def_var(ncid, name='XLONG_U', xtype=nf90_real, &
-                 dimids= (/ weStagDimID, snDimID /), varid=LonuVarID),  &
-                 'nc_write_model_atts','def_var XLONG_U')
+                dimids= (/ weStagDimID, snDimID /), varid=LonuVarID),  &
+                'nc_write_model_atts','def_var XLONG_U')
    call nc_check(nf90_put_att(ncid, LonuVarID, 'long_name', &
-                 'LONGITUDE, WEST IS NEGATIVE'), &
-                 'nc_write_model_atts','put_att XLONG_U'//' long_name')
+                'LONGITUDE, WEST IS NEGATIVE'), &
+                'nc_write_model_atts','put_att XLONG_U'//' long_name')
    call nc_check(nf90_put_att(ncid, LonuVarID, 'units', 'degrees_east'), &
-                 'nc_write_model_atts','put_att XLONG_U'//' units')
+                'nc_write_model_atts','put_att XLONG_U'//' units')
    call nc_check(nf90_put_att(ncid, LonuVarID, 'valid_range', &
-                 (/ -180.0_r8, 180.0_r8 /)), &
-                 'nc_write_model_atts','put_att XLONG_U'//' valid_range')
+                (/ -180.0_r8, 180.0_r8 /)), &
+                'nc_write_model_atts','put_att XLONG_U'//' valid_range')
    call nc_check(nf90_put_att(ncid, LonuVarID, 'description', &
-                 'LONGITUDE, WEST IS NEGATIVE'), &
-                 'nc_write_model_atts','put_att XLONG_U'//' description')
+                'LONGITUDE, WEST IS NEGATIVE'), &
+                'nc_write_model_atts','put_att XLONG_U'//' description')
 
 !      float XLONG_V(Time, south_north_stag, west_east) ;
 !         XLONG:FieldType = 104 ;
 !         XLONG:MemoryOrder = 'XY ' ;
 !         XLONG:stagger = '' ;
 call nc_check(nf90_def_var(ncid, name='XLONG_V', xtype=nf90_real, &
-                 dimids= (/ weDimID, snStagDimID /), varid=LonvVarID),  &
-                 'nc_write_model_atts','def_var XLONG_V')
+             dimids= (/ weDimID, snStagDimID /), varid=LonvVarID),  &
+             'nc_write_model_atts','def_var XLONG_V')
 call nc_check(nf90_put_att(ncid, LonvVarID, 'long_name', &
-                 'LONGITUDE, WEST IS NEGATIVE'), &
-                 'nc_write_model_atts','put_att XLONG_V'//' long_name')
+             'LONGITUDE, WEST IS NEGATIVE'), &
+             'nc_write_model_atts','put_att XLONG_V'//' long_name')
 call nc_check(nf90_put_att(ncid, LonvVarID, 'units', 'degrees_east'), &
-                 'nc_write_model_atts','put_att XLONG_V'//' units')
+             'nc_write_model_atts','put_att XLONG_V'//' units')
 call nc_check(nf90_put_att(ncid, LonvVarID, 'valid_range', &
-                 (/ -180.0_r8, 180.0_r8 /)), &
-                 'nc_write_model_atts','put_att XLONG_V'//' valid_range')
+             (/ -180.0_r8, 180.0_r8 /)), &
+             'nc_write_model_atts','put_att XLONG_V'//' valid_range')
 call nc_check(nf90_put_att(ncid, LonvVarID, 'description', &
-                 'LONGITUDE, WEST IS NEGATIVE'), &
-                 'nc_write_model_atts','put_att XLONG_V'//' description')
+             'LONGITUDE, WEST IS NEGATIVE'), &
+             'nc_write_model_atts','put_att XLONG_V'//' description')
 
 ! Latitudes
 !      float XLAT(Time, south_north, west_east) ;
@@ -5928,71 +5947,71 @@ call nc_check(nf90_put_att(ncid, LonvVarID, 'description', &
 !         XLAT:MemoryOrder = 'XY ' ;
 !         XLAT:stagger = '' ;
 call nc_check(nf90_def_var(ncid, name='XLAT', xtype=nf90_real, &
-                 dimids=(/ weDimID, snDimID /), varid=LatVarID), &
-                 'nc_write_model_atts','def_var XLAT') 
+             dimids=(/ weDimID, snDimID /), varid=LatVarID), &
+             'nc_write_model_atts','def_var XLAT') 
 call nc_check(nf90_put_att(ncid, LatVarID, 'long_name', &
-                 'LATITUDE, SOUTH IS NEGATIVE'), &
-                 'nc_write_model_atts','put_att XLAT'//' long_name')
+             'LATITUDE, SOUTH IS NEGATIVE'), &
+             'nc_write_model_atts','put_att XLAT'//' long_name')
 call nc_check(nf90_put_att(ncid, LatVarID, 'units', 'degrees_north'), &
-                 'nc_write_model_atts','put_att XLAT'//' units')
+             'nc_write_model_atts','put_att XLAT'//' units')
 call nc_check(nf90_put_att(ncid, LatVarID, 'valid_range', &
-                 (/ -90.0_r8, 90.0_r8 /)), &
-                 'nc_write_model_atts','put_att XLAT'//' valid_range')
+             (/ -90.0_r8, 90.0_r8 /)), &
+             'nc_write_model_atts','put_att XLAT'//' valid_range')
 call nc_check(nf90_put_att(ncid, LatVarID, 'description', &
-                 'LATITUDE, SOUTH IS NEGATIVE'), &
-                 'nc_write_model_atts','put_att XLAT'//' description')
+             'LATITUDE, SOUTH IS NEGATIVE'), &
+             'nc_write_model_atts','put_att XLAT'//' description')
 
 !      float XLAT_U(Time, south_north, west_east_stag) ;
 !         XLAT_U:FieldType = 104 ;
 !         XLAT_U:MemoryOrder = 'XY ' ;
 !         XLAT_U:stagger = '' ;
 call nc_check(nf90_def_var(ncid, name='XLAT_U', xtype=nf90_real, &
-                 dimids=(/ weStagDimID, snDimID /), varid=LatuVarID), &
-                 'nc_write_model_atts','def_var XLAT_U') 
+             dimids=(/ weStagDimID, snDimID /), varid=LatuVarID), &
+             'nc_write_model_atts','def_var XLAT_U') 
 call nc_check(nf90_put_att(ncid, LatuVarID, 'long_name', &
-                 'LATITUDE, SOUTH IS NEGATIVE'), &
-                 'nc_write_model_atts','put_att XLAT_U'//' long_name')
+             'LATITUDE, SOUTH IS NEGATIVE'), &
+             'nc_write_model_atts','put_att XLAT_U'//' long_name')
 call nc_check(nf90_put_att(ncid, LatuVarID, 'units', 'degrees_north'), &
-                 'nc_write_model_atts','put_att XLAT_U'//' units')
+             'nc_write_model_atts','put_att XLAT_U'//' units')
 call nc_check(nf90_put_att(ncid, LatuVarID, 'valid_range', &
-                 (/ -90.0_r8, 90.0_r8 /)), &
-                 'nc_write_model_atts','put_att XLAT_U'//' valid_range')
+             (/ -90.0_r8, 90.0_r8 /)), &
+             'nc_write_model_atts','put_att XLAT_U'//' valid_range')
 call nc_check(nf90_put_att(ncid, LatuVarID, 'description', &
-                 'LATITUDE, SOUTH IS NEGATIVE'), &
-                 'nc_write_model_atts','put_att XLAT_U'//' description')
+             'LATITUDE, SOUTH IS NEGATIVE'), &
+             'nc_write_model_atts','put_att XLAT_U'//' description')
 
 !      float XLAT_V(Time, south_north_stag, west_east) ;
 !         XLAT_V:FieldType = 104 ;
 !         XLAT_V:MemoryOrder = 'XY ' ;
 !         XLAT_V:stagger = '' ;
 call nc_check(nf90_def_var(ncid, name='XLAT_V', xtype=nf90_real, &
-                 dimids=(/ weDimID, snStagDimID /), varid=LatvVarID), &
-                 'nc_write_model_atts','def_var XLAT_V') 
+             dimids=(/ weDimID, snStagDimID /), varid=LatvVarID), &
+             'nc_write_model_atts','def_var XLAT_V') 
 call nc_check(nf90_put_att(ncid, LatvVarID, 'long_name', &
-                 'LATITUDE, SOUTH IS NEGATIVE'), &
-                 'nc_write_model_atts','put_att XLAT_V'//' long_name')
+             'LATITUDE, SOUTH IS NEGATIVE'), &
+             'nc_write_model_atts','put_att XLAT_V'//' long_name')
 call nc_check(nf90_put_att(ncid, LatvVarID, 'units', 'degrees_north'), &
-                 'nc_write_model_atts','put_att XLAT_V'//' units')
+             'nc_write_model_atts','put_att XLAT_V'//' units')
 call nc_check(nf90_put_att(ncid, LatvVarID, 'valid_range', &
-                 (/ -90.0_r8, 90.0_r8 /)), &
-                 'nc_write_model_atts','put_att XLAT_V'//' valid_range')
+             (/ -90.0_r8, 90.0_r8 /)), &
+             'nc_write_model_atts','put_att XLAT_V'//' valid_range')
 call nc_check(nf90_put_att(ncid, LatvVarID, 'description', &
-                 'LATITUDE, SOUTH IS NEGATIVE'), &
-                 'nc_write_model_atts','put_att XLAT_V'//' description')
+             'LATITUDE, SOUTH IS NEGATIVE'), &
+             'nc_write_model_atts','put_att XLAT_V'//' description')
 
 ! grid levels
 call nc_check(nf90_def_var(ncid, name='level', xtype=nf90_short, &
-                 dimids=btDimID, varid=ilevVarID), &
-                 'nc_write_model_atts','def_var level')
+             dimids=btDimID, varid=ilevVarID), &
+             'nc_write_model_atts','def_var level')
 call nc_check(nf90_put_att(ncid, ilevVarID, 'long_name', &
-                 'level index'), &
-                 'nc_write_model_atts','put_att level'//' long_name')
+             'level index'), &
+             'nc_write_model_atts','put_att level'//' long_name')
 call nc_check(nf90_put_att(ncid, ilevVarID, 'description', &
-                 'level index'), &
-                 'nc_write_model_atts','put_att level'//' description')
+             'level index'), &
+             'nc_write_model_atts','put_att level'//' description')
 call nc_check(nf90_put_att(ncid, ilevVarID, 'units', &
-                 ''), &
-                 'nc_write_model_atts','put_att level'//' units')
+             ''), &
+             'nc_write_model_atts','put_att level'//' units')
 
 ! Land Mask
 !    float XLAND(Time, south_north, west_east) ;
@@ -6002,21 +6021,21 @@ call nc_check(nf90_put_att(ncid, ilevVarID, 'units', &
 !            XLAND:stagger = '' ;
              coordinate_char = 'XLONG'//' XLAT'
 call nc_check(nf90_def_var(ncid, name='XLAND', xtype=nf90_short, &
-                 dimids= (/ weDimID, snDimID /), varid=XlandVarID),  &
-                 'nc_write_model_atts','def_var XLAND')
+             dimids= (/ weDimID, snDimID /), varid=XlandVarID),  &
+             'nc_write_model_atts','def_var XLAND')
 call nc_check(nf90_put_att(ncid, XlandVarID, 'long_name', &
-                 'LAND MASK (1 FOR LAND, 2 FOR WATER)'), &
-                 'nc_write_model_atts','put_att XLAND'//' long_name')
+             'LAND MASK (1 FOR LAND, 2 FOR WATER)'), &
+             'nc_write_model_atts','put_att XLAND'//' long_name')
 call nc_check(nf90_put_att(ncid, XlandVarID, 'units', ' '), &
-                 'nc_write_model_atts','put_att XLAND'//' units')
+             'nc_write_model_atts','put_att XLAND'//' units')
 call nc_check(nf90_put_att(ncid, XlandVarID, 'coordinates', &
-                 trim(coordinate_char)), &
-                 'nc_write_model_atts','put_att XLAND'//' coordinates')
+             trim(coordinate_char)), &
+             'nc_write_model_atts','put_att XLAND'//' coordinates')
 call nc_check(nf90_put_att(ncid, XlandVarID, 'valid_range', (/ 1, 2 /)), &
-                 'nc_write_model_atts','put_att XLAND'//' valid_range')
+             'nc_write_model_atts','put_att XLAND'//' valid_range')
 call nc_check(nf90_put_att(ncid, XlandVarID, 'description', &
-                 'LAND MASK (1 FOR LAND, 2 FOR WATER)'), &
-                 'nc_write_model_atts','put_att XLAND'//' description')
+             'LAND MASK (1 FOR LAND, 2 FOR WATER)'), &
+             'nc_write_model_atts','put_att XLAND'//' description')
 
 ! PHB
 !    float PHB(Time, bottom_top_stag, south_north, west_east) ;
@@ -6025,37 +6044,37 @@ call nc_check(nf90_put_att(ncid, XlandVarID, 'description', &
 !            PHB:stagger = 'Z' ;
              coordinate_char = 'XLONG'//' XLAT'
 call nc_check(nf90_def_var(ncid, name='PHB', xtype=nf90_real, &
-        dimids= (/ weDimID, snDimID, btStagDimID /), varid=phbVarId), &
-        'nc_write_model_atts','def_var PHB')
+             dimids= (/ weDimID, snDimID, btStagDimID /), varid=phbVarId), &
+             'nc_write_model_atts','def_var PHB')
 call nc_check(nf90_put_att(ncid, phbVarId, 'long_name', &
-                 'base-state geopotential'), &
-                 'nc_write_model_atts','put_att PHB'//' long_name')
+             'base-state geopotential'), &
+             'nc_write_model_atts','put_att PHB'//' long_name')
 call nc_check(nf90_put_att(ncid, phbVarId, 'description', &
-                 'base-state geopotential'), &
-                 'nc_write_model_atts','put_att PHB'//' description')
+             'base-state geopotential'), &
+             'nc_write_model_atts','put_att PHB'//' description')
 call nc_check(nf90_put_att(ncid, phbVarId, 'units', 'm2/s2'), &
-                 'nc_write_model_atts','put_att PHB'//' units')
+             'nc_write_model_atts','put_att PHB'//' units')
 call nc_check(nf90_put_att(ncid, phbVarId, 'coordinates', &
-                 trim(coordinate_char)), &
-                 'nc_write_model_atts','put_att PHB'//' coordinates')
+             trim(coordinate_char)), &
+             'nc_write_model_atts','put_att PHB'//' coordinates')
 call nc_check(nf90_put_att(ncid, phbVarId, 'units_long_name', 'm{2} s{-2}'), &
-                 'nc_write_model_atts','put_att PHB'//' units_long_name')
+             'nc_write_model_atts','put_att PHB'//' units_long_name')
 
              coordinate_char = 'XLONG'//' XLAT'
 call nc_check(nf90_def_var(ncid, name='HGT', xtype=nf90_real, &
-                 dimids= (/ weDimID, snDimID /), varid=hgtVarId), &
-                 'nc_write_model_atts','def_var HGT')
+             dimids= (/ weDimID, snDimID /), varid=hgtVarId), &
+             'nc_write_model_atts','def_var HGT')
 call nc_check(nf90_put_att(ncid, hgtVarId, 'long_name', 'Terrain Height'), &
-                 'nc_write_model_atts','put_att HGT'//' long_name')
+             'nc_write_model_atts','put_att HGT'//' long_name')
 call nc_check(nf90_put_att(ncid, hgtVarId, 'description', 'Terrain Height'), &
-                 'nc_write_model_atts','put_att HGT'//' description')
+             'nc_write_model_atts','put_att HGT'//' description')
 call nc_check(nf90_put_att(ncid, hgtVarId, 'units', 'm'), &
-                 'nc_write_model_atts','put_att HGT'//' units')
+             'nc_write_model_atts','put_att HGT'//' units')
 call nc_check(nf90_put_att(ncid, hgtVarId, 'coordinates', &
-                 trim(coordinate_char)), &
-                 'nc_write_model_atts','put_att HGT'//' coordinates')
+             trim(coordinate_char)), &
+             'nc_write_model_atts','put_att HGT'//' coordinates')
 call nc_check(nf90_put_att(ncid, hgtVarId, 'units_long_name', 'meters'), &
-                 'nc_write_model_atts','put_att HGT'//' units_long_name')
+             'nc_write_model_atts','put_att HGT'//' units_long_name')
 
 ! Leave define mode so we can actually fill the variables.
 call nc_end_define_mode(ncid)
@@ -6065,21 +6084,21 @@ call nc_end_define_mode(ncid)
 !-----------------------------------------------------------------
 
 call nc_check(nf90_put_var(ncid,        DXVarID, wrf%dom(id)%dx), &
-              'nc_write_model_atts','put_var dx')
+             'nc_write_model_atts','put_var dx')
 call nc_check(nf90_put_var(ncid,        DYVarID, wrf%dom(id)%dy), &
-              'nc_write_model_atts','put_var dy')
+             'nc_write_model_atts','put_var dy')
 call nc_check(nf90_put_var(ncid,  TRUELAT1VarID, wrf%dom(id)%proj%truelat1), &
-              'nc_write_model_atts','put_var truelat1')
+             'nc_write_model_atts','put_var truelat1')
 call nc_check(nf90_put_var(ncid,  TRUELAT2VarID, wrf%dom(id)%proj%truelat2), &
-              'nc_write_model_atts','put_var truelat2')
+             'nc_write_model_atts','put_var truelat2')
 call nc_check(nf90_put_var(ncid, STAND_LONVarID, wrf%dom(id)%proj%stdlon), &
-              'nc_write_model_atts','put_var stdlon')
+             'nc_write_model_atts','put_var stdlon')
 call nc_check(nf90_put_var(ncid,   CEN_LATVarID, wrf%dom(id)%cen_lat), &
-              'nc_write_model_atts','put_var cen_lat')
+             'nc_write_model_atts','put_var cen_lat')
 call nc_check(nf90_put_var(ncid,   CEN_LONVarID, wrf%dom(id)%cen_lon), &
-              'nc_write_model_atts','put_var cen_lon')
+             'nc_write_model_atts','put_var cen_lon')
 call nc_check(nf90_put_var(ncid,  MAP_PROJVarID, wrf%dom(id)%map_proj), &
-              'nc_write_model_atts','put_var map_proj')
+             'nc_write_model_atts','put_var map_proj')
 
 !nc -- convert internally logical boundary condition variables into integers before filling
 if ( wrf%dom(id)%periodic_x ) then
@@ -6088,7 +6107,7 @@ else
    tmp = 0
 endif
 call nc_check(nf90_put_var(ncid, PERIODIC_XVarID, tmp ), &
-              'nc_write_model_atts','put_var PERIODIC_XVarID')
+             'nc_write_model_atts','put_var PERIODIC_XVarID')
 
 if ( wrf%dom(id)%polar ) then
    tmp = 1
@@ -6096,19 +6115,26 @@ else
    tmp = 0
 endif
 call nc_check(nf90_put_var(ncid, POLARVarID, tmp ), &
-              'nc_write_model_atts','put var POLARVarID')
+             'nc_write_model_atts','put var POLARVarID')
 
 
 ! defining grid levels
 call nc_check(nf90_put_var(ncid,       DNVarID, wrf%dom(id)%dn), &
-              'nc_write_model_atts','put_var dn')
+             'nc_write_model_atts','put_var dn')
 call nc_check(nf90_put_var(ncid,      ZNUVarID, wrf%dom(id)%znu), &
-              'nc_write_model_atts','put_var znu')
+             'nc_write_model_atts','put_var znu')
 call nc_check(nf90_put_var(ncid,      ZNWVarID, wrf%dom(id)%znw), &
-              'nc_write_model_atts','put_var znw')
+             'nc_write_model_atts','put_var znw')
 call nc_check(nf90_put_var(ncid,      DNWVarID, wrf%dom(id)%dnw), &
-              'nc_write_model_atts','put_var dnw')
-
+             'nc_write_model_atts','put_var dnw')
+!
+! APM; CHH +++
+call nc_check(nf90_put_var(ncid,      C1HVarID, wrf%dom(id)%c1h), &
+             'nc_write_model_atts','put_var c1h')
+call nc_check(nf90_put_var(ncid,      C2HVarID, wrf%dom(id)%c2h), &
+             'nc_write_model_atts','put_var c2h')
+! APM; CHH ---
+!
 ! defining horizontal
 call nc_check(nf90_put_var(ncid,      mubVarID, wrf%dom(id)%mub), &
               'nc_write_model_atts','put_var mub')
@@ -7078,7 +7104,12 @@ ph_e = ( (x_iphp1 + wrf%dom(id)%phb(i,j,k+1)) &
 ! now calculate rho = - mu / dphi/deta
 
 model_rho_t_distrib(:) = - (wrf%dom(id)%mub(i,j)+x_imu) / ph_e
-
+!
+! APM; CHH +++
+! for hybrid coordinate
+model_rho_t_distrib(:) = - (wrf%dom(id)%c1h(k)*(wrf%dom(id)%mub(i,j)+x_imu) + wrf%dom(id)%c2h(k)) / ph_e
+! APM; CHH ---
+! 
 end function model_rho_t_distrib
 
 !#######################################################
@@ -8936,53 +8967,71 @@ logical, parameter    :: debug = .false.
 integer               :: var_id 
 
    call nc_check( nf90_inq_varid(ncid, "P_TOP", var_id), &
-                     'read_wrf_static_data','inq_varid P_TOP')
+                'read_wrf_static_data','inq_varid P_TOP')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%p_top), &
-                     'read_wrf_static_data','get_var P_TOP')
+                'read_wrf_static_data','get_var P_TOP')
 
 !  get 1D (z) static data defining grid levels
 
    allocate(wrf%dom(id)%dn(1:wrf%dom(id)%bt))
    call nc_check( nf90_inq_varid(ncid, "DN", var_id), &
-                     'read_wrf_static_data','inq_varid DN')
+                'read_wrf_static_data','inq_varid DN')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%dn), &
-                     'read_wrf_static_data','get_var DN')
+                'read_wrf_static_data','get_var DN')
    if(debug) write(*,*) ' dn ',wrf%dom(id)%dn
 
    allocate(wrf%dom(id)%znu(1:wrf%dom(id)%bt))
    call nc_check( nf90_inq_varid(ncid, "ZNU", var_id), &
-                     'read_wrf_static_data','inq_varid ZNU')
+                'read_wrf_static_data','inq_varid ZNU')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%znu), &
-                     'read_wrf_static_data','get_var ZNU')
+                'read_wrf_static_data','get_var ZNU')
    if(debug) write(*,*) ' znu is ',wrf%dom(id)%znu
 
    allocate(wrf%dom(id)%znw(1:wrf%dom(id)%bts))
    call nc_check( nf90_inq_varid(ncid, "ZNW", var_id), &
-                     'read_wrf_static_data','inq_varid ZNW')
+                'read_wrf_static_data','inq_varid ZNW')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%znw), &
-                     'read_wrf_static_data','get_var ZNW')
+                'read_wrf_static_data','get_var ZNW')
    if(debug) write(*,*) ' znw is ',wrf%dom(id)%znw
 
    allocate(wrf%dom(id)%dnw(1:wrf%dom(id)%bt))
    call nc_check( nf90_inq_varid(ncid, "DNW", var_id), &
-                     'read_wrf_static_data','inq_varid DNW')
+                'read_wrf_static_data','inq_varid DNW')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%dnw), &
-                     'read_wrf_static_data','get_var DNW')
+                'read_wrf_static_data','get_var DNW')
    if(debug) write(*,*) ' dnw is ',wrf%dom(id)%dnw
-
+!
+! APM; CHH +++
+! C1H
+   allocate(wrf%dom(id)%c1h(1:wrf%dom(id)%bt))
+   call nc_check(nf90_inq_varid(ncid, "C1H", var_id), &
+                'read_wrf_static_data','inq_varid C1H')
+   call nc_check(nf90_get_var(ncid, var_id, wrf%dom(id)%c1h), &
+                'read_wrf_static_data','get_var C1H')
+   if(debug) write(*,*) ' c1h is ',wrf%dom(id)%c1h
+! 
+! C2H
+   allocate(wrf%dom(id)%c2h(1:wrf%dom(id)%bt))
+   call nc_check(nf90_inq_varid(ncid, "C2H", var_id), &
+                'read_wrf_static_data','inq_varid C2H')
+   call nc_check(nf90_get_var(ncid, var_id, wrf%dom(id)%c2h), &
+                'read_wrf_static_data','get_var C2H')
+   if(debug) write(*,*) ' c2h is ',wrf%dom(id)%c2h
+! APM; CHH ---
+!
    allocate(wrf%dom(id)%zs(1:wrf%dom(id)%sls))
    call nc_check( nf90_inq_varid(ncid, "ZS", var_id), &
-                     'read_wrf_static_data','inq_varid ZS')
+                'read_wrf_static_data','inq_varid ZS')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%zs), &
-                     'read_wrf_static_data','get_var ZS')
+                'read_wrf_static_data','get_var ZS')
 
 !  get 2D (x,y) base state for mu, latitude, longitude
 
    allocate(wrf%dom(id)%mub(1:wrf%dom(id)%we,1:wrf%dom(id)%sn))
    call nc_check( nf90_inq_varid(ncid, "MUB", var_id), &
-                     'read_wrf_static_data','inq_varid MUB')
+                'read_wrf_static_data','inq_varid MUB')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%mub), &
-                     'read_wrf_static_data','get_var MUB')
+                'read_wrf_static_data','get_var MUB')
    if(debug) then
       write(*,*) ' corners of mub '
       write(*,*) wrf%dom(id)%mub(1,1),wrf%dom(id)%mub(wrf%dom(id)%we,1),  &
@@ -8992,45 +9041,45 @@ integer               :: var_id
 
    allocate(wrf%dom(id)%longitude(1:wrf%dom(id)%we,1:wrf%dom(id)%sn))
    call nc_check( nf90_inq_varid(ncid, "XLONG", var_id), &
-                     'read_wrf_static_data','inq_varid XLONG')
+                'read_wrf_static_data','inq_varid XLONG')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%longitude), &
-                     'read_wrf_static_data','get_var XLONG')
+                'read_wrf_static_data','get_var XLONG')
 
    allocate(wrf%dom(id)%longitude_u(1:wrf%dom(id)%wes,1:wrf%dom(id)%sn))
    call nc_check( nf90_inq_varid(ncid, "XLONG_U", var_id), &
-                     'read_wrf_static_data','inq_varid XLONG_U')
+                'read_wrf_static_data','inq_varid XLONG_U')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%longitude_u), &
-                     'read_wrf_static_data','get_var XLONG_U')
+                'read_wrf_static_data','get_var XLONG_U')
 
    allocate(wrf%dom(id)%longitude_v(1:wrf%dom(id)%we,1:wrf%dom(id)%sns))
    call nc_check( nf90_inq_varid(ncid, "XLONG_V", var_id), &
-                     'read_wrf_static_data','inq_varid XLONG_V')
+                'read_wrf_static_data','inq_varid XLONG_V')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%longitude_v), &
-                     'read_wrf_static_data','get_var XLONG_V')
+                'read_wrf_static_data','get_var XLONG_V')
 
    allocate(wrf%dom(id)%latitude(1:wrf%dom(id)%we,1:wrf%dom(id)%sn))
    call nc_check( nf90_inq_varid(ncid, "XLAT", var_id), &
-                     'read_wrf_static_data','inq_varid XLAT')
+                'read_wrf_static_data','inq_varid XLAT')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%latitude), &
-                     'read_wrf_static_data','get_var XLAT')
+                'read_wrf_static_data','get_var XLAT')
 
    allocate(wrf%dom(id)%latitude_u(1:wrf%dom(id)%wes,1:wrf%dom(id)%sn))
    call nc_check( nf90_inq_varid(ncid, "XLAT_U", var_id), &
-                     'read_wrf_static_data','inq_varid XLAT_U')
+                'read_wrf_static_data','inq_varid XLAT_U')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%latitude_u), &
-                     'read_wrf_static_data','get_var XLAT_U')
+                'read_wrf_static_data','get_var XLAT_U')
 
    allocate(wrf%dom(id)%latitude_v(1:wrf%dom(id)%we,1:wrf%dom(id)%sns))
    call nc_check( nf90_inq_varid(ncid, "XLAT_V", var_id), &
-                     'read_wrf_static_data','inq_varid XLAT_V')
+                'read_wrf_static_data','inq_varid XLAT_V')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%latitude_v), &
-                     'read_wrf_static_data','get_var XLAT_V')
+                'read_wrf_static_data','get_var XLAT_V')
 
    allocate(wrf%dom(id)%land(1:wrf%dom(id)%we,1:wrf%dom(id)%sn))
    call nc_check( nf90_inq_varid(ncid, "XLAND", var_id), &
-                     'read_wrf_static_data','inq_varid XLAND')
+                'read_wrf_static_data','inq_varid XLAND')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%land), &
-                     'read_wrf_static_data','get_var XLAND')
+                'read_wrf_static_data','get_var XLAND')
    if(debug) then
       write(*,*) ' corners of land '
       write(*,*) wrf%dom(id)%land(1,1),wrf%dom(id)%land(wrf%dom(id)%we,1),  &
@@ -9051,17 +9100,17 @@ integer               :: var_id
 
    allocate(wrf%dom(id)%hgt(1:wrf%dom(id)%we,1:wrf%dom(id)%sn))
    call nc_check( nf90_inq_varid(ncid, "HGT", var_id), &
-                     'read_wrf_static_data','inq_varid HGT')
+                'read_wrf_static_data','inq_varid HGT')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%hgt), &
-                     'read_wrf_static_data','get_var HGT')
+                'read_wrf_static_data','get_var HGT')
 
 ! get 3D base state geopotential
 
    allocate(wrf%dom(id)%phb(1:wrf%dom(id)%we,1:wrf%dom(id)%sn,1:wrf%dom(id)%bts))
    call nc_check( nf90_inq_varid(ncid, "PHB", var_id), &
-                     'read_wrf_static_data','inq_varid PHB')
+                'read_wrf_static_data','inq_varid PHB')
    call nc_check( nf90_get_var(ncid, var_id, wrf%dom(id)%phb), &
-                     'read_wrf_static_data','get_var PHB')
+                'read_wrf_static_data','get_var PHB')
    if(debug) then
       write(*,*) ' corners of phb '
       write(*,*) wrf%dom(id)%phb(1,1,1),wrf%dom(id)%phb(wrf%dom(id)%we,1,1),  &
@@ -9217,6 +9266,7 @@ end subroutine fill_default_state_table
 !
 !--------------------------------------------
 !
+! APM +++
 subroutine concatenate_variable_tables( )
 
 integer :: iline,irow
@@ -9246,6 +9296,7 @@ endif
 return
 
 end subroutine concatenate_variable_tables
+! APM ---
 !
 !--------------------------------------------
 !

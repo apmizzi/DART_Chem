@@ -19,8 +19,6 @@
       cp ${DART_DIR}/models/wrf_chem/WRF_DART_utilities/wrf_dart_obs_preprocess.nml ./.
       rm -rf input.nml
       export NL_DEFAULT_STATE_VARIABLES=.false.
-      export NL_MOPITT_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_MOPITT}\'
-      export NL_IASI_CO_RETRIEVAL_TYPE=\'${RETRIEVAL_TYPE_IASI}\'
       export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
       export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
       export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
@@ -67,4 +65,4 @@ EOF
 #      ./wrf_dart_obs_preprocess ${DAY_GREG} ${SEC_GREG} > index.html 2>&1
       qsub -Wblock=true job.ksh
       mv obs_seq.new obs_seq_comb_filtered_${DATE}.out
-      rm -rf advance_time dart_log* input.nml job.ksh obs_seq.old wrf*
+#      rm -rf advance_time dart_log* input.nml job.ksh obs_seq.old wrf*

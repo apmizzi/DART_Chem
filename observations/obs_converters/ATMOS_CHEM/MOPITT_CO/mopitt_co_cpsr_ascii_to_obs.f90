@@ -268,6 +268,7 @@ call check_namelist_read(iunit, io, "create_mopitt_obs_nml")
 ! Record the namelist values used for the run ...
 call error_handler(E_MSG,'init_create_mopitt_co_cpsr_obs','create_mopitt_obs_nml values are',' ',' ',' ')
 write(     *     , nml=create_mopitt_obs_nml)
+MOPITT_CO_retrieval_type='CPSR'
 !
 ! Initialize an obs_sequence structure
 call init_obs_sequence(seq, num_copies, num_qc, max_num_obs)

@@ -305,6 +305,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    fi
 #
 # SELECT COMPONENT RUN OPTIONS:
+   export RUN_CONSOLIDATE_CMAQ_INPUT=false
+   if [[ ${DATE} -gt ${INITIAL_DATE} ]]; then   
+       export RUN_CONSOLIDATE_CMAQ_INPUT=true
+   fi
 # FOR GENERAL CYCLING   
    if [[ ${RUN_SPECIAL_FORECAST} == false ]]; then
       if ${RUN_INPUT_OBS}; then
@@ -436,7 +440,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export GENERAL_TIME_LIMIT=00:20:00
    export GENERAL_NODES=1
    export GENERAL_TASKS=16
-   export FILTER_TIME_LIMIT=06:59:00   
+   export FILTER_JOB_CLASS=devel
+   export FILTER_TIME_LIMIT=01:59:00
+   export FILTER_NODES=1
+   export FILTER_TASKS=16
 #
 #########################################################################
 #
@@ -446,6 +453,23 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
    if [[ ! -e ${RUN_DIR}/${DATE} ]]; then mkdir -p ${RUN_DIR}/${DATE}; fi
    cd ${RUN_DIR}/${DATE}
+#
+#########################################################################
+#
+# RUN CONSOLIDTATE CMAQ INPUT FILES
+#
+#########################################################################
+#
+   if ${RUN_CONSOLIDATE_CMAQ_INPUT}; then
+      if [[ ! -d consolidate_cmaq_input} ]]; then
+         mkdir -p consolidate_cmaq_input
+         cd consolidate_cmaq_input
+      else
+         cd consolidate_cmaq_input
+      fi
+      source ${RS_SCRIPTS_DIR}/RS_Consolidate_CMAQ_Files.ksh > index_rs.html 2>&1
+   fi
+   exit					   
 #
 #########################################################################
 #

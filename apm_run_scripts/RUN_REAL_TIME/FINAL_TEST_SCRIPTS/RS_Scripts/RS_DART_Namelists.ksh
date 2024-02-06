@@ -309,6 +309,7 @@
                     '${DART_DIR}/observations/forward_operators/obs_def_MOPITT_CO_TOTAL_COL_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_MOPITT_CO_PROFILE_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_MOPITT_V5_CO_PROFILE_mod.f90',
+                    '${DART_DIR}/observations/forward_operators/obs_def_MOPITT_V8_CO_PROFILE_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_MOPITT_CO_CPSR_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_IASI_CO_TOTAL_COL_mod.f90',
                     '${DART_DIR}/observations/forward_operators/obs_def_IASI_CO_PROFILE_mod.f90',

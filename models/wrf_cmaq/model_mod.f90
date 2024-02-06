@@ -221,6 +221,11 @@ logical :: output_state_vector     = .false.  ! output prognostic variables
 logical :: default_state_variables = .true.   ! use default state list?
 character(len=129) :: cmaq_state_variables(num_state_table_columns,max_state_variables) = 'NULL'
 character(len=129) :: cmaq_state_bounds(num_bounds_table_columns,max_state_variables) = 'NULL'
+!
+! APM +++
+character(len=129) :: conv_state_variables(num_state_table_columns,max_state_variables) = 'NULL'
+! APM ---
+!
 integer :: num_domains          = 1
 integer :: calendar_type        = GREGORIAN
 integer :: assimilation_period_seconds = 21600  ! 6 hrs
@@ -268,8 +273,12 @@ namelist /model_nml/ num_moist_vars, &
                      allow_obs_below_vol, vert_localization_coord, &
                      center_search_half_length, center_spline_grid_scale, &
                      circulation_pres_level, circulation_radius, polar, &
-                     periodic_x, periodic_y, scm, allow_perturbed_ics
-
+                     periodic_x, periodic_y, scm, allow_perturbed_ics, &
+!
+! APM +++                     
+                     conv_state_variables
+! APM ---
+!
 ! if you need to check backwards compatibility, set this to .true.
 ! otherwise, leave it as false to use the more correct geometric height
 logical :: use_geopotential_height = .false.
@@ -325,6 +334,8 @@ TYPE cmaq_static_data_for_dart
    real(r8), dimension(:,:),   pointer :: latitude, latitude_u, latitude_v
    real(r8), dimension(:,:),   pointer :: longitude, longitude_u, longitude_v
    real(r8), dimension(:,:,:), pointer :: phb
+   real(r8), dimension(:,:),   pointer :: prs_sfc
+   real(r8), dimension(:,:,:), pointer :: prs,dens,zh,zf
 
    ! NEWVAR:  Currently you have to add a new type here if you want to use
    ! NEWVAR:  a CMAQ variable which is not one of these types.  This will go
@@ -346,9 +357,9 @@ TYPE cmaq_static_data_for_dart
    integer :: type_co, type_o3, type_no, type_no2, type_so2, &
               type_so4, type_n2o5, type_acet, type_tol, type_isopr, &
               type_hcho, type_hno3, type_nh3, type_pan, type_ch4
+   integer :: number_of_conv_variables
 ! APM ---
 !
-
    integer :: number_of_cmaq_variables
    integer(i8), dimension(:,:), pointer :: var_index
    integer,     dimension(:,:), pointer :: var_size
@@ -359,7 +370,7 @@ TYPE cmaq_static_data_for_dart
    integer,     dimension(:,:), pointer :: land
    real(r8),    dimension(:),   pointer :: lower_bound,upper_bound
    character(len=10), dimension(:),pointer :: clamp_or_fail
-   character(len=129),dimension(:),pointer :: description, units, stagger, coordinates
+   character(len=129),dimension(:),pointer :: description, units, stagger, long_name
 
 
 end type cmaq_static_data_for_dart
@@ -386,7 +397,7 @@ subroutine static_init_model()
 
 ! Initializes class data for CMAQ
 
-integer :: ncid
+integer :: ncid, ncid_cmaq
 integer :: io, iunit
 
 character (len=1)     :: idom
@@ -395,7 +406,17 @@ integer               :: ind, i, j, k, id
 integer(i8)           :: dart_index
 integer               :: my_index
 integer               :: var_element_list(max_state_variables)
+!
+! APM +++
+integer               :: var_element_list_conv(max_state_variables)
+! APM ---
+!
 logical               :: var_update_list(max_state_variables)
+!
+! APM +++
+logical               :: var_update_list_conv(max_state_variables)
+! APM ---
+!
 real(r8)              :: var_bounds_table(max_state_variables,2)
 ! holds the variable names for a domain when calling add_domain
 character(len=129)    :: netcdf_variable_names(max_state_variables)
@@ -435,6 +456,19 @@ if ( default_state_variables ) then
   call error_handler(E_MSG, 'static_init_model:', &
                   'Using predefined cmaq variable list for dart state vector.', &
                    text2=msgstring2, text3=msgstring3)
+!
+! APM +++  
+else
+!
+! Consolidate all the input variable tables into one 'wrf_state_variables' table.
+! Since all the variables of interest are scoped module global, no arguments are needed.
+! APM: This combines WRF-Chem conv, chemi, and firechemi variables lists into a single list
+! APM: Only add the emission variables if ADD_EMISS is true (otherwise use the
+! APM: conv_state_variables list).
+
+   call concatenate_variable_tables()
+! APM ---
+!   
 endif
 
 if ( debug ) then
@@ -451,8 +485,9 @@ endif
 
 num_obs_kinds = get_num_quantities()
 allocate(in_state_vector(num_obs_kinds))
+!
+! APM: DEBUGGING HERE
 call fill_dart_kinds_table(cmaq_state_variables, in_state_vector)
-
 
 ! set calendar type
 call set_calendar_type(calendar_type)
@@ -498,58 +533,63 @@ CMAQDomains : do id=1,num_domains
    endif
 
    if(file_exist('cmaqinput_d0'//idom)) then
-
-      call nc_check( nf90_open('cmaqinput_d0'//idom, NF90_NOWRITE, ncid), &
+      call nc_check( nf90_open('cmaqinput_d0'//idom, NF90_NOWRITE, ncid_cmaq), &
                      'static_init_model','open cmaqinput_d0'//idom )
-
    else
-
       call error_handler(E_ERR,'static_init_model', &
            'Please put cmaqinput_d0'//idom//' in the work directory.', source, revision,revdate)
-
    endif
 
-   if(debug) write(*,*) ' ncid is ',ncid
-
+   if(debug) then
+      write(*,*) ' ncid_cmaq is ',ncid_cmaq
+   endif
 !-------------------------------------------------------
 ! read CMAQ dimensions
-! APM: Currenly use only the mass grid    
 !-------------------------------------------------------
-   call read_cmaq_dimensions(ncid,cmaq%dom(id)%bt, &
+   call read_cmaq_dimensions(ncid_cmaq,cmaq%dom(id)%bt, cmaq%dom(id)%bts, &
                                  cmaq%dom(id)%sn, &
                                  cmaq%dom(id)%we)
 
 !-------------------------------------------------------
 ! read CMAQ file attributes
-! APM: Check the map projection constants    
 !-------------------------------------------------------
-   call read_cmaq_file_attributes(ncid,id)
+   call read_cmaq_file_attributes(ncid_cmaq,id)
 
 !-------------------------------------------------------
 ! assign boundary condition flags
-! APM: This call does not impact CMAQ   
 !-------------------------------------------------------
    call assign_boundary_conditions(id)
 
 !-------------------------------------------------------
 ! read static data
-! APM: Need file with CMAQ grid information   
 !-------------------------------------------------------
-   call read_cmaq_static_data(ncid,id)
+   call read_cmaq_static_data(ncid,ncid_cmaq,id)
 
 !-------------------------------------------------------
 ! next block set up map
-! APM: This is done but the project ids may be incorrect   
+! APM: This is done but the projection ids may be incorrect   
 !-------------------------------------------------------
    call setup_map_projection(id)
 
 !-------------------------------------------------------
 ! end block set up map
 !-------------------------------------------------------
-
-! get the number of cmaq variables wanted in this domain's state
-   cmaq%dom(id)%number_of_cmaq_variables = get_number_of_cmaq_variables(id,cmaq_state_variables,var_element_list, var_update_list)
-
+!
+! APM +++
+! get the number of conv/emiss variables wanted in this domain's state
+   cmaq%dom(id)%number_of_conv_variables=0
+!
+   cmaq%dom(id)%number_of_conv_variables = get_number_of_cmaq_variables(id, &
+   conv_state_variables,var_element_list_conv,var_update_list_conv)
+   cmaq%dom(id)%number_of_cmaq_variables=cmaq%dom(id)%number_of_conv_variables
+!
+! conv variables
+   do ind = 1,cmaq%dom(id)%number_of_conv_variables
+      var_element_list(ind)=var_element_list_conv(ind)
+      var_update_list(ind)=var_update_list_conv(ind)
+   enddo
+! APM ---
+!   
 ! allocate and store the table locations of the variables valid on this domain
    allocate(cmaq%dom(id)%var_index_list(cmaq%dom(id)%number_of_cmaq_variables))
    cmaq%dom(id)%var_index_list = var_element_list(1:cmaq%dom(id)%number_of_cmaq_variables)
@@ -571,7 +611,7 @@ CMAQDomains : do id=1,num_domains
    allocate(cmaq%dom(id)%stagger(cmaq%dom(id)%number_of_cmaq_variables))
    allocate(cmaq%dom(id)%description(cmaq%dom(id)%number_of_cmaq_variables))
    allocate(cmaq%dom(id)%units(cmaq%dom(id)%number_of_cmaq_variables))
-   allocate(cmaq%dom(id)%coordinates(cmaq%dom(id)%number_of_cmaq_variables))
+   allocate(cmaq%dom(id)%long_name(cmaq%dom(id)%number_of_cmaq_variables))
 
 ! set default bounds checking
    allocate(cmaq%dom(id)%lower_bound(cmaq%dom(id)%number_of_cmaq_variables))
@@ -584,8 +624,11 @@ CMAQDomains : do id=1,num_domains
 
 !  build the variable indices
 !  this accounts for the fact that some variables might not be on all domains
-
-   do ind = 1,cmaq%dom(id)%number_of_cmaq_variables
+!
+! APM +++
+   do ind = 1,cmaq%dom(id)%number_of_conv_variables
+!      write(errstring, '(A,I4)') 'APM: Start read for conv variable ',ind
+!      call error_handler(E_MSG, 'static_init_model: ', errstring)
 
       ! actual location in state variable table
       my_index =  cmaq%dom(id)%var_index_list(ind)
@@ -594,35 +637,42 @@ CMAQDomains : do id=1,num_domains
       cmaq%dom(id)%dart_kind(ind) = get_index_for_quantity(trim(cmaq_state_variables(2,my_index)))
 
       if ( debug ) then
-         print*,'dart kind identified: ',trim(cmaq_state_variables(2,my_index)),' ',cmaq%dom(id)%dart_kind(ind)
+         print*,'dart kind identified: ',trim(cmaq_state_variables(2,my_index)),' ', &
+         cmaq%dom(id)%dart_kind(ind)
       endif
 
       ! get stagger and variable size
-      ! APM: This may be done 
-      call get_variable_size_from_file(ncid,id,  &
+      call get_variable_size_from_file(ncid_cmaq,id, &
                                        cmaq_state_variables(1,my_index), &
                                        cmaq%dom(id)%bt, &
                                        cmaq%dom(id)%sn, &
                                        cmaq%dom(id)%we, & 
                                        cmaq%dom(id)%stagger(ind),        &
                                        cmaq%dom(id)%var_size(:,ind))
+!      write(errstring, '(A)') 'APM: Completed get_variable_size_from_file '
+!      call error_handler(E_MSG, 'static_init_model: ', errstring)
 
-      ! get other variable metadata; units, coordinates and description
-      ! APM: This may be done 
-      call get_variable_metadata_from_file(ncid,id,  &
-                                       cmaq_state_variables(1,my_index), &
+      ! get other variable metadata; units, long_name and description
+      call get_variable_metadata_from_file(ncid_cmaq, &
+                                       id,cmaq_state_variables(1,my_index), &
                                        cmaq%dom(id)%description(ind),         &
-                                       cmaq%dom(id)%coordinates(ind),         &
+                                       cmaq%dom(id)%long_name(ind),         &
                                        cmaq%dom(id)%units(ind) )
+
+!      write(errstring, '(A)') 'APM: Completed get_variable_metadata_from_file '
+!      call error_handler(E_MSG, 'static_init_model: ', errstring)
 
       if ( debug ) then
          print*,'variable size ',trim(cmaq_state_variables(1,my_index)),' ',cmaq%dom(id)%var_size(:,ind)
       endif
 
-      !  add bounds checking information
+!  add bounds checking information
       call get_variable_bounds(cmaq_state_bounds, cmaq_state_variables(1,my_index), &
                                cmaq%dom(id)%lower_bound(ind), cmaq%dom(id)%upper_bound(ind), &
                                cmaq%dom(id)%clamp_or_fail(ind))
+
+!      write(errstring, '(A)') 'APM: Completed get_variable_bounds '
+!      call error_handler(E_MSG, 'static_init_model: ', errstring)
 
       if ( debug ) then
          write(*,*) 'Bounds for variable ',  &
@@ -635,16 +685,16 @@ CMAQDomains : do id=1,num_domains
       write(errstring, '(A,I4,2A)') 'state vector array ', ind, ' is ', trim(cmaq_state_variables(1,my_index))
       call error_handler(E_MSG, 'static_init_model: ', errstring)
    enddo
-
    if (do_output()) then
       write(     *     ,*)
       write(logfileunit,*)
    endif
 
-! close data file, we have all we need
+! close data files, we have all we need
 
-   call nc_check(nf90_close(ncid),'static_init_model','close cmaqinput_d0'//idom)
-
+   call nc_check(nf90_close(ncid_cmaq),'static_init_model','close cmaqinput_d0'//idom)
+! APM ---
+!
 ! indices into 1D array - hopefully this becomes obsolete
 ! JPH changed last dimension here from num_model_var_types
    !HK allocate(wrf%dom(id)%dart_ind(wrf%dom(id)%wes,wrf%dom(id)%sns,wrf%dom(id)%bts,wrf%dom(id)%number_of_wrf_variables))
@@ -669,9 +719,9 @@ CMAQDomains : do id=1,num_domains
 ! specific type via cmaq%dom(id)%var_index_list(ind).  This saves some
 ! space from the previous implementation but I am not yet sure of other
 ! problems that it might cause.
-
+   
    do ind = 1,cmaq%dom(id)%number_of_cmaq_variables
-
+      print *, 'APM: ind varaibles list ',ind  
       my_index =  cmaq%dom(id)%var_index_list(ind)
 
       if ( debug ) then
@@ -679,6 +729,7 @@ CMAQDomains : do id=1,num_domains
          write(*,*) 'affiliated with CMAQ variable ',trim(cmaq_state_variables(1,my_index)),' of size ',cmaq%dom(id)%var_size(:,ind)
       endif
 
+      print *, 'APM: at dart index loop ',ind  
       cmaq%dom(id)%var_index(1,ind) = dart_index
       do k=1,cmaq%dom(id)%var_size(3,ind)
          do j=1,cmaq%dom(id)%var_size(2,ind)
@@ -694,6 +745,9 @@ CMAQDomains : do id=1,num_domains
       if ( debug ) write(*,*) 'assigned start, stop ',cmaq%dom(id)%var_index(:,ind)
 
    enddo ! loop through all viable state variables on this domain
+   print *, 'APM: exit variables loop '
+   print *, 'APM: value of id is ',id
+   
    if ( id == 1 ) then
      cmaq%dom(id)%domain_size = dart_index - 1
    else
@@ -702,7 +756,6 @@ CMAQDomains : do id=1,num_domains
        cmaq%dom(id)%domain_size = cmaq%dom(id)%domain_size - cmaq%dom(ind)%domain_size
      enddo
    endif
-
 
    ! NEWVAR: If you add a new cmaq array type which is not yet in this list, currently
    ! NEWVAR: you will have to add it here, and add a type_xx for it, and also add
@@ -747,7 +800,6 @@ CMAQDomains : do id=1,num_domains
    cmaq%dom(id)%type_dref   = get_type_ind_from_type_string(id,'DIFF_REFL_10CM')
    cmaq%dom(id)%type_spdp   = get_type_ind_from_type_string(id,'SPEC_DIFF_10CM')
    cmaq%dom(id)%type_fall_spd = get_type_ind_from_type_string(id,'FALL_SPD_Z_WEIGHTED')
-   !cmaq%dom(id)%type_fall_spd = get_type_ind_from_type_string(id,'VT_DBZ_WT')
    cmaq%dom(id)%type_hdiab  = get_type_ind_from_type_string(id,'H_DIABATIC')
 !
 ! APM +++
@@ -757,9 +809,10 @@ CMAQDomains : do id=1,num_domains
    cmaq%dom(id)%type_no2 = get_type_ind_from_type_string(id,'NO2')
    cmaq%dom(id)%type_so2 = get_type_ind_from_type_string(id,'SO2')
    cmaq%dom(id)%type_so4 = get_type_ind_from_type_string(id,'SULF')
-   cmaq%dom(id)%type_hcho = get_type_ind_from_type_string(id,'FORM')
 ! APM --
-!   
+!
+   print *, 'APM: finished type definitions '
+   
    ! variable bound table for setting upper and lower bounds of variables 
    var_bounds_table(1:cmaq%dom(id)%number_of_cmaq_variables,1) = cmaq%dom(id)%lower_bound
    var_bounds_table(1:cmaq%dom(id)%number_of_cmaq_variables,2) = cmaq%dom(id)%upper_bound
@@ -770,8 +823,11 @@ CMAQDomains : do id=1,num_domains
       netcdf_variable_names(i) = cmaq_state_variables(1, my_index)
    enddo
 
+   print *, 'APM: at add domain '
+! APM START HERE
 
-   ! add domain - not doing anything with domain_id yet so just overwriting it
+! add domain - not doing anything with domain_id yet so just overwriting it
+! using add_domain_from_file
    domain_id(id) = add_domain( 'cmaqinput_d0'//idom, &
                            cmaq%dom(id)%number_of_cmaq_variables, &
                            var_names   = netcdf_variable_names(1:cmaq%dom(id)%number_of_cmaq_variables), &
@@ -783,6 +839,7 @@ CMAQDomains : do id=1,num_domains
 
 enddo CMAQDomains 
 
+print *, 'APM: at end of static_init_model '
 cmaq%model_size = dart_index - 1
 write(errstring,*) ' cmaq model size is ',cmaq%model_size
 call error_handler(E_MSG, 'static_init_model', errstring)
@@ -874,7 +931,7 @@ model_dt = nint(cmaq%dom(1)%dt)
 assim_dt = (assimilation_period_seconds / model_dt) * model_dt
 !
 ! APM +++
-shortest_time_between_assimilations = set_time(assim_dt)
+!shortest_time_between_assimilations = set_time(assim_dt)
 shortest_time_between_assimilations = set_time(assimilation_period_seconds)
 ! APM ---
 !
@@ -4691,7 +4748,7 @@ call nc_add_global_attribute(ncid, "model", "cmaq")
 ! Define the dimensions IDs
 !-----------------------------------------------------------------
 
-!>@todo all the cmaq files use Time as the first dimension
+!>@todo all the wrf files use Time as the first dimension
 !> but if we are creating a file from scratch, we need this
 !> to be made
 ret = nf90_inq_dimid(ncid, "Time", TimeDimID)
@@ -4708,24 +4765,12 @@ endif
 call nc_check(nf90_def_dim(ncid=ncid, name='west_east', &
               len = cmaq%dom(id)%we,  dimid = weDimID), &
               'nc_write_model_atts','def_dim west_east')
-call nc_check(nf90_def_dim(ncid=ncid, name='west_east_stag',   &
-              len = cmaq%dom(id)%wes, dimid = weStagDimID), &
-              'nc_write_model_atts','def_dim west_east_stag')
 call nc_check(nf90_def_dim(ncid=ncid, name='south_north',      &
               len = cmaq%dom(id)%sn,  dimid = snDimID), &
               'nc_write_model_atts','def_dim south_north')
-call nc_check(nf90_def_dim(ncid=ncid, name='south_north_stag', &
-              len = cmaq%dom(id)%sns, dimid = snStagDimID), &
-              'nc_write_model_atts','def_dim south_north_stag')
 call nc_check(nf90_def_dim(ncid=ncid, name='bottom_top',       &
               len = cmaq%dom(id)%bt,  dimid = btDimID), &
               'nc_write_model_atts','def_dim bottom_top')
-call nc_check(nf90_def_dim(ncid=ncid, name='bottom_top_stag',  &
-              len = cmaq%dom(id)%bts, dimid = btStagDimID), &
-              'nc_write_model_atts','def_dim bottom_top_stag')
-call nc_check(nf90_def_dim(ncid=ncid, name='soil_layers_stag',  &
-              len = cmaq%dom(id)%sls, dimid = slSDimID), &
-              'nc_write_model_atts','def_dim soil_layers_stag')
 
 !-----------------------------------------------------------------
 ! Create the (empty) Variables and the Attributes
@@ -4937,9 +4982,9 @@ call nc_check(nf90_put_att(ncid, MubVarID, 'description', &
                  'nc_write_model_atts','put_att MUB'//' description')
 call nc_check(nf90_put_att(ncid, MubVarID, 'units', 'Pa'), &
                  'nc_write_model_atts','put_att MUB'//' units')
-call nc_check(nf90_put_att(ncid, MubVarID, 'coordinates', &
+call nc_check(nf90_put_att(ncid, MubVarID, 'long_name', &
                  trim(coordinate_char)), &
-                 'nc_write_model_atts','put_att MUB'//' coordinates')
+                 'nc_write_model_atts','put_att MUB'//' long_name')
 
 ! Longitudes
 !      float XLONG(Time, south_north, west_east) ;
@@ -5086,9 +5131,9 @@ call nc_check(nf90_put_att(ncid, XlandVarID, 'long_name', &
                  'nc_write_model_atts','put_att XLAND'//' long_name')
 call nc_check(nf90_put_att(ncid, XlandVarID, 'units', ' '), &
                  'nc_write_model_atts','put_att XLAND'//' units')
-call nc_check(nf90_put_att(ncid, XlandVarID, 'coordinates', &
+call nc_check(nf90_put_att(ncid, XlandVarID, 'long_name', &
                  trim(coordinate_char)), &
-                 'nc_write_model_atts','put_att XLAND'//' coordinates')
+                 'nc_write_model_atts','put_att XLAND'//' long_name')
 call nc_check(nf90_put_att(ncid, XlandVarID, 'valid_range', (/ 1, 2 /)), &
                  'nc_write_model_atts','put_att XLAND'//' valid_range')
 call nc_check(nf90_put_att(ncid, XlandVarID, 'description', &
@@ -5112,9 +5157,9 @@ call nc_check(nf90_put_att(ncid, phbVarId, 'description', &
                  'nc_write_model_atts','put_att PHB'//' description')
 call nc_check(nf90_put_att(ncid, phbVarId, 'units', 'm2/s2'), &
                  'nc_write_model_atts','put_att PHB'//' units')
-call nc_check(nf90_put_att(ncid, phbVarId, 'coordinates', &
+call nc_check(nf90_put_att(ncid, phbVarId, 'long_name', &
                  trim(coordinate_char)), &
-                 'nc_write_model_atts','put_att PHB'//' coordinates')
+                 'nc_write_model_atts','put_att PHB'//' long_name')
 call nc_check(nf90_put_att(ncid, phbVarId, 'units_long_name', 'm{2} s{-2}'), &
                  'nc_write_model_atts','put_att PHB'//' units_long_name')
 
@@ -5128,9 +5173,9 @@ call nc_check(nf90_put_att(ncid, hgtVarId, 'description', 'Terrain Height'), &
                  'nc_write_model_atts','put_att HGT'//' description')
 call nc_check(nf90_put_att(ncid, hgtVarId, 'units', 'm'), &
                  'nc_write_model_atts','put_att HGT'//' units')
-call nc_check(nf90_put_att(ncid, hgtVarId, 'coordinates', &
+call nc_check(nf90_put_att(ncid, hgtVarId, 'long_name', &
                  trim(coordinate_char)), &
-                 'nc_write_model_atts','put_att HGT'//' coordinates')
+                 'nc_write_model_atts','put_att HGT'//' long_name')
 call nc_check(nf90_put_att(ncid, hgtVarId, 'units_long_name', 'meters'), &
                  'nc_write_model_atts','put_att HGT'//' units_long_name')
 
@@ -7846,13 +7891,13 @@ end subroutine getCorners
 !--------------------------------------------------------------------
 !--------------------------------------------------------------------
 
-subroutine read_cmaq_dimensions(ncid,bt,sn,we)
+subroutine read_cmaq_dimensions(ncid,bt,bts,sn,we)
 
 ! ncid: input, file handl
 ! id:   input, domain id
 
 integer, intent(in)            :: ncid
-integer, intent(out)           :: bt,sn,we
+integer, intent(out)           :: bt,bts,sn,we
 logical, parameter             :: debug = .false.
 integer                        :: var_id 
 character (len=NF90_MAX_NAME)  :: name
@@ -7863,6 +7908,7 @@ character (len=NF90_MAX_NAME)  :: name
                      'static_init_model','inq_dimid bottom_top')
    call nc_check( nf90_inquire_dimension(ncid, var_id, name, bt), &
                      'static_init_model','inquire_dimension '//trim(name))
+   bts=bt+1
 
 !   call nc_check( nf90_inq_dimid(ncid, "bottom_top_stag", var_id), &
 !                     'static_init_model','inq_dimid bottom_top_stag') ! reuse var_id, no harm
@@ -8003,152 +8049,88 @@ end subroutine assign_boundary_conditions
 !--------------------------------------------------------------------
 !--------------------------------------------------------------------
 
-subroutine read_cmaq_static_data(ncid,id)
+subroutine read_cmaq_static_data(ncid,ncid_cmaq,id)
 
 ! ncid: input, file handle
 ! id:   input, domain id
 
-integer, intent(in)   :: ncid, id
+integer, intent(in)   :: ncid,ncid_cmaq,id
 logical, parameter    :: debug = .false.
 integer               :: var_id 
 
-   call nc_check( nf90_inq_varid(ncid, "VGTOP", var_id), &
-                     'read_cmaq_static_data','inq_varid VGTOP')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%p_top), &
-                     'read_cmaq_static_data','get_var VGTOP')
+! VGTOP - pressure at full level grid top
+   call nc_check( nf90_get_att(ncid_cmaq, nf90_global, 'VGTOP', cmaq%dom(id)%p_top), &
+                     'static_init_model', 'get_att VGTOP')
 
-!  get 1D (z) static data defining grid levels
+! PRSFC - pressure at full level grid bottom (surface pressure)
+   allocate(cmaq%dom(id)%prs_sfc(cmaq%dom(id)%we,cmaq%dom(id)%sn))
+   call nc_check( nf90_inq_varid(ncid_cmaq, "PRSFC", var_id), &
+                     'read_cmaq_static_data','inq_varid PRSFC')
+   call nc_check( nf90_get_var(ncid_cmaq, var_id, cmaq%dom(id)%prs_sfc), &
+                     'read_cmaq_static_data','get_var PRSFC')
+   if(debug) write(*,*) ' prs_sfc is ',cmaq%dom(id)%prs_sfc
+   
+! ZH - height of half (mass) levels
+   allocate(cmaq%dom(id)%zh(cmaq%dom(id)%we,cmaq%dom(id)%sn,cmaq%dom(id)%bt))
+   call nc_check( nf90_inq_varid(ncid_cmaq, "ZH", var_id), &
+                     'read_cmaq_static_data','inq_varid ZH')
+   call nc_check( nf90_get_var(ncid_cmaq, var_id, cmaq%dom(id)%zh), &
+                     'read_cmaq_static_data','get_var ZH')
+   if(debug) write(*,*) ' zh is ',cmaq%dom(id)%zh
 
-   allocate(cmaq%dom(id)%dn(1:cmaq%dom(id)%bt))
-   call nc_check( nf90_inq_varid(ncid, "DN", var_id), &
-                     'read_cmaq_static_data','inq_varid DN')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%dn), &
-                     'read_cmaq_static_data','get_var DN')
-   if(debug) write(*,*) ' dn ',cmaq%dom(id)%dn
+! ZF - height of full (vertical velocity) levels
+   allocate(cmaq%dom(id)%zf(cmaq%dom(id)%we,cmaq%dom(id)%sn,cmaq%dom(id)%bt))
+   call nc_check( nf90_inq_varid(ncid_cmaq, "ZF", var_id), &
+                     'read_cmaq_static_data','inq_varid ZF')
+   call nc_check( nf90_get_var(ncid_cmaq, var_id, cmaq%dom(id)%zf), &
+                     'read_cmaq_static_data','get_var ZF')
+   if(debug) write(*,*) ' zf is ',cmaq%dom(id)%zf
 
-   allocate(cmaq%dom(id)%znu(1:cmaq%dom(id)%bt))
-   call nc_check( nf90_inq_varid(ncid, "ZNU", var_id), &
-                     'read_cmaq_static_data','inq_varid ZNU')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%znu), &
-                     'read_cmaq_static_data','get_var ZNU')
-   if(debug) write(*,*) ' znu is ',cmaq%dom(id)%znu
+! PRES - pressure at full (vertical velocity) levels
+   allocate(cmaq%dom(id)%prs(cmaq%dom(id)%we,cmaq%dom(id)%sn,cmaq%dom(id)%bt))
+   call nc_check( nf90_inq_varid(ncid_cmaq, "PRES", var_id), &
+                     'read_cmaq_static_data','inq_varid PRES')
+   call nc_check( nf90_get_var(ncid_cmaq, var_id, cmaq%dom(id)%prs), &
+                     'read_cmaq_static_data','get_var PRES')
+   if(debug) write(*,*) ' zf is ',cmaq%dom(id)%prs
 
-!   allocate(cmaq%dom(id)%znw(1:cmaq%dom(id)%bts))
-!   call nc_check( nf90_inq_varid(ncid, "ZNW", var_id), &
-!                     'read_cmaq_static_data','inq_varid ZNW')
-!   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%znw), &
-!                     'read_cmaq_static_data','get_var ZNW')
-!   if(debug) write(*,*) ' znw is ',cmaq%dom(id)%znw
+! DENS - density at half (mass velocity) levels
+   allocate(cmaq%dom(id)%dens(cmaq%dom(id)%we,cmaq%dom(id)%sn,cmaq%dom(id)%bt))
+   call nc_check( nf90_inq_varid(ncid_cmaq, "DENS", var_id), &
+                     'read_cmaq_static_data','inq_varid DENS')
+   call nc_check( nf90_get_var(ncid_cmaq, var_id, cmaq%dom(id)%dens), &
+                     'read_cmaq_static_data','get_var DENS')
+   if(debug) write(*,*) ' zf is ',cmaq%dom(id)%dens
 
-   allocate(cmaq%dom(id)%dnw(1:cmaq%dom(id)%bt))
-   call nc_check( nf90_inq_varid(ncid, "DNW", var_id), &
-                     'read_cmaq_static_data','inq_varid DNW')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%dnw), &
-                     'read_cmaq_static_data','get_var DNW')
-   if(debug) write(*,*) ' dnw is ',cmaq%dom(id)%dnw
+! LAT
+   allocate(cmaq%dom(id)%latitude(cmaq%dom(id)%we,cmaq%dom(id)%sn))
+   call nc_check( nf90_inq_varid(ncid_cmaq, "LAT", var_id), &
+                     'read_cmaq_static_data','inq_varid LAT')
+   call nc_check( nf90_get_var(ncid_cmaq, var_id, cmaq%dom(id)%latitude), &
+                     'read_cmaq_static_data','get_var LAT')
 
-   allocate(cmaq%dom(id)%zs(1:cmaq%dom(id)%sls))
-   call nc_check( nf90_inq_varid(ncid, "ZS", var_id), &
-                     'read_cmaq_static_data','inq_varid ZS')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%zs), &
-                     'read_cmaq_static_data','get_var ZS')
+! LON
+   allocate(cmaq%dom(id)%longitude(cmaq%dom(id)%we,cmaq%dom(id)%sn))
+   call nc_check( nf90_inq_varid(ncid_cmaq, "LON", var_id), &
+                     'read_cmaq_static_data','inq_varid LON')
+   call nc_check( nf90_get_var(ncid_cmaq, var_id, cmaq%dom(id)%longitude), &
+                     'read_cmaq_static_data','get_var LON')
 
-!  get 2D (x,y) base state for mu, latitude, longitude
-
-   allocate(cmaq%dom(id)%mub(1:cmaq%dom(id)%we,1:cmaq%dom(id)%sn))
-   call nc_check( nf90_inq_varid(ncid, "MUB", var_id), &
-                     'read_cmaq_static_data','inq_varid MUB')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%mub), &
-                     'read_cmaq_static_data','get_var MUB')
-   if(debug) then
-      write(*,*) ' corners of mub '
-      write(*,*) cmaq%dom(id)%mub(1,1),cmaq%dom(id)%mub(cmaq%dom(id)%we,1),  &
-           cmaq%dom(id)%mub(1,cmaq%dom(id)%sn),cmaq%dom(id)%mub(cmaq%dom(id)%we, &
-           cmaq%dom(id)%sn)
-   endif
-
-   allocate(cmaq%dom(id)%longitude(1:cmaq%dom(id)%we,1:cmaq%dom(id)%sn))
-   call nc_check( nf90_inq_varid(ncid, "XLONG", var_id), &
-                     'read_cmaq_static_data','inq_varid XLONG')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%longitude), &
-                     'read_cmaq_static_data','get_var XLONG')
-
-   allocate(cmaq%dom(id)%longitude_u(1:cmaq%dom(id)%wes,1:cmaq%dom(id)%sn))
-   call nc_check( nf90_inq_varid(ncid, "XLONG_U", var_id), &
-                     'read_cmaq_static_data','inq_varid XLONG_U')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%longitude_u), &
-                     'read_cmaq_static_data','get_var XLONG_U')
-
-   allocate(cmaq%dom(id)%longitude_v(1:cmaq%dom(id)%we,1:cmaq%dom(id)%sns))
-   call nc_check( nf90_inq_varid(ncid, "XLONG_V", var_id), &
-                     'read_cmaq_static_data','inq_varid XLONG_V')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%longitude_v), &
-                     'read_cmaq_static_data','get_var XLONG_V')
-
-   allocate(cmaq%dom(id)%latitude(1:cmaq%dom(id)%we,1:cmaq%dom(id)%sn))
-   call nc_check( nf90_inq_varid(ncid, "XLAT", var_id), &
-                     'read_cmaq_static_data','inq_varid XLAT')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%latitude), &
-                     'read_cmaq_static_data','get_var XLAT')
-
-   allocate(cmaq%dom(id)%latitude_u(1:cmaq%dom(id)%wes,1:cmaq%dom(id)%sn))
-   call nc_check( nf90_inq_varid(ncid, "XLAT_U", var_id), &
-                     'read_cmaq_static_data','inq_varid XLAT_U')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%latitude_u), &
-                     'read_cmaq_static_data','get_var XLAT_U')
-
-   allocate(cmaq%dom(id)%latitude_v(1:cmaq%dom(id)%we,1:cmaq%dom(id)%sns))
-   call nc_check( nf90_inq_varid(ncid, "XLAT_V", var_id), &
-                     'read_cmaq_static_data','inq_varid XLAT_V')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%latitude_v), &
-                     'read_cmaq_static_data','get_var XLAT_V')
-
-   allocate(cmaq%dom(id)%land(1:cmaq%dom(id)%we,1:cmaq%dom(id)%sn))
-   call nc_check( nf90_inq_varid(ncid, "XLAND", var_id), &
-                     'read_cmaq_static_data','inq_varid XLAND')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%land), &
-                     'read_cmaq_static_data','get_var XLAND')
-   if(debug) then
-      write(*,*) ' corners of land '
-      write(*,*) cmaq%dom(id)%land(1,1),cmaq%dom(id)%land(cmaq%dom(id)%we,1),  &
-           cmaq%dom(id)%land(1,cmaq%dom(id)%sn),cmaq%dom(id)%land(cmaq%dom(id)%we, &
-           cmaq%dom(id)%sn)
-   endif
-
-   if(debug) then
-      write(*,*) ' corners of lat '
-      write(*,*) cmaq%dom(id)%latitude(1,1),cmaq%dom(id)%latitude(cmaq%dom(id)%we,1),  &
-           cmaq%dom(id)%latitude(1,cmaq%dom(id)%sn), &
-           cmaq%dom(id)%latitude(cmaq%dom(id)%we,cmaq%dom(id)%sn)
-      write(*,*) ' corners of long '
-      write(*,*) cmaq%dom(id)%longitude(1,1),cmaq%dom(id)%longitude(cmaq%dom(id)%we,1),  &
-           cmaq%dom(id)%longitude(1,cmaq%dom(id)%sn), &
-           cmaq%dom(id)%longitude(cmaq%dom(id)%we,cmaq%dom(id)%sn)
-   endif
-
-   allocate(cmaq%dom(id)%hgt(1:cmaq%dom(id)%we,1:cmaq%dom(id)%sn))
-   call nc_check( nf90_inq_varid(ncid, "HGT", var_id), &
-                     'read_cmaq_static_data','inq_varid HGT')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%hgt), &
-                     'read_cmaq_static_data','get_var HGT')
-
-! get 3D base state geopotential
-
-   allocate(cmaq%dom(id)%phb(1:cmaq%dom(id)%we,1:cmaq%dom(id)%sn,1:cmaq%dom(id)%bts))
-   call nc_check( nf90_inq_varid(ncid, "PHB", var_id), &
-                     'read_cmaq_static_data','inq_varid PHB')
-   call nc_check( nf90_get_var(ncid, var_id, cmaq%dom(id)%phb), &
-                     'read_cmaq_static_data','get_var PHB')
-   if(debug) then
-      write(*,*) ' corners of phb '
-      write(*,*) cmaq%dom(id)%phb(1,1,1),cmaq%dom(id)%phb(cmaq%dom(id)%we,1,1),  &
-           cmaq%dom(id)%phb(1,cmaq%dom(id)%sn,1),cmaq%dom(id)%phb(cmaq%dom(id)%we, &
-           cmaq%dom(id)%sn,1)
-      write(*,*) cmaq%dom(id)%phb(1,1,cmaq%dom(id)%bts), &
-           cmaq%dom(id)%phb(cmaq%dom(id)%we,1,cmaq%dom(id)%bts),  &
-           cmaq%dom(id)%phb(1,cmaq%dom(id)%sn,cmaq%dom(id)%bts), &
-           cmaq%dom(id)%phb(cmaq%dom(id)%we,cmaq%dom(id)%sn,cmaq%dom(id)%bts)
-   endif
+!
+! APM: fix flag value   
+! LWMASK (CMAQ: 1 - land, 2 - water; WRF: 1 - land, 0 - water)
+   allocate(cmaq%dom(id)%land(cmaq%dom(id)%we,cmaq%dom(id)%sn))
+   call nc_check( nf90_inq_varid(ncid_cmaq, "LWMASK", var_id), &
+                     'read_cmaq_static_data','inq_varid LWMASK')
+   call nc_check( nf90_get_var(ncid_cmaq, var_id, cmaq%dom(id)%land), &
+                     'read_cmaq_static_data','get_var LWMASK')
+!
+! HT
+   allocate(cmaq%dom(id)%hgt(cmaq%dom(id)%we,cmaq%dom(id)%sn))
+   call nc_check( nf90_inq_varid(ncid_cmaq, "HT", var_id), &
+                     'read_cmaq_static_data','inq_varid HT')
+   call nc_check( nf90_get_var(ncid_cmaq, var_id, cmaq%dom(id)%hgt), &
+                     'read_cmaq_static_data','get_var HT')
 
 end subroutine read_cmaq_static_data
 
@@ -8291,8 +8273,25 @@ default_table(:,row) = (/ 'QVAPOR                    ', &
 return
 
 end subroutine fill_default_state_table
-
+!
 !--------------------------------------------
+!
+! APM +++
+subroutine concatenate_variable_tables( )
+
+integer :: iline,irow
+
+irow = 0
+
+CONV_LOOP : do iline = 1,max_state_variables
+   if (conv_state_variables(1,iline) == 'NULL') exit CONV_LOOP
+   irow = irow+1
+   cmaq_state_variables(:,irow) = conv_state_variables(:,iline)
+enddo CONV_LOOP
+
+end subroutine concatenate_variable_tables
+! APM ---
+!
 !--------------------------------------------
 
 subroutine fill_dart_kinds_table(cmaq_state_variables, in_state_vector)
@@ -8329,7 +8328,7 @@ do i = 1, row
    nextkind = get_index_for_quantity(trim(cmaq_state_variables(2, i)))
    select case(nextkind)
 
-   ! cmaq stores potential temperature (temperature perturbations around a 
+   ! wrf stores potential temperature (temperature perturbations around a 
    ! threshold) but we can interpolate sensible temperature from it
    case (QTY_POTENTIAL_TEMPERATURE)
       in_state_vector(QTY_TEMPERATURE) = .true.
@@ -8626,15 +8625,14 @@ end function variable_is_on_domain
 !--------------------------------------------------------------------
 !--------------------------------------------------------------------
 
-subroutine get_variable_size_from_file(ncid,id,cmaq_var_name,bt,sn, &
-                                       we,stagger,var_size)
+subroutine get_variable_size_from_file(ncid_cmaq,id,cmaq_var_name,bt,sn,we,stagger,var_size)
 
 !NOTE: only supports 2D and 3D variables (ignoring time dimension)
 
 ! ncid: input, file handle
 ! id:   input, domain index
 
-integer,           intent(in)   :: ncid, id
+integer,           intent(in)   :: ncid_cmaq,id
 integer,           intent(in)   :: bt, sn, we
 character(len=*),  intent(in)   :: cmaq_var_name
 integer,           intent(out)  :: var_size(3)
@@ -8642,10 +8640,13 @@ character(len=129),intent(out)  :: stagger
 
 logical, parameter    :: debug = .false.
 integer               :: var_id, ndims, dimids(10) 
-integer               :: idim
+integer               :: ncid,idim
 
    stagger = ''
 
+! get file for reading
+
+   ncid=ncid_cmaq
 ! get variable ID
    call nc_check( nf90_inq_varid(ncid, trim(cmaq_var_name), var_id), &
                      'get_variable_size_from_file',                 &
@@ -8672,15 +8673,14 @@ integer               :: idim
       print*,'In get_variable_size_from_file got variable size ',var_size
    endif
 
-
 ! get variable attribute stagger
-   call nc_check( nf90_get_att(ncid, var_id, 'stagger', stagger), &
-                     'get_variable_size_from_file', &
-                     'get_att '//cmaq_var_name//' '//stagger)
-
-   if ( debug ) then
-      print*,'In get_variable_size_from_file got stagger ',trim(stagger),' for variable ',trim(cmaq_var_name)
-   endif
+!   call nc_check( nf90_get_att(ncid, var_id, 'stagger', stagger), &
+!                     'get_variable_size_from_file', &
+!                     'get_att '//cmaq_var_name//' '//stagger)
+!
+!   if ( debug ) then
+!      print*,'In get_variable_size_from_file got stagger ',trim(stagger),' for variable ',trim(cmaq_var_name)
+!   endif
 
 return
 
@@ -8689,37 +8689,39 @@ end subroutine get_variable_size_from_file
 !--------------------------------------------------------------------
 !--------------------------------------------------------------------
 
-subroutine get_variable_metadata_from_file(ncid,id,cmaq_var_name,description, &
-                                       coordinates,units)
+subroutine get_variable_metadata_from_file(ncid_cmaq, &
+   id,cmaq_var_name,description,long_name,units)
 
 ! ncid: input, file handle
 ! id:   input, domain index
 
-integer, intent(in)               :: ncid, id
-character(len=*),   intent(in)    :: cmaq_var_name
-character(len=129), intent(out)   :: description, coordinates, units
+integer,           intent(in)   :: ncid_cmaq,id
+integer                         :: ncid
+character(len=*),   intent(in)  :: cmaq_var_name
+character(len=129), intent(out) :: long_name, description, units
 
 logical, parameter    :: debug = .false.
 integer               :: var_id
 
+   ncid=ncid_cmaq
    call nc_check( nf90_inq_varid(ncid, trim(cmaq_var_name), var_id), &
                      'get_variable_metadata_from_file', &
                      'inq_varid '//cmaq_var_name)
 
-   description = ''
-   call nc_check( nf90_get_att(ncid, var_id, 'description', description), &
+   long_name = ''
+   call nc_check( nf90_get_att(ncid, var_id, 'long_name', long_name), &
                      'get_variable_metadata_from_file', &
-                     'get_att '//cmaq_var_name//' '//description)
-
-   coordinates = ''
-   call nc_check( nf90_get_att(ncid, var_id, 'coordinates', coordinates), &
-                     'get_variable_metadata_from_file', &
-                     'get_att '//cmaq_var_name//' '//coordinates)
+                     'get_att '//cmaq_var_name//' '//long_name)
 
    units = ''
    call nc_check( nf90_get_att(ncid, var_id, 'units', units), &
                      'get_variable_metadata_from_file', &
                      'get_att '//cmaq_var_name//' '//units)
+
+   description = ''
+   call nc_check( nf90_get_att(ncid, var_id, 'var_desc', description), &
+                     'get_variable_metadata_from_file', &
+                     'get_att '//cmaq_var_name//' '//description)
 
 return
 
@@ -9289,10 +9291,10 @@ print*, 'lower_bound,upper_bound ', size(cmaq%dom(domain)%lower_bound), &
 
 print*, 'clamp_or_fail   ', size(cmaq%dom(domain)%clamp_or_fail)
 
-print*, 'description, units, stagger, coordinates ', size(cmaq%dom(domain)%description), &
+print*, 'description, units, stagger, long_name ', size(cmaq%dom(domain)%description), &
                                                      size(cmaq%dom(domain)%units), &
                                                      size(cmaq%dom(domain)%stagger), &
-                                                     size(cmaq%dom(domain)%coordinates)
+                                                     size(cmaq%dom(domain)%long_name)
 
 print*
 

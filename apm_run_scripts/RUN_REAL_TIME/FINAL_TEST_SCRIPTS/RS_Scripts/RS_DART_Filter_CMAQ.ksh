@@ -12,6 +12,8 @@
       export LL_FILE_DATE=${LL_YY}-${LL_MM}-${LL_DD}_${LL_HH}:00:00
 #
 # Process filter output without calling filter	 
+      rm -rf input.nml
+      ${NAMELIST_SCRIPTS_DIR}/DART/dart_create_input.nml.ksh
       if ! ${SKIP_FILTER}; then
 #
 # Get DART files
@@ -28,14 +30,10 @@
             exit
          fi
 #
-# Get upper boundary data	 
-#         cp ${EXPERIMENT_STATIC_FILES}/ubvals_b40.20th.track1_1996-2005.nc ./.
-#
 # Copy DART file that controls the observation/state variable update localization
          cp ${LOCALIZATION_DIR}/control_impact_runtime.txt ./control_impact_runtime.table
 #
-#
-# Get background forecasts
+# Get background forecasts (These are the CCTM_CGRID_xxx ensemble of CMAQ output files).
          if [[ ${DATE} -eq ${FIRST_FILTER_DATE} ]]; then
             export BACKGND_FCST_DIR=${WRFCHEM_INITIAL_DIR}
          else
@@ -50,7 +48,7 @@
             if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
             cp ${BACKGND_FCST_DIR}/run_${CMEM}/cmaqout_d${CR_DOMAIN}_${FILE_DATE} cmaqinput_d${CR_DOMAIN}_${CMEM}
 #
-# Add files to the DART input and output list
+# Add files to the DART input and output lists
             echo cmaqinput_d${CR_DOMAIN}_${CMEM} >> input_list.txt
             echo cmaqinput_d${CR_DOMAIN}_${CMEM} >> output_list.txt
             let MEM=${MEM}+1
@@ -87,25 +85,25 @@
                fi 
             fi
          fi
+      fi   
 #
-# Generate input.nml 
-         set -A temp `echo ${ASIM_MIN_DATE} 0 -g | ${CMAQ_DART_WORK_DIR}/advance_time`
-         (( temp[1]=${temp[1]}+1 ))
-         export NL_FIRST_OBS_DAYS=${temp[0]}
-         export NL_FIRST_OBS_SECONDS=${temp[1]}
-         set -A temp `echo ${ASIM_MAX_DATE} 0 -g | ${CMAQ_DART_WORK_DIR}/advance_time`
-         export NL_LAST_OBS_DAYS=${temp[0]}
-         export NL_LAST_OBS_SECONDS=${temp[1]}
-         export NL_NUM_INPUT_FILES=1
-         export NL_FILENAME_SEQ="'obs_seq.out'"
-         export NL_FILENAME_OUT="'obs_seq.processed'"
-         rm -rf input.nml
-         ${NAMELIST_SCRIPTS_DIR}/DART/dart_create_input_cmaq.nml.ksh
-exit
+# Generate input.nml
+      set -A temp `echo ${ASIM_MIN_DATE} 0 -g | ${CMAQ_DART_WORK_DIR}/advance_time`
+      (( temp[1]=${temp[1]}+1 ))
+      export NL_FIRST_OBS_DAYS=${temp[0]}
+      export NL_FIRST_OBS_SECONDS=${temp[1]}
+      set -A temp `echo ${ASIM_MAX_DATE} 0 -g | ${CMAQ_DART_WORK_DIR}/advance_time`
+      export NL_LAST_OBS_DAYS=${temp[0]}
+      export NL_LAST_OBS_SECONDS=${temp[1]}
+      export NL_NUM_INPUT_FILES=1
+      export NL_FILENAME_SEQ="'obs_seq.out'"
+      export NL_FILENAME_OUT="'obs_seq.processed'"
+      rm -rf input.nml
+      ${NAMELIST_SCRIPTS_DIR}/DART/dart_create_input_cmaq.nml.ksh	 
 #
 # Make filter_apm_nml for special_outlier_threshold
-         rm -rf filter_apm.nml
-         cat << EOF > filter_apm.nml
+      rm -rf filter_apm.nml
+      cat << EOF > filter_apm.nml
 &filter_apm_nml
 special_outlier_threshold=${NL_SPECIAL_OUTLIER_THRESHOLD}
 /
@@ -113,11 +111,13 @@ EOF
 #
 # Run DART_FILTER
 # Create job script for this member and run it 
-         RANDOM=$$
-         export JOBRND=${RANDOM}_filter
-         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_has.ksh ${JOBRND} ${FILTER_JOB_CLASS} ${FILTER_TIME_LIMIT} ${FILTER_NODES} ${FILTER_TASKS} filter PARALLEL ${ACCOUNT}
-         qsub -Wblock=true job.ksh
-      fi
+      RANDOM=$$
+      export JOBRND=${RANDOM}_filter
+      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_has.ksh ${JOBRND} ${FILTER_JOB_CLASS} ${FILTER_TIME_LIMIT} ${FILTER_NODES} ${FILTER_TASKS} filter PARALLEL ${ACCOUNT}
+      qsub -Wblock=true job.ksh
+
+exit
+      
 #
 # Check whether DART worked properly
       if [[ ! -f output_postinf_mean.nc || ! -f output_mean.nc || ! -f output_postinf_sd.nc || ! -f output_sd.nc || ! -f obs_seq.final ]]; then

@@ -358,9 +358,14 @@ logical :: ds, all_gone, allow_missing
 ! real(r8), allocatable   :: temp_ens(:) ! for smoother
 real(r8), allocatable   :: prior_qc_copy(:)
 
+!print *, 'APM: call filter_initialize_modules_used '
+!print *, 'APM: static_init_model is called in here '
+! APM CODE FAILING HERE
 call filter_initialize_modules_used() ! static_init_model called in here
 
+
 ! Read the namelist entry
+!print *, 'APM: call find_namelist_in_file '
 call find_namelist_in_file("input.nml", "filter_nml", iunit)
 read(iunit, nml = filter_nml, iostat = io)
 call check_namelist_read(iunit, io, "filter_nml")
@@ -371,6 +376,7 @@ if (do_nml_term()) write(     *     , nml=filter_nml)
 
 if (task_count() == 1) distributed_state = .true.
 
+!print *, 'APM: call set_debug_fwd_op '
 call set_debug_fwd_op(output_forward_op_errors)
 call set_trace(trace_execution, output_timestamps, silence)
 
@@ -1329,11 +1335,15 @@ subroutine filter_initialize_modules_used()
 call trace_message('Before filter_initialize_module_used call')
 
 ! Initialize the obs sequence module
+!print *, 'APM: call static_init_obs_sequence '
 call static_init_obs_sequence()
 
 ! Initialize the model class data now that obs_sequence is all set up
+!print *, 'APM: call static_init_assim_model '
 call static_init_assim_model()
+!print *, 'APM: call state_vctor_io_init '
 call state_vector_io_init()
+!print *, 'APM: call initialize_qc '
 call initialize_qc()
 call trace_message('After filter_initialize_module_used call')
 

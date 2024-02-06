@@ -15,10 +15,13 @@ implicit none
 
 !----------------------------------------------------------------
 
+!print *, 'APM: call initialize_mpi_utilities '
 call initialize_mpi_utilities('Filter')
 
+!print *, 'APM: call filter_main '
 call filter_main()
 
+!print *, 'APM: call finalize_mpi_utilities '
 call finalize_mpi_utilities()
 
 end program filter

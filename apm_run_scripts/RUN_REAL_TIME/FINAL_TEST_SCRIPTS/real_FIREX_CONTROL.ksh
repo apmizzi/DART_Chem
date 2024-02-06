@@ -51,10 +51,10 @@ export FIRST_DART_INFLATE_DATE=2020071318
 export FIRST_EMISS_INV_DATE=2020071318
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2020071318
+export CYCLE_STR_DATE=2020071418
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2020071318
+export CYCLE_END_DATE=2020071418
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -73,7 +73,7 @@ export LS_CHEM_DZ=88
 export LS_CHEM_DT=57
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=true
+export RUN_INPUT_OBS=false
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
 export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
 export RUN_MOPITT_CO_CPSR_OBS=true # (done)
@@ -85,31 +85,31 @@ export RUN_IASI_O3_CPSR_OBS=false
 export RUN_MODIS_AOD_TOTAL_COL_OBS=true # (done)
 export RUN_OMI_O3_TOTAL_COL_OBS=false
 export RUN_OMI_O3_TROP_COL_OBS=false
-export RUN_OMI_O3_PROFILE_OBS=true # (done)
-export RUN_OMI_O3_CPSR_OBS=true # (works)
+export RUN_OMI_O3_PROFILE_OBS=false # (done, ???????)
+export RUN_OMI_O3_CPSR_OBS=false # (works, ?????????)
 export RUN_OMI_NO2_TOTAL_COL_OBS=false
 export RUN_OMI_NO2_TROP_COL_OBS=true # (done)
 export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
 export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true # (works)
 export RUN_OMI_SO2_TOTAL_COL_OBS=false
-export RUN_OMI_SO2_PBL_COL_OBS=true # (works)
+export RUN_OMI_SO2_PBL_COL_OBS=false # (works, ?????)
 export RUN_OMI_HCHO_TOTAL_COL_OBS=true # (works)
-export RUN_OMI_HCHO_TROP_COL_OBS=false 
-export RUN_TROPOMI_CO_TOTAL_COL_OBS=false # (done)
+export RUN_OMI_HCHO_TROP_COL_OBS=false
+export RUN_TROPOMI_CO_TOTAL_COL_OBS=true # (done)
 export RUN_TROPOMI_O3_TOTAL_COL_OBS=false
 export RUN_TROPOMI_O3_TROP_COL_OBS=false
 export RUN_TROPOMI_O3_PROFILE_OBS=false # (not done, no data)
-export RUN_TROPOMI_O3_CPSR_OBS=false
+export RUN_TROPOMI_O3_CPSR_OBS=false # (not done, no data)
 export RUN_TROPOMI_NO2_TOTAL_COL_OBS=false
 export RUN_TROPOMI_NO2_TROP_COL_OBS=true # (works)
 export RUN_TROPOMI_SO2_TOTAL_COL_OBS=false
-export RUN_TROPOMI_SO2_PBL_COL_OBS=false # (works, vertical sum)
+export RUN_TROPOMI_SO2_PBL_COL_OBS=false # (works, vertical sum, ?????)
 export RUN_TROPOMI_CH4_TOTAL_COL_OBS=false  # (works, vertical sum)
 export RUN_TROPOMI_CH4_TROP_COL_OBS=false
 export RUN_TROPOMI_CH4_PROFILE_OBS=false
 export RUN_TROPOMI_CH4_CPSR_OBS=false
 export RUN_TROPOMI_HCHO_TOTAL_COL_OBS=false 
-export RUN_TROPOMI_HCHO_TROP_COL_OBS=true # (works, vertical sum, ???)
+export RUN_TROPOMI_HCHO_TROP_COL_OBS=true # (works, vertical sum)
 export RUN_TEMPO_O3_TOTAL_COL_OBS=false
 export RUN_TEMPO_O3_TROP_COL_OBS=false
 export RUN_TEMPO_O3_PROFILE_OBS=true # (done)
@@ -252,12 +252,12 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'SAT_V_WIND_COMPONENT'"
 #
 # Run WRF-Chem for failed forecasts (will not work with adaptive time step)
-export RUN_SPECIAL_FORECAST=false
-export NUM_SPECIAL_FORECAST=0
+export RUN_SPECIAL_FORECAST=true
+export NUM_SPECIAL_FORECAST=1
 export SPECIAL_FORECAST_FAC=1.
 #
-export SPECIAL_FORECAST_MEM[1]=9
-export SPECIAL_FORECAST_MEM[2]=10
+export SPECIAL_FORECAST_MEM[1]=10
+export SPECIAL_FORECAST_MEM[2]=9
 export SPECIAL_FORECAST_MEM[3]=4
 export SPECIAL_FORECAST_MEM[4]=5
 export SPECIAL_FORECAST_MEM[5]=9
@@ -322,10 +322,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_WRFCHEM_INITIAL=true
          export RUN_WRFCHEM_CYCLE_CR=false
       else
-         export RUN_DART_FILTER=true
+         export RUN_DART_FILTER=false
          export RUN_BIAS_CORRECTION=false
-         export RUN_UPDATE_BC=true
-         export RUN_ENSEMBLE_MEAN_INPUT=true
+         export RUN_UPDATE_BC=false
+         export RUN_ENSEMBLE_MEAN_INPUT=false
          export RUN_WRFCHEM_INITIAL=false
          export RUN_WRFCHEM_CYCLE_CR=true
       fi	  
