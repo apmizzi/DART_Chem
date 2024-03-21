@@ -50,7 +50,7 @@
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
 #
 # SET GOME2A INPUT DATA DIR
-      export TMP_INFILE=\'${EXPERIMENT_GOME2A_NO2_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${GOME2A_FILE_PRE}\'
+      export TMP_INFILE=${EXPERIMENT_GOME2A_NO2_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${GOME2A_FILE_PRE}
 #
 # COPY EXECUTABLE
       export FILE=gome2a_no2_trop_col_extract.m
@@ -162,5 +162,5 @@
       fi
 #
 # Clean directory
-      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
-      rm requiredMCRP* run_gome2a_no2* gome2a_no2_trop* unresolved* *.dat
+#      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+#      rm requiredMCRP* run_gome2a_no2* gome2a_no2_trop* unresolved* *.dat

@@ -47,16 +47,16 @@ export CYCLE_PERIOD=6
 export FCST_PERIOD=6
 #
 # CYCLE TIME SETTINGS
-export INITIAL_DATE=2018063118
-export FIRST_FILTER_DATE=2018070100
-export FIRST_DART_INFLATE_DATE=2018070100
-export FIRST_EMISS_INV_DATE=2018070100
+export INITIAL_DATE=2016073118
+export FIRST_FILTER_DATE=2016080100
+export FIRST_DART_INFLATE_DATE=2016080100
+export FIRST_EMISS_INV_DATE=2016080100
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2018070100
+export CYCLE_STR_DATE=2016080100
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2018070100
+export CYCLE_END_DATE=2016080100
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -114,6 +114,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_WRFCHEM_CHEMI=false
    export RUN_PERT_WRFCHEM_CHEM_ICBC=false
    export RUN_PERT_WRFCHEM_CHEM_EMISS=false
+   export RUN_PERT_WRFCHEM_CHEM_CMAQ=false
    export RUN_BIAS_CORRECTION=false
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
    export RUN_MOPITT_CO_PROFILE_OBS=false # (done)
@@ -488,6 +489,25 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export NL_CHEM_BIOG_EMIS='MSEBIO_ISOP',
       source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Chem_Emiss.ksh > index_rs.html 2>&1
    fi
+#
+#########################################################################
+#
+# RUN CMAQ PERTURB CHEM ICBC
+#
+#########################################################################
+#
+   if ${RUN_PERT_CMAQ_CHEM_ICBC}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/cmaq_chem_icbc ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/cmaq_chem_icbc
+         cd ${RUN_DIR}/${DATE}/cmaq_chem_icbc
+      else
+         cd ${RUN_DIR}/${DATE}/cmaq_chem_icbc
+      fi
+      source ${RS_SCRIPTS_DIR}/RS_Pert_CMAQ_Chem_ICBC.ksh > index_rs.html 2>&1
+   fi
+
+exit
+   
 #
 ########################################################################
 #

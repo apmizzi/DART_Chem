@@ -100,7 +100,7 @@ private
 public :: filter_sync_keys_time, &
           filter_set_initial_time, &
           filter_main
-
+!
 character(len=*), parameter :: source = 'filter_mod.f90'
 
 ! Some convenient global storage items
@@ -358,14 +358,10 @@ logical :: ds, all_gone, allow_missing
 ! real(r8), allocatable   :: temp_ens(:) ! for smoother
 real(r8), allocatable   :: prior_qc_copy(:)
 
-!print *, 'APM: call filter_initialize_modules_used '
-!print *, 'APM: static_init_model is called in here '
-! APM CODE FAILING HERE
+
 call filter_initialize_modules_used() ! static_init_model called in here
 
-
 ! Read the namelist entry
-!print *, 'APM: call find_namelist_in_file '
 call find_namelist_in_file("input.nml", "filter_nml", iunit)
 read(iunit, nml = filter_nml, iostat = io)
 call check_namelist_read(iunit, io, "filter_nml")
@@ -376,7 +372,6 @@ if (do_nml_term()) write(     *     , nml=filter_nml)
 
 if (task_count() == 1) distributed_state = .true.
 
-!print *, 'APM: call set_debug_fwd_op '
 call set_debug_fwd_op(output_forward_op_errors)
 call set_trace(trace_execution, output_timestamps, silence)
 
@@ -509,7 +504,7 @@ TOTAL_OBS_COPIES = ens_size + 5 + 2*num_groups
 
 call     trace_message('Before setting up space for observations')
 call timestamp_message('Before setting up space for observations')
-
+!
 ! Initialize the obs_sequence; every pe gets a copy for now
 call filter_setup_obs_sequence(seq, in_obs_copy, obs_val_index, input_qc_index, DART_qc_index, compute_posterior)
 
@@ -608,6 +603,7 @@ allow_missing = get_missing_ok_status()
 call     trace_message('Before initializing output files')
 call timestamp_message('Before initializing output files')
 
+
 ! Initialize the output sequences and state files and set their meta data
 call filter_generate_copy_meta_data(seq, in_obs_copy, &
       prior_obs_mean_index, posterior_obs_mean_index, &
@@ -663,7 +659,7 @@ if (get_stage_to_write('input')) then
 
    call     trace_message('Before input state space output')
    call timestamp_message('Before input state space output')
-
+   
    if (write_all_stages_at_end) then
       call store_input(state_ens_handle, prior_inflate, post_inflate)
    else
@@ -715,7 +711,6 @@ AdvanceTime : do
    ! curr_ens_time in move_ahead() is intent(inout) and doesn't get changed
    ! even if there are no more obs.
    call trace_message('Before move_ahead checks time of data and next obs')
-
    call move_ahead(state_ens_handle, ens_size, seq, last_key_used, window_time, &
       key_bounds, num_obs_in_set, curr_ens_time, next_ens_time)
 
@@ -729,12 +724,16 @@ AdvanceTime : do
    call filter_sync_keys_time(state_ens_handle, key_bounds, num_obs_in_set, &
                               curr_ens_time, next_ens_time)
 
+   call trace_message('After call to filter_sync_keys_time')
+
    if(key_bounds(1) < 0) then
       call trace_message('No more obs to assimilate, exiting main loop', 'filter:', -1)
       exit AdvanceTime
    endif
 
    ! if model state data not at required time, advance model
+   call trace_message('Before if block to advance model (current time, next time ')
+   
    if (curr_ens_time /= next_ens_time) then
       ! Advance the lagged distribution, if needed.
       ! Must be done before the model runs and updates the data.
@@ -821,7 +820,7 @@ AdvanceTime : do
          call     trace_message('Before forecast state space output')
          call timestamp_message('Before forecast state space output')
 
-         ! save or output the data
+            ! save or output the data
          if (write_all_stages_at_end) then
             call store_copies(state_ens_handle, FORECAST_COPIES)
          else
@@ -886,6 +885,7 @@ AdvanceTime : do
          call timestamp_message('Before preassim state space output')
 
          ! save or output the data
+         
          if (write_all_stages_at_end) then
             call store_copies(state_ens_handle, PREASSIM_COPIES)
          else
@@ -904,6 +904,7 @@ AdvanceTime : do
    ! copy ( + others ) is moved to task 0 so task 0 can update seq.
    ! There is a transpose (all_copies_to_all_vars(obs_fwd_op_ens_handle)) in obs_space_diagnostics
    ! Do prior observation space diagnostics and associated quality control
+
    call obs_space_diagnostics(obs_fwd_op_ens_handle, qc_ens_handle, ens_size, &
            seq, keys, PRIOR_DIAG, num_output_obs_members, in_obs_copy+1, &
            obs_val_index, OBS_KEY_COPY, &
@@ -911,7 +912,6 @@ AdvanceTime : do
            OBS_MEAN_START, OBS_VAR_START, OBS_GLOBAL_QC_COPY, &
            OBS_VAL_COPY, OBS_ERR_VAR_COPY, DART_qc_index, compute_posterior)
    call trace_message('After  observation space diagnostics')
-
 
    write(msgstring, '(A,I8,A)') 'Ready to assimilate up to', size(keys), ' observations'
    call trace_message(msgstring, 'filter:', -1)
@@ -1335,15 +1335,11 @@ subroutine filter_initialize_modules_used()
 call trace_message('Before filter_initialize_module_used call')
 
 ! Initialize the obs sequence module
-!print *, 'APM: call static_init_obs_sequence '
 call static_init_obs_sequence()
 
 ! Initialize the model class data now that obs_sequence is all set up
-!print *, 'APM: call static_init_assim_model '
 call static_init_assim_model()
-!print *, 'APM: call state_vctor_io_init '
 call state_vector_io_init()
-!print *, 'APM: call initialize_qc '
 call initialize_qc()
 call trace_message('After filter_initialize_module_used call')
 

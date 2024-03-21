@@ -44,7 +44,6 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %
 % Convert DU to molecules/m^2
    du2molcpm2=2.6867e20;
-
    day_secs_beg=whh_mn*60.*60. + wmm_mn*60. + wss_mn;
    day_secs_end=whh_mx*60.*60. + wmm_mx*60. + wss_mx;
 %
@@ -182,7 +181,6 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       file_end_secs=file_end_hh*3600 + file_end_mn*60 + file_end_ss;
       fprintf('%d %s \n',ifile,file_in);
 %      fprintf('file str secs %d cycle vend secs %d \n',file_secs,day_secs_end);
-%
       if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
 %         fprintf('is %d <= %d, then process obs \n',file_str_secs,day_secs_end)
 %         fprintf('is %d >= %d, then process obs \n',file_end_secs,day_secs_beg)
@@ -321,19 +319,26 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %
 % QA/QC
 %
-%         if(zenang(itim)>=80.0)
+         if(zenang(itim)>=80.0)
 %            fprintf('zenang %6.2f \n',zenang(itim))
-%            continue
-%         end
+            continue
+         end
 %         if(isnan(o3_col_obs(itim)))
 %            continue
 %         end
-         for ilay=1:layer	 
-            if(isnan(o3_obs(ilay,itim)))
-	       fprinf('o3_obs is a NaN %d \n',o3_obs(ilay,itim)) 
-               continue
-            end
-         end
+%         for ilay=1:layer	 
+%            if(isnan(o3_obs(ilay,itim)))
+%	       fprinf('o3_obs is a NaN %d \n',o3_obs(ilay,itim)) 
+%               continue
+%            end
+%         end
+%	 
+%         for ilay=1:layer	 
+%            if(o3_obs(ilay,itim)<0.0)
+%               fprintf('o3_obs is negative \n')
+%               continue
+%            end
+%         end
 %
 % Check domain
 % Input grid needs to be in degrees
@@ -450,8 +455,8 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
             fprintf(fid,'%14.8g ',avgk_obs(k,1:tru_nlay));
             fprintf(fid,'\n');
 	 end
-         fprintf(fid,'%14.8g \n',o3_col_obs(itim));
-         fprintf(fid,'%14.8g \n',o3_col_obs_err(itim));
+%         fprintf(fid,'%14.8g \n',o3_col_obs(itim));
+%         fprintf(fid,'%14.8g \n',o3_col_obs_err(itim));
       end
    end  
 end

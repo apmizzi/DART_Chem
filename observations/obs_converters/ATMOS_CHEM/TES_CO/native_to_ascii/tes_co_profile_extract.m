@@ -157,28 +157,38 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       field='/HDFEOS/SWATHS/CONadirSwath/Data Fields/CO';
       co_lay=h5read(file_in,field);
       units=h5readatt(file_in,field,'Units');
+      tempapm=h5readatt(file_in,field,'Title');
+      tempapm=h5readatt(file_in,field,'UniqueFieldDefinition');
 %
 % co_lay_err (layer,nobs) (ln(vmr))
       field='/HDFEOS/SWATHS/CONadirSwath/Data Fields/COPrecision';
       co_lay_err=h5read(file_in,field);
       units=h5readatt(file_in,field,'Units');
+      tempapm=h5readatt(file_in,field,'Title');
+      tempapm=h5readatt(file_in,field,'UniqueFieldDefinition');
 %
 % dofs(nobs)
       field='/HDFEOS/SWATHS/CONadirSwath/Data Fields/DegreesOfFreedomForSignal';
       dofs=h5read(file_in,field);
 %
-% co_lay_prior (layer,nobs)
+% co_lay_prior (layer,nobs) (vmr)
       field='/HDFEOS/SWATHS/CONadirSwath/Data Fields/Initial';
       co_lay_prior=h5read(file_in,field);
       units=h5readatt(file_in,field,'Units');
 %
-% err_cov_mea(layer,layer,nobs)
+% err_cov_mea(layer,layer,nobs) (ln(vmr)^2)
       field='/HDFEOS/SWATHS/CONadirSwath/Data Fields/MeasurementErrorCovariance';
       err_cov_mea=h5read(file_in,field);
+      tempapm=h5readatt(file_in,field,'Units');
+      tempapm=h5readatt(file_in,field,'Title');
+      tempapm=h5readatt(file_in,field,'UniqueFieldDefinition');
 %
-% err_cov_obs(layer,layer,nobs)
+% err_cov_obs(layer,layer,nobs) (ln(vmr)^2)
       field='/HDFEOS/SWATHS/CONadirSwath/Data Fields/ObservationErrorCovariance';
       err_cov_obs=h5read(file_in,field);
+      tempapm=h5readatt(file_in,field,'Units');
+      tempapm=h5readatt(file_in,field,'Title');
+      tempapm=h5readatt(file_in,field,'UniqueFieldDefinition');
 %
 % prs_lay (layer,nobs) Pressure is bottom to top (hPa)
       field='/HDFEOS/SWATHS/CONadirSwath/Data Fields/Pressure';

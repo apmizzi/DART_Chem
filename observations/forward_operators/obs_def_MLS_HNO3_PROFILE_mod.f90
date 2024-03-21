@@ -354,7 +354,7 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
    Ru       = 8.316_r8      ! J/(mole-kg)
    Cp       = 1006.0        ! J/kg/K
    grav     = 9.8_r8        ! m/s^2
-   hno3_min   = 1.e-6_r8
+   hno3_min = 1.e-6_r8
    msq2cmsq = 1.e4_r8
    AvogN    = 6.02214e23_r8
    missing  = -888888_r8
@@ -568,9 +568,24 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
 !
          data_file=trim(upper_data_file)
          model=trim(upper_data_model)
+         
+!         write(string1, *) &
+!         'APM: Model pressure 1, n', kstart, prs_mdl_1(imem), prs_mdl_n(imem)
+!         call error_handler(E_ALLMSG, routine, string1, source) 
+!         do k=1,layer_mls
+!            write(string1, *) &
+!            'APM: MLS pressure ', k, prs_mls(k)
+!            call error_handler(E_ALLMSG, routine, string1, source) 
+!         enddo
          call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
          ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_mls_top, &
          ncnt,hno3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+!         do k=1,ncnt
+!            write(string1, *) &
+!            'APM: Uppr Bdy values ', k, hno3_prf_mdl(k), tmp_prf_mdl(k), qmr_prf_mdl(k)
+!            call error_handler(E_ALLMSG, routine, string1, source) 
+!         enddo
+         
 !
 ! Impose ensemble perturbations from level kstart-1
          do k=kstart,layer_mls
@@ -586,6 +601,16 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
          deallocate(hno3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
       endif             
    enddo
+!
+! Print full profile examples
+!   do imem=1,1
+!      do k=1,layer_mls
+!         write(string1, *) &
+!         'APM: prs,hno3,tmp,qmr ',k,prs_mls(k)/100.,hno3_val(imem,k), &
+!         tmp_val(imem,k),qmr_val(imem,k)
+!         call error_handler(E_MSG, routine, string1, source)
+!      enddo
+!   enddo
 !
 ! Check full profile for negative values
    do imem=1,ens_size
@@ -728,7 +753,7 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
 !         write(string1, *)'APM: expected retr ',k,expct_val(imem), &
 !         avg_kernel(key,k), prior(key,k)
 !         call error_handler(E_MSG, routine, string1, source)
-      enddo       
+      enddo
 !      write(string1, *)'APM: FINAL EXPECTED VALUE ',expct_val(imem)
 !      call error_handler(E_MSG, routine, string1, source)
 !      write(string1, *)'  '

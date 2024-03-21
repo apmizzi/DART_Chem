@@ -390,8 +390,8 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
    level_mls = nlayer(key)+1
    klev_mls  = klev(key)
    kend_mls  = kend(key)
-   layer_mdl   = nlayer_model
-   level_mdl   = nlayer_model+1
+   layer_mdl = nlayer_model
+   level_mdl = nlayer_model+1
 
    allocate(prs_mls(layer_mls))
    allocate(prs_mls_mem(layer_mls))
@@ -557,8 +557,7 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
          allocate(prs_mls_top(ncnt))
          allocate(o3_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
          do k=kstart,layer_mls
-            kk=k-kstart+1
-            prs_mls_top(kk)=prs_mls(k)
+            prs_mls_top(k-kstart+1)=prs_mls(k)
          enddo
          prs_mls_top(:)=prs_mls_top(:)/100.
 !
@@ -568,9 +567,24 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
 !
          data_file=trim(upper_data_file)
          model=trim(upper_data_model)
+         
+!         write(string1, *) &
+!         'APM: Model pressure 1, n', kstart, prs_mdl_1(imem), prs_mdl_n(imem)
+!         call error_handler(E_ALLMSG, routine, string1, source) 
+!         do k=1,layer_mls
+!            write(string1, *) &
+!            'APM: MLS pressure ', k, prs_mls(k)
+!            call error_handler(E_ALLMSG, routine, string1, source) 
+!         enddo
          call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
          ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_mls_top, &
          ncnt,o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+!         do k=1,ncnt
+!            write(string1, *) &
+!            'APM: Uppr Bdy values ', k, o3_prf_mdl(k), tmp_prf_mdl(k), qmr_prf_mdl(k)
+!            call error_handler(E_ALLMSG, routine, string1, source) 
+!         enddo
+         
 !
 ! Impose ensemble perturbations from level kstart-1
          do k=kstart,layer_mls
@@ -586,6 +600,16 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
          deallocate(o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
       endif
    enddo
+!
+! Print full profile examples
+!   do imem=1,1
+!      do k=1,layer_mls
+!         write(string1, *) &
+!         'APM: prs,o3,tmp,qmr ',k,prs_mls(k)/100.,o3_val(imem,k), &
+!         tmp_val(imem,k),qmr_val(imem,k)
+!         call error_handler(E_MSG, routine, string1, source)
+!      enddo
+!   enddo
 !
 ! Check full profile for negative values
    do imem=1,ens_size
@@ -719,8 +743,8 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
          else
             o3_val_conv = (dw_wt*o3_bot+up_wt*o3_top)/tl_wt
          endif
-         prior_term=-avg_kernel(key,k)
-         if(k.eq.klev_mls) prior_term=1.-avg_kernel(key,k)
+         prior_term=-1.*avg_kernel(key,k)
+         if(k.eq.klev_mls) prior_term=1.0_r8-avg_kernel(key,k)
 ! expected retrieval
          expct_val(imem) = expct_val(imem) + o3_val_conv * &
          avg_kernel(key,k) + prior_term*prior(key,k)
@@ -736,8 +760,8 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
       if(expct_val(imem).lt.0) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
-!         write(string1, *) 'APM NOTICE: MLS O3 expected value is negative '
-!         call error_handler(E_MSG, routine, string1, source)
+         write(string1, *) 'APM NOTICE: MLS O3 expected value is negative '
+         call error_handler(E_MSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif

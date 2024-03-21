@@ -131,8 +131,9 @@ program mopitt_v8_co_profile_ascii_to_obs
    integer                           :: sum_reject,sum_accept,sum_total,num_thin
    integer                           :: obs_accept,obs_co_reten_freq,obs_o3_reten_freq
 !
+   integer                           :: kobs(2)   
    integer,dimension(12)             :: days_in_month=(/ &
-                                      31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
+                                        31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
 !
    real                              :: bin_beg_sec,bin_end_sec
    real                              :: lon_min,lon_max,lat_min,lat_max
@@ -343,14 +344,10 @@ program mopitt_v8_co_profile_ascii_to_obs
          call set_obs_def_location(obs_def, obs_location)
          call set_obs_def_time(obs_def, obs_time)
          call set_obs_def_error_variance(obs_def, obs_err_var)
-         print *, 'APM: ilv, qc_count ',ilv,qc_count
-         print *, 'APM:  prs ',prs_lev_r8(1:nlev_obs)
-         print *, 'APM:  avgk ',avgk_lay_r8(1:nlay_obs)
-         print *, 'APM:  prior ',prior_prf_r8(1:nlay_obs)
-         print *, 'APM: ilv,nlay,nlev ',ilv,nlay_obs,nlev_obs
-         print *, ' '
+         kobs(1)=sum_total
+         kobs(2)=ilv
          call set_obs_def_mopitt_v8_co_profile(qc_count, prs_lev_r8, avgk_lay_r8, &
-         prior_prf_r8, ilv, nlay_obs, nlev_obs)
+         prior_prf_r8, kobs, nlay_obs, nlev_obs)
          call set_obs_def_key(obs_def, qc_count)
          call set_obs_values(obs, obs_val, 1)
          call set_qc(obs, mopitt_qc, num_qc)

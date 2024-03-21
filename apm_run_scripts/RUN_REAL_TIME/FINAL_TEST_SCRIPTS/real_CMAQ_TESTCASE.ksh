@@ -39,22 +39,22 @@ export RUN_DIR=${EXPERIMENT_DIR}/CMAQ_TESTCASE
 export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_CMAQ_TESTCASE
 export EXPERIMENT_INPUT_OBS=CMAQ_OBS
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'      
-export WRFCHEM_TEMPLATE_FILE=cmaqout_d01_2018-07-01_00:00:00
+export WRFCHEM_TEMPLATE_FILE=cmaqout_d01_2016-08-01_00:00:00
 export NUM_MEMBERS=10
 export CYCLE_PERIOD=6
 export FCST_PERIOD=6
 #
 # CYCLE TIME SETTINGS
-export INITIAL_DATE=2018063018
-export FIRST_FILTER_DATE=2018070100
-export FIRST_DART_INFLATE_DATE=2018070100
-export FIRST_EMISS_INV_DATE=2018070100
+export INITIAL_DATE=2016073118
+export FIRST_FILTER_DATE=2016080100
+export FIRST_DART_INFLATE_DATE=2016080100
+export FIRST_EMISS_INV_DATE=2016080100
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2018070100
+export CYCLE_STR_DATE=2016080100
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2018070100
+export CYCLE_END_DATE=2016080100
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -306,9 +306,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # SELECT COMPONENT RUN OPTIONS:
    export RUN_CONSOLIDATE_CMAQ_INPUT=false
-   if [[ ${DATE} -gt ${INITIAL_DATE} ]]; then   
-       export RUN_CONSOLIDATE_CMAQ_INPUT=true
-   fi
+#   
 # FOR GENERAL CYCLING   
    if [[ ${RUN_SPECIAL_FORECAST} == false ]]; then
       if ${RUN_INPUT_OBS}; then
@@ -436,12 +434,14 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 #########################################################################
 #
-   export GENERAL_JOB_CLASS=devel
-   export GENERAL_TIME_LIMIT=00:20:00
+   export GENERAL_JOB_CLASS=normal
+   export GENERAL_TIME_LIMIT=00:05:00
    export GENERAL_NODES=1
-   export GENERAL_TASKS=16
+   export GENERAL_TASKS=1
    export FILTER_JOB_CLASS=devel
    export FILTER_TIME_LIMIT=01:59:00
+   export FILTER_JOB_CLASS=devel
+   export FILTER_TIME_LIMIT=00:05:00
    export FILTER_NODES=1
    export FILTER_TASKS=16
 #
@@ -468,8 +468,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          cd consolidate_cmaq_input
       fi
       source ${RS_SCRIPTS_DIR}/RS_Consolidate_CMAQ_Files.ksh > index_rs.html 2>&1
-   fi
-   exit					   
+      exit
+  fi
 #
 #########################################################################
 #

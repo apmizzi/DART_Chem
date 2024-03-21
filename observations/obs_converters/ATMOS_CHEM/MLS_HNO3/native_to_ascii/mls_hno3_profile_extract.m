@@ -176,8 +176,7 @@ function mls_hno3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
       file_end_dd=str2double(time_end(9:10));
       file_end_hh=str2double(time_end(12:13));
       file_end_mn=str2double(time_end(15:16));
-      file_end_ss=round(str2double(time_end(18:23)));
-      
+      file_end_ss=round(str2double(time_end(18:23)));      
       file_str_secs=file_str_hh*3600 + file_str_mn*60 + file_str_ss;
       file_end_secs=file_end_hh*3600 + file_end_mn*60 + file_end_ss;
       fprintf('%d %s \n',ifile,file_in);
@@ -304,19 +303,26 @@ function mls_hno3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
 %
 % QA/QC
 %
-%         if(zenang(itim)>=80.0)
+         if(zenang(itim)>=80.0)
 %            fprintf('zenang %6.2f \n',zenang(itim))
-%            continue
-%         end
+            continue
+         end
 %         if(isnan(hno3_col_obs(itim)))
 %            continue
 %         end
-         for ilay=1:layer	 
-            if(isnan(hno3_obs(ilay,itim)))
-	       fprinf('hno3_obs is a NaN %d \n',hno3_obs(ilay,itim)) 
-               continue
-            end
-         end
+%         for ilay=1:layer	 
+%            if(isnan(hno3_obs(ilay,itim)))
+%	       fprinf('hno3_obs is NaN %d \n',hno3_obs(ilay,itim)) 
+%               continue
+%            end
+%         end
+%	 
+%         for ilay=1:layer	 
+%            if(hno3_obs(ilay,itim)<0.0)
+%               fprintf('hno3_obs is negative \n')
+%               continue
+%            end
+%         end
 %
 % Check domain
 % Input grid needs to be in degrees
@@ -398,7 +404,7 @@ function mls_hno3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
 	 elseif (y_obser>35 & y_obser<=70.)
            swt=70.-y_obser;
 	   nwt=y_obser-35.;
-	   avgk_obs=(swt*avgk_lay_1d35N + nwt*avgk_lay_1d70N)/35.;
+	   avgk_obs=(swt*avgk_lay_1d35N + nwt*avgk_lay_1d70N)/35.
 	   ret_lay_obs=(swt*ret_lay_35N + nwt*ret_lay_70N)/35.;
 	   tru_lay_obs=(swt*tru_lay_35N + nwt*tru_lay_70N)/35.;
 	 else
@@ -430,7 +436,7 @@ function mls_hno3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
          fprintf(fid,'\n');
          fprintf(fid,'%14.8g \n',hno3_prior_err(itim));
          for k=1:ret_nlay
-            fprintf(fid,'%14.8g ',avgk_obs(k,1:tru_nlay));
+            fprintf(fid,'%14.8g ',avgk_obs(k,1:tru_nlay))
             fprintf(fid,'\n');
 	 end
 %         fprintf(fid,'%14.8g \n',hno3_col_obs(itim));

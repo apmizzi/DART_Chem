@@ -1,6 +1,6 @@
 #!/bin/ksh -aux
 #
-   cd ${RUN_DIR}/${DATE}/omi_domino_no2_trop_col_obs
+   cd ${RUN_DIR}/${DATE}/omi_no2_domino_trop_col_obs
 #
 # SET OMI PARAMETERS
       export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
@@ -152,8 +152,8 @@
       ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_omi_input_nml.ksh
 #
 # DO THINNING
-      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/work/omi_no2_domino_trop_col_thinner ./.
-      ./omi_no2_domino_trop_col_thinner > index_thinner.html 2>&1
+#      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/work/omi_no2_domino_trop_col_thinner ./.
+#      ./omi_no2_domino_trop_col_thinner > index_thinner.html 2>&1
 #
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/OMI_NO2/work/omi_no2_domino_trop_col_ascii_to_obs ./.
@@ -165,5 +165,5 @@
       fi
 #
 # Clean directory
-      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
-      rm requiredMCRP* run_omi_no2_domino* omi_no2_domino_trop* unresolved* *.dat
+#      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+#      rm requiredMCRP* run_omi_no2_domino* omi_no2_domino_trop* unresolved* *.dat

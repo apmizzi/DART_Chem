@@ -159,5 +159,5 @@
       fi
 #
 # Clean directory
-      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
-      rm requiredMCRP* run_mls_hno3* mls_hno3_profile* unresolved* *.dat
+#      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+#      rm requiredMCRP* run_mls_hno3* mls_hno3_profile* unresolved* *.dat

@@ -161,15 +161,19 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       field='/HDFEOS/SWATHS/O3NadirSwath/Data Fields/MeasurementErrorCovariance';
       err_cov_mea=h5read(file_in,field);
 %
-% o3_lay (layer,nobs)
+% o3_lay (layer,nobs) (vmr)
       field='/HDFEOS/SWATHS/O3NadirSwath/Data Fields/O3';
       o3_lay=h5read(file_in,field);
       units=h5readatt(file_in,field,'Units');
+      tempapm=h5readatt(file_in,field,'Title');
+      tempapm=h5readatt(file_in,field,'UniqueFieldDefinition');
 %
-% o3_lay_prior (layer,nobs)
+% o3_lay_prior (layer,nobs) (vmr)
       field='/HDFEOS/SWATHS/O3NadirSwath/Data Fields/Initial';
       o3_lay_prior=h5read(file_in,field);
       units=h5readatt(file_in,field,'Units');
+      tempapm=h5readatt(file_in,field,'Title');
+      tempapm=h5readatt(file_in,field,'UniqueFieldDefinition');
 %
 % o3_lay_err (layer,nobs)
       field='/HDFEOS/SWATHS/O3NadirSwath/Data Fields/O3Precision';
@@ -200,9 +204,12 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       field='/HDFEOS/SWATHS/O3NadirSwath/Data Fields/TotalColumnDensityInitial';
       o3_total_col_prior=h5read(file_in,field);
 %      
-% err_cov_obs(layer,layer,nobs)
+% err_cov_obs(layer,layer,nobs) (ln(vmr)^2)
       field='/HDFEOS/SWATHS/O3NadirSwath/Data Fields/ObservationErrorCovariance';
       err_cov_obs=h5read(file_in,field);
+      units=h5readatt(file_in,field,'Units');
+      tempapm=h5readatt(file_in,field,'Title');
+      tempapm=h5readatt(file_in,field,'UniqueFieldDefinition');
 %
 % prs_lay (layer,nobs) Pressure is bottom to top (hPa)
       field='/HDFEOS/SWATHS/O3NadirSwath/Data Fields/Pressure';
@@ -213,13 +220,17 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       field='/HDFEOS/SWATHS/O3NadirSwath/Data Fields/TotalError';
       total_err=h5read(file_in,field);
 %
-% err_cov_total(layer,layer,nobs)
+% err_cov_total(layer,layer,nobs) (ln(vmr)^2)
       field='/HDFEOS/SWATHS/O3NadirSwath/Data Fields/TotalErrorCovariance';
       err_cov_total=h5read(file_in,field);
+      units=h5readatt(file_in,field,'Units');
+      tempapm=h5readatt(file_in,field,'Title');
+      tempapm=h5readatt(file_in,field,'UniqueFieldDefinition');
 %
-% tropopause pressure(nobs)
+% tropopause pressure(nobs) hPa
       field='/HDFEOS/SWATHS/O3NadirSwath/Data Fields/TropopausePressure';
       trop_pressure=h5read(file_in,field);
+      units=h5readatt(file_in,field,'Units');
 %
 % lat (nobs)
       field='/HDFEOS/SWATHS/O3NadirSwath/Geolocation Fields/Latitude';

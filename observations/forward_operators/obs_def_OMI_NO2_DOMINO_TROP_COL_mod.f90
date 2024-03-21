@@ -513,21 +513,21 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
             zstatus(:)=20
             expct_val(:)=missing_r8
             write(string1, *) &
-            'APM: Model profile data has missing values for obs, level ',key,k
-            call error_handler(E_ALLMSG, routine, string1, source)
+            'APM: Input data has missing values '
+            call error_handler(E_MSG, routine, string1, source)
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            do imemm=1,ens_size
-               write(string1, *) &
-               'APM: Model profile values: no2,tmp,qmr',key,imem,k,no2_val(imemm,k), &
-               tmp_val(imemm,k),qmr_val(imemm,k)     
-               call error_handler(E_ALLMSG, routine, string1, source)
-            enddo
             return
          endif
       enddo
 !
 ! Convert units for no2 from ppmv
       no2_val(:,k) = no2_val(:,k) * 1.e-6_r8
+   enddo
+   imem=1
+   do k=1,level_omi
+      write(string1, *)'APM: ',k,prs_omi(k), &
+      no2_val(imem,k)*1.e6_8,tmp_val(imem,k),qmr_val(imem,k)
+      call error_handler(E_MSG, routine, string1, source)
    enddo
 !
    istatus(:)=0
@@ -555,10 +555,10 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
          thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
          log(prs_omi_mem(k)/prs_omi_mem(k+1))
 
-!         write(string1, *) &
-!         'APM: Key, Thickness calcs ', key, k, thick(k), up_wt, dw_wt, tmp_vir_k,tmp_vir_kp, &
-!         prs_omi_mem(k), prs_omi_mem(k+1)     
-!         call error_handler(E_ALLMSG, routine, string1, source)
+         write(string1, *) &
+         'APM: Key, Thickness calcs ', key, k, thick(k), up_wt, dw_wt, tmp_vir_k,tmp_vir_kp, &
+         prs_omi_mem(k), prs_omi_mem(k+1)     
+         call error_handler(E_ALLMSG, routine, string1, source)
 
       enddo
    
@@ -586,16 +586,16 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
          expct_val(imem) = expct_val(imem) + thick(k) * no2_val_conv * &
          AvogN/msq2cmsq * scat_wt(key,k) 
 
-!         write(string1, *) &
-!         'APM: Key, Expected Value Terms ',key,k,expct_val(imem),thick(k),no2_val_conv, &
-!         AvogN/msq2cmsq, scat_wt(key,k)     
-!         call error_handler(E_ALLMSG, routine, string1, source)
+         write(string1, *) &
+         'APM: Key, Expected Value Terms ',key,k,expct_val(imem),thick(k),no2_val_conv, &
+         AvogN/msq2cmsq, scat_wt(key,k)     
+         call error_handler(E_ALLMSG, routine, string1, source)
 
       enddo
 
-!      write(string1, *) &
-!      'APM: Member ',imem,'Key, Final Value for ob ',key,expct_val(imem)
-!      call error_handler(E_ALLMSG, routine, string1, source)
+      write(string1, *) &
+      'APM: Member ',imem,'Key, Final Value for ob ',key,expct_val(imem)
+      call error_handler(E_ALLMSG, routine, string1, source)
 
       if(isnan(expct_val(imem))) then
          zstatus(imem)=20

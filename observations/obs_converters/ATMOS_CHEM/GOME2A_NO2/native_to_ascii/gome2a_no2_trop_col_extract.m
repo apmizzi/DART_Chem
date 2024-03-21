@@ -142,17 +142,17 @@ function gome2a_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
       field='/PRODUCT/longitude';
       lon=ncread(file_in,field);
 %
-% time(ntim)
+% time(ntim) (seconds since 1995-01-01 00:00:00)
       field='/PRODUCT/time';
       time=ncread(file_in,field);
 %
-% delta_time(nscan,ntim) (milliseconds)
+% delta_time(nscan,ntim) (milliseconds from reference time of measurement)
       field='/PRODUCT/delta_time';
       delta_time=ncread(file_in,field);
       delta_time=delta_time/1000.;
       units=ncreadatt(file_in,field,'units');
 %
-% no2_vert_col_trop (npxl,nscan,ntim)
+% no2_vert_col_trop (npxl,nscan,ntim) (mollecules cm-2)
       field='/PRODUCT/tropospheric_no2_vertical_column';
       no2_vert_col_trop=ncread(file_in,field);
 %
@@ -176,12 +176,12 @@ function gome2a_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
       field='/PRODUCT/tm5_tropopause_layer_index';
       trop_index=ncread(file_in,field);
 %
-% tm5_prs_a (nv,layer) In Pa, needs to be in hPa
+% tm5_prs_a (nv,layer) (hybrid pressure coefficient for Pa; 1 - lower grid bdy; 2 - upper grid bdy)
       field='/PRODUCT/tm5_pressure_level_a';
       tm5_prs_a=ncread(file_in,field);
       tm5_prs_a=tm5_prs_a/100.;
 %
-% tm5_prs_b (nv,layer) ( )
+% tm5_prs_b (nv,layer) (hybrid pressure coefficient for Pa - lower grid bdy; 2 - upper grid bdy)
       field='/PRODUCT/tm5_pressure_level_b';
       tm5_prs_b=ncread(file_in,field);
 %
@@ -195,6 +195,8 @@ function gome2a_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
       for ipxl=1:npxl
          for ilin=1:nscan
             if(isnan(tm5_prs_sfc(ipxl,ilin)))
+               prs_lev(ipxl,ilin,:)=-99999.; 
+               prs_lay(ipxl,ilin,:)=-99999.; 
                continue
             end
             for ilv=1:layer

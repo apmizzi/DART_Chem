@@ -162,5 +162,5 @@
       fi
 #
 # Clean directory
-      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
-      rm requiredMCRP* run_tes_o3* tes_o3_profile* unresolved* *.dat
+#      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
+#      rm requiredMCRP* run_tes_o3* tes_o3_profile* unresolved* *.dat

@@ -95,10 +95,10 @@
 ##
 ## APM: add PSFC and DENSITY
    
-   export NL_CONV_STATE_VARIABLES="'ZF',     'QTY_GEOPOTENTIAL_HEIGHT',  'TYPE_GZ',    'NULL','999',
-          'TA',      'QTY_TEMPERATURE',          'TYPE_T',     'NULL',  '999',
-          'QV',      'QTY_VAPOR_MIXING_RATIO',   'TYPE_QV',    'NULL',  '999',
-          'PRES',    'QTY_PRESSURE',             'TYPE_MU',    'NULL',  '999',
+   export NL_CONV_STATE_VARIABLES="'ZF',     'QTY_GEOPOTENTIAL_HEIGHT',  'TYPE_GZ',    'UPDATE','999',
+          'TA',      'QTY_TEMPERATURE',          'TYPE_T',     'UPDATE',  '999',
+          'QV',      'QTY_VAPOR_MIXING_RATIO',   'TYPE_QV',    'UPDATE',  '999',
+          'PRES',    'QTY_PRESSURE',             'TYPE_MU',    'UPDATE',  '999',
           'CO',      'QTY_CO',                   'TYPE_CO',    'UPDATE','999',
           'O3',      'QTY_O3',                   'TYPE_O3',    'UPDATE','999',
           'NO2',     'QTY_NO2',                  'TYPE_NO2',   'UPDATE','999',
@@ -106,10 +106,7 @@
           'SO2',     'QTY_SO2',                  'TYPE_SO2',   'UPDATE','999',
           'SULF',    'QTY_SO4',                  'TYPE_SO4',   'UPDATE','999'"
 
-   export NL_CMAQ_STATE_BOUNDS="'ZF',    'NULL',       'NULL',       'CLAMP',
-          'TA',     '0.0',        'NULL',       'CLAMP',
-          'QV',     '0.0',        'NULL',       'CLAMP',
-          'PRES',   '0.0',        'NULL',       'CLAMP',
+   export NL_CMAQ_STATE_BOUNDS="'QV',     '0.0',        'NULL',       'CLAMP',
           'CO',     '${CO_MIN}',  '${CO_MAX}',  'CLAMP',
           'O3',     '${O3_MIN}',  '${O3_MAX}',  'CLAMP',
           'NO2',    '${NO2_MIN}', '${NO2_MAX}', 'CLAMP',

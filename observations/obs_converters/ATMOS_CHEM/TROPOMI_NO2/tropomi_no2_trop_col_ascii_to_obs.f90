@@ -298,14 +298,14 @@ program tropomi_no2_trop_col_ascii_to_obs
       read(fileid,*,iostat=ios) trop_indx
       prs_obs(:)=prs_obs(:)*100.
       prs_obs_r8(:)=prs_obs(:)
-      avgk_obs_r8(:)=avgk_obs(:)
+      avgk_obs_r8(:)=avgk_obs(:)*amf_trop_obs
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
       amf_trop_obs_r8=amf_trop_obs
 !
 ! Obs thinning test
       obs_accept=obs_accept+1
-      if(obs_accept/obs_o3_reten_freq*obs_o3_reten_freq.eq.obs_accept) then
+      if(obs_accept/obs_no2_reten_freq*obs_no2_reten_freq.eq.obs_accept) then
          sum_accept=sum_accept+1
          qc_count=qc_count+1
 !
@@ -332,6 +332,7 @@ program tropomi_no2_trop_col_ascii_to_obs
          call set_obs_def_location(obs_def, obs_location)
          call set_obs_def_time(obs_def, obs_time)
          call set_obs_def_error_variance(obs_def, obs_err_var)
+! APM: Here avgk_obs_r8 is the scattering weights due to conversion at the assignment above.
          call set_obs_def_tropomi_no2_trop_col(qc_count, prs_obs_r8, avgk_obs_r8, trop_indx, nlay_obs)
          call set_obs_def_key(obs_def, qc_count)
          call set_obs_values(obs, obs_val, 1)

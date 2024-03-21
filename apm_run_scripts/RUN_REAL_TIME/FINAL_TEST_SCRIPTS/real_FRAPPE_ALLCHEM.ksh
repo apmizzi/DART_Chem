@@ -73,7 +73,7 @@ export LS_CHEM_DZ=56
 export LS_CHEM_DT=368
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=false
+export RUN_INPUT_OBS=true
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
 export RUN_MOPITT_CO_PROFILE_OBS=true # (done)
 export RUN_MOPITT_CO_CPSR_OBS=false # (done)

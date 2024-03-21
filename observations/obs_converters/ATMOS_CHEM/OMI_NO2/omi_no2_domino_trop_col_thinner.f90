@@ -82,14 +82,20 @@ program omi_no2_thinner
       real,allocatable,dimension(:)    :: lon_obs
       integer,allocatable,dimension(:) :: nlay_obs
       integer,allocatable,dimension(:) :: nlev_obs
-      integer,allocatable,dimension(:) :: trop_index
+      real,allocatable,dimension(:)    :: amf_strat
       real,allocatable,dimension(:)    :: amf_trop
       real,allocatable,dimension(:)    :: amf_total
+      real,allocatable,dimension(:)    :: cld_frac
+      real,allocatable,dimension(:)    :: cld_prs
+      real,allocatable,dimension(:)    :: cld_rad_frac
+      real,allocatable,dimension(:)    :: col_amt_total
+      real,allocatable,dimension(:)    :: col_amt_total_err
       real,allocatable,dimension(:)    :: col_amt_trop
       real,allocatable,dimension(:)    :: col_amt_trop_err
       real,allocatable,dimension(:)    :: slnt_col_amt
       real,allocatable,dimension(:)    :: slnt_col_amt_err
-      real,allocatable,dimension(:,:)  :: avgk
+      real,allocatable,dimension(:)    :: prs_trop
+      real,allocatable,dimension(:,:)  :: scwt
       real,allocatable,dimension(:,:)  :: prs_obs
    end type observation_data
 !
@@ -140,13 +146,19 @@ program omi_no2_thinner
          allocate(omi_data(i_min,j_min)%lon_obs(max_num_obs))
          allocate(omi_data(i_min,j_min)%nlay_obs(max_num_obs))
          allocate(omi_data(i_min,j_min)%nlev_obs(max_num_obs))
-         allocate(omi_data(i_min,j_min)%trop_index(max_num_obs))
+         allocate(omi_data(i_min,j_min)%amf_strat(max_num_obs))
          allocate(omi_data(i_min,j_min)%amf_trop(max_num_obs))
          allocate(omi_data(i_min,j_min)%amf_total(max_num_obs))
+         allocate(omi_data(i_min,j_min)%cld_frac(max_num_obs))
+         allocate(omi_data(i_min,j_min)%cld_prs(max_num_obs))
+         allocate(omi_data(i_min,j_min)%cld_rad_frac(max_num_obs))
+         allocate(omi_data(i_min,j_min)%col_amt_total(max_num_obs))
+         allocate(omi_data(i_min,j_min)%col_amt_total_err(max_num_obs))
          allocate(omi_data(i_min,j_min)%col_amt_trop(max_num_obs))
          allocate(omi_data(i_min,j_min)%col_amt_trop_err(max_num_obs))
          allocate(omi_data(i_min,j_min)%slnt_col_amt(max_num_obs))
          allocate(omi_data(i_min,j_min)%slnt_col_amt_err(max_num_obs))
+         allocate(omi_data(i_min,j_min)%prs_trop(max_num_obs))
       endif
 !
       read(fileid,*,iostat=ios) &
@@ -164,16 +176,23 @@ program omi_no2_thinner
          omi_data(i_min,j_min)%nlev_obs(icnt)
          nlay_obs=omi_data(i_min,j_min)%nlay_obs(icnt)
          nlev_obs=omi_data(i_min,j_min)%nlev_obs(icnt)
-      read(fileid,*,iostat=ios) &
-         omi_data(i_min,j_min)%trop_index(icnt)
       if(omi_data(i_min,j_min)%icnt.eq.1) then
-         allocate(omi_data(i_min,j_min)%avgk(max_num_obs,nlay_obs))
+         allocate(omi_data(i_min,j_min)%scwt(max_num_obs,nlay_obs))
          allocate(omi_data(i_min,j_min)%prs_obs(max_num_obs,nlev_obs))
       endif
+      read(fileid,*,iostat=ios) &
+         omi_data(i_min,j_min)%amf_strat(icnt)
       read(fileid,*,iostat=ios) &
          omi_data(i_min,j_min)%amf_trop(icnt)
       read(fileid,*,iostat=ios) &
          omi_data(i_min,j_min)%amf_total(icnt)
+      read(fileid,*,iostat=ios) &
+         omi_data(i_min,j_min)%cld_frac(icnt), &
+         omi_data(i_min,j_min)%cld_prs(icnt), &
+         omi_data(i_min,j_min)%cld_rad_frac(icnt)
+      read(fileid,*,iostat=ios) &
+         omi_data(i_min,j_min)%col_amt_total(icnt), &
+         omi_data(i_min,j_min)%col_amt_total_err(icnt)
       read(fileid,*,iostat=ios) &
          omi_data(i_min,j_min)%col_amt_trop(icnt), &
          omi_data(i_min,j_min)%col_amt_trop_err(icnt)
@@ -181,7 +200,9 @@ program omi_no2_thinner
          omi_data(i_min,j_min)%slnt_col_amt(icnt), &
          omi_data(i_min,j_min)%slnt_col_amt_err(icnt)
       read(fileid,*,iostat=ios) &
-         omi_data(i_min,j_min)%avgk(icnt,1:nlay_obs)
+         omi_data(i_min,j_min)%prs_trop(icnt)
+      read(fileid,*,iostat=ios) &
+         omi_data(i_min,j_min)%scwt(icnt,1:nlay_obs)
       read(fileid,*,iostat=ios) &
          omi_data(i_min,j_min)%prs_obs(icnt,1:nlev_obs)
       read(fileid,*,iostat=ios) data_type, obs_id, &
@@ -285,11 +306,18 @@ program omi_no2_thinner
                omi_data(i,j)%nlay_obs(icnt), &
                omi_data(i,j)%nlev_obs(icnt)
             write(fileid,*,iostat=ios) &
-               omi_data(i,j)%trop_index(icnt)
+               omi_data(i,j)%amf_strat(icnt)
             write(fileid,*,iostat=ios) &
                omi_data(i,j)%amf_trop(icnt)
             write(fileid,*,iostat=ios) &
                omi_data(i,j)%amf_total(icnt)
+            write(fileid,*,iostat=ios) &
+               omi_data(i,j)%cld_frac(icnt), &
+               omi_data(i,j)%cld_prs(icnt), &
+               omi_data(i,j)%cld_rad_frac(icnt)
+            write(fileid,*,iostat=ios) &
+               omi_data(i,j)%col_amt_total(icnt), &
+               omi_data(i,j)%col_amt_total_err(icnt)
             write(fileid,*,iostat=ios) &
                omi_data(i,j)%col_amt_trop(icnt), &
                omi_data(i,j)%col_amt_trop_err(icnt)
@@ -297,7 +325,9 @@ program omi_no2_thinner
                omi_data(i,j)%slnt_col_amt(icnt), &
                omi_data(i,j)%slnt_col_amt_err(icnt)
             write(fileid,*,iostat=ios) &
-               omi_data(i,j)%avgk(icnt,1:nlay_obs)
+               omi_data(i,j)%prs_trop(icnt)
+            write(fileid,*,iostat=ios) &
+               omi_data(i,j)%scwt(icnt,1:nlay_obs)
             write(fileid,*,iostat=ios) &
                omi_data(i,j)%prs_obs(icnt,1:nlev_obs)
          endif
@@ -318,14 +348,20 @@ program omi_no2_thinner
             deallocate(omi_data(i,j)%lon_obs)
             deallocate(omi_data(i,j)%nlay_obs)
             deallocate(omi_data(i,j)%nlev_obs)
-            deallocate(omi_data(i,j)%trop_index)
+            deallocate(omi_data(i,j)%amf_strat)
             deallocate(omi_data(i,j)%amf_trop)
             deallocate(omi_data(i,j)%amf_total)
+            deallocate(omi_data(i,j)%cld_frac)
+            deallocate(omi_data(i,j)%cld_prs)
+            deallocate(omi_data(i,j)%cld_rad_frac)
+            deallocate(omi_data(i,j)%col_amt_total)
+            deallocate(omi_data(i,j)%col_amt_total_err)
             deallocate(omi_data(i,j)%col_amt_trop)
             deallocate(omi_data(i,j)%col_amt_trop_err)
             deallocate(omi_data(i,j)%slnt_col_amt)
             deallocate(omi_data(i,j)%slnt_col_amt_err)
-            deallocate(omi_data(i,j)%avgk)
+            deallocate(omi_data(i,j)%prs_trop)
+            deallocate(omi_data(i,j)%scwt)
             deallocate(omi_data(i,j)%prs_obs)
          endif
       enddo

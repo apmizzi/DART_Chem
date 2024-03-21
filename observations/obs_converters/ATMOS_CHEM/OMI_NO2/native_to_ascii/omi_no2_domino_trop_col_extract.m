@@ -16,11 +16,11 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
    nx_mdl=str2double(cnx_mdl);
    ny_mdl=str2double(cny_mdl);
 %
-   command=strcat('rm'," ",'-rf'," ",fileout);
+   command=strcat('/usr/bin/rm'," ",'-rf'," ",fileout);
    [status]=system(command);
    fid=fopen(fileout,'w');
 %
-   command=strcat('ls'," ",'-1'," ",filein,'*');
+   command=strcat('/usr/bin/ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);
@@ -155,6 +155,12 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
       delta_time=ncread(file_in,field);
       delta_time=delta_time/1000.;
       units=ncreadatt(file_in,field,'units');
+% processing_error_flag(npxl,nscan,ntim) (8-bit unsigned integer; 0 - good, 1 - fail)
+      field='/PRODUCT/processing_error_flag';
+      proc_err_flag=ncread(file_in,field);
+% snow_ice_flag(npxl,nscan,ntim) (8-bit unsigned integer; 0 - good, 1 - fail)
+      field='/PRODUCT/SUPPORT_DATA/INPUT_DATA/snow_ice_flag';
+      snow_ice_flag=ncread(file_in,field);
 % no2_trop_col(npxl,nscan,ntim) (molec/cm^2)
       field='/PRODUCT/tropospheric_no2_vertical_column';
       no2_trop_col=ncread(file_in,field);
@@ -175,16 +181,24 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
       field='/PRODUCT/amf_total';
       amf_total=ncread(file_in,field);
       units=ncreadatt(file_in,field,'units');
+% amf_geom(npxl,nscan,ntime) ( )
+      field='/PRODUCT/amf_total';
+      amf_geom=ncread(file_in,field);
+      units=ncreadatt(file_in,field,'units');
+% cloud_radiance_fraction_no2(npxl,nscan,ntime) ( )
+      field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/cloud_radiance_fraction_no2';
+      cld_rad_frac_no2=ncread(file_in,field);
+      units=ncreadatt(file_in,field,'units');
 % trop_indx(npxl,nscan,ntime) ( ) this is fill values only
       field='/PRODUCT/tm5_tropopause_layer_index';
       trop_indx=ncread(file_in,field);
       units=ncreadatt(file_in,field,'units');
-% tm5_prs_a(nv,layer) (Pa) Convert to hPa
+% tm5_prs_a(nv,layer) (Pa) Convert to hPa (1 - lower interface, 2 - upper interface)
       field='/PRODUCT/tm5_pressure_level_a';
       tm5_prs_a=ncread(file_in,field);
       units=ncreadatt(file_in,field,'units');
       tm5_prs_a=tm5_prs_a/100.;
-% tm5_prs_b(nv,layer) ( )
+% tm5_prs_b(nv,layer) ( )  (1 - lower interface, 2 - upper interface)
       field='/PRODUCT/tm5_pressure_level_b';
       tm5_prs_b=ncread(file_in,field);
       units=ncreadatt(file_in,field,'units');
@@ -209,11 +223,6 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
             end
             prs_lev(ipxl,iscan,level)=tm5_prs_a(2,layer)+tm5_prs_b(2,layer)* ...
             tm5_prs_sfc(ipxl,iscan,1);
-%            for k=1:layer
-%               mid=(prs_lev(ipxl,iscan,k)+prs_lev(ipxl,iscan,k+1))/2.;
-%               fprintf('prs_lay, mid %7.2f, %7.2f \n',prs_lay(ipxl,iscan,k),mid)
-%            end
-         end
       end
 % zenang(npxl,nscan,ntime) (deg)
       field='/PRODUCT/SUPPORT_DATA/GEOLOCATIONS/solar_zenith_angle';
@@ -293,42 +302,38 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
    	    for ipxl=1:npxl
 %
 % QA/AC
-               if(isnan(tm5_prs_sfc(ipxl,iscan,itim)))
-%                  fprintf('APM: Surface pressure is NaN \n') 
-                  continue
-	        end
-               if((ipxl>=1 & ipxl<=5) | (ipxl>=56 & ipxl<=60))
-%                  fprintf('APM: ipxl issue \n') 
-                  continue
-               end	       
-               reject=0;
-               for k=1:layer
-                  if(isnan(prs_lay(ipxl,iscan,k)))
-                     reject=1;
-                     break
-                  end
-               end    
-               if(reject==1)
-%                  fprintf('APM: prs_lay has NaNs \n')
+               if(isnan(proc_err_flag(ipxl,iscan,itim)) | proc_err_flag(ipxl,iscan,itim)~=0)
+                  continue		
+               end
+               if(isnan(zenang(ipxl,iscan,itim)) | zenang(ipxl,iscan,itim)>=80.0)
                   continue
                end
-               if(zenang(ipxl,iscan,itim)>=80.0)
-%                  fprintf('APM: zenang %6.2f \n',zenang(ipxl,iscan,itim))
+               if(isnan(snow_ice_flag(ipxl,iscan,itim)) | (snow_ice_flag(ipxl,iscan,itim)>=10 & ...
+               snow_ice_flag(ipxl,iscan,itim)~=255))
+                  continue		
+               end
+               if(isnan(amf_trop(ipxl,iscan,itim)) | isnan(amf_geom(ipxl,iscan,itim)) | ...
+               amf_geom(ipxl,iscan,itim)==0)
+                  continue		
+               end
+               if(amf_trop(ipxl,iscan,itim)/amf_geom(ipxl,iscan,itim)<=.2)
+                  continue		
+               end
+               if(isnan(cld_rad_frac_no2(ipxl,iscan,itim)) | cld_rad_frac_no2(ipxl,iscan,itim)>0.5)
+                  continue		
+               end
+               if(isnan(tm5_prs_sfc(ipxl,iscan,itim)))
+                  continue
+	        end
+               if(any(isnan(prs_lay(ipxl,iscan,1:layer))))
                   continue
                end
                if(isnan(no2_trop_col(ipxl,iscan,itim)) | no2_trop_col(ipxl,iscan,itim)<=0)
-%                  fprintf('APM: no2_trop_col is NaN or negative %6.2f \n',no2_vert_col_trop(ipxl,iscan,itim))
                   continue
                end
                if(isnan(no2_slnt_col(ipxl,iscan,itim)) | no2_slnt_col(ipxl,iscan,itim)<=0)
-%                  fprintf('APM: no2_slnt_col  issue \n ') 
                   continue
                end
-%               if(bitand(vcd_flg(ipxl,iscan),1)~=0 | xtrk_flg(ipxl,iscan)~=0 | ...
-%               xtrk_flg(ipxl,iscan)~=255 | zenang(ipxl,iscan)>=80.)
-%                  fprintf('APM: vcd or xtrk flag issue \n') 
-%                  continue
-%               end
 %
 % Check domain
 % Input grid needs to be in degrees
@@ -413,7 +418,7 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
 	       no2_trop_col_err(ipxl,iscan,itim));
                fprintf(fid,'%14.8g %14.8g \n',no2_slnt_col(ipxl,iscan,itim), ...
 	       no2_slnt_col_err(ipxl,iscan,itim));
-               fprintf(fid,'%14.8g ',avgk(1:layer,ipxl,iscan,itim));
+               fprintf(fid,'%14.8g ',avgk(1:layer,ipxl,iscan,itim))*amf_total(ipxl,iscan,itim);
                fprintf(fid,'\n');
  	       fprintf(fid,'%14.8g ',prs_lev(ipxl,iscan,1:level));
                fprintf(fid,'\n');
