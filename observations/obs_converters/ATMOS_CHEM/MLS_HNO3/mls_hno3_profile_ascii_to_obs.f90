@@ -304,13 +304,6 @@ program mls_hno3_profile_ascii_to_obs
       read(fileid,*,iostat=ios) tru_lay_obs(1:tru_nlay)
       read(fileid,*,iostat=ios) hno3_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) hno3_obs_err(1:nlay_obs)
-!
-! APM: Temporary fixes to address negative values      
-      do k=1,nlay_obs
-         if(hno3_obs(k).lt.0.) then
-            hno3_obs(k)=1.e-8
-         endif
-      enddo   
       cov_obs(:,:)=0.
       do k=1,nlay_obs
          cov_obs(k,k)=hno3_obs_err(k)*hno3_obs_err(k)
@@ -348,54 +341,23 @@ program mls_hno3_profile_ascii_to_obs
          lon_obs_r8=lon_obs
          lat_obs_r8=lat_obs
 !      
-! Check whether avgk row is zero.
-         reject_ak=1         
-         do ilay=1,nlay_obs
-            do icol=1,nlay_obs
-               if(avgk_obs(ilay,icol).ne.0.) then
-                  reject_ak=0
-                  exit
-               endif  
-            enddo
-         enddo
-!
-! Check the input data            
-         if(any(isnan(hno3_obs)) .or. any(isnan(prior_obs)) .or. &
-         any(isnan(avgk_obs)) .or. any(isnan(cov_obs))) then
-            print *, 'hno3 or prior or avgk or cov contains NaNs'
-            reject_ak=1
-         endif
-         do k=1,nlay_obs
-            if(hno3_obs(k).lt.0. .or. prior_obs(k).lt.0. .or. &
-            cov_obs(k,k).lt.0.) then
-               reject_ak=1
-               print *, 'hno3, prior, cov < 0 ',k,nlay_obs,hno3_obs(k),prior_obs(k),cov_obs(k,k)
-               exit
-            endif
-         enddo
-         if(reject_ak.eq.1) then
-            deallocate(prs_obs) 
-            deallocate(hno3_obs) 
-            deallocate(hno3_obs_err) 
-            deallocate(prior_obs)
-            deallocate(ret_lay_obs)
-            deallocate(tru_lay_obs)
-            deallocate(avgk_obs)
-            deallocate(cov_obs)
-            deallocate(prior_obs_r8)
-            deallocate(prs_obs_r8) 
-            deallocate(avgk_obs_r8)
-            read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-            cycle
-         endif
-!      
 ! Loop through the profile retrievals
-         do ilay=1,nlay_obs
+         do k=1,nlay_obs
+            ilay=k
+            if(all(avgk_obs(ilay,1:nlay_obs).eq.0.)) then
+               cycle
+            endif
+            if(hno3_obs(k).lt.0. .or. prior_obs(k).lt.0. .or. &
+            isnan(hno3_obs(k)) .or. isnan(prior_obs(k)) .or. &
+            any(isnan(avgk_obs(k,:))) .or. all(avgk_obs(k,:).eq.0)) then
+               print *, 'hno3, prior, cov < 0 ',k,nlay_obs,hno3_obs(k),prior_obs(k),cov_obs(k,k)
+               cycle
+            endif
 !
 ! Set data for writing obs_sequence file
             sum_accept=sum_accept+1
             qc_count=qc_count+1
-            avgk_obs_r8(1:nlay_obs)=avgk_obs(ilay,1:nlay_obs)         
+            avgk_obs_r8(1:nlay_obs)=avgk_obs(ilay,1:nlay_obs)
             obs_val(:)=hno3_obs(ilay)
             obs_err_var=(fac_obs_error*fac_err*sqrt(cov_obs(ilay,ilay)))**2
             mls_qc(:)=0

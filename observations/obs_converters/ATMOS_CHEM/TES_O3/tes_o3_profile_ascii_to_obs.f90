@@ -351,28 +351,25 @@ program tes_o3_profile_ascii_to_obs
 !      
 ! Loop through the profile retrievals
          do ilay=klev+1,nlay_obs
-!
-! Check whether avgk row is zero.
-            reject_ak=1
-            do icol=klev+1,nlay_obs
-               if(avgk_obs(ilay,icol).ne.-999 .or. cov_total(ilay,icol).ne.-999) then
-                  reject_ak=0
-                  exit
-               endif  
-            enddo
-         enddo
-         if(reject_ak.eq.1) cycle
+            avgk_obs_r8(1:kend)=avgk_obs(ilay,klev+1:nlay_obs)         
+            if(all(avgk_obs_r8(1:kend).eq.0.) .or. &
+            any(avgk_obs_r8(1:kend).eq.-999)) then 
+               cycle
+            endif
+            if(any(prior_obs_r8(1:kend).lt.0.) .or. &
+            any(prior_obs_r8(1:kend).eq.-999)) then 
+               cycle
+            endif
 !
 ! Process accepted observations
-         do ilay=klev+1,nlay_obs
             sum_accept=sum_accept+1
             qc_count=qc_count+1
 !
 ! Obs is a profile
-            avgk_obs_r8(1:kend)=avgk_obs(ilay,klev+1:nlay_obs)         
             obs_val(:)=o3_obs(ilay)
+!            obs_err_var=(fac_obs_error*fac_err*sqrt(cov_total(ilay,ilay))*o3_obs(ilay))**2
+!            obs_err_var=(fac_obs_error*fac_err*sqrt(cov_obs(ilay,ilay))*o3_obs(ilay))**2
             obs_err_var=(fac_obs_error*fac_err*o3_obs_err(ilay)*o3_obs(ilay))**2
-!            obs_err_var=(fac_obs_error*fac_err*sqrt(cov_obs(ilay,ilay)))**2
             tes_qc(:)=0
             obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
             call get_time(obs_time, seconds, days)

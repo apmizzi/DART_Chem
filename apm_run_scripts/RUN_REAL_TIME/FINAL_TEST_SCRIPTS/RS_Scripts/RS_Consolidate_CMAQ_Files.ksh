@@ -6,8 +6,8 @@
 #
    export NL_NUM_2D_VARS=5
    export NL_LIST_2D_VARS=\'LAT\',\'LON\',\'HT\',\'LWMASK\',\'PRSFC\'
-   export NL_NUM_3D_VARS=4
-   export NL_LIST_3D_VARS=\'PRES\',\'DENS\',\'ZF\',\'ZH\'
+   export NL_NUM_3D_VARS=6
+   export NL_LIST_3D_VARS=\'TA\',\'QV\',\'PRES\',\'DENS\',\'ZF\',\'ZH\'
 #
    export BACKGROUND_DIR=${RUN_DIR}/${PAST_DATE}/wrfchem_cycle_cr
    if [[ ${DATE} -eq ${FIRST_FILTER_DATE} ]]; then
@@ -17,14 +17,14 @@
 # COPY BACKGROUND FORECASTS
    export L_DART_FILTER_DIR=${RUN_DIR}/${DATE}/dart_filter
    mkdir -p ${L_DART_FILTER_DIR}
-   let MEM=1
-   while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
-      export CMEM=e${MEM}
-      if [[ ${MEM} -lt 100 ]]; then; export export CMEM=e0${MEM}; fi
-      if [[ ${MEM} -lt 10 ]]; then; export CMEM=e00${MEM}; fi
+#   let MEM=1
+#   while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
+#      export CMEM=e${MEM}
+#      if [[ ${MEM} -lt 100 ]]; then; export export CMEM=e0${MEM}; fi
+#      if [[ ${MEM} -lt 10 ]]; then; export CMEM=e00${MEM}; fi
 #      cp ${BACKGROUND_DIR}/run_${CMEM}/cmaq_output_d${CR_DOMAIN} ${L_DART_FILTER_DIR}/cmaq_output_d${CR_DOMAIN}.${CMEM}
-      let MEM=${MEM}+1
-   done
+#      let MEM=${MEM}+1
+#   done
 #
 # CREATE NAMELIST FILE
    rm -rf cmaq_dimensions_nml
@@ -51,4 +51,4 @@ list_3d_vars    = ${NL_LIST_3D_VARS}
 /
 EOF
 !
-   ./consolidate_cmaq_files.exe
+   ./consolidate_cmaq_files.exe > index.consolidate 2>&1

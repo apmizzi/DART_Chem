@@ -17,6 +17,7 @@ programs=(
 mopitt_co_profile_ascii_to_obs
 mopitt_v5_co_profile_ascii_to_obs
 mopitt_v8_co_profile_ascii_to_obs
+mopitt_v8_co_profile_thinner
 mopitt_co_cpsr_ascii_to_obs
 obs_sequence_tool
 advance_time

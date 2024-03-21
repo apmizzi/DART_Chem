@@ -17,12 +17,14 @@
       if ! ${SKIP_FILTER}; then
 #
 # Get DART files
+         rm -rf filter advance_time input.nml sampling_error_correction_table.nc 
          cp ${CMAQ_DART_WORK_DIR}/filter      ./.
          cp ${CMAQ_DART_WORK_DIR}/advance_time ./.
          cp ${CMAQ_DART_WORK_DIR}/input.nml ./.
          cp ${DART_DIR}/assimilation_code/programs/gen_sampling_err_table/work/sampling_error_correction_table.nc ./.
 #
 # Get observations
+         rm -rf obs_seq.out	 
          if [[ ${PREPROCESS_OBS_DIR}/obs_seq_comb_filtered_${START_DATE}.out ]]; then      
             cp  ${PREPROCESS_OBS_DIR}/obs_seq_comb_filtered_${START_DATE}.out obs_seq.out
          else
@@ -31,14 +33,18 @@
          fi
 #
 # Copy DART file that controls the observation/state variable update localization
+         rm control_impact_runtime.table
          cp ${LOCALIZATION_DIR}/control_impact_runtime.txt ./control_impact_runtime.table
 #
 # Get background forecasts (These are the CCTM_CGRID_xxx ensemble of CMAQ output files).
-         if [[ ${DATE} -eq ${FIRST_FILTER_DATE} ]]; then
-            export BACKGND_FCST_DIR=${WRFCHEM_INITIAL_DIR}
-         else
-            export BACKGND_FCST_DIR=${WRFCHEM_LAST_CYCLE_CR_DIR}
-         fi
+#         if [[ ${DATE} -eq ${FIRST_FILTER_DATE} ]]; then
+#            export BACKGND_FCST_DIR=${WRFCHEM_INITIAL_DIR}
+#         else
+#            export BACKGND_FCST_DIR=${WRFCHEM_LAST_CYCLE_CR_DIR}
+#         fi
+         rm -rf input_list.txt output_list.txt
+	 touch input_list.txt
+	 touch output_list.txt
          let MEM=1
          while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
             export CMEM=e${MEM}
@@ -46,7 +52,9 @@
             if [[ ${MEM} -lt 1000 ]]; then export KMEM=0${MEM}; fi
             if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
             if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
-            cp ${BACKGND_FCST_DIR}/run_${CMEM}/cmaqout_d${CR_DOMAIN}_${FILE_DATE} cmaqinput_d${CR_DOMAIN}_${CMEM}
+#            cp ${BACKGND_FCST_DIR}/run_${CMEM}/cmaqout_d${CR_DOMAIN}_${FILE_DATE} cmaqinput_d${CR_DOMAIN}_${CMEM}
+            unlink cmaqinput_d${CR_DOMAIN}_${CMEM}
+            ln -sf cmaq_output_d${CR_DOMAIN}.${CMEM} cmaqinput_d${CR_DOMAIN}_${CMEM}
 #
 # Add files to the DART input and output lists
             echo cmaqinput_d${CR_DOMAIN}_${CMEM} >> input_list.txt
@@ -55,7 +63,8 @@
          done
 #
 # Copy template files
-         cp cmaqinput_d${CR_DOMAIN}_e001 cmaqinput_d${CR_DOMAIN}      
+         rm cmaqinput_d${CR_DOMAIN}
+         cp cmaq_output_d${CR_DOMAIN}.e001 cmaqinput_d${CR_DOMAIN}      
 #
 # Copy "out" inflation files from prior cycle to "in" inflation files for current cycle
          if ${USE_DART_INFL}; then
@@ -70,6 +79,8 @@
                export NL_INF_INITIAL_FROM_RESTART_POST=.true.
                export NL_INF_SD_INITIAL_FROM_RESTART_POST=.true.
             fi
+	    rm -rf input_priorinf_mean.nc
+	    rm -rf input_priorinf_sd.nc
             if [[ ${DATE} -ne ${FIRST_DART_INFLATE_DATE} ]]; then
                if [[ ${NL_INF_FLAVOR_PRIOR} != 0 ]]; then
                   export INF_OUT_FILE_MN_PRIOR=${RUN_DIR}/${PAST_DATE}/dart_filter/output_priorinf_mean.nc

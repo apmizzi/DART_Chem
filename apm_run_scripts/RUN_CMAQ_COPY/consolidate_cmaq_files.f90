@@ -15,31 +15,41 @@
 ! DART $Id: consolidate_cmaq_files.f90 13171 2019-05-09 16:42:36Z thoar@ucar.edu $
 
 ! code to consolidate all cmaq input files into a single DART input file
+! to remove variable ncks -x -v variable_name input.nc output.nc
+! to rename a dimension ncrename -d old_dim,new_dim input.nc
+!
 program main
+   use netcdf
    implicit none
 !
 ! version controlled file description for error handling, do not edit
    character(len=*), parameter :: source   = 'consolidate_cmaq_files.f90'
    character(len=*), parameter :: revision = ''
    character(len=*), parameter :: revdate  = ''
+   integer, parameter          :: DateStrLen = 19
 !
-   integer                                     :: ncol,nrow,nlay,ntim,nvar,idx
-   integer                                     :: nlay_add,nlay_out,ntim_add,ntim_out
-   integer                                     :: ncol_id,nrow_id,nlay_id,ntim_id,nvar_id
-   integer                                     :: num_mems,num_2d_vars,num_3d_vars
-   integer                                     :: unit,ivar,imem,iflg,idx_sav,start_mem
-   real,dimension(:,:,:),allocatable           :: tflag
-   real,dimension(:,:,:),allocatable           :: tflag_out
-   real,dimension(:,:,:,:),allocatable         :: cmaq_2d_data
-   real,dimension(:,:,:,:),allocatable         :: cmaq_3d_data
-   real,dimension(:,:,:,:),allocatable         :: data_out
-   character(len=200)                          :: cmaq_old_path,cmaq_new_path
-   character(len=200)                          :: cmaq_input_file,grid2d_file
-   character(len=200)                          :: met2d_file,met3d_file
-   character(len=200)                          :: file_grid2d,file_met2d,file_met3d
-   character(len=200)                          :: file_cmaq,file_input,file_output
-   character(len=200)                          :: cmem,fld
-   character(len=200),dimension(:),allocatable :: list_2d_vars,list_3d_vars
+   integer                                      :: ncol,nrow,nlay,ntim,nvar,idx,new_var
+   integer                                      :: nlay_add,nlay_out,ntim_add,ntim_out
+   integer                                      :: ncol_id,nrow_id,nlay_id,ntim_id,nvar_id
+   integer                                      :: num_mems,num_2d_vars,num_3d_vars
+   integer                                      :: unit,ivar,imem,iflg,idx_sav,start_mem
+   integer                                      :: year,month,day,hour,minute,second,ddd
+   integer                                      :: rc,f_id,time_id,length_id,times_id
+   integer(kind=4),dimension(:,:,:),allocatable :: tflag
+   integer(kind=4),dimension(:,:,:),allocatable :: tflag_out
+   real,dimension(:,:,:,:),allocatable          :: cmaq_2d_data
+   real,dimension(:,:,:,:),allocatable          :: cmaq_3d_data
+   real,dimension(:,:,:,:),allocatable          :: data_out
+   character(len=200)                           :: cmaq_old_path,cmaq_new_path
+   character(len=200)                           :: cmaq_input_file,grid2d_file
+   character(len=200)                           :: met2d_file,met3d_file
+   character(len=200)                           :: file_grid2d,file_met2d,file_met3d
+   character(len=200)                           :: file_cmaq,file_input,file_output
+   character(len=200)                           :: cmem,fld,datestr
+   character(len=200),dimension(:),allocatable  :: list_2d_vars,list_3d_vars
+   character(len=10)                            :: ch_year,ch_month,ch_day,ch_hour, &
+                                                   ch_minute,ch_second
+   character(len=DateStrLen)                    :: Times
 !
    namelist /cmaq_dimensions_nml/num_mems,num_2d_vars,num_3d_vars
 !
@@ -65,7 +75,8 @@ program main
    close(unit)
 !
 ! Transfer 2d variables
-   do ivar=1,num_2d_vars
+!   do ivar=1,num_2d_vars
+   do ivar=1,0
       print *, 'CMAQ variable ',trim(list_2d_vars(ivar))
       start_mem=1
       do imem=start_mem,num_mems
@@ -150,7 +161,8 @@ program main
    deallocate(list_2d_vars)
 !
 ! Transfer 3d variables
-   do ivar=1,num_3d_vars
+!   do ivar=1,num_3d_vars
+   do ivar=1,0
       print *, 'CMAQ variable ',trim(list_3d_vars(ivar))
       start_mem=1
       do imem=start_mem,num_mems
@@ -219,8 +231,82 @@ program main
          deallocate(tflag,tflag_out)
       enddo
    enddo
-!
    deallocate(list_3d_vars)
+!
+! Write WRF-like variables to file.
+! Get the date/time information from the cmaq chemistry output file
+   nvar=225
+   ntim=1
+   allocate(tflag_out(2,nvar,ntim))
+   allocate(cmaq_3d_data(ncol,nrow,nlay,ntim))
+   file_cmaq=trim(cmaq_new_path)//'/'//trim(cmaq_input_file)
+   file_output=trim(file_cmaq)
+   call get_cmaq_data(file_output,'CO',cmaq_3d_data,ncol,nrow,nlay,ntim,nvar,tflag_out)
+   rc = nf90_close(f_id)
+   year=tflag_out(1,1,1)/1000
+   ddd=tflag_out(1,1,1)-year*1000
+!
+! Convert ddd to month and day
+   month=8
+   day=1
+   hour=tflag_out(2,1,1)/10000
+   minute=(tflag_out(2,1,1)-hour*10000)/100
+   second=tflag_out(2,1,1)-hour*10000-minute*100
+!
+! Convert to character data
+   write(ch_year,'(i4)') year
+   write(ch_month,'(i2)') month
+   if(month.le.10) write(ch_month,"('0',i1)") month
+   write(ch_day,'(i2)') day
+   if(day.le.10) write(ch_day,"('0',i1)") day
+   write(ch_hour,'(i2)') hour
+   if(hour.le.10) write(ch_hour,"('0',i1)") hour
+   write(ch_minute,'(i2)') minute
+   if(minute.le.10) write(ch_minute,"('0',i1)") minute
+   write(ch_second,'(i2)') second
+   if(second.le.10) write(ch_second,"('0',i1)") second
+   datestr=trim(ch_year)//'-'//trim(ch_month)//'-'//trim(ch_day) &
+   //'_'//trim(ch_hour)//':'//trim(ch_minute)//':'//trim(ch_second)
+   Times=trim(datestr)
+!
+! Write character variable Times to each member 
+   start_mem=1
+   do imem=start_mem,num_mems
+      if(imem.ge.0.and.imem.lt.10) write(cmem,"('e00',i1)"),imem
+      if(imem.ge.10.and.imem.lt.100) write(cmem,"('e0',i2)"),imem
+      if(imem.ge.100.and.imem.lt.1000) write(cmem,"('e',i3)"),imem
+      file_cmaq=trim(cmaq_new_path)//'/'//trim(cmaq_input_file)//'.'//trim(cmem)
+      print *, 'APM: Open file ',trim(file_cmaq)
+      rc = nf90_open(trim(file_cmaq),nf90_write,f_id)
+      call check_error(rc,'main nf90_open')
+      rc = nf90_inq_dimid(f_id,"Time",time_id)
+      call check_error(rc,'main nf90_inq_dim')
+!
+! change NETCDF file mode to 'define' for writing the variable
+      new_var=1
+      if(new_var.eq.1) then
+         rc = nf90_redef(f_id)
+         call check_error(rc,'main nf90_redef')
+         rc = nf90_def_dim(f_id,"DateStrLen",DateStrLen,length_id)
+         call check_error(rc,'main nf90_def_dim')
+         rc = nf90_def_var(f_id,"Times",nf90_char,(/length_id, time_id/),times_id) 
+         call check_error(rc,'main nf90_def_var')
+         rc = nf90_enddef(f_id)
+         call check_error(rc,'main nf90_enddef')
+         rc = nf90_put_var(f_id, times_id,trim(Times))
+         call check_error(rc,'main nf90_put_var')
+      else 
+         rc = nf90_inq_dimid(f_id,"DateStrLen",length_id)
+         call check_error(rc,'main nf90_inq_dim')
+         rc = nf90_inq_varid(f_id,"Times",times_id)
+         call check_error(rc,'get_cmaq_data nf90_inq_varid var_name')    
+         rc = nf90_put_var(f_id, times_id,trim(Times))
+         call check_error(rc,'main nf90_put_var')
+      endif   
+      rc = nf90_close(f_id)
+   enddo
+   deallocate(tflag_out)
+   deallocate(cmaq_3d_data)
 end program main
 !
 subroutine get_cmaq_dims(file_name,ncol,nrow,nlay,ntim,nvar,ncol_id,nrow_id,nlay_id,ntim_id,nvar_id)
@@ -233,6 +319,7 @@ subroutine get_cmaq_dims(file_name,ncol,nrow,nlay,ntim,nvar,ncol_id,nrow_id,nlay
    character(len=200)                    :: dim_nam1,dim_nam2,dim_nam3,dim_nam4,dim_nam5
 !
 ! open netcdf file
+   print *, 'file ',trim(file_name)   
    rc = nf90_open(trim(file_name),nf90_share,f_id)
    call check_error(rc,'get_cmaq_dims nf90_open ')
 !
@@ -265,13 +352,13 @@ end subroutine get_cmaq_dims
 subroutine get_cmaq_data(file_name,var_name,data,ncol,nrow,nlay,ntim,nvar,tflag)
    use netcdf
    implicit none
-   integer                               :: ncol,nrow,nlay,ntim,nvar
-   integer                               :: ncol_id,nrow_id,nlay_id,ntim_id,nvar_id
-   integer                               :: rc,f_id,var_id,tflag_id
-   real,dimension(ncol,nrow,nlay,ntim)   :: data
-   real,dimension(2,nvar,ntim)           :: tflag
-   character(len=200)                    :: file_name,var_name
-   character(len=200)                    :: dim_nam1,dim_nam2,dim_nam3,dim_nam4,dim_nam5
+   integer                                :: ncol,nrow,nlay,ntim,nvar
+   integer                                :: ncol_id,nrow_id,nlay_id,ntim_id,nvar_id
+   integer                                :: rc,f_id,var_id,tflag_id
+   integer(kind=4),dimension(2,nvar,ntim) :: tflag
+   real,dimension(ncol,nrow,nlay,ntim)    :: data
+   character(len=200)                     :: file_name,var_name
+   character(len=200)                     :: dim_nam1,dim_nam2,dim_nam3,dim_nam4,dim_nam5
 !
 ! open netcdf file
    rc = nf90_open(trim(file_name),nf90_nowrite,f_id)
@@ -280,7 +367,6 @@ subroutine get_cmaq_data(file_name,var_name,data,ncol,nrow,nlay,ntim,nvar,tflag)
 ! get variable identifiers
    rc = nf90_inq_varid(f_id,trim(var_name),var_id)
    call check_error(rc,'get_cmaq_data nf90_inq_varid var_name')
-!   
    rc = nf90_inq_varid(f_id,"TFLAG",tflag_id)
    call check_error(rc,'get_cmaq_data nf90_inq_varid tflag')
 !
@@ -289,7 +375,6 @@ subroutine get_cmaq_data(file_name,var_name,data,ncol,nrow,nlay,ntim,nvar,tflag)
    call check_error(rc,'get_cmaq_data nf90_get_var var_name')
    rc = nf90_get_var(f_id,tflag_id,tflag,start=(/1,1,1/))
    call check_error(rc,'get_cmaq_data nf90_get_var tflag')
-!
    rc=nf90_close(f_id)
    return
 end subroutine get_cmaq_data

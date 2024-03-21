@@ -166,6 +166,7 @@ program gome2a_no2_trop_col_ascii_to_obs
    real*8                          :: lat_obs_r8,lon_obs_r8
    real,allocatable,dimension(:)   :: avgk_obs
    real*8,allocatable,dimension(:) :: avgk_obs_r8
+   real*8,allocatable,dimension(:) :: scwt_obs_r8
    real,allocatable,dimension(:)   :: prs_obs
    real*8,allocatable,dimension(:) :: prs_obs_r8
    real,allocatable,dimension(:)   :: prf_locl,prf_full
@@ -274,6 +275,7 @@ program gome2a_no2_trop_col_ascii_to_obs
       allocate(avgk_obs(nlay_obs))
       allocate(prs_obs_r8(nlev_obs))
       allocate(avgk_obs_r8(nlay_obs))
+      allocate(scwt_obs_r8(nlay_obs))
       read(fileid,*,iostat=ios) prs_obs(1:nlev_obs)
       read(fileid,*,iostat=ios) avgk_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) no2_trop_col_obs, no2_trop_col_obs_err
@@ -285,8 +287,10 @@ program gome2a_no2_trop_col_ascii_to_obs
       prs_obs(:)=prs_obs(:)*100.
       prs_obs_r8(:)=prs_obs(:)
       avgk_obs_r8(:)=avgk_obs(:)
+      scwt_obs_r8(:)=avgk_obs(:)*amf_total_obs
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
+      amf_total_obs_r8=amf_total_obs
       amf_trop_obs_r8=amf_trop_obs
 !
 ! Obs thinning test
@@ -301,7 +305,11 @@ program gome2a_no2_trop_col_ascii_to_obs
 !
 ! Obs value is the tropospheric vertical column
          obs_val(:)=no2_trop_col_obs*amf_trop_obs
-         obs_err_var=(fac_obs_error*fac_err*no2_trop_col_obs*amf_trop_obs)**2.
+! Use reprted error         
+         obs_err_var=(fac_obs_error*no2_trop_col_obs_err*amf_trop_obs)**2.
+! Use estimated error         
+!         obs_err_var=(fac_obs_error*fac_err*no2_trop_col_obs*amf_trop_obs)**2.
+!
          gome2a_qc(:)=0
          obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
          call get_time(obs_time, seconds, days)
@@ -321,7 +329,7 @@ program gome2a_no2_trop_col_ascii_to_obs
          call set_obs_def_time(obs_def, obs_time)
          call set_obs_def_error_variance(obs_def, obs_err_var)
          call set_obs_def_gome2a_no2_trop_col(qc_count, prs_obs_r8, &
-         avgk_obs_r8, amf_trop_obs_r8, trop_indx, nlay_obs)
+         scwt_obs_r8, amf_trop_obs_r8, trop_indx, nlay_obs)
          call set_obs_def_key(obs_def, qc_count)
          call set_obs_values(obs, obs_val, 1)
          call set_qc(obs, gome2a_qc, num_qc)
@@ -349,6 +357,7 @@ program gome2a_no2_trop_col_ascii_to_obs
       deallocate(prs_obs_r8) 
       deallocate(avgk_obs) 
       deallocate(avgk_obs_r8) 
+      deallocate(scwt_obs_r8) 
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    enddo   
 !

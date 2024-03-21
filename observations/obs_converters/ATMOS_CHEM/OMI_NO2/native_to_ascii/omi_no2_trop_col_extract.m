@@ -133,6 +133,14 @@ function omi_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
       scalef=h5readatt(file_in,field,'ScaleFactor');
       units=h5readatt(file_in,field,'Units');
       amftrop(:,:)=amftrop(:,:)*scalef;
+% amftotal(pixel,scanline) (none)
+      field='/HDFEOS/SWATHS/ColumnAmountNO2/Data Fields/AmfTotal';
+      amftotal=h5read(file_in,field);
+      missing=h5readatt(file_in,field,'MissingValue');
+      offset=h5readatt(file_in,field,'Offset');
+      scalef=h5readatt(file_in,field,'ScaleFactor');
+      units=h5readatt(file_in,field,'Units');
+      amftotal(:,:)=amftotal(:,:)*scalef;
 % amftrop_clr(pixel,scanline) (none)
       field='/HDFEOS/SWATHS/ColumnAmountNO2/Data Fields/AmfTropClear';
       amftrop_clr=h5read(file_in,field);
@@ -507,10 +515,9 @@ function omi_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
 	    mn_omi,dy_omi,hh_omi,mm_omi,ss_omi);
 	    fprintf(fid,'%14.8f %14.8f \n',lat(ipxl,ilin),lon(ipxl,ilin));
             fprintf(fid,'%d %d \n',layer,level);
-            fprintf(fid,'%14.8g %14.8g %14.8g \n',amfstrat(ipxl,ilin), ...
-            amfstrat_clr(ipxl,ilin),amfstrat_cld(ipxl,ilin));
-            fprintf(fid,'%14.8g %14.8g %14.8g \n',amftrop(ipxl,ilin), ...
-            amftrop_clr(ipxl,ilin),amftrop_cld(ipxl,ilin));
+            fprintf(fid,'%14.8g \n',amfstrat(ipxl,ilin)
+            fprintf(fid,'%14.8g \n',amftrop(ipxl,ilin)
+            fprintf(fid,'%14.8g \n',amftotal(ipxl,ilin)
             fprintf(fid,'%14.8g %14.8g %14.8g \n',cld_frac(ipxl,ilin), ...
             cld_prs(ipxl,ilin),cld_rad_frac(ipxl,ilin));
             fprintf(fid,'%14.8g %14.8g \n',col_amt(ipxl,ilin), ...

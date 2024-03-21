@@ -89,6 +89,8 @@ public :: get_unit, &
           write_int_scalar, &       
           read_r8_scalar, &
           write_r8_scalar, &
+          read_int_array, &
+          write_int_array, &       
           read_r8_array, &
           write_r8_array
 ! APM ---
@@ -3098,6 +3100,52 @@ subroutine write_r8_scalar(ifile, my_scalar, fform, context)
    endif
 
 end subroutine write_r8_scalar
+
+!-------------------------------------------------------------------------------
+
+subroutine read_int_array(ifile, num_items, int_array, fform, context)
+
+   integer,          intent(in)  :: ifile, num_items
+   integer,          intent(out) :: int_array(:)
+   character(len=*), intent(in)  :: fform
+   character(len=*), intent(in)  :: context
+   character(len=*), parameter   ::  source = 'forward_operator_code.f90'
+   
+   integer :: io
+   
+   if (ascii_file_format(fform)) then
+      read(ifile, *, iostat = io) int_array(1:num_items)
+   else
+      read(ifile, iostat = io) int_array(1:num_items)
+   endif
+   if ( io /= 0 ) then
+      call error_handler(E_ERR, 'read_int_array', context, source)
+   endif
+
+end subroutine read_int_array
+
+!-------------------------------------------------------------------------------
+
+subroutine write_int_array(ifile, num_items, array, fform, context)
+
+   integer,          intent(in) :: ifile, num_items
+   integer,          intent(in) :: array(:)
+   character(len=*), intent(in) :: fform
+   character(len=*), intent(in) :: context
+   character(len=*), parameter  :: source = 'forward_operator_code.f90'
+   
+   integer :: io
+   
+   if (ascii_file_format(fform)) then
+      write(ifile, *, iostat = io) array(1:num_items)
+   else
+      write(ifile, iostat = io) array(1:num_items)
+   endif
+   if ( io /= 0 ) then
+      call error_handler(E_ERR, 'write_int_array', context, source)
+   endif
+
+end subroutine write_int_array
 
 !-------------------------------------------------------------------------------
 

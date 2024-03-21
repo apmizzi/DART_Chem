@@ -243,14 +243,18 @@ call assert_file_info_initialized(file_info, 'write_state')
 ! do this once
 output_files = get_stage_metadata(file_info)
 
+!print *, 'APM: write_state - get_single_file ',get_single_file(file_info)
 if ( get_single_file(file_info) ) then
    if (.not. single_file_initialized(file_info)) then
       call initialize_single_file_io(state_ens_handle, file_info)
    endif
 
+!   print *, 'APM: Before write_single_file '
    call write_single_file(state_ens_handle, file_info)
+!   print *, 'APM: After write_single_file '
 
 else ! multiple files
+!   print *, 'APM: write_state - get_cycling ',get_cycling(file_info)
    if ( get_cycling(file_info) ) then
       call error_handler(E_ERR, 'write_state: ', &
       'currently cannot write multiple-file output while advancing the model inside filter', &
@@ -258,7 +262,10 @@ else ! multiple files
    endif
    
    ! write ensemble copies
+   
+!   print *, 'APM: Before write_restart_direct '
    call write_restart_direct(state_ens_handle, output_files)
+!   print *, 'APM: After write_restart_direct '
 endif
 
 end subroutine write_state
@@ -316,18 +323,25 @@ type(stage_metadata_type), intent(in) :: file_name_handle
 integer(i8) :: dart_index !< where to start in state_ens_handle%copies
 integer :: domain !< loop index
 
+!print *, 'APM: Before call state_vector_io_init '
+!print *, 'APM: module_initialized ',module_initialized
 if ( .not. module_initialized ) call state_vector_io_init() ! to read the namelist
+!print *, 'APM: After call state_vector_io_init '
 
 ! check whether file_info handle is initialized
+!print *, 'APM: Before call assert_restart_name_initialized '
 call assert_restart_names_initialized(file_name_handle, 'write_restart_direct')
+!print *, 'APM: After call assert_restart_name_initialized '
 
 ! transpose and write out the data
 dart_index = 1
 
 ! Different filenames for prior vs. posterior vs. diagnostic files
 do domain = 1, get_num_domains()
+!   print *, 'APM: Before call transpose_write ',domain
    call transpose_write(state_ens_handle, file_name_handle, domain, &
                   dart_index, buffer_state_io, single_precision_output)
+!   print *, 'APM: After call transpose_write ',domain
 enddo
 
 end subroutine write_restart_direct

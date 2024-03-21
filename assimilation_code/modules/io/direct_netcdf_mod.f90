@@ -172,9 +172,14 @@ integer(i8),               intent(inout) :: dart_index       !< This is for mult
 logical,                   intent(in)    :: read_single_vars !< Read one variable at a time
 
 if (task_count() == 1) then
+!   print *, 'APM: Before read_transpose_single_task'
    call read_transpose_single_task(state_ens_handle, name_handle, domain, dart_index)
+!   print *, 'APM: After read_transpose_single_task'
 else
+!   print *, 'APM: Before read_transpose_multi_task'
    call read_transpose_multi_task( state_ens_handle, name_handle, domain, dart_index, read_single_vars)
+!   print *, 'APM: After read_transpose_multi_task'
+
 endif
 
 end subroutine read_transpose
@@ -195,11 +200,14 @@ logical,                   intent(in)    :: write_single_vars !< write one varia
 logical,                   intent(in)    :: write_single_precision
 
 if (task_count() == 1) then
+!   print *, 'APM: Before transpose_write_single_task'
    call transpose_write_single_task(state_ens_handle, name_handle, domain, &
                                     dart_index, write_single_precision)
 else
+!   print *, 'APM: Before transpose_write_multi_task'
    call transpose_write_multi_task(state_ens_handle, name_handle, domain, &
                                    dart_index, write_single_vars, write_single_precision)
+!   print *, 'APM: After transpose_write_multi_task'
 endif
 
 end subroutine transpose_write
@@ -935,6 +943,7 @@ COPIES: do copy = 1, state_ens_handle%my_num_copies
    ! open netcdf file
    if (query_read_copy(name_handle, copy)) then
       netcdf_filename = get_restart_filename(name_handle, copy, domain)
+!      print *, 'APM: restart filename ', trim(netcdf_filename)
       ret = nf90_open(netcdf_filename, NF90_NOWRITE, ncfile)
       call nc_check(ret, 'read_transpose_single_task: opening', netcdf_filename)
    endif
@@ -943,13 +952,19 @@ COPIES: do copy = 1, state_ens_handle%my_num_copies
 
    iend = istart + block_size -1
 
+!   print *, 'APM: Before query_read_copy ', query_read_copy(name_handle, copy)
    if (query_read_copy(name_handle, copy)) then
+!      print *, 'APM: Before read_variables '
       call read_variables(ncfile, vector, 1, get_num_variables(domain), domain)
+!      print *, 'APM: After read_variables '
+      
       ! close netcdf file
+!      print *, 'APM: Before close file '
       ret = nf90_close(ncfile)
       call nc_check(ret, 'read_transpose_single_task: closing', netcdf_filename)
       state_ens_handle%copies(copy, istart:iend) = vector
-
+!      print *, 'APM: After close file '
+      
    endif
 
 enddo COPIES
@@ -990,6 +1005,7 @@ logical :: clamp_vars, force_copy
 type(time_type) :: dart_time
 
 ! need to read into a tempory array to fill with one copies
+!print *, 'APM: domain size, dart_index ',get_domain_size(domain),dart_index
 allocate(vector(get_domain_size(domain)))
 
 istart = dart_index ! position in state_ens_handle%vars
@@ -1004,11 +1020,15 @@ COPIES: do copy = 1, state_ens_handle%my_num_copies
    ! open netcdf file
    if (query_write_copy(name_handle, copy)) then
       netcdf_filename_out = get_restart_filename(name_handle, copy, domain)
-
+!      print *, 'APM: netcdf_filename ',trim(netcdf_filename_out)
+!      print *, 'APM: netcdf_filename ',file_exist(netcdf_filename_out)
+      
       if(file_exist(netcdf_filename_out)) then
          ret = nf90_open(netcdf_filename_out, NF90_WRITE, ncfile_out)
          call nc_check(ret, 'transpose_write: opening', trim(netcdf_filename_out))
+!         print *, 'APM: Before nc_write_global_att_clamping '
          call nc_write_global_att_clamping(ncfile_out, copy, domain)
+!         print *, 'APM: After nc_write_global_att_clamping '
 
          if (overwrite_time_in_output_file) then
             call get_copy_owner_index(state_ens_handle, copy, time_owner, time_owner_index)
@@ -1045,9 +1065,11 @@ COPIES: do copy = 1, state_ens_handle%my_num_copies
       ! actual copy, may need clamping
       clamp_vars = copy_is_clamped(name_handle, copy)
       force_copy = force_copy_back(name_handle, copy)
-
+!      print *, 'APM: Before call write_variables '
+!      print *, 'APM: ',ncfile_out,start_var,end_var,domain
       call write_variables(ncfile_out, vector, start_var, end_var, &
                            domain, clamp_vars, force_copy)
+!      print *, 'APM: After call write_variables '
 
       ! close netcdf file
       ret = nf90_close(ncfile_out)
@@ -1570,17 +1592,20 @@ istart = 1
 do i = start_var, end_var
 
    var_size = get_variable_size(domain, i)
+!   print *, 'APM: var size ',i, var_size
    iend = istart + var_size - 1
   
    ! Some diagnostic variables do not need to be  updated. 
    ! This information is stored in the state structure and
    ! set by the model.
+
+!   print *, 'APM: ',do_io_update(domain,i),force_copy
    if ( do_io_update(domain, i) .or. force_copy ) then
       ! diagnostic files do not get clamped but restart may be clamped
       if ( do_io_clamping(domain, i) .and. do_file_clamping) then
          call clamp_variable(domain, i, var_block(istart:iend))
       endif
-     
+!      print *, 'APM: After clamp_variable '
       ! number of dimensions and length of each variable
       num_dims = get_io_num_dims(domain, i)
       allocate(counts(num_dims))
@@ -1595,28 +1620,33 @@ do i = start_var, end_var
 
          ! write the latest time slice - HK hack to get started with tiegcm
          ! not sure if it will always be the last time slice
+!         print *, 'APM: Before nf90_inquire_dimension 1 '
          ret = nf90_inquire(ncid, unlimitedDimID=unlim_dimID)
          call nc_check(ret, 'write_variables: nf90_inquire', 'unlimitedDimID')
+!         print *, 'APM: After nf90_inquire_dimension 1 '
          if (unlim_dimID /= -1) then ! unlimited dimension exists
+!            print *, 'APM: Before nf90_inquire_dimension 2 '
             ret = nf90_inquire_dimension(ncid, unlim_dimID, len=slice_start(num_dims))
             call nc_check(ret, 'write_variables: nf90_inquire dimension', 'unlimitedDim length')
             if (slice_start(num_dims) == 0) slice_start(num_dims) = 1 ! newly created file
+!            print *, 'APM: After nf90_inquire_dimension 2 '
          else  ! file does not have an unlimited dimension because it was created by DART
             slice_start(num_dims) = 1
+!            print *, 'APM: File does not unlimited dimension (written by DART) '
          endif
-
       else
-
+!         print *, 'APM: has_unlimited_dim is false  ',has_unlimited_dim(domain)
          counts(1:get_num_dims(domain, i)) = get_dim_lengths(domain, i)
       endif
 
-
 !>@todo FIXME, the first variable in the second domain is not found when using coamps_nest.
+!      print *, 'APM: Before nf90_inq_varid ',trim(get_variable_name(domain, i))
+!      print *, 'APM: In write_varibles from direct_netcdf_mod.f90' 
       ret = nf90_inq_varid(ncid, trim(get_variable_name(domain, i)), var_id)
       call nc_check(ret, 'write_variables:', 'nf90_inq_varid "'//trim(get_variable_name(domain,i))//'"')
-
       if (missing_possible) call set_model_missing_value(var_block(istart:iend), domain, i)
 
+!      print *, 'APM: Before nf90_put_var '
       ret = nf90_put_var(ncid, var_id, var_block(istart:iend), count=counts, start=slice_start)
       call nc_check(ret, 'write_variables:', 'nf90_put_var "'//trim(get_variable_name(domain,i))//'"')
 

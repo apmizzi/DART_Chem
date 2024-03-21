@@ -105,12 +105,6 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
       year=h5readatt(file_in,field,'Year');
       str_time=h5readatt(file_in,field,'StartDateTime');
 %
-%      field='/HDFEOS/SWATHS/MOP02';
-%      nlay=h5read(file_in,field,'nPrs');
-%      nlev=h5read(file_in,field,'nPrs2');
-%      ntim=h5read(file_in,field,'nTime');
-%      ntwo=h5read(file_in,field,'nTwo');
-%
 % prior_prof_lay(ntwo,nlay,ntim) (ppbv)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/APrioriCOMixingRatioProfile';
       prior_prof_lay=h5read(file_in,field);
@@ -200,10 +194,12 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
       field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/Pressure';
       prs_lay=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
+%      nlay=size(prs_lay);
 % prs_lev(nlev) (hPa)
       field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/Pressure2';
       prs_lev=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
+%      nlev=size(prs_lev);
 % secs_day(ntim) 
       field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/SecondsinDay';
       secs_day=h5read(file_in,field);
@@ -243,10 +239,13 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
          if(isnan(prior_col_amt(itim)) | prior_col_amt(itim)<=0.)
             continue
          end
+         if all(prior_prof_lay(1,:,itim)==0)
+	   continue
+	 end
+%
 % Check domain
 % Input grid needs to be in degrees
-% X coordinate is [0 to 360]
-%		 
+% X coordinate is [0 to 360]		 
 	 x_obser=lon(itim);
          y_obser=lat(itim);
          if(x_obser<0.)
@@ -258,7 +257,7 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
             xmdl_sw=xmdl_sw+360.;
          end
 %
-% APM: Need to get this info from model
+% Get corresponding indexes	 
          [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
          xmdl_sw,delx,cen_lon,truelat1,truelat2);
          i_min = round(xi);
@@ -304,43 +303,58 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
          end
 %
 % Fix pressure profile for surface pressure
-	 nlevm=nlev;
-	 nlevv=nlev+1;
-	 prs_lev_sft=zeros(nlevv);
-	 prs_lev_sft(1:nlevm)=prs_lev(1:nlevm);
-	 prs_lev_sft(nlevv)=50.;
-         for ilv=2:nlevm
-            if(ilv==2 && prs_sfc(itim)>=prs_lev_sft(ilv))
+	 prs_lev_sft=zeros(nlev);
+	 prs_lev_sft(1:nlev)=prs_lev(1:nlev);
+         for ilv=2:nlay
+            if(ilv==1 || ilv==2 && prs_sfc(itim)>prs_lev_sft(ilv))
                kstr=1;
-               nlev_sft=nlevv;
-               prs_lev_sft(ilv-1)=prs_sfc(itim);     
+               nlev_sft=nlev;
+               prs_lev_sft(1)=prs_sfc(itim);     
                break
-            elseif(prs_sfc(itim)<prs_lev_sft(ilv) && prs_sfc(itim)>=prs_lev_sft(ilv+1))
-               kstr=ilv-1;
-               nlev_sft=nlevv-ilv+1;
-               prs_lev_sft(ilv-1)=prs_sfc(itim);     
-               break	  
-            elseif(ilv==nlevm && prs_sfc(itim)<prs_lev_sft(ilv+1))
-               kstr=nlevv+1;
+            elseif(ilv==nlev && prs_sfc(itim)<prs_lev_sft(ilv+1))
+               kstr=0;
                nlev_sft=0;
                break
+            elseif(prs_sfc(itim)<=prs_lev_sft(ilv) && prs_sfc(itim)>prs_lev_sft(ilv+1))
+               kstr=ilv;
+               nlev_sft=nlev-kstr+1;
+               prs_lev_sft(kstr)=prs_sfc(itim);     
+               break	  
             end
          end
          if(nlev_sft==0)
+            fprintf('APM: skip this ob - prs_sfc too low \n')
             continue
          end
-	 nlay_sft=nlev_sft-1;
+	 nlay_sft=nlay-kstr+1;
          for ilv=1:kstr-1
             prs_lev_sft(ilv)=-999;
 	 end
-         for ilv=kstr:nlevv
+         for ilv=kstr:nlev
             prs_lev_sft(ilv-kstr+1)=prs_lev_sft(ilv);
          end
 %
 % Get shifted layer pressures
-	 for ilv=1:nlev_sft-1
+	 for ilv=1:nlay_sft 
 	   prs_lay_sft(ilv)=(prs_lev_sft(ilv)+prs_lev_sft(ilv+1))/2.;
          end
+%	 if(icnt==210)
+%            fprintf('APM: prs_sfc \n')
+%            fprintf('%14.8g \n',prs_sfc(itim))
+%            fprintf('APM: prs_lay \n')
+%            fprintf('%14.8g ',prs_lay(1:nlay))
+%            fprintf('\n')
+%            fprintf('APM: prs_lev \n')
+%            fprintf('%14.8g ',prs_lev(1:nlev))
+%            fprintf('\n')
+%            fprintf('APM: prs_lay_sft \n')
+%            fprintf('%14.8g ',prs_lay_sft(1:nlay_sft))
+%            fprintf('\n')
+%            fprintf('APM: prs_lev_sft \n')
+%            fprintf('%14.8g ',prs_lev_sft(1:nlev_sft))
+%            fprintf('\n')
+%            return
+%         end
 %
 % Shift remaining data	 
          retr_prof_sft=zeros(ntwo,nlay_sft);
@@ -349,21 +363,61 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
          cov_m_sft=zeros(nlay_sft,nlay_sft);
          cov_r_sft=zeros(nlay_sft,nlay_sft);
          cov_s_sft=zeros(nlay_sft,nlay_sft);
-	 for ilv=1:nlay_sft
-	    if(ilv==1) 
-               retr_prof_sft(:,ilv)=retr_sfc(:,itim);
-               prior_prof_sft(:,ilv)=prior_sfc(:,itim);
+	 for ilv=kstr:nlay
+	    if(ilv-kstr+1==1) 
+               retr_prof_sft(:,ilv-kstr+1)=retr_sfc(:,itim);
+               prior_prof_sft(:,ilv-kstr+1)=prior_sfc(:,itim);
 	    else
-               retr_prof_sft(:,ilv)=retr_prof_lay(:,ilv+kstr-2,itim);
-               prior_prof_sft(:,ilv)=prior_prof_lay(:,ilv+kstr-2,itim);
+               retr_prof_sft(:,ilv-kstr+1)=retr_prof_lay(:,ilv,itim);
+               prior_prof_sft(:,ilv-kstr+1)=prior_prof_lay(:,ilv,itim);
 	    end
-	    for ilw=1:nlay_sft
-              avgk_sft(ilv,ilw)=avgk_lev(ilv+kstr-1,ilw+kstr-1,itim);
-              cov_m_sft(ilv,ilw)=cov_m(ilv+kstr-1,ilw+kstr-1,itim);
-              cov_r_sft(ilv,ilw)=cov_r(ilv+kstr-1,ilw+kstr-1,itim);
-              cov_s_sft(ilv,ilw)=cov_s(ilv+kstr-1,ilw+kstr-1,itim);
+	 end
+	 for ilv=kstr:nlay
+	    for ilw=kstr:nlay
+              avgk_sft(ilv-kstr+1,ilw-kstr+1)=avgk_lev(ilv+1,ilw+1,itim);
+              cov_m_sft(ilv-kstr+1,ilw-kstr+1)=cov_m(ilv+1,ilw+1,itim);
+              cov_r_sft(ilv-kstr+1,ilw-kstr+1)=cov_r(ilv+1,ilw+1,itim);
+              cov_s_sft(ilv-kstr+1,ilw-kstr+1)=cov_s(ilv+1,ilw+1,itim);
             end
          end
+%
+%
+%         if(icnt==210)
+%            fprintf('APM: retr_sfc \n')
+%            fprintf('%14.8g ',retr_sfc(1,itim))
+%            fprintf('APM: retr_prof_lay \n')
+%            fprintf('%14.8g ',retr_prof_lay(1,1:nlay,itim))
+%            fprintf('\n')
+%            fprintf('APM: prior_sfc \n')
+%            fprintf('%14.8g ',prior_sfc(1,itim))
+%            fprintf('APM: prior_prof_lay \n')
+%            fprintf('%14.8g ',prior_prof_lay(1,1:nlay,itim))
+%            fprintf('\n')
+%	    for k=1:nlev
+%               fprintf('APM: avgk_lev row: %d  \n',k)
+%               fprintf('%14.8g ',avgk_lev(k,1:nlev,itim))
+%               fprintf('\n')
+%            end
+%         end
+%	     
+% check averaging kernel for zero
+%         if(icnt==210)
+%            fprintf('\n')
+%            fprintf('APM: icnt,i_min,j_min: %d %d %d \n',icnt,i_min,j_min)
+%            fprintf('APM: kstr, nlay_sft: %d %d \n',kstr,nlay_sft)
+%            fprintf('APM: retr_prof_sft \n')
+%            fprintf('%14.8g ',retr_prof_sft(1,1:nlay_sft))
+%            fprintf('\n')
+%            fprintf('APM: prior_prof_sft \n')
+%            fprintf('%14.8g ',prior_prof_sft(1,1:nlay_sft))
+%            fprintf('\n')
+%            for k=1:nlay_sft
+%               fprintf('APM: avgk_sft row %d \n',k)
+%               fprintf('%14.8g ',avgk_sft(k,1:nlay_sft))
+%               fprintf('\n')
+%            end
+%	    return
+%         end
 %
 % Save data to ascii file
          icnt=icnt+1;
@@ -391,22 +445,22 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
 	 fprintf(fid,'%14.8g ',prior_prof_sft(2,1:nlay_sft));
          fprintf(fid,'\n');
 	 for k=1:nlay_sft
-	    fprintf(fid,'%14.8g ',cov_s(k,1:nlay_sft));
+	    fprintf(fid,'%14.8g ',cov_s_sft(k,1:nlay_sft));
             fprintf(fid,'\n');
          end
 	 for k=1:nlay_sft
-            fprintf(fid,'%14.6g ',cov_r(k,1:nlay_sft));
+            fprintf(fid,'%14.6g ',cov_r_sft(k,1:nlay_sft));
             fprintf(fid,'\n');
          end
 	 for k=1:nlay_sft
-            fprintf(fid,'%14.6g ',cov_m(k,1:nlay_sft));
+            fprintf(fid,'%14.6g ',cov_m_sft(k,1:nlay_sft));
             fprintf(fid,'\n');
          end
          fprintf(fid,'%14.8g \n',retr_col_amt(1,itim));
          fprintf(fid,'%14.8g \n',retr_col_amt(2,itim));
          fprintf(fid,'%14.8g \n',prior_col_amt(itim));
       end
-      clear prior_lay cld_prs col_amt rad_cld_frac avgk_lay 
+      clear prior_lay cld_prs col_amt rad_cld_frac avgk_lev 
       clear lat lon secs_day zen_ang time 
    end
 end

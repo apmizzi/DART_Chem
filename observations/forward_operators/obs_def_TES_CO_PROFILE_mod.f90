@@ -313,11 +313,11 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
    character(len=*),parameter  :: fld = 'CO_VMR_inst'
    type(location_type) :: loc2
    
-   integer :: layer_tes,level_tes
+   integer :: layer_tes,level_tes, klev_tes, kend_tes
    integer :: layer_mdl,level_mdl
    integer :: k,kk,imem,imemm,flg
    integer :: interp_new
-   integer :: icnt,ncnt,kstart,klev_tes
+   integer :: icnt,ncnt,kstart
    integer :: date_obs,datesec_obs
    integer, dimension(ens_size) :: zstatus,kbnd_1,kbnd_n
    
@@ -542,7 +542,7 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
       if (prs_tes(layer_tes).lt.prs_mdl_n(imem)) then
          do k=1,layer_tes
             if (prs_tes(k).le.prs_mdl_n(imem)) then
-               kstart=k
+               kstart=k-1
                exit
             endif
          enddo
@@ -564,7 +564,7 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
          ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_tes_top, &
          ncnt,co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
 !
-! Impose ensemble perturbations from level kstart(imem)-1      
+! Impose ensemble perturbations from level kstart-1      
          do k=kstart,layer_tes
             kk=k-kstart+1
             co_val(imem,k)=co_prf_mdl(kk)*co_val(imem,kstart-1)/ &
@@ -579,17 +579,17 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
       endif             
    enddo
 !
-! Check full profile for negative values
-
-!   do imem=1,1
-!      do k=1,layer_tes
-!         write(string1, *) &
-!         'APM: prs, co, tmp, qmr ',k,prs_tes(k),co_val(imem,k), &
-!         tmp_val(imem,k),qmr_val(imem,k)
-!         call error_handler(E_MSG, routine, string1, source)
-!      enddo
-!   enddo      
+! Print full profile examples
+   do imem=1,1
+      do k=1,layer_tes
+         write(string1, *) &
+         'APM: prs,co,tmp,qmr ',k,prs_tes(k)/100.,co_val(imem,k), &
+         tmp_val(imem,k),qmr_val(imem,k)
+         call error_handler(E_MSG, routine, string1, source)
+      enddo
+   enddo
 !
+! Check full profile for negative values
    do imem=1,ens_size
       flg=0
       do k=1,layer_tes   
@@ -617,23 +617,15 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
 ! Process the vertical summation
    do imem=1,ens_size
       do k=1,layer_tes
-         if(prior(key,k).lt.0.) then
-!            write(string1, *) &
-!            'APM: TES Prior is negative. Level may be below surface. Key,Layer: ',key,k
-!            call error_handler(E_MSG, routine, string1, source)
-            cycle
-         endif
-!
-! Get expected observation
          prior_term=-1.*avg_kernel(key,k)
          if(k.eq.klev_tes) prior_term=(1.0_r8 - avg_kernel(key,k)) 
 
          expct_val(imem) = expct_val(imem) + log(co_val(imem,k)) * &
          avg_kernel(key,k) + prior_term * log(prior(key,k))
 
-!         write(string1, *) 'APM: exp_val, co, avgk, prior_trm, prior',imem,k, &
-!         expct_val(imem),co_val(imem,k),avg_kernel(key,k),prior_term,prior(key,k)
-!         call error_handler(E_MSG, routine, string1, source)
+         write(string1, *) 'APM: exp_val, co, avgk, prior_trm, prior',imem,k, &
+         expct_val(imem),co_val(imem,k),avg_kernel(key,k),prior_term,prior(key,k)
+         call error_handler(E_MSG, routine, string1, source)
       enddo
 
       expct_val(imem)=exp(expct_val(imem))      

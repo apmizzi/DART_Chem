@@ -20,8 +20,8 @@
          export FILE_LIST[${NUM_FILES}]=obs_seq_MOP_CO_TOTAL_COL_${DATE}.out
       fi
 #
-# MOPITT CO PROFILE
-      if [[ -s ${MOPITT_CO_PROFILE_OBS_DIR}/obs_seq_mopitt_co_profile_${DATE}.out && ${RUN_MOPITT_CO_PROFILE_OBS} == true ]]; then 
+      # MOPITT CO PROFILE
+      if [[ -s ${MOPITT_CO_PROFILE_OBS_DIR}/obs_seq_mopitt_co_profile_${DATE}.out && (${RUN_MOPITT_CO_PROFILE_OBS} == true || ${RUN_MOPITT_V8_CO_PROFILE_OBS} == true) ]]; then
          cp ${MOPITT_CO_PROFILE_OBS_DIR}/obs_seq_mopitt_co_profile_${DATE}.out ./obs_seq_MOP_CO_PROFILE_${DATE}.out
          (( NUM_FILES=${NUM_FILES}+1 ))
          export FILE_LIST[${NUM_FILES}]=obs_seq_MOP_CO_PROFILE_${DATE}.out

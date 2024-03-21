@@ -174,7 +174,7 @@ program omi_no2_domino_trop_col_ascii_to_obs
    real                            :: amfstrat,amftotal
    real                            :: amftrop,amftrop_clr,amftrop_cld
    real                            :: cld_frac,cld_prs,cld_rad_frac
-   real                            :: col_amt,col_amt_err
+   real                            :: col_amt_total,col_amt_total_err
    real                            :: col_amt_trop,col_amt_trop_err
    real                            :: slnt_col_amt,slnt_col_amt_err
    real                            :: prs_trop,zenang,obs_sum
@@ -285,7 +285,6 @@ program omi_no2_domino_trop_col_ascii_to_obs
 ! Read OMI NO2
    line_count = 0
    read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
-!   print *, trim(data_type), obs_id, i_min, j_min
    do while (ios == 0)
       sum_total=sum_total+1
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
@@ -293,32 +292,30 @@ program omi_no2_domino_trop_col_ascii_to_obs
       read(fileid,*,iostat=ios) lat_obs,lon_obs
       if(lon_obs.lt.0.) lon_obs=lon_obs+360.
       read(fileid,*,iostat=ios) nlay_obs,nlev_obs
-      read(fileid,*,iostat=ios) trop_index
+      read(fileid,*,iostat=ios) amfstrat
       read(fileid,*,iostat=ios) amftrop
       read(fileid,*,iostat=ios) amftotal
-      read(fileid,*,iostat=ios) col_amt_trop,col_amt_trop_err
-      read(fileid,*,iostat=ios) slnt_col_amt,slnt_col_amt_err
+      read(fileid,*,iostat=ios) cld_frac, cld_prs, cld_rad_frac
+      read(fileid,*,iostat=ios) col_amt_total, col_amt_total_err
+      read(fileid,*,iostat=ios) col_amt_trop, col_amt_trop_err
+      read(fileid,*,iostat=ios) slnt_col_amt, slnt_col_amt_err
+      read(fileid,*,iostat=ios) prs_trop
       allocate(prs_obs(nlev_obs))
-      allocate(avgk(nlay_obs))
       allocate(scwt(nlay_obs))
       allocate(prs_obs_r8(nlev_obs))
-      allocate(avgk_r8(nlay_obs))
       allocate(scwt_r8(nlay_obs))
       allocate(prf_model(nlay_obs))
-      read(fileid,*,iostat=ios) avgk(1:nlay_obs)
+      read(fileid,*,iostat=ios) scwt(1:nlay_obs)
       read(fileid,*,iostat=ios) prs_obs(1:nlev_obs)
-      scwt(:)=avgk(:)*amftrop
       scwt_r8(:)=scwt(:)
-      avgk_r8(:)=avgk(:)
       prs_obs(:)=prs_obs(:)*100.
       prs_obs_r8(:)=prs_obs(:)/100.
-      prs_trop_r8=prs_obs_r8(trop_index)
+      prs_trop_r8=prs_trop
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
 !
 ! Obs thinning test
       obs_accept=obs_accept+1
-      print *, 'APM: at thinning ', obs_accept
       if(obs_accept/obs_no2_reten_freq*obs_no2_reten_freq.eq.obs_accept) then
 !
 ! Set data for writing obs_sequence file
@@ -360,6 +357,11 @@ program omi_no2_domino_trop_col_ascii_to_obs
          call set_obs_def_location(obs_def, obs_location)
          call set_obs_def_time(obs_def, obs_time)
          call set_obs_def_error_variance(obs_def, obs_err_var)
+         print *, 'prs ',prs_obs_r8(:)
+         print *, 'scwt ',scwt_r8(:)
+         print *, 'prs_trop ',prs_trop_r8
+         print *, 'kend ',kend
+         print *, 'nlay ',nlay_obs
          call set_obs_def_omi_no2_domino_trop_col(qc_count, prs_obs_r8, scwt_r8, prs_trop_r8, kend, nlay_obs)
          call set_obs_def_key(obs_def, qc_count)
          call set_obs_values(obs, obs_val, 1)
@@ -384,10 +386,8 @@ program omi_no2_domino_trop_col_ascii_to_obs
          endif
          obs_old=obs
       endif
-      deallocate(avgk)
       deallocate(scwt)
       deallocate(prs_obs) 
-      deallocate(avgk_r8)
       deallocate(scwt_r8)
       deallocate(prs_obs_r8) 
       deallocate(prf_model)
