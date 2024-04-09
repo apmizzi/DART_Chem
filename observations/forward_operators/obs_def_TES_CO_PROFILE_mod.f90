@@ -580,14 +580,14 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
    enddo
 !
 ! Print full profile examples
-   do imem=1,1
-      do k=1,layer_tes
-         write(string1, *) &
-         'APM: prs,co,tmp,qmr ',k,prs_tes(k)/100.,co_val(imem,k), &
-         tmp_val(imem,k),qmr_val(imem,k)
-         call error_handler(E_MSG, routine, string1, source)
-      enddo
-   enddo
+!   do imem=1,1
+!      do k=1,layer_tes
+!         write(string1, *) &
+!         'APM: prs,co,tmp,qmr ',k,prs_tes(k)/100.,co_val(imem,k), &
+!         tmp_val(imem,k),qmr_val(imem,k)
+!         call error_handler(E_MSG, routine, string1, source)
+!      enddo
+!   enddo
 !
 ! Check full profile for negative values
    do imem=1,ens_size
@@ -623,9 +623,9 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
          expct_val(imem) = expct_val(imem) + log(co_val(imem,k)) * &
          avg_kernel(key,k) + prior_term * log(prior(key,k))
 
-         write(string1, *) 'APM: exp_val, co, avgk, prior_trm, prior',imem,k, &
-         expct_val(imem),co_val(imem,k),avg_kernel(key,k),prior_term,prior(key,k)
-         call error_handler(E_MSG, routine, string1, source)
+!         write(string1, *) 'APM: exp_val, co, avgk, prior_trm, prior',imem,k, &
+!         expct_val(imem),co_val(imem,k),avg_kernel(key,k),prior_term,prior(key,k)
+!         call error_handler(E_MSG, routine, string1, source)
       enddo
 
       expct_val(imem)=exp(expct_val(imem))      

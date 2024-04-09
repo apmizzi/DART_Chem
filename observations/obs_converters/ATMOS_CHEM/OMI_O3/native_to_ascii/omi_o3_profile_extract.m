@@ -38,11 +38,6 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
    P_std=1013.25;
    grav=9.8;
    cone_fac=.715567;   
-   xcnt1=0;
-   xcnt2=0;
-   xcnt3=0;
-   xcnt4=0;
-   xcnt5=0;
 %
 % Convert DU to moles/m^2
    du2molpm2=4.4615e-4;
@@ -56,7 +51,6 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 % Print input data
 %   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
 %   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
-%
 %
 % Read model grid
    lon_mdl=ncread(strcat(path_mdl,'/',file_mdl),'XLONG');
@@ -84,15 +78,25 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       if(isempty(indx))
          continue
       end
-      file_mm=str2double(file_in(indx+32:indx+33));
-      file_secs=file_mm*60.;
-%       
-      fprintf('%d %s \n',ifile,file_in);
-      fprintf('file str secs %d cycle end secs %d \n',file_secs,day_secs_end);
-%      if(day_secs_end<file_secs)
-%         continue
-%      end
-%      fprintf('READ OMI DATA \n')
+%      
+% date data
+      field='/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/';
+      day=h5readatt(file_in,field,'GranuleDay');
+      month=h5readatt(file_in,field,'GranuleMonth');
+      year=h5readatt(file_in,field,'GranuleYear');
+      tai93At0z=h5readatt(file_in,field,'TAI93At0zOfGranule');
+      field='/HDFEOS/SWATHS/O3Profile/';
+      ntime=h5readatt(file_in,field,'NumTimes');
+% time(ntim)
+      field='/HDFEOS/SWATHS/O3Profile/Geolocation Fields/Time';
+      time=h5read(file_in,field);
+      missing=h5readatt(file_in,field,'MissingValue');
+      offset=h5readatt(file_in,field,'Offset');
+      scalef=h5readatt(file_in,field,'ScaleFactor');  
+      title=h5readatt(file_in,field,'Title');
+      defn=h5readatt(file_in,field,'UniqueFieldDefinition');
+      units=h5readatt(file_in,field,'Units');
+      fprintf('READ OMI DATA \n')
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -100,19 +104,15 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% date data
-      field='/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/';
-      day=h5readatt(file_in,field,'GranuleDay');
-      month=h5readatt(file_in,field,'GranuleMonth');
-      year=h5readatt(file_in,field,'GranuleYear');
-      field='/HDFEOS/SWATHS/O3Profile/';
-      ntime=h5readatt(file_in,field,'NumTimes');
-% cov_prior_lay(ndim_cov,npixel,ntime) (no units)
+% cov_prior_lay(ndim_cov,npixel,ntime) (no units) (465, 30, 329)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/APrioriCovarianceMatrix';
       cov_prior_lay_int=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');  
       offset=h5readatt(file_in,field,'Offset');
       scalef=h5readatt(file_in,field,'ScaleFactor');
+      units=h5readatt(file_in,field,'Units');
+      title=h5readatt(file_in,field,'Title');
+      defn=h5readatt(file_in,field,'UniqueFieldDefinition');
       units=h5readatt(file_in,field,'Units');
       tmp=size(cov_prior_lay_int);
       ndim_cov=tmp(1);
@@ -121,7 +121,7 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       for i=1:ndim_cov
          for j=1:npixel
             for k=1:ntime
-	       if(cov_prior_lay_int(i,j,k)~=missing)
+	       if(round(cov_prior_lay_int(i,j,k))~=missing)
                   cov_prior_lay(i,j,k)=double(cov_prior_lay_int(i,j,k))*scalef;
                else		 
                   cov_prior_lay(i,j,k)=double(cov_prior_lay_int(i,j,k));
@@ -130,13 +130,16 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          end
       end
       clear cov_prior_lay_int tmp
-% avgk_lay(layer,layer,npixel,ntime) (no units)
+% avgk_lay(layer,layer,npixel,ntime) (no units) (18, 18, 30, 329)
 %'avgk'
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/AveragingKernel';
       avgk_lay_int=h5read(file_in,field);
-      missing=h5readatt(file_in,field,'MissingValue');  
+      missing=h5readatt(file_in,field,'MissingValue');
       offset=h5readatt(file_in,field,'Offset');
-      scalef=h5readatt(file_in,field,'ScaleFactor');  
+      scalef=h5readatt(file_in,field,'ScaleFactor');
+      units=h5readatt(file_in,field,'Units');
+      title=h5readatt(file_in,field,'Title');
+      defn=h5readatt(file_in,field,'UniqueFieldDefinition');
       units=h5readatt(file_in,field,'Units');
       tmp=size(avgk_lay_int);
       layer=tmp(1);
@@ -145,7 +148,7 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          for j=1:layer
             for k=1:npixel
                for l=1:ntime
-	          if(avgk_lay_int(i,j,k,l)~=missing)
+	          if(round(avgk_lay_int(i,j,k,l))~=missing)
                      avgk_lay(i,j,k,l)=double(avgk_lay_int(i,j,k,l))*scalef;
                   else
                      avgk_lay(i,j,k,l)=double(avgk_lay_int(i,j,k,l));
@@ -158,14 +161,17 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 % cov_lay(ndim_cov,npixel,ntime) (no units)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/CovarianceMatrix';
       cov_lay_int=h5read(file_in,field);
-      missing=h5readatt(file_in,field,'MissingValue');  
-      offset=h5readatt(file_in,field,'Offset');  
+      missing=h5readatt(file_in,field,'MissingValue');
+      offset=h5readatt(file_in,field,'Offset');
       scalef=h5readatt(file_in,field,'ScaleFactor');  
+      units=h5readatt(file_in,field,'Units');
+      title=h5readatt(file_in,field,'Title');
+      defn=h5readatt(file_in,field,'UniqueFieldDefinition');
       units=h5readatt(file_in,field,'Units');
       for i=1:ndim_cov
          for j=1:npixel
             for k=1:ntime
-	       if(cov_lay_int(i,j,k)~=missing)
+	       if(round(cov_lay_int(i,j,k))~=missing)
                   cov_lay(i,j,k)=double(cov_lay_int(i,j,k))*scalef;
                else
                   cov_lay(i,j,k)=double(cov_lay_int(i,j,k));
@@ -196,21 +202,27 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       o3_lay=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');
       offset=h5readatt(file_in,field,'Offset');
-      scalef=h5readatt(file_in,field,'ScaleFactor');  
+      scalef=h5readatt(file_in,field,'ScaleFactor');
       units=h5readatt(file_in,field,'Units');
-      for i=1:layer
-         for j=1:npixel
-            for k=1:ntime
+      title=h5readatt(file_in,field,'Title');
+      defn=h5readatt(file_in,field,'UniqueFieldDefinition');
+      fill=h5readatt(file_in,field,'_FillValue');
+      for j=1:npixel
+         for k=1:ntime
+            for i=1:layer
 	       if(o3_lay(i,j,k)>0)
                   o3_lay(i,j,k)=o3_lay(i,j,k)*scalef*du2molpm2;
-               else
-                  o3_lay(i,j,k)=o3_lay(i,j,k);
                end
             end
+%	    if (any(abs(o3_lay(:,j,k))< 1.e10) & ...
+%            any(round(o3_lay(:,j,k))<1.e10))
+%               fprintf('o3_lay \n')
+%	       fprintf(' %8.4g ',o3_lay(:,j,k))
+%	       fprintf('\n')
+%	    end
          end
       end 
 % o3_prior_lay(layer,npixel,ntime) (DU)
-% The scaled values appear to be off by 1.e-6
 %'o3_prior_lay'
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/O3Apriori';
       o3_prior_lay_int=h5read(file_in,field);
@@ -218,16 +230,26 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       offset=h5readatt(file_in,field,'Offset');
       scalef=h5readatt(file_in,field,'ScaleFactor');  
       units=h5readatt(file_in,field,'Units');
-      for i=1:layer
-         for j=1:npixel
-            for k=1:ntime
-	       if(o3_prior_lay_int(i,j,k)~=missing)
+      title=h5readatt(file_in,field,'Title');
+      defn=h5readatt(file_in,field,'UniqueFieldDefinition');
+      fill=h5readatt(file_in,field,'_FillValue');
+      for j=1:npixel
+         for k=1:ntime
+            for i=1:layer
+	       if(round(o3_prior_lay_int(i,j,k))~=missing & ...
+               round(o3_prior_lay_int(i,j,k))~=fill)
                   o3_prior_lay(i,j,k)=double(o3_prior_lay_int(i,j,k)) ...;
-		 * scalef * du2molpm2;
+		  * scalef * du2molpm2;
                else
                   o3_prior_lay(i,j,k)=double(o3_prior_lay_int(i,j,k));
                end
             end
+%	    if (any(round(o3_prior_lay(:,j,k))~=missing) & ...
+%            any(round(o3_prior_lay(:,j,k))~=fill))
+%               fprintf('o3_prior_lay \n')
+%	       fprintf(' %8.4g ',o3_prior_lay(:,j,k))
+%	       fprintf('\n')
+%	    end
          end
       end
       clear o3_prior_lay_int
@@ -274,19 +296,26 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 % vertical grid is top to bottom      
       field='/HDFEOS/SWATHS/O3Profile/Geolocation Fields/Pressure';
       prs_lev=h5read(file_in,field);
-      missing=h5readatt(file_in,field,'MissingValue');  
+      missing=h5readatt(file_in,field,'MissingValue');
       offset=h5readatt(file_in,field,'Offset');
-      scalef=h5readatt(file_in,field,'ScaleFactor');  
-      units=h5readatt(file_in,field,'Units');  
-      for i=1:layer
-         for j=1:npixel
-            for k=1:ntime
-	       if(prs_lev(i,j,k)~=missing)
+      scalef=h5readatt(file_in,field,'ScaleFactor');
+      units=h5readatt(file_in,field,'Units');
+      title=h5readatt(file_in,field,'Title');
+      defn=h5readatt(file_in,field,'UniqueFieldDefinition');
+      fill=h5readatt(file_in,field,'_FillValue');
+      for j=1:npixel
+         for k=1:ntime
+            for i=1:level
+	       if (abs(prs_lev(i,j,k))<1.e5)
                   prs_lev(i,j,k)=prs_lev(i,j,k)*scalef;
                end
             end
+%	    if (any(abs(prs_lev(:,j,k))<1.e5))
+%	       fprintf(' %7.2f ',prs_lev(1:level,j,k))
+%	       fprintf('\n')
+%	    end
          end
-      end 
+      end
 % zenang(npixel,ntime) (deg)
       field='/HDFEOS/SWATHS/O3Profile/Geolocation Fields/SolarZenithAngle';
       zenang=double(h5read(file_in,field));
@@ -295,15 +324,6 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       scalef=h5readatt(file_in,field,'ScaleFactor');
       units=h5readatt(file_in,field,'Units');
       zenang(:,:)=zenang(:,:)*scalef;
-% time(ntim)
-      field='/HDFEOS/SWATHS/O3Profile/Geolocation Fields/Time';
-      time=h5read(file_in,field);
-      missing=h5readatt(file_in,field,'MissingValue');  
-      offset=h5readatt(file_in,field,'Offset');
-      scalef=h5readatt(file_in,field,'ScaleFactor');  
-      units=h5readatt(file_in,field,'Units');
-      time(:)=time(:)*scalef;
-      time(:)=time(:)-37;
 % RCF_qual(npixel,ntim) (should be less than 30)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/ReflectanceCostFunction';
       RCF_qual=h5read(file_in,field);
@@ -320,72 +340,60 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       clear temp
       [temp,rc]=time_tai93(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx);
       windate_max=single(temp);
-      clear temp
-      [temp,rc]=time_tai93(year,month,day,0,0,0);
-      base_omi=single(temp);
-%      fprintf('%d \n',single(time(1)))
-%      fprintf('%d %d %d \n',windate_min,base_omi,windate_max)
-%   
-      yyyy_omi=double(year);
-      mn_omi=double(month);
-      dy_omi=double(day);
-      ocnt=0;
+      year_omi=double(year);
+      month_omi=double(month);
+      day_omi=double(day);
       icnt=0;
       for ilin=1:ntime
-         secs_day(ilin)=time(ilin)-base_omi;
-         hh_omi=double(idivide(int32(secs_day(ilin)),3600));
-         mm_omi=double(idivide(mod(int32(secs_day(ilin)),3600),60));
-         ss_omi=double(int32(secs_day(ilin))-int32(hh_omi*3600+mm_omi*60));
-         omidate=single(time(ilin));
-         if(int32(hh_omi)>23 | int32(mm_omi)>59 | int32(ss_omi)>59)
-%            fprintf('yr %d mn %d dy %d hh %d mm %d ss %d \n', ...
-%	    year,month,day,int32(hh_omi),int32(mm_omi),int32(ss_omi))
-            [yr_nw,mn_nw,dy_nw,hh_nw,mm_nw,ss_nw]=incr_time(year, ...
-            month,day,int32(hh_omi),int32(mm_omi),int32(ss_omi));
-            year=yr_nw;
-            month=mn_nw;
-            day=dy_nw;
-            hh_omi=hh_nw;
-            mm_omi=mm_nw;
-            ss_omi=ss_nw;
-%            fprintf('yr %d mn %d dy %d hh %d mm %d ss %d \n \n', ...
-%   	    year,month,day,hh_omi,mm_omi,ss_omi)
-	 end 
-%
-% Check time
-%         fprintf('min %d date %d max %d \n',windate_min,omidate,windate_max)
+         secs_day(ilin)=round(time(ilin))-tai93At0z;
+         hour_omi=double(idivide(int32(secs_day(ilin)),3600));
+         minute_omi=double(idivide(mod(int32(secs_day(ilin)),3600),60));
+         second_omi=double(int32(secs_day(ilin))-int32(hour_omi*3600+minute_omi*60));
+	 if(hour_omi>23)
+	   [year_tmp,month_tmp,day_tmp,hour_tmp,minute_tmp,second_tmp]= ...
+	   incr_time(year_omi,month_omi,day_omi,hour_omi,minute_omi,second_omi);
+%	   fprintf('before %d %d %d %d %d %d \n',year_omi,month_omi,day_omi, ...
+%           hour_omi,minute_omi,second_omi)
+%	   fprintf('after %d %d %d %d %d %d \n',year_tmp,month_tmp,day_tmp, ...
+%           hour_tmp,minute_tmp,second_tmp)
+	   year_omi=year_tmp;
+	   month_omi=month_tmp;
+	   day_omi=day_tmp;
+	   hour_omi=hour_tmp;
+	   minute_omi=minute_tmp;
+	   second_omi=second_tmp;
+	 end
+         clear temp
+         [omidate,rc]=time_tai93(year_omi,month_omi,day_omi,hour_omi,minute_omi,second_omi);
          if(omidate<windate_min | omidate>windate_max)
             continue
          end
          for ipxl=1:npixel
 %
 % QA/AC
-%            if((ipxl>=1 & ipxl<=5) | (ipxl>=56 & ipxl<=60))
-%	       fprintf('APM: ipxl issue \n') 
-%	       continue
-%	    end
-%
 	    if(zenang(ipxl,ilin)>=75)
-%	       fprintf('APM: solar zenith angle issue %d \n ',zenang(ipxl,ilin)) 
                continue
 	    end
 %
 	    if(RCF_qual(ipxl,ilin)>=30)
-%	       fprintf('APM: reflectance cost function issue %d \n ',RCF_qual(ipxl,ilin)) 
                continue
 	    end
 %
-	   if(isnan(o3_lay(:,ipxl,ilin)) | any(o3_lay(1:int16(layer/2),ipxl,ilin)<=0))
-%	       fprintf('APM: o3_lay  issue \n ') 
+	    if(isnan(o3_lay(:,ipxl,ilin)) | any(o3_lay(1:int16(layer/2),ipxl,ilin)<=0))
                continue
             end
 
 	    if(isnan(o3_prior_lay(:,ipxl,ilin)) | any(o3_prior_lay(1:int16(layer/2),ipxl,ilin))<=0)
-%	       fprintf('APM: col_amt_trop issue issue \n ') 
                continue
             end
 %
-%	    fprintf('APM: processing obs number %d %d \n ',ilin, ipxl)
+% Check for negative pressures
+	    if(any(prs_lev(:,ipxl,ilin)<0.))
+	       fprintf('Negative pressures \n')
+               fprintf('%8.2f ',prs_lev(:,ipxl,ilin))
+               fprintf('\n')		 
+	       continue
+	    end  
 %
 % Check domain
 % Input grid needs to be in degrees
@@ -450,8 +458,8 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 % Save profile data to ascii file  
             icnt=icnt+1;
             fprintf(fid,'OMI_O3_Profile_Obs: %d %d %d \n',icnt,i_min,j_min);
-            fprintf(fid,'%d %d %d %d %d %d \n',yyyy_omi, ...
-	    mn_omi,dy_omi,hh_omi,mm_omi,ss_omi);
+            fprintf(fid,'%d %d %d %d %d %d \n',year_omi, ...
+	    month_omi,day_omi,hour_omi,minute_omi,second_omi);
 	    fprintf(fid,'%14.8f %14.8f \n',lat(ipxl,ilin),lon(ipxl,ilin));
             fprintf(fid,'%d %d %d \n',layer,level,ndim_cov);
 	    fprintf(fid,'%14.8g \n ',dofs(ipxl,ilin));
@@ -464,7 +472,6 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
             fprintf(fid,'%14.8g ',o3_prior_err_lay(1:layer,ipxl,ilin));
             fprintf(fid,'\n');
 	    for j=1:layer	    
-%               fprintf(fid,'%14.8g ',avgk_lay(1:layer,j,ipxl,ilin));
                fprintf(fid,'%14.8g ',avgk_lay(j,1:layer,ipxl,ilin));
                fprintf(fid,'\n');
 	    end    

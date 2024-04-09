@@ -567,24 +567,9 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
 !
          data_file=trim(upper_data_file)
          model=trim(upper_data_model)
-         
-!         write(string1, *) &
-!         'APM: Model pressure 1, n', kstart, prs_mdl_1(imem), prs_mdl_n(imem)
-!         call error_handler(E_ALLMSG, routine, string1, source) 
-!         do k=1,layer_mls
-!            write(string1, *) &
-!            'APM: MLS pressure ', k, prs_mls(k)
-!            call error_handler(E_ALLMSG, routine, string1, source) 
-!         enddo
          call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
          ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_mls_top, &
          ncnt,o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
-!         do k=1,ncnt
-!            write(string1, *) &
-!            'APM: Uppr Bdy values ', k, o3_prf_mdl(k), tmp_prf_mdl(k), qmr_prf_mdl(k)
-!            call error_handler(E_ALLMSG, routine, string1, source) 
-!         enddo
-         
 !
 ! Impose ensemble perturbations from level kstart-1
          do k=kstart,layer_mls

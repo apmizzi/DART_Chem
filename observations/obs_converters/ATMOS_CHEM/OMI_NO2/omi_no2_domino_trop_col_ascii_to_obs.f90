@@ -292,14 +292,11 @@ program omi_no2_domino_trop_col_ascii_to_obs
       read(fileid,*,iostat=ios) lat_obs,lon_obs
       if(lon_obs.lt.0.) lon_obs=lon_obs+360.
       read(fileid,*,iostat=ios) nlay_obs,nlev_obs
-      read(fileid,*,iostat=ios) amfstrat
+      read(fileid,*,iostat=ios) trop_index
       read(fileid,*,iostat=ios) amftrop
       read(fileid,*,iostat=ios) amftotal
-      read(fileid,*,iostat=ios) cld_frac, cld_prs, cld_rad_frac
-      read(fileid,*,iostat=ios) col_amt_total, col_amt_total_err
       read(fileid,*,iostat=ios) col_amt_trop, col_amt_trop_err
       read(fileid,*,iostat=ios) slnt_col_amt, slnt_col_amt_err
-      read(fileid,*,iostat=ios) prs_trop
       allocate(prs_obs(nlev_obs))
       allocate(scwt(nlay_obs))
       allocate(prs_obs_r8(nlev_obs))
@@ -310,7 +307,6 @@ program omi_no2_domino_trop_col_ascii_to_obs
       scwt_r8(:)=scwt(:)
       prs_obs(:)=prs_obs(:)*100.
       prs_obs_r8(:)=prs_obs(:)/100.
-      prs_trop_r8=prs_trop
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
 !
@@ -338,31 +334,13 @@ program omi_no2_domino_trop_col_ascii_to_obs
          obs_kind = OMI_NO2_DOMINO_TROP_COL
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90) 
          level=0.
-         do k=1,nlev_obs
-            if(prs_trop_r8.ge.prs_obs_r8(1)) then
-               kend=1
-               exit
-            else if(prs_trop_r8.le.prs_obs_r8(nlev_obs)) then
-               kend=nlev_obs
-               exit
-            else if(prs_trop_r8.lt.prs_obs_r8(k) .and. &
-            prs_trop_r8.ge.prs_obs_r8(k+1)) then
-               kend=k+1
-               exit
-            endif
-         enddo
          obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
 !
          call set_obs_def_type_of_obs(obs_def, obs_kind)
          call set_obs_def_location(obs_def, obs_location)
          call set_obs_def_time(obs_def, obs_time)
          call set_obs_def_error_variance(obs_def, obs_err_var)
-         print *, 'prs ',prs_obs_r8(:)
-         print *, 'scwt ',scwt_r8(:)
-         print *, 'prs_trop ',prs_trop_r8
-         print *, 'kend ',kend
-         print *, 'nlay ',nlay_obs
-         call set_obs_def_omi_no2_domino_trop_col(qc_count, prs_obs_r8, scwt_r8, prs_trop_r8, kend, nlay_obs)
+         call set_obs_def_omi_no2_domino_trop_col(qc_count, prs_obs_r8, scwt_r8, trop_index, nlay_obs)
          call set_obs_def_key(obs_def, qc_count)
          call set_obs_values(obs, obs_val, 1)
          call set_qc(obs, omi_qc, num_qc)

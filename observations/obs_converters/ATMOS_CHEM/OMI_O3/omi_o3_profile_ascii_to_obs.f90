@@ -137,10 +137,11 @@ program omi_o3_profile_ascii_to_obs
    integer                         :: line_count,fileid,nlevels
    integer                         :: obs_id,yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs
    integer                         :: nlay_obs,nlev_obs,ndim_cov,ilv
+   integer                         :: nlay_adj,nlev_adj
    integer                         :: seconds,days,which_vert
    integer                         :: seconds_last,days_last
    integer                         :: nx_model,ny_model,nz_model
-   integer                         :: reject,i,j,k,icnt,klev,kend
+   integer                         :: reject,i,j,k,kk,icnt,klev,kend
    integer                         :: i_min,j_min,flg
    integer                         :: sum_reject,sum_accept,sum_total
    integer                         :: obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq, &
@@ -324,8 +325,23 @@ program omi_o3_profile_ascii_to_obs
             endif
          enddo
       enddo
+!
+! Adjust OMI data for low surface pressures (missing levels near surface)
+      nlev_adj=nlev_obs
+      nlay_adj=nlay_obs
+      if(any(prs_obs(:).lt.0.)) then      
+         do k=1,nlev_obs
+            kk=nlev_obs-k+1
+            if(prs_obs(kk).lt.0.) then
+               nlev_adj=nlev_adj-1
+               nlay_adj=nlay_adj-1
+            else
+               exit
+            endif
+         enddo
+      endif
       flg=0
-      do i=1,nlay_obs
+      do i=1,nlay_adj
          if(isnan(cov_obs(i,i)) .or. cov_obs(i,i).lt.0.) then
             flg=1
 !            print *, 'omi_variance is NaN or negative ',cov_obs(i,i)
@@ -343,9 +359,9 @@ program omi_o3_profile_ascii_to_obs
          cycle
       endif
 
-      prs_obs(:)=prs_obs(:)*100.
-      prs_obs_r8(:)=prs_obs(:)/100.
-      prior_obs_r8(:)=prior_obs(:)
+      prs_obs(1:nlev_adj)=prs_obs(1:nlev_adj)*100.
+      prs_obs_r8(1:nlev_adj)=prs_obs(1:nlev_adj)/100.
+      prior_obs_r8(1:nlay_adj)=prior_obs(1:nlay_adj)
       
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
@@ -357,8 +373,8 @@ program omi_o3_profile_ascii_to_obs
 !
 ! Loop through vertical grid (OMI O3 is top to bottom)
       reject=0
-      do ilv=1,nlay_obs
-         avgk_obs_r8(1:nlay_obs)=avgk_obs(ilv,1:nlay_obs)
+      do ilv=1,nlay_adj
+         avgk_obs_r8(1:nlay_adj)=avgk_obs(ilv,1:nlay_adj)
 !
 ! Check whether observation is above model vertical grid
          if(prs_obs(ilv).le.prs_mdl_top) cycle
@@ -367,7 +383,7 @@ program omi_o3_profile_ascii_to_obs
          if(prior_obs_r8(ilv).lt.0. .or. o3_obs(ilv).lt.0.) then
             print *, 'APM: OMI Retrieval or Prior is negative. Layer may be below surface. Layer: ',ilv
             print *, 'APM: Prior ',prior_obs_r8(ilv),'Avgk: ',avgk_obs_r8(ilv)
-!            cycle
+            cycle
          endif
 !
 ! Process observations
@@ -375,10 +391,10 @@ program omi_o3_profile_ascii_to_obs
 ! Obs value is the total vertical column      
          obs_val(:)=o3_obs(ilv)
 !
-! Assign observation error         
-!         obs_err_var=(fac_obs_error*fac_err*sqrt(cov_obs(ilv,ilv)))**2.
+! Assign observation error
          if(prior_obs_r8(ilv).gt.0. .and. o3_obs(ilv).gt.0.) then
-            obs_err_var=(fac_obs_error*fac_err*o3_obs(ilv))**2.
+!            obs_err_var=(fac_obs_error*fac_err*o3_obs(ilv))**2.
+            obs_err_var=(fac_obs_error*o3_obs(ilv)*sqrt(cov_obs(ilv,ilv)))**2.
          else
             obs_err_var=0.
             cycle
@@ -399,15 +415,15 @@ program omi_o3_profile_ascii_to_obs
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90)
          klev=ilv
          kend=ilv
-         level=prs_obs(ilv)   
+         level=prs_obs(ilv)
          obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
 !
          call set_obs_def_type_of_obs(obs_def, obs_kind)
          call set_obs_def_location(obs_def, obs_location)
          call set_obs_def_time(obs_def, obs_time)
          call set_obs_def_error_variance(obs_def, obs_err_var)
-         call set_obs_def_omi_o3_profile(qc_count, prs_obs_r8(1:nlay_obs+1), &
-         avgk_obs_r8(1:nlay_obs), prior_obs_r8(1:nlay_obs), nlay_obs, klev, kend)
+         call set_obs_def_omi_o3_profile(qc_count, prs_obs_r8(1:nlay_adj+1), &
+         avgk_obs_r8(1:nlay_adj), prior_obs_r8(1:nlay_adj), nlay_adj, klev, kend)
          call set_obs_def_key(obs_def, qc_count)
          call set_obs_values(obs, obs_val, 1)
          call set_qc(obs, omi_qc, num_qc)

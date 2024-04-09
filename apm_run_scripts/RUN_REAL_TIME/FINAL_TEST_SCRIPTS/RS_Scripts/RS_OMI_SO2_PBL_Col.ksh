@@ -172,5 +172,5 @@
       fi
 #
 # Clean directory
-      rm dart_log* input.nml mccExcluded* *.dat omi_so2_pbl* 
-      rm readme.* requiredMCRP* run_omi_so2_* includedSupport* unresolved*
+#      rm dart_log* input.nml mccExcluded* *.dat omi_so2_pbl* 
+#      rm readme.* requiredMCRP* run_omi_so2_* includedSupport* unresolved*

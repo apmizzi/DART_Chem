@@ -514,10 +514,10 @@ function omi_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
             fprintf(fid,'%d %d %d %d %d %d \n',yyyy_omi, ...
 	    mn_omi,dy_omi,hh_omi,mm_omi,ss_omi);
 	    fprintf(fid,'%14.8f %14.8f \n',lat(ipxl,ilin),lon(ipxl,ilin));
-            fprintf(fid,'%d %d \n',layer,level);
-            fprintf(fid,'%14.8g \n',amfstrat(ipxl,ilin)
-            fprintf(fid,'%14.8g \n',amftrop(ipxl,ilin)
-            fprintf(fid,'%14.8g \n',amftotal(ipxl,ilin)
+            fprintf(fid,'%d %d \n',layer,level);	    
+            fprintf(fid,'%14.8g \n',amfstrat(ipxl,ilin))
+            fprintf(fid,'%14.8g \n',amftrop(ipxl,ilin))
+            fprintf(fid,'%14.8g \n',amftotal(ipxl,ilin))
             fprintf(fid,'%14.8g %14.8g %14.8g \n',cld_frac(ipxl,ilin), ...
             cld_prs(ipxl,ilin),cld_rad_frac(ipxl,ilin));
             fprintf(fid,'%14.8g %14.8g \n',col_amt(ipxl,ilin), ...
@@ -532,7 +532,7 @@ function omi_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
             fprintf(fid,'\n');
  	    fprintf(fid,'%14.8g ',prs_lev(1:level));
             fprintf(fid,'\n');
-         end
+	 end
       end
       clear amfstrat amfstrat_clr amfstrat_cld amftrop amftrop_clr 
       clear cld_frac cld_prs cld_rad_frac col_amt col_amt_std 

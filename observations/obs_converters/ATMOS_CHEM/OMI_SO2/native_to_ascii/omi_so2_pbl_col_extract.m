@@ -86,6 +86,28 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
 %      if(day_secs_end<file_secs)
 %         continue
 %      end
+%
+% date data
+      field='/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/';
+      day=h5readatt(file_in,field,'GranuleDay');
+      month=h5readatt(file_in,field,'GranuleMonth');
+      year=h5readatt(file_in,field,'GranuleYear');
+% time(scanline) TAI93 seconds
+      field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Geolocation Fields/Time';
+      time=h5read(file_in,field);
+      title=h5readatt(file_in,field,'Title');
+      missing=h5readatt(file_in,field,'MissingValue');
+      units=h5readatt(file_in,field,'Units');
+      range=h5readatt(file_in,field,'ValidRange');
+      fill=h5readatt(file_in,field,'_FillValue');
+% secs_day(scanline)
+      field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Geolocation Fields/SecondsInDay';
+      secs_day=h5read(file_in,field);
+      title=h5readatt(file_in,field,'Title');
+      missing=h5readatt(file_in,field,'MissingValue');
+      units=h5readatt(file_in,field,'Units');
+      range=h5readatt(file_in,field,'ValidRange');
+      fill=h5readatt(file_in,field,'_FillValue');
       fprintf('READ OMI DATA \n')
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -93,12 +115,7 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
 % Read OMI data
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-% date data
-      field='/HDFEOS/ADDITIONAL/FILE_ATTRIBUTES/';
-      day=h5readatt(file_in,field,'GranuleDay');
-      month=h5readatt(file_in,field,'GranuleMonth');
-      year=h5readatt(file_in,field,'GranuleYear');
+
 % flg_snoice(pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/AlgorithmFlag_SnowIce';
       flg_snoice=h5read(file_in,field);
@@ -145,10 +162,21 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
 % col_amt_pbl(pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/ColumnAmountSO2_PBL';
       col_amt_pbl=h5read(file_in,field);
-      missing=h5readatt(file_in,field,'MissingValue');   
+      missing=h5readatt(file_in,field,'MissingValue');
       units=h5readatt(file_in,field,'Units');
       range=h5readatt(file_in,field,'ValidRange');
-      col_amt_pbl(:,:)=col_amt_pbl(:,:)*du2molcpm2/msq2cmsq;
+      fill=h5readatt(file_in,field,'_FillValue');
+      clear tml
+      tmp=size(col_amt_pbl);
+      pixel=tmp(1);
+      scanline=tmp(2);
+      for i=1:pixel
+         for j=1:scanline
+            if(abs(col_amt_pbl(i,j))<1.e10)
+               col_amt_pbl(:,:)=col_amt_pbl(:,:)*du2molcpm2/msq2cmsq;
+            end
+         end
+      end    
 % col_amt_stl(pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/ColumnAmountSO2_STL';
       col_amt_stl=h5read(file_in,field);
@@ -179,26 +207,29 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
 % layer_wt(layer,pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/GEOS5LayerWeight';
       layer_wt=h5read(file_in,field);
-      missing=h5readatt(file_in,field,'MissingValue');   
-      units=h5readatt(file_in,field,'Units');  
-      range=h5readatt(file_in,field,'ValidRange');  
+      missing=h5readatt(file_in,field,'MissingValue');
+      units=h5readatt(file_in,field,'Units');
+      range=h5readatt(file_in,field,'ValidRange');
+      fill=h5readatt(file_in,field,'_FillValue');
+      clear tml
       tmp=size(layer_wt);
       layer=tmp(1);
-      pixel=tmp(2);
-      scanline=tmp(3);
       level=layer+1;
 % prs_bot(layer) (hPa)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/LayerBottomPressure';
       prs_bot=h5read(file_in,field);
-      missing=h5readatt(file_in,field,'MissingValue');   
-      units=h5readatt(file_in,field,'Units');  
+      missing=h5readatt(file_in,field,'MissingValue');
+      units=h5readatt(file_in,field,'Units');
       range=h5readatt(file_in,field,'ValidRange');
+%      for i=1:layer
+%         fprintf('prs i, %d %8.3f \n',i,prs_bot(i))
+%      end
 % layer_wt_pbl(layer,pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/PBLLayerWeight';
       layer_wt_pbl=h5read(file_in,field);
-      missing=h5readatt(file_in,field,'MissingValue');   
-      units=h5readatt(file_in,field,'Units');  
-      range=h5readatt(file_in,field,'ValidRange');  
+      missing=h5readatt(file_in,field,'MissingValue');
+      units=h5readatt(file_in,field,'Units');
+      range=h5readatt(file_in,field,'ValidRange');
 % rad_cld_frac(pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/RadiativeCloudFraction';
       rad_cld_frac=h5read(file_in,field);
@@ -238,12 +269,6 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
             end
          end
       end
-% secs_day(scanline)
-      field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Geolocation Fields/SecondsInDay';
-      secs_day=h5read(file_in,field);
-      missing=h5readatt(file_in,field,'MissingValue');   
-      units=h5readatt(file_in,field,'Units');  
-      range=h5readatt(file_in,field,'ValidRange');  
 % zenang(pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Geolocation Fields/SolarZenithAngle';
       zenang=h5read(file_in,field);
@@ -251,13 +276,6 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       units=h5readatt(file_in,field,'Units');  
       range=h5readatt(file_in,field,'ValidRange');  
       radcldfrc=h5read(file_in,field);
-% time(scanline) TAI93 seconds
-      field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Geolocation Fields/Time';
-      time=h5read(file_in,field);
-      missing=h5readatt(file_in,field,'MissingValue');   
-      units=h5readatt(file_in,field,'Units');  
-      range=h5readatt(file_in,field,'ValidRange');  
-      time(:)=time(:)-37;
 %
 % Define level pressures (top to bottom)
       prs_lev(1)=0.01;
@@ -322,8 +340,6 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
 	    if(xmdl_sw<0.)
 	       xmdl_sw=xmdl_sw+360.;
             end
-%
-% APM: Need to get this info from model
 	    [xi,xj]=w3fb13(y_obser,x_obser,lat_mdl(1,1), ...
 	    xmdl_sw,delx,cen_lon,truelat1,truelat2);
             i_min = round(xi);

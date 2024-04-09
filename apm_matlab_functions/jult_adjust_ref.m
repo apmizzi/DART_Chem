@@ -6,7 +6,7 @@ function [jult_out]=jult_adjust_ref(jult_in,ref_year,ref_month,ref_day,ref_hour,
 %
 % NOTE: hours run 0 - 23
    if(ref_hour>23)
-      'APM: ERROR - hour must be less than or equal to 23'
+      fprintf('APM: ERROR - hour must be less than or equal to 23 \n')
       return
    end
 %

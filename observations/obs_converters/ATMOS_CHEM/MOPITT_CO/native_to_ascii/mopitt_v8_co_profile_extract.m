@@ -104,7 +104,14 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
       day=h5readatt(file_in,field,'Day');
       year=h5readatt(file_in,field,'Year');
       str_time=h5readatt(file_in,field,'StartDateTime');
-%
+% secs_day(ntim) 
+      field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/SecondsinDay';
+      secs_day=h5read(file_in,field);
+      units=h5readatt(file_in,field,'units');  
+% time(ntim) (TAI time)
+      field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/Time';
+      time=h5read(file_in,field);
+      units=h5readatt(file_in,field,'units');  
 % prior_prof_lay(ntwo,nlay,ntim) (ppbv)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/APrioriCOMixingRatioProfile';
       prior_prof_lay=h5read(file_in,field);
@@ -142,7 +149,7 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
       field='/HDFEOS/SWATHS/MOP02/Data Fields/PressureGrid';
       prs_grd=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
-% avgk_lev(nlev,nlev,ntim) (uses log10 VMR)
+% avgk_lev(nlev,nlev,ntim) (uses log10 VMR; ordered nrow,ncol,ntim)
       field='/HDFEOS/SWATHS/MOP02/Data Fields/RetrievalAveragingKernelMatrix';
       avgk_lev=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
@@ -190,24 +197,16 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
       field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/Longitude';
       lon=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');
-% prs_lay(nlay) (hPa)
+% prs_lay(nlay) (hPa) (900 hPa to 100 hPa)
       field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/Pressure';
       prs_lay=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
 %      nlay=size(prs_lay);
-% prs_lev(nlev) (hPa)
+% prs_lev(nlev) (hPa) (1000 hPa to 100 hPa)
       field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/Pressure2';
       prs_lev=h5read(file_in,field);
       units=h5readatt(file_in,field,'units');  
 %      nlev=size(prs_lev);
-% secs_day(ntim) 
-      field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/SecondsinDay';
-      secs_day=h5read(file_in,field);
-      units=h5readatt(file_in,field,'units');  
-% time(ntim) (TAI time)
-      field='/HDFEOS/SWATHS/MOP02/Geolocation Fields/Time';
-      time=h5read(file_in,field);
-      units=h5readatt(file_in,field,'units');  
 %
 % Loop through MOPITT data
       windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,1993));
@@ -311,7 +310,7 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
                nlev_sft=nlev;
                prs_lev_sft(1)=prs_sfc(itim);     
                break
-            elseif(ilv==nlev && prs_sfc(itim)<prs_lev_sft(ilv+1))
+            elseif(ilv==nlay && prs_sfc(itim)<prs_lev_sft(ilv+1))
                kstr=0;
                nlev_sft=0;
                break
@@ -338,23 +337,6 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
 	 for ilv=1:nlay_sft 
 	   prs_lay_sft(ilv)=(prs_lev_sft(ilv)+prs_lev_sft(ilv+1))/2.;
          end
-%	 if(icnt==210)
-%            fprintf('APM: prs_sfc \n')
-%            fprintf('%14.8g \n',prs_sfc(itim))
-%            fprintf('APM: prs_lay \n')
-%            fprintf('%14.8g ',prs_lay(1:nlay))
-%            fprintf('\n')
-%            fprintf('APM: prs_lev \n')
-%            fprintf('%14.8g ',prs_lev(1:nlev))
-%            fprintf('\n')
-%            fprintf('APM: prs_lay_sft \n')
-%            fprintf('%14.8g ',prs_lay_sft(1:nlay_sft))
-%            fprintf('\n')
-%            fprintf('APM: prs_lev_sft \n')
-%            fprintf('%14.8g ',prs_lev_sft(1:nlev_sft))
-%            fprintf('\n')
-%            return
-%         end
 %
 % Shift remaining data	 
          retr_prof_sft=zeros(ntwo,nlay_sft);
@@ -380,44 +362,6 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
               cov_s_sft(ilv-kstr+1,ilw-kstr+1)=cov_s(ilv+1,ilw+1,itim);
             end
          end
-%
-%
-%         if(icnt==210)
-%            fprintf('APM: retr_sfc \n')
-%            fprintf('%14.8g ',retr_sfc(1,itim))
-%            fprintf('APM: retr_prof_lay \n')
-%            fprintf('%14.8g ',retr_prof_lay(1,1:nlay,itim))
-%            fprintf('\n')
-%            fprintf('APM: prior_sfc \n')
-%            fprintf('%14.8g ',prior_sfc(1,itim))
-%            fprintf('APM: prior_prof_lay \n')
-%            fprintf('%14.8g ',prior_prof_lay(1,1:nlay,itim))
-%            fprintf('\n')
-%	    for k=1:nlev
-%               fprintf('APM: avgk_lev row: %d  \n',k)
-%               fprintf('%14.8g ',avgk_lev(k,1:nlev,itim))
-%               fprintf('\n')
-%            end
-%         end
-%	     
-% check averaging kernel for zero
-%         if(icnt==210)
-%            fprintf('\n')
-%            fprintf('APM: icnt,i_min,j_min: %d %d %d \n',icnt,i_min,j_min)
-%            fprintf('APM: kstr, nlay_sft: %d %d \n',kstr,nlay_sft)
-%            fprintf('APM: retr_prof_sft \n')
-%            fprintf('%14.8g ',retr_prof_sft(1,1:nlay_sft))
-%            fprintf('\n')
-%            fprintf('APM: prior_prof_sft \n')
-%            fprintf('%14.8g ',prior_prof_sft(1,1:nlay_sft))
-%            fprintf('\n')
-%            for k=1:nlay_sft
-%               fprintf('APM: avgk_sft row %d \n',k)
-%               fprintf('%14.8g ',avgk_sft(k,1:nlay_sft))
-%               fprintf('\n')
-%            end
-%	    return
-%         end
 %
 % Save data to ascii file
          icnt=icnt+1;

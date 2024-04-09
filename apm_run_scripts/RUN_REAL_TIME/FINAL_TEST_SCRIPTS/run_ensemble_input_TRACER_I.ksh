@@ -126,7 +126,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_IASI_CO_CPSR_OBS=false # (done)
    export RUN_IASI_O3_PROFILE_OBS=false
    export RUN_IASI_O3_CPSR_OBS=false
-   export RUN_MODIS_AOD_TOTAL_COL_OBS=false # (done)  TRACER I
+   export RUN_MODIS_AOD_TOTAL_COL_OBS=true # (done)  TRACER I
    export RUN_OMI_O3_TOTAL_COL_OBS=false
    export RUN_OMI_O3_TROP_COL_OBS=false
    export RUN_OMI_O3_PROFILE_OBS=false # (done)  TRACER I
@@ -134,7 +134,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_OMI_NO2_TOTAL_COL_OBS=false
    export RUN_OMI_NO2_TROP_COL_OBS=false # (done)
    export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
-   export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true # (works)  TRACER I
+   export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false # (works)  TRACER I
    export RUN_OMI_SO2_TOTAL_COL_OBS=false
    export RUN_OMI_SO2_PBL_COL_OBS=false # (works)  TRACER I
    export RUN_OMI_HCHO_TOTAL_COL_OBS=false # (works)
@@ -213,7 +213,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_MET_OBS=false # (done)  TRACER I
    export RUN_COMBINE_OBS=true
    export RUN_PREPROCESS_OBS=true
-   export RUN_LOCALIZATION=true
+   export RUN_LOCALIZATION=false
 #
    rm -rf index_RS_Code_Versions_${DATE}   
    source ${RS_SCRIPTS_DIR}/RS_Code_Versions.ksh > index_RS_Code_Versions_${DATE} 2>&1
@@ -639,7 +639,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/modis_aod_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_MODIS_AOD_Total_Col.ksh > index_rs.html 2>&1
+#      source ${RS_SCRIPTS_DIR}/RS_MODIS_AOD_Total_Col.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_MODIS_AOD_Total_Col_MATLAB.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################

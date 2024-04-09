@@ -327,6 +327,7 @@ program omi_so2_pbl_col_ascii_to_obs
          sum_accept=sum_accept+1
 !
 ! Obs value is the tropospheric slant column
+! APM: Do literature review to find uncertainty setting         
          obs_val(:)=col_amt_pbl*AMF
          obs_err_var=(fac_obs_error*fac_err*col_amt_pbl*AMF)**2.
          omi_qc(:)=0
