@@ -164,6 +164,8 @@ program omi_o3_profile_thinner
          nlay_obs=omi_data(i_min,j_min)%nlay_obs(icnt)
          nlev_obs=omi_data(i_min,j_min)%nlev_obs(icnt)
          ndim_obs=omi_data(i_min,j_min)%ndim_obs(icnt)
+      read(fileid,*,iostat=ios) &
+         omi_data(i_min,j_min)%dofs(icnt)
       if(omi_data(i_min,j_min)%icnt.eq.1) then
          allocate(omi_data(i_min,j_min)%prs_lev(max_num_obs,nlev_obs))
          allocate(omi_data(i_min,j_min)%o3_lay(max_num_obs,nlay_obs))

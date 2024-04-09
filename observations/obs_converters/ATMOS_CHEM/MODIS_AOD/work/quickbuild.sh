@@ -16,6 +16,8 @@ LOCATION=threed_sphere
 programs=(
 MOD15A2_to_obs
 modis_aod_total_col_ascii_to_obs
+modis_aod_total_col_ascii_to_obs_MATLAB
+modis_aod_total_col_thinner_MATLAB
 obs_sequence_tool
 advance_time
 )

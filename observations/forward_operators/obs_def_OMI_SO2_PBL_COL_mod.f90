@@ -403,44 +403,35 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
    call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus)
 
-   so2_mdl_tmp(:)=missing_r8
-   tmp_mdl_tmp(:)=missing_r8
-   qmr_mdl_tmp(:)=missing_r8
-   prs_mdl_tmp(:)=missing_r8
+   so2_mdl_1(:)=missing_r8
+   tmp_mdl_1(:)=missing_r8
+   qmr_mdl_1(:)=missing_r8
+   prs_mdl_1(:)=missing_r8
 
    kbnd_1(:)=1
    do k=1,layer_mdl
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-      call interpolate(state_handle, ens_size, loc2, QTY_SO2, so2_mdl_tmp, zstatus) ! ppmv 
+      call interpolate(state_handle, ens_size, loc2, QTY_SO2, so2_mdl_1, zstatus) ! ppmv 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_tmp, zstatus) ! K 
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_1, zstatus) ! K 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_tmp, zstatus) ! kg / kg 
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg / kg 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_tmp, zstatus) ! Pa
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
 
       interp_new=0
       do imem=1,ens_size
-         if(so2_mdl_tmp(imem).eq.missing_r8 .or. tmp_mdl_tmp(imem).eq.missing_r8 .or. &
-         qmr_mdl_tmp(imem).eq.missing_r8 .or. prs_mdl_tmp(imem).eq.missing_r8) then
+         if(so2_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
+         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
             interp_new=1
-         else
-            kbnd_1(imem)=k
-            so2_mdl_1(imem)=so2_mdl_tmp(imem)
-            tmp_mdl_1(imem)=tmp_mdl_tmp(imem)
-            qmr_mdl_1(imem)=qmr_mdl_tmp(imem)
-            prs_mdl_1(imem)=prs_mdl_tmp(imem)
+            exit
          endif
       enddo
-      if(interp_new.eq.0) exit
-   enddo
-!
-! Sometimes the WRF-Chem surface pressure is greater than the
-! first model level pressure. This fixes that problem.   
-   do imem=1,ens_size
-      if(prs_sfc(imem).lt.prs_mdl_1(imem)) prs_mdl_1(imem)=prs_sfc(imem)
+      if(interp_new.eq.0) then
+         exit
+      endif
    enddo
 
 !   write(string1, *) 'APM: so2 lower bound ',key,so2_mdl_1
@@ -452,43 +443,38 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 !   write(string1, *) 'APM: prs lower bound ',key,prs_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
 
-! pressure at model top (Pa)
-
-   so2_mdl_tmp(:)=missing_r8
-   tmp_mdl_tmp(:)=missing_r8
-   qmr_mdl_tmp(:)=missing_r8
-   prs_mdl_tmp(:)=missing_r8
+   so2_mdl_n(:)=missing_r8
+   tmp_mdl_n(:)=missing_r8
+   qmr_mdl_n(:)=missing_r8
+   prs_mdl_n(:)=missing_r8
 
    kbnd_n(:)=layer_mdl
    do k=layer_mdl,1,-1
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-      call interpolate(state_handle, ens_size, loc2, QTY_SO2, so2_mdl_tmp, zstatus) 
+      call interpolate(state_handle, ens_size, loc2, QTY_SO2, so2_mdl_n, zstatus) 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_tmp, &
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_n, &
       zstatus) 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_tmp, &
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, &
       zstatus) 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_tmp, &
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, &
       zstatus) 
 !
       interp_new=0
       do imem=1,ens_size
-         if(so2_mdl_tmp(imem).eq.missing_r8 .or. tmp_mdl_tmp(imem).eq.missing_r8 .or. &
-         qmr_mdl_tmp(imem).eq.missing_r8 .or. prs_mdl_tmp(imem).eq.missing_r8) then
+         if(so2_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
+         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
             interp_new=1
-         else
-            kbnd_n(imem)=k
-            so2_mdl_n(imem)=so2_mdl_tmp(imem)
-            tmp_mdl_n(imem)=tmp_mdl_tmp(imem)
-            qmr_mdl_n(imem)=qmr_mdl_tmp(imem)
-            prs_mdl_n(imem)=prs_mdl_tmp(imem)
+            exit
          endif
       enddo
-      if(interp_new.eq.0) exit
+      if(interp_new.eq.0) then
+         exit
+      endif
    enddo
 
 !   write(string1, *) 'APM: so2 upper bound ',key,so2_mdl_n
@@ -544,15 +530,10 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          qmr_val(imem,k).eq.missing_r8) then
             zstatus(:)=20
             expct_val(:)=missing_r8
-            write(string1, *) 'APM: Model profile data has missing values for obs, level ',key,k
-            call error_handler(E_ALLMSG, routine, string1, source)
+            write(string1, *) &
+            'APM: Input data has missing values '
+            call error_handler(E_MSG, routine, string1, source)
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            do imemm=1,ens_size
-               write(string1, *) &
-               'APM: Model profile values: so2,tmp,qmr',key,imem,k,so2_val(imemm,k), &
-               tmp_val(imemm,k),qmr_val(imemm,k)     
-               call error_handler(E_ALLMSG, routine, string1, source)
-            enddo
             return
          endif
       enddo
@@ -560,6 +541,14 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 ! Convert units for so2 from ppmv
       so2_val(:,k) = so2_val(:,k) * 1.e-6_r8
    enddo
+   so2_mdl_1(:)=so2_mdl_1(:) * 1.e-6_r8
+   so2_mdl_n(:)=so2_mdl_n(:) * 1.e-6_r8
+!   imem=1
+!   do k=1,level_omi
+!      write(string1, *)'APM: ',k,prs_omi(k), &
+!      so2_val(imem,k)*1.e6_8,tmp_val(imem,k),qmr_val(imem,k)
+!      call error_handler(E_MSG, routine, string1, source)
+!   enddo                                                                                                    
 !
 ! Use large scale so2 data above the regional model top
 ! OMI vertical is from top to bottom   
@@ -604,51 +593,48 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
       endif
    enddo
 !
+! Print full profile examples
+!   do imem=1,1
+!      do k=1,level_omi
+!         write(string1, *) &
+!         'APM: prs,so2,tmp,qmr ',k,prs_omi(k)/100.,so2_val(imem,k), &
+!         tmp_val(imem,k),qmr_val(imem,k)
+!         call error_handler(E_MSG, routine, string1, source)
+!      enddo
+!   enddo
+!
 ! Check full profile for negative values
    do imem=1,ens_size
       flg=0
       do k=1,level_omi   
-
-!         write(string1, *) &
-!         'APM: so2 values: imem,k,so2 ',imem,k,so2_val(imem,k)
-!         call error_handler(E_ALL, routine, string1, source)
-         
          if(so2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             flg=1   
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
-            call error_handler(E_ALLMSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            if(k.le.kstart) then
-               do kk=1,level_omi
-                  write(string1, *) &
-                  'APM: prs, so2, tmp, qmr',key,imem,prs_omi(kk),so2_val(imem,kk), &
-                  tmp_val(imem,kk),qmr_val(imem,kk)
-                  call error_handler(E_ALLMSG, routine, string1, source)
-               enddo
-               exit
-            endif
+            call error_handler(E_MSG, routine, string1, source)
          endif
       enddo
-      if(flg.eq.1) exit
+      if(flg.eq.1) then
+         zstatus(:)=20
+         expct_val(:)=missing_r8
+         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         return
+      endif
    enddo
-   
+!
+! Calculate the expected retrieval   
    istatus(:)=0
    zstatus(:)=0.
    expct_val(:)=0.0
    allocate(thick(layer_omi))
 
+   prs_omi_mem(:)=prs_omi(:)
    do imem=1,ens_size
-! Adjust the OMI pressure for WRF-Chem lower/upper boudary pressure
-! (OMI SO2 vertical grid is top to bottom)
-      prs_omi_mem(:)=prs_omi(:)
-      if (prs_sfc(imem).gt.prs_omi_mem(level_omi)) then
-         prs_omi_mem(level_omi)=prs_sfc(imem)
-      endif
-      
-! Calculate the thicknesses
-      
+
+! Calculate the thicknesses (grid is top to bottom)
+
+      thick(:)=0.
       do k=1,layer_omi
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
          up_wt=log(prs_omi_mem(k+1))-lnpr_mid
@@ -658,7 +644,15 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
          thick(k)   = Rd*(dw_wt*tmp_vir_kp + up_wt*tmp_vir_k)/tl_wt/grav* &
          log(prs_omi_mem(k+1)/prs_omi_mem(k))
+
+!         write(string1, *) &
+!         'APM: Key, Thickness calcs ', k, thick(k), up_wt, dw_wt, tmp_vir_k,tmp_vir_kp, &
+!         prs_omi_mem(k), prs_omi_mem(k+1)     
+!         call error_handler(E_MSG, routine, string1, source)
+         
       enddo
+!
+! Find PBL index      
       pbl_sum=0.
       pbl_index=1
       do k=1,layer_omi
@@ -669,11 +663,6 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
             exit
          endif
       enddo
-      
-!      write(string1, *) &
-!      'APM: Mem: pbl_index ', pbl_index
-!      call error_handler(E_MSG, routine, string1, source)
-
       if(pbl_index.lt.layer_omi/2 .or. pbl_index.ge.layer_omi) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
@@ -684,7 +673,7 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          return
       endif
       
-! Process the vertical summation
+! Process the vertical summation (OMI SO2 units are mole per m^2)
 
       do k=pbl_index,layer_omi
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
@@ -709,20 +698,21 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          AvogN/msq2cmsq * scat_wt(key,k)
 
 !         write(string1, *) &
-!         'APM: Mem ',imem,' Key ',key,' Expct Val Terms: prs ',k, &
-!         (prs_omi_mem(k)+prs_omi_mem(k+1))/2.,' expct val ',expct_val(imem), &
-!         ' thick ',thick(k),' scat_wt ',scat_wt(key,k),'AvogN/msq2cmsq*thick*so2_conv ', &
-!         thick(k)*so2_val_conv*AvogN/msq2cmsq
+!         'APM: Key, Expected Value Terms ',k, expct_val(imem), thick(k), &
+!         thick(k)*so2_val_conv, so2_val_conv, scat_wt(key,k)
 !         call error_handler(E_MSG, routine, string1, source)
 
       enddo
-! 
+!      write(string1, *) &
+!      'APM: Expected Value is ',imem, expct_val(imem)
+!      call error_handler(E_MSG, routine, string1, source)
+
       if(isnan(expct_val(imem))) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
-!         write(string1, *) &
-!         'APM NOTICE: OMI SO2 expected value is NaN for obs ',key
-!         call error_handler(E_ALLMSG, routine, string1, source)
+         write(string1, *) &
+         'APM NOTICE: OMI SO2 expected value is NaN '
+         call error_handler(E_MSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
@@ -730,9 +720,9 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
       if(expct_val(imem).le.0) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
-!         write(string1, *) &
-!         'APM NOTICE: OMI SO2 expected value is negative for obs ',key
-!         call error_handler(E_ALLMSG, routine, string1, source)
+         write(string1, *) &
+         'APM NOTICE: OMI SO2 expected value is negative '
+         call error_handler(E_MSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif

@@ -107,5 +107,5 @@ EOFF
       fi
 #
 # Clean directory
-      rm create_modis* dart_log* input.nml job.ksh *.dat modis_aod_total*
-      rm modis_asciidata*
+#      rm create_modis* dart_log* input.nml job.ksh *.dat modis_aod_total*
+#      rm modis_asciidata*

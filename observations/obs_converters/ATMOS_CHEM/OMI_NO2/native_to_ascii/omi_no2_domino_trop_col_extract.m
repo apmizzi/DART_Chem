@@ -312,6 +312,9 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
                snow_ice_flag(ipxl,iscan,itim)~=255))
                   continue		
                end
+               if(all(prs_lev(ipxl,iscan,:)==0.))
+                  continue
+               end
                if(isnan(amf_trop(ipxl,iscan,itim)) | isnan(amf_geom(ipxl,iscan,itim)) | ...
                amf_geom(ipxl,iscan,itim)==0)
                   continue		
@@ -400,7 +403,7 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
                   continue
                end
                if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
-                  fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
+%                  fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
                   continue
                end
 %
@@ -422,7 +425,13 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
                fprintf(fid,'\n');
  	       fprintf(fid,'%14.8g ',prs_lev(ipxl,iscan,1:level));
                fprintf(fid,'\n');
-            end
+               if(all(prs_lev(ipxl,iscan,:)==0.))
+                  fprintf('OMI PRS ZERO \n ')
+                  fprintf('%14.8g ',prs_lev(ipxl,iscan,1:level))
+                  fprintf(fid,'\n');
+	          return
+               end
+	    end
          end
       end
    end

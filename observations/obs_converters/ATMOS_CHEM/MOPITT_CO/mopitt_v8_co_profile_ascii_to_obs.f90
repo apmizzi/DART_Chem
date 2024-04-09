@@ -323,9 +323,11 @@ program mopitt_v8_co_profile_ascii_to_obs
          sum_accept=sum_accept+1
          qc_count=qc_count+1
 !
-! Obs value is a profile element
+! Obs value is a profile element 
          obs_val(:)=retr_prf(ilv)
-         obs_err_var=(fac_obs_error*fac_err*retr_prf_err(ilv))**2.
+! APM: Check the error definition (it should be the error in log10 space)
+!         obs_err_var=(fac_obs_error*retr_prf_err(ilv)*retr_prf(ilv))**2.
+         obs_err_var=(fac_obs_error*retr_prf_err(ilv))**2.
          avgk_lay_r8(1:nlay_obs)=avgk_lay(ilv,1:nlay_obs)
          mopitt_qc(:)=0
          obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)

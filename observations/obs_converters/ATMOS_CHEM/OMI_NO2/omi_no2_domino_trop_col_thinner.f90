@@ -82,7 +82,7 @@ program omi_no2_thinner
       real,allocatable,dimension(:)    :: lon_obs
       integer,allocatable,dimension(:) :: nlay_obs
       integer,allocatable,dimension(:) :: nlev_obs
-      real,allocatable,dimension(:)    :: amf_strat
+      integer,allocatable,dimension(:) :: trop_index
       real,allocatable,dimension(:)    :: amf_trop
       real,allocatable,dimension(:)    :: amf_total
       real,allocatable,dimension(:)    :: cld_frac
@@ -146,7 +146,7 @@ program omi_no2_thinner
          allocate(omi_data(i_min,j_min)%lon_obs(max_num_obs))
          allocate(omi_data(i_min,j_min)%nlay_obs(max_num_obs))
          allocate(omi_data(i_min,j_min)%nlev_obs(max_num_obs))
-         allocate(omi_data(i_min,j_min)%amf_strat(max_num_obs))
+         allocate(omi_data(i_min,j_min)%trop_index(max_num_obs))
          allocate(omi_data(i_min,j_min)%amf_trop(max_num_obs))
          allocate(omi_data(i_min,j_min)%amf_total(max_num_obs))
          allocate(omi_data(i_min,j_min)%cld_frac(max_num_obs))
@@ -181,26 +181,17 @@ program omi_no2_thinner
          allocate(omi_data(i_min,j_min)%prs_obs(max_num_obs,nlev_obs))
       endif
       read(fileid,*,iostat=ios) &
-         omi_data(i_min,j_min)%amf_strat(icnt)
+         omi_data(i_min,j_min)%trop_index(icnt)
       read(fileid,*,iostat=ios) &
          omi_data(i_min,j_min)%amf_trop(icnt)
       read(fileid,*,iostat=ios) &
          omi_data(i_min,j_min)%amf_total(icnt)
-      read(fileid,*,iostat=ios) &
-         omi_data(i_min,j_min)%cld_frac(icnt), &
-         omi_data(i_min,j_min)%cld_prs(icnt), &
-         omi_data(i_min,j_min)%cld_rad_frac(icnt)
-      read(fileid,*,iostat=ios) &
-         omi_data(i_min,j_min)%col_amt_total(icnt), &
-         omi_data(i_min,j_min)%col_amt_total_err(icnt)
       read(fileid,*,iostat=ios) &
          omi_data(i_min,j_min)%col_amt_trop(icnt), &
          omi_data(i_min,j_min)%col_amt_trop_err(icnt)
       read(fileid,*,iostat=ios) &
          omi_data(i_min,j_min)%slnt_col_amt(icnt), &
          omi_data(i_min,j_min)%slnt_col_amt_err(icnt)
-      read(fileid,*,iostat=ios) &
-         omi_data(i_min,j_min)%prs_trop(icnt)
       read(fileid,*,iostat=ios) &
          omi_data(i_min,j_min)%scwt(icnt,1:nlay_obs)
       read(fileid,*,iostat=ios) &
@@ -306,26 +297,17 @@ program omi_no2_thinner
                omi_data(i,j)%nlay_obs(icnt), &
                omi_data(i,j)%nlev_obs(icnt)
             write(fileid,*,iostat=ios) &
-               omi_data(i,j)%amf_strat(icnt)
+               omi_data(i,j)%trop_index(icnt)
             write(fileid,*,iostat=ios) &
                omi_data(i,j)%amf_trop(icnt)
             write(fileid,*,iostat=ios) &
                omi_data(i,j)%amf_total(icnt)
-            write(fileid,*,iostat=ios) &
-               omi_data(i,j)%cld_frac(icnt), &
-               omi_data(i,j)%cld_prs(icnt), &
-               omi_data(i,j)%cld_rad_frac(icnt)
-            write(fileid,*,iostat=ios) &
-               omi_data(i,j)%col_amt_total(icnt), &
-               omi_data(i,j)%col_amt_total_err(icnt)
             write(fileid,*,iostat=ios) &
                omi_data(i,j)%col_amt_trop(icnt), &
                omi_data(i,j)%col_amt_trop_err(icnt)
             write(fileid,*,iostat=ios) &
                omi_data(i,j)%slnt_col_amt(icnt), &
                omi_data(i,j)%slnt_col_amt_err(icnt)
-            write(fileid,*,iostat=ios) &
-               omi_data(i,j)%prs_trop(icnt)
             write(fileid,*,iostat=ios) &
                omi_data(i,j)%scwt(icnt,1:nlay_obs)
             write(fileid,*,iostat=ios) &
@@ -348,7 +330,7 @@ program omi_no2_thinner
             deallocate(omi_data(i,j)%lon_obs)
             deallocate(omi_data(i,j)%nlay_obs)
             deallocate(omi_data(i,j)%nlev_obs)
-            deallocate(omi_data(i,j)%amf_strat)
+            deallocate(omi_data(i,j)%trop_index)
             deallocate(omi_data(i,j)%amf_trop)
             deallocate(omi_data(i,j)%amf_total)
             deallocate(omi_data(i,j)%cld_frac)

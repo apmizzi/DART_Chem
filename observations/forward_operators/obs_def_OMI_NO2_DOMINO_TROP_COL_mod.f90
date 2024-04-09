@@ -103,7 +103,6 @@ integer,  allocatable :: nlayer(:)
 integer,  allocatable :: kend(:)
 real(r8), allocatable :: pressure(:,:)
 real(r8), allocatable :: scat_wt(:,:)
-real(r8), allocatable :: prs_trop(:)
 ! version controlled file description for error handling, do not edit
 character(len=*), parameter :: source   = 'obs_def_omi_no2_domino_trop_col_mod.f90'
 character(len=*), parameter :: revision = ''
@@ -171,7 +170,6 @@ allocate(   nlayer(max_omi_no2_domino_obs))
 allocate(   kend(max_omi_no2_domino_obs))
 allocate( pressure(max_omi_no2_domino_obs,nlayer_omi+1))
 allocate(  scat_wt(max_omi_no2_domino_obs,nlayer_omi))
-allocate( prs_trop(max_omi_no2_domino_obs))
 
 end subroutine initialize_module
 
@@ -190,7 +188,6 @@ integer               :: nlayer_1
 integer               :: kend_1
 real(r8), allocatable :: pressure_1(:)
 real(r8), allocatable :: scat_wt_1(:)
-real(r8)              :: prs_trop_1
 character(len=32)     :: fileformat
 
 integer, SAVE :: counts1 = 0
@@ -203,7 +200,6 @@ if(present(fform)) fileformat = adjustl(fform)
 ! Need to know how many layers for this one
 nlayer_1   = read_int_scalar( ifile, fileformat, 'nlayer_1')
 kend_1     = read_int_scalar( ifile, fileformat, 'kend_1')
-prs_trop_1 = read_r8_scalar( ifile, fileformat, 'prs_trop_1')
 
 allocate( pressure_1(nlayer_1+1))
 allocate(  scat_wt_1(nlayer_1))
@@ -221,7 +217,7 @@ if(counts1 > max_omi_no2_domino_obs) then
    call error_handler(E_ERR,'read_omi_no2_domino_trop_col',string1,source,text2=string2)
 endif
 
-call set_obs_def_omi_no2_domino_trop_col(key, pressure_1, scat_wt_1, prs_trop_1, kend_1, nlayer_1)
+call set_obs_def_omi_no2_domino_trop_col(key, pressure_1, scat_wt_1,  kend_1, nlayer_1)
 
 deallocate(pressure_1, scat_wt_1)
 
@@ -247,7 +243,6 @@ if(present(fform)) fileformat = adjustl(fform)
 
 call write_int_scalar(ifile,                     nlayer(key), fileformat,'nlayer')
 call write_int_scalar(ifile,                     kend(key), fileformat,'kend')
-call write_r8_scalar( ifile,                     prs_trop(key), fileformat,'prs_trop')
 call write_r8_array(  ifile, nlayer(key)+1,  pressure(key,:), fileformat,'pressure')
 call write_r8_array(  ifile, nlayer(key),  scat_wt(key,:), fileformat,'scat_wt')
 call write_int_scalar(ifile,                             key, fileformat,'key')
@@ -311,7 +306,6 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
    real(r8) :: mloc(3)
    real(r8) :: no2_val_conv,prs_trop_omi
    real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
-   real(r8), dimension(ens_size) :: no2_mdl_tmp, tmp_mdl_tmp, qmr_mdl_tmp, prs_mdl_tmp
    real(r8), dimension(ens_size) :: no2_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
    real(r8), dimension(ens_size) :: no2_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
    real(r8), dimension(ens_size) :: prs_sfc
@@ -349,8 +343,10 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
    
    allocate(prs_omi(level_omi))
    allocate(prs_omi_mem(level_omi))
+   if(pressure(key,level_omi).eq.0.) then
+      pressure(key,level_omi)=10.
+   endif   
    prs_omi(1:level_omi)=pressure(key,1:level_omi)*100.
-   prs_trop_omi=prs_trop(key)*100.   
 
 ! Get location infomation
 
@@ -375,44 +371,35 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
    call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus) 
 
-   no2_mdl_tmp(:)=missing_r8
-   tmp_mdl_tmp(:)=missing_r8
-   qmr_mdl_tmp(:)=missing_r8
-   prs_mdl_tmp(:)=missing_r8
+   no2_mdl_1(:)=missing_r8
+   tmp_mdl_1(:)=missing_r8
+   qmr_mdl_1(:)=missing_r8
+   prs_mdl_1(:)=missing_r8
 
    kbnd_1(:)=1
    do k=1,layer_mdl
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-      call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_mdl_tmp, zstatus) ! ppmv 
+      call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_mdl_1, zstatus) ! ppmv 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_tmp, zstatus) ! K 
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_1, zstatus) ! K 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_tmp, zstatus) ! kg / kg 
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg / kg 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_tmp, zstatus) ! Pa      
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa      
 !
       interp_new=0
       do imem=1,ens_size
-         if(no2_mdl_tmp(imem).eq.missing_r8 .or. tmp_mdl_tmp(imem).eq.missing_r8 .or. &
-         qmr_mdl_tmp(imem).eq.missing_r8 .or. prs_mdl_tmp(imem).eq.missing_r8) then
+         if(no2_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
+         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
             interp_new=1
+            exit
          else
             kbnd_1(imem)=k
-            no2_mdl_1(imem)=no2_mdl_tmp(imem)
-            tmp_mdl_1(imem)=tmp_mdl_tmp(imem)
-            qmr_mdl_1(imem)=qmr_mdl_tmp(imem)
-            prs_mdl_1(imem)=prs_mdl_tmp(imem)
          endif
       enddo
       if(interp_new.eq.0) exit
-   enddo
-!
-! Sometimes the WRF-Chem surface pressure is greater than the
-! first model level pressure. This fixes that problem.   
-   do imem=1,ens_size
-      if(prs_sfc(imem).lt.prs_mdl_1(imem)) prs_mdl_1(imem)=prs_sfc(imem)
    enddo
 
 !   write(string1, *)'APM: no2 lower bound 1 ',key,no2_mdl_1
@@ -424,35 +411,32 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
 !   write(string1, *)'APM: prs lower bound 1 ',key,prs_mdl_1
 !   call error_handler(E_ALLMSG, routine, string1, source)
 
-   no2_mdl_tmp(:)=missing_r8
-   tmp_mdl_tmp(:)=missing_r8
-   qmr_mdl_tmp(:)=missing_r8
-   prs_mdl_tmp(:)=missing_r8
+   no2_mdl_n(:)=missing_r8
+   tmp_mdl_n(:)=missing_r8
+   qmr_mdl_n(:)=missing_r8
+   prs_mdl_n(:)=missing_r8
 
    kbnd_n(:)=layer_mdl
    do k=layer_mdl,1,-1
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
-      call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_mdl_tmp, zstatus) ! ppmv
+      call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_mdl_n, zstatus) ! ppmv
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_tmp, zstatus) ! K 
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_n, zstatus) ! K 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_tmp, zstatus) ! kg / kg 
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, zstatus) ! kg / kg 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_tmp, zstatus) ! Pa
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, zstatus) ! Pa
 !
       interp_new=0
       do imem=1,ens_size
-         if(no2_mdl_tmp(imem).eq.missing_r8 .or. tmp_mdl_tmp(imem).eq.missing_r8 .or. &
-         qmr_mdl_tmp(imem).eq.missing_r8 .or. prs_mdl_tmp(imem).eq.missing_r8) then
+         if(no2_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
+         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
             interp_new=1
+            exit
          else
             kbnd_n(imem)=k
-            no2_mdl_n(imem)=no2_mdl_tmp(imem)
-            tmp_mdl_n(imem)=tmp_mdl_tmp(imem)
-            qmr_mdl_n(imem)=qmr_mdl_tmp(imem)
-            prs_mdl_n(imem)=prs_mdl_tmp(imem)
          endif
       enddo
       if(interp_new.eq.0) exit
@@ -482,7 +466,7 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
       call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_val(:,k), zstatus)  
       zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_val(:,k), zstatus)  
-
+!
 ! Correcting for expected failures near the surface
       do imem=1,ens_size
          if (prs_omi(k).ge.prs_mdl_1(imem)) then
@@ -490,7 +474,7 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
             tmp_val(imem,k) = tmp_mdl_1(imem)
             qmr_val(imem,k) = qmr_mdl_1(imem)
          endif
-
+!
 ! Correcting for expected failures near the top
          if (prs_omi(k).le.prs_mdl_n(imem)) then
             no2_val(imem,k) = no2_mdl_n(imem)
@@ -523,28 +507,24 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
 ! Convert units for no2 from ppmv
       no2_val(:,k) = no2_val(:,k) * 1.e-6_r8
    enddo
-   imem=1
-   do k=1,level_omi
-      write(string1, *)'APM: ',k,prs_omi(k), &
-      no2_val(imem,k)*1.e6_8,tmp_val(imem,k),qmr_val(imem,k)
-      call error_handler(E_MSG, routine, string1, source)
-   enddo
+!   imem=1
+!   do k=1,level_omi
+!      write(string1, *)'APM: ',k,prs_omi(k), &
+!      no2_val(imem,k)*1.e6_8,tmp_val(imem,k),qmr_val(imem,k)
+!      call error_handler(E_MSG, routine, string1, source)
+!   enddo
 !
    istatus(:)=0
    zstatus(:)=0
    expct_val(:)=0.0
    allocate(thick(layer_omi))
 
+   prs_omi_mem(:)=prs_omi(:)
    do imem=1,ens_size
-! Adjust the OMI pressure for WRF-Chem lower/upper boudary pressure
-! (OMI NO2 vertical grid is bottom to top)
-      prs_omi_mem(:)=prs_omi(:)
-      if (prs_sfc(imem).gt.prs_omi_mem(1)) then
-         prs_omi_mem(1)=prs_sfc(imem)
-      endif   
 
 ! Calculate the thicknesses (grid is bottom to top)
 
+      thick(:)=0.
       do k=1,kend_omi
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
          up_wt=log(prs_omi_mem(k))-lnpr_mid
@@ -555,10 +535,10 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
          thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
          log(prs_omi_mem(k)/prs_omi_mem(k+1))
 
-         write(string1, *) &
-         'APM: Key, Thickness calcs ', key, k, thick(k), up_wt, dw_wt, tmp_vir_k,tmp_vir_kp, &
-         prs_omi_mem(k), prs_omi_mem(k+1)     
-         call error_handler(E_ALLMSG, routine, string1, source)
+!         write(string1, *) &
+!         'APM: Key, Thickness calcs ', key, k, thick(k), up_wt, dw_wt, tmp_vir_k,tmp_vir_kp, &
+!         prs_omi_mem(k), prs_omi_mem(k+1)     
+!         call error_handler(E_MSG, routine, string1, source)
 
       enddo
    
@@ -586,16 +566,12 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
          expct_val(imem) = expct_val(imem) + thick(k) * no2_val_conv * &
          AvogN/msq2cmsq * scat_wt(key,k) 
 
-         write(string1, *) &
-         'APM: Key, Expected Value Terms ',key,k,expct_val(imem),thick(k),no2_val_conv, &
-         AvogN/msq2cmsq, scat_wt(key,k)     
-         call error_handler(E_ALLMSG, routine, string1, source)
+!         write(string1, *) &
+!         'APM: Key, Expected Value Terms ',key,k,expct_val(imem),thick(k),no2_val_conv, &
+!         AvogN/msq2cmsq, scat_wt(key,k)     
+!         call error_handler(E_MSG, routine, string1, source)
 
       enddo
-
-      write(string1, *) &
-      'APM: Member ',imem,'Key, Final Value for ob ',key,expct_val(imem)
-      call error_handler(E_ALLMSG, routine, string1, source)
 
       if(isnan(expct_val(imem))) then
          zstatus(imem)=20
@@ -627,13 +603,12 @@ end subroutine get_expected_omi_no2_domino_trop_col
 
 !-------------------------------------------------------------------------------
 
-subroutine set_obs_def_omi_no2_domino_trop_col(key, no2_pressure, no2_scat_wt, no2_prs_trop, no2_kend, no2_nlayer)
+subroutine set_obs_def_omi_no2_domino_trop_col(key, no2_pressure, no2_scat_wt, no2_kend, no2_nlayer)
 
 integer,                            intent(in)   :: key, no2_nlayer
 integer,                            intent(in)   :: no2_kend
 real(r8), dimension(no2_nlayer+1),  intent(in)   :: no2_pressure
 real(r8), dimension(no2_nlayer),    intent(in)   :: no2_scat_wt
-real(r8),                           intent(in)   :: no2_prs_trop
 
 if ( .not. module_initialized ) call initialize_module
 
@@ -648,7 +623,6 @@ nlayer(key) = no2_nlayer
 kend(key) = no2_kend
 pressure(key,1:no2_nlayer+1) = no2_pressure(1:no2_nlayer+1)
 scat_wt(key,1:no2_nlayer) = no2_scat_wt(1:no2_nlayer)
-prs_trop(key) = no2_prs_trop
 
 end subroutine set_obs_def_omi_no2_domino_trop_col
 

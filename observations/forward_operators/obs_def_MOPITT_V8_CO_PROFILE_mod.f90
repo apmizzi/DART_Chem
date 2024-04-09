@@ -722,14 +722,12 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
 !         call error_handler(E_ALLMSG, routine, string1, source)
 
       enddo
-!      print *, 'APM: at call exit_all '
-!      call exit_all()
 !
 ! Convert expected observation from log10(ppbv) to ppbv         
-      write(string1, *) &
-      'APM: CO_Expected Value - key,ilv,val,10^val: ',key,klay_mopitt, &
-      expct_val(imem),10.**expct_val(imem)
-      call error_handler(E_ALLMSG, routine, string1, source)
+!      write(string1, *) &
+!      'APM: CO_Expected Value - key,ilv,val,10^val: ',key,klay_mopitt, &
+!      expct_val(imem),10.**expct_val(imem)
+!      call error_handler(E_ALLMSG, routine, string1, source)
       expct_val(imem)=10.**expct_val(imem)
 
       if(isnan(expct_val(imem))) then
@@ -774,15 +772,15 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
          enddo
          co_var(k)=co_var(k)/real(ens_size-1)
       enddo
-      write(string1, *) &
-      'APM : key,klay,mean,var ',key,klay_mopitt,expobs_mean,expobs_var
-      call error_handler(E_ALLMSG, routine, string1, source)
-      do k=1,nlayer_mopitt
-         write(string1, *) &
-         'APM: key,ilv,co_mean,co_std,prior,avgk: ', &
-         key,k,co_mean(k),sqrt(co_var(k)),prior(key,k),avg_kernel(key,k)
-         call error_handler(E_ALLMSG, routine, string1, source)
-      enddo
+!      write(string1, *) &
+!      'APM : key,klay,mean,var ',key,klay_mopitt,expobs_mean,expobs_var
+!      call error_handler(E_ALLMSG, routine, string1, source)
+!      do k=1,nlayer_mopitt
+!         write(string1, *) &
+!         'APM: key,ilv,co_mean,co_std,prior,avgk: ', &
+!         key,k,co_mean(k),sqrt(co_var(k)),prior(key,k),avg_kernel(key,k)
+!         call error_handler(E_ALLMSG, routine, string1, source)
+!      enddo
       zstatus(:)=20
       expct_val(:)=missing_r8
       call track_status(ens_size, zstatus, expct_val, istatus, return_now)

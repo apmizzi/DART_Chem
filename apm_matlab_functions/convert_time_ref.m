@@ -12,11 +12,11 @@ function [jult]=convert_time_ref(year,month,day,hour,minute,second,ref_year)
 %
 % NOTE: hours run 0 - 23
    if(hour>23)
-      'APM: ERROR - hour must be less than or equal to 23'
+      fprintf('APM: ERROR - hour must be less than or equal to 23 \n')
       return
    end
    if(ref_year>year)
-      'APM: ERROR - year must greater than or equal to 2010'
+      fprintf('APM: ERROR - year must greater than or equal to %d \n',ref_year)
       return
    end
 %
