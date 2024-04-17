@@ -153,6 +153,7 @@ program main
    geo_ht(:,:,:)=geo_ht(:,:,:)/grav
 !
 ! Construct the vertical correlations transformation matrix
+   allocate(A_chem(nx,ny,nz,nz))
    call vertical_transform(A_chem,geo_ht,nx,ny,nz,nz,corr_lngth_vt)
    deallocate(geo_ht)
 !
@@ -187,7 +188,6 @@ program main
       call perturb_fields(chem_fac_mem_old,chem_fac_mem_new, &
       lat,lon,A_chem,nx,ny,nz,nchem_spcs,ngrid_corr,sw_corr_tm, &
       corr_lngth_hz)
-      deallocate(A_chem)
       allocate(tmp_arry(nx*ny*nz*nchem_spcs))
       if(sw_corr_tm) then
          call apm_pack(tmp_arry,chem_fac_mem_old,nx,ny,nz,nchem_spcs)

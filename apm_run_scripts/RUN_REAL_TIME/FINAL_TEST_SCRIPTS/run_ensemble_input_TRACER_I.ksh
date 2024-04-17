@@ -112,7 +112,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_WRFCHEM_BIO=false
    export RUN_WRFCHEM_FIRE=false
    export RUN_WRFCHEM_CHEMI=false
-   export RUN_PERT_WRFCHEM_CHEM_ICBC=false
+   export RUN_PERT_WRFCHEM_CHEM_ICBC=true
    export RUN_PERT_WRFCHEM_CHEM_EMISS=false
    export RUN_BIAS_CORRECTION=false
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
@@ -126,7 +126,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_IASI_CO_CPSR_OBS=false # (done)
    export RUN_IASI_O3_PROFILE_OBS=false
    export RUN_IASI_O3_CPSR_OBS=false
-   export RUN_MODIS_AOD_TOTAL_COL_OBS=true # (done)  TRACER I
+   export RUN_MODIS_AOD_TOTAL_COL_OBS=false # (done)  TRACER I
    export RUN_OMI_O3_TOTAL_COL_OBS=false
    export RUN_OMI_O3_TROP_COL_OBS=false
    export RUN_OMI_O3_PROFILE_OBS=false # (done)  TRACER I
@@ -211,8 +211,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_PANDA_PM25_OBS=false
    export RUN_MEXICO_AQS_CO_OBS=false
    export RUN_MET_OBS=false # (done)  TRACER I
-   export RUN_COMBINE_OBS=true
-   export RUN_PREPROCESS_OBS=true
+   export RUN_COMBINE_OBS=false
+   export RUN_PREPROCESS_OBS=false
    export RUN_LOCALIZATION=false
 #
    rm -rf index_RS_Code_Versions_${DATE}   
@@ -268,6 +268,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export GENERAL_TIME_LIMIT=00:20:00
    export GENERAL_NODES=1
    export GENERAL_TASKS=16
+   export PERT_JOB_CLASS=devel
+   export PERT_TIME_LIMIT=01:59:00
+   export PERT_NODES=1
+   export PERT_TASKS=24
 #
 #########################################################################
 #
