@@ -36,7 +36,18 @@
          export WRFBIOCHEMI=wrfbiochemi_d${CR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00
 #
 # COPY DATA
-         cp ${WRFCHEM_CHEMI_DIR}/${WRFCHEMI} ${WRFCHEMI}
+         if [[ ${L_DATE} -ne ${INITIAL_DATE} ]]; then
+            export L_WRFCHEM_CHEMI_DIR=${WRFCHEM_CHEMI_DIR}
+         elif [[${L_DATE} -eq ${DATE}
+            export L_WRFCHEM_CHEMI_DIR=${RUN_DIR}/${PAST_DATE}/wrfchem_chem_emiss
+         fi	     
+	     
+#         cp ${L_WRFCHEM_CHEMI_DIR}/${WRFCHEMI} ${WRFCHEMI}
+         echo ${L_WRFCHEM_CHEMI_DIR}/${WRFCHEMI}
+
+exit
+
+	 
          chmod 644 ${WRFCHEMI}
          ncatted -O -a coordinates,E_CO,c,c,"XLONG, XLAT" ${WRFCHEMI}
          ncatted -O -a coordinates,E_NO,c,c,"XLONG, XLAT" ${WRFCHEMI}

@@ -440,6 +440,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export GENERAL_TIME_LIMIT=00:20:00
    export FILTER_JOB_CLASS=normal
    export FILTER_TIME_LIMIT=06:59:00   
+#   export FILTER_JOB_CLASS=devel
+#   export FILTER_TIME_LIMIT=01:59:00   
 #
 #########################################################################
 #
