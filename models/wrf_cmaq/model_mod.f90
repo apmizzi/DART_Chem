@@ -165,22 +165,22 @@ public ::  adv_1step,          &
 !-----
 ! Here is the appropriate place for other users to make additional routines
 !   contained within model_mod available for public use:
-public ::  get_number_domains,          &
+public ::  get_number_domains,           &
            get_cmaq_static_data,         &
-           model_pressure_distrib,      &
-           model_height_distrib,        &
-           pres_to_zk,                  &
-           height_to_zk,                &
-           get_domain_info,             &
+           model_pressure_distrib,       &
+           model_height_distrib,         &
+           pres_to_zk,                   &
+           height_to_zk,                 &
+           get_domain_info,              &
            get_cmaq_state_variables,     &
-           fill_default_state_table,    &
+           fill_default_state_table,     &
            read_cmaq_dimensions,         &
            get_number_of_cmaq_variables, &
-           get_variable_bounds,         &
-           set_variable_bound_defaults, &
-           get_variable_size_from_file, &
-           get_cmaq_date, set_cmaq_date,  &
-           vert_convert,                &
+           get_variable_bounds,          &
+           set_variable_bound_defaults,  &
+           get_variable_size_from_file,  &
+           get_cmaq_date, set_cmaq_date, &
+           vert_convert,                 &
            height_diff_check
 
 ! public parameters
@@ -372,7 +372,6 @@ TYPE cmaq_static_data_for_dart
    character(len=10), dimension(:),pointer :: clamp_or_fail
    character(len=129),dimension(:),pointer :: description, units, stagger, long_name
 
-
 end type cmaq_static_data_for_dart
 
 type cmaq_dom
@@ -487,7 +486,6 @@ endif
 
 num_obs_kinds = get_num_quantities()
 allocate(in_state_vector(num_obs_kinds))
-!
 call fill_dart_kinds_table(cmaq_state_variables, in_state_vector)
 
 ! set calendar type
@@ -541,41 +539,19 @@ CMAQDomains : do id=1,num_domains
            'Please put cmaqinput_d0'//idom//' in the work directory.', source, revision,revdate)
    endif
 
-   if(debug) then
-      write(*,*) ' ncid_cmaq is ',ncid_cmaq
-   endif
+   if(debug) write(*,*) ' ncid_cmaq is ',ncid_cmaq
+
 !-------------------------------------------------------
 ! read CMAQ dimensions
 !-------------------------------------------------------
-!   call error_handler(E_MSG,'model_mod', &
-!   'APM: Before read_cmaq_dimensions ', source, revision,revdate)
    call read_cmaq_dimensions(ncid_cmaq,cmaq%dom(id)%bt, cmaq%dom(id)%bts, &
    cmaq%dom(id)%bt1, cmaq%dom(id)%sn, cmaq%dom(id)%we)
-!   print *, 'APM: bt ',cmaq%dom(id)%bt
-!   print *, 'APM: bts ',cmaq%dom(id)%bts
-!   print *, 'APM: bt1 ',cmaq%dom(id)%bt1
-!   print *, 'APM: sn ',cmaq%dom(id)%sn
-!   print *, 'APM: we ',cmaq%dom(id)%we
-!   call error_handler(E_MSG,'model_mod', &
-!   'APM: After read_cmaq_dimensions ', source, revision,revdate)
 
 !-------------------------------------------------------
 ! read CMAQ file attributes
 !-------------------------------------------------------
-!   call error_handler(E_MSG,'model_mod', &
-!   'APM: Before read_cmaq_attributes ', source, revision,revdate)
    call read_cmaq_file_attributes(ncid_cmaq,id)
-!   print *, 'APM: dx ',cmaq%dom(id)%dx
-!   print *, 'APM: dy ',cmaq%dom(id)%dy
-!   print *, 'APM: dt ',cmaq%dom(id)%dt
-!   print *, 'APM: map_proj ',cmaq%dom(id)%map_proj
-!   print *, 'APM: cen_lat ',cmaq%dom(id)%cen_lat
-!   print *, 'APM: cen_lon ',cmaq%dom(id)%cen_lon
-!   print *, 'APM: truelat1 ',truelat1
-!   print *, 'APM: truelat2 ',truelat2
-!   print *, 'APM: stdlon ',stdlon
-!   call error_handler(E_MSG,'model_mod', &
-!   'APM: After read_cmaq_attributes ', source, revision,revdate)
+
 !-------------------------------------------------------
 ! assign boundary condition flags
 !-------------------------------------------------------
@@ -584,32 +560,13 @@ CMAQDomains : do id=1,num_domains
 !-------------------------------------------------------
 ! read static data
 !-------------------------------------------------------
-!   call error_handler(E_MSG,'model_mod', &
-!   'APM: Before read_cmaq_static_data ', source, revision,revdate)
    call read_cmaq_static_data(ncid_cmaq,id)
-!   print *, 'APM: p_top ',cmaq%dom(id)%p_top
-!   print *, 'APM: prs_sfc ',cmaq%dom(id)%prs_sfc(50,50)
-!   print *, 'APM: zh ',cmaq%dom(id)%zh(50,50,10)
-!   print *, 'APM: zf ',cmaq%dom(id)%zf(50,50,10)
-!   print *, 'APM: prs ',cmaq%dom(id)%prs(50,50,10)
-!   print *, 'APM: dens ',cmaq%dom(id)%dens(50,50,10)
-!   print *, 'APM: prs ',cmaq%dom(id)%prs(50,50,10)
-!   print *, 'APM: latitude ',cmaq%dom(id)%latitude(50,50)
-!   print *, 'APM: longitude ',cmaq%dom(id)%longitude(50,50)
-!   print *, 'APM: lwmask ',cmaq%dom(id)%land(50,50)
-!   print *, 'APM: hgt ',cmaq%dom(id)%hgt(50,50)
-!   call error_handler(E_MSG,'model_mod', &
-!   'APM: After read_cmaq_static_data ', source, revision,revdate)
 
 !-------------------------------------------------------
 ! next block set up map
 ! APM: This is done but the projection ids may be incorrect   
 !-------------------------------------------------------
-!   call error_handler(E_MSG,'model_mod', &
-!   'APM: Before setup_map_projection ', source, revision,revdate)
    call setup_map_projection(id)
-!   call error_handler(E_MSG,'model_mod', &
-!   'APM: After setup_map_projection ', source, revision,revdate)
 
 !-------------------------------------------------------
 ! end block set up map
@@ -619,20 +576,14 @@ CMAQDomains : do id=1,num_domains
 ! get the number of conv/emiss variables wanted in this domain's state
    cmaq%dom(id)%number_of_conv_variables=0
 !
-!   call error_handler(E_MSG,'model_mod', &
-!   'APM: Before get_number_of_cmaq_variables ', source, revision,revdate)
    cmaq%dom(id)%number_of_conv_variables = get_number_of_cmaq_variables(id, &
    conv_state_variables,var_element_list_conv,var_update_list_conv)
    cmaq%dom(id)%number_of_cmaq_variables=cmaq%dom(id)%number_of_conv_variables
-!   print *, 'APM: number of cmaq variables ',cmaq%dom(id)%number_of_cmaq_variables
-!   call error_handler(E_MSG,'model_mod', &
-!   'APM: After get_number_of_cmaq_variables ', source, revision,revdate)
 !
 ! conv variables
    do ind = 1,cmaq%dom(id)%number_of_conv_variables
       var_element_list(ind)=var_element_list_conv(ind)
       var_update_list(ind)=var_update_list_conv(ind)
-!      print *, 'APM: var_element, var_update ',var_element_list(ind),var_update_list(ind)
    enddo
 
 ! APM ---
@@ -664,21 +615,12 @@ CMAQDomains : do id=1,num_domains
    allocate(cmaq%dom(id)%lower_bound(cmaq%dom(id)%number_of_cmaq_variables))
    allocate(cmaq%dom(id)%upper_bound(cmaq%dom(id)%number_of_cmaq_variables))
    allocate(cmaq%dom(id)%clamp_or_fail(cmaq%dom(id)%number_of_cmaq_variables))
-!   call error_handler(E_MSG,'model_mod', &
-!   'APM: Before set_variable_bound_defaults ', source, revision,revdate)
    call set_variable_bound_defaults(cmaq%dom(id)%number_of_cmaq_variables, &
                                     cmaq%dom(id)%lower_bound, &
                                     cmaq%dom(id)%upper_bound, &
                                     cmaq%dom(id)%clamp_or_fail)
-   do ind = 1, cmaq%dom(id)%number_of_cmaq_variables
-      print *, cmaq%dom(id)%var_index_list(ind),cmaq%dom(id)%var_update_list(ind), &
-      cmaq%dom(id)%lower_bound(ind),cmaq%dom(id)%upper_bound(ind), &
-      cmaq%dom(id)%clamp_or_fail(ind)
-   end do
-!   call error_handler(E_MSG,'model_mod', &
-!   'APM: After set_variable_bound_defaults ', source, revision,revdate)
-   
-!  build the variable indices
+
+!  build the variable indices   
 !  this accounts for the fact that some variables might not be on all domains
 !
 ! APM +++
@@ -691,8 +633,6 @@ CMAQDomains : do id=1,num_domains
 
       cmaq%dom(id)%var_type(ind) = ind ! types are just the order for this domain
       cmaq%dom(id)%dart_kind(ind) = get_index_for_quantity(trim(cmaq_state_variables(2,my_index)))
-!      print *, 'APM: ind, kind ',cmaq%dom(id)%var_type(ind),cmaq%dom(id)%dart_kind(ind), &
-!      cmaq_state_variables(2,my_index)
 
       if ( debug ) then
          print*,'dart kind identified: ',trim(cmaq_state_variables(2,my_index)),' ', &
@@ -708,8 +648,6 @@ CMAQDomains : do id=1,num_domains
                                        cmaq%dom(id)%we, & 
                                        cmaq%dom(id)%stagger(ind),        &
                                        cmaq%dom(id)%var_size(:,ind))
-!       print *, 'APM: ',cmaq_state_variables(1,my_index),cmaq%dom(id)%bt,cmaq%dom(id)%bt1, &
-!       cmaq%dom(id)%sn,cmaq%dom(id)%we,cmaq%dom(id)%stagger(ind),cmaq%dom(id)%var_size(:,ind)
 !       write(errstring, '(A)') 'APM: After get_variable_size_from_file '
 !       call error_handler(E_MSG, 'static_init_model: ', errstring)
 
@@ -720,8 +658,6 @@ CMAQDomains : do id=1,num_domains
                                        cmaq%dom(id)%long_name(ind),         &
                                        cmaq%dom(id)%units(ind) )
 
-!       print *, 'APM: ',cmaq_state_variables(1,my_index),cmaq%dom(id)%description(ind), &
-!       cmaq%dom(id)%long_name(ind),cmaq%dom(id)%units(ind)
 !       write(errstring, '(A)') 'APM: After get_variable_metadata_from_file '
 !       call error_handler(E_MSG, 'static_init_model: ', errstring)
 
@@ -734,8 +670,6 @@ CMAQDomains : do id=1,num_domains
                                cmaq%dom(id)%lower_bound(ind), cmaq%dom(id)%upper_bound(ind), &
                                cmaq%dom(id)%clamp_or_fail(ind))
 
-!      print *, cmaq_state_variables(1,my_index),cmaq%dom(id)%lower_bound(ind), &
-!      cmaq%dom(id)%upper_bound(ind),cmaq%dom(id)%clamp_or_fail(ind)
 !      write(errstring, '(A)') 'APM: After get_variable_bounds '
 !      call error_handler(E_MSG, 'static_init_model: ', errstring)
 
@@ -754,11 +688,9 @@ CMAQDomains : do id=1,num_domains
       write(     *     ,*)
       write(logfileunit,*)
    endif
-
+!
 ! close data files, we have all we need
-
    call nc_check(nf90_close(ncid_cmaq),'static_init_model','close cmaqinput_d0'//idom)
-   
 ! APM ---
 !
 ! indices into 1D array - hopefully this becomes obsolete
@@ -805,13 +737,10 @@ CMAQDomains : do id=1,num_domains
          enddo
       enddo
       cmaq%dom(id)%var_index(2,ind) = dart_index - 1
-!      print *, 'APM: ',cmaq%dom(id)%var_index(1,ind),cmaq%dom(id)%var_index(2,ind), &
-!      cmaq%dom(id)%var_size(1,ind),cmaq%dom(id)%var_size(2,ind),cmaq%dom(id)%var_size(3,ind), &
-!      cmaq%dom(id)%var_size(1,ind)*cmaq%dom(id)%var_size(2,ind)*cmaq%dom(id)%var_size(3,ind)
+
       if ( debug ) write(*,*) 'assigned start, stop ',cmaq%dom(id)%var_index(:,ind)
 
-   enddo ! loop through all viable state variables on this domain
-   
+   enddo ! loop through all viable state variables on this domain   
    if ( id == 1 ) then
      cmaq%dom(id)%domain_size = dart_index - 1
    else
@@ -878,9 +807,7 @@ CMAQDomains : do id=1,num_domains
    cmaq%dom(id)%type_so2    = get_type_ind_from_type_string(id,'SO2')
    cmaq%dom(id)%type_so4    = get_type_ind_from_type_string(id,'SULF')
 ! APM --
-!
-!   print *, 'APM: finished type definitions '
-   
+!   
    ! variable bound table for setting upper and lower bounds of variables 
    var_bounds_table(1:cmaq%dom(id)%number_of_cmaq_variables,1) = cmaq%dom(id)%lower_bound
    var_bounds_table(1:cmaq%dom(id)%number_of_cmaq_variables,2) = cmaq%dom(id)%upper_bound
@@ -889,11 +816,9 @@ CMAQDomains : do id=1,num_domains
    do i = 1, cmaq%dom(id)%number_of_cmaq_variables
       my_index =  cmaq%dom(id)%var_index_list(i) ! index in cmaq_state_variables
       netcdf_variable_names(i) = cmaq_state_variables(1, my_index)
-!      print *, 'APM: netcdf var names ',netcdf_variable_names(i)
    enddo
 
 ! add domain - not doing anything with domain_id yet so just overwriting it
-! using add_domain_from_file
    domain_id(id) = add_domain( 'cmaqinput_d0'//idom, &
                            cmaq%dom(id)%number_of_cmaq_variables, &
                            var_names   = netcdf_variable_names(1:cmaq%dom(id)%number_of_cmaq_variables), &
@@ -910,9 +835,7 @@ write(errstring,*) ' cmaq model size is ',cmaq%model_size
 call error_handler(E_MSG, 'static_init_model', errstring)
 
 ! tell the location module how we want to localize in the vertical
-!call error_handler(E_MSG, 'static_init_model', 'APM: Call set_vertical_localization ')
 call set_vertical_localization_coord(vert_localization_coord)
-!call error_handler(E_MSG, 'static_init_model', 'APM: Finish set_vertical_localization ')
 
 end subroutine static_init_model
 
@@ -1006,7 +929,6 @@ end function shortest_time_between_assimilations
 
 
 !#######################################################################
-
 
 subroutine get_state_meta_data(index_in, location, var_type_out, id_out)
 
@@ -3980,8 +3902,7 @@ do i=1, num
 enddo
 
 end subroutine convert_vertical_obs
-
-
+!
 !#######################################################################
 subroutine convert_vertical_state(state_handle, num, locs, loc_qtys, loc_indx, &
                                   which_vert, istatus)
@@ -4007,14 +3928,11 @@ integer :: id, var_id, state_id
 logical, parameter :: debug = .false.
 
 istatus = 0
-!   print *, 'APM: In get_model_variable_indices'
 
 do i=1, num
 
    ! from the dart index get the local variables indices
-!   print *, 'APM: Before get_model_variable_indices'
    call get_model_variable_indices(loc_indx(i), ip, jp, kp, var_id=var_id, dom_id=state_id)
-!   print *, 'APM: Before get_model_variable_indices'
    
    ! convert from state_structure domain number to cmaq.
    id = get_cmaq_domain(state_id)
@@ -4111,7 +4029,6 @@ logical  :: lev0
 
 ! assume failure.
 istatus = 1
-!   print *, 'APM: In vert_convert'
 
 ! first off, check if ob is identity ob.  if so get_state_meta_data() will 
 ! return location information already in the requested vertical type.
@@ -4728,8 +4645,6 @@ real(r8), intent(out) :: long, lat
 ! the staggered points.  now that all three grids are being read, look 
 ! up the point locations directly from the appropriate array.
 
-!   print *, 'APM: In get_cmaq_horizontal_location'
-
 if (var_type == cmaq%dom(id)%type_u) then
    long = cmaq%dom(id)%longitude_u(i,j)
    lat  = cmaq%dom(id)%latitude_u(i,j)
@@ -4754,7 +4669,7 @@ end subroutine get_cmaq_horizontal_location
 
 !***********************************************************************
 
-
+!!!! APM START HERE
 subroutine nc_write_model_atts( ncid, id ) 
 !-----------------------------------------------------------------
 ! Writes the model-specific attributes to a netCDF file

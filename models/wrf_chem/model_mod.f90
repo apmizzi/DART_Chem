@@ -212,7 +212,7 @@ public :: wrf_dom, wrf_static_data_for_dart
 
 !-----------------------------------------------------------------------
 ! version controlled file description for error handling, do not edit
-character(len=*), parameter :: source   = 'wrf/model_mod.f90'
+character(len=*), parameter :: source   = 'wrf_chem/model_mod.f90'
 character(len=*), parameter :: revision = ''
 character(len=*), parameter :: revdate  = ''
 
@@ -538,7 +538,6 @@ num_obs_kinds = get_num_quantities()
 allocate(in_state_vector(num_obs_kinds))
 call fill_dart_kinds_table(wrf_state_variables, in_state_vector)
 
-
 ! set calendar type
 call set_calendar_type(calendar_type)
 
@@ -639,19 +638,16 @@ WRFDomains : do id=1,num_domains
 !-------------------------------------------------------
 ! assign boundary condition flags
 !-------------------------------------------------------
-
    call assign_boundary_conditions(id)
 
 !-------------------------------------------------------
 ! read static data
 !-------------------------------------------------------
-
    call read_wrf_static_data(ncid,id)
 
 !-------------------------------------------------------
 ! next block set up map
 !-------------------------------------------------------
-
    call setup_map_projection(id)
 
 !-------------------------------------------------------
@@ -971,7 +967,6 @@ WRFDomains : do id=1,num_domains
 ! problems that it might cause.
 
    do ind = 1,wrf%dom(id)%number_of_wrf_variables
-
       my_index =  wrf%dom(id)%var_index_list(ind)
 
       if ( debug ) then
@@ -1002,7 +997,6 @@ WRFDomains : do id=1,num_domains
        wrf%dom(id)%domain_size = wrf%dom(id)%domain_size - wrf%dom(ind)%domain_size
      enddo
    endif
-
 
    ! NEWVAR: If you add a new wrf array type which is not yet in this list, currently
    ! NEWVAR: you will have to add it here, and add a type_xx for it, and also add
@@ -1112,8 +1106,7 @@ WRFDomains : do id=1,num_domains
       netcdf_variable_names(i) = wrf_state_variables(1, my_index)
    enddo
 
-
-   ! add domain - not doing anything with domain_id yet so just overwriting it
+! add domain - not doing anything with domain_id yet so just overwriting it
    domain_id(id) = add_domain( 'wrfinput_d0'//idom, &
                            wrf%dom(id)%number_of_wrf_variables, &
                            var_names   = netcdf_variable_names(1:wrf%dom(id)%number_of_wrf_variables), &
@@ -1214,7 +1207,6 @@ model_dt = nint(wrf%dom(1)%dt)
 
 ! The integer arithmetic does its magic.
 assim_dt = (assimilation_period_seconds / model_dt) * model_dt
-
 !
 ! APM +++
 !shortest_time_between_assimilations = set_time(assim_dt)
@@ -1225,7 +1217,6 @@ end function shortest_time_between_assimilations
 
 
 !#######################################################################
-
 
 subroutine get_state_meta_data(index_in, location, var_type_out, id_out)
 
@@ -4765,7 +4756,6 @@ enddo
 end subroutine convert_vertical_obs
 !
 !#######################################################################
-!
 subroutine convert_vertical_state(state_handle, num, locs, loc_qtys, loc_indx, &
                                   which_vert, istatus)
 
@@ -4788,7 +4778,6 @@ character(len=129) :: string1
 
 integer :: id, var_id, state_id
 logical, parameter :: debug = .false.
-
 
 istatus = 0
 
@@ -5532,7 +5521,7 @@ end subroutine get_wrf_horizontal_location
 
 !***********************************************************************
 
-
+!!!! APM START HERE
 subroutine nc_write_model_atts( ncid, id ) 
 !-----------------------------------------------------------------
 ! Writes the model-specific attributes to a netCDF file
