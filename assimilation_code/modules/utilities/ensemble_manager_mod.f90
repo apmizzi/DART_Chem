@@ -1228,9 +1228,11 @@ integer     :: sending_pe, recv_pe, k, sv, copy, num_copies_to_send
 integer     :: global_ens_index
 
 ! only output if there is a label
+print *, 'all_copies_to_all_vars: Before timestamp_message '
 if (present(label)) then
    call timestamp_message('copies_to_vars start: '//label, alltasks=.true.)
 endif
+print *, 'all_copies_to_all_vars: After timestamp_message '
 
 ! Error checking, but can't return early in case only some of the
 ! MPI tasks need to transpose.  Only if all N tasks say this is an
@@ -1282,6 +1284,7 @@ if (use_copy2var_send_loop .eqv. .true. ) then
 ! communication pattern to use
 !    Default: use sending_pe loop (use_copy2var_send_loop = .true.)
 
+print *, 'all_copies_to_all_vars: Before Sending PE Loop '
 SENDING_PE_LOOP: do sending_pe = 0, num_pes - 1
  
    if (my_pe /= sending_pe ) then
@@ -1334,10 +1337,12 @@ SENDING_PE_LOOP: do sending_pe = 0, num_pes - 1
    endif
 
 enddo SENDING_PE_LOOP
+print *, 'all_copies_to_all_vars: After Sending PE Loop '
 
 else ! use old communication pattern
 
 ! Loop to give each pe a turn to receive its vars
+print *, 'all_copies_to_all_vars: Before Recceiving PE Loop '
 RECEIVING_PE_LOOP: do recv_pe = 0, num_pes - 1
    ! If I'm the receiving pe, do this block
    if(my_pe == recv_pe) then
@@ -1382,9 +1387,9 @@ RECEIVING_PE_LOOP: do recv_pe = 0, num_pes - 1
       
    endif
 end do RECEIVING_PE_LOOP
+print *, 'all_copies_to_all_vars: After Recceiving PE Loop '
 
 endif
-
 
 ! Free up the temporary storage
 deallocate(var_list, transfer_temp, copy_list)

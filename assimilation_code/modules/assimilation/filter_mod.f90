@@ -856,8 +856,10 @@ AdvanceTime : do
          ! save or output the data
          
          if (write_all_stages_at_end) then
+            call trace_message('Before store_copies')
             call store_copies(state_ens_handle, PREASSIM_COPIES)
          else
+            call trace_message('Before write_state')
             call write_state(state_ens_handle, file_info_preassim)
          endif
 
@@ -1620,7 +1622,9 @@ real(r8), allocatable :: obs_temp(:)
 real(r8)              :: rvalue(1)
 
 ! Do verbose forward operator output if requested
+call trace_message('Before output_forward_op_errors')
 if(output_forward_op_errors) call verbose_forward_op_output(qc_ens_handle, prior_post, ens_size, keys)
+call trace_message('After output_forward_op_errors')
 
 ! this is a query routine to return which task has 
 ! logical processing element 0 in this ensemble.
@@ -1636,7 +1640,9 @@ endif
 
 ! Make var complete for get_copy() calls below.
 ! Optimize: Could we use a gather instead of a transpose and get copy?
+call trace_message('Before all_copies_to_all_vars')
 call all_copies_to_all_vars(obs_fwd_op_ens_handle)
+call trace_message('After all_copies_to_all_vars')
 
 ! allocate temp space for sending data only on the task that will
 ! write the obs_seq.final file
@@ -1647,6 +1653,8 @@ else ! TJH: this change became necessary when using Intel 19.0.5 ...
 endif
 
 ! Update the ensemble mean
+
+call trace_message('Obs_Space_Diagnostics: Before update ensemble mean')
 call get_copy(io_task, obs_fwd_op_ens_handle, OBS_MEAN_START, obs_temp)
 if(my_task == io_task) then
    do j = 1, obs_fwd_op_ens_handle%num_vars
@@ -1655,6 +1663,7 @@ if(my_task == io_task) then
      end do
   endif
 
+call trace_message('Obs_Space_Diagnostics: Before update ensemble spread')
 ! Update the ensemble spread
 call get_copy(io_task, obs_fwd_op_ens_handle, OBS_VAR_START, obs_temp)
 if(my_task == io_task) then
@@ -1668,6 +1677,7 @@ if(my_task == io_task) then
    end do
 endif
 
+call trace_message('Obs_Space_Diagnostics: Before any requested ensemble members')
 ! Update any requested ensemble members
 ens_offset = members_index + 2*copy_factor
 do k = 1, num_output_members
@@ -1681,6 +1691,8 @@ do k = 1, num_output_members
    endif
 end do
 
+call trace_message('Obs_Space_Diagnostics: Before update qc global values')
+
 ! Update the qc global value
 call get_copy(io_task, obs_fwd_op_ens_handle, OBS_GLOBAL_QC_COPY, obs_temp)
 if(my_task == io_task) then
@@ -1689,6 +1701,8 @@ if(my_task == io_task) then
       call replace_qc(seq, keys(j), rvalue, DART_qc_index)
    end do
 endif
+
+call trace_message('Obs_Space_Diagnostics: After update qc global values')
 
 deallocate(obs_temp)
 

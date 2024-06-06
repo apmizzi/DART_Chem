@@ -660,21 +660,19 @@ subroutine get_expected_cris_co_profile(state_handle, ens_size, location, key, o
       endif   
 
 ! Calculate the thicknesses
-
-      thick(:)=0.
-      do k=1,layer_cris
-         lnpr_mid=(log(prs_cris_mem(k+1))+log(prs_cris_mem(k)))/2.
-         up_wt=log(prs_cris_mem(k+1))-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_cris_mem(k))
-         tl_wt=up_wt+dw_wt
-         tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
-         tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
-         thick(k)   = Rd*(dw_wt*tmp_vir_kp + up_wt*tmp_vir_k)/tl_wt/grav* &
-         log(prs_cris_mem(k+1)/prs_cris_mem(k))
-      enddo
+!      thick(:)=0.
+!      do k=1,layer_cris
+!         lnpr_mid=(log(prs_cris_mem(k+1))+log(prs_cris_mem(k)))/2.
+!         up_wt=log(prs_cris_mem(k+1))-lnpr_mid
+!         dw_wt=lnpr_mid-log(prs_cris_mem(k))
+!         tl_wt=up_wt+dw_wt
+!         tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
+!         tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
+!         thick(k)   = Rd*(dw_wt*tmp_vir_kp + up_wt*tmp_vir_k)/tl_wt/grav* &
+!         log(prs_cris_mem(k+1)/prs_cris_mem(k))
+!      enddo
 
 ! Process the vertical summation
-
       do k=1,layer_cris
          if(prior(key,k).lt.0.) then
             write(string1, *) &
@@ -693,22 +691,24 @@ subroutine get_expected_cris_co_profile(state_handle, ens_size, location, key, o
    
 ! Convert from VMR to molar density (mol/m^3)
          if(use_log_co) then
-            co_val_conv = (dw_wt*exp(co_val(imem,k+1))+up_wt*exp(co_val(imem,k)))/tl_wt * &
-            (dw_wt*prs_cris_mem(k+1)+up_wt*prs_cris_mem(k)) / &
-            (Ru*(dw_wt*tmp_val(imem,k+1)+up_wt*tmp_val(imem,k)))
-         else
-            co_val_conv = (dw_wt*co_val(imem,k+1)+up_wt*co_val(imem,k))/tl_wt * &
-            (dw_wt*prs_cris_mem(k+1)+up_wt*prs_cris_mem(k)) / &
-            (Ru*(dw_wt*tmp_val(imem,k+1)+up_wt*tmp_val(imem,k)))
+!            co_val_conv = (dw_wt*exp(co_val(imem,k+1))+up_wt*exp(co_val(imem,k)))/tl_wt * &
+!            (dw_wt*prs_cris_mem(k+1)+up_wt*prs_cris_mem(k)) / &
+!            (Ru*(dw_wt*tmp_val(imem,k+1)+up_wt*tmp_val(imem,k)))
+             co_val_conv = (dw_wt*exp(co_val(imem,k+1))+up_wt*exp(co_val(imem,k)))/tl_wt
+!         else
+!            co_val_conv = (dw_wt*co_val(imem,k+1)+up_wt*co_val(imem,k))/tl_wt * &
+!            (dw_wt*prs_cris_mem(k+1)+up_wt*prs_cris_mem(k)) / &
+!            (Ru*(dw_wt*tmp_val(imem,k+1)+up_wt*tmp_val(imem,k)))
+             co_val_conv = (dw_wt*co_val(imem,k+1)+up_wt*co_val(imem,k))/tl_wt
          endif
  
-! Get expected observation
-
+! Get expected observation (assume the co_val_conv is in concentration space (not log space))
          prior_term=-1.*avg_kernel(key,k)
          if(k.eq.klev_cris) prior_term=(1.0_r8 - avg_kernel(key,k)) 
-
-         expct_val(imem) = expct_val(imem) + thick(k) * co_val_conv * &
-         avg_kernel(key,k) + prior_term * prior(key,k)
+!
+         expct_val(imem) = expct_val(imem) + log(co_val_conv) * &
+         avg_kernel(key,k) + prior_term * log(prior(key,k))
+         expct_val(imem) = exp(expct_val(imem))
          
 !         write(string1, *) &
 !         'APM: Mem ',imem,' Key ',key,' Expct Val Terms: prs ',k, &

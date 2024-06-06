@@ -51,7 +51,7 @@ use ensemble_manager_mod, only : ensemble_type, map_pe_to_task, &
 
 use utilities_mod,        only : error_handler, check_namelist_read, &
                                  find_namelist_in_file, nmlfileunit, do_nml_file, &
-                                 do_nml_term, to_upper,  E_MSG, E_ERR
+                                 do_nml_term, to_upper,  E_MSG, E_ERR, do_output
 
 use time_manager_mod,     only : time_type, get_time
 
@@ -235,41 +235,44 @@ type(file_info_type),  intent(inout) :: file_info
 
 type(stage_metadata_type) :: output_files
 
+call trace_message('Before state_vector_io_mod: write_state -> state_vector_io_init')
 if ( .not. module_initialized ) call state_vector_io_init() ! to read the namelist
+call trace_message('After state_vector_io_mod: write_state -> state_vector_io_init')
 
 ! check whether file_info handle is initialized
+call trace_message('Before state_vector_io_mod: write_state -> assert_file_info_initialized')
 call assert_file_info_initialized(file_info, 'write_state')
+call trace_message('After state_vector_io_mod: write_state -> assert_file_info_initialized')
 
 ! do this once
 output_files = get_stage_metadata(file_info)
 
-!print *, 'APM: write_state - get_single_file ',get_single_file(file_info)
 if ( get_single_file(file_info) ) then
+   call trace_message('Before state_vector_io_mod: write_state -> get_single_file')
    if (.not. single_file_initialized(file_info)) then
       call initialize_single_file_io(state_ens_handle, file_info)
    endif
 
-!   print *, 'APM: Before write_single_file '
    call write_single_file(state_ens_handle, file_info)
-!   print *, 'APM: After write_single_file '
+   call trace_message('After state_vector_io_mod: write_state -> get_single_file')
 
 else ! multiple files
-!   print *, 'APM: write_state - get_cycling ',get_cycling(file_info)
+   call trace_message('Before state_vector_io_mod: write_state -> get_cycling')
    if ( get_cycling(file_info) ) then
       call error_handler(E_ERR, 'write_state: ', &
       'currently cannot write multiple-file output while advancing the model inside filter', &
       source, text2='either use single file i/o, or advance the model outside filter')
    endif
+   call trace_message('After state_vector_io_mod: write_state -> get_cycling')
    
    ! write ensemble copies
    
-!   print *, 'APM: Before write_restart_direct '
+   call trace_message('Before state_vector_io_mod: write_state -> write_restart_direct')
    call write_restart_direct(state_ens_handle, output_files)
-!   print *, 'APM: After write_restart_direct '
+   call trace_message('After state_vector_io_mod: write_state -> write_restart_direct')
 endif
 
 end subroutine write_state
-
 
 !----------------------------------------------------------------------
 !> Read the restart information directly from the model netcdf file
@@ -323,29 +326,28 @@ type(stage_metadata_type), intent(in) :: file_name_handle
 integer(i8) :: dart_index !< where to start in state_ens_handle%copies
 integer :: domain !< loop index
 
-!print *, 'APM: Before call state_vector_io_init '
-!print *, 'APM: module_initialized ',module_initialized
+!call trace_message('Before call state_vector_io_init')
 if ( .not. module_initialized ) call state_vector_io_init() ! to read the namelist
-!print *, 'APM: After call state_vector_io_init '
+!call trace_message('After call state_vector_io_init')
+
 
 ! check whether file_info handle is initialized
-!print *, 'APM: Before call assert_restart_name_initialized '
+!call trace_message('Before call assert_restart_names_initialized')
 call assert_restart_names_initialized(file_name_handle, 'write_restart_direct')
-!print *, 'APM: After call assert_restart_name_initialized '
+!call trace_message('After call assert_restart_names_initialized')
 
 ! transpose and write out the data
 dart_index = 1
 
 ! Different filenames for prior vs. posterior vs. diagnostic files
 do domain = 1, get_num_domains()
-!   print *, 'APM: Before call transpose_write ',domain
+!   call trace_message('Before transpose_write')
    call transpose_write(state_ens_handle, file_name_handle, domain, &
                   dart_index, buffer_state_io, single_precision_output)
-!   print *, 'APM: After call transpose_write ',domain
+!   call trace_message('After transpose_write')
 enddo
 
 end subroutine write_restart_direct
-
 
 !-----------------------------------------------------------------------
 !> Single state space inflation from file value is only index 1 of 
@@ -593,6 +595,32 @@ if (do_ss_inflate(inflate_handle)) then
 endif
 
 end subroutine print_inflation_source
+
+!-------------------------------------------------------------------------
+
+subroutine trace_message(msg, label, threshold)
+
+character(len=*), intent(in)           :: msg
+character(len=*), intent(in), optional :: label
+integer,          intent(in), optional :: threshold
+integer                                :: trace_level=0
+! Write message to stdout and log file.
+integer :: t
+
+t = 0
+if (present(threshold)) t = threshold
+
+if (trace_level <= t) return
+
+if (.not. do_output()) return
+
+if (present(label)) then
+   call error_handler(E_MSG,trim(label),trim(msg))
+else
+   call error_handler(E_MSG,' filter trace:',trim(msg))
+endif
+
+end subroutine trace_message
 
 !-----------------------------------------------------------------------
 !> @}
