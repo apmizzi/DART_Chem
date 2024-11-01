@@ -172,7 +172,7 @@ program omi_so2_pbl_col_ascii_to_obs
 ! Species-specific variables
    real                            :: col_amt,col_amt_pbl,col_amt_stl
    real                            :: cld_frac,cld_prs,cld_rad_frac,rad_cld_frac
-   real                            :: slnt_col_amt,AMF
+   real                            :: slnt_col_amt,amf
    real                            :: zenang,obs_sum
    real                            :: prs_loc,pbl_sum
    real                            :: lat_obs,lon_obs
@@ -195,7 +195,7 @@ program omi_so2_pbl_col_ascii_to_obs
    pi=4.*atan(1.)
    rad2deg=360./(2.*pi)
    re=6371000.
-   fac_err=1.00
+   fac_err=.3
    days_last=-9999.
    seconds_last=-9999.
    level_crit=50000.
@@ -203,7 +203,6 @@ program omi_so2_pbl_col_ascii_to_obs
    sum_accept=0
    sum_total=0
    obs_accept=0
-   AMF=0.36
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
@@ -317,6 +316,7 @@ program omi_so2_pbl_col_ascii_to_obs
       scat_wt_r8(:)=scat_wt(:)
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
+      amf=slnt_col_amt/col_amt
 !
 ! Obs thinning test
       obs_accept=obs_accept+1
@@ -327,9 +327,9 @@ program omi_so2_pbl_col_ascii_to_obs
          sum_accept=sum_accept+1
 !
 ! Obs value is the tropospheric slant column
-! APM: Do literature review to find uncertainty setting         
-         obs_val(:)=col_amt_pbl*AMF
-         obs_err_var=(fac_obs_error*fac_err*col_amt_pbl*AMF)**2.
+! APM: Do literature review to find uncertainty setting
+         obs_val(:)=col_amt_pbl*amf
+         obs_err_var=(fac_obs_error*fac_err*col_amt_pbl*amf)**2.
          omi_qc(:)=0
 !
          obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)

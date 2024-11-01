@@ -18,9 +18,9 @@ cat > input.nml_temp << EOF
    ls_chem_dt = ${LS_CHEM_DT}
    use_log_o3     = ${NL_USE_LOG_O3:-.false.},
    nlayer_model   = ${NL_NLAYER_MODEL:-36},
-   nlayer_mls_o3_total_col  = ${NL_NLAYER_MLS_O3_TOTAL_COL:-50},
-   nlayer_mls_o3_trop_col   = ${NL_NLAYER_MLS_O3_TROP_COL:-50},
-   nlayer_mls_o3_profile    = ${NL_NLAYER_MLS_O3_PROFILE:-50},
+   nlayer_mls_o3_total_col  = ${NL_NLAYER_MLS_O3_TOTAL_COL:-60},
+   nlayer_mls_o3_trop_col   = ${NL_NLAYER_MLS_O3_TROP_COL:-60},
+   nlayer_mls_o3_profile    = ${NL_NLAYER_MLS_O3_PROFILE:-60},
 / 
 EOF
 #

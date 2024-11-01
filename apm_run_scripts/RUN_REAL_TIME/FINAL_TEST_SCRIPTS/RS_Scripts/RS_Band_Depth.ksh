@@ -45,7 +45,7 @@
 #PBS -l walltime=${GENERAL_TIME_LIMIT}
 #PBS -q ${GENERAL_JOB_CLASS}
 #PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
+#PBS -l select=${GENERAL_NODES}:ncpus=1:model=ivy
 #
 matlab -nosplash -nodesktop -r 'ComputeBandDepth(.09)'
 export RC=\$?     

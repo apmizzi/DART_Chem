@@ -10,28 +10,17 @@
 #
 ############################################################################### 
 #
-   export START_DATE=2014072606
+   export START_DATE=2014072618
    export END_DATE=2014072718
 #
-#   export START_DATE=2020071006
-#   export END_DATE=2020071606
+    export TRUNK_DIR=/nobackupp28/amizzi/TRUNK
+    export DART_DIR=DART_development
+    export CODE_DIR=apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS
+    export RS_SCRIPTS_DIR=${TRUNK_DIR}/${DART_DIR}/${CODE_DIR}/RS_SCRIPTS
 #
 # Define EXPERIMENT path
-#
-#   export DIR_NAME=FRAPPE_CONTROL
-#   export DIR_NAME=real_FRAPPE_ALLCHEM
-#   export DIR_NAME=real_FRAPPE_EMISADJ
-
-#   export DIR_NAME=FRAPPE_CONTROL_CO_RETR
-#   export DIR_NAME=FRAPPE_ALLCHEM_CO_RETR
-   export DIR_NAME=FRAPPE_ALLCHEM_CO_CPSR
-#   export DIR_NAME=FRAPPE_EMISADJ_CO_RETR
-#   export DIR_NAME=FRAPPE_EMISADJ_CO_CPSR
-#
-#   export DIR_NAME=FIREX_CONTROL
-#   export DIR_NAME=FIREX_ALLCHEM
-#   export DIR_NAME=FIREX_EMISADJ
-#
+   export DIR_NAME=TRACER_I_ALLCHEM
+   export DIR_NAME=FRAPPE_ALLCHEM_CO_RETR
    export NUM_MEMBERS=20
 #
 # Set large scale chemisty file
@@ -41,7 +30,7 @@
    export LS_CHEM_DY=13
    export LS_CHEM_DZ=56
    export LS_CHEM_DT=368
-   export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
+   export INPUT_DATA_DIR=/nobackupp28/amizzi/INPUT_DATA
    export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_REAL_TIME_DATA
    export MOZBC_DATA_DIR=${EXPERIMENT_DATA_DIR}/large_scale_chem_forecasts
    export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
@@ -52,7 +41,7 @@
    export DELETE_FLG=true
    export DOMAIN=01
    export CYCLE_PERIOD=6
-   export FCST_PERIOD=6
+   export FCST_PERIOD=24
    export ASIM_PERIOD=3
    export LBC_FREQ=3
    (( INTERVAL_SEC=${LBC_FREQ}*60*60 ))
@@ -65,9 +54,9 @@
    export WRFDA_VER=WRFDAv4.3.2_dmpar
 #
 # Independent path settings
-   export SCRATCH_DIR=/nobackupp11/amizzi/OUTPUT_DATA
-   export PROJECT_DIR=/nobackupp11/amizzi
-   export DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
+   export SCRATCH_DIR=/nobackupp28/amizzi/OUTPUT_DATA
+   export PROJECT_DIR=/nobackupp28/amizzi
+   export DATA_DIR=/nobackupp28/amizzi/INPUT_DATA
 #
 # Dependent path settings
    export RUN_DIR=${SCRATCH_DIR}/DART_OBS_DIAG/${DIR_NAME}
@@ -223,8 +212,8 @@
    export NL_TIME_TO_SKIP_MN=0
    export NL_TIME_TO_SKIP_SS=0
    export NL_MAX_NUM_BINS=1000
-   export NL_PLEVEL='750.'
-   export NL_PLEVEL='950., 850., 750., 500., 400. 300.'
+   export NL_PLEVEL='146, 100, 68'
+   export NL_PLEVEL='140, 100, 60'
    export NL_NREGIONS=1
    export NL_LONLIM1=0.
    export NL_LONLIM2=360.
@@ -603,59 +592,9 @@
    export NL_SPECIAL_VERT_NORMALIZATION_LEVELS="20.0,20.0"
    export NL_SPECIAL_VERT_NORMALIZATION_SCALE_HEIGHTS="4.5,4.5"
 #
-# Forward operator parameters
-   export NL_NLAYER_MODEL=${NNZP_CR}
-   export NL_NLAYER_MOPITT_CO_TOTAL_COL=10
-   export NL_NLAYER_MOPITT_CO_PROFILE=10
-   export NL_NLAYER_MOPITT_CO_CPSR=10
-   export NL_NLAYER_IASI_CO_TOTAL_COL=19
-   export NL_NLAYER_IASI_CO_PROFILE=19
-   export NL_NLAYER_IASI_CO_CPSR=19
-   export NL_NLAYER_IASI_O3_PROFILE=41
-   export NL_NLAYER_IASI_O3_CPSR=41
-   export NL_NLAYER_OMI_O3_TOTAL_COL=11
-   export NL_NLAYER_OMI_O3_TROP_COL=11
-   export NL_NLAYER_OMI_O3_PROFILE=18
-   export NL_NLAYER_OMI_O3_CPSR=18
-   export NL_NLAYER_OMI_NO2_TOTAL_COL=40
-   export NL_NLAYER_OMI_NO2_TROP_COL=40
-   export NL_NLAYER_OMI_SO2=75
-   export NL_NLAYER_TROPOMI_CO_TOTAL_COL=55
-   export NL_NLAYER_TROPOMI_O3_TOTAL_COL=20
-   export NL_NLAYER_TROPOMI_O3_TROP_COL=20
-   export NL_NLAYER_TROPOMI_O3_PROFILE=20
-   export NL_NLAYER_TROPOMI_O3_CPSR=20
-   export NL_NLAYER_TROPOMI_NO2_TOTAL_COL=40
-   export NL_NLAYER_TROPOMI_NO2_TROP_COL=40
-   export NL_NLAYER_TROPOMI_SO2=40
-   export NL_NLAYER_TEMPO_O3_TOTAL_COL=50
-   export NL_NLAYER_TEMPO_O3_TROP_COL=50
-   export NL_NLAYER_TEMPO_O3_PROFILE=50
-   export NL_NLAYER_TEMPO_O3_CPSR=50
-   export NL_NLAYER_TEMPO_NO2_TOTAL_COL=50
-   export NL_NLAYER_TEMPO_NO2_TROP_COL=50
-#
-# Observation retension frequemcy
-   export NL_MOPITT_CO_RETEN_FREQ=1
-   export NL_IASI_CO_RETEN_FREQ=1
-   export NL_IASI_O3_RETEN_FREQ=1
-   export NL_MODIS_AOD_RETEN_FREQ=1
-   export NL_OMI_O3_RETEN_FREQ=1
-   export NL_OMI_NO2_RETEN_FREQ=1
-   export NL_OMI_SO2_RETEN_FREQ=1
-   export NL_TROPOMI_CO_RETEN_FREQ=3
-   export NL_TROPOMI_O3_RETEN_FREQ=3
-   export NL_TROPOMI_NO2_RETEN_FREQ=3
-   export NL_TROPOMI_SO2_RETEN_FREQ=3
-   export NL_TEMPO_O3_RETEN_FREQ=5
-   export NL_TEMPO_NO2_RETEN_FREQ=50
-   export NL_AIRNOW_CO_RETEN_FREQ=1
-   export NL_AIRNOW_O3_RETEN_FREQ=1
-   export NL_AIRNOW_NO2_RETEN_FREQ=1
-   export NL_AIRNOW_SO2_RETEN_FREQ=1
-   export NL_AIRNOW_PM10_RETEN_FREQ=1
-   export NL_AIRNOW_PM25_RETEN_FREQ=1
-#
+# Set namelist parameters
+   source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
+   source ${RS_SCRIPTS_DIR}/RS_Forward_Operator_Params.ksh
    rm -rf input.nml
    ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input_prs_levels.nml.ksh
 #

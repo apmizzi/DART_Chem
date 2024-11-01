@@ -29,11 +29,11 @@
 # ROOT DIRECTORIES:
 export DART_VER=DART_development
 export PERT_CHEM_VER=ICBC_PERT
-export WORK_DIR=/nobackupp11/amizzi
+export WORK_DIR=/nobackupp28/amizzi
 export TRUNK_DIR=${WORK_DIR}/TRUNK
 export REAL_TIME_DIR=${TRUNK_DIR}/${DART_VER}/apm_run_scripts/RUN_REAL_TIME
 export RS_SCRIPTS_DIR=${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS/RS_Scripts
-export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
+export INPUT_DATA_DIR=/nobackupp28/amizzi/INPUT_DATA
 export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
 export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_REAL_TIME_DATA
@@ -53,10 +53,10 @@ export FIRST_DART_INFLATE_DATE=2014072618
 export FIRST_EMISS_INV_DATE=2014072618
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072612
+export CYCLE_STR_DATE=2014072618
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072612
+export CYCLE_END_DATE=2014072618
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -112,8 +112,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_WRFCHEM_BIO=false
    export RUN_WRFCHEM_FIRE=false
    export RUN_WRFCHEM_CHEMI=false
-   export RUN_PERT_WRFCHEM_CHEM_ICBC=true
-   export RUN_PERT_WRFCHEM_CHEM_EMISS=false
+   export RUN_PERT_WRFCHEM_CHEM_ICBC=false
+   export RUN_PERT_WRFCHEM_CHEM_EMISS=true
    export RUN_BIAS_CORRECTION=false
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
    export RUN_MOPITT_CO_PROFILE_OBS=false # (done)
@@ -193,14 +193,14 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_SCIAM_NO2_TOTAL_COL_OBS=false
    export RUN_SCIAM_NO2_TROP_COL_OBS=false # (works, vertical sum)
    export RUN_GOME2A_NO2_TOTAL_COL_OBS=false
-   export RUN_GOME2A_NO2_TROP_COL_OBS=false # (works, vertical sum)   TRACER I
+   export RUN_GOME2A_NO2_TROP_COL_OBS=false # (works, vertical sum)  TRACER I
    export RUN_MLS_O3_TOTAL_COL_OBS=false
-   export RUN_MLS_O3_PROFILE_OBS=false # (works, check)   TRACER I
+   export RUN_MLS_O3_PROFILE_OBS=false # (works, check)  TRACER I
    export RUN_MLS_O3_CPSR_OBS=false # (works, vertical sum)
    export RUN_MLS_HNO3_TOTAL_COL_OBS=false
-   export RUN_MLS_HNO3_PROFILE_OBS=false # (works, vertical sum)  TRACER I
+   export RUN_MLS_HNO3_PROFILE_OBS=true # (works, vertical sum)  TRACER I
    export RUN_MLS_HNO3_CPSR_OBS=false # (works, vertical sum)
-   export RUN_AIRNOW_CO_OBS=false # (done)  TRACER I 
+   export RUN_AIRNOW_CO_OBS=false # (done)  TRACER I
    export RUN_AIRNOW_O3_OBS=false # (done)  TRACER I
    export RUN_AIRNOW_NO2_OBS=false # (done)  TRACER I
    export RUN_AIRNOW_SO2_OBS=false # (done)  TRACER I
@@ -211,9 +211,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_PANDA_PM25_OBS=false
    export RUN_MEXICO_AQS_CO_OBS=false
    export RUN_MET_OBS=false # (done)  TRACER I
-   export RUN_COMBINE_OBS=false
-   export RUN_PREPROCESS_OBS=false
-   export RUN_LOCALIZATION=false
+   export RUN_COMBINE_OBS=true
+   export RUN_PREPROCESS_OBS=true
+   export RUN_LOCALIZATION=true
 #
    rm -rf index_RS_Code_Versions_${DATE}   
    source ${RS_SCRIPTS_DIR}/RS_Code_Versions.ksh > index_RS_Code_Versions_${DATE} 2>&1
@@ -254,7 +254,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
    export GDAS_HR_PREFIX=''
    export GDAS_HR_SUFFIX=.wo40.be
-#   
+#
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
    cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
 #
@@ -268,12 +268,16 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export GENERAL_TIME_LIMIT=00:20:00
    export GENERAL_NODES=1
    export GENERAL_TASKS=16
-   export PERT_JOB_CLASS=normal
-   export PERT_JOB_CLASS=devel
-   export PERT_TIME_LIMIT=03:59:00
-   export PERT_TIME_LIMIT=01:59:00
+#   export PERT_JOB_CLASS=normal
+#   export PERT_TIME_LIMIT=4:59:00
    export PERT_NODES=3
    export PERT_TASKS=24
+   export PERT_JOB_CLASS=devel
+#   export PERT_JOB_CLASS=normal
+   export PERT_TIME_LIMIT=01:59:00
+#   export PERT_NODES=1
+#   export PERT_TASKS=4
+   export NL_FAC_OBS_ERROR_OMI_SO2=1.50
 #
 #########################################################################
 #
@@ -297,7 +301,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/geogrid
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Geogrid.ksh > index_rs.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Geogrid.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -314,7 +318,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          cd ${RUN_DIR}/${DATE}/ungrib
       fi
       export EXPERIMENT_LS_MET=${EXPERIMENT_GFS_DIR}
-      source ${RS_SCRIPTS_DIR}/RS_Ungrib.ksh > index_rs.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Ungrib.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -330,7 +334,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/metgrid
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Metgrid.ksh > index_rs.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Metgrid.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -346,7 +350,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/real
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Real.ksh > index_rs.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_Real.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -496,6 +500,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export NL_CHEM_BIOG_EMIS='MSEBIO_ISOP',
       source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Chem_Emiss.ksh > index_rs.html 2>&1
    fi
+
+exit
+
+   
 #
 ########################################################################
 #
@@ -503,7 +511,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 ########################################################################
 #
-   if ${RUN_MOPITT_CO_TOTAL_COL_OBS} | ${RUN_MOPITT_CO_TOTAL_COL_OBS} ; then
+   if ${RUN_MOPITT_CO_TOTAL_COL_OBS}; then
       if [[ ! -d ${RUN_DIR}/${DATE}/mopitt_co_total_col_obs ]]; then
          mkdir -p ${RUN_DIR}/${DATE}/mopitt_co_total_col_obs
          cd ${RUN_DIR}/${DATE}/mopitt_co_total_col_obs

@@ -1,4 +1,4 @@
-#!/bin/ksh -aux
+s#!/bin/ksh -aux
    cd ${RUN_DIR}/${DATE}/wrfchem_chem_emiss
 #
 # SET PARAMETERS
@@ -90,28 +90,28 @@
          done
 #
 # CREATE ENSEMBLE STATS FILES AS TEMPLATES	 
-         if [[ ${NL_PERT_CHEM} == true ]]; then 
-            cp ${WRFCHEMI} ${WRFCHEMI}_mean
-            cp ${WRFCHEMI} ${WRFCHEMI}_sprd
-            cp ${WRFCHEMI} ${WRFCHEMI}_frac
-         fi
-         if [[ ${NL_PERT_FIRE} == true ]]; then 
-            cp ${WRFFIRECHEMI} ${WRFFIRECHEMI}_mean
-            cp ${WRFFIRECHEMI} ${WRFFIRECHEMI}_sprd
-            cp ${WRFFIRECHEMI} ${WRFFIRECHEMI}_frac
-         fi
-         if [[ ${NL_PERT_BIO} == true ]]; then 
-            if [[ ${L_HH} -eq 00 || ${L_HH} -eq 06 || ${L_HH} -eq 12 || ${L_HH} -eq 18 ]]; then
-               cp ${WRFBIOCHEMI} ${WRFBIOCHEMI}_mean
-               cp ${WRFBIOCHEMI} ${WRFBIOCHEMI}_sprd
-               cp ${WRFBIOCHEMI} ${WRFBIOCHEMI}_frac
-            fi
-         fi
+#         if [[ ${NL_PERT_CHEM} == true ]]; then 
+#            cp ${WRFCHEMI} ${WRFCHEMI}_mean
+#            cp ${WRFCHEMI} ${WRFCHEMI}_sprd
+#            cp ${WRFCHEMI} ${WRFCHEMI}_frac
+#         fi
+#         if [[ ${NL_PERT_FIRE} == true ]]; then 
+#            cp ${WRFFIRECHEMI} ${WRFFIRECHEMI}_mean
+#            cp ${WRFFIRECHEMI} ${WRFFIRECHEMI}_sprd
+#            cp ${WRFFIRECHEMI} ${WRFFIRECHEMI}_frac
+#         fi
+#         if [[ ${NL_PERT_BIO} == true ]]; then 
+#            if [[ ${L_HH} -eq 00 || ${L_HH} -eq 06 || ${L_HH} -eq 12 || ${L_HH} -eq 18 ]]; then
+#               cp ${WRFBIOCHEMI} ${WRFBIOCHEMI}_mean
+#               cp ${WRFBIOCHEMI} ${WRFBIOCHEMI}_sprd
+#               cp ${WRFBIOCHEMI} ${WRFBIOCHEMI}_frac
+#            fi
+#         fi
 #
 # CREATE NAMELIST
          export NL_PERT_PATH_PR=${RUN_DIR}/${DATE}/wrfchem_chem_emiss
          export NL_PERT_PATH_PO=${RUN_DIR}/${DATE}/wrfchem_chem_emiss
-         if [[ ${L_DATE} -eq ${DATE} || ${L_HH} -eq 00 ]]; then
+         if [[ ${L_DATE} -eq ${DATE} ]]; then
             export NL_PERT_PATH_PR=${RUN_DIR}/${PAST_DATE}/wrfchem_chem_emiss
             export NL_PERT_PATH_PO=${RUN_DIR}/${DATE}/wrfchem_chem_emiss
          fi
@@ -167,12 +167,23 @@ EOF
 #         export JOBRND=${RANDOM}_cr_emiss_pert
 #         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
 #
-#
 # PARALLEL ON HASWELL
          export JOBRND=${RANDOM}_cr_emiss_pert
          ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_has.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_emiss_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT}
 #
          qsub -Wblock=true job.ksh
+#
+#	 sleep 60
+	 mv index.html index_${L_DATE}.html
+	 if [[ -e pert_chem_icbc_temp && ${NL_PERT_CHEM}==true ]]; then
+	    mv pert_chem_icbc_temp pert_chem_icbc
+	 fi    
+	 if [[ -e pert_fire_icbc_temp && ${NL_PERT_FIRE}==true ]]; then
+	    mv pert_fire_icbc_temp pert_fire_icbc
+	 fi    
+	 if [[ -e pert_biog_icbc_temp && ${NL_PERT_BIOG}==true ]]; then
+	    mv pert_biog_icbc_temp pert_biog_icbc
+	 fi    
 #
 # GET FINE GRID EMISSON FILES FOR THIS MEMBER
 #         export WRFCHEMI=wrfchemi_d${FR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00
@@ -365,21 +376,20 @@ EOF
             done
             let MEM=MEM+1
          done
-
       fi
 #
 # Clean directory
-      export L_DATE=${DATE}
-      export LE_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} ${FCST_PERIOD} 2>/dev/null)
-      while [[ ${L_DATE} -le ${LE_DATE} ]] ; do
-         export L_YYYY=$(echo $L_DATE | cut -c1-4)
-         export L_MM=$(echo $L_DATE | cut -c5-6)
-         export L_DD=$(echo $L_DATE | cut -c7-8)
-         export L_HH=$(echo $L_DATE | cut -c9-10)
-         export L_FILE_DATE=${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00
-	 rm wrfbiochemi_d01_${L_FILE_DATE} wrfchemi_d01_${L_FILE_DATE}
-	 rm wrffirechemi_d01_${L_FILE_DATE}
-         export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} 1 2>/dev/null)
-      done
+#      export L_DATE=${DATE}
+#      export LE_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} ${FCST_PERIOD} 2>/dev/null)
+#      while [[ ${L_DATE} -le ${LE_DATE} ]] ; do
+#         export L_YYYY=$(echo $L_DATE | cut -c1-4)
+#         export L_MM=$(echo $L_DATE | cut -c5-6)
+#         export L_DD=$(echo $L_DATE | cut -c7-8)
+#         export L_HH=$(echo $L_DATE | cut -c9-10)
+#         export L_FILE_DATE=${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00
+#	 rm wrfbiochemi_d01_${L_FILE_DATE} wrfchemi_d01_${L_FILE_DATE}
+#	 rm wrffirechemi_d01_${L_FILE_DATE}
+#         export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} 1 2>/dev/null)
+#      done
 #      rm *_cr_emiss_pert* adjust_chem_* job.ksh perturb_chem_*
 #      rm wrffirechemi_d01_${DATE} wrf*_frac wrf*_mean wrf*_sprd wrfinput_d*

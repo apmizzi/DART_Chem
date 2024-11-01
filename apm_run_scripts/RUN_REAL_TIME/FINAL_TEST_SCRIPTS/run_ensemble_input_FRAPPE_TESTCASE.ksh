@@ -29,11 +29,11 @@
 # ROOT DIRECTORIES:
 export DART_VER=DART_development
 export PERT_CHEM_VER=ICBC_PERT
-export WORK_DIR=/nobackupp11/amizzi
+export WORK_DIR=/nobackupp28/amizzi
 export TRUNK_DIR=${WORK_DIR}/TRUNK
 export REAL_TIME_DIR=${TRUNK_DIR}/${DART_VER}/apm_run_scripts/RUN_REAL_TIME
 export RS_SCRIPTS_DIR=${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS/RS_Scripts
-export INPUT_DATA_DIR=/nobackupp11/amizzi/INPUT_DATA
+export INPUT_DATA_DIR=/nobackupp28/amizzi/INPUT_DATA
 export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
 export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_TESTCASE_INPUT_DATA
@@ -53,10 +53,10 @@ export FIRST_DART_INFLATE_DATE=2014072618
 export FIRST_EMISS_INV_DATE=2014072618
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072618
+export CYCLE_STR_DATE=2014072612
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072618
+export CYCLE_END_DATE=2014072612
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -253,6 +253,17 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #   
    cp ${WRFCHEM_DART_WORK_DIR}/advance_time ./.
    cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
+#
+#########################################################################
+#
+# LOCAL ENVIRONMENTAL VARIABLE SETTINGS
+#
+#########################################################################
+#
+   export PERT_JOB_CLASS=devel
+   export PERT_TIME_LIMIT=01:59:00
+   export PERT_NODES=1
+   export PERT_TASKS=24
 #
 #########################################################################
 #

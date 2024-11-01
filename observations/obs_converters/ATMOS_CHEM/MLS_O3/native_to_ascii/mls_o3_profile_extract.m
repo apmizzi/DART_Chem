@@ -20,7 +20,7 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
    [status]=system(command);
    fid=fopen(fileout,'w');
 %
-   command=strcat('ls'," ",'-1'," ",filein,'*');
+   command=strcat('/usr/bin/ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);
@@ -68,7 +68,7 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
    pole_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','POLE_LON');
 %
 % Get the averaging kernel data
-   file_avgk_path='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mls_o3_hdf_data/Averaging_Kernels_v4';
+   file_avgk_path='/nobackupp28/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mls_o3_hdf_data/Averaging_Kernels_v4';
    file_avgk_1d0N='/MLS_v4_1D_AVK_0N.nc4';
    file_avgk_1d35N='/MLS_v4_1D_AVK_35N.nc4';
    file_avgk_1d70N='/MLS_v4_1D_AVK_70N.nc4';
@@ -319,26 +319,35 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %
 % QA/QC
 %
-         if(zenang(itim)>=80.0)
-%            fprintf('zenang %6.2f \n',zenang(itim))
+         if(zenang(itim)>=90.0)
             continue
          end
-%         if(isnan(o3_col_obs(itim)))
+%
+         if(rem(o3_obs_status(itim),2)~=0)
+            continue
+         end
+%
+         if(o3_obs_qual(itim)<=1.0)
+            continue
+         end
+%
+         if(o3_obs_conv(itim)>=1.03)
+            continue
+         end
+%
+% Used in obs_converter	 
+%         iflg=0	 
+%         for ilay=4:27
+%           if(o3_obs_err(ilay,itim)<=0 | isnan(o3_obs(ilay,itim)) | ...
+%           o3_prior(ilay,itim)<=0 | isnan(o3_prior(ilay,itim) ...
+%           o3_obs(ilay,itim)<=0))
+%               iflg=1
+%	       break
+%            end
+%         end
+%	 if(iflg==1)
 %            continue
-%         end
-%         for ilay=1:layer	 
-%            if(isnan(o3_obs(ilay,itim)))
-%	       fprinf('o3_obs is a NaN %d \n',o3_obs(ilay,itim)) 
-%               continue
-%            end
-%         end
-%	 
-%         for ilay=1:layer	 
-%            if(o3_obs(ilay,itim)<0.0)
-%               fprintf('o3_obs is negative \n')
-%               continue
-%            end
-%         end
+%	 end
 %
 % Check domain
 % Input grid needs to be in degrees

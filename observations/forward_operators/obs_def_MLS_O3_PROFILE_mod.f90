@@ -528,13 +528,6 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
             qmr_val(imem,k) = qmr_mdl_n(imem)
          endif
       enddo
-
-!      write(string1, *)'APM: o3 ',key,k,o3_val(1,k)
-!      call error_handler(E_MSG, routine, string1, source)
-!      write(string1, *)'APM: tmp ',key,k,tmp_val(1,k)
-!      call error_handler(E_MSG, routine, string1, source)
-!      write(string1, *)'APM: qmr ',key,k,qmr_val(1,k)
-!      call error_handler(E_MSG, routine, string1, source)
 !
 ! Convert units for o3 from ppmv
       o3_val(:,k) = o3_val(:,k) * 1.e-6_r8
@@ -542,14 +535,23 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
    o3_mdl_1(:) = o3_mdl_1(:) * 1.e-6_r8
    o3_mdl_n(:) = o3_mdl_n(:) * 1.e-6_r8
 !
+! Print profile values    
+!   do imem=1,1
+!      do k=1,layer_mls
+!         write(string1, *)'APM: k,prs,o3,tmp,qmr ',k,prs_mls(k)/100., &
+!         o3_val(imem,k),tmp_val(imem,k),qmr_val(imem,k)
+!         call error_handler(E_MSG, routine, string1, source)
+!      enddo
+!   enddo
+!
 ! Use large scale o3 data above the regional model top
 ! MLS vertical grid is from bottom to top
    kstart=-1
    do imem=1,ens_size
       if (prs_mls(layer_mls).lt.prs_mdl_n(imem)) then
          do k=1,layer_mls
-            if (prs_mls(k).le.prs_mdl_n(imem)) then
-               kstart=k-1
+            if (prs_mls(k).lt.prs_mdl_n(imem)) then
+               kstart=k
                exit
             endif
          enddo
@@ -560,13 +562,12 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
             prs_mls_top(k-kstart+1)=prs_mls(k)
          enddo
          prs_mls_top(:)=prs_mls_top(:)/100.
-!
          lon_obs=mloc(1)/rad2deg
          lat_obs=mloc(2)/rad2deg
          call get_time(obs_time,datesec_obs,date_obs)
-!
          data_file=trim(upper_data_file)
          model=trim(upper_data_model)
+!         
          call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
          ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_mls_top, &
          ncnt,o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
@@ -586,12 +587,11 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
       endif
    enddo
 !
-! Print full profile examples
+! Print profile values    
 !   do imem=1,1
 !      do k=1,layer_mls
-!         write(string1, *) &
-!         'APM: prs,o3,tmp,qmr ',k,prs_mls(k)/100.,o3_val(imem,k), &
-!         tmp_val(imem,k),qmr_val(imem,k)
+!         write(string1, *)'APM Final Profiles: k,prs,o3,tmp,qmr ',k,prs_mls(k)/100., &
+!         o3_val(imem,k),tmp_val(imem,k),qmr_val(imem,k)
 !         call error_handler(E_MSG, routine, string1, source)
 !      enddo
 !   enddo
@@ -620,133 +620,37 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
    istatus(:)=0
    zstatus(:)=0
    expct_val(:)=0.0
-   allocate(thick(layer_mls))
-
    do imem=1,ens_size
-! Define upper and lower values for layer grid
-! (MLS O3 grid is bottom to top) prs is in Pa
-      prs_mls_mem(:)=prs_mls(:)      
-! Definitions for k=1 or k=layer_mls
-      prs_bot=prs_sfc(imem)
-      if (prs_bot.le.prs_mls_mem(1)) then
-         prs_bot=prs_mls_mem(1)+prs_del
-      endif   
-! Bottom terms
-      o3_bot=o3_mdl_1(imem)
-      tmp_bot=tmp_mdl_1(imem)
-      qmr_bot=qmr_mdl_1(imem)
-! Top terms
-      prs_top=prs_mls(layer_mls)+(prs_mls(layer_mls)-prs_mls(layer_mls-1))/2.
-      if(prs_top.le.0.) prs_top=bdy_coef*prs_mls(layer_mls)
-! o3
-      delta=(o3_val(imem,layer_mls)-o3_val(imem,layer_mls-1))/ &
-      (prs_mls(layer_mls)-prs_mls(layer_mls-1))
-      o3_top=o3_val(imem,layer_mls) + delta*(prs_top-prs_mls(layer_mls))
-      if(o3_top.le.0.) then
-         if(delta.le.0.) o3_top=bdy_coef*o3_val(imem,layer_mls)
-         if(delta.gt.0.) o3_top=(2.-bdy_coef)*o3_val(imem,layer_mls)
-      endif
-! tmp
-      delta=(tmp_val(imem,layer_mls)-tmp_val(imem,layer_mls-1))/ &
-      (prs_mls(layer_mls)-prs_mls(layer_mls-1))
-      tmp_top=tmp_val(imem,layer_mls) + delta*(prs_top-prs_mls(layer_mls))
-      if(tmp_top.le.0.) then
-         if(delta.le.0.) tmp_top=bdy_coef*tmp_val(imem,layer_mls)
-         if(delta.gt.0.) tmp_top=(2.-bdy_coef)*tmp_val(imem,layer_mls)
-      endif
-! qmr
-      delta=(qmr_val(imem,layer_mls)-qmr_val(imem,layer_mls-1))/ &
-      (prs_mls(layer_mls)-prs_mls(layer_mls-1))
-      qmr_top=qmr_val(imem,layer_mls) + delta*(prs_top-prs_mls(layer_mls))
-      if(qmr_top.le.0.) then
-         if(delta.le.0.) qmr_top=bdy_coef*qmr_val(imem,layer_mls)
-         if(delta.gt.0.) qmr_top=(2.-bdy_coef)*qmr_val(imem,layer_mls)
-      endif
-!
-! VERTICAL SUMMATION
-! k=1 term      
-      k=1
-! o3 term (Units are VMR, calculate layer average)
-         lnpr_mid=(log(prs_mls_mem(k+1))+log(prs_bot))/2.
-         up_wt=log(prs_bot)-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_mls_mem(k+1))
-         tl_wt=up_wt+dw_wt
-         if(use_log_o3) then
-            o3_val_conv = (dw_wt*exp(o3_bot)+up_wt*exp(o3_val(imem,k+1)))/tl_wt
-         else
-            o3_val_conv = (dw_wt*o3_bot+up_wt*o3_val(imem,k+1))/tl_wt
-         endif
-         prior_term=-avg_kernel(key,k)
-         if(k.eq.klev_mls) prior_term=1.-avg_kernel(key,k)
-! expected retrieval sum
-         expct_val(imem) = expct_val(imem) + o3_val_conv * &
-         avg_kernel(key,k) + prior_term*prior(key,k)
-
-!         write(string1, *)'APM: expected retr ',k,expct_val(imem), &
-!         avg_kernel(key,k), prior(key,k)
-!         call error_handler(E_MSG, routine, string1, source)
-!
-! k=layer_mls term
-      k=layer_mls
-         lnpr_mid=(log(prs_top)+log(prs_mls_mem(k)))/2.
-         up_wt=log(prs_mls_mem(k))-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_top)
-         tl_wt=up_wt+dw_wt
-! O3 term (Units are VMR, calculate layer average)
-         if(use_log_o3) then
-            o3_val_conv = (dw_wt*exp(o3_val(imem,k))+up_wt*exp(o3_top))/tl_wt
-         else
-            o3_val_conv = (dw_wt*o3_val(imem,k)+up_wt*o3_top)/tl_wt
-         endif
-         prior_term=-avg_kernel(key,k)
-         if(k.eq.klev_mls) prior_term=1.-avg_kernel(key,k)
-! expected retrieval sum
-         expct_val(imem) = expct_val(imem) + o3_val_conv * &
-         avg_kernel(key,k) + prior_term*prior(key,k)
-
-!         write(string1, *)'APM: expected retr ',k,expct_val(imem), &
-!         avg_kernel(key,k), prior(key,k)
-!         call error_handler(E_MSG, routine, string1, source)
-!
-! remaining terms
-      do k=2,layer_mls-1
-         prs_bot=(prs_mls_mem(k-1)+prs_mls_mem(k))/2.
-         prs_top=(prs_mls_mem(k)+prs_mls_mem(k+1))/2.
-         o3_bot=(o3_val(imem,k-1)+o3_val(imem,k))/2.
-         o3_top=(o3_val(imem,k)+o3_val(imem,k+1))/2.
-         tmp_bot=(tmp_val(imem,k-1)+tmp_val(imem,k))/2.
-         tmp_top=(tmp_val(imem,k)+tmp_val(imem,k+1))/2.
-         qmr_bot=(qmr_val(imem,k-1)+qmr_val(imem,k))/2.
-         qmr_top=(qmr_val(imem,k)+qmr_val(imem,k+1))/2.
-         lnpr_mid=(log(prs_top)+log(prs_mls_mem(k)))/2.
-         up_wt=log(prs_bot)-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_mls_mem(k+1))
-         tl_wt=up_wt+dw_wt
-! o3 term (Units are VMR, calculate layer average)
-         if(use_log_o3) then
-            o3_val_conv = (dw_wt*exp(o3_bot)+up_wt*exp(o3_top))/tl_wt
-         else
-            o3_val_conv = (dw_wt*o3_bot+up_wt*o3_top)/tl_wt
-         endif
+      do k=1,layer_mls
          prior_term=-1.*avg_kernel(key,k)
          if(k.eq.klev_mls) prior_term=1.0_r8-avg_kernel(key,k)
+!
 ! expected retrieval
-         expct_val(imem) = expct_val(imem) + o3_val_conv * &
+         expct_val(imem) = expct_val(imem) + o3_val(imem,k) * &
          avg_kernel(key,k) + prior_term*prior(key,k)
 
 !         write(string1, *)'APM: expected retr ',k,expct_val(imem), &
 !         avg_kernel(key,k), prior(key,k)
 !         call error_handler(E_MSG, routine, string1, source)
-      enddo       
+!
+      enddo
 !      write(string1, *)'APM: FINAL EXPECTED VALUE ',expct_val(imem)
 !      call error_handler(E_MSG, routine, string1, source)
-!      write(string1, *)'  '
-!      call error_handler(E_MSG, routine, string1, source)
+!
+      if(isnan(expct_val(imem))) then
+         zstatus(imem)=20
+         expct_val(:)=missing_r8
+!         write(string1, *) 'APM NOTICE: MLS O3 expected value is NaN '
+!         call error_handler(E_MSG, routine, string1, source)
+         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         return
+      endif
+
       if(expct_val(imem).lt.0) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
-         write(string1, *) 'APM NOTICE: MLS O3 expected value is negative '
-         call error_handler(E_MSG, routine, string1, source)
+!         write(string1, *) 'APM NOTICE: MLS O3 expected value is negative '
+!         call error_handler(E_MSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
@@ -754,7 +658,6 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
 
 ! Clean up and return
    deallocate(o3_val, tmp_val, qmr_val)
-   deallocate(thick)
    deallocate(prs_mls, prs_mls_mem)
 
 end subroutine get_expected_mls_o3_profile

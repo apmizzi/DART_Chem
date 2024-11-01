@@ -20,7 +20,7 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
    [status]=system(command);
    fid=fopen(fileout,'w');
 %
-   command=strcat('ls'," ",'-1'," ",filein,'*');
+   command=strcat('/usr/bin/ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);
@@ -68,9 +68,9 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
    pole_lat=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','POLE_LAT');  
    pole_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','POLE_LON');
 %
-% Process satellite data
+% Process satellite data (OMI SO2 data is top to bottom)
    for ifile=1:nfile
-     file_in=char(file_list(ifile));
+      file_in=char(file_list(ifile));
       if(isempty(file_in))
          continue
       end
@@ -92,7 +92,14 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       day=h5readatt(file_in,field,'GranuleDay');
       month=h5readatt(file_in,field,'GranuleMonth');
       year=h5readatt(file_in,field,'GranuleYear');
-% time(scanline) TAI93 seconds
+% phony_dim_0 = scanline  (1643)
+% phony_dim_1 = pixel     (60)
+% phony_dim_2 = layer     (72)
+% phony_dim_3 = scanline  (1643)
+% phony_dim_4 = pixel     (60)
+% phony_dim_5 =           (4)
+%
+% time(scanline) TAI93 seconds (Seconds since 01-01-1993)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Geolocation Fields/Time';
       time=h5read(file_in,field);
       title=h5readatt(file_in,field,'Title');
@@ -100,7 +107,7 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       units=h5readatt(file_in,field,'Units');
       range=h5readatt(file_in,field,'ValidRange');
       fill=h5readatt(file_in,field,'_FillValue');
-% secs_day(scanline)
+% secs_day(scanline) (Seconds after UTC midnight)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Geolocation Fields/SecondsInDay';
       secs_day=h5read(file_in,field);
       title=h5readatt(file_in,field,'Title');
@@ -151,7 +158,8 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       cld_rad_frac=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');   
       units=h5readatt(file_in,field,'Units');  
-      range=h5readatt(file_in,field,'ValidRange');  
+      range=h5readatt(file_in,field,'ValidRange');
+% OMSO2Readme_V2 recommends using this product      
 % col_amt(pixel,scanline) (Dobson Units)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/ColumnAmountSO2';
       col_amt=h5read(file_in,field);
@@ -159,6 +167,9 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       units=h5readatt(file_in,field,'Units');  
       range=h5readatt(file_in,field,'ValidRange');  
       col_amt(:,:)=col_amt(:,:)*du2molcpm2/msq2cmsq;
+% OMSO2Readme_V2:
+% VCD PBL is lowest 1 km of atmosphere (assumes SO2 constant in PBL and negligible above PBL)
+% In V2 and after, this product is recommended for "top-down" emissions estimates
 % col_amt_pbl(pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/ColumnAmountSO2_PBL';
       col_amt_pbl=h5read(file_in,field);
@@ -170,13 +181,7 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       tmp=size(col_amt_pbl);
       pixel=tmp(1);
       scanline=tmp(2);
-      for i=1:pixel
-         for j=1:scanline
-            if(abs(col_amt_pbl(i,j))<1.e10)
-               col_amt_pbl(:,:)=col_amt_pbl(:,:)*du2molcpm2/msq2cmsq;
-            end
-         end
-      end    
+      col_amt_pbl(:,:)=col_amt_pbl(:,:)*du2molcpm2/msq2cmsq;
 % col_amt_stl(pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/ColumnAmountSO2_STL';
       col_amt_stl=h5read(file_in,field);
@@ -221,9 +226,6 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       missing=h5readatt(file_in,field,'MissingValue');
       units=h5readatt(file_in,field,'Units');
       range=h5readatt(file_in,field,'ValidRange');
-%      for i=1:layer
-%         fprintf('prs i, %d %8.3f \n',i,prs_bot(i))
-%      end
 % layer_wt_pbl(layer,pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/PBLLayerWeight';
       layer_wt_pbl=h5read(file_in,field);
@@ -250,6 +252,10 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       range=h5readatt(file_in,field,'ValidRange');
 % calculate amf_total
       amf_total(:,:)=slnt_col_amt(:,:)./col_amt(:,:);
+%
+% OMSO2Readme_V2 (Rel: Feb 26, 2008; Upd: Feb 29, 2020)
+% Use amf_total(:,:)=0.36  to convert SlantColumnAmountSO2 to ColumnAmountSO2_PBL in v1.2 and 1.3      
+%      amf_total(:,:)=0.36
 % lat(pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Geolocation Fields/Latitude';
       lat=h5read(file_in,field);
@@ -289,8 +295,8 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       end
 %
 % Loop through OMI data
-      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
-      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,1993));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,1993));
       icnt=0;
       for ilin=1:scanline
          yyyy_omi=double(year);
@@ -303,7 +309,7 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
             [yyyy_omi,mn_omi,dy_omi,hh_omi,mm_omi,ss_omi]=incr_time(yyyy_omi, ...
       	    mn_omi,dy_omi,hh_omi,mm_omi,ss_omi);
          end
-         omidate=single(convert_time_ref(yyyy_omi,mn_omi,dy_omi,hh_omi,mm_omi,ss_omi,2010));
+         omidate=single(convert_time_ref(yyyy_omi,mn_omi,dy_omi,hh_omi,mm_omi,ss_omi,1993));
 %
 % Check time
          if(omidate<windate_min | omidate>windate_max)
@@ -312,17 +318,28 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
          for ipxl=1:pixel
 %
 % QA/AC
-            if((ipxl>=1 & ipxl<=5) | (ipxl>=56 & ipxl<=60))
+% From OMI-DUG-3.0 (Dec 3, 2009) (QA/QC reccs not used)
+% Also from OMSO2Readme_V2 (Rel: Feb 26, 2008; Upd: Feb 29, 2020) (QA/QC reccs used)
+%
+            if(ipxl<5 | ipxl>55)
 	       continue
 	    end
-
-            if(flg_rowanom(ipxl,ilin)==1 | flg_saa(ipxl,ilin)==1 | ...
-	       cld_rad_frac(ipxl,ilin)>=0.3 | zenang(ipxl,ilin)>=65.0 | ...
-	       flg_snoice(ipxl,ilin)==2 | amf_total(ipxl,ilin)<=0.3)
+	    
+            if(cld_rad_frac(ipxl,ilin)>=0.3 | amf_total(ipxl,ilin)<=0.3 | ...
+	    zenang(ipxl,ilin)>=65.0 | flg_snoice(ipxl,ilin)==2 | ...
+	    flg_rowanom(ipxl,ilin)==1 | flg_saa(ipxl,ilin)==1)
                continue
             end
 	    
+	    if(isnan(col_amt(ipxl,ilin)) | col_amt(ipxl,ilin)<=0)
+               continue
+            end
+
 	    if(isnan(slnt_col_amt(ipxl,ilin)) | slnt_col_amt(ipxl,ilin)<=0)
+               continue
+            end
+	    
+	    if(isnan(col_amt_pbl(ipxl,ilin)) | col_amt_pbl(ipxl,ilin)<=0)
                continue
             end
 %

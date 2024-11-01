@@ -172,13 +172,9 @@ integer(i8),               intent(inout) :: dart_index       !< This is for mult
 logical,                   intent(in)    :: read_single_vars !< Read one variable at a time
 
 if (task_count() == 1) then
-!   print *, 'APM: Before read_transpose_single_task'
    call read_transpose_single_task(state_ens_handle, name_handle, domain, dart_index)
-!   print *, 'APM: After read_transpose_single_task'
 else
-!   print *, 'APM: Before read_transpose_multi_task'
    call read_transpose_multi_task( state_ens_handle, name_handle, domain, dart_index, read_single_vars)
-!   print *, 'APM: After read_transpose_multi_task'
 
 endif
 
@@ -200,15 +196,11 @@ logical,                   intent(in)    :: write_single_vars !< write one varia
 logical,                   intent(in)    :: write_single_precision
 
 if (task_count() == 1) then
-   print *, 'APM: Before transpose_write_single_task'
    call transpose_write_single_task(state_ens_handle, name_handle, domain, &
                                     dart_index, write_single_precision)
-   print *, 'APM: After transpose_write_single_task'
 else
-   print *, 'APM: Before transpose_write_multi_task'
    call transpose_write_multi_task(state_ens_handle, name_handle, domain, &
                                    dart_index, write_single_vars, write_single_precision)
-   print *, 'APM: After transpose_write_multi_task'
 endif
 
 end subroutine transpose_write
@@ -942,10 +934,8 @@ COPIES: do copy = 1, state_ens_handle%my_num_copies
    start_var = 1 ! read first variable first
 
    ! open netcdf file
-   print *, 'APM: Before first query_read_copy ', query_read_copy(name_handle, copy)
    if (query_read_copy(name_handle, copy)) then
       netcdf_filename = get_restart_filename(name_handle, copy, domain)
-      print *, 'APM: restart filename ', trim(netcdf_filename)
       ret = nf90_open(netcdf_filename, NF90_NOWRITE, ncfile)
       call nc_check(ret, 'read_transpose_single_task: opening', netcdf_filename)
    endif
@@ -954,18 +944,13 @@ COPIES: do copy = 1, state_ens_handle%my_num_copies
 
    iend = istart + block_size -1
 
-   print *, 'APM: Before second  query_read_copy ', query_read_copy(name_handle, copy)
    if (query_read_copy(name_handle, copy)) then
-      print *, 'APM: Before read_variables '
       call read_variables(ncfile, vector, 1, get_num_variables(domain), domain)
-      print *, 'APM: After read_variables '
       
       ! close netcdf file
-      print *, 'APM: Before close file '
       ret = nf90_close(ncfile)
       call nc_check(ret, 'read_transpose_single_task: closing', netcdf_filename)
       state_ens_handle%copies(copy, istart:iend) = vector
-      print *, 'APM: After close file '
       
    endif
 
@@ -1021,34 +1006,26 @@ COPIES: do copy = 1, state_ens_handle%my_num_copies
    ! open netcdf file
    if (query_write_copy(name_handle, copy)) then
       netcdf_filename_out = get_restart_filename(name_handle, copy, domain)
-      print *, 'APM: netcdf_filename ',trim(netcdf_filename_out)
-      print *, 'APM: netcdf_filename ',file_exist(netcdf_filename_out)
       
       if(file_exist(netcdf_filename_out)) then
          ret = nf90_open(netcdf_filename_out, NF90_WRITE, ncfile_out)
          call nc_check(ret, 'transpose_write: opening', trim(netcdf_filename_out))
-!         print *, 'APM: Before nc_write_global_att_clamping ',trim(netcdf_filename_out)
          call nc_write_global_att_clamping(ncfile_out, copy, domain)
-!         print *, 'APM: After nc_write_global_att_clamping ',trim(netcdf_filename_out)
 
          if (overwrite_time_in_output_file) then
-            print *, 'Enter overwrite_time_in_output_file block'
             call get_copy_owner_index(state_ens_handle, copy, time_owner, time_owner_index)
             call get_ensemble_time(state_ens_handle, time_owner_index, dart_time)
             call write_model_time(ncfile_out, dart_time)
-            print *, 'Exit overwrite_time_in_output_file block'
          endif
 
       else ! create and open file
          !>@todo This is grabbing the time assuming the ensemble is var complete.
          !> Should we instead have all copies time in the ensemble handle?
-         print *, 'Before get_copy_owner_index '
          call get_copy_owner_index(state_ens_handle, copy, time_owner, time_owner_index)
          call get_ensemble_time(state_ens_handle, time_owner_index, dart_time)
          ncfile_out = create_and_open_state_output(name_handle, domain, copy, &
          dart_time, write_single_precision)
 
-         print *, 'After get_copy_owner_index '
          !>@todo if multiple domains exist in the same file, only the variables
          !>      from the first domain are created by create_and_open_state_output()
          !>      and since the file exists, the variables for the additional domains
@@ -1059,7 +1036,6 @@ COPIES: do copy = 1, state_ens_handle%my_num_copies
    block_size = get_domain_size(domain)
    iend       = istart + block_size -1
 
-   print *, 'Before query_write_copy test '
    if (query_write_copy(name_handle, copy)) then
 
       vector = state_ens_handle%copies(copy, istart:iend)
@@ -1072,17 +1048,13 @@ COPIES: do copy = 1, state_ens_handle%my_num_copies
       ! actual copy, may need clamping
       clamp_vars = copy_is_clamped(name_handle, copy)
       force_copy = force_copy_back(name_handle, copy)
-      print *, 'APM: Before call write_variables '
-      print *, 'APM: ',ncfile_out,start_var,end_var,domain
       call write_variables(ncfile_out, vector, start_var, end_var, &
                            domain, clamp_vars, force_copy)
-      print *, 'APM: After call write_variables '
 
       ! close netcdf file
       ret = nf90_close(ncfile_out)
       call nc_check(ret, 'transpose_write closing', netcdf_filename_out)
    endif
-   print *, 'After query_write_copy test '
 
 enddo COPIES
 
@@ -1092,8 +1064,6 @@ istart = istart + block_size
 dart_index = istart
 
 deallocate(vector)
-
-print *, 'End of subroutine transpose_write_single_task '
 
 end subroutine transpose_write_single_task
 
@@ -1332,8 +1302,6 @@ ens_size = state_ens_handle%num_copies ! have the extras incase you want to read
 my_pe = state_ens_handle%my_pe
 num_state_variables = get_num_variables(domain)
 
-print *, 'direct_netcdf_mod -> transpose_write_multi_taks: ens_size, my_pe,num_state_variables ', &
-ens_size, my_pe,num_state_variables
 
 ! need to calculate RECEIVING_PE_LOOP start:end, group size, sending_pe start:end for each group.
 ! Flipped send and recv compared to read_transpose.
@@ -1356,29 +1324,19 @@ COPIES : do c = 1, ens_size
 
    ! writers open netcdf output file. This is a copy of the input file
    if (is_writer) then
-      print *, 'Before is_writer if block'
       if ( query_write_copy(name_handle, my_copy)) then
          netcdf_filename_out = get_restart_filename(name_handle, my_copy, domain)
-
-         print *, 'direct_netcdf_mod -> transpose_write_multi_taks: netcdf_filename_out ', &
-              trim(netcdf_filename_out), file_exist(netcdf_filename_out)
          
          if(file_exist(netcdf_filename_out)) then
             ret = nf90_open(netcdf_filename_out, NF90_WRITE, ncfile_out)
-            print *,'Before nc_check '
             call nc_check(ret, 'transpose_write: opening ', trim(netcdf_filename_out))
-            print *,'After nc_check '
-            print *,'Before nc_write_global_att_clamping 2 '
             call nc_write_global_att_clamping(ncfile_out, my_copy, domain)
-            print *,'After nc_write_global_att_clamping 2 '
 
-            print *,'Before overwrite_time_in_output block '
             if (overwrite_time_in_output_file) then
                call get_copy_owner_index(state_ens_handle, my_copy, time_owner, time_owner_index)
                call get_ensemble_time(state_ens_handle, time_owner_index, dart_time)
                call write_model_time(ncfile_out, dart_time)
             endif
-            print *,'After overwrite_time_in_output block '
 
          else ! create and open output file
 
@@ -1387,16 +1345,13 @@ COPIES : do c = 1, ens_size
             call get_copy_owner_index(state_ens_handle, my_copy, time_owner, time_owner_index)
             call get_ensemble_time(state_ens_handle, time_owner_index, dart_time)
 
-            print *,'Create and open ',trim(netcdf_filename_out)
             ncfile_out = create_and_open_state_output(name_handle, domain, my_copy, &
             dart_time, write_single_precision)
          endif
       endif
-      print *, 'After is_writer if block'
       
    endif
 
-   print *,'Before VARIABLE LOOP '
    VARIABLE_LOOP: do dummy_loop = 1, num_state_variables
       if (start_var > num_state_variables) exit ! instead of using do while loop
 
@@ -1417,7 +1372,6 @@ COPIES : do c = 1, ens_size
 
       start_rank =  get_start_rank(start_var, domain)
 
-      print *,'Before SENDING PE LOOP '
       SENDING_PE_LOOP: do sending_pe = send_start, send_end
 
          ! work out elm_count on the sending pe
@@ -1429,18 +1383,15 @@ COPIES : do c = 1, ens_size
 
          if (my_pe /= sending_pe ) then ! post recieves
 
-            print *,'Before sending_pe block 1 '
             if (query_write_copy(name_handle, my_copy)) then
                call recv_variables_to_write(state_ens_handle, sending_pe, i, elm_count, &
                block_size, var_block)
             endif
-            print *,'After sending_pe block 1 '
 
          else ! send to the collector
 
             ensemble_member =  copies_written + 1
 
-            print *,'Before receive_pe loop '
             do recv_pe = recv_start, recv_end ! no if statement because everyone sends
 
                if (query_write_copy(name_handle, recv_pe + copies_written + 1)) then
@@ -1456,7 +1407,6 @@ COPIES : do c = 1, ens_size
                ensemble_member = ensemble_member + 1
 
             enddo
-            print *,'After receive_pe loop '
 
             ! update starting point
             istart = istart + elm_count
@@ -1464,24 +1414,14 @@ COPIES : do c = 1, ens_size
          endif
 
       enddo SENDING_PE_LOOP
-      print *,'After SENDING PE LOOP '
 
       if (is_writer) then ! I am a writer
          if ( query_write_copy(name_handle, my_copy)) then
             !var_block = MISSING_R8  ! if you want to create a file for bitwise testing
-            print *,'Before copy_is_clamped '
             clamp_vars = copy_is_clamped(name_handle, my_copy)
-            print *,'After copy_is_clamped '
-            print *,'Before force_copy_back '
             force_copy = force_copy_back(name_handle, my_copy)
-            print *,'After force_copy_back '
-            print *,'Before write_variables '
-            print *, 'ncfile_out ',ncfile_out,trim(netcdf_filename_out)
-            print *, 'start_var,end_var,domain,clamp_vars,force_copy ', &
-            start_var,end_var,domain,clamp_vars,force_copy
             call write_variables(ncfile_out, var_block, start_var, end_var, &
             domain, clamp_vars, force_copy)
-            print *,'After write_variables '
             deallocate(var_block)
          endif
       endif
@@ -1489,7 +1429,6 @@ COPIES : do c = 1, ens_size
       start_var = end_var + 1
 
    enddo VARIABLE_LOOP
-   print *,'After VARIABLE LOOP '
 
    ! keep track of how many copies have been written
    copies_written = copies_written + task_count()
@@ -1506,7 +1445,6 @@ enddo COPIES
 
 dart_index = istart
 
-print *,'End of subroutine transpose_write_multi_task '
 
  end subroutine transpose_write_multi_task
 

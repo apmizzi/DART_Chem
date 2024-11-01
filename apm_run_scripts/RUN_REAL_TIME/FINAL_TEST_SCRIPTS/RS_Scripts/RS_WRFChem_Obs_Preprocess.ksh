@@ -48,7 +48,7 @@
 #PBS -l walltime=${GENERAL_TIME_LIMIT}
 #PBS -q ${GENERAL_JOB_CLASS}
 #PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=san
+#PBS -l select=${GENERAL_NODES}:ncpus=1:model=ivy
 #PBS -l site=needed=/home1+/nobackupp11
 ./wrf_dart_obs_preprocess ${DAY_GREG} ${SEC_GREG} > index.html 2>&1
 export RC=\$?
