@@ -330,7 +330,7 @@ program mls_hno3_profile_ascii_to_obs
          read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
          cycle
       endif
-      print *, 'MLS HNO3: Completed data read'      
+      print *, 'MLS HNO3: Completed data read'
 !
 ! Obs thinning test
       obs_accept=obs_accept+1
@@ -342,19 +342,19 @@ program mls_hno3_profile_ascii_to_obs
          lat_obs_r8=lat_obs
 !      
 ! Loop through the profile retrievals
-         do k=1,nlay_obs
-            ilay=k
+! (prs_obs(5)=215.55 hPa; prs_obs(18)=1.47 hPa)
+         do ilay=5,18
             if(all(avgk_obs(ilay,1:nlay_obs).eq.0.)) then
                cycle
             endif
-            if(hno3_obs(k).lt.0. .or. prior_obs(k).lt.0. .or. &
-            isnan(hno3_obs(k)) .or. isnan(prior_obs(k)) .or. &
-            any(isnan(avgk_obs(k,:))) .or. all(avgk_obs(k,:).eq.0)) then
-               print *, 'hno3, prior, cov < 0 ',k,nlay_obs,hno3_obs(k),prior_obs(k),cov_obs(k,k)
+!
+            if(hno3_obs_err(ilay).le.0. .or. isnan(hno3_obs_err(ilay)) .or. &
+            hno3_obs(ilay).le.0. .or. isnan(hno3_obs(ilay)) .or. &
+            prior_obs(ilay).le.0. .or. isnan(prior_obs(ilay))) then
                cycle
             endif
 !
-! Set data for writing obs_sequence file
+! Set data for writing obs_sequence file            
             sum_accept=sum_accept+1
             qc_count=qc_count+1
             avgk_obs_r8(1:nlay_obs)=avgk_obs(ilay,1:nlay_obs)

@@ -20,7 +20,7 @@ function mls_hno3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
    [status]=system(command);
    fid=fopen(fileout,'w');
 %
-   command=strcat('ls'," ",'-1'," ",filein,'*');
+   command=strcat('/usr/bin/ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);
@@ -44,6 +44,7 @@ function mls_hno3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
 %
 % Convert DU to molecules/m^2
    du2molcpm2=2.6867e20;
+%
    day_secs_beg=whh_mn*60.*60. + wmm_mn*60. + wss_mn;
    day_secs_end=whh_mx*60.*60. + wmm_mx*60. + wss_mx;
 %
@@ -68,7 +69,7 @@ function mls_hno3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
    pole_lon=ncreadatt(strcat(path_mdl,'/',file_mdl),'/','POLE_LON');
 %
 % Get the averaging kernel data
-   file_avgk_path='/nobackupp11/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mls_o3_hdf_data/Averaging_Kernels_v4';
+   file_avgk_path='/nobackupp28/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/mls_o3_hdf_data/Averaging_Kernels_v4';
    file_avgk_1d0N='/MLS_v4_1D_AVK_0N.nc4';
    file_avgk_1d35N='/MLS_v4_1D_AVK_35N.nc4';
    file_avgk_1d70N='/MLS_v4_1D_AVK_70N.nc4';
@@ -237,6 +238,7 @@ function mls_hno3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
       field='/HDFEOS/SWATHS/HNO3/Geolocation Fields/Pressure';
       prs_lay=h5read(file_in,field);
       units=h5readatt(file_in,field,'Units');
+%      fprintf('%13.8f \n',prs_lay(:))
 %
 % zenang (ntime)
       field='/HDFEOS/SWATHS/HNO3/Geolocation Fields/SolarZenithAngle';
@@ -258,17 +260,27 @@ function mls_hno3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
       field='/HDFEOS/SWATHS/HNO3-APriori/Data Fields/L2gpValue';
       hno3_prior=h5read(file_in,field);
 %
-% HNO3 Prior Error (ntime)  
+% HNO3 A Prior Error (ntime)  
       field='/HDFEOS/SWATHS/HNO3-APriori/Data Fields/L2gpPrecision';
       hno3_prior_err=h5read(file_in,field);
+%
+% HNO3 A Prior Convergence (ntime)  
+      field='/HDFEOS/SWATHS/HNO3-APriori/Data Fields/Convergence';
+      hno3_prior_conv=h5read(file_in,field);
 %
 % HNO3 Prior Quality (ntime)
       field='/HDFEOS/SWATHS/HNO3-APriori/Data Fields/Quality';
       hno3_prior_qual=h5read(file_in,field);
 %
+% HNO3 Prior Status (ntime)
+      field='/HDFEOS/SWATHS/HNO3-APriori/Data Fields/Status';
+      hno3_prior_status=h5read(file_in,field);
+%
 % Loop through MLS data
-      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
-      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn, ...
+      whh_mn,wmm_mn,wss_mn,2000));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx, ...
+      whh_mx,wmm_mx,wss_mx,2000));
       icnt=0;
       for itim=1:ntime
          curr_hrs=fix((time(itim)-tai93_0UTC)/3600);
@@ -283,7 +295,7 @@ function mls_hno3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
          mm_mls=curr_min;
          ss_mls=round(curr_sec);
          mlsdate=single(convert_time_ref(yyyy_mls,mn_mls, ...
-         dy_mls,hh_mls,mm_mls,ss_mls,2010));
+         dy_mls,hh_mls,mm_mls,ss_mls,2000));
          if(hh_mls==24 | mm_mls==60 | ss_mls==60)	 
             yyyy_tp=yyyy_mls;
             mn_tp=mn_mls;
@@ -297,32 +309,36 @@ function mls_hno3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
 %
 % Check time
          if(mlsdate<windate_min | mlsdate>windate_max)
-%            fprintf('min %d, mls %d, max %d \n',windate_min,mlsdate,windate_max)
             continue
          end
 %
-% QA/QC
-%
-         if(zenang(itim)>=80.0)
-%            fprintf('zenang %6.2f \n',zenang(itim))
+% QA/QC      
+         if(rem(hno3_obs_status(itim),2)~=0)
             continue
          end
-%         if(isnan(hno3_col_obs(itim)))
+%
+         if(hno3_obs_qual(itim)<=0.8)
+            continue
+         end
+%
+	 if(hno3_obs(4,itim)<-2.0 | hno3_obs(5,itim)<-1.6 | ...
+         hno3_obs(6,itim)<-1.6 | hno3_obs(7,itim)<-1.6 | ...
+         hno3_obs(8,itim)<-1.6)
+            continue
+         end
+%
+% Used in obs_converter	 
+%         iflg=0	 
+%         for ilay=5:18
+%           if(hno3_obs_err(ilay,itim)<=0 | isnan(hno3_obs(ilay,itim)) | ...
+%           hno3_prior(ilay,itim)<=0 | isnan(hno3_prior(ilay,itim)))
+%               iflg=1
+%	       break
+%            end
+%         end
+%	 if(iflg==1)
 %            continue
-%         end
-%         for ilay=1:layer	 
-%            if(isnan(hno3_obs(ilay,itim)))
-%	       fprinf('hno3_obs is NaN %d \n',hno3_obs(ilay,itim)) 
-%               continue
-%            end
-%         end
-%	 
-%         for ilay=1:layer	 
-%            if(hno3_obs(ilay,itim)<0.0)
-%               fprintf('hno3_obs is negative \n')
-%               continue
-%            end
-%         end
+%	 end
 %
 % Check domain
 % Input grid needs to be in degrees
@@ -380,11 +396,6 @@ function mls_hno3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
             reject=1;
          end
          if(reject==1)
-%            fprintf('x_mdl_min, x_obs, x_mdl_max: %6.2f %6.2f %6.2f \n',xmdl_sw, ...
-%            x_obser,xmdl_mx)
-%            fprintf('y_mdl_min, y_obs, y_mdl_max: %6.2f %6.2f %6.2f \n',lat_mdl(1,1), ...
-%            y_obser,lat_mdl(nx_mdl,ny_mdl))
-%            fprintf('i_min %d j_min %d \n',i_min,j_min)
             continue
          end
          if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
@@ -404,12 +415,44 @@ function mls_hno3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
 	 elseif (y_obser>35 & y_obser<=70.)
            swt=70.-y_obser;
 	   nwt=y_obser-35.;
-	   avgk_obs=(swt*avgk_lay_1d35N + nwt*avgk_lay_1d70N)/35.
+	   avgk_obs=(swt*avgk_lay_1d35N + nwt*avgk_lay_1d70N)/35.;
 	   ret_lay_obs=(swt*ret_lay_35N + nwt*ret_lay_70N)/35.;
 	   tru_lay_obs=(swt*tru_lay_35N + nwt*tru_lay_70N)/35.;
 	 else
            fprintf('APM: Observation latitude is outside MLS AvgK latitude range \n')
 	   continue
+         end
+%
+% Check the averaging kernel
+	 iflg=0
+         for ilay=1:layer
+            if(isnan(ret_lay_obs(ilay)) | isnan(tru_lay_obs(ilay)) | ...
+            ret_lay_obs(ilay)<0 | tru_lay_obs(ilay)<0)
+               iflg=1
+               break
+            end
+	 end
+         if(iflg==1)
+            continue  
+         end
+	 iflg=0
+	 izro=1
+         for ilay=1:layer
+            for jlay=1:layer
+               if(isnan(avgk_obs(ilay,jlay)))
+                  iflg=1
+                  break
+               end
+               if(avgk_obs(ilay,jlay)~=0)
+                  izro=0
+               end
+            end
+	    if(iflg==1)
+               break
+            end
+         end
+         if(iflg==1 | izro==1)
+            continue  
          end
 %
 % Save data to ascii file
@@ -436,7 +479,7 @@ function mls_hno3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
          fprintf(fid,'\n');
          fprintf(fid,'%14.8g \n',hno3_prior_err(itim));
          for k=1:ret_nlay
-            fprintf(fid,'%14.8g ',avgk_obs(k,1:tru_nlay))
+            fprintf(fid,'%14.8g ',avgk_obs(k,1:tru_nlay));
             fprintf(fid,'\n');
 	 end
 %         fprintf(fid,'%14.8g \n',hno3_col_obs(itim));

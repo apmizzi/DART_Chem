@@ -342,15 +342,15 @@ program mls_o3_profile_ascii_to_obs
          lat_obs_r8=lat_obs
 !      
 ! Loop through the profile retrievals
-         do k=1,nlay_obs
-            ilay=k
+! (prs_obs(4)=316. hPa; prs_obs(27)=.0215 hPa)
+         do ilay=4,27
             if(all(avgk_obs(ilay,1:nlay_obs).eq.0.)) then
                cycle
             endif
-            if(o3_obs(k).lt.0. .or. prior_obs(k).lt.0. .or. &
-            isnan(o3_obs(k)) .or. isnan(prior_obs(k)) .or. &
-            any(isnan(avgk_obs(k,:))) .or. all(avgk_obs(k,:).eq.0)) then
-               print *, 'o3, prior, cov < 0 ',k,nlay_obs,o3_obs(k),prior_obs(k),cov_obs(k,k)
+!            
+            if(o3_obs_err(ilay).le.0. .or. isnan(o3_obs_err(ilay)) .or. &
+            o3_obs(ilay).le.0. .or. isnan(o3_obs(ilay)) .or. &
+            prior_obs(ilay).le.0. .or. isnan(prior_obs(ilay))) then
                cycle
             endif
 !

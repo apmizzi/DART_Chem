@@ -312,12 +312,14 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
    
    real(r8) :: eps, AvogN, Rd, Ru, Cp, grav, msq2cmsq
    real(r8) :: missing,so2_min,tmp_max
-   real(r8) :: level,del_prs,prior_term,pbl_sum
+   real(r8) :: level,del_prs,prior_term,hgt_sum
+   real(r8) :: mas_sum_pp,mas_sum_dwn
    real(r8) :: tmp_vir_k,tmp_vir_kp
    real(r8) :: mloc(3),obs_prs
-   real(r8) :: so2_val_conv, VMR_conv
+   real(r8) :: VMR_conv
    real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
    real(r8) :: lon_obs,lat_obs,pi,rad2deg
+   real(r8) :: so2_val_conv
 
    real(r8), dimension(ens_size) :: so2_mdl_tmp, tmp_mdl_tmp, qmr_mdl_tmp, prs_mdl_tmp
    real(r8), dimension(ens_size) :: so2_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
@@ -378,7 +380,7 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
    allocate(prs_omi(level_omi))
    allocate(prs_omi_mem(level_omi))
    prs_omi(1:level_omi)=pressure(key,1:level_omi)*100.
-
+!
 ! Get location infomation
 
    mloc = get_location(location)
@@ -433,7 +435,7 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          exit
       endif
    enddo
-
+!
 !   write(string1, *) 'APM: so2 lower bound ',key,so2_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
 !   write(string1, *) 'APM: tmp lower bound ',key,tmp_mdl_1
@@ -442,7 +444,7 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 !   call error_handler(E_MSG, routine, string1, source)
 !   write(string1, *) 'APM: prs lower bound ',key,prs_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
-
+!
    so2_mdl_n(:)=missing_r8
    tmp_mdl_n(:)=missing_r8
    qmr_mdl_n(:)=missing_r8
@@ -476,7 +478,7 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          exit
       endif
    enddo
-
+!
 !   write(string1, *) 'APM: so2 upper bound ',key,so2_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
 !   write(string1, *) 'APM: tmp upper bound ',key,tmp_mdl_n
@@ -485,7 +487,7 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 !   call error_handler(E_MSG, routine, string1, source)
 !   write(string1, *) 'APM: prs upper bound ',key,prs_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-   
+!   
 ! Get values at OMI pressure levels (Pa)
 
    allocate(so2_val(ens_size,level_omi))
@@ -517,11 +519,13 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          endif
       enddo
 !
-!      write(string1, *)'APM: so2 ',key,k,so2_val(1,k)
+!      write(string1, *)'APM: prs ',k,prs_omi(k)
 !      call error_handler(E_MSG, routine, string1, source)
-!      write(string1, *)'APM: tmp ',key,k,tmp_val(1,k)
+!      write(string1, *)'APM: so2 ',k,so2_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
-!      write(string1, *)'APM: qmr ',key,k,qmr_val(1,k)
+!      write(string1, *)'APM: tmp ',k,tmp_val(1,k)
+!      call error_handler(E_MSG, routine, string1, source)
+!      write(string1, *)'APM: qmr ',k,qmr_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
 !
 ! Check data for missing values      
@@ -534,6 +538,11 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
             'APM: Input data has missing values '
             call error_handler(E_MSG, routine, string1, source)
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+            deallocate(prs_omi)
+            deallocate(prs_omi_mem)
+            deallocate(so2_val)
+            deallocate(tmp_val)
+            deallocate(qmr_val)
             return
          endif
       enddo
@@ -619,6 +628,11 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          zstatus(:)=20
          expct_val(:)=missing_r8
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         deallocate(prs_omi)
+         deallocate(prs_omi_mem)
+         deallocate(so2_val)
+         deallocate(tmp_val)
+         deallocate(qmr_val)
          return
       endif
    enddo
@@ -627,13 +641,11 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
    istatus(:)=0
    zstatus(:)=0.
    expct_val(:)=0.0
-   allocate(thick(layer_omi))
-
    prs_omi_mem(:)=prs_omi(:)
+   allocate(thick(layer_omi))
    do imem=1,ens_size
-
+!
 ! Calculate the thicknesses (grid is top to bottom)
-
       thick(:)=0.
       do k=1,layer_omi
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
@@ -644,38 +656,10 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
          thick(k)   = Rd*(dw_wt*tmp_vir_kp + up_wt*tmp_vir_k)/tl_wt/grav* &
          log(prs_omi_mem(k+1)/prs_omi_mem(k))
-
-!         write(string1, *) &
-!         'APM: Key, Thickness calcs ', k, thick(k), up_wt, dw_wt, tmp_vir_k,tmp_vir_kp, &
-!         prs_omi_mem(k), prs_omi_mem(k+1)     
-!         call error_handler(E_MSG, routine, string1, source)
-         
       enddo
-!
-! Find PBL index      
-      pbl_sum=0.
-      pbl_index=1
-      do k=1,layer_omi
-         kk=layer_omi-k+1
-         pbl_sum=pbl_sum+thick(kk)
-         if(pbl_sum.ge.1000.) then
-            pbl_index=kk
-            exit
-         endif
-      enddo
-      if(pbl_index.lt.layer_omi/2 .or. pbl_index.ge.layer_omi) then
-         zstatus(imem)=20
-         expct_val(:)=missing_r8
-         write(string1, *) &
-         'APM NOTICE: OMI SO2 PBL COL - pbl_index is unreasonable ',pbl_index
-         call error_handler(E_ALLMSG, routine, string1, source)
-         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-         return
-      endif
-      
+!      
 ! Process the vertical summation (OMI SO2 units are mole per m^2)
-
-      do k=pbl_index,layer_omi
+      do k=1,level_omi-1
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
          up_wt=log(prs_omi_mem(k+1))-lnpr_mid
          dw_wt=lnpr_mid-log(prs_omi_mem(k))
@@ -684,24 +668,22 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 ! Convert from VMR to molar density (mol/m^3)
          if(use_log_so2) then
             so2_val_conv = (up_wt*exp(so2_val(imem,k))+dw_wt*exp(so2_val(imem,k+1)))/tl_wt * &
-            (up_wt*prs_omi_mem(k)+dw_wt*prs_omi_mem(k+1)) / &
+            (up_wt*prs_omi_mem(k)+dw_wt*prs_omi_mem(k)) / &
             (Ru*(up_wt*tmp_val(imem,k)+dw_wt*tmp_val(imem,k+1)))
          else
             so2_val_conv = (up_wt*so2_val(imem,k)+dw_wt*so2_val(imem,k+1))/tl_wt * &
             (up_wt*prs_omi_mem(k)+dw_wt*prs_omi_mem(k+1)) / &
-            (Ru*(up_wt*tmp_val(imem,k)+dw_wt*tmp_val(imem,k+1)))
+            (Ru*(up_wt*tmp_val(imem,k)+dw_wt*tmp_val(imem,k)))
          endif
- 
+!
 ! Get expected observation (molec/cm^2)
-
          expct_val(imem) = expct_val(imem) + thick(k) * so2_val_conv * &
          AvogN/msq2cmsq * scat_wt(key,k)
-
+!
 !         write(string1, *) &
 !         'APM: Key, Expected Value Terms ',k, expct_val(imem), thick(k), &
 !         thick(k)*so2_val_conv, so2_val_conv, scat_wt(key,k)
 !         call error_handler(E_MSG, routine, string1, source)
-
       enddo
 !      write(string1, *) &
 !      'APM: Expected Value is ',imem, expct_val(imem)
@@ -714,6 +696,12 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          'APM NOTICE: OMI SO2 expected value is NaN '
          call error_handler(E_MSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         deallocate(prs_omi)
+         deallocate(prs_omi_mem)
+         deallocate(so2_val)
+         deallocate(tmp_val)
+         deallocate(qmr_val)
+         deallocate(thick)
          return
       endif
 !
@@ -724,6 +712,12 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          'APM NOTICE: OMI SO2 expected value is negative '
          call error_handler(E_MSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         deallocate(prs_omi)
+         deallocate(prs_omi_mem)
+         deallocate(so2_val)
+         deallocate(tmp_val)
+         deallocate(qmr_val)
+         deallocate(thick)
          return
       endif
    enddo
@@ -732,7 +726,7 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
    deallocate(so2_val, tmp_val, qmr_val)
    deallocate(thick)
    deallocate(prs_omi, prs_omi_mem)
-
+   
 end subroutine get_expected_omi_so2_pbl_col
 
 !-------------------------------------------------------------------------------

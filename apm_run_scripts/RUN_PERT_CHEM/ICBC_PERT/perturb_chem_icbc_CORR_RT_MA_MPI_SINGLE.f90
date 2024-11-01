@@ -503,7 +503,7 @@ character(len=*), parameter :: revdate  = ''
                                   do k=1,nz
                                      do j=1,bdy_dims(ibdy)
                                         chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k,imem)+(1.-wgt_bc_mid)* &
-                                        chem_fac_new(i,j,k,imem)
+                                        chem_fac_end(i,j,k,imem)
                                         if(chem_databdy(j,k,h,1)*(1.+chem_fac_old(i,j,k,imem)) .le. 0.) then
                                            chem_databdy(j,k,h,1)=fac_min*chem_databdy(j,k,h,1)
                                         else
@@ -529,7 +529,7 @@ character(len=*), parameter :: revdate  = ''
                                   do k=1,nz
                                      do j=1,bdy_dims(ibdy)
                                         chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k,imem)+(1.-wgt_bc_mid)* &
-                                        chem_fac_new(i,j,k,imem)
+                                        chem_fac_end(i,j,k,imem)
 !
                                         chem_databdy(j,k,h,1)=chem_databdy(j,k,h,1)* &
                                         (1.+(chem_fac_old(i,j,k,imem)+chem_fac_mid)/2.) + &
@@ -555,7 +555,7 @@ character(len=*), parameter :: revdate  = ''
                                   do k=1,nz
                                      do i=1,bdy_dims(ibdy)
                                         chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k,imem)+(1.-wgt_bc_mid)* &
-                                        chem_fac_new(i,j,k,imem)
+                                        chem_fac_end(i,j,k,imem)
                                         if(chem_databdy(i,k,h,1)*(1.+chem_fac_old(i,j,k,imem)).le.0.) then
                                            chem_databdy(i,k,h,1)=fac_min*chem_databdy(i,k,h,1)
                                         else
@@ -581,7 +581,7 @@ character(len=*), parameter :: revdate  = ''
                                   do k=1,nz
                                      do i=1,bdy_dims(ibdy)
                                         chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k,imem)+(1.-wgt_bc_mid)* &
-                                        chem_fac_new(i,j,k,imem)
+                                        chem_fac_end(i,j,k,imem)
 !
                                         chem_databdy(j,k,h,1)=chem_databdy(i,k,h,1)* &
                                         (1.+(chem_fac_old(i,j,k,imem)+chem_fac_mid)/2.) + &

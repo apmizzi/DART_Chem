@@ -182,7 +182,7 @@ function omi_no2_domino_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_m
       amf_total=ncread(file_in,field);
       units=ncreadatt(file_in,field,'units');
 % amf_geom(npxl,nscan,ntime) ( )
-      field='/PRODUCT/amf_total';
+      field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/amf_geo';
       amf_geom=ncread(file_in,field);
       units=ncreadatt(file_in,field,'units');
 % cloud_radiance_fraction_no2(npxl,nscan,ntime) ( )
