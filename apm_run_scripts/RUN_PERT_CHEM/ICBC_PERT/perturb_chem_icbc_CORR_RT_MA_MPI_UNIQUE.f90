@@ -115,26 +115,26 @@ program main
    rewind(unit)   
    read(unit,perturb_chem_icbc_corr_nml)
    close(unit)
-!   if(rank.eq.0) then
-!      print *, 'date               ',date
-!      print *, 'nx                 ',nx
-!      print *, 'ny                 ',ny
-!      print *, 'nz                 ',nz
-!      print *, 'nchem_spcs         ',nchem_spcs
-!      print *, 'pert_path_old     ',trim(pert_path_old)
-!      print *, 'pert_path_new     ',trim(pert_path_new)
-!      print *, 'num_mems           ',nnum_mems
-!      print *, 'wrfinput_fld_new   ',trim(wrfinput_fld_new)
-!      print *, 'wrfinput_err_new   ',trim(wrfinput_err_new)
-!      print *, 'wrfbdy_fld_new     ',trim(wrfbdy_fld_new)
-!      print *, 'sprd_chem          ',sprd_chem
-!      print *, 'corr_lngth_hz      ',corr_lngth_hz
-!      print *, 'corr_lngth_vt      ',corr_lngth_vt
-!      print *, 'corr_lngth_tm      ',corr_lngth_tm
-!      print *, 'corr_tm_delt       ',corr_tm_delt
-!      print *, 'sw_corr_tm         ',sw_corr_tm
-!      print *, 'sw_seed            ',sw_seed
-!   endif
+   if(rank.eq.0) then
+      print *, 'date               ',date
+      print *, 'nx                 ',nx
+      print *, 'ny                 ',ny
+      print *, 'nz                 ',nz
+      print *, 'nchem_spcs         ',nchem_spcs
+      print *, 'pert_path_old     ',trim(pert_path_old)
+      print *, 'pert_path_new     ',trim(pert_path_new)
+      print *, 'num_mems           ',nnum_mems
+      print *, 'wrfinput_fld_new   ',trim(wrfinput_fld_new)
+      print *, 'wrfinput_err_new   ',trim(wrfinput_err_new)
+      print *, 'wrfbdy_fld_new     ',trim(wrfbdy_fld_new)
+      print *, 'sprd_chem          ',sprd_chem
+      print *, 'corr_lngth_hz      ',corr_lngth_hz
+      print *, 'corr_lngth_vt      ',corr_lngth_vt
+      print *, 'corr_lngth_tm      ',corr_lngth_tm
+      print *, 'corr_tm_delt       ',corr_tm_delt
+      print *, 'sw_corr_tm         ',sw_corr_tm
+      print *, 'sw_seed            ',sw_seed
+   endif
    nxy=nx*ny
    nzp=nz+1
    num_mems=nint(nnum_mems)
@@ -167,10 +167,17 @@ program main
 !
 ! Calculate number of horizontal grid points to be correlated 
    ngrid_corr=ceiling(zfac*corr_lngth_hz/grid_length)+1
+
+   call cpu_time(cpu_str)
+   if(rank.eq.0) print *, 'APM: Before vertical transform: time str ', cpu_str
 !
 ! Construct the vertical weights
    call vertical_transform(A_chem,geo_ht,nx,ny,nz,nz,corr_lngth_vt)
    deallocate(geo_ht)
+
+   call cpu_time(cpu_end)
+   cpu_dif=cpu_end-cpu_str
+   if(rank.eq.0) print *, 'APM: After vertical transform: time dif', cpu_dif
 !
 ! Allocate processors (reserve tasks 0 and 1)
    allocate(itask(num_mems,nchem_spcs))
@@ -255,6 +262,8 @@ program main
    endif
 !
 ! Loop through member and species. Assign one member/species to each processor
+! Note: the perturb_fields step is very slow; need to have at least (num_mems * nchem_spcs) + 2
+! processors   
    if(rank.ne.0 .and. rank.ne.1) then   
       allocate(chem_fac_old(nx,ny,nz))
       allocate(chem_fac_new(nx,ny,nz))
@@ -263,8 +272,11 @@ program main
       do imem=1,num_mems
          do isp=1,nchem_spcs
             if(rank.eq.itask(imem,isp)) then
-               print *, 'RANK: ',itask(imem,isp),' imem,isp ',imem,isp
-               if(.not.sw_corr_tm) then            
+               if (rank.eq.3) then
+                  call cpu_time(cpu_str)
+                 print *, 'APM: Before pert_flds rank,imem,isp ',rank,imem,isp,cpu_str
+               endif
+               if(.not.sw_corr_tm) then
                   allocate(tmp_arry(nx*ny*nz))
                   call mpi_recv(tmp_arry,nx*ny*nz,MPI_FLOAT, &
                   0,1,MPI_COMM_WORLD,stat,ierr)
@@ -272,14 +284,9 @@ program main
                   deallocate(tmp_arry)
                endif
                if(sw_seed) call init_const_random_seed(rank,date)
-               call cpu_time(cpu_str)
-               print *, 'RANK: ',itask(imem,isp),'Before perturb_fields '
                call perturb_fields(chem_fac_old,chem_fac_new, &
                lat,lon,A_chem,nx,ny,nz,nchem_spcs,ngrid_corr,sw_corr_tm, &
                corr_lngth_hz,rank)
-               call cpu_time(cpu_end)
-               cpu_dif=cpu_end-cpu_str
-               print *,'RANK:  ',itask(imem,isp),' perturb_fields time ',cpu_dif
 !
 ! Impose temporal correlations
                wgt_bc_str=exp(-0.0*corr_tm_delt/corr_lngth_tm)
@@ -294,6 +301,11 @@ program main
                call mpi_send(tmp_arry,nx*ny*nz,MPI_FLOAT, &
                1,21,MPI_COMM_WORLD,ierr)
                deallocate(tmp_arry)
+               if (rank.eq.3) then
+                  call cpu_time(cpu_end)
+                  cpu_dif=cpu_end-cpu_str
+                  print *, 'APM: After pert_flds rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+               endif
             endif
          enddo
       enddo
@@ -303,7 +315,11 @@ program main
          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
          if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
          do isp=1,nchem_spcs
-           if(rank.eq.itask(imem,isp)) then
+            if(rank.eq.itask(imem,isp)) then
+               if (rank.eq.3) then
+                  call cpu_time(cpu_str)
+                  print *, 'APM: Before smoothing rank,imem,isp ',rank,imem,isp,cpu_str
+               endif
                allocate(tmp_arry(nx*ny*nz))
                call mpi_recv(tmp_arry,nx*ny*nz,MPI_FLOAT, &
                0,1,MPI_COMM_WORLD,stat,ierr)
@@ -339,7 +355,7 @@ program main
                   if(ibdy.eq.3) allocate(chem_data_sav_2(bdy_dims(ibdy),nz,nhalo,nt,2))
                   allocate(chem_databdy(bdy_dims(ibdy),nz,nhalo,nt))
                   allocate(tmp_arry(bdy_dims(ibdy)*nz*nhalo*nt))
-                  call mpi_recv(tmp_arry,nx*ny*nz, &
+                  call mpi_recv(tmp_arry,bdy_dims(ibdy)*nz*nhalo*nt, &
                   MPI_FLOAT,0,ibdy+2,MPI_COMM_WORLD,stat,ierr)
                   call apm_unpack_4d(tmp_arry,chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
                   deallocate(tmp_arry)
@@ -466,6 +482,11 @@ program main
                enddo
                deallocate(chem_data_sav_1)
                deallocate(chem_data_sav_2)
+               if (rank.eq.3) then
+                  call cpu_time(cpu_end)
+                  cpu_dif=cpu_end-cpu_str
+                  print *, 'APM: After smoothing rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+               endif
             endif
          enddo
       enddo
@@ -477,6 +498,8 @@ program main
 !
 ! Save the correlation factors for next cycle
    if (rank.eq.1) then
+      call cpu_time(cpu_str)
+      print *, 'APM: Before final writes ',rank,imem,isp,cpu_str
       unitb=40
       filenm=trim(pert_path_new)//'/pert_chem_icbc'
       open(unit=unitb,file=trim(filenm),form='unformatted',status='unknown')
@@ -520,7 +543,7 @@ program main
                allocate(tmp_arry(bdy_dims(ibdy)*nz*nhalo*nt))
                call mpi_recv(tmp_arry,bdy_dims(ibdy)*nz*nhalo*nt,MPI_FLOAT, &
                itask(imem,isp),ibdy+22,MPI_COMM_WORLD,stat,ierr)
-               call apm_pack_4d(tmp_arry,chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
+               call apm_unpack_4d(tmp_arry,chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
                call put_WRFCHEM_icbc_data(wrfchem_file_bc,ch_spcs, &
                chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
                deallocate(chem_databdy)
@@ -530,6 +553,9 @@ program main
       enddo
       deallocate(chem_data3d)
       close(unitb)
+      call cpu_time(cpu_end)
+      cpu_dif=cpu_end-cpu_str
+      print *, 'APM: After final writes ',rank,imem,isp,cpu_end,cpu_dif
    endif
    deallocate(ch_chem_spc)
    deallocate(A_chem)
@@ -634,11 +660,13 @@ corr_lngth_hz,rank)
 !
    integer                             :: i,j,k,isp,ii,jj,kk,nxy
    integer                             :: ii_str,ii_end,jj_str,jj_end,icnt,ncnt
+   integer                             :: ierr
    integer,allocatable,dimension(:)    :: indx,jndx
    real                                :: pi,get_dist,wgt_sum
    real                                :: u_ran_1,u_ran_2,zdist
    real,allocatable,dimension(:)       :: pert_chem_sum_old,pert_chem_sum_new,wgt
    real,allocatable,dimension(:,:,:)   :: pert_chem_old,pert_chem_new
+   real                                :: cpu_str,cpu_end,cpu_dif
 !
 ! Constants
    pi=4.*atan(1.)
@@ -680,13 +708,20 @@ corr_lngth_hz,rank)
    endif
    chem_fac_new(:,:,:)=0.
    allocate(indx(nxy),jndx(nxy),wgt(nxy))
-   do i=1,nx
-      do j=1,ny
-         indx(:)=0
-         jndx(:)=0
-         call horiz_grid_wts(i,j,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
-         ngrid_corr,corr_lngth_hz,rank)
-         if(sw_corr_tm) then         
+!   
+   if(sw_corr_tm) then
+!
+! chem_fac_old calc takes one hour for each member/species for TRACER-I
+      if(rank.eq.3) then
+         call cpu_time(cpu_str)
+         print *, 'APM: Before chem_fac_old ', cpu_str
+      endif
+      do i=1,nx
+         do j=1,ny
+            indx(:)=0
+            jndx(:)=0
+            call horiz_grid_wts(i,j,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
+            ngrid_corr,corr_lngth_hz,rank)
             if(ncnt.eq.0) then
                do k=1,nz
                   chem_fac_old(i,j,k)=pert_chem_old(i,j,k)
@@ -700,11 +735,30 @@ corr_lngth_hz,rank)
                   pert_chem_old(ii,jj,k)/wgt_sum
                enddo
             enddo
-          endif
+         enddo
+      enddo
+      if(rank.eq.3) then
+         call cpu_time(cpu_end)
+         cpu_dif=cpu_end-cpu_str
+         print *, 'APM: After chem_fac_old ', cpu_end, cpu_dif
+      endif
+   endif
+!
+! chem_fac_new calc takes one hour for each member/species for TRACER-I
+   if(rank.eq.3) then
+      call cpu_time(cpu_str)
+      print *, 'APM: Before chem_fac_new ', cpu_str
+   endif
+   do i=1,nx
+      do j=1,ny
+         indx(:)=0
+         jndx(:)=0
+         call horiz_grid_wts(i,j,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
+         ngrid_corr,corr_lngth_hz,rank)
          if(ncnt.eq.0) then   
-            do k=1,nz
-               chem_fac_new(i,j,k)=pert_chem_new(i,j,k)
-            enddo
+           do k=1,nz
+              chem_fac_new(i,j,k)=pert_chem_new(i,j,k)
+           enddo
          endif
          do icnt=1,ncnt
             ii=indx(icnt)
@@ -719,9 +773,19 @@ corr_lngth_hz,rank)
    deallocate(indx,jndx,wgt)
    deallocate(pert_chem_old)
    deallocate(pert_chem_new)
+   if(rank.eq.3) then
+      call cpu_time(cpu_end)
+      cpu_dif=cpu_end-cpu_str
+      print *, 'APM: After chem_fac_new ', cpu_end, cpu_dif
+   endif
 !
 ! Apply vertical correlations
+! takes 30 sec for chem_fac_old   
    if(sw_corr_tm) then
+      if(rank.eq.3) then
+         call cpu_time(cpu_str)
+         print *, 'APM: Before chem_fac_old vert_corr calc ', cpu_str
+      endif
       allocate(pert_chem_sum_old(nz))
       do i=1,nx
          do j=1,ny
@@ -738,6 +802,17 @@ corr_lngth_hz,rank)
          enddo
       enddo
       deallocate(pert_chem_sum_old)
+      if(rank.eq.3) then
+         call cpu_time(cpu_end)
+         cpu_dif=cpu_end-cpu_str
+         print *, 'APM: After chem_fac_old vert_corr calc ', cpu_end, cpu_dif
+      endif
+   endif
+!
+! takes 30 sec for chem_fac_new
+   if(rank.eq.3) then
+      call cpu_time(cpu_str)
+      print *, 'APM: Before chem_fac_new vert_corr calc ', cpu_str
    endif
    allocate(pert_chem_sum_new(nz))
    do i=1,nx
@@ -754,7 +829,12 @@ corr_lngth_hz,rank)
          enddo
       enddo
    enddo
-   deallocate(pert_chem_sum_new)
+   deallocate(pert_chem_sum_new) 
+   if(rank.eq.3) then
+      call cpu_time(cpu_end)
+      cpu_dif=cpu_end-cpu_str
+      print *, 'APM: After chem_fac_new vert_corr calc ', cpu_end, cpu_dif
+   endif
 end subroutine perturb_fields
 
 !-------------------------------------------------------------------------------

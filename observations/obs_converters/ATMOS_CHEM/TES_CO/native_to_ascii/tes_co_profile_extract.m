@@ -21,7 +21,7 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
    [status]=system(command);
    fid=fopen(fileout,'w');
 %
-   command=strcat('ls'," ",'-1'," ",filein,'*');
+   command=strcat('/usr/bin/ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);   
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);
@@ -49,8 +49,10 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
    day_secs_end=whh_mx*60.*60. + wmm_mx*60. + wss_mx;
 %
 % Print input data
-   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
-   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
+   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn, ...
+   wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
+   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx, ...
+   wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
 %
 % Read model grid
    lon_mdl=ncread(strcat(path_mdl,'/',file_mdl),'XLONG');
@@ -101,7 +103,6 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       nobs=size(utc_time);  % 14
       time_start=cell2mat(utc_time(1));
       time_end=cell2mat(utc_time(nobs(1)));
-
       file_str_yy=str2double(time_start(1:4));
       file_str_mm=str2double(time_start(6:7));
       file_str_dd=str2double(time_start(9:10));
@@ -114,12 +115,13 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       file_end_hh=str2double(time_end(12:13));
       file_end_mn=str2double(time_end(15:16));
       file_end_ss=round(str2double(time_end(18:23)));
-      
       file_str_secs=file_str_hh*3600 + file_str_mn*60 + file_str_ss;
       file_end_secs=file_end_hh*3600 + file_end_mn*60 + file_end_ss;
       fprintf('%d %s \n',ifile,file_in);
-      fprintf('If file_str_secs %d <= day_secs_end %d, and \n',file_str_secs,day_secs_end);
-      fprintf('If file_end_secs %d >= day_secs_beg %d, then process data \n',file_end_secs,day_secs_beg);
+      fprintf('If file_str_secs %d <= day_secs_end %d, and \n', ...
+      file_str_secs,day_secs_end);
+      fprintf('If file_end_secs %d >= day_secs_beg %d, then process data \n', ...
+      file_end_secs,day_secs_beg);
       if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
          continue
       end
@@ -232,8 +234,10 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       zenang=h5read(file_in,field);
 %
 % Loop through TES data
-      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
-      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn, ...
+      whh_mn,wmm_mn,wss_mn,2000));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx, ...
+      whh_mx,wmm_mx,wss_mx,2000));
       icnt=0;
       for iobs=1:nobs
          utcc_time=cell2mat(utc_time(iobs));
@@ -244,10 +248,9 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          mm_tes=str2double(utcc_time(15:16));
          ss_tes=round(str2double(utcc_time(18:23)));
          tesdate=single(convert_time_ref(yyyy_tes,mn_tes, ...
-         dy_tes,hh_tes,mm_tes,ss_tes,2010));
+	 dy_tes,hh_tes,mm_tes,ss_tes,2000));
 %
 % Check time
-%	 fprintf('APM: Time test - %d %d %d \n',windate_min,tesdate,windate_max)
          if(tesdate<windate_min | tesdate>windate_max)
             continue
          end
@@ -265,11 +268,7 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
             continue
          end
 %
-         if(any(isnan(err_cov_total(:,:,iobs))))
-            continue
-         end
-%
-%         if(any(isnan(co_lay(:,iobs))) | any(co_lay(:,iobs)<=0))
+%         if(any(isnan(co_lay(:,iobs))) | any(co_lay(:,iobs)<0))
 %            continue
 %         end
 %
@@ -277,27 +276,11 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %            continue
 %         end
 %
-%         if(any(isnan(co_lay_prior(:,iobs))) | any(co_lay_prior(:,iobs)<=0))
+%         if(any(isnan(co_lay_prior(:,iobs))) | any(co_lay_prior(:,iobs)<0))
 %            continue
 %         end
 %
          if(isnan(trop_pressure(iobs)) | trop_pressure(iobs)<=0.)
-            continue
-         end
-%
-         if(isnan(dofs(iobs)) | dofs(iobs)<0.)
-            continue
-         end
-%
-         if(isnan(co_total_col(iobs)) | co_total_col(iobs)<=0.)
-            continue
-         end
-%
-         if(isnan(co_total_col_err(iobs)) | co_total_col_err(iobs)<=0.)
-            continue
-         end
-%
-         if(isnan(co_total_col_prior(iobs)) | co_total_col_prior(iobs)<=0.)
             continue
          end
 %
@@ -327,6 +310,9 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 	 xmdl_sw,delx,cen_lon,truelat1,truelat2);
          i_min = round(xi);
          j_min = round(xj);
+%	 fprintf('lon,lat: %d %d \n',x_obser,y_obser)
+%	 fprintf('imin,jmin,nx,ny: %d %d %d %d \n', ...
+%         i_min,j_min,nx_mdl,ny_mdl)
          reject = 0;
 %
 % Check lower bounds
@@ -368,6 +354,7 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %            fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
             continue
          end
+%	 fprintf('APM: Time test - %d %d %d \n',windate_min,tesdate,windate_max)
 %
 % Save data to ascii file
          icnt=icnt+1;

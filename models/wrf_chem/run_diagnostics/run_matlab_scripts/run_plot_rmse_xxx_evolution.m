@@ -22,7 +22,7 @@ fname=strcat(path,exp)
 copystring    = 'totalspread';
 %copystring    = 'spread';
 %
-%obsname      = 'MOPITT_CO_PROFILE';
+%obsname      = 'MOPITT_V8_CO_PROFILE';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
 %obsname      = 'MOPITT_CO_CPSR';
@@ -49,8 +49,8 @@ copystring    = 'totalspread';
 %obsname      = 'OMI_NO2_DOMINO_TROP_COL';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
-obsname      = 'OMI_SO2_PBL_COL';
-plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
+%obsname      = 'OMI_SO2_PBL_COL';
+%plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
 %obsname      = 'OMI_HCHO_TOTAL_COL';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
@@ -70,14 +70,14 @@ plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %obsname      = 'GOME2A_NO2_TROP_COL';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
-obsname      = 'MLS_O3_PROFILE';
-plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
+%obsname      = 'MLS_O3_PROFILE';
+%plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
 %obsname      = 'MLS_O3_CPSR';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
-obsname      = 'MLS_HNO3_PROFILE';
-plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
+%obsname      = 'MLS_HNO3_PROFILE';
+%plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
 %obsname      = 'MLS_HNO3_CPSR';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
@@ -109,14 +109,14 @@ plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %obsname      = 'AIRNOW_O3';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
-%obsname      = 'AIRNOW_NO2';
-%plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
+obsname      = 'AIRNOW_NO2';
+plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
 %obsname      = 'AIRNOW_SO2';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
-%obsname      = 'AIRNOW_PM10';
-%plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
+obsname      = 'AIRNOW_PM10';
+plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
 %obsname      = 'AIRNOW_PM25';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);

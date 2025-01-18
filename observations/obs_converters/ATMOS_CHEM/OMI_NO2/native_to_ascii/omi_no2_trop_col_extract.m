@@ -20,7 +20,7 @@ function omi_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_
    [status]=system(command);
    fid=fopen(fileout,'w');
 %
-   command=strcat('ls'," ",'-1'," ",filein,'*');
+   command=strcat('/usr/bin/ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);

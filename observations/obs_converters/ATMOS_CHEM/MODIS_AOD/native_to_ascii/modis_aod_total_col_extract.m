@@ -26,7 +26,7 @@ function modis_aod_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
    [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);  
-   nfile=size(file_list);
+   nfile=size(file_list)
 %
 % Constants
    Ru=8.316;
@@ -84,6 +84,7 @@ function modis_aod_total_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
       tmp=size(time);
       nscan=tmp(1);
       npixl=tmp(2);
+      fprintf('tim_min, time, tim_max %d %d %d \n',windate_min,fix(time(1,1)),windate_max)
       if (time(1,1)>windate_max | time(nscan,npixl)<windate_min)
          continue
       end

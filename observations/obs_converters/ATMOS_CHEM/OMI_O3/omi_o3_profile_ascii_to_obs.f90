@@ -145,7 +145,7 @@ program omi_o3_profile_ascii_to_obs
    integer                         :: i_min,j_min,flg
    integer                         :: sum_reject,sum_accept,sum_total
    integer                         :: obs_o3_reten_freq,obs_no2_reten_freq,obs_so2_reten_freq, &
-                                      obs_hcho_reten_freq
+                                      obs_hcho_reten_freq,obs_accept
 !
    integer,dimension(12)           :: days_in_month=(/ &
                                       31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31  /)
@@ -197,7 +197,6 @@ program omi_o3_profile_ascii_to_obs
    pi=4.*atan(1.)
    rad2deg=360./(2.*pi)
    re=6371000.
-   fac_err=0.3
    days_last=-9999.
    seconds_last=-9999.
    prs_trop=-9999.
@@ -205,7 +204,9 @@ program omi_o3_profile_ascii_to_obs
    sum_reject=0
    sum_accept=0
    sum_total=0
+   obs_accept=0
    prs_mdl_top=15000. ! (Pa)
+   fac_err=1.0
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
@@ -280,7 +281,6 @@ program omi_o3_profile_ascii_to_obs
    open(unit=fileid,file=TRIM(filedir)//TRIM(filename),form='formatted', status='old', iostat=ios)
 !
 ! Read OMI O3
-   line_count = 0
    read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    do while (ios == 0)
       sum_total=sum_total+1
@@ -307,7 +307,9 @@ program omi_o3_profile_ascii_to_obs
       read(fileid,*,iostat=ios) o3_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) prior_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) prior_err_obs(1:nlay_obs)
+! Need to transpose avgk to account for NetCdf dimension reveral
       do k=1,nlay_obs
+!         read(fileid,*,iostat=ios) avgk_obs(k,1:nlay_obs)
          read(fileid,*,iostat=ios) avgk_obs(1:nlay_obs,k)
       enddo
       read(fileid,*,iostat=ios) cov_obs_tmp(1:ndim_cov)
@@ -334,12 +336,26 @@ program omi_o3_profile_ascii_to_obs
             kk=nlev_obs-k+1
             if(prs_obs(kk).lt.0.) then
                nlev_adj=nlev_adj-1
-               nlay_adj=nlay_adj-1
+               nlay_adj=nlev_adj-1
             else
                exit
             endif
          enddo
       endif
+!
+! QA/QC based on adjusted pressure grid
+      if(any(prs_obs(1:nlev_adj).lt.0.)) then
+         cycle
+      endif
+!
+      if(any(o3_obs(1:nlay_adj).lt.0.)) then
+         cycle
+      endif
+!
+      if(any(prior_obs(1:nlay_adj).lt.0.)) then
+         cycle
+      endif
+!      
       flg=0
       do i=1,nlay_adj
          if(isnan(cov_obs(i,i)) .or. cov_obs(i,i).lt.0.) then
@@ -358,13 +374,16 @@ program omi_o3_profile_ascii_to_obs
          read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
          cycle
       endif
-
-      prs_obs(1:nlev_adj)=prs_obs(1:nlev_adj)*100.
-      prs_obs_r8(1:nlev_adj)=prs_obs(1:nlev_adj)/100.
-      prior_obs_r8(1:nlay_adj)=prior_obs(1:nlay_adj)
-      
-      lon_obs_r8=lon_obs
-      lat_obs_r8=lat_obs
+      print *, 'OMI O3: Completed data read'
+!
+!     Obs thinning test
+      obs_accept=obs_accept+1
+      if(obs_accept/obs_o3_reten_freq*obs_o3_reten_freq.eq.obs_accept) then
+         prs_obs(1:nlev_adj)=prs_obs(1:nlev_adj)*100.
+         prs_obs_r8(1:nlev_adj)=prs_obs(1:nlev_adj)/100.
+         prior_obs_r8(1:nlay_adj)=prior_obs(1:nlay_adj)
+         lon_obs_r8=lon_obs
+         lat_obs_r8=lat_obs
 !
 !--------------------------------------------------------
 ! Find model O3 profile corresponding to the observation
@@ -372,80 +391,61 @@ program omi_o3_profile_ascii_to_obs
 !--------------------------------------------------------
 !
 ! Loop through vertical grid (OMI O3 is top to bottom)
-      reject=0
-      do ilv=1,nlay_adj
-         avgk_obs_r8(1:nlay_adj)=avgk_obs(ilv,1:nlay_adj)
+         reject=0
+         do ilv=1,nlay_adj
+            avgk_obs_r8(1:nlay_adj)=avgk_obs(ilv,1:nlay_adj)
 !
-! Check whether observation is above model vertical grid
-         if(prs_obs(ilv).le.prs_mdl_top) cycle
-!
-! Check whether observation is below the surface based on OMI          
-         if(prior_obs_r8(ilv).lt.0. .or. o3_obs(ilv).lt.0.) then
-            print *, 'APM: OMI Retrieval or Prior is negative. Layer may be below surface. Layer: ',ilv
-            print *, 'APM: Prior ',prior_obs_r8(ilv),'Avgk: ',avgk_obs_r8(ilv)
-            cycle
-         endif
-!
-! Process observations
-!
-! Obs value is the total vertical column      
-         obs_val(:)=o3_obs(ilv)
-!
-! Assign observation error
-         if(prior_obs_r8(ilv).gt.0. .and. o3_obs(ilv).gt.0.) then
+! Set data for writing to obs_sequence file
+            obs_val(:)=o3_obs(ilv)
 !            obs_err_var=(fac_obs_error*fac_err*o3_obs(ilv))**2.
             obs_err_var=(fac_obs_error*o3_obs(ilv)*sqrt(cov_obs(ilv,ilv)))**2.
-         else
-            obs_err_var=0.
-            cycle
-         endif
-         sum_accept=sum_accept+1
-         qc_count=qc_count+1
-         
-         omi_qc(:)=0      
-         obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
-         call get_time(obs_time, seconds, days)
+            sum_accept=sum_accept+1
+            qc_count=qc_count+1
+            omi_qc(:)=0      
+            obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)
+            call get_time(obs_time, seconds, days)
 !
-!         which_vert=-2      ! undefined
-!         which_vert=-1      ! surface
-!         which_vert=1       ! level
-         which_vert=2       ! pressure surface
+!            which_vert=-2      ! undefined
+!            which_vert=-1      ! surface
+!            which_vert=1       ! level
+            which_vert=2       ! pressure surface
 !
-         obs_kind = OMI_O3_PROFILE
+            obs_kind = OMI_O3_PROFILE
 ! (0 <= lon_obs <= 360); (-90 <= lat_obs <= 90)
-         klev=ilv
-         kend=ilv
-         level=prs_obs(ilv)
-         obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
-!
-         call set_obs_def_type_of_obs(obs_def, obs_kind)
-         call set_obs_def_location(obs_def, obs_location)
-         call set_obs_def_time(obs_def, obs_time)
-         call set_obs_def_error_variance(obs_def, obs_err_var)
-         call set_obs_def_omi_o3_profile(qc_count, prs_obs_r8(1:nlay_adj+1), &
-         avgk_obs_r8(1:nlay_adj), prior_obs_r8(1:nlay_adj), nlay_adj, klev, kend)
-         call set_obs_def_key(obs_def, qc_count)
-         call set_obs_values(obs, obs_val, 1)
-         call set_qc(obs, omi_qc, num_qc)
-         call set_obs_def(obs, obs_def)
-!
-         old_ob=0
-         if(days.lt.days_last) then
-            old_ob=1
-         elseif(days.eq.days_last .and. seconds.lt.seconds_last) then
-            old_ob=1
-         endif
-         if(old_ob.eq.0) then
-            days_last=days
-            seconds_last=seconds
-         endif
-         if ( qc_count == 1 .or. old_ob.eq.1) then
-            call insert_obs_in_seq(seq, obs)
-         else
-            call insert_obs_in_seq(seq, obs, obs_old )
-         endif
-         obs_old=obs
-      enddo
+            klev=ilv
+            kend=ilv
+            level=prs_obs(ilv)
+            obs_location=set_location(lon_obs_r8, lat_obs_r8, level, which_vert)
+!           
+            call set_obs_def_type_of_obs(obs_def, obs_kind)
+            call set_obs_def_location(obs_def, obs_location)
+            call set_obs_def_time(obs_def, obs_time)
+            call set_obs_def_error_variance(obs_def, obs_err_var)
+            call set_obs_def_omi_o3_profile(qc_count, prs_obs_r8(1:nlay_adj+1), &
+            avgk_obs_r8(1:nlay_adj), prior_obs_r8(1:nlay_adj), nlay_adj, klev, kend)
+            call set_obs_def_key(obs_def, qc_count)
+            call set_obs_values(obs, obs_val, 1)
+            call set_qc(obs, omi_qc, num_qc)
+            call set_obs_def(obs, obs_def)
+!           
+            old_ob=0
+            if(days.lt.days_last) then
+               old_ob=1
+            elseif(days.eq.days_last .and. seconds.lt.seconds_last) then
+               old_ob=1
+            endif
+            if(old_ob.eq.0) then
+               days_last=days
+               seconds_last=seconds
+            endif
+            if ( qc_count == 1 .or. old_ob.eq.1) then
+               call insert_obs_in_seq(seq, obs)
+            else
+               call insert_obs_in_seq(seq, obs, obs_old )
+            endif
+            obs_old=obs
+         enddo
+      endif   
       deallocate(prs_obs,o3_obs,prior_obs)
       deallocate(prior_err_obs,avgk_obs,cov_obs)
       deallocate(cov_prior_obs,cov_obs_tmp)

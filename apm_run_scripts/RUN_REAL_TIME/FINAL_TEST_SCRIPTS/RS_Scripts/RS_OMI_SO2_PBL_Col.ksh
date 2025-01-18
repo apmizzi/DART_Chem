@@ -49,7 +49,7 @@
       export NL_BIN_END_SEC=${BIN_END_SEC}
 #
 # SET OMI INPUT DATA FILE
-      export INFILE=${EXPERIMENT_OMI_SO2_DIR}/${OMI_FILE_PRE_NQ}${YYYY}m${MM}${DD}t
+      export INFILE=${EXPERIMENT_OMI_SO2_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}/${OMI_FILE_PRE_NQ}${YYYY}m${MM}${DD}t
       export OUTFILE=TEMP_FILE.dat
       export OUTFILE_NQ=TEMP_FILE.dat
       export ARCHIVE_FILE=OMI_SO2_${DATE}.dat
@@ -87,7 +87,7 @@
          export BIN_END_HH=23
          export BIN_END_MN=59
          export BIN_END_SS=59
-         export INFILE=${EXPERIMENT_OMI_SO2_DIR}/${OMI_FILE_PRE_NQ}${PAST_YYYY}m${PAST_MM}${PAST_DD}t
+         export INFILE=${EXPERIMENT_OMI_SO2_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}//${OMI_FILE_PRE_NQ}${PAST_YYYY}m${PAST_MM}${PAST_DD}t
          export OUTFILE=TEMP_FILE.dat
          export OUTFILE_NQ=TEMP_FILE.dat
          rm -rf ${OUTFILE_NQ}

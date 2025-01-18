@@ -1,0 +1,776 @@
+Job 21090944.pbspl1.nas.nasa.gov started on Wed Nov 20 20:22:53 PST 2024
+The job requested the following resources:
+    ncpus=48
+    place=scatter:excl
+    site=needed=/home1+/nobackupp11
+    walltime=05:59:00
+
+PBS set the following environment variables:
+        FORT_BUFFERED = 1
+                   TZ = PST8PDT
+
+On r595i4n3:
+Warning: no access to tty (Inappropriate ioctl for device).
+Thus no job control in this shell.
+total 128
+drwxr-sr-x+ 2 amizzi s1395  4096 Nov 20 11:57 RS_SINGLE/
+-rwxr-xr-x  1 amizzi s1395  2148 Nov 20 19:20 run_TRACER_I_Input.ksh*
+-rwxr-xr-x  1 amizzi s1395  2148 Nov 20 12:10 run_TRACER_I_Input.ksh~*
+-rw-------  1 amizzi s2933 27631 Nov 20 11:57 TRACER-I_Input.o21086835
+-rw-------  1 amizzi s2933 27705 Nov 20 17:12 TRACER-I_Input.o21088812
+Current directory is /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/SINGLE_TEST_SCRIPTS
+	This module will set up an alias for easy anonymous
+	check-out last version of the Modules package
+	get-modules   - retrieve last version of modules sources
+
+Loading mpi-hpe/mpt
+  Loading requirement: mpi-hpe/mpt.2.28_25Apr23_rhel87
+
+Loading hdf5/1.8.18_mpt
+  Loading requirement: szip/2.1.1
++ NPROC=48
++ export NPROC
++ FINAL_ROOT_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts
++ export FINAL_ROOT_DIR
++ FINAL_SCRIPTS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS
++ export FINAL_SCRIPTS_DIR
++ FINAL_RS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts
++ export FINAL_RS_DIR
++ SINGLE_SCRIPTS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/SINGLE_TEST_SCRIPTS
++ export SINGLE_SCRIPTS_DIR
++ SINGLE_RS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/SINGLE_TEST_SCRIPTS/RS_SINGLE
++ export SINGLE_RS_DIR
++ SINGLE_RUN_DIR=/nobackupp28/amizzi/OUTPUT_DATA/INPUT_DATA_TRACER_I/work
++ export SINGLE_RUN_DIR
++ [[ ! -d /nobackupp28/amizzi/OUTPUT_DATA/INPUT_DATA_TRACER_I/work ]]
++ cd /nobackupp28/amizzi/OUTPUT_DATA/INPUT_DATA_TRACER_I/work
++ cp /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/SINGLE_TEST_SCRIPTS/RS_SINGLE/run_ensemble_input_TRACER_I_SINGLE.ksh ./
++ ./run_ensemble_input_TRACER_I_SINGLE.ksh
++ DART_VER=DART_development
++ export DART_VER
++ PERT_CHEM_VER=ICBC_PERT
++ export PERT_CHEM_VER
++ WORK_DIR=/nobackupp28/amizzi
++ export WORK_DIR
++ TRUNK_DIR=/nobackupp28/amizzi/TRUNK
++ export TRUNK_DIR
++ REAL_TIME_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME
++ export REAL_TIME_DIR
++ RS_SCRIPTS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts
++ export RS_SCRIPTS_DIR
++ INPUT_DATA_DIR=/nobackupp28/amizzi/INPUT_DATA
++ export INPUT_DATA_DIR
++ SCRATCH_DIR=/nobackupp28/amizzi/OUTPUT_DATA
++ export SCRATCH_DIR
++ EXPERIMENT_DIR=/nobackupp28/amizzi/OUTPUT_DATA
++ export EXPERIMENT_DIR
++ EXPERIMENT_DATA_DIR=/nobackupp28/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA
++ export EXPERIMENT_DATA_DIR
++ RUN_DIR=/nobackupp28/amizzi/OUTPUT_DATA/INPUT_DATA_TRACER_I
++ export RUN_DIR
++ RUN_INPUT_DIR=/nobackupp28/amizzi/OUTPUT_DATA/INPUT_DATA_TRACER_I
++ export RUN_INPUT_DIR
++ EXPERIMENT_INPUT_OBS=TRACER_I_OBS
++ export EXPERIMENT_INPUT_OBS
++ NL_CORRECTION_FILENAME=Historical_Bias_Corrections
++ export NL_CORRECTION_FILENAME
++ WRFCHEM_TEMPLATE_FILE=wrfout_d01_2014071512_mean
++ export WRFCHEM_TEMPLATE_FILE
++ NUM_MEMBERS=20
++ export NUM_MEMBERS
++ CYCLE_PERIOD=6
++ export CYCLE_PERIOD
++ FCST_PERIOD=6
++ export FCST_PERIOD
++ INITIAL_DATE=2014072612
++ export INITIAL_DATE
++ FIRST_FILTER_DATE=2014072618
++ export FIRST_FILTER_DATE
++ FIRST_DART_INFLATE_DATE=2014072618
++ export FIRST_DART_INFLATE_DATE
++ FIRST_EMISS_INV_DATE=2014072618
++ export FIRST_EMISS_INV_DATE
++ CYCLE_STR_DATE=2014072612
++ export CYCLE_STR_DATE
++ CYCLE_END_DATE=2014072712
++ export CYCLE_END_DATE
++ ADD_EMISS=false
++ export ADD_EMISS
++ EMISS_DAMP_CYCLE=1.0
++ export EMISS_DAMP_CYCLE
++ EMISS_DAMP_INTRA_CYCLE=1.0
++ export EMISS_DAMP_INTRA_CYCLE
++ NL_UPPER_DATA_FILE_NAME=/h0004.nc
++ export NL_UPPER_DATA_FILE_NAME
++ NL_UPPER_DATA_MODEL=$'\'MOZART\''
++ export NL_UPPER_DATA_MODEL
++ LS_CHEM_DX=17
++ export LS_CHEM_DX
++ LS_CHEM_DY=13
++ export LS_CHEM_DY
++ LS_CHEM_DZ=56
++ export LS_CHEM_DZ
++ LS_CHEM_DT=368
++ export LS_CHEM_DT
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_Fac_Retn_Constants.ksh
++ NL_FAC_OBS_ERROR_MOPITT_CO=1.00
++ export NL_FAC_OBS_ERROR_MOPITT_CO
++ NL_FAC_OBS_ERROR_MODIS_AOD=1.00
++ export NL_FAC_OBS_ERROR_MODIS_AOD
++ NL_FAC_OBS_ERROR_IASI_CO=1.00
++ export NL_FAC_OBS_ERROR_IASI_CO
++ NL_FAC_OBS_ERROR_IASI_O3=1.00
++ export NL_FAC_OBS_ERROR_IASI_O3
++ NL_FAC_OBS_ERROR_OMI_O3=1.00
++ export NL_FAC_OBS_ERROR_OMI_O3
++ NL_FAC_OBS_ERROR_OMI_NO2=1.00
++ export NL_FAC_OBS_ERROR_OMI_NO2
++ NL_FAC_OBS_ERROR_OMI_NO2_DOMINO=1.00
++ export NL_FAC_OBS_ERROR_OMI_NO2_DOMINO
++ NL_FAC_OBS_ERROR_OMI_SO2=1.00
++ export NL_FAC_OBS_ERROR_OMI_SO2
++ NL_FAC_OBS_ERROR_OMI_HCHO=1.00
++ export NL_FAC_OBS_ERROR_OMI_HCHO
++ NL_FAC_OBS_ERROR_TROPOMI_CO=1.00
++ export NL_FAC_OBS_ERROR_TROPOMI_CO
++ NL_FAC_OBS_ERROR_TROPOMI_O3=1.00
++ export NL_FAC_OBS_ERROR_TROPOMI_O3
++ NL_FAC_OBS_ERROR_TROPOMI_NO2=1.00
++ export NL_FAC_OBS_ERROR_TROPOMI_NO2
++ NL_FAC_OBS_ERROR_TROPOMI_SO2=1.00
++ export NL_FAC_OBS_ERROR_TROPOMI_SO2
++ NL_FAC_OBS_ERROR_TROPOMI_CH4=1.00
++ export NL_FAC_OBS_ERROR_TROPOMI_CH4
++ NL_FAC_OBS_ERROR_TROPOMI_HCHO=1.00
++ export NL_FAC_OBS_ERROR_TROPOMI_HCHO
++ NL_FAC_OBS_ERROR_TEMPO_O3=1.00
++ export NL_FAC_OBS_ERROR_TEMPO_O3
++ NL_FAC_OBS_ERROR_TEMPO_NO2=1.00
++ export NL_FAC_OBS_ERROR_TEMPO_NO2
++ NL_FAC_OBS_ERROR_TES_CO=1.00
++ export NL_FAC_OBS_ERROR_TES_CO
++ NL_FAC_OBS_ERROR_TES_CO2=1.00
++ export NL_FAC_OBS_ERROR_TES_CO2
++ NL_FAC_OBS_ERROR_TES_O3=1.00
++ export NL_FAC_OBS_ERROR_TES_O3
++ NL_FAC_OBS_ERROR_TES_NH3=1.00
++ export NL_FAC_OBS_ERROR_TES_NH3
++ NL_FAC_OBS_ERROR_TES_CH4=1.00
++ export NL_FAC_OBS_ERROR_TES_CH4
++ NL_FAC_OBS_ERROR_CRIS_CO=1.00
++ export NL_FAC_OBS_ERROR_CRIS_CO
++ NL_FAC_OBS_ERROR_CRIS_O3=1.00
++ export NL_FAC_OBS_ERROR_CRIS_O3
++ NL_FAC_OBS_ERROR_CRIS_NH3=1.00
++ export NL_FAC_OBS_ERROR_CRIS_NH3
++ NL_FAC_OBS_ERROR_CRIS_CH4=1.00
++ export NL_FAC_OBS_ERROR_CRIS_CH4
++ NL_FAC_OBS_ERROR_CRIS_PAN=1.00
++ export NL_FAC_OBS_ERROR_CRIS_PAN
++ NL_FAC_OBS_ERROR_SCIAM_NO2=1.00
++ export NL_FAC_OBS_ERROR_SCIAM_NO2
++ NL_FAC_OBS_ERROR_GOME2A_NO2=1.00
++ export NL_FAC_OBS_ERROR_GOME2A_NO2
++ NL_FAC_OBS_ERROR_MLS_O3=1.00
++ export NL_FAC_OBS_ERROR_MLS_O3
++ NL_FAC_OBS_ERROR_MLS_HNO3=1.00
++ export NL_FAC_OBS_ERROR_MLS_HNO3
++ NL_FAC_OBS_ERROR_AIRNOW_CO=1.00
++ export NL_FAC_OBS_ERROR_AIRNOW_CO
++ NL_FAC_OBS_ERROR_AIRNOW_O3=1.00
++ export NL_FAC_OBS_ERROR_AIRNOW_O3
++ NL_FAC_OBS_ERROR_AIRNOW_NO2=1.00
++ export NL_FAC_OBS_ERROR_AIRNOW_NO2
++ NL_FAC_OBS_ERROR_AIRNOW_SO2=1.00
++ export NL_FAC_OBS_ERROR_AIRNOW_SO2
++ NL_FAC_OBS_ERROR_AIRNOW_PM10=1.00
++ export NL_FAC_OBS_ERROR_AIRNOW_PM10
++ NL_FAC_OBS_ERROR_AIRNOW_PM25=1.00
++ export NL_FAC_OBS_ERROR_AIRNOW_PM25
++ NL_FAC_OBS_ERROR_MEXICO_AQS=1.00
++ export NL_FAC_OBS_ERROR_MEXICO_AQS
++ NL_MOPITT_CO_RETEN_FREQ=1
++ export NL_MOPITT_CO_RETEN_FREQ
++ NL_MODIS_AOD_RETEN_FREQ=1
++ export NL_MODIS_AOD_RETEN_FREQ
++ NL_IASI_CO_RETEN_FREQ=1
++ export NL_IASI_CO_RETEN_FREQ
++ NL_IASI_O3_RETEN_FREQ=1
++ export NL_IASI_O3_RETEN_FREQ
++ NL_MODIS_AOD_RETEN_FREQ=1
++ export NL_MODIS_AOD_RETEN_FREQ
++ NL_OMI_O3_RETEN_FREQ=1
++ export NL_OMI_O3_RETEN_FREQ
++ NL_OMI_NO2_RETEN_FREQ=1
++ export NL_OMI_NO2_RETEN_FREQ
++ NL_OMI_NO2_DOMINO_RETEN_FREQ=1
++ export NL_OMI_NO2_DOMINO_RETEN_FREQ
++ NL_OMI_SO2_RETEN_FREQ=1
++ export NL_OMI_SO2_RETEN_FREQ
++ NL_OMI_HCHO_RETEN_FREQ=1
++ export NL_OMI_HCHO_RETEN_FREQ
++ NL_TROPOMI_CO_RETEN_FREQ=1
++ export NL_TROPOMI_CO_RETEN_FREQ
++ NL_TROPOMI_O3_RETEN_FREQ=1
++ export NL_TROPOMI_O3_RETEN_FREQ
++ NL_TROPOMI_NO2_RETEN_FREQ=1
++ export NL_TROPOMI_NO2_RETEN_FREQ
++ NL_TROPOMI_SO2_RETEN_FREQ=1
++ export NL_TROPOMI_SO2_RETEN_FREQ
++ NL_TROPOMI_CH4_RETEN_FREQ=1
++ export NL_TROPOMI_CH4_RETEN_FREQ
++ NL_TROPOMI_HCHO_RETEN_FREQ=1
++ export NL_TROPOMI_HCHO_RETEN_FREQ
++ NL_TEMPO_O3_RETEN_FREQ=1
++ export NL_TEMPO_O3_RETEN_FREQ
++ NL_TEMPO_NO2_RETEN_FREQ=1
++ export NL_TEMPO_NO2_RETEN_FREQ
++ NL_TES_CO_RETEN_FREQ=1
++ export NL_TES_CO_RETEN_FREQ
++ NL_TES_CO2_RETEN_FREQ=1
++ export NL_TES_CO2_RETEN_FREQ
++ NL_TES_O3_RETEN_FREQ=1
++ export NL_TES_O3_RETEN_FREQ
++ NL_TES_NH3_RETEN_FREQ=1
++ export NL_TES_NH3_RETEN_FREQ
++ NL_TES_CH4_RETEN_FREQ=1
++ export NL_TES_CH4_RETEN_FREQ
++ NL_CRIS_CO_RETEN_FREQ=1
++ export NL_CRIS_CO_RETEN_FREQ
++ NL_CRIS_O3_RETEN_FREQ=1
++ export NL_CRIS_O3_RETEN_FREQ
++ NL_CRIS_NH3_RETEN_FREQ=1
++ export NL_CRIS_NH3_RETEN_FREQ
++ NL_CRIS_CH4_RETEN_FREQ=1
++ export NL_CRIS_CH4_RETEN_FREQ
++ NL_CRIS_PAN_RETEN_FREQ=1
++ export NL_CRIS_PAN_RETEN_FREQ
++ NL_SCIAM_NO2_RETEN_FREQ=1
++ export NL_SCIAM_NO2_RETEN_FREQ
++ NL_GOME2A_NO2_RETEN_FREQ=1
++ export NL_GOME2A_NO2_RETEN_FREQ
++ NL_MLS_O3_RETEN_FREQ=1
++ export NL_MLS_O3_RETEN_FREQ
++ NL_MLS_HNO3_RETEN_FREQ=1
++ export NL_MLS_HNO3_RETEN_FREQ
++ NL_AIRNOW_CO_RETEN_FREQ=1
++ export NL_AIRNOW_CO_RETEN_FREQ
++ NL_AIRNOW_O3_RETEN_FREQ=1
++ export NL_AIRNOW_O3_RETEN_FREQ
++ NL_AIRNOW_NO2_RETEN_FREQ=1
++ export NL_AIRNOW_NO2_RETEN_FREQ
++ NL_AIRNOW_SO2_RETEN_FREQ=1
++ export NL_AIRNOW_SO2_RETEN_FREQ
++ NL_AIRNOW_PM10_RETEN_FREQ=1
++ export NL_AIRNOW_PM10_RETEN_FREQ
++ NL_AIRNOW_PM25_RETEN_FREQ=1
++ export NL_AIRNOW_PM25_RETEN_FREQ
++ USE_LOG=false
++ export USE_LOG
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_Set_Log_Transformation_Constants.ksh
++ [[ false == true ]]
++ CO_MIN=1.e-4
++ export CO_MIN
++ CO_MAX=NULL
++ export CO_MAX
++ O3_MIN=1.e-4
++ export O3_MIN
++ O3_MAX=NULL
++ export O3_MAX
++ NO_MIN=1.e-5
++ export NO_MIN
++ NO_MAX=NULL
++ export NO_MAX
++ NO2_MIN=1.e-5
++ export NO2_MIN
++ NO2_MAX=NULL
++ export NO2_MAX
++ SO2_MIN=1.e-5
++ export SO2_MIN
++ SO2_MAX=NULL
++ export SO2_MAX
++ SO4_MIN=1.e-5
++ export SO4_MIN
++ SO4_MAX=NULL
++ export SO4_MAX
++ PM10_MIN=0.
++ export PM10_MIN
++ PM10_MAX=NULL
++ export PM10_MAX
++ PM25_MIN=0.
++ export PM25_MIN
++ PM25_MAX=NULL
++ export PM25_MAX
++ USE_LOG_CO_LOGIC=.false.
++ export USE_LOG_CO_LOGIC
++ USE_LOG_O3_LOGIC=.false.
++ export USE_LOG_O3_LOGIC
++ USE_LOG_NOX_LOGIC=.false.
++ export USE_LOG_NOX_LOGIC
++ USE_LOG_NO2_LOGIC=.false.
++ export USE_LOG_NO2_LOGIC
++ USE_LOG_SO2_LOGIC=.false.
++ export USE_LOG_SO2_LOGIC
++ USE_LOG_PM10_LOGIC=.false.
++ export USE_LOG_PM10_LOGIC
++ USE_LOG_PM25_LOGIC=.false.
++ export USE_LOG_PM25_LOGIC
++ USE_LOG_AOD_LOGIC=.false.
++ export USE_LOG_AOD_LOGIC
++ USE_LOG_CO2_LOGIC=.false.
++ export USE_LOG_CO2_LOGIC
++ USE_LOG_CH4_LOGIC=.false.
++ export USE_LOG_CH4_LOGIC
++ USE_LOG_NH3_LOGIC=.false.
++ export USE_LOG_NH3_LOGIC
++ USE_LOG_HNO3_LOGIC=.false.
++ export USE_LOG_HNO3_LOGIC
++ USE_LOG_HCHO_LOGIC=.false.
++ export USE_LOG_HCHO_LOGIC
++ USE_LOG_PAN_LOGIC=.false.
++ export USE_LOG_PAN_LOGIC
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_CPSR_Settings.ksh
++ RETRIEVAL_TYPE_MOPITT=RAWR
++ export RETRIEVAL_TYPE_MOPITT
++ RETRIEVAL_TYPE_IASI=RAWR
++ export RETRIEVAL_TYPE_IASI
++ NL_USE_CPSR_CO_TRUNC=.false.
++ export NL_USE_CPSR_CO_TRUNC
++ NL_CPSR_CO_TRUNC_LIM=4
++ export NL_CPSR_CO_TRUNC_LIM
++ NL_USE_CPSR_O3_TRUNC=.false.
++ export NL_USE_CPSR_O3_TRUNC
++ NL_CPSR_O3_TRUNC_LIM=4
++ export NL_CPSR_O3_TRUNC_LIM
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_Miscellaneous_Constants.ksh
++ HISTORY_INTERVAL_HR=1
++ export HISTORY_INTERVAL_HR
++ (( HISTORY_INTERVAL_MIN = 1 * 60 ))
++ START_IASI_O3_DATA=2014060100
++ export START_IASI_O3_DATA
++ END_IASI_O3_DATA=2014073118
++ export END_IASI_O3_DATA
++ NL_DEBUG_LEVEL=100
++ export NL_DEBUG_LEVEL
++ CYCLE_DATE=2014072612
++ export CYCLE_DATE
++ [[ 2014072612 -le 2014072712 ]]
++ DATE=2014072612
++ export DATE
++ EXP_INPUT_OBS=/nobackupp28/amizzi/OUTPUT_DATA/INPUT_DATA_TRACER_I/2014072612/TRACER_I_OBS
++ export EXP_INPUT_OBS
++ L_ADD_EMISS=false
++ export L_ADD_EMISS
++ [[ 2014072612 -lt 2014072618 ]]
++ L_ADD_EMISS=false
++ export L_ADD_EMISS
++ RUN_GEOGRID=false
++ export RUN_GEOGRID
++ RUN_UNGRIB=false
++ export RUN_UNGRIB
++ RUN_METGRID=false
++ export RUN_METGRID
++ RUN_REAL=false
++ export RUN_REAL
++ RUN_PERT_WRFCHEM_MET_IC=false
++ export RUN_PERT_WRFCHEM_MET_IC
++ RUN_PERT_WRFCHEM_MET_BC=false
++ export RUN_PERT_WRFCHEM_MET_BC
++ RUN_EXO_COLDENS=false
++ export RUN_EXO_COLDENS
++ RUN_SEASON_WES=false
++ export RUN_SEASON_WES
++ RUN_WRFCHEM_BIO=false
++ export RUN_WRFCHEM_BIO
++ RUN_WRFCHEM_FIRE=false
++ export RUN_WRFCHEM_FIRE
++ RUN_WRFCHEM_CHEMI=false
++ export RUN_WRFCHEM_CHEMI
++ RUN_PERT_WRFCHEM_CHEM_ICBC=true
++ export RUN_PERT_WRFCHEM_CHEM_ICBC
++ RUN_PERT_WRFCHEM_CHEM_EMISS=true
++ export RUN_PERT_WRFCHEM_CHEM_EMISS
++ RUN_BIAS_CORRECTION=false
++ export RUN_BIAS_CORRECTION
++ RUN_MOPITT_CO_TOTAL_COL_OBS=false
++ export RUN_MOPITT_CO_TOTAL_COL_OBS
++ RUN_MOPITT_CO_PROFILE_OBS=false
++ export RUN_MOPITT_CO_PROFILE_OBS
++ RUN_MOPITT_CO_CPSR_OBS=false
++ export RUN_MOPITT_CO_CPSR_OBS
++ RUN_MOPITT_V8_CO_TOTAL_COL_OBS=false
++ export RUN_MOPITT_V8_CO_TOTAL_COL_OBS
++ RUN_MOPITT_V8_CO_PROFILE_OBS=true
++ export RUN_MOPITT_V8_CO_PROFILE_OBS
++ RUN_MOPITT_V8_CO_CPSR_OBS=false
++ export RUN_MOPITT_V8_CO_CPSR_OBS
++ RUN_IASI_CO_TOTAL_COL_OBS=false
++ export RUN_IASI_CO_TOTAL_COL_OBS
++ RUN_IASI_CO_PROFILE_OBS=false
++ export RUN_IASI_CO_PROFILE_OBS
++ RUN_IASI_CO_CPSR_OBS=false
++ export RUN_IASI_CO_CPSR_OBS
++ RUN_IASI_O3_PROFILE_OBS=false
++ export RUN_IASI_O3_PROFILE_OBS
++ RUN_IASI_O3_CPSR_OBS=false
++ export RUN_IASI_O3_CPSR_OBS
++ RUN_MODIS_AOD_TOTAL_COL_OBS=true
++ export RUN_MODIS_AOD_TOTAL_COL_OBS
++ RUN_OMI_O3_TOTAL_COL_OBS=false
++ export RUN_OMI_O3_TOTAL_COL_OBS
++ RUN_OMI_O3_TROP_COL_OBS=false
++ export RUN_OMI_O3_TROP_COL_OBS
++ RUN_OMI_O3_PROFILE_OBS=true
++ export RUN_OMI_O3_PROFILE_OBS
++ RUN_OMI_O3_CPSR_OBS=false
++ export RUN_OMI_O3_CPSR_OBS
++ RUN_OMI_NO2_TOTAL_COL_OBS=false
++ export RUN_OMI_NO2_TOTAL_COL_OBS
++ RUN_OMI_NO2_TROP_COL_OBS=false
++ export RUN_OMI_NO2_TROP_COL_OBS
++ RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
++ export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS
++ RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true
++ export RUN_OMI_NO2_DOMINO_TROP_COL_OBS
++ RUN_OMI_SO2_TOTAL_COL_OBS=false
++ export RUN_OMI_SO2_TOTAL_COL_OBS
++ RUN_OMI_SO2_PBL_COL_OBS=true
++ export RUN_OMI_SO2_PBL_COL_OBS
++ RUN_OMI_HCHO_TOTAL_COL_OBS=false
++ export RUN_OMI_HCHO_TOTAL_COL_OBS
++ RUN_OMI_HCHO_TROP_COL_OBS=false
++ export RUN_OMI_HCHO_TROP_COL_OBS
++ RUN_TROPOMI_CO_TOTAL_COL_OBS=false
++ export RUN_TROPOMI_CO_TOTAL_COL_OBS
++ RUN_TROPOMI_O3_TOTAL_COL_OBS=false
++ export RUN_TROPOMI_O3_TOTAL_COL_OBS
++ RUN_TROPOMI_O3_TROP_COL_OBS=false
++ export RUN_TROPOMI_O3_TROP_COL_OBS
++ RUN_TROPOMI_O3_PROFILE_OBS=false
++ export RUN_TROPOMI_O3_PROFILE_OBS
++ RUN_TROPOMI_O3_CPSR_OBS=false
++ export RUN_TROPOMI_O3_CPSR_OBS
++ RUN_TROPOMI_NO2_TOTAL_COL_OBS=false
++ export RUN_TROPOMI_NO2_TOTAL_COL_OBS
++ RUN_TROPOMI_NO2_TROP_COL_OBS=false
++ export RUN_TROPOMI_NO2_TROP_COL_OBS
++ RUN_TROPOMI_SO2_TOTAL_COL_OBS=false
++ export RUN_TROPOMI_SO2_TOTAL_COL_OBS
++ RUN_TROPOMI_SO2_PBL_COL_OBS=false
++ export RUN_TROPOMI_SO2_PBL_COL_OBS
++ RUN_TROPOMI_CH4_TOTAL_COL_OBS=false
++ export RUN_TROPOMI_CH4_TOTAL_COL_OBS
++ RUN_TROPOMI_CH4_TROP_COL_OBS=false
++ export RUN_TROPOMI_CH4_TROP_COL_OBS
++ RUN_TROPOMI_CH4_PROFILE_OBS=false
++ export RUN_TROPOMI_CH4_PROFILE_OBS
++ RUN_TROPOMI_CH4_CPSR_OBS=false
++ export RUN_TROPOMI_CH4_CPSR_OBS
++ RUN_TROPOMI_HCHO_TOTAL_COL_OBS=false
++ export RUN_TROPOMI_HCHO_TOTAL_COL_OBS
++ RUN_TROPOMI_HCHO_TROP_COL_OBS=false
++ export RUN_TROPOMI_HCHO_TROP_COL_OBS
++ RUN_TEMPO_O3_TOTAL_COL_OBS=false
++ export RUN_TEMPO_O3_TOTAL_COL_OBS
++ RUN_TEMPO_O3_TROP_COL_OBS=false
++ export RUN_TEMPO_O3_TROP_COL_OBS
++ RUN_TEMPO_O3_PROFILE_OBS=false
++ export RUN_TEMPO_O3_PROFILE_OBS
++ RUN_TEMPO_O3_CPSR_OBS=false
++ export RUN_TEMPO_O3_CPSR_OBS
++ RUN_TEMPO_NO2_TOTAL_COL_OBS=false
++ export RUN_TEMPO_NO2_TOTAL_COL_OBS
++ RUN_TEMPO_NO2_TROP_COL_OBS=false
++ export RUN_TEMPO_NO2_TROP_COL_OBS
++ RUN_TES_CO_TOTAL_COL_OBS=false
++ export RUN_TES_CO_TOTAL_COL_OBS
++ RUN_TES_CO_PROFILE_OBS=true
++ export RUN_TES_CO_PROFILE_OBS
++ RUN_TES_CO_CPSR_OBS=false
++ export RUN_TES_CO_CPSR_OBS
++ RUN_TES_CO2_TOTAL_COL_OBS=false
++ export RUN_TES_CO2_TOTAL_COL_OBS
++ RUN_TES_CO2_PROFILE_OBS=false
++ export RUN_TES_CO2_PROFILE_OBS
++ RUN_TES_CO2_CPSR_OBS=false
++ export RUN_TES_CO2_CPSR_OBS
++ RUN_TES_O3_TOTAL_COL_OBS=false
++ export RUN_TES_O3_TOTAL_COL_OBS
++ RUN_TES_O3_PROFILE_OBS=true
++ export RUN_TES_O3_PROFILE_OBS
++ RUN_TES_O3_CPSR_OBS=false
++ export RUN_TES_O3_CPSR_OBS
++ RUN_TES_NH3_TOTAL_COL_OBS=false
++ export RUN_TES_NH3_TOTAL_COL_OBS
++ RUN_TES_NH3_PROFILE_OBS=false
++ export RUN_TES_NH3_PROFILE_OBS
++ RUN_TES_NH3_CPSR_OBS=false
++ export RUN_TES_NH3_CPSR_OBS
++ RUN_TES_CH4_TOTAL_COL_OBS=false
++ export RUN_TES_CH4_TOTAL_COL_OBS
++ RUN_TES_CH4_PROFILE_OBS=false
++ export RUN_TES_CH4_PROFILE_OBS
++ RUN_TES_CH4_CPSR_OBS=false
++ export RUN_TES_CH4_CPSR_OBS
++ RUN_CRIS_CO_TOTAL_COL_OBS=false
++ export RUN_CRIS_CO_TOTAL_COL_OBS
++ RUN_CRIS_CO_PROFILE_OBS=false
++ export RUN_CRIS_CO_PROFILE_OBS
++ RUN_CRIS_CO_CPSR_OBS=false
++ export RUN_CRIS_CO_CPSR_OBS
++ RUN_CRIS_O3_TOTAL_COL_OBS=false
++ export RUN_CRIS_O3_TOTAL_COL_OBS
++ RUN_CRIS_O3_PROFILE_OBS=false
++ export RUN_CRIS_O3_PROFILE_OBS
++ RUN_CRIS_O3_CPSR_OBS=false
++ export RUN_CRIS_O3_CPSR_OBS
++ RUN_CRIS_NH3_TOTAL_COL_OBS=false
++ export RUN_CRIS_NH3_TOTAL_COL_OBS
++ RUN_CRIS_NH3_PROFILE_OBS=false
++ export RUN_CRIS_NH3_PROFILE_OBS
++ RUN_CRIS_NH3_CPSR_OBS=false
++ export RUN_CRIS_NH3_CPSR_OBS
++ RUN_CRIS_CH4_TOTAL_COL_OBS=false
++ export RUN_CRIS_CH4_TOTAL_COL_OBS
++ RUN_CRIS_CH4_PROFILE_OBS=false
++ export RUN_CRIS_CH4_PROFILE_OBS
++ RUN_CRIS_CH4_CPSR_OBS=false
++ export RUN_CRIS_CH4_CPSR_OBS
++ RUN_CRIS_PAN_TOTAL_COL_OBS=false
++ export RUN_CRIS_PAN_TOTAL_COL_OBS
++ RUN_CRIS_PAN_PROFILE_OBS=false
++ export RUN_CRIS_PAN_PROFILE_OBS
++ RUN_CRIS_PAN_CPSR_OBS=false
++ export RUN_CRIS_PAN_CPSR_OBS
++ RUN_SCIAM_NO2_TOTAL_COL_OBS=false
++ export RUN_SCIAM_NO2_TOTAL_COL_OBS
++ RUN_SCIAM_NO2_TROP_COL_OBS=false
++ export RUN_SCIAM_NO2_TROP_COL_OBS
++ RUN_GOME2A_NO2_TOTAL_COL_OBS=false
++ export RUN_GOME2A_NO2_TOTAL_COL_OBS
++ RUN_GOME2A_NO2_TROP_COL_OBS=true
++ export RUN_GOME2A_NO2_TROP_COL_OBS
++ RUN_MLS_O3_TOTAL_COL_OBS=false
++ export RUN_MLS_O3_TOTAL_COL_OBS
++ RUN_MLS_O3_PROFILE_OBS=true
++ export RUN_MLS_O3_PROFILE_OBS
++ RUN_MLS_O3_CPSR_OBS=false
++ export RUN_MLS_O3_CPSR_OBS
++ RUN_MLS_HNO3_TOTAL_COL_OBS=false
++ export RUN_MLS_HNO3_TOTAL_COL_OBS
++ RUN_MLS_HNO3_PROFILE_OBS=true
++ export RUN_MLS_HNO3_PROFILE_OBS
++ RUN_MLS_HNO3_CPSR_OBS=false
++ export RUN_MLS_HNO3_CPSR_OBS
++ RUN_AIRNOW_CO_OBS=false
++ export RUN_AIRNOW_CO_OBS
++ RUN_AIRNOW_O3_OBS=false
++ export RUN_AIRNOW_O3_OBS
++ RUN_AIRNOW_NO2_OBS=false
++ export RUN_AIRNOW_NO2_OBS
++ RUN_AIRNOW_SO2_OBS=false
++ export RUN_AIRNOW_SO2_OBS
++ RUN_AIRNOW_PM10_OBS=false
++ export RUN_AIRNOW_PM10_OBS
++ RUN_AIRNOW_PM25_OBS=false
++ export RUN_AIRNOW_PM25_OBS
++ RUN_PANDA_CO_OBS=false
++ export RUN_PANDA_CO_OBS
++ RUN_PANDA_O3_OBS=false
++ export RUN_PANDA_O3_OBS
++ RUN_PANDA_PM25_OBS=false
++ export RUN_PANDA_PM25_OBS
++ RUN_MEXICO_AQS_CO_OBS=false
++ export RUN_MEXICO_AQS_CO_OBS
++ RUN_MET_OBS=true
++ export RUN_MET_OBS
++ RUN_COMBINE_OBS=true
++ export RUN_COMBINE_OBS
++ RUN_PREPROCESS_OBS=true
++ export RUN_PREPROCESS_OBS
++ RUN_LOCALIZATION=true
++ export RUN_LOCALIZATION
++ rm -rf index_RS_Code_Versions_2014072612
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_Code_Versions.ksh
++ 1> index_RS_Code_Versions_2014072612 2>& 1
++ rm -rf index_RS_Experiment_Dirs_2014072612
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_Experiment_Dirs.ksh
++ 1> index_RS_Experiment_Dirs_2014072612 2>& 1
++ rm -rf index_RS_Set_Time_Vars_2014072612
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_Set_Time_Vars.ksh
++ 1> index_RS_Set_Time_Vars_2014072612 2>& 1
++ rm -rf index_RS_Run_Dirs_2014072612
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_Run_Dirs.ksh
++ 1> index_RS_Run_Dirs_2014072612 2>& 1
++ rm -rf index_RS_Computer_Settings_2014072612
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_Computer_Settings.ksh
++ 1> index_RS_Computer_Settings_2014072612 2>& 1
++ rm -rf index_RS_Observation_Dirs_2014072612
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_Observation_Dirs.ksh
++ 1> index_RS_Observation_Dirs_2014072612 2>& 1
++ rm -rf index_RS_Chemistry_Pert_Params_2014072612
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_Chemistry_Pert_Params.ksh
++ 1> index_RS_Chemistry_Pert_Params_2014072612 2>& 1
++ rm -rf index_RS_Forecast_Time_Domain_Params_2014072612
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_Forecast_Time_Domain_Params_FRAPPE.ksh
++ 1> index_RS_Forecast_Time_Domain_Params_2014072612 2>& 1
++ rm -rf index_RS_WRFChem_Namelists_2014072612
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_WRFChem_Namelists_FRAPPE.ksh
++ 1> index_RS_WRFChem_Namelists_2014072612 2>& 1
++ rm -rf index_RS_Forward_Operator_Params_2014072612
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_Forward_Operator_Params.ksh
++ 1> index_RS_Forward_Operator_Params_2014072612 2>& 1
++ rm -rf index_RS_DART_Namelists_2014072612
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_DART_Namelists.ksh
++ 1> index_RS_DART_Namelists_2014072612 2>& 1
++ rm -rf index_RS_Error_Decorrelation_Settings_2014072612
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_Error_Decorrelation_Settings.ksh
++ 1> index_RS_Error_Decorrelation_Settings_2014072612 2>& 1
++ rm -rf index_RS_Code_Versions_2014072612
++ rm -rf index_RS_Experiment_Dirs_2014072612
++ rm -rf index_RS_Set_Time_Vars_2014072612
++ rm -rf index_RS_Run_Dirs_2014072612
++ rm -rf index_RS_Computer_Settings_2014072612
++ rm -rf index_RS_Observation_Dirs_2014072612
++ rm -rf index_RS_Chemistry_Pert_Params_2014072612
++ rm -rf index_RS_Forecast_Time_Domain_Params_2014072612
++ rm -rf index_RS_WRFChem_Namelists_2014072612
++ rm -rf index_RS_Forward_Operator_Params_2014072612
++ rm -rf index_RS_DART_Namelists_2014072612
++ rm -rf index_RS_Error_Decorrelation_Settings_2014072612
++ NL_UPPER_DATA_FILE=$'\'/nobackupp28/amizzi/INPUT_DATA/FRAPPE_REAL_TIME_DATA/large_scale_chem_forecasts/h0004.nc\''
++ export NL_UPPER_DATA_FILE
++ GDAS_HR_PREFIX=''
++ export GDAS_HR_PREFIX
++ GDAS_HR_SUFFIX=.wo40.be
++ export GDAS_HR_SUFFIX
++ cp /nobackupp28/amizzi/TRUNK/DART_development/models/wrf_chem/work/advance_time ./.
++ cp /nobackupp28/amizzi/TRUNK/DART_development/models/wrf_chem/work/input.nml ./.
++ GENERAL_JOB_CLASS=devel
++ export GENERAL_JOB_CLASS
++ GENERAL_TIME_LIMIT=00:20:00
++ export GENERAL_TIME_LIMIT
++ GENERAL_NODES=1
++ export GENERAL_NODES
++ GENERAL_TASKS=16
++ export GENERAL_TASKS
++ PERT_JOB_CLASS=normal
++ export PERT_JOB_CLASS
++ PERT_JOB_CLASS=devel
++ export PERT_JOB_CLASS
++ PERT_TIME_LIMIT=02:59:00
++ export PERT_TIME_LIMIT
++ PERT_TIME_LIMIT=01:59:00
++ export PERT_TIME_LIMIT
++ PERT_NODES=3
++ export PERT_NODES
++ PERT_TASKS=24
++ export PERT_TASKS
++ NL_FAC_OBS_ERROR_OMI_SO2=2.00
++ export NL_FAC_OBS_ERROR_OMI_SO2
++ NL_FAC_OBS_ERROR_OMI_SO2=2.50
++ export NL_FAC_OBS_ERROR_OMI_SO2
++ NL_FAC_OBS_ERROR_OMI_SO2=1.80
++ export NL_FAC_OBS_ERROR_OMI_SO2
++ NL_FAC_OBS_ERROR_OMI_SO2=1.75
++ export NL_FAC_OBS_ERROR_OMI_SO2
++ NL_FAC_OBS_ERROR_MLS_HNO3=0.15
++ export NL_FAC_OBS_ERROR_MLS_HNO3
++ NL_FAC_OBS_ERROR_MLS_HNO3=1.5
++ export NL_FAC_OBS_ERROR_MLS_HNO3
++ NL_FAC_OBS_ERROR_MLS_HNO3=2.0
++ export NL_FAC_OBS_ERROR_MLS_HNO3
++ NL_FAC_OBS_ERROR_MLS_HNO3=2.25
++ export NL_FAC_OBS_ERROR_MLS_HNO3
++ NL_FAC_OBS_ERROR_MLS_HNO3=1.75
++ export NL_FAC_OBS_ERROR_MLS_HNO3
++ NL_FAC_OBS_ERROR_MLS_HNO3=2.0
++ export NL_FAC_OBS_ERROR_MLS_HNO3
++ NL_FAC_OBS_ERROR_MLS_O3=1.50
++ export NL_FAC_OBS_ERROR_MLS_O3
++ NL_FAC_OBS_ERROR_MLS_O3=2.00
++ export NL_FAC_OBS_ERROR_MLS_O3
++ NL_FAC_OBS_ERROR_MLS_O3=1.75
++ export NL_FAC_OBS_ERROR_MLS_O3
++ NL_FAC_OBS_ERROR_MLS_O3=1.50
++ export NL_FAC_OBS_ERROR_MLS_O3
++ NL_FAC_OBS_ERROR_TES_CO=100.00
++ export NL_FAC_OBS_ERROR_TES_CO
++ NL_FAC_OBS_ERROR_TES_CO=50.00
++ export NL_FAC_OBS_ERROR_TES_CO
++ NL_FAC_OBS_ERROR_TES_CO=25.00
++ export NL_FAC_OBS_ERROR_TES_CO
++ NL_FAC_OBS_ERROR_TES_CO=50.00
++ export NL_FAC_OBS_ERROR_TES_CO
++ NL_FAC_OBS_ERROR_TES_O3=5.00
++ export NL_FAC_OBS_ERROR_TES_O3
++ NL_FAC_OBS_ERROR_TES_O3=2.50
++ export NL_FAC_OBS_ERROR_TES_O3
++ NL_FAC_OBS_ERROR_TES_O3=3.75
++ export NL_FAC_OBS_ERROR_TES_O3
++ NL_FAC_OBS_ERROR_MODIS_AOD=0.30
++ export NL_FAC_OBS_ERROR_MODIS_AOD
++ NL_FAC_OBS_ERROR_MODIS_AOD=0.50
++ export NL_FAC_OBS_ERROR_MODIS_AOD
++ NL_FAC_OBS_ERROR_MODIS_AOD=0.75
++ export NL_FAC_OBS_ERROR_MODIS_AOD
++ NL_FAC_OBS_ERROR_MODIS_AOD=1.00
++ export NL_FAC_OBS_ERROR_MODIS_AOD
++ NL_FAC_OBS_ERROR_GOME2A_NO2=0.30
++ export NL_FAC_OBS_ERROR_GOME2A_NO2
++ NL_FAC_OBS_ERROR_GOME2A_NO2=0.50
++ export NL_FAC_OBS_ERROR_GOME2A_NO2
++ NL_FAC_OBS_ERROR_GOME2A_NO2=0.75
++ export NL_FAC_OBS_ERROR_GOME2A_NO2
++ NL_FAC_OBS_ERROR_MOPITT_CO=1.00
++ export NL_FAC_OBS_ERROR_MOPITT_CO
++ NL_FAC_OBS_ERROR_MOPITT_CO=0.75
++ export NL_FAC_OBS_ERROR_MOPITT_CO
++ NL_FAC_OBS_ERROR_MOPITT_CO=0.50
++ export NL_FAC_OBS_ERROR_MOPITT_CO
++ NL_FAC_OBS_ERROR_MOPITT_CO=0.40
++ export NL_FAC_OBS_ERROR_MOPITT_CO
++ NL_FAC_OBS_ERROR_OMI_NO2_DOMINO=0.30
++ export NL_FAC_OBS_ERROR_OMI_NO2_DOMINO
++ NL_FAC_OBS_ERROR_OMI_NO2_DOMINO=0.40
++ export NL_FAC_OBS_ERROR_OMI_NO2_DOMINO
++ NL_FAC_OBS_ERROR_OMI_NO2_DOMINO=0.50
++ export NL_FAC_OBS_ERROR_OMI_NO2_DOMINO
++ [[ ! -e /nobackupp28/amizzi/OUTPUT_DATA/INPUT_DATA_TRACER_I/2014072612 ]]
++ cd /nobackupp28/amizzi/OUTPUT_DATA/INPUT_DATA_TRACER_I/2014072612
++ [[ false == true ]]
++ [[ false == true ]]
++ [[ false == true ]]
++ [[ false == true ]]
++ [[ false == true ]]
++ [[ false == true ]]
++ false
++ false
++ false
++ false
++ false
++ true
++ [[ ! -d /nobackupp28/amizzi/OUTPUT_DATA/INPUT_DATA_TRACER_I/2014072612/wrfchem_chem_icbc ]]
++ cd /nobackupp28/amizzi/OUTPUT_DATA/INPUT_DATA_TRACER_I/2014072612/wrfchem_chem_icbc
++ NL_CHEM_ICBC_SPECIES=o3,no,no2,no3,nh3,hno3,hno4,n2o5,ho2,h2o2,co,ch4,ch3o2,ch3ooh,hcho,ch3oh,c2h4,ald,ch3cooh,acet,mgly,pan,mpan,macr,mvk,c2h6,c3h6,c3h8,c2h5oh,c10h16,onit,onitr,isopr,isopn,acetol,glyald,hydrald,mek,bigene,open,bigalk,tol,cres,dms,so2,sulf,BC1,BC2,OC1,OC2,SEAS_1,SEAS_2,SEAS_3,SEAS_4,DUST_1,DUST_2,DUST_3,DUST_4,DUST_5,h2,n2o
++ export NL_CHEM_ICBC_SPECIES
++ command . /nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS/RS_Scripts/RS_SINGLE_Pert_WRFChem_Chem_ICBC.ksh
++ 1> index_rc.html 2>& 1
++ exit
+
+____________________________________________________________________
+Job Resource Usage Summary for 21090944.pbspl1.nas.nasa.gov
+
+    CPU Time Used            : 86:59:54
+    Real Memory Used         : 4072960kb
+    Walltime Used            : 05:30:49
+    Exit Status              : 0
+
+    Number of CPUs Requested : 48
+    Walltime Requested       : 05:59:00
+
+    Execution Queue          : normal
+    Charged To               : s2933
+
+    Job Stopped              : Thu Nov 21 01:54:08 2024
+____________________________________________________________________

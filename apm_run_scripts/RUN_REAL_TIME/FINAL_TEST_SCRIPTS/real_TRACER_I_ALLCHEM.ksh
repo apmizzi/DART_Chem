@@ -51,10 +51,10 @@ export FIRST_DART_INFLATE_DATE=2014072618
 export FIRST_EMISS_INV_DATE=2014072618
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014072618
+export CYCLE_STR_DATE=2014072612
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014072618
+export CYCLE_END_DATE=2014072612
 #
 # For emissions estimation
 export ADD_EMISS=false
@@ -156,15 +156,15 @@ export RUN_CRIS_PAN_PROFILE_OBS=false
 export RUN_CRIS_PAN_CPSR_OBS=false
 export RUN_SCIAM_NO2_TOTAL_COL_OBS=false
 export RUN_SCIAM_NO2_TROP_COL_OBS=false # (works, vertical sum)
-export RUN_GOMME2A_NO2_TOTAL_COL_OBS=false
+export RUN_GOME2A_NO2_TOTAL_COL_OBS=false
 export RUN_GOME2A_NO2_TROP_COL_OBS=false # (works, vertical sum)  TRACER I
 export RUN_MLS_O3_TOTAL_COL_OBS=false
 export RUN_MLS_O3_PROFILE_OBS=false # (works, check)  TRACER I
 export RUN_MLS_O3_CPSR_OBS=false # (works, vertical sum)
 export RUN_MLS_HNO3_TOTAL_COL_OBS=false
-export RUN_MLS_HNO3_PROFILE_OBS=true # (works, vertical sum)  TRACER I
+export RUN_MLS_HNO3_PROFILE_OBS=false # (works, vertical sum)  TRACER I
 export RUN_MLS_HNO3_CPSR_OBS=false # (works, vertical sum)
-export RUN_AIRNOW_CO_OBS=false # (done)  TRACER I
+export RUN_AIRNOW_CO_OBS=true # (done)  TRACER I
 export RUN_AIRNOW_O3_OBS=false # (done)  TRACER I
 export RUN_AIRNOW_NO2_OBS=false # (done)  TRACER I
 export RUN_AIRNOW_SO2_OBS=false # (done)  TRACER I
@@ -257,15 +257,15 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'AIRNOW_PM25'"
 #
 # Run WRF-Chem for failed forecasts (will not work with adaptive time step)
-export RUN_SPECIAL_FORECAST=false
-export NUM_SPECIAL_FORECAST=0
+export RUN_SPECIAL_FORECAST=true
+export NUM_SPECIAL_FORECAST=3
 export SPECIAL_FORECAST_FAC=1.
 #
-export SPECIAL_FORECAST_MEM[1]=1
-export SPECIAL_FORECAST_MEM[2]=2
-export SPECIAL_FORECAST_MEM[3]=3
-export SPECIAL_FORECAST_MEM[4]=4
-export SPECIAL_FORECAST_MEM[5]=5
+export SPECIAL_FORECAST_MEM[1]=7
+export SPECIAL_FORECAST_MEM[2]=8
+export SPECIAL_FORECAST_MEM[3]=9
+export SPECIAL_FORECAST_MEM[4]=9
+export SPECIAL_FORECAST_MEM[5]=10
 export SPECIAL_FORECAST_MEM[6]=6
 export SPECIAL_FORECAST_MEM[7]=7
 export SPECIAL_FORECAST_MEM[8]=8
@@ -323,7 +323,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_DART_FILTER=false
          export RUN_BIAS_CORRECTION=false
          export RUN_UPDATE_BC=false
-         export RUN_ENSEMBLE_MEAN_INPUT=true
+         export RUN_ENSEMBLE_MEAN_INPUT=false
          export RUN_WRFCHEM_INITIAL=true
          export RUN_WRFCHEM_CYCLE_CR=false
       else
@@ -437,12 +437,35 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #########################################################################
 #
    export GENERAL_JOB_CLASS=devel
-   export GENERAL_TIME_LIMIT=00:20:00
-#  export FILTER_JOB_CLASS=normal
+   export GENERAL_TIME_LIMIT=00:05:00
+   export FILTER_JOB_CLASS=normal
 #  export FILTER_TIME_LIMIT=06:59:00
    export FILTER_JOB_CLASS=devel
    export FILTER_TIME_LIMIT=01:59:00
-   export NL_FAC_OBS_ERROR_OMI_SO2=1.50
+   export FILTER_TIME_LIMIT=01:59:00
+   export FILTER_TIME_LIMIT=00:05:00
+   export FILTER_TASKS=24
+   export FILTER_NODES=1
+   export FILTER_TASKS=1
+
+   export NL_FAC_OBS_ERROR_OMI_SO2=2.00
+   export NL_FAC_OBS_ERROR_OMI_SO2=2.50
+   export NL_FAC_OBS_ERROR_OMI_SO2=1.80
+   
+   export NL_FAC_OBS_ERROR_MLS_HNO3=0.15
+   export NL_FAC_OBS_ERROR_MLS_HNO3=1.5
+   export NL_FAC_OBS_ERROR_MLS_HNO3=2.0
+   export NL_FAC_OBS_ERROR_MLS_HNO3=2.25
+   
+   export NL_FAC_OBS_ERROR_MLS_O3=1.50
+   export NL_FAC_OBS_ERROR_MLS_O3=2.00
+   export NL_FAC_OBS_ERROR_MLS_O3=1.75
+   export NL_FAC_OBS_ERROR_MLS_O3=1.50
+   
+   export NL_FAC_OBS_ERROR_TES_CO=100.00
+   export NL_FAC_OBS_ERROR_TES_CO=50.00
+   
+   export NL_FAC_OBS_ERROR_TES_O3=5.00
 #
 #########################################################################
 #
@@ -484,11 +507,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       fi
       source ${RS_SCRIPTS_DIR}/RS_DART_Filter.ksh > index_rs.html 2>&1 
    fi
-
-
-exit
-
-   
 #
 #########################################################################
 #

@@ -406,8 +406,8 @@ subroutine get_expected_omi_no2_trop_col(state_handle, ens_size, location, key, 
       if(interp_new.eq.0) exit
    enddo
 !
-! Sometimes the WRF-Chem surface pressure is greater than the
-! first model level pressure. This fixes that problem.   
+! WRF-Chem surface pressure is greater than the
+! first model level pressure. Set the lower bound pressue to surface pressure.   
    do imem=1,ens_size
       if(prs_sfc(imem).lt.prs_mdl_1(imem)) prs_mdl_1(imem)=prs_sfc(imem)
    enddo
@@ -469,7 +469,6 @@ subroutine get_expected_omi_no2_trop_col(state_handle, ens_size, location, key, 
    allocate(no2_val(ens_size,level_omi))
    allocate(tmp_val(ens_size,level_omi))
    allocate(qmr_val(ens_size,level_omi))
-   allocate(prs_val(ens_size,level_omi))
 
    do k=1,level_omi
       zstatus(:)=0
@@ -505,20 +504,14 @@ subroutine get_expected_omi_no2_trop_col(state_handle, ens_size, location, key, 
 !
 ! Check data for missing values      
       do imem=1,ens_size
-         if(no2_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
-         qmr_val(imem,k).eq.missing_r8) then
+         if(no2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         qmr_val(imem,k).lt.0.) then
             zstatus(:)=20
             expct_val(:)=missing_r8
             write(string1, *) &
-            'APM: Model profile data has missing values for obs, level ',key,k
+            'APM: Model profile data has missing values for obs, level ',k
             call error_handler(E_ALLMSG, routine, string1, source)
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            do imemm=1,ens_size
-               write(string1, *) &
-               'APM: Model profile values: no2,tmp,qmr',key,imem,k,no2_val(imemm,k), &
-               tmp_val(imemm,k),qmr_val(imemm,k)     
-               call error_handler(E_ALLMSG, routine, string1, source)
-            enddo
             return
          endif
       enddo
@@ -542,8 +535,8 @@ subroutine get_expected_omi_no2_trop_col(state_handle, ens_size, location, key, 
    no2_trop(:)=no2_trop(:) * 1.e-6_r8
    
    do imem=1,ens_size
-      if(no2_trop(imem).eq.missing_r8 .or. tmp_trop(imem).eq.missing_r8 .or. &
-      qmr_trop(imem).eq.missing_r8) then
+      if(no2_trop(imem).lt.0. .or. tmp_trop(imem).lt.0. .or. &
+      qmr_trop(imem).lt.0.) then
          zstatus(:)=20
          expct_val(:)=missing_r8
          write(string1, *) &
@@ -555,12 +548,12 @@ subroutine get_expected_omi_no2_trop_col(state_handle, ens_size, location, key, 
          return
       endif
    enddo
-
+!
+! Calculate the expected retrievals   
    istatus(:)=0
    zstatus(:)=0
    expct_val(:)=0.0
    allocate(thick(layer_omi))
-
    do imem=1,ens_size
 ! Adjust the OMI pressure for WRF-Chem lower/upper boudary pressure
 ! (OMI NO2 vertical grid is bottom to top)
@@ -568,9 +561,9 @@ subroutine get_expected_omi_no2_trop_col(state_handle, ens_size, location, key, 
       if (prs_sfc(imem).gt.prs_omi_mem(1)) then
          prs_omi_mem(1)=prs_sfc(imem)
       endif   
-
-! Calculate the thicknesses
-
+!
+! Calculate the thicknesses (grid is bottom to top) 
+      thick(:)=0.
       do k=1,kend_omi+1
          if(k.ne.kend_omi+1) then 
             lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
@@ -591,16 +584,9 @@ subroutine get_expected_omi_no2_trop_col(state_handle, ens_size, location, key, 
             thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
             log(prs_omi_mem(k)/prs_trop_omi)
          endif
-
-!         write(string1, *) &
-!         'APM: Key, Thickness calcs ', key, k, thick(k), up_wt, dw_wt, tmp_vir_k,tmp_vir_kp, &
-!         prs_omi_mem(k), prs_trop_omi     
-!         call error_handler(E_ALLMSG, routine, string1, source)
-
       enddo
-   
-! Process the vertical summation
-
+!   
+! Process the vertical summation (OMI NO2 unit are moles per m^2)
       do k=1,kend_omi+1
          if(k.ne.kend_omi+1) then 
             lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
@@ -648,10 +634,6 @@ subroutine get_expected_omi_no2_trop_col(state_handle, ens_size, location, key, 
 
       enddo
 
-!      write(string1, *) &
-!      'APM: Member ',imem,'Key, Final Value for ob ',key,expct_val(imem)
-!      call error_handler(E_ALLMSG, routine, string1, source)
-
       if(isnan(expct_val(imem))) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
@@ -674,7 +656,7 @@ subroutine get_expected_omi_no2_trop_col(state_handle, ens_size, location, key, 
    enddo
 
 ! Clean up and return
-   deallocate(no2_val, tmp_val, qmr_val, prs_val)
+   deallocate(no2_val, tmp_val, qmr_val)
    deallocate(no2_trop,tmp_trop,qmr_trop)
    deallocate(thick)
    deallocate(prs_omi, prs_omi_mem)

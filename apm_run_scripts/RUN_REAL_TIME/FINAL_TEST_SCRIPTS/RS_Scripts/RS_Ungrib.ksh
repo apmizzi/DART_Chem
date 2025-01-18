@@ -69,5 +69,5 @@
       ./ungrib.exe > index.html 2>&1
 #
 # Clean directory
-      rm GRIBFILE* rm gfs_4_*      
+      rm -rf GRIBFILE* gfs_4_*      
       rm namelist.wps ungrib.exe ungrib.log Vtable

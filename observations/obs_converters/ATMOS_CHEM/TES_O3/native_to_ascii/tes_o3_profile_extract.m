@@ -21,7 +21,7 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
    [status]=system(command);
    fid=fopen(fileout,'w');
 %
-   command=strcat('ls'," ",'-1'," ",filein,'*');
+   command=strcat('/usr/bin/ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);   
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);
@@ -245,8 +245,10 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       zenang=h5read(file_in,field);
 %
 % Loop through TES data
-      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
-      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn, ...
+      whh_mn,wmm_mn,wss_mn,2000));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx, ...
+      whh_mx,wmm_mx,wss_mx,2000));
       icnt=0;
       for iobs=1:nobs
          utcc_time=cell2mat(utc_time(iobs));
@@ -257,7 +259,9 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          mm_tes=str2double(utcc_time(15:16));
          ss_tes=round(str2double(utcc_time(18:23)));
          tesdate=single(convert_time_ref(yyyy_tes,mn_tes, ...
-         dy_tes,hh_tes,mm_tes,ss_tes,2010));
+         dy_tes,hh_tes,mm_tes,ss_tes,2000));
+         fprintf('yr,mn,dy,hh,mm %d %d %d %d %d \n', ...
+         yyyy_tes,mn_tes,dy_tes,hh_tes,mm_tes) 	 
 %
 % Check time
 %	 fprintf('APM: Time test - %d %d %d \n',windate_min,tesdate,windate_max)
@@ -266,7 +270,6 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          end
 %
 % QA/QC
-%
 %         if(any(isnan(prs_lay(:,iobs))) | any(prs_lay(:,iobs)<0))
 %            continue
 %         end
@@ -279,51 +282,19 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
             continue
          end
 %
-         if(any(isnan(err_cov_total(:,:,iobs))))
-            continue
-         end
-%
-%         if(any(isnan(o3_lay(:,iobs))) | any(o3_lay(:,iobs)<=0))
+%         if(any(isnan(o3_lay(:,iobs))) | any(o3_lay(:,iobs)<0))
 %            continue
 %         end
 %
 %         if(any(isnan(o3_lay_err(:,iobs))) | any(o3_lay_err(:,iobs)<=0))
-%            continue
+%           continue
 %         end
 %
-%         if(any(isnan(o3_lay_prior(:,iobs))) | any(o3_lay_prior(:,iobs)<=0))
+%         if(any(isnan(o3_lay_prior(:,iobs))) | any(o3_lay_prior(:,iobs)<0))
 %            continue
 %         end
 %
          if(isnan(trop_pressure(iobs)) | trop_pressure(iobs)<=0.)
-            continue
-         end
-%
-         if(isnan(dofs(iobs)) | dofs(iobs)<0.)
-            continue
-         end
-%
-         if(isnan(o3_trop_col(iobs)) | o3_trop_col(iobs)<=0.)
-            continue
-         end
-%
-         if(isnan(o3_trop_col_err(iobs)) | o3_trop_col_err(iobs)<=0.)
-            continue
-         end
-%
-         if(isnan(o3_trop_col_prior(iobs)) | o3_trop_col_prior(iobs)<=0.)
-            continue
-         end
-%
-         if(isnan(o3_total_col(iobs)) | o3_total_col(iobs)<=0.)
-            continue
-         end
-%
-         if(isnan(o3_total_col_err(iobs)) | o3_total_col_err(iobs)<=0.)
-            continue
-         end
-%
-         if(isnan(o3_total_col_prior(iobs)) | o3_total_col_prior(iobs)<=0.)
             continue
          end
 %

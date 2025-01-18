@@ -172,6 +172,8 @@ program mls_o3_profile_ascii_to_obs
 ! Species-specific variables
    real                              :: o3_col_obs,o3_col_obs_err,prior_err
    real                              :: lat_obs,lon_obs,dofs_obs,trop_prs
+   real                              :: o3_conv,o3_qual,o3_stat
+   real                              :: prior_conv,prior_qual,prior_stat
    real*8                            :: lat_obs_r8,lon_obs_r8
    real,allocatable,dimension(:,:)   :: avgk_obs,cov_obs,cov_total
    real,allocatable,dimension(:)     :: prior_obs,o3_obs,o3_obs_err
@@ -201,7 +203,7 @@ program mls_o3_profile_ascii_to_obs
    sum_accept=0
    sum_total=0
    obs_accept=0
-   fac_err=0.1
+   fac_err=1.0
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
@@ -274,6 +276,7 @@ program mls_o3_profile_ascii_to_obs
 ! Read MLS O3
    read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    do while (ios == 0)
+      sum_total=sum_total+1
       read(fileid,*,iostat=ios) yr_obs, mn_obs, &
       dy_obs, hh_obs, mm_obs, ss_obs
       read(fileid,*,iostat=ios) lat_obs,lon_obs
@@ -302,12 +305,16 @@ program mls_o3_profile_ascii_to_obs
       read(fileid,*,iostat=ios) prs_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) ret_lay_obs(1:ret_nlay)
       read(fileid,*,iostat=ios) tru_lay_obs(1:tru_nlay)
+      read(fileid,*,iostat=ios) o3_conv,o3_qual,o3_stat
       read(fileid,*,iostat=ios) o3_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) o3_obs_err(1:nlay_obs)
-      cov_obs(:,:)=0.
-      do k=1,nlay_obs
-         cov_obs(k,k)=o3_obs_err(k)*o3_obs_err(k)
-      enddo
+      if(reject.eq.0) then
+         cov_obs(:,:)=0.
+         do k=1,nlay_obs
+            cov_obs(k,k)=o3_obs_err(k)*o3_obs_err(k)
+         enddo
+      endif
+      read(fileid,*,iostat=ios) prior_conv,prior_qual,prior_stat
       read(fileid,*,iostat=ios) prior_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) prior_err
       do k=1,ret_nlay
@@ -342,15 +349,27 @@ program mls_o3_profile_ascii_to_obs
          lat_obs_r8=lat_obs
 !      
 ! Loop through the profile retrievals
-! (prs_obs(4)=316. hPa; prs_obs(27)=.0215 hPa)
-         do ilay=4,27
+! Based on v4-2 data quality document         
+! (prs_obs(8)=261.01. hPa; prs_obs(29)=4.64 hPa)
+!
+! QA/QC
+         if(prior_err.le.0. .or. isnan(prior_err)) then
+            cycle
+         endif
+         
+         do ilay=8,29
             if(all(avgk_obs(ilay,1:nlay_obs).eq.0.)) then
                cycle
             endif
 !            
-            if(o3_obs_err(ilay).le.0. .or. isnan(o3_obs_err(ilay)) .or. &
-            o3_obs(ilay).le.0. .or. isnan(o3_obs(ilay)) .or. &
-            prior_obs(ilay).le.0. .or. isnan(prior_obs(ilay))) then
+            if(o3_obs(ilay).lt.0. .or. isnan(o3_obs(ilay)) .or. &
+            o3_obs_err(ilay).le.0. .or. isnan(o3_obs_err(ilay)) .or. &
+            prior_obs(ilay).lt.0. .or. isnan(prior_obs(ilay))) then
+               cycle
+            endif
+!
+            if(mod(int(o3_stat),2).ne.0 .or. o3_qual.le.1.0 .or. &
+            o3_conv.ge.1.03) then
                cycle
             endif
 !

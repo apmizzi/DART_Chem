@@ -62,6 +62,10 @@ s#!/bin/ksh -aux
             chmod 644 ${WRFBIOCHEMI}
          fi
 #
+# COPY THE WRFINPUT TEMPLATE (for grid information)
+         rm wrfinput_d${CR_DOMAIN}.template
+         cp ${WRFCHEM_TEMPLATE_DIR}/${WRFCHEM_TEMPLATE_FILE} wrfinput_d${CR_DOMAIN}.template
+#
 # CREATE ENSEMBLE MEMBER FILES AS TEMPLATES	 
          let MEM=1
          while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do

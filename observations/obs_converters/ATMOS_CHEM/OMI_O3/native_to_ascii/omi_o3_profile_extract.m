@@ -20,7 +20,7 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
    [status]=system(command);
    fid=fopen(fileout,'w');
 %
-   command=strcat('ls'," ",'-1'," ",filein,'*');
+   command=strcat('/usr/bin/ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
    file_list=squeeze(file_list_b);   
@@ -130,8 +130,8 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          end
       end
       clear cov_prior_lay_int tmp
+%
 % avgk_lay(layer,layer,npixel,ntime) (no units) (18, 18, 30, 329)
-%'avgk'
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/AveragingKernel';
       avgk_lay_int=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');
@@ -158,6 +158,7 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          end
       end 
       clear avgk_lay_lay_int tmp
+%      
 % cov_lay(ndim_cov,npixel,ntime) (no units)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/CovarianceMatrix';
       cov_lay_int=h5read(file_in,field);
@@ -180,6 +181,7 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          end
       end
       clear cov_prior_lay_int tmp
+%      
 % dofs(npixel,ntime) (no units)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/DegreesOfFreedomForSignal';
       dofs=double(h5read(file_in,field));
@@ -188,6 +190,7 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       scalef=h5readatt(file_in,field,'ScaleFactor');  
       units=h5readatt(file_in,field,'Units');  
       dofs(:,:)=dofs(:,:)*scalef;
+%      
 % meas_qual_flg(ntime) (no units)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/MeasurementQualityFlags';
       meas_qual_flg=h5read(file_in,field);
@@ -196,8 +199,8 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       scalef=h5readatt(file_in,field,'ScaleFactor');  
       units=h5readatt(file_in,field,'Units');  
       meas_qual_flg(:,:)=meas_qual_flg(:,:)*scalef;
+%      
 % o3_lay(layer,npixel,ntime) (DU)
-%'o3_lay'
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/O3';
       o3_lay=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');
@@ -214,16 +217,10 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
                   o3_lay(i,j,k)=o3_lay(i,j,k)*scalef*du2molpm2;
                end
             end
-%	    if (any(abs(o3_lay(:,j,k))< 1.e10) & ...
-%            any(round(o3_lay(:,j,k))<1.e10))
-%               fprintf('o3_lay \n')
-%	       fprintf(' %8.4g ',o3_lay(:,j,k))
-%	       fprintf('\n')
-%	    end
          end
-      end 
+      end
+%      
 % o3_prior_lay(layer,npixel,ntime) (DU)
-%'o3_prior_lay'
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/O3Apriori';
       o3_prior_lay_int=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');
@@ -244,15 +241,10 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
                   o3_prior_lay(i,j,k)=double(o3_prior_lay_int(i,j,k));
                end
             end
-%	    if (any(round(o3_prior_lay(:,j,k))~=missing) & ...
-%            any(round(o3_prior_lay(:,j,k))~=fill))
-%               fprintf('o3_prior_lay \n')
-%	       fprintf(' %8.4g ',o3_prior_lay(:,j,k))
-%	       fprintf('\n')
-%	    end
          end
       end
       clear o3_prior_lay_int
+%      
 % o3_prior_err_lay(layer,npixel,ntime) (%)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/O3AprioriError';
       o3_prior_err_lay=double(h5read(file_in,field));
@@ -261,6 +253,7 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       scalef=h5readatt(file_in,field,'ScaleFactor');  
       units=h5readatt(file_in,field,'Units');
       o3_prior_err_lay(:,:,:)=o3_prior_err_lay(:,:,:)*scalef;
+%      
 % proc_qual_flg(npixel,ntime) (no units)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/ProcessingQualityFlags';
       proc_qual_flg=h5read(file_in,field);
@@ -269,6 +262,7 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       scalef=h5readatt(file_in,field,'ScaleFactor');  
       units=h5readatt(file_in,field,'Units');  
       meas_qual_flg(:,:)=meas_qual_flg(:,:)*scalef;
+%      
 % lat(npixel,ntime)
       field='/HDFEOS/SWATHS/O3Profile/Geolocation Fields/Latitude';
       lat=h5read(file_in,field);
@@ -277,6 +271,7 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       scalef=h5readatt(file_in,field,'ScaleFactor');  
       units=h5readatt(file_in,field,'Units');  
       lat(:,:)=lat(:,:)*scalef;
+%      
 % lon(npixel,ntime)
       field='/HDFEOS/SWATHS/O3Profile/Geolocation Fields/Longitude';
       lon=h5read(file_in,field);
@@ -292,6 +287,7 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
             end
          end
       end
+%      
 % prs_lev(level,npixel,ntime)
 % vertical grid is top to bottom      
       field='/HDFEOS/SWATHS/O3Profile/Geolocation Fields/Pressure';
@@ -306,16 +302,13 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       for j=1:npixel
          for k=1:ntime
             for i=1:level
-	       if (abs(prs_lev(i,j,k))<1.e5)
+	       if (abs(prs_lev(i,j,k))<2.e4)
                   prs_lev(i,j,k)=prs_lev(i,j,k)*scalef;
                end
             end
-%	    if (any(abs(prs_lev(:,j,k))<1.e5))
-%	       fprintf(' %7.2f ',prs_lev(1:level,j,k))
-%	       fprintf('\n')
-%	    end
          end
       end
+%      
 % zenang(npixel,ntime) (deg)
       field='/HDFEOS/SWATHS/O3Profile/Geolocation Fields/SolarZenithAngle';
       zenang=double(h5read(file_in,field));
@@ -324,6 +317,7 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       scalef=h5readatt(file_in,field,'ScaleFactor');
       units=h5readatt(file_in,field,'Units');
       zenang(:,:)=zenang(:,:)*scalef;
+%
 % RCF_qual(npixel,ntim) (should be less than 30)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/ReflectanceCostFunction';
       RCF_qual=h5read(file_in,field);
@@ -379,21 +373,35 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
                continue
 	    end
 %
-	    if(isnan(o3_lay(:,ipxl,ilin)) | any(o3_lay(1:int16(layer/2),ipxl,ilin)<=0))
-               continue
-            end
-
-	    if(isnan(o3_prior_lay(:,ipxl,ilin)) | any(o3_prior_lay(1:int16(layer/2),ipxl,ilin))<=0)
+	    if(isnan(o3_lay(:,ipxl,ilin)) | isnan(o3_prior_lay(:,ipxl,ilin)))
                continue
             end
 %
+%            iflg=0;
+%            for ilay=1:layer
+%               if(o3_lay(ilay,ipxl,ilin)<0 | o3_prior_lay(ilay,ipxl,ilin)<=0)
+%                 iflg=1
+%                 exit
+%               end
+%            end
+%            if(iflg==1)
+%               continue						
+%            end
+%
 % Check for negative pressures
-	    if(any(prs_lev(:,ipxl,ilin)<0.))
-	       fprintf('Negative pressures \n')
-               fprintf('%8.2f ',prs_lev(:,ipxl,ilin))
-               fprintf('\n')		 
-	       continue
-	    end  
+%            iflg=0;			 
+%            for ilev=1:level
+%               if(prs_lev(ilev,ipxl,ilin)<0.))
+%                  iflg=1;
+%                  fprintf('Negative pressures \n')
+%                  fprintf('%8.2f ',prs_lev(:,ipxl,ilin))
+%                  fprintf('\n')		 
+%                  exit
+%               end
+%            end
+%            if(iflg==1)
+%               continue						
+%            end
 %
 % Check domain
 % Input grid needs to be in degrees

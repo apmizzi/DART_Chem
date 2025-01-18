@@ -170,7 +170,7 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
 % OMSO2Readme_V2:
 % VCD PBL is lowest 1 km of atmosphere (assumes SO2 constant in PBL and negligible above PBL)
 % In V2 and after, this product is recommended for "top-down" emissions estimates
-% col_amt_pbl(pixel,scanline)
+% col_amt_pbl(pixel,scanline) (DU)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/ColumnAmountSO2_PBL';
       col_amt_pbl=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');
@@ -186,7 +186,7 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/ColumnAmountSO2_STL';
       col_amt_stl=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');   
-      units=h5readatt(file_in,field,'Units');  
+      units=h5readatt(file_in,field,'Units');
       range=h5readatt(file_in,field,'ValidRange');  
 % col_amt_trl(pixel,scanline)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/ColumnAmountSO2_TRL';
@@ -202,11 +202,11 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       units=h5readatt(file_in,field,'Units');  
       range=h5readatt(file_in,field,'ValidRange');  
       col_amt_trm(:,:)=col_amt_trm(:,:)*du2molcpm2/msq2cmsq;
-% col_amt_tru(pixel,scanline)
+% col_amt_tru(pixel,scanline) (DU)
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/ColumnAmountSO2_TRU';
       col_amt_tru=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');   
-      units=h5readatt(file_in,field,'Units');  
+      units=h5readatt(file_in,field,'Units');
       range=h5readatt(file_in,field,'ValidRange');  
       col_amt_tru(:,:)=col_amt_tru(:,:)*du2molcpm2/msq2cmsq;
 % layer_wt(layer,pixel,scanline)
@@ -248,7 +248,7 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
       field='/HDFEOS/SWATHS/OMI Total Column Amount SO2/Data Fields/SlantColumnAmountSO2';
       slnt_col_amt=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');   
-      units=h5readatt(file_in,field,'Units');  
+      units=h5readatt(file_in,field,'Units');
       range=h5readatt(file_in,field,'ValidRange');
 % calculate amf_total
       amf_total(:,:)=slnt_col_amt(:,:)./col_amt(:,:);
@@ -318,28 +318,34 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
          for ipxl=1:pixel
 %
 % QA/AC
-% From OMI-DUG-3.0 (Dec 3, 2009) (QA/QC reccs not used)
-% Also from OMSO2Readme_V2 (Rel: Feb 26, 2008; Upd: Feb 29, 2020) (QA/QC reccs used)
+% From OMI-DUG-3.0 (Dec 3, 2009) (QA/QC reccs used)
 %
-            if(ipxl<5 | ipxl>55)
+%            if(ipxl<5 | ipxl>55)
+%	       continue
+%	    end
+%	    
+%            if(zenang(ipxl,ilin)>=70.0 | rad_cld_frac(ipxl,ilin)>=0.3)
+%               continue
+%            end
+%
+            if(ipxl<10 | ipxl>50)
 	       continue
 	    end
 	    
-            if(cld_rad_frac(ipxl,ilin)>=0.3 | amf_total(ipxl,ilin)<=0.3 | ...
-	    zenang(ipxl,ilin)>=65.0 | flg_snoice(ipxl,ilin)==2 | ...
-	    flg_rowanom(ipxl,ilin)==1 | flg_saa(ipxl,ilin)==1)
-               continue
-            end
-	    
-	    if(isnan(col_amt(ipxl,ilin)) | col_amt(ipxl,ilin)<=0)
+            if(cld_frac(ipxl,ilin)>=0.2 | zenang(ipxl,ilin)>50.0 | ...
+	    rad_cld_frac(ipxl,ilin)>0.2)
                continue
             end
 
-	    if(isnan(slnt_col_amt(ipxl,ilin)) | slnt_col_amt(ipxl,ilin)<=0)
+	    if(isnan(col_amt(ipxl,ilin)) | col_amt(ipxl,ilin)<0)
+               continue
+            end
+
+	    if(isnan(slnt_col_amt(ipxl,ilin)) | slnt_col_amt(ipxl,ilin)<0)
                continue
             end
 	    
-	    if(isnan(col_amt_pbl(ipxl,ilin)) | col_amt_pbl(ipxl,ilin)<=0)
+	    if(isnan(col_amt_pbl(ipxl,ilin)) | col_amt_pbl(ipxl,ilin)<0)
                continue
             end
 %
@@ -415,7 +421,7 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
             fprintf(fid,'%14.8g \n',rad_cld_frac(ipxl,ilin));
             fprintf(fid,'%14.8g \n',slnt_col_amt(ipxl,ilin));
             fprintf(fid,'%14.8g \n',zenang(ipxl,ilin));
-            fprintf(fid,'%14.8g ',scat_wt(1:layer,ipxl,ilin));
+1<            fprintf(fid,'%14.8g ',scat_wt(1:layer,ipxl,ilin));
             fprintf(fid,'\n');
             fprintf(fid,'%14.8g ',prs_lev(1:level));
             fprintf(fid,'\n');

@@ -50,7 +50,7 @@
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
 #
 # SET TES INPUT DATA DIR
-      export TMP_INFILE=\'${EXPERIMENT_TES_O3_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${TES_FILE_PRE}\'
+      export TMP_INFILE=\'${EXPERIMENT_TES_O3_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}/${TES_FILE_PRE}\'
 #
 # COPY EXECUTABLE
       export FILE=tes_o3_profile_extract.m
@@ -83,7 +83,7 @@
          export BIN_END_HH=23
          export BIN_END_MN=59
          export BIN_END_SS=59
-         export TMP_INFILE=\'${EXPERIMENT_TES_O3_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${TES_FILE_PRE}\'
+         export TMP_INFILE=\'${EXPERIMENT_TES_O3_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}/${TES_FILE_PRE}\'
 #
 # COPY EXECUTABLE
          export FILE=tes_o3_profile_extract.m
@@ -149,8 +149,8 @@
       ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # DO THINNING
-      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/work/tes_o3_profile_thinner ./.
-      ./tes_o3_profile_thinner > index_thinner.html 2>&1
+#      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/work/tes_o3_profile_thinner ./.
+#      ./tes_o3_profile_thinner > index_thinner.html 2>&1
 #
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_O3/work/tes_o3_profile_ascii_to_obs ./.

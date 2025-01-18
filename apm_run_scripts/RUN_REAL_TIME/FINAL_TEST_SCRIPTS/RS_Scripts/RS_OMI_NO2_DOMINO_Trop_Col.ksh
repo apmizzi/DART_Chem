@@ -50,7 +50,7 @@
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
 #
 # SET OMI INPUT DATA DIR
-      export TMP_INFILE=\'${EXPERIMENT_OMI_NO2_DOMINO_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${OMI_FILE_PRE}\'
+      export TMP_INFILE=\'${EXPERIMENT_OMI_NO2_DOMINO_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}/${OMI_FILE_PRE}\'
 #
 # COPY EXECUTABLE
       export FILE=omi_no2_domino_trop_col_extract.m
@@ -83,7 +83,7 @@
          export BIN_END_HH=23
          export BIN_END_MN=59
          export BIN_END_SS=59
-         export TMP_INFILE=\'${EXPERIMENT_OMI_NO2_DOMINO_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${OMI_FILE_PRE}\'
+         export TMP_INFILE=\'${EXPERIMENT_OMI_NO2_DOMINO_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}/${OMI_FILE_PRE}\'
 #
 # COPY EXECUTABLE
          export FILE=omi_no2_domino_trop_col_extract.m

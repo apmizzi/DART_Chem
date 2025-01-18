@@ -152,8 +152,8 @@ program modis_aod_total_col_ascii_to_obs
 
 ! the first one needs to contain the string 'observation' and the
 ! second needs the string 'QC'.
-   call set_copy_meta_data(obs_seq, 1, 'MODIS observation')
-   call set_qc_meta_data(obs_seq, 1, 'MODIS QC index')
+   call set_copy_meta_data(obs_seq, 1, 'MODIS AOD observation')
+   call set_qc_meta_data(obs_seq, 1, 'MODIS AOD QC index')
 
 ! if you want to append to existing files (e.g. you have a lot of
 ! small modis_ascii files you want to combine), you can do it this way,

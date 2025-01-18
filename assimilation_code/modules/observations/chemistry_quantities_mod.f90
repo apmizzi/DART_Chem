@@ -29,6 +29,7 @@
 !   QTY_PAN  
 !   QTY_MEK
 !   QTY_ALD
+!   QTY_H2O2  
 !   QTY_HCHO  
 !   QTY_HNO3
 !   QTY_HNO4
@@ -38,6 +39,7 @@
 !   QTY_ACET
 !   QTY_C2H4
 !   QTY_C3H6
+!   QTY_H2O2  
 !   QTY_C10H16
 !   QTY_MVK
 !   QTY_BIGALK

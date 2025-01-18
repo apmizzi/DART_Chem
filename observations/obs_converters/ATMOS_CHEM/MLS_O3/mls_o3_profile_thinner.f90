@@ -46,6 +46,8 @@ program mls_o3_profile_thinner
    integer                           :: nlay_obs,nlev_obs,ilv
    integer                           :: ret_nlay,tru_nlay
    real                              :: dofs
+   real                              :: o3_conv,o3_qual,o3_stat
+   real                              :: prior_conv,prior_qual,prior_stat
    real,allocatable,dimension(:,:)   :: prs_obs
    real,allocatable,dimension(:,:)   :: ret_lay_obs
    real,allocatable,dimension(:,:)   :: tru_lay_obs
@@ -90,6 +92,12 @@ program mls_o3_profile_thinner
       integer,allocatable,dimension(:)  :: ret_nlay
       integer,allocatable,dimension(:)  :: tru_nlay
       real,allocatable,dimension(:)     :: dofs
+      real,allocatable,dimension(:)     :: o3_conv
+      real,allocatable,dimension(:)     :: o3_qual
+      real,allocatable,dimension(:)     :: o3_stat
+      real,allocatable,dimension(:)     :: prior_conv
+      real,allocatable,dimension(:)     :: prior_qual
+      real,allocatable,dimension(:)     :: prior_stat
       real,allocatable,dimension(:,:)   :: prs_obs
       real,allocatable,dimension(:,:)   :: ret_lay_obs
       real,allocatable,dimension(:,:)   :: tru_lay_obs
@@ -130,8 +138,7 @@ program mls_o3_profile_thinner
    write(6,*)'opening ',TRIM(TRIM(filedir)//TRIM(filename))
    open(unit=fileid,file=TRIM(TRIM(filedir)//TRIM(filename)), &
    form='formatted', status='old', iostat=ios)
-   read(fileid,*,iostat=ios) data_type, obs_id, &
-   i_min, j_min
+   read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    mls_data(i_min,j_min)%data_type=data_type
    mls_data(i_min,j_min)%obs_id=obs_id
    do while (ios == 0)
@@ -184,17 +191,31 @@ program mls_o3_profile_thinner
          allocate(mls_data(i_min,j_min)%avgk_obs(max_num_obs,ret_nlay,tru_nlay))
          allocate(mls_data(i_min,j_min)%o3_col_obs(max_num_obs))
          allocate(mls_data(i_min,j_min)%o3_col_obs_err(max_num_obs))
+         allocate(mls_data(i_min,j_min)%o3_conv(max_num_obs))
+         allocate(mls_data(i_min,j_min)%o3_qual(max_num_obs))
+         allocate(mls_data(i_min,j_min)%o3_stat(max_num_obs))
+         allocate(mls_data(i_min,j_min)%prior_conv(max_num_obs))
+         allocate(mls_data(i_min,j_min)%prior_qual(max_num_obs))
+         allocate(mls_data(i_min,j_min)%prior_stat(max_num_obs))
       endif
       read(fileid,*,iostat=ios) &
          mls_data(i_min,j_min)%prs_obs(icnt,1:nlay_obs)
       read(fileid,*,iostat=ios) &
          mls_data(i_min,j_min)%ret_lay_obs(icnt,1:ret_nlay)
       read(fileid,*,iostat=ios) &
-         mls_data(i_min,j_min)%tru_lay_obs(icnt,1:tru_nlay)
+           mls_data(i_min,j_min)%tru_lay_obs(icnt,1:tru_nlay)
+      read(fileid,*,iostat=ios) &
+         mls_data(i_min,j_min)%o3_conv(icnt), &
+         mls_data(i_min,j_min)%o3_qual(icnt), &
+         mls_data(i_min,j_min)%o3_stat(icnt)
       read(fileid,*,iostat=ios) &
          mls_data(i_min,j_min)%o3_obs(icnt,1:nlay_obs)
       read(fileid,*,iostat=ios) &
          mls_data(i_min,j_min)%o3_obs_err(icnt,1:nlay_obs)
+      read(fileid,*,iostat=ios) &
+         mls_data(i_min,j_min)%prior_conv(icnt), &
+         mls_data(i_min,j_min)%prior_qual(icnt), &
+         mls_data(i_min,j_min)%prior_stat(icnt)
       read(fileid,*,iostat=ios) &
          mls_data(i_min,j_min)%prior_obs(icnt,1:nlay_obs)
       read(fileid,*,iostat=ios) &
@@ -203,10 +224,10 @@ program mls_o3_profile_thinner
          read(fileid,*,iostat=ios) &
          mls_data(i_min,j_min)%avgk_obs(icnt,k,1:tru_nlay)
       enddo   
-      read(fileid,*,iostat=ios) &
-         mls_data(i_min,j_min)%o3_col_obs(icnt)
-      read(fileid,*,iostat=ios) &
-         mls_data(i_min,j_min)%o3_col_obs_err(icnt)
+!      read(fileid,*,iostat=ios) &
+!         mls_data(i_min,j_min)%o3_col_obs(icnt)
+!      read(fileid,*,iostat=ios) &
+!         mls_data(i_min,j_min)%o3_col_obs_err(icnt)
       read(fileid,*,iostat=ios) data_type, obs_id, &
          i_min, j_min
       mls_data(i_min,j_min)%data_type=data_type
@@ -324,9 +345,17 @@ program mls_o3_profile_thinner
             write(fileid,*,iostat=ios) &
                mls_data(i,j)%tru_lay_obs(icnt,1:tru_nlay)
             write(fileid,*,iostat=ios) &
+               mls_data(i,j)%o3_conv(icnt), &
+               mls_data(i,j)%o3_qual(icnt), &
+               mls_data(i,j)%o3_stat(icnt)
+            write(fileid,*,iostat=ios) &
                mls_data(i,j)%o3_obs(icnt,1:nlay_obs)
             write(fileid,*,iostat=ios) &
                mls_data(i,j)%o3_obs_err(icnt,1:nlay_obs)
+            write(fileid,*,iostat=ios) &
+               mls_data(i,j)%prior_conv(icnt), &
+               mls_data(i,j)%prior_qual(icnt), &
+               mls_data(i,j)%prior_stat(icnt)
             write(fileid,*,iostat=ios) &
                mls_data(i,j)%prior_obs(icnt,1:nlay_obs)
             write(fileid,*,iostat=ios) &
@@ -366,6 +395,12 @@ program mls_o3_profile_thinner
             deallocate(mls_data(i,j)%avgk_obs)
             deallocate(mls_data(i,j)%o3_col_obs)
             deallocate(mls_data(i,j)%o3_col_obs_err)
+            deallocate(mls_data(i,j)%o3_conv)
+            deallocate(mls_data(i,j)%o3_qual)
+            deallocate(mls_data(i,j)%o3_stat)
+            deallocate(mls_data(i,j)%prior_conv)
+            deallocate(mls_data(i,j)%prior_qual)
+            deallocate(mls_data(i,j)%prior_stat)
          endif
       enddo
    enddo

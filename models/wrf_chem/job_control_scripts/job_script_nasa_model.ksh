@@ -41,8 +41,7 @@ if [[ ${TYPE} == PARALLEL ]]; then
 #PBS -q ${CLASS}
 #PBS -j oe
 #PBS -l select=${NODES}:ncpus=${TASKS}:mpiprocs=${TASKS}:model=${MODEL}
-#PBS -l site=needed=/home1+/nobackupp11
-/u/scicon/tools/bin/several_tries mpiexec -np ${NPROC} ./${EXECUTE}  > index.html 2>&1 
+mpiexec -np ${NPROC} ./${EXECUTE}  > index.html 2>&1 
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
 if [[ -f FAILED ]]; then rm -rf FAILED; fi          
@@ -64,7 +63,6 @@ elif [[ ${TYPE} == SERIAL ]]; then
 #PBS -q ${CLASS}
 #PBS -j oe
 #PBS -l select=${NODES}:ncpus=1:model=${MODEL}
-#PBS -l site=needed=/home1+/nobackupp11
 ./${EXECUTE}  > index.html 2>&1 
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     

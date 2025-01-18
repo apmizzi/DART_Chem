@@ -170,11 +170,13 @@ program mls_hno3_profile_ascii_to_obs
    logical                         :: use_log_o3,use_log_hno3
 !
 ! Species-specific variables
-   real                              :: hno3_col_obs,hno3_col_obs_err,prior_err
+   real                              :: hno3_col_obs,hno3_col_obs_err
    real                              :: lat_obs,lon_obs,dofs_obs,trop_prs
+   real                              :: hno3_conv,hno3_qual,hno3_stat
+   real                              :: prior_conv,prior_qual,prior_stat
    real*8                            :: lat_obs_r8,lon_obs_r8
    real,allocatable,dimension(:,:)   :: avgk_obs,cov_obs,cov_total
-   real,allocatable,dimension(:)     :: prior_obs,hno3_obs,hno3_obs_err
+   real,allocatable,dimension(:)     :: prior_obs,prior_obs_err,hno3_obs,hno3_obs_err
    real*8,allocatable,dimension(:)   :: avgk_obs_r8
    real*8,allocatable,dimension(:,:) :: cov_obs_r8
    real*8,allocatable,dimension(:)   :: prior_obs_r8,hno3_obs_r8
@@ -290,6 +292,7 @@ program mls_hno3_profile_ascii_to_obs
       allocate(hno3_obs(nlay_obs))
       allocate(hno3_obs_err(nlay_obs))
       allocate(prior_obs(nlay_obs))
+      allocate(prior_obs_err(nlay_obs))
       allocate(ret_lay_obs(ret_nlay))
       allocate(tru_lay_obs(tru_nlay))
       allocate(avgk_obs(ret_nlay,tru_nlay))
@@ -302,14 +305,18 @@ program mls_hno3_profile_ascii_to_obs
       read(fileid,*,iostat=ios) prs_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) ret_lay_obs(1:ret_nlay)
       read(fileid,*,iostat=ios) tru_lay_obs(1:tru_nlay)
+      read(fileid,*,iostat=ios) hno3_conv,hno3_qual,hno3_stat
       read(fileid,*,iostat=ios) hno3_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) hno3_obs_err(1:nlay_obs)
-      cov_obs(:,:)=0.
-      do k=1,nlay_obs
-         cov_obs(k,k)=hno3_obs_err(k)*hno3_obs_err(k)
-      enddo
+      if(reject.eq.0) then
+         cov_obs(:,:)=0.
+         do k=1,nlay_obs
+            cov_obs(k,k)=hno3_obs_err(k)*hno3_obs_err(k)
+         enddo
+      endif
+      read(fileid,*,iostat=ios) prior_conv,prior_qual,prior_stat
       read(fileid,*,iostat=ios) prior_obs(1:nlay_obs)
-      read(fileid,*,iostat=ios) prior_err
+      read(fileid,*,iostat=ios) prior_obs_err(1:nlay_obs)
       do k=1,ret_nlay
          read(fileid,*,iostat=ios) (avgk_obs(k,l),l=1,tru_nlay)
       enddo
@@ -320,6 +327,7 @@ program mls_hno3_profile_ascii_to_obs
          deallocate(hno3_obs) 
          deallocate(hno3_obs_err) 
          deallocate(prior_obs)
+         deallocate(prior_obs_err)
          deallocate(ret_lay_obs)
          deallocate(tru_lay_obs)
          deallocate(avgk_obs)
@@ -342,17 +350,33 @@ program mls_hno3_profile_ascii_to_obs
          lat_obs_r8=lat_obs
 !      
 ! Loop through the profile retrievals
-! (prs_obs(5)=215.55 hPa; prs_obs(18)=1.47 hPa)
-         do ilay=5,18
+! Based on v4-2 data quality document     
+! (prs_obs(5)=215.55 hPa; prs_obs(15)=4.64 hPa)
+!
+! QA/QC
+         do ilay=5,15
             if(all(avgk_obs(ilay,1:nlay_obs).eq.0.)) then
                cycle
             endif
 !
-            if(hno3_obs_err(ilay).le.0. .or. isnan(hno3_obs_err(ilay)) .or. &
-            hno3_obs(ilay).le.0. .or. isnan(hno3_obs(ilay)) .or. &
-            prior_obs(ilay).le.0. .or. isnan(prior_obs(ilay))) then
+            if(hno3_obs(ilay).le.0. .or. isnan(hno3_obs(ilay)) .or. &
+            hno3_obs_err(ilay).le.0. .or. isnan(hno3_obs_err(ilay)) .or. &
+            prior_obs(ilay).le.0. .or. isnan(prior_obs(ilay)) .or. &
+            prior_obs_err(ilay).le.0. .or. isnan(prior_obs_err(ilay))) then
                cycle
             endif
+!
+            if(prs_obs(ilay)/100..ge.1.5) then
+               if(mod(int(hno3_stat),2).ne.0 .or. hno3_qual.le.0.8 .or. &
+               hno3_conv.ge.1.03) then
+                  cycle
+               endif
+            else
+               if(hno3_stat.ne.0. .or. hno3_qual.le.0.8 .or. &
+               hno3_conv.ge.1.4) then
+                  cycle
+               endif
+            endif        
 !
 ! Set data for writing obs_sequence file            
             sum_accept=sum_accept+1
@@ -409,6 +433,7 @@ program mls_hno3_profile_ascii_to_obs
       deallocate(hno3_obs) 
       deallocate(hno3_obs_err) 
       deallocate(prior_obs)
+      deallocate(prior_obs_err)
       deallocate(ret_lay_obs)
       deallocate(tru_lay_obs)
       deallocate(avgk_obs)
