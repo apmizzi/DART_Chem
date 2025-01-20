@@ -12,7 +12,7 @@
          export L_MM=$(echo $L_DATE | cut -c5-6)
          export L_DD=$(echo $L_DATE | cut -c7-8)
          export L_HH=$(echo $L_DATE | cut -c9-10)
-         cp ${EXPERIMENT_PREPBUFR_DIR}/${L_YYYY}${L_MM}${L_DD}${L_HH}/prepbufr.gdas.${L_YYYY}${L_MM}${L_DD}${GDAS_HR_PREFIX}${L_HH}${GDAS_HR_SUFFIX} prepqm${L_YY}${L_MM}${L_DD}${L_HH}
+         cp ${EXPERIMENT_PREPBUFR_DIR}/${L_YYYY}/${L_MM}/${L_DD}/prepbufr.gdas.${L_YYYY}${L_MM}${L_DD}${GDAS_HR_PREFIX}${L_HH}${GDAS_HR_SUFFIX} prepqm${L_YY}${L_MM}${L_DD}${L_HH}
          export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} +6 2>/dev/null)
       done
 #
@@ -30,5 +30,5 @@
       mv obs_seq${D_DATE} obs_seq_prep_${DATE}.out
 #
 # Clean directory
-      rm dart_log* index_create index.file input.nml mccExcluded* prepqm* temp_obs.2014*
-      rm obs_seq2* temp_obs*
+#      rm dart_log* index_create index.file input.nml mccExcluded* prepqm* temp_obs.2014*
+#      rm obs_seq2* temp_obs*

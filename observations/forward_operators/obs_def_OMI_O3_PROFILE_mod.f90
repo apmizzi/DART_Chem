@@ -347,8 +347,6 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
 
    if ( .not. module_initialized ) call initialize_module
 
-   pi       = 4.*atan(1.)
-   rad2deg  = 360./(2.*pi)
    eps      = 0.61_r8
    Rd       = 287.058_r8    ! J/(mole-kg)
    Ru       = 8.3145_r8     ! J/(mole-kg)
@@ -360,8 +358,10 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
    missing  = -888888_r8
    tmp_max  = 600.
    del_prs  = 5000.
+   rad2deg  = 360./(2.*pi)
    VMR_conv = 28.9644/47.9982
 ! 
+! CSM - VMR   
 ! WACCM - MMR
 ! WRFChem - VMR ppmv
 !
@@ -392,7 +392,7 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
    
    allocate(prs_omi(level_omi))
    allocate(prs_omi_mem(level_omi))
-   prs_omi(1:level_omi)=pressure(key,1:level_omi)*100.
+   prs_omi(1:level_omi)=pressure(key,1:level_omi)*100.  ! Pa
 
 ! Get location infomation
 
@@ -439,12 +439,15 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
          if(o3_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
          qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
             interp_new=1
-            exit            
          endif
       enddo
-      if(interp_new.eq.0) then
-         exit
-      endif
+      if(interp_new.eq.0) exit
+   enddo
+!
+! WRF-Chem surface pressure is greater than the first model level
+! pressure. Set the lower bound pressue to surface pressure.
+   do imem=1,ens_size
+      if(prs_sfc(imem).lt.prs_mdl_1(imem)) prs_mdl_1(imem)=prs_sfc(imem)
    enddo
 
 !   write(string1, *) 'APM: o3 lower bound ',key,o3_mdl_1
@@ -481,12 +484,9 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
          if(o3_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
          qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
             interp_new=1
-            exit
          endif
       enddo
-      if(interp_new.eq.0) then
-         exit
-      endif
+      if(interp_new.eq.0) exit
    enddo
 
 !   write(string1, *) 'APM: o3 upper bound ',key,o3_mdl_n
@@ -528,47 +528,30 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
             qmr_val(imem,k) = qmr_mdl_n(imem)
          endif
       enddo
-
+!
 !      write(string1, *)'APM: o3 ',key,k,o3_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
 !      write(string1, *)'APM: tmp ',key,k,tmp_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
 !      write(string1, *)'APM: qmr ',key,k,qmr_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
-!
-! Check data for missing values                                                                         
-      do imem=1,ens_size
-         if(o3_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
-         qmr_val(imem,k).eq.missing_r8) then
-            zstatus(:)=20
-            expct_val(:)=missing_r8
-            write(string1, *) &
-            'APM: Input data has missing values '
-            call error_handler(E_MSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            return
-         endif
-      enddo
+   enddo
 !
 ! Convert units for o3 from ppmv
+   do k=1,level_omi
       o3_val(:,k) = o3_val(:,k) * 1.e-6_r8
-   enddo
+   enddo   
    o3_mdl_1(:) = o3_mdl_1(:) * 1.e-6_r8
    o3_mdl_n(:) = o3_mdl_n(:) * 1.e-6_r8
-!   imem=1
-!   do k=1,level_omi
-!      write(string1, *)'APM: ',k,prs_omi(k), &
-!      o3_val(imem,k)*1.e6_8,tmp_val(imem,k),qmr_val(imem,k)
-!      call error_handler(E_MSG, routine, string1, source)
-!   enddo                                                                                                    !         
+!
 ! Use large scale ozone data above the regional model top
 ! OMI vertical grid is from top to bottom
-   kstart=-1
+   kstart=1
    do imem=1,ens_size
       if (prs_omi(1).lt.prs_mdl_n(imem)) then
          do k=1,level_omi
-            if (prs_omi(k).gt.prs_mdl_n(imem)) then
-               kstart=k
+            if (prs_omi(k).ge.prs_mdl_n(imem)) then
+               kstart=k-1
                exit
             endif
          enddo
@@ -579,11 +562,9 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
             prs_omi_top(k)=prs_omi(k)
          enddo
          prs_omi_top(:)=prs_omi_top(:)/100.
-!
          lon_obs=mloc(1)/rad2deg
          lat_obs=mloc(2)/rad2deg
          call get_time(obs_time,datesec_obs,date_obs)
-!
          data_file=trim(upper_data_file)
          model=trim(upper_data_model)
          call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
@@ -604,7 +585,7 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
       endif
    enddo
 !
-! Print full profile examples
+! Print full profile
 !   do imem=1,1
 !      do k=1,level_omi
 !         write(string1, *) &
@@ -614,13 +595,13 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
 !      enddo
 !   enddo
 !
-! Check full profile for negative values
+! Check full profile for negative/missing values
    do imem=1,ens_size
       flg=0
       do k=1,level_omi
          if(o3_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
-            flg=1   
+            flg=1
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
             call error_handler(E_MSG, routine, string1, source)
@@ -639,12 +620,15 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
    zstatus(:)=0.
    expct_val(:)=0.0
    allocate(thick(layer_omi))
-
-   prs_omi_mem(:)=prs_omi(:)
    do imem=1,ens_size
-      
+! Adjust the OMI pressure for WRF-Chem lower/upper boudary pressure
+! (OMI O3 vertical grid is top to bottom)
+      prs_omi_mem(:)=prs_omi(:)
+      if (prs_sfc(imem).gt.prs_omi_mem(1)) then
+         prs_omi_mem(1)=prs_sfc(imem)
+      endif
+! 
 ! Calculate the thicknesses (grid is top to bottom)
-
       thick(:)=0.
       do k=1,layer_omi
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
@@ -655,16 +639,9 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
          tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
          thick(k)   = Rd*(dw_wt*tmp_vir_kp + up_wt*tmp_vir_k)/tl_wt/grav* &
          log(prs_omi_mem(k+1)/prs_omi_mem(k))
-
-!         write(string1, *) &
-!         'APM: Key, Thickness calcs ', k, thick(k), up_wt, dw_wt, tmp_vir_k,tmp_vir_kp, &
-!         prs_omi_mem(k), prs_omi_mem(k+1)     
-!         call error_handler(E_MSG, routine, string1, source)
-         
       enddo
-      
+!      
 ! Process the vertical summation (OMI O3 units are moles per m^2)
-
       do k=1,layer_omi
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
          up_wt=log(prs_omi_mem(k+1))-lnpr_mid
@@ -690,14 +667,11 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
          avg_kernel(key,k) + prior_term * prior(key,k)
 
 !         write(string1, *) &
-!         'APM: Key, Expected Value Terms ',k, expct_val(imem), thick(k), &
+!         'APM: Expected Value Terms ',k, expct_val(imem), thick(k), &
 !         thick(k)*o3_val_conv, o3_val_conv, avg_kernel(key,k), prior_term, prior(key,k)     
 !         call error_handler(E_MSG, routine, string1, source)
 
       enddo
-!      write(string1, *) &
-!      'APM: Expected Value is ',imem, expct_val(imem)
-!      call error_handler(E_MSG, routine, string1, source)
       
       if(isnan(expct_val(imem))) then
          zstatus(imem)=20

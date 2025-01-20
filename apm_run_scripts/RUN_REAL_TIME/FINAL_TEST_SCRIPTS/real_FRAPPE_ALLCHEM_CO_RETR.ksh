@@ -73,7 +73,7 @@ export LS_CHEM_DZ=56
 export LS_CHEM_DT=368
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=true
+export RUN_INPUT_OBS=false
 export RUN_MOPITT_CO_TOTAL_COL_OBS=false
 export RUN_MOPITT_CO_PROFILE_OBS=false # (done)
 export RUN_MOPITT_CO_CPSR_OBS=false # (done)
@@ -95,8 +95,8 @@ export RUN_OMI_NO2_TROP_COL_OBS=false # (done)
 export RUN_OMI_NO2_DOMINO_TOTAL_COL_OBS=false
 export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false # (works)
 export RUN_OMI_SO2_TOTAL_COL_OBS=false
-export RUN_OMI_SO2_PBL_COL_OBS=true # (works)
-export RUN_OMI_HCHO_TOTAL_COL_OBS=false # (works)
+export RUN_OMI_SO2_PBL_COL_OBS=false # (works)
+export RUN_OMI_HCHO_TOTAL_COL_OBS=fgalse # (works)
 export RUN_OMI_HCHO_TROP_COL_OBS=false 
 export RUN_TROPOMI_CO_TOTAL_COL_OBS=false # (done)
 export RUN_TROPOMI_O3_TOTAL_COL_OBS=false
@@ -159,16 +159,16 @@ export RUN_SCIAM_NO2_TROP_COL_OBS=false # (works, vertical sum)
 export RUN_GOME2A_NO2_TOTAL_COL_OBS=false
 export RUN_GOME2A_NO2_TROP_COL_OBS=false # (works, vertical sum)
 export RUN_MLS_O3_TOTAL_COL_OBS=false
-export RUN_MLS_O3_PROFILE_OBS=true # (works, check)
+export RUN_MLS_O3_PROFILE_OBS=false # (works, check)
 export RUN_MLS_O3_CPSR_OBS=false # (works, vertical sum)
 export RUN_MLS_HNO3_TOTAL_COL_OBS=false
-export RUN_MLS_HNO3_PROFILE_OBS=true # (works, vertical sum)
+export RUN_MLS_HNO3_PROFILE_OBS=false # (works, vertical sum)
 export RUN_MLS_HNO3_CPSR_OBS=false # (works, vertical sum)
 export RUN_AIRNOW_CO_OBS=false # (done)
 export RUN_AIRNOW_O3_OBS=false # (done)
-export RUN_AIRNOW_NO2_OBS=false # (done)
+export RUN_AIRNOW_NO2_OBS=true # (done)
 export RUN_AIRNOW_SO2_OBS=false # (done)
-export RUN_AIRNOW_PM10_OBS=false # (done)
+export RUN_AIRNOW_PM10_OBS=true # (done)
 export RUN_AIRNOW_PM25_OBS=false # (done)
 export RUN_PANDA_CO_OBS=false
 export RUN_PANDA_O3_OBS=false
@@ -206,12 +206,23 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'SAT_U_WIND_COMPONENT',
                                    'SAT_V_WIND_COMPONENT',
                                    'OMI_SO2_PBL_COL',
+                                   'OMI_O3_PROFILE',
+                                   'OMI_NO2_DOMINO_TROP_COL',
                                    'MLS_O3_PROFILE',
                                    'MLS_HNO3_PROFILE',
                                    'MOPITT_CO_PROFILE',
+                                   'MOPITT_V8_CO_PROFILE',
                                    'IASI_CO_PROFILE',
                                    'TES_CO_PROFILE',
-                                   'AIRNOW_CO'"
+                                   'TES_O3_PROFILE',
+                                   'GOME2A_NO2_TROP_COL',
+                                   'MODIS_AOD_TOTAL_COL',
+                                   'AIRNOW_CO',
+                                   'AIRNOW_O3',
+                                   'AIRNOW_NO2',
+                                   'AIRNOW_SO2',
+                                   'AIRNOW_PM10',
+                                   'AIRNOW_PM25'"
 #
 # Run WRF-Chem for failed forecasts (will not work with adaptive time step)
 export RUN_SPECIAL_FORECAST=false
@@ -286,14 +297,14 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          export RUN_DART_FILTER=true
          export RUN_BIAS_CORRECTION=false
-         export RUN_UPDATE_BC=true
-         export RUN_ENSEMBLE_MEAN_INPUT=true
+         export RUN_UPDATE_BC=false # true
+         export RUN_ENSEMBLE_MEAN_INPUT=false # true
          export RUN_WRFCHEM_INITIAL=false
-         export RUN_WRFCHEM_CYCLE_CR=true
+         export RUN_WRFCHEM_CYCLE_CR=false # true
       fi	  
       export RUN_WRFCHEM_CYCLE_FR=false
       export RUN_ENSMEAN_CYCLE_FR=false
-      export RUN_ENSEMBLE_MEAN_OUTPUT=true
+      export RUN_ENSEMBLE_MEAN_OUTPUT=false # true
       export RUN_BAND_DEPTH=false
    fi
    if [[ ${RUN_SPECIAL_FORECAST} == true ]]; then
@@ -394,16 +405,16 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #########################################################################
 #
    export GENERAL_JOB_CLASS=devel
+   export GENERAL_JOB_CLASS=normal
    export GENERAL_TIME_LIMIT=00:20:00
-#  export FILTER_JOB_CLASS=normal
-#  export FILTER_TIME_LIMIT=06:59:00
-#   export FILTER_JOB_CLASS=devel
+#   export FILTER_JOB_CLASS=normal
+#   export FILTER_TIME_LIMIT=05:59:00
+   export FILTER_JOB_CLASS=devel
    export FILTER_JOB_CLASS=normal
-   export FILTER_TIME_LIMIT=01:59:00
-   export NL_FAC_OBS_ERROR_OMI_SO2=1.70
-   export NL_FAC_OBS_ERROR_OMI_SO2=2.00
-   export NL_FAC_OBS_ERROR_MLS_HNO3=1.20
-   export NL_FAC_OBS_ERROR_MLS_HNO3=1.50
+   export FILTER_TIME_LIMIT=00:59:00
+   export FILTER_NODES=2
+   export FILTER_NODES=1
+   export FILTER_TASKS=12
 #
 #########################################################################
 #
@@ -445,10 +456,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       fi
       source ${RS_SCRIPTS_DIR}/RS_DART_Filter.ksh > index_rs.html 2>&1 
    fi
-
-exit
-
-   
 #
 #########################################################################
 #

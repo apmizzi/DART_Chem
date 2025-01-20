@@ -191,7 +191,7 @@ program gome2a_no2_trop_col_ascii_to_obs
    sum_accept=0
    sum_total=0
    obs_accept=0
-   fac_err=0.3
+   fac_err=1.0
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)

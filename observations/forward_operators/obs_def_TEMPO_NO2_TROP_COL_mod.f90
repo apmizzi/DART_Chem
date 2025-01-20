@@ -362,7 +362,7 @@ subroutine get_expected_tempo_no2_trop_col(state_handle, ens_size, location, key
    zstatus=0
    level=0.0_r8
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
-   call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus) 
+   call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus)
 
    no2_mdl_1(:)=missing_r8
    tmp_mdl_1(:)=missing_r8
@@ -510,12 +510,14 @@ subroutine get_expected_tempo_no2_trop_col(state_handle, ens_size, location, key
    allocate(thick(layer_tempo))
 !
    do imem=1,ens_size
-! Adjust the TEMPO pressure for WRF-Chem lower/upper boudary pressure
-! (TEMPO NO2 vertical grid is bottom to top)
+
+! when the platform pressure grid is a 'level' pressure grid (as opposed to a 'layer'
+! pressure grid) replace the platform surface pressure with the model surface pressure to
+! to avoid lower boundary problems (TEMPO pressure to bottom to top; model and TEMPO
+! pressure are in Pa)
+      
       prs_tempo_mem(:)=prs_tempo(:)
-      if (prs_sfc(imem).gt.prs_tempo_mem(1)) then
-         prs_tempo_mem(1)=prs_sfc(imem)
-      endif   
+      prs_tempo_mem(1)=prs_sfc(imem)
 
 ! Calculate the thicknesses
 
@@ -528,7 +530,7 @@ subroutine get_expected_tempo_no2_trop_col(state_handle, ens_size, location, key
          tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
          tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
          thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
-                   log(prs_tempo_mem(k)/prs_tempo_mem(k+1))
+         log(prs_tempo_mem(k)/prs_tempo_mem(k+1))
       enddo
 
 ! Process the vertical summation

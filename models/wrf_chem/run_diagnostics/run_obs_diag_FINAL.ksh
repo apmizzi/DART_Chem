@@ -16,7 +16,7 @@
     export TRUNK_DIR=/nobackupp28/amizzi/TRUNK
     export DART_DIR=DART_development
     export CODE_DIR=apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS
-    export RS_SCRIPTS_DIR=${TRUNK_DIR}/${DART_DIR}/${CODE_DIR}/RS_SCRIPTS
+    export RS_SCRIPTS_DIR=${TRUNK_DIR}/${DART_DIR}/${CODE_DIR}/RS_Scripts
 #
 # Define EXPERIMENT path
    export DIR_NAME=TRACER_I_ALLCHEM
@@ -41,7 +41,7 @@
    export DELETE_FLG=true
    export DOMAIN=01
    export CYCLE_PERIOD=6
-   export FCST_PERIOD=24
+   export FCST_PERIOD=6
    export ASIM_PERIOD=3
    export LBC_FREQ=3
    (( INTERVAL_SEC=${LBC_FREQ}*60*60 ))
@@ -212,8 +212,9 @@
    export NL_TIME_TO_SKIP_MN=0
    export NL_TIME_TO_SKIP_SS=0
    export NL_MAX_NUM_BINS=1000
-   export NL_PLEVEL='146, 100, 68'
    export NL_PLEVEL='140, 100, 60'
+   export NL_PLEVEL='600, 500, 400'
+   export NL_PLEVEL='900, 800, 700, 600, 500, 400, 300, 140, 100, 60'
    export NL_NREGIONS=1
    export NL_LONLIM1=0.
    export NL_LONLIM2=360.
@@ -595,7 +596,7 @@
 # Set namelist parameters
    source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
    source ${RS_SCRIPTS_DIR}/RS_Forward_Operator_Params.ksh
-   rm -rf input.nml
+   rm input.nml
    ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_input_prs_levels.nml.ksh
 #
 ###############################################################################

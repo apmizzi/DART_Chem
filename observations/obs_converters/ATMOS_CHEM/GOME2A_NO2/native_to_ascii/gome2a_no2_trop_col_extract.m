@@ -20,10 +20,10 @@ function gome2a_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
    [status]=system(command);
    fid=fopen(fileout,'w');
 %
-   command=strcat('ls'," ",'-1'," ",filein,'*');
+   command=strcat('/usr/bin/ls'," ",'-1'," ",filein,'*');
    [status,file_list_a]=system(command);
    file_list_b=split(file_list_a);
-   file_list=squeeze(file_list_b);
+   file_list=squeeze(file_list_b)
    nfile=size(file_list);
 %
 % Constants
@@ -70,7 +70,7 @@ function gome2a_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cw
 %
 % Process satellite data
    for ifile=1:nfile
-     file_in=char(file_list(ifile));
+     file_in=char(file_list(ifile))
       if(isempty(file_in))
          continue
       end

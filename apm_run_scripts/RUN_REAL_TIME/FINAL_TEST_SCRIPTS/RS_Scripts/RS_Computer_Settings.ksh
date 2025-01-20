@@ -12,12 +12,14 @@
    export GENERAL_JOB_CLASS=normal
    export GENERAL_TIME_LIMIT=00:20:00
    export GENERAL_NODES=1
-   export GENERAL_TASKS=16
+   export GENERAL_TASKS=24
+   export GENERAL_MODEL=has
 #
 #   export GENERAL_JOB_CLASS=devel
 #   export GENERAL_TIME_LIMIT=00:20:00
 #   export GENERAL_NODES=1
-#   export GENERAL_TASKS=16
+#   export GENERAL_TASKS=24
+#   export GENERAL_MODEL=has
 #   
    export WRFDA_JOB_CLASS=normal
    export WRFDA_TIME_LIMIT=00:05:00
@@ -44,11 +46,13 @@
    export FILTER_TIME_LIMIT=06:59:00
    export FILTER_NODES=2
    export FILTER_TASKS=24
+   export FILTER_MODEL=has
 #
 #   export FILTER_JOB_CLASS=devel
 #   export FILTER_TIME_LIMIT=01:59:00
 #   export FILTER_NODES=2
 #   export FILTER_TASKS=24
+#   export GENERAL_MODEL=has
 #
 # Sandy Bridge
 #   export WRFCHEM_JOB_CLASS=devel
@@ -60,16 +64,19 @@
    export WRFCHEM_TIME_LIMIT=00:30:00
    export WRFCHEM_NODES=2
    export WRFCHEM_TASKS=24
+   export WRFCHEM_MODEL=has
 # Haswell (Single submission for WRFCHEM ensemble)
    export WRFCHEM_SING_CLASS=normal
    export WRFCHEM_SING_LIMIT=06:30:00
    export WRFCHEM_SING_NODES=2
    export WRFCHEM_SING_TASKS=24
+   export WRFCHEM_SING_MODEL=has
 #
 #   export WRFCHEM_JOB_CLASS=devel
 #   export WRFCHEM_TIME_LIMIT=00:40:00
 #   export WRFCHEM_NODES=1
 #   export WRFCHEM_TASKS=24
+#   export WRFCHEM_MODEL=has
 #
 # Sandy Bridge   
 #   export PERT_JOB_CLASS=normal
@@ -81,6 +88,7 @@
    export PERT_TIME_LIMIT=05:59:00
    export PERT_NODES=1
    export PERT_TASKS=24
+   export PERT_MODEL=has
 #
 #   export PERT_JOB_CLASS=devel
 #   export PERT_TIME_LIMIT=01:59:00

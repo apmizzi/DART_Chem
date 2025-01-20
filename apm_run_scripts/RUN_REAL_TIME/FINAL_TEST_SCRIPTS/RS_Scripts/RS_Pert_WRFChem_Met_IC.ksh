@@ -6,7 +6,7 @@
       export NL_OB_FORMAT=1
       export L_FCST_RANGE=${FCST_PERIOD}
       export L_START_DATE=${DATE}
-      export L_END_DATE=$($BUILD_DIR/da_advance_time.exe ${L_START_DATE} ${L_FCST_RANGE} 2>/dev/null)
+      export L_END_DATE=$($BUILD_DIR/da_advance_time.exe ${L_START_DATE} ${L_FCST_RANGE} -f ccyymmddhh 2>/dev/null)
       export L_START_YEAR=$(echo $L_START_DATE | cut -c1-4)
       export L_START_MONTH=$(echo $L_START_DATE | cut -c5-6)
       export L_START_DAY=$(echo $L_START_DATE | cut -c7-8)
@@ -28,7 +28,7 @@
 #
 # LOOP THROUGH ALL BDY TENDENCY TIMES
       export P_DATE=${DATE}
-      export P_END_DATE=$(${BUILD_DIR}/da_advance_time.exe ${P_DATE} ${FCST_PERIOD} 2>/dev/null)
+      export P_END_DATE=$(${BUILD_DIR}/da_advance_time.exe ${P_DATE} ${FCST_PERIOD} -f ccyymmddhh 2>/dev/null)
       while [[ ${P_DATE} -le ${P_END_DATE} ]] ; do
          export L_YYYY=$(echo $P_DATE | cut -c1-4)
          export L_MM=$(echo $P_DATE | cut -c5-6)

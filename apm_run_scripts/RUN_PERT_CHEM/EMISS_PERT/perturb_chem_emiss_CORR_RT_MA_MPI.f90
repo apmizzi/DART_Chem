@@ -168,7 +168,7 @@ program main
 !
 ! Get mean geopotential height data
    allocate(geo_ht(nx,ny,nz))
-   call get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp,num_mems)
+   call get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp)
    geo_ht(:,:,:)=geo_ht(:,:,:)/grav
 !
 ! Get horiztonal grid length
@@ -178,6 +178,8 @@ program main
    ngrid_corr=ceiling(zfac*corr_lngth_hz/grid_length)+1
 !
 ! Construct the vertical weights
+   call cpu_time(cpu_str)
+   if(rank.eq.0) print *, 'APM: Before vertical transform: time str ', cpu_str   
    if(sw_chem) then
       call vertical_transform(A_chem,geo_ht,nx,ny,nz,nz_chem,corr_lngth_vt)
    endif
@@ -188,8 +190,11 @@ program main
       call vertical_transform(A_biog,geo_ht,nx,ny,nz,nz_biog,corr_lngth_vt)
    endif
    deallocate(geo_ht)
+   call cpu_time(cpu_end)
+   cpu_dif=cpu_end-cpu_str
+   if(rank.eq.0) print *, 'APM: After vertical transform: time dif', cpu_dif
 !
-! Allocate processors
+! Allocate processors (reserve tasks 0 and 1)
    ntotal_spcs=0
    if(sw_chem) then
       ntotal_spcs=ntotal_spcs+nchem_spcs
@@ -399,7 +404,9 @@ program main
       enddo
    endif
 !
-! Loop through member and species. Assign one member/species to each processor   
+! Loop through member and species. Assign one member/species to each processor
+! Note: the perturb_fields step is very slow; need to have at least (num_mems * nchem_spcs) + 2
+! processors   
    if(rank.ne.0 .and. rank.ne.1) then
       icnt=0
       do imem=1,num_mems
@@ -413,6 +420,10 @@ program main
          do isp=1,nchem_spcs
             icnt=icnt+1
             if(rank.eq.itask(imem,icnt)) then
+               if (rank.eq.3) then
+                  call cpu_time(cpu_str)
+                  print *, 'APM: Before chem pert_flds rank,imem,isp ',rank,imem,isp,cpu_str
+               endif
                if(.not.sw_corr_tm) then
                   allocate(tmp_arry(nx*ny*nz_chem))
                   call mpi_recv(tmp_arry,nx*ny*nz_chem, &
@@ -420,7 +431,6 @@ program main
                   call apm_unpack(tmp_arry,chem_fac_old,nx,ny,nz_chem)
                   deallocate(tmp_arry)
                endif
-!
                if(sw_seed) call init_const_random_seed(rank,date)
                call cpu_time(cpu_str)
                call perturb_fields(chem_fac_old,chem_fac_new, &
@@ -440,7 +450,12 @@ program main
                call apm_pack(tmp_arry,chem_fac_end,nx,ny,nz_chem)
                call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
                1,21,MPI_COMM_WORLD,ierr)
-               deallocate(tmp_arry)             
+               deallocate(tmp_arry)
+               if (rank.eq.3) then
+                  call cpu_time(cpu_end)
+                  cpu_dif=cpu_end-cpu_str
+                  print *, 'APM: After chem pert_flds rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+               endif
             endif
          enddo
          deallocate(chem_fac_old)
@@ -455,6 +470,10 @@ program main
          do isp=1,nfire_spcs
             icnt=icnt+1
             if(rank.eq.itask(imem,icnt)) then
+               if (rank.eq.3) then
+                  call cpu_time(cpu_str)
+                  print *, 'APM: Before fire pert_flds rank,imem,isp ',rank,imem,isp,cpu_str
+               endif
                if(.not.sw_corr_tm) then
                   allocate(tmp_arry(nx*ny*nz_fire))
                   call mpi_recv(tmp_arry,nx*ny*nz_fire, &
@@ -483,6 +502,11 @@ program main
                call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
                1,22,MPI_COMM_WORLD,ierr)
                deallocate(tmp_arry)             
+               if (rank.eq.3) then
+                  call cpu_time(cpu_end)
+                  cpu_dif=cpu_end-cpu_str
+                  print *, 'APM: fire chem pert_flds rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+               endif
             endif
          enddo
          deallocate(fire_fac_old)
@@ -497,6 +521,10 @@ program main
          do isp=1,nbiog_spcs
             icnt=icnt+1
             if(rank.eq.itask(imem,icnt)) then
+               if (rank.eq.3) then
+                  call cpu_time(cpu_str)
+                  print *, 'APM: Before biog pert_flds rank,imem,isp ',rank,imem,isp,cpu_str
+               endif
                if(.not.sw_corr_tm) then
                   allocate(tmp_arry(nx*ny*nz_biog))
                   call mpi_recv(tmp_arry,nx*ny*nz_biog, &
@@ -525,6 +553,11 @@ program main
                call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
                1,23,MPI_COMM_WORLD,ierr)
                deallocate(tmp_arry) 
+               if (rank.eq.3) then
+                  call cpu_time(cpu_end)
+                  cpu_dif=cpu_end-cpu_str
+                  print *, 'APM: biog chem pert_flds rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+               endif
             endif
          enddo
          deallocate(biog_fac_old)
@@ -543,6 +576,10 @@ program main
          do isp=1,nchem_spcs
             icnt=icnt+1
             if(rank.eq.itask(imem,icnt)) then
+               if (rank.eq.3) then
+                  call cpu_time(cpu_str)
+                  print *, 'APM: Before chem smoothing rank,imem,isp ',rank,imem,isp,cpu_str
+               endif
                allocate(tmp_arry(nx*ny*nz_chem))
                call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
                0,4,MPI_COMM_WORLD,stat,ierr)
@@ -572,6 +609,11 @@ program main
                call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
                1,24,MPI_COMM_WORLD,ierr)
                deallocate(tmp_arry)
+               if (rank.eq.3) then
+                  call cpu_time(cpu_end)
+                  cpu_dif=cpu_end-cpu_str
+                  print *, 'APM: After chem smoothing rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+               endif
             endif
          enddo      
          deallocate (chem_fac_end)
@@ -582,6 +624,10 @@ program main
          do isp=1,nfire_spcs
             icnt=icnt+1
             if(rank.eq.itask(imem,icnt)) then
+               if (rank.eq.3) then
+                  call cpu_time(cpu_str)
+                  print *, 'APM: Before fire smoothing rank,imem,isp ',rank,imem,isp,cpu_str
+               endif
                allocate(tmp_arry(nx*ny*nz_fire))
                call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
                0,6,MPI_COMM_WORLD,stat,ierr)
@@ -611,6 +657,11 @@ program main
                call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
                1,25,MPI_COMM_WORLD,ierr)
                deallocate(tmp_arry)
+               if (rank.eq.3) then
+                  call cpu_time(cpu_end)
+                  cpu_dif=cpu_end-cpu_str
+                  print *, 'APM: After fire smoothing rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+               endif
             endif
          enddo      
          deallocate (fire_fac_end)
@@ -621,6 +672,10 @@ program main
          do isp=1,nbiog_spcs
             icnt=icnt+1
             if(rank.eq.itask(imem,icnt)) then
+               if (rank.eq.3) then
+                  call cpu_time(cpu_str)
+                  print *, 'APM: Before biog smoothing rank,imem,isp ',rank,imem,isp,cpu_str
+               endif
                allocate(tmp_arry(nx*ny*nz_biog))
                call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
                0,8,MPI_COMM_WORLD,stat,ierr)
@@ -650,6 +705,11 @@ program main
                call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
                1,26,MPI_COMM_WORLD,ierr)
                deallocate(tmp_arry)
+               if (rank.eq.3) then
+                  call cpu_time(cpu_end)
+                  cpu_dif=cpu_end-cpu_str
+                  print *, 'APM: After biog smoothing rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+               endif
             endif
          enddo
          deallocate (biog_fac_end)
@@ -879,6 +939,7 @@ corr_lngth_hz,rank)
    real                                :: u_ran_1,u_ran_2,zdist
    real,allocatable,dimension(:)       :: pert_chem_sum_old,pert_chem_sum_new,wgt
    real,allocatable,dimension(:,:,:)   :: pert_chem_old,pert_chem_new
+   real                                :: cpu_str,cpu_end,cpu_dif
 !
 ! Constants
    pi=4.*atan(1.)
@@ -920,13 +981,19 @@ corr_lngth_hz,rank)
    endif
    chem_fac_new(:,:,:)=0.
    allocate(indx(nxy),jndx(nxy),wgt(nxy))
-   do i=1,nx
-      do j=1,ny
-         indx(:)=0
-         jndx(:)=0
-         call horiz_grid_wts(i,j,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
-         ngrid_corr,corr_lngth_hz,rank)
-         if(sw_corr_tm) then         
+   if(sw_corr_tm) then
+!
+! chem_fac_old calc takes one hour for each member/species for TRACER-I  
+      if(rank.eq.3) then
+         call cpu_time(cpu_str)
+         print *, 'APM: Before chem_fac_old ', cpu_str
+      endif
+      do i=1,nx
+         do j=1,ny
+            indx(:)=0
+            jndx(:)=0
+            call horiz_grid_wts(i,j,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
+            ngrid_corr,corr_lngth_hz,rank)
             if(ncnt.eq.0) then
                do k=1,nz
                   chem_fac_old(i,j,k)=pert_chem_old(i,j,k)
@@ -940,7 +1007,26 @@ corr_lngth_hz,rank)
                   pert_chem_old(ii,jj,k)/wgt_sum
                enddo
             enddo
-         endif
+         enddo
+      enddo
+      if(rank.eq.3) then
+         call cpu_time(cpu_end)
+         cpu_dif=cpu_end-cpu_str
+         print *, 'APM: After chem_fac_old ', cpu_end, cpu_dif
+      endif      
+   endif
+!
+! chem_fac_new takes one hour for each member/species for TRACER-I
+   if(rank.eq.3) then
+      call cpu_time(cpu_str)
+      print *, 'APM: Before chem_fac_new ', cpu_str
+   endif
+   do i=1,nx
+      do j=1,ny
+         indx(:)=0
+         jndx(:)=0
+         call horiz_grid_wts(i,j,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
+         ngrid_corr,corr_lngth_hz,rank)
          if(ncnt.eq.0) then   
             do k=1,nz
                chem_fac_new(i,j,k)=pert_chem_new(i,j,k)
@@ -959,9 +1045,19 @@ corr_lngth_hz,rank)
    deallocate(indx,jndx,wgt)
    deallocate(pert_chem_old)
    deallocate(pert_chem_new)
+   if(rank.eq.3) then
+      call cpu_time(cpu_end)
+      cpu_dif=cpu_end-cpu_str
+      print *, 'APM: After chem_fac_new ', cpu_end, cpu_dif
+   endif
 !
 ! Apply vertical correlations
+! takes 30 sec for chem_fac_old   
    if(sw_corr_tm) then
+      if(rank.eq.3) then
+         call cpu_time(cpu_str)
+         print *, 'APM: Before chem_fac_old vert_corr calc ', cpu_str
+      endif      
       allocate(pert_chem_sum_old(nz))
       do i=1,nx
          do j=1,ny
@@ -978,6 +1074,17 @@ corr_lngth_hz,rank)
          enddo
       enddo
       deallocate(pert_chem_sum_old)
+      if(rank.eq.3) then
+         call cpu_time(cpu_end)
+         cpu_dif=cpu_end-cpu_str
+         print *, 'APM: After chem_fac_old vert_corr calc ', cpu_end, cpu_dif
+      endif
+   endif
+!
+! takes 30 sec for chem_fac_new
+   if(rank.eq.3) then
+      call cpu_time(cpu_str)
+      print *, 'APM: Before chem_fac_new vert_corr calc ', cpu_str
    endif
    allocate(pert_chem_sum_new(nz))
    do i=1,nx
@@ -994,6 +1101,11 @@ corr_lngth_hz,rank)
          enddo
       enddo
    enddo
+   if(rank.eq.3) then
+      call cpu_time(cpu_end)
+      cpu_dif=cpu_end-cpu_str
+      print *, 'APM: After chem_fac_new vert_corr calc ', cpu_end, cpu_dif
+   endif
    deallocate(pert_chem_sum_new)
 end subroutine perturb_fields
 
@@ -1016,7 +1128,7 @@ subroutine get_WRFINPUT_lat_lon(lat,lon,nx,ny)
    character*(80)                         :: file
 !
 ! open netcdf file
-   file='wrfinput_d01.e001'
+   file='wrfinput_d01.template'
    name='XLAT'
    rc = nf_open(trim(file),NF_NOWRITE,f_id)
 !   print *, trim(file)
@@ -1093,11 +1205,11 @@ end subroutine get_WRFINPUT_lat_lon
 
 !-------------------------------------------------------------------------------
 
-subroutine get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp,nmem)
+subroutine get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp)
    implicit none
    include 'netcdf.inc'
    integer, parameter                    :: maxdim=6
-   integer                               :: k,nx,ny,nz,nzp,nmem
+   integer                               :: k,nx,ny,nz,nzp
    integer                               :: i,imem,rc
    integer                               :: f_id
    integer                               :: v_id_ph,v_id_phb,v_ndim,typ,natts
@@ -1112,83 +1224,78 @@ subroutine get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp,nmem)
 !
 ! Loop through members to find ensemble mean geo_ht
    geo_ht(:,:,:)=0.
-   do imem=1,nmem
-      if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-      if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-      if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
 !
 ! open netcdf file
-      file='wrfinput_d01'//trim(cmem)
-      rc = nf_open(trim(file),NF_NOWRITE,f_id)
-      if(rc.ne.0) then
-         print *, 'nf_open error ',trim(file)
-         stop
-      endif
+   file='wrfinput_d01.template'
+   rc = nf_open(trim(file),NF_NOWRITE,f_id)
+   if(rc.ne.0) then
+      print *, 'nf_open error ',trim(file)
+      stop
+   endif
 !
 ! get variables identifiers
-      name='PH'
-      rc = nf_inq_varid(f_id,trim(name),v_id_ph)
-      if(rc.ne.0) then
-         print *, 'nf_inq_varid error ', v_id_ph
-         stop
-      endif
-      name='PHB'
-      rc = nf_inq_varid(f_id,trim(name),v_id_phb)
-      if(rc.ne.0) then
-         print *, 'nf_inq_varid error ', v_id_phb
-         stop
-      endif
+   name='PH'
+   rc = nf_inq_varid(f_id,trim(name),v_id_ph)
+   if(rc.ne.0) then
+      print *, 'nf_inq_varid error ', v_id_ph
+      stop
+   endif
+   name='PHB'
+   rc = nf_inq_varid(f_id,trim(name),v_id_phb)
+   if(rc.ne.0) then
+      print *, 'nf_inq_varid error ', v_id_phb
+      stop
+   endif
 !
 ! get dimension identifiers
-      v_dimid=0
-      rc = nf_inq_var(f_id,v_id_ph,v_nam,typ,v_ndim,v_dimid,natts)
-      if(rc.ne.0) then
-         print *, 'nf_inq_var error ', v_dimid
-         stop
-      endif
+   v_dimid=0
+   rc = nf_inq_var(f_id,v_id_ph,v_nam,typ,v_ndim,v_dimid,natts)
+   if(rc.ne.0) then
+      print *, 'nf_inq_var error ', v_dimid
+      stop
+   endif
 !
 ! get dimensions
-      v_dim(:)=1
-      do i=1,v_ndim
-         rc = nf_inq_dimlen(f_id,v_dimid(i),v_dim(i))
-      enddo
-      if(rc.ne.0) then
-         print *, 'nf_inq_dimlen error ', v_dim
-         stop
-      endif
+   v_dim(:)=1
+   do i=1,v_ndim
+      rc = nf_inq_dimlen(f_id,v_dimid(i),v_dim(i))
+   enddo
+   if(rc.ne.0) then
+      print *, 'nf_inq_dimlen error ', v_dim
+      stop
+   endif
 !
 ! check dimensions
-      if(nx.ne.v_dim(1)) then
-         print *, 'ERROR: nx dimension conflict ',nx,v_dim(1)
-         stop
-      else if(ny.ne.v_dim(2)) then
-         print *, 'ERROR: ny dimension conflict ',ny,v_dim(2)
-         stop
-      else if(nzp.ne.v_dim(3)) then             
-         print *, 'ERROR: nzp dimension conflict ','nzp',v_dim(3)
-         stop
-      endif
+   if(nx.ne.v_dim(1)) then
+      print *, 'ERROR: nx dimension conflict ',nx,v_dim(1)
+      stop
+   else if(ny.ne.v_dim(2)) then
+      print *, 'ERROR: ny dimension conflict ',ny,v_dim(2)
+      stop
+   else if(nzp.ne.v_dim(3)) then             
+      print *, 'ERROR: nzp dimension conflict ','nzp',v_dim(3)
+      stop
+   endif
 !
 ! get data
-      one(:)=1
-      rc = nf_get_vara_real(f_id,v_id_ph,one,v_dim,ph)
-      if(rc.ne.0) then
-         print *, 'nf_get_vara_real ', ph(1,1,1)
-         stop
-      endif
-      rc = nf_get_vara_real(f_id,v_id_phb,one,v_dim,phb)
-      if(rc.ne.0) then
-         print *, 'nf_get_vara_real ', phb(1,1,1)
-         stop
-      endif
+   one(:)=1
+   rc = nf_get_vara_real(f_id,v_id_ph,one,v_dim,ph)
+   if(rc.ne.0) then
+      print *, 'nf_get_vara_real ', ph(1,1,1)
+      stop
+   endif
+   rc = nf_get_vara_real(f_id,v_id_phb,one,v_dim,phb)
+   if(rc.ne.0) then
+      print *, 'nf_get_vara_real ', phb(1,1,1)
+      stop
+   endif
 !
 ! get mean geo_ht
-      do k=1,nz
-         geo_ht(:,:,k)=geo_ht(:,:,k)+(ph(:,:,k)+phb(:,:,k)+ph(:,:,k+1)+ &
-         phb(:,:,k+1))/2./float(nmem)
-      enddo
-      rc = nf_close(f_id)
+   do k=1,nz
+      geo_ht(:,:,k)=(ph(:,:,k)+phb(:,:,k) + ph(:,:,k+1)+ &
+      phb(:,:,k+1))/2.
    enddo
+   rc = nf_close(f_id)
 end subroutine get_WRFINPUT_geo_ht
 
 !-------------------------------------------------------------------------------

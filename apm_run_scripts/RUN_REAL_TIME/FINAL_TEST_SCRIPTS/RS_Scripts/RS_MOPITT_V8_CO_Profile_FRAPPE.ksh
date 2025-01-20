@@ -32,7 +32,7 @@
       export FLG=0
       if [[ ${ASIM_MX_HH} -eq 3 ]]; then
          export FLG=1
-         export BIN_BEG_YY=${ASIM_MX_YYY}
+         export BIN_BEG_YY=${ASIM_MX_YYYY}
          export BIN_BEG_MM=${ASIM_MX_MM}
          export BIN_BEG_DD=${ASIM_MX_DD}
          export BIN_BEG_HH=0
@@ -49,7 +49,7 @@
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
 #
 # SET MOPITT INPUT DATA FILE
-      export INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${YYYY}${MM}${DD}${MOPITT_FILE_EXT}\'
+      export INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${YYYY}/${MM}/${DD}/${MOPITT_FILE_PRE}${YYYY}${MM}${DD}${MOPITT_FILE_EXT}\'
       export OUTFILE=TEMP_FILE.dat
       export OUTFILE_NQ=TEMP_FILE.dat
       export ARCHIVE_FILE=MOPITT_CO_${DATE}.dat
@@ -87,7 +87,7 @@
          export BIN_END_HH=23
          export BIN_END_MN=59
          export BIN_END_SS=59
-         export INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${MOPITT_FILE_PRE}${PAST_YYYY}${PAST_MM}${PAST_DD}${MOPITT_FILE_EXT}\'
+         export INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${YYYY}/${MM}/${DD}/${MOPITT_FILE_PRE}${PAST_YYYY}${PAST_MM}${PAST_DD}${MOPITT_FILE_EXT}\'
          export OUTFILE=TEMP_FILE.dat
          export OUTFILE_NQ=TEMP_FILE.dat
          rm -rf ${OUTFILE_NQ}

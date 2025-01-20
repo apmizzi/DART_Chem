@@ -40,29 +40,9 @@
       rm -rf obs_seq.new
       cp ${COMBINE_OBS_DIR}/obs_seq_comb_${DATE}.out obs_seq.old
 #
-      rm -rf job.ksh
-      touch job.ksh
-      cat << EOF > job.ksh
-#!/bin/ksh -aeux
-#PBS -N prepr
-#PBS -l walltime=${GENERAL_TIME_LIMIT}
-#PBS -q ${GENERAL_JOB_CLASS}
-#PBS -j oe
-#PBS -l select=${GENERAL_NODES}:ncpus=1:model=ivy
-#PBS -l site=needed=/home1+/nobackupp11
-./wrf_dart_obs_preprocess ${DAY_GREG} ${SEC_GREG} > index.html 2>&1
-export RC=\$?
-if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
-if [[ -f FAILED ]]; then rm -rf FAILED; fi          
-if [[ \$RC = 0 ]]; then
-   touch SUCCESS
-else
-   touch FAILED 
-   exit
-fi
-EOF
-#
-#      ./wrf_dart_obs_preprocess ${DAY_GREG} ${SEC_GREG} > index.html 2>&1
+      TRANDOM=$$      
+      export JOBRND=${TRANDOM}_prepr
+      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} wrf_dart_obs_preprocess SERIAL ${ACCOUNT} ${GENERAL_MODEL}
       qsub -Wblock=true job.ksh
       mv obs_seq.new obs_seq_comb_filtered_${DATE}.out
 #      rm -rf advance_time dart_log* input.nml job.ksh obs_seq.old wrf*

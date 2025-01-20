@@ -243,24 +243,24 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       zenang=h5read(file_in,field);
 %
 % O3 Column (ntime)
-      field='/HDFEOS/SWATHS/O3 column/Data Fields/L2gpValue';
-      o3_col_obs=h5read(file_in,field);
+%      field='/HDFEOS/SWATHS/O3 column/Data Fields/L2gpValue';
+%      o3_col_obs=h5read(file_in,field);
 %
 % O3 Column Error (ntime) 
-      field='/HDFEOS/SWATHS/O3 column/Data Fields/L2gpPrecision';
-      o3_col_obs_err=h5read(file_in,field);
+%      field='/HDFEOS/SWATHS/O3 column/Data Fields/L2gpPrecision';
+%      o3_col_obs_err=h5read(file_in,field);
 %
 % O3 Column Convergence (ntime)
-      field='/HDFEOS/SWATHS/O3 column/Data Fields/Convergence';
-      o3_col_obs_conv=h5read(file_in,field);
+%      field='/HDFEOS/SWATHS/O3 column/Data Fields/Convergence';
+%      o3_col_obs_conv=h5read(file_in,field);
 %
 % O3 Column Quality (ntime)
-      field='/HDFEOS/SWATHS/O3 column/Data Fields/Quality';
-      o3_col_obs_qual=h5read(file_in,field);
+%      field='/HDFEOS/SWATHS/O3 column/Data Fields/Quality';
+%      o3_col_obs_qual=h5read(file_in,field);
 %
 % O3 Column Status (ntime)
-      field='/HDFEOS/SWATHS/O3 column/Data Fields/Status';
-      o3_col_obs_status=h5read(file_in,field);
+%      field='/HDFEOS/SWATHS/O3 column/Data Fields/Status';
+%      o3_col_obs_status=h5read(file_in,field);
 %
 % O3 A Priori (layer,ntime)
       field='/HDFEOS/SWATHS/O3-APriori/Data Fields/L2gpValue';
@@ -283,8 +283,10 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       o3_prior_status=h5read(file_in,field);
 %
 % Loop through MLS data
-      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,2010));
-      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,2010));
+      windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn, ...
+      wmm_mn,wss_mn,2000));
+      windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx, ...
+      wmm_mx,wss_mx,2000));
       icnt=0;
       for itim=1:ntime
          curr_hrs=fix((time(itim)-tai93_0UTC)/3600);
@@ -299,7 +301,7 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          mm_mls=curr_min;
          ss_mls=round(curr_sec);
          mlsdate=single(convert_time_ref(yyyy_mls,mn_mls, ...
-         dy_mls,hh_mls,mm_mls,ss_mls,2010));
+         dy_mls,hh_mls,mm_mls,ss_mls,2000));
          if(hh_mls==24 | mm_mls==60 | ss_mls==60)	 
             yyyy_tp=yyyy_mls;
             mn_tp=mn_mls;
@@ -313,41 +315,14 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %
 % Check time
          if(mlsdate<windate_min | mlsdate>windate_max)
-%            fprintf('min %d, mls %d, max %d \n',windate_min,mlsdate,windate_max)
             continue
          end
 %
 % QA/QC
-%
-         if(zenang(itim)>=90.0)
-            continue
-         end
-%
-         if(rem(o3_obs_status(itim),2)~=0)
-            continue
-         end
-%
-         if(o3_obs_qual(itim)<=1.0)
-            continue
-         end
-%
-         if(o3_obs_conv(itim)>=1.03)
-            continue
-         end
-%
-% Used in obs_converter	 
-%         iflg=0	 
-%         for ilay=4:27
-%           if(o3_obs_err(ilay,itim)<=0 | isnan(o3_obs(ilay,itim)) | ...
-%           o3_prior(ilay,itim)<=0 | isnan(o3_prior(ilay,itim) ...
-%           o3_obs(ilay,itim)<=0))
-%               iflg=1
-%	       break
-%            end
-%         end
-%	 if(iflg==1)
-%            continue
-%	 end
+% Generally done in obs_converter because it is level dependent
+	 if(zenang(itim)>=90.0)
+	    continue
+	 end
 %
 % Check domain
 % Input grid needs to be in degrees
@@ -405,11 +380,6 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
             reject=1;
          end
          if(reject==1)
-%            fprintf('x_mdl_min, x_obs, x_mdl_max: %6.2f %6.2f %6.2f \n',xmdl_sw, ...
-%            x_obser,xmdl_mx)
-%            fprintf('y_mdl_min, y_obs, y_mdl_max: %6.2f %6.2f %6.2f \n',lat_mdl(1,1), ...
-%            y_obser,lat_mdl(nx_mdl,ny_mdl))
-%            fprintf('i_min %d j_min %d \n',i_min,j_min)
             continue
          end
          if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
@@ -453,10 +423,14 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          fprintf(fid,'\n');
          fprintf(fid,'%14.8g ',tru_lay_obs(1:tru_nlay));
          fprintf(fid,'\n');
+         fprintf(fid,'%14.8g %14.8g %14.8g \n', o3_obs_conv(itim), ...
+         o3_obs_qual(itim), o3_obs_status(itim));
          fprintf(fid,'%14.8g ',o3_obs(1:layer,itim));
          fprintf(fid,'\n');
          fprintf(fid,'%14.8g ',o3_obs_err(1:layer,itim));
          fprintf(fid,'\n');
+         fprintf(fid,'%14.8g %14.8g %14.8g \n', o3_prior_conv(itim), ...
+         o3_prior_qual(itim), o3_prior_status(itim));
          fprintf(fid,'%14.8g ',o3_prior(1:layer,itim));
          fprintf(fid,'\n');
          fprintf(fid,'%14.8g \n',o3_prior_err(itim));
@@ -467,5 +441,7 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %         fprintf(fid,'%14.8g \n',o3_col_obs(itim));
 %         fprintf(fid,'%14.8g \n',o3_col_obs_err(itim));
       end
-   end  
+   end
+   fclose(fid);
+   netcdf.close(wfid);
 end

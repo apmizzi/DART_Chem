@@ -367,8 +367,6 @@ program tes_o3_profile_ascii_to_obs
 !
 ! Obs is a profile
             obs_val(:)=o3_obs(ilay)
-!            obs_err_var=(fac_obs_error*fac_err*sqrt(cov_total(ilay,ilay))*o3_obs(ilay))**2
-!            obs_err_var=(fac_obs_error*fac_err*sqrt(cov_obs(ilay,ilay))*o3_obs(ilay))**2
             obs_err_var=(fac_obs_error*fac_err*o3_obs_err(ilay)*o3_obs(ilay))**2
             tes_qc(:)=0
             obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)

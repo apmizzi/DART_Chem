@@ -46,13 +46,15 @@ program mls_hno3_profile_thinner
    integer                           :: nlay_obs,nlev_obs,ilv
    integer                           :: ret_nlay,tru_nlay
    real                              :: dofs
+   real                              :: hno3_conv,hno3_qual,hno3_stat
+   real                              :: prior_conv,prior_qual,prior_stat
    real,allocatable,dimension(:,:)   :: prs_obs
    real,allocatable,dimension(:,:)   :: ret_lay_obs
    real,allocatable,dimension(:,:)   :: tru_lay_obs
    real,allocatable,dimension(:,:)   :: hno3_obs
    real,allocatable,dimension(:,:)   :: hno3_obs_err
    real,allocatable,dimension(:,:)   :: prior_obs
-   real,allocatable,dimension(:)     :: prior_err
+   real,allocatable,dimension(:,:)   :: prior_obs_err
    real,allocatable,dimension(:,:,:) :: avgk_obs
    real,allocatable,dimension(:)     :: hno3_col_obs
    real,allocatable,dimension(:)     :: hno3_col_obs_err
@@ -90,13 +92,19 @@ program mls_hno3_profile_thinner
       integer,allocatable,dimension(:)  :: ret_nlay
       integer,allocatable,dimension(:)  :: tru_nlay
       real,allocatable,dimension(:)     :: dofs
+      real,allocatable,dimension(:)     :: hno3_conv
+      real,allocatable,dimension(:)     :: hno3_qual
+      real,allocatable,dimension(:)     :: hno3_stat
+      real,allocatable,dimension(:)     :: prior_conv
+      real,allocatable,dimension(:)     :: prior_qual
+      real,allocatable,dimension(:)     :: prior_stat
       real,allocatable,dimension(:,:)   :: prs_obs
       real,allocatable,dimension(:,:)   :: ret_lay_obs
       real,allocatable,dimension(:,:)   :: tru_lay_obs
       real,allocatable,dimension(:,:)   :: hno3_obs
       real,allocatable,dimension(:,:)   :: hno3_obs_err
       real,allocatable,dimension(:,:)   :: prior_obs
-      real,allocatable,dimension(:)     :: prior_err
+      real,allocatable,dimension(:,:)   :: prior_obs_err
       real,allocatable,dimension(:,:,:) :: avgk_obs
       real,allocatable,dimension(:)     :: hno3_col_obs
       real,allocatable,dimension(:)     :: hno3_col_obs_err
@@ -180,10 +188,16 @@ program mls_hno3_profile_thinner
          allocate(mls_data(i_min,j_min)%hno3_obs(max_num_obs,nlay_obs))
          allocate(mls_data(i_min,j_min)%hno3_obs_err(max_num_obs,nlay_obs))
          allocate(mls_data(i_min,j_min)%prior_obs(max_num_obs,nlay_obs))
-         allocate(mls_data(i_min,j_min)%prior_err(max_num_obs))
+         allocate(mls_data(i_min,j_min)%prior_obs_err(max_num_obs,nlay_obs))
          allocate(mls_data(i_min,j_min)%avgk_obs(max_num_obs,ret_nlay,tru_nlay))
          allocate(mls_data(i_min,j_min)%hno3_col_obs(max_num_obs))
          allocate(mls_data(i_min,j_min)%hno3_col_obs_err(max_num_obs))
+         allocate(mls_data(i_min,j_min)%hno3_conv(max_num_obs))
+         allocate(mls_data(i_min,j_min)%hno3_qual(max_num_obs))
+         allocate(mls_data(i_min,j_min)%hno3_stat(max_num_obs))
+         allocate(mls_data(i_min,j_min)%prior_conv(max_num_obs))
+         allocate(mls_data(i_min,j_min)%prior_qual(max_num_obs))
+         allocate(mls_data(i_min,j_min)%prior_stat(max_num_obs))
       endif
       read(fileid,*,iostat=ios) &
          mls_data(i_min,j_min)%prs_obs(icnt,1:nlay_obs)
@@ -192,13 +206,21 @@ program mls_hno3_profile_thinner
       read(fileid,*,iostat=ios) &
          mls_data(i_min,j_min)%tru_lay_obs(icnt,1:tru_nlay)
       read(fileid,*,iostat=ios) &
+         mls_data(i_min,j_min)%hno3_conv(icnt), &
+         mls_data(i_min,j_min)%hno3_qual(icnt), &
+         mls_data(i_min,j_min)%hno3_stat(icnt)
+      read(fileid,*,iostat=ios) &
          mls_data(i_min,j_min)%hno3_obs(icnt,1:nlay_obs)
       read(fileid,*,iostat=ios) &
          mls_data(i_min,j_min)%hno3_obs_err(icnt,1:nlay_obs)
       read(fileid,*,iostat=ios) &
+         mls_data(i_min,j_min)%prior_conv(icnt), &
+         mls_data(i_min,j_min)%prior_qual(icnt), &
+         mls_data(i_min,j_min)%prior_stat(icnt)
+      read(fileid,*,iostat=ios) &
          mls_data(i_min,j_min)%prior_obs(icnt,1:nlay_obs)
       read(fileid,*,iostat=ios) &
-         mls_data(i_min,j_min)%prior_err(icnt)
+         mls_data(i_min,j_min)%prior_obs_err(icnt,1:nlay_obs)
       do k=1,ret_nlay
          read(fileid,*,iostat=ios) &
          mls_data(i_min,j_min)%avgk_obs(icnt,k,1:tru_nlay)
@@ -324,13 +346,21 @@ program mls_hno3_profile_thinner
             write(fileid,*,iostat=ios) &
                mls_data(i,j)%tru_lay_obs(icnt,1:tru_nlay)
             write(fileid,*,iostat=ios) &
+               mls_data(i,j)%hno3_conv(icnt), &
+               mls_data(i,j)%hno3_qual(icnt), &
+               mls_data(i,j)%hno3_stat(icnt)
+            write(fileid,*,iostat=ios) &
                mls_data(i,j)%hno3_obs(icnt,1:nlay_obs)
             write(fileid,*,iostat=ios) &
                mls_data(i,j)%hno3_obs_err(icnt,1:nlay_obs)
             write(fileid,*,iostat=ios) &
+               mls_data(i,j)%prior_conv(icnt), &
+               mls_data(i,j)%prior_qual(icnt), &
+               mls_data(i,j)%prior_stat(icnt)
+            write(fileid,*,iostat=ios) &
                mls_data(i,j)%prior_obs(icnt,1:nlay_obs)
             write(fileid,*,iostat=ios) &
-               mls_data(i,j)%prior_err(icnt)
+               mls_data(i,j)%prior_obs_err(icnt,1:nlay_obs)
             do k=1,ret_nlay
                write(fileid,*,iostat=ios) &
                mls_data(i,j)%avgk_obs(icnt,k,1:tru_nlay)
@@ -362,10 +392,16 @@ program mls_hno3_profile_thinner
             deallocate(mls_data(i,j)%hno3_obs)
             deallocate(mls_data(i,j)%hno3_obs_err)
             deallocate(mls_data(i,j)%prior_obs)
-            deallocate(mls_data(i,j)%prior_err)
+            deallocate(mls_data(i,j)%prior_obs_err)
             deallocate(mls_data(i,j)%avgk_obs)
             deallocate(mls_data(i,j)%hno3_col_obs)
             deallocate(mls_data(i,j)%hno3_col_obs_err)
+            deallocate(mls_data(i,j)%hno3_conv)
+            deallocate(mls_data(i,j)%hno3_qual)
+            deallocate(mls_data(i,j)%hno3_stat)
+            deallocate(mls_data(i,j)%prior_conv)
+            deallocate(mls_data(i,j)%prior_qual)
+            deallocate(mls_data(i,j)%prior_stat)
          endif
       enddo
    enddo

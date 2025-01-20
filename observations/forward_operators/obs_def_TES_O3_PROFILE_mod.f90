@@ -313,11 +313,11 @@ subroutine get_expected_tes_o3_profile(state_handle, ens_size, location, key, ob
    character(len=*),parameter  :: fld = 'O3_VMR_inst'
    type(location_type) :: loc2
    
-   integer :: layer_tes,level_tes
+   integer :: layer_tes,level_tes, klev_tes, kend_tes
    integer :: layer_mdl,level_mdl
    integer :: k,kk,imem,imemm,flg
    integer :: interp_new
-   integer :: icnt,ncnt,kstart,klev_tes
+   integer :: icnt,ncnt,kstart
    integer :: date_obs,datesec_obs
    integer, dimension(ens_size) :: zstatus,kbnd_1,kbnd_n
    
@@ -411,7 +411,7 @@ subroutine get_expected_tes_o3_profile(state_handle, ens_size, location, key, ob
    zstatus=0
    level=0.0_r8
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
-   call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus) 
+   call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus)
 
    o3_mdl_1(:)=missing_r8
    tmp_mdl_1(:)=missing_r8
@@ -532,6 +532,15 @@ subroutine get_expected_tes_o3_profile(state_handle, ens_size, location, key, ob
 ! Convert units for o3 from ppmv
       o3_val(:,k) = o3_val(:,k) * 1.e-6_r8
    enddo
+
+!   do imem=1,1
+!      do k=1,layer_tes
+!         write(string1, *)'APM: o3 ',key,k,prs_tes(k),o3_val(imem,k), &
+!         tmp_val(imem,k),qmr_val(imem,k)
+!         call error_handler(E_MSG, routine, string1, source)
+!      enddo
+!   enddo
+  
    o3_mdl_1(:) = o3_mdl_1(:) * 1.e-6_r8
    o3_mdl_n(:) = o3_mdl_n(:) * 1.e-6_r8
 !

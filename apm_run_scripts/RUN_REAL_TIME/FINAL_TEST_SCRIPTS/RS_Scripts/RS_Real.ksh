@@ -69,4 +69,4 @@
       done
 #
 # Clean directory
-      rm hist_io_flds* namelist.* real.exe met_em.d* index.html
+#      rm hist_io_flds* namelist.* real.exe met_em.d* index.html

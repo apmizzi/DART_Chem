@@ -18,9 +18,9 @@ cat > input.nml_temp << EOF
    ls_chem_dt = ${LS_CHEM_DT}
    use_log_co     = ${NL_USE_LOG_CO:-.false.},
    nlayer_model   = ${NL_NLAYER_MODEL:-36},
-   nlayer_tes_co_total_col  = ${NL_NLAYER_TES_CO_TOTAL_COL:-50},
-   nlayer_tes_co_trop_col   = ${NL_NLAYER_TES_CO_TROP_COL:-50},
-   nlayer_tes_co_profile    = ${NL_NLAYER_TES_CO_PROFILE:-50},
+   nlayer_tes_co_total_col  = ${NL_NLAYER_TES_CO_TOTAL_COL:-70},
+   nlayer_tes_co_trop_col   = ${NL_NLAYER_TES_CO_TROP_COL:-70},
+   nlayer_tes_co_profile    = ${NL_NLAYER_TES_CO_PROFILE:-70},
 / 
 EOF
 #

@@ -49,7 +49,7 @@
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
 #
 # SET MODIS INPUT DATA FILE
-      export INFILE=${EXPERIMENT_MODIS_AOD_DIR}/${YYYY}${MM}${DD}00/${MODIS_FILE_PRE}${YYYY}
+      export INFILE=${EXPERIMENT_MODIS_AOD_DIR}/${YYYY}/${MM}/${DD}/${MODIS_FILE_PRE}${YYYY}
       export OUTFILE=TEMP_FILE.dat
       export OUTFILE_NQ=TEMP_FILE.dat
       export ARCHIVE_FILE=MODIS_AOD_${DATE}.dat
@@ -87,7 +87,7 @@
          export BIN_END_HH=23
          export BIN_END_MN=59
          export BIN_END_SS=59
-         export INFILE=${EXPERIMENT_MODIS_AOD_DIR}/${PAST_YYYY}${PAST_MM}${PAST_DD}00/${MODIS_FILE_PRE}${PAST_YYYY}
+         export INFILE=${EXPERIMENT_MODIS_AOD_DIR}/${PAST_YYYY}/${PAST_MM}/${PAST_DD}/${MODIS_FILE_PRE}${PAST_YYYY}
          export OUTFILE=TEMP_FILE.dat
          export OUTFILE_NQ=TEMP_FILE.dat
          rm -rf ${OUTFILE_NQ}

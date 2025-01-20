@@ -7,7 +7,7 @@
       export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
-      export MLS_FILE_PRE=MLS-Aura_L2GP-O3_v04-20-c01_
+      export MLS_FILE_PRE=MLS-Aura_L2GP-O3_v04-23-c01_
       export MLS_FILE_EXT=.hdr
       export OUTFILE=TEMP_FILE.dat
       export TMP_OUTFILE=MLS_O3_${DATE}.dat
@@ -50,7 +50,7 @@
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
 #
 # SET MLS INPUT DATA DIR
-      export TMP_INFILE=\'${EXPERIMENT_MLS_O3_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${MLS_FILE_PRE}\'
+      export TMP_INFILE=\'${EXPERIMENT_MLS_O3_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}/${MLS_FILE_PRE}\'
 #
 # COPY EXECUTABLE
       export FILE=mls_o3_profile_extract.m
@@ -83,7 +83,7 @@
          export BIN_END_HH=23
          export BIN_END_MN=59
          export BIN_END_SS=59
-         export TMP_INFILE=\'${EXPERIMENT_MLS_O3_DIR}/${BIN_BEG_YY}${BIN_BEG_MM}${BIN_BEG_DD}/${MLS_FILE_PRE}\'
+         export TMP_INFILE=\'${EXPERIMENT_MLS_O3_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}/${MLS_FILE_PRE}\'
 #
 # COPY EXECUTABLE
          export FILE=mls_o3_profile_extract.m

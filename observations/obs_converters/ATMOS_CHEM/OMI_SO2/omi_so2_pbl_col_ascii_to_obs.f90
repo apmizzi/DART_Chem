@@ -319,6 +319,9 @@ program omi_so2_pbl_col_ascii_to_obs
       amf=slnt_col_amt/col_amt
 !
 ! Obs thinning test
+      if(all(scat_wt.eq.0.) .or. col_amt.eq.0. .or. slnt_col_amt.eq.0. .or. &
+      col_amt.eq.0.) cycle
+!      
       obs_accept=obs_accept+1
       if(obs_accept/obs_so2_reten_freq*obs_so2_reten_freq.eq.obs_accept) then
 !
