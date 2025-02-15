@@ -47,7 +47,7 @@ export EXPERIMENT_INPUT_OBS=NOAA
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
 #
 # APM - Need NOAA template file
-export WRFCHEM_TEMPLATE_FILE=wrfinput_d01_2019-04-02_00:00:00.e001
+export WRFCHEM_TEMPLATE_FILE=wrfinput_d01_2019-04-02_03:00:00.e001
 export NUM_MEMBERS=10
 #
 # NOAA
@@ -61,11 +61,18 @@ export FIRST_DART_INFLATE_DATE=2019040203
 export FIRST_EMISS_INV_DATE=2019040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2019040200
+export CYCLE_STR_DATE=2019040209
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2019040200
-
+export CYCLE_END_DATE=2019040209
+#
+# Special DATE for emissions perturbations
+export RUN_SPECIAL_PERT_DATE=false
+export SPECIAL_PERT_DATE=${CYCLE_STR_DATE}00
+if [[ ${RUN_SPECIAL_PERT_DATE} = "true" ]]; then
+   export SPECIAL_PERT_DATE=201904020300
+fi
+#    
 # For emissions estimation
 export ADD_EMISS=false
 export EMISS_DAMP_CYCLE=1.0
@@ -110,19 +117,19 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # SELECT COMPONENT RUN OPTIONS:
    export RUN_GEOGRID=false
-   export RUN_UNGRIB=false
-   export RUN_METGRID=false
-   export RUN_REAL=false
-   export RUN_PERT_WRFCHEM_MET_IC=false
-   export RUN_PERT_WRFCHEM_MET_BC=false
-   export RUN_EXO_COLDENS=false
-   export RUN_SEASON_WES=false
-   export RUN_WRFCHEM_BIO=false
-   export RUN_WRFCHEM_FIRE=false
-   export RUN_WRFCHEM_CHEMI=false
+   export RUN_UNGRIB=true
+   export RUN_METGRID=true
+   export RUN_REAL=true
+   export RUN_PERT_WRFCHEM_MET_IC=true
+   export RUN_PERT_WRFCHEM_MET_BC=true
+   export RUN_EXO_COLDENS=true
+   export RUN_SEASON_WES=true
+   export RUN_WRFCHEM_BIO=true
+   export RUN_WRFCHEM_FIRE=true
+   export RUN_WRFCHEM_CHEMI=true
    export RUN_PERT_WRFCHEM_CHEM_ICBC=true
-   export RUN_PERT_WRFCHEM_CHEM_EMISS=false
-   export RUN_BIAS_CORRECTION=false
+   export RUN_PERT_WRFCHEM_CHEM_EMISS=true
+   export RUN_BIAS_CORRECTION=true
    export RUN_COMBINE_OBS=true
    export RUN_PREPROCESS_OBS=true
    export RUN_LOCALIZATION=true
@@ -225,15 +232,15 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # PERT_ICBC (Used for settings in call to RS script)
 # (NSPCS x NUM_MEMS) + 2
-# (20 x 10) + 2
+# (19 x 10) + 2
 # Ivy 20 nodes per core   
 # Haswell 24 nodes per core   
 # Broadwell 28 nodes per core
 # Broadwell
    export L_ICBC_PERT_JOB_CLASS=normal
    export L_ICBC_PERT_TIME_LIMIT=02:45:00
-   export L_ICBC_PERT_NODES=8
-   export L_ICBC_PERT_TASKS=26
+   export L_ICBC_PERT_NODES=7
+   export L_ICBC_PERT_TASKS=28
    export L_ICBC_PERT_MODEL=bro
 #
 # PERT_EMISS (Used for settings in call to  RS script)
@@ -556,9 +563,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export PERT_MODEL=${L_ICBC_PERT_MODEL}
       source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Chem_ICBC_NOAA.ksh > index_rs.html 2>&1
    fi
-
-exit
-   
 #
 #########################################################################
 #

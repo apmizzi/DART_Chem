@@ -318,7 +318,7 @@ program main
             if(rank.eq.itask(imem,isp)) then
                if (rank.eq.3) then
                   call cpu_time(cpu_str)
-                  print *, 'APM: Before smoothing rank,imem,isp ',rank,imem,isp,cpu_str
+                  print *, 'APM: Before smoothing rank,imem,isp ',rank,imem,trim(ch_chem_spc(isp)),cpu_str
                endif
                allocate(tmp_arry(nx*ny*nz))
                call mpi_recv(tmp_arry,nx*ny*nz,MPI_FLOAT, &
@@ -485,7 +485,7 @@ program main
                if (rank.eq.3) then
                   call cpu_time(cpu_end)
                   cpu_dif=cpu_end-cpu_str
-                  print *, 'APM: After smoothing rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+                  print *, 'APM: After smoothing rank,imem,isp ',rank,imem,trim(ch_chem_spc(isp)),cpu_end,cpu_dif
                endif
             endif
          enddo

@@ -27,35 +27,35 @@
       export LD_PAST_MM=${L_PAST_MM}
       export LD_PAST_DD=${L_PAST_DD}
       export LD_PAST_HH=${L_PAST_HH}
-      if [[ ${HH} -eq 0 ]]; then
-         export LD_DATE=${L_PAST_YYYY}${L_PAST_MM}${L_PAST_DD}24
+      if [[ ${HH} -eq 00 ]]; then
+         export LD_DATE=${L_PAST_YYYY}${L_PAST_MM}${L_PAST_DD}00
          export LD_YYYY=${L_PAST_YYYY}
          export LD_YY=${L_PAST_YY}
          export LD_MM=${L_PAST_MM}
          export LD_DD=${L_PAST_DD}
          export LD_HH=24
-	 export LD_PAST_DATE=$(${BUILD_DIR}/da_advance_time.exe ${LD_DATE} -24 2>/dev/null)
-         export LD_PAST_YYYY=$(echo ${LD_PAST_DATE} | cut -c1-4)
-         export LD_PAST_YY=$(echo ${LD_PAST_DATE} | cut -c3-4)
-         export LD_PAST_MM=$(echo ${LD_PAST_DATE} | cut -c5-6)
-         export LD_PAST_DD=$(echo ${LD_PAST_DATE} | cut -c7-8)
-         export LD_PAST_HH=24
+	 export LD_NEXT_DATE=$(${BUILD_DIR}/da_advance_time.exe ${LD_DATE} 24 2>/dev/null)
+         export LD_NEXT_YYYY=$(echo ${LD_NEXT_DATE} | cut -c1-4)
+         export LD_NEXT_YY=$(echo ${LD_NEXT_DATE} | cut -c3-4)
+         export LD_NEXT_MM=$(echo ${LD_NEXT_DATE} | cut -c5-6)
+         export LD_NEXT_DD=$(echo ${LD_NEXT_DATE} | cut -c7-8)
+         export LD_NEXT_HH=24
       fi
       (( LDD_YYYY = ${LD_YYYY} + 0 ))
       (( LDD_MM = ${LD_MM} + 0 ))
       (( LDD_DD = ${LD_DD} + 0 ))
       (( LDD_HH = ${LD_HH} + 0 ))
-      (( LDD_PAST_YYYY = ${LD_PAST_YYYY} + 0 ))
-      (( LDD_PAST_MM = ${LD_PAST_MM} + 0 ))
-      (( LDD_PAST_DD = ${LD_PAST_DD} + 0 ))
-      (( LDD_PAST_HH = ${LD_PAST_HH} + 0 ))
+      (( LDD_NEXT_YYYY = ${LD_NEXT_YYYY} + 0 ))
+      (( LDD_NEXT_MM = ${LD_NEXT_MM} + 0 ))
+      (( LDD_NEXT_DD = ${LD_NEXT_DD} + 0 ))
+      (( LDD_NEXT_HH = ${LD_NEXT_HH} + 0 ))
 #
       export S_DATE=${L_YYYY}${L_MM}${L_DD}06
       export S_YYYY=${L_YYYY}
       export S_MM=${L_MM}
       export S_DD=${L_DD}
       export S_HH=06
-      if [[ ${HH} -eq 0 || ${HH} -eq 03 ]]; then
+      if [[ ${HH} -eq 00 || ${HH} -eq 03 ]]; then
 	 export S_DATE=${L_PAST_YYYY}${L_PAST_MM}${L_PAST_DD}06
          export S_YYYY=${L_PAST_YYYY}
          export S_MM=${L_PAST_MM}
@@ -90,17 +90,17 @@
       cp ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/work/input.nml ./.
       ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/work/prepbufr_RT.csh ${LDD_YYYY} ${LDD_MM} ${LDD_DD} ${LDD_DD} ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/exe > index_ascii_1.file 2>&1
       ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_ncep_ascii_to_obs_input_nml_RT.ksh
-      ${DART_DIR}/observations/obs_converters/NCEP/ascii_to_obs/work/create_real_obs > index_create 2>&1
+      ${DART_DIR}/observations/obs_converters/NCEP/ascii_to_obs/work/create_real_obs > index_create_1 2>&1
 #
-      if [[ ${HH} -eq 0 || ${HH} -eq 03 ]]; then
-         export D_YYYY=${LD_PAST_YYYY}
-         export D_MM=${LD_PAST_MM}
-         export D_DD=${LD_PAST_DD}
+      if [[ ${HH} -eq 00 || ${HH} -eq 03 ]]; then
+         export D_YYYY=${LD_NEXT_YYYY}
+         export D_MM=${LD_NEXT_MM}
+         export D_DD=${LD_NEXT_DD}
          rm -rf input.nml
          cp ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/work/input.nml ./.
-         ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/work/prepbufr_RT.csh ${LDD_PAST_YYYY} ${LDD_PAST_MM} ${LDD_PAST_DD} ${LDD_PAST_DD} ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/exe > index_ascii_2.file 2>&1
+         ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/work/prepbufr_RT.csh ${LDD_NEXT_YYYY} ${LDD_NEXT_MM} ${LDD_NEXT_DD} ${LDD_NEXT_DD} ${DART_DIR}/observations/obs_converters/NCEP/prep_bufr/exe > index_ascii_2.file 2>&1
          ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_ncep_ascii_to_obs_input_nml_RT.ksh
-         ${DART_DIR}/observations/obs_converters/NCEP/ascii_to_obs/work/create_real_obs > index_create 2>&1
+         ${DART_DIR}/observations/obs_converters/NCEP/ascii_to_obs/work/create_real_obs > index_create_2 2>&1
       fi
 #
 # RESET SETTINGS
@@ -133,10 +133,10 @@
       cp ${WRFCHEM_DART_WORK_DIR}/obs_sequence_tool ./.
       if [[ ${HH} -eq 03 ]]; then
          export NL_NUM_INPUT_FILES=2
-         export NL_FILENAME_SEQ=\'obs_seq${LD_PAST_YYYY}${LD_PAST_MM}${LD_PAST_DD}24\',\'obs_seq${LD_YYYY}${LD_MM}${LD_DD}06\'
+         export NL_FILENAME_SEQ=\'obs_seq${LD_YYYY}${LD__MM}${LD_DD}24\',\'obs_seq${LD_NEXT_YYYY}${LD_NEXT_MM}${LD_NEXT_DD}06\'
          ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_dart_input_nml.ksh
          ./obs_sequence_tool > index_obs_seq.html 2>&1
-         mv obs_seq.proc obs_seq_prep_${LD_YYYY}${LD_MM}${LD_DD}03.out
+         mv obs_seq.proc obs_seq_prep_${LD_NEXT_YYYY}${LD_NEXT_MM}${LD_NEXT_DD}03.out
       fi
       if [[ ${HH} -eq 09 ]]; then
          export NL_NUM_INPUT_FILES=2
@@ -161,10 +161,10 @@
       fi
       if [[ ${HH} -eq 00 ]]; then
          export NL_NUM_INPUT_FILES=1
-         export NL_FILENAME_SEQ=\'obs_seq${LD_PAST_YYYY}${LD_PAST_MM}${LD_PAST_DD}24\'
+         export NL_FILENAME_SEQ=\'obs_seq${LD_YYYY}${LD_MM}${LD_DD}24\'
          ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_dart_input_nml.ksh
          ./obs_sequence_tool > index_obs_seq.html 2>&1
-         mv obs_seq.proc obs_seq_prep_${LD_YYYY}${LD_MM}${LD_DD}00.out
+         mv obs_seq.proc obs_seq_prep_${LD_NEXT_YYYY}${LD_NEXT_MM}${LD_NEXT_DD}00.out
       fi
       if [[ ${HH} -eq 06 ]]; then
          export NL_NUM_INPUT_FILES=1

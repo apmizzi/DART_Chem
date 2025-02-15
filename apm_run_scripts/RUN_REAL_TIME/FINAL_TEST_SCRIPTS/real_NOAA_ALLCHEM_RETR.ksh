@@ -40,7 +40,7 @@ export RUN_DIR=${EXPERIMENT_DIR}/NOAA_ALLCHEM_RETR
 export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA
 export EXPERIMENT_INPUT_OBS=NOAA_RUNTIME_OBS
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
-export WRFCHEM_TEMPLATE_FILE=wrfinput_d01_2019-04-02_00:00:00.e001
+export WRFCHEM_TEMPLATE_FILE=wrfinput_d01_2019-04-02_03:00:00.e001
 export NUM_MEMBERS=10
 export CYCLE_PERIOD=3
 export FCST_PERIOD=3
@@ -52,10 +52,10 @@ export FIRST_DART_INFLATE_DATE=2019040203
 export FIRST_EMISS_INV_DATE=2019040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2019040200
+export CYCLE_STR_DATE=2019040206
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2019040200
+export CYCLE_END_DATE=2019040206
 
 # For emissions estimation
 export ADD_EMISS=false
@@ -85,10 +85,10 @@ export RUN_TES_O3_PROFILE_OBS=true                 # (done)  TRACER I
 export RUN_GOME2A_NO2_TROP_COL_OBS=true            # (done)  TRACER I
 export RUN_MLS_O3_PROFILE_OBS=true                 # (done)  TRACER I
 export RUN_MLS_HNO3_PROFILE_OBS=true               # (done)  TRACER I
-export RUN_AIRNOW_CO_OBS=true                      # (done)  TRACER I
-export RUN_AIRNOW_O3_OBS=true                      # (done)  TRACER I
-export RUN_AIRNOW_NO2_OBS=true                     # (done)  TRACER I
-export RUN_AIRNOW_SO2_OBS=true                     # (done)  TRACER I
+export RUN_AIRNOW_CO_OBS=false                      # (done)  TRACER I
+export RUN_AIRNOW_O3_OBS=false                      # (done)  TRACER I
+export RUN_AIRNOW_NO2_OBS=false                     # (done)  TRACER I
+export RUN_AIRNOW_SO2_OBS=false                     # (done)  TRACER I
 export RUN_AIRNOW_PM10_OBS=false                    # (done)  TRACER I
 export RUN_AIRNOW_PM25_OBS=false                    # (done)  TRACER I
 export RUN_MET_OBS=true                             # (done)  TRACER I
@@ -141,9 +141,9 @@ export RUN_SPECIAL_FORECAST=false
 export NUM_SPECIAL_FORECAST=0
 export SPECIAL_FORECAST_FAC=1.
 #
-export SPECIAL_FORECAST_MEM[1]=20
-export SPECIAL_FORECAST_MEM[2]=20
-export SPECIAL_FORECAST_MEM[3]=13
+export SPECIAL_FORECAST_MEM[1]=5
+export SPECIAL_FORECAST_MEM[2]=6
+export SPECIAL_FORECAST_MEM[3]=7
 export SPECIAL_FORECAST_MEM[4]=14
 export SPECIAL_FORECAST_MEM[5]=15
 export SPECIAL_FORECAST_MEM[6]=16
@@ -203,20 +203,20 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_DART_FILTER=false
          export RUN_BIAS_CORRECTION=false
          export RUN_UPDATE_BC=false
-         export RUN_ENSEMBLE_MEAN_INPUT=false
+         export RUN_ENSEMBLE_MEAN_INPUT=true
          export RUN_WRFCHEM_INITIAL=true
          export RUN_WRFCHEM_CYCLE_CR=false
       else
-         export RUN_DART_FILTER=true
+         export RUN_DART_FILTER=false
          export RUN_BIAS_CORRECTION=false
-         export RUN_UPDATE_BC=true
+         export RUN_UPDATE_BC=false
          export RUN_ENSEMBLE_MEAN_INPUT=true
          export RUN_WRFCHEM_INITIAL=false
-         export RUN_WRFCHEM_CYCLE_CR=true
+         export RUN_WRFCHEM_CYCLE_CR=false
       fi	  
       export RUN_WRFCHEM_CYCLE_FR=false
       export RUN_ENSMEAN_CYCLE_FR=false
-      export RUN_ENSEMBLE_MEAN_OUTPUT=false
+      export RUN_ENSEMBLE_MEAN_OUTPUT=true
       export RUN_BAND_DEPTH=false
    fi
    if [[ ${RUN_SPECIAL_FORECAST} == true ]]; then
@@ -345,20 +345,20 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export ADJUST_EMISS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_EMISS_INV
    export PERT_CHEM_EMISS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_PERT_CHEM/EMISS_PERT
 #   
-   export GENERAL_JOB_CLASS=devel
-   export GENERAL_TIME_LIMIT=00:10:00
+   export GENERAL_JOB_CLASS=normal
+   export GENERAL_TIME_LIMIT=01:00:00
    export GENERAL_NODES=1
-   export GENERAL_TASKS=12
-   export GENERAL_MODEL=ivy
+   export GENERAL_TASKS=1
+   export GENERAL_MODEL=has
 #
 # Haswell   
-   export FILTER_JOB_CLASS=devel
+   export FILTER_JOB_CLASS=normal
    export FILTER_TIME_LIMIT=01:59:00
    export FILTER_NODES=5
    export FILTER_TASKS=24
    export FILTER_MODEL=has
 #
-   export WRFCHEM_JOB_CLASS=devel
+   export WRFCHEM_JOB_CLASS=normal
    export WRFCHEM_TIME_LIMIT=01:59:00
    export WRFCHEM_TIME_LIMIT=00:40:00
    export WRFCHEM_NODES=5
@@ -563,11 +563,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_cycle_cr
       fi
-      if [[ ${RUN_SPECIAL_FORECAST} == true ]]; then
-         source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR.ksh > index_rs.html 2>&1
-      else    
-         source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR_Single.ksh > index_rs.html 2>&1
-      fi 
+      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR_NOAA.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
