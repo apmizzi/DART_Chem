@@ -39,9 +39,11 @@ if [[ ${TYPE} == PARALLEL ]]; then
 #PBS -N ${JOBID}
 #PBS -l walltime=${TIME_LIMIT}
 #PBS -q ${CLASS}
+#PBS -l site=needed=/home1+/nobackupp28
 #PBS -j oe
 #PBS -l select=${NODES}:ncpus=${TASKS}:mpiprocs=${TASKS}:model=${MODEL}
-mpiexec -np ${NPROC} ./${EXECUTE}  > index.html 2>&1 
+export MPI_LAUNCH_TIMEOUT=60
+/u/scicon/tools/bin/several_tries mpiexec -np ${NPROC} ./${EXECUTE}  > index.html 2>&1 
 export RC=\$?     
 if [[ -f SUCCESS ]]; then rm -rf SUCCESS; fi     
 if [[ -f FAILED ]]; then rm -rf FAILED; fi          

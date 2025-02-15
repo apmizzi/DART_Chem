@@ -23,6 +23,11 @@
 # COPY CURRENT ARCHIVE EMISSIONS      
       export L_DATE=${DATE}00
       export LE_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} ${FCST_PERIOD} -f ccyymmddhhnn 2>/dev/null)
+      if [[ ${RUN_SPECIAL_PERT_DATE} = "true" ]]; then
+         export L_DATE=${SPECIAL_PERT_DATE}
+      fi
+#
+# SKIP THE CALCULATIONS
       while [[ ${L_DATE} -le ${LE_DATE} ]]; do
          export L_YYYY=$(echo $L_DATE | cut -c1-4)
          export L_MM=$(echo $L_DATE | cut -c5-6)
@@ -164,15 +169,75 @@ EOF
 #
 #	 sleep 60
 	 mv index.html index_${L_DATE}.html
-	 if [[ -e pert_chem_icbc_temp && ${NL_PERT_CHEM}==true ]]; then
-	    mv pert_chem_icbc_temp pert_chem_icbc
+	 if [[ -e pert_chem_emis_temp && ${NL_PERT_CHEM} = "true" ]]; then
+	    mv pert_chem_emis_temp pert_chem_emis
 	 fi    
-	 if [[ -e pert_fire_icbc_temp && ${NL_PERT_FIRE}==true ]]; then
-	    mv pert_fire_icbc_temp pert_fire_icbc
+	 if [[ -e pert_fire_emis_temp && ${NL_PERT_FIRE} = "true" ]]; then
+	    mv pert_fire_emis_temp pert_fire_emis
 	 fi    
-	 if [[ -e pert_biog_icbc_temp && ${NL_PERT_BIOG}==true ]]; then
-	    mv pert_biog_icbc_temp pert_biog_icbc
-	 fi    
+	 if [[ -e pert_biog_emis_temp && ${NL_PERT_BIO} = "true" ]]; then
+	    mv pert_biog_emis_temp pert_biog_emis
+	 fi
+#
+# Recenter the perturbed ensemblesn (based on icbc - change to emiss)
+         rm jobx.ksh
+         touch jobx.ksh
+         chmod +x jobx.ksh
+         cat << EOF > jobx.ksh
+#!/bin/ksh -aux
+if [[ ${NL_PERT_CHEM} = "true" ]]; then
+   rm -rf ens_mean_chem
+   rm -rf mean_diff_chem
+   rm -rf new_mean_chem_${L_DATE}
+   ncea -O -n ${NUM_MEMBERS},3,1 ${WRFCHEMI}.e001 ens_mean_chem
+   ncdiff -O ens_mean_chem ${WRFCHEMI} mean_diff_chem
+   let MEM=1
+   while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
+      export CMEM=e\${MEM}
+      if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
+      if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
+      ncdiff -O ${WRFCHEMI}.\${CMEM} mean_diff_chem ${WRFCHEMI}.\${CMEM}
+      let MEM=MEM+1
+   done
+   ncea -O -n ${NUM_MEMBERS},3,1 ${WRFCHEMI}.e001 new_mean_chem_${L_DATE}
+fi
+if [[ ${NL_PERT_FIRE} = "true" ]]; then
+   rm -rf ens_mean_fire
+   rm -rf mean_diff_fire
+   rm -rf new_mean_fire_${L_DATE}
+   ncea -O -n ${NUM_MEMBERS},3,1 ${WRFFIRECHEMI}.e001 ens_mean_fire
+   ncdiff -O ens_mean_fire ${WRFFIRECHEMI} mean_diff_fire
+   let MEM=1
+   while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
+      export CMEM=e\${MEM}
+      if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
+      if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
+      ncdiff -O ${WRFFIRECHEMI}.\${CMEM} mean_diff_fire ${WRFFIRECHEMI}.\${CMEM}
+      let MEM=MEM+1
+   done
+   ncea -O -n ${NUM_MEMBERS},3,1 ${WRFFIRECHEMI}.e001 new_mean_fire_${L_DATE}
+fi
+if [[ ${NL_PERT_BIO} = "true" ]]; then
+   rm -rf ens_mean_bio
+   rm -rf mean_diff_bio
+   rm -rf new_mean_bio_${L_DATE}
+   ncea -O -n ${NUM_MEMBERS},3,1 ${WRFBIOCHEMI}.e001 ens_mean_bio
+   ncdiff -O ens_mean_bio ${WRFBIOCHEMI} mean_diff_bio
+   let MEM=1
+   while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
+      export CMEM=e\${MEM}
+      if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
+      if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
+      ncdiff -O ${WRFBIOCHEMI}.\${CMEM} mean_diff_bio ${WRFBIOCHEMI}.\${CMEM}
+      let MEM=MEM+1
+   done
+   ncea -O -n ${NUM_MEMBERS},3,1 ${WRFBIOCHEMI}.e001 new_mean_bio_${L_DATE}
+fi
+EOF
+         TRANDOM=$$
+         export JOBRND=${TRANDOM}_nco
+         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${GENERAL_MODEL}
+         qsub -Wblock=true job.ksh
 #
 # GET FINE GRID EMISSON FILES FOR THIS MEMBER
 #         export WRFCHEMI=wrfchemi_d${FR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00

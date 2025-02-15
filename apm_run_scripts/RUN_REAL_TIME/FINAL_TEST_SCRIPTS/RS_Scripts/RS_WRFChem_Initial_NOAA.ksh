@@ -90,17 +90,12 @@
          cp -r ${EXPERIMENT_PHOT_DIR}/TUV/TUV.phot/* ./.	 
 #
 # Get WRF-Chem input and bdy files
-##         cp ${WRFCHEM_CHEM_ICBC_DIR}/wrfinput_d${CR_DOMAIN}_${START_FILE_DATE}.${CMEM} wrfinput_d${CR_DOMAIN}
-##         cp ${WRFCHEM_CHEM_ICBC_DIR}/wrfbdy_d${CR_DOMAIN}_${START_FILE_DATE}.${CMEM} wrfbdy_d${CR_DOMAIN}
-#
-	 export APM_TEST_DIR=/nobackupp28/amizzi/OUTPUT_DATA/INPUT_DATA_NOAA/2019040200	    
-#
-         cp ${APM_TEST_DIR}/wrfchem_chem_icbc/wrfinput_d${CR_DOMAIN}_${START_FILE_DATE} wrfinput_d${CR_DOMAIN}
-         cp ${APM_TEST_DIR}/wrfchem_chem_icbc/wrfbdy_d${CR_DOMAIN}_${START_FILE_DATE}  wrfbdy_d${CR_DOMAIN}
+         cp ${WRFCHEM_CHEM_ICBC_DIR}/wrfinput_d${CR_DOMAIN}_${START_FILE_DATE}.${CMEM} wrfinput_d${CR_DOMAIN}
+         cp ${WRFCHEM_CHEM_ICBC_DIR}/wrfbdy_d${CR_DOMAIN}_${START_FILE_DATE}.${CMEM} wrfbdy_d${CR_DOMAIN}
 	 cp ${RUN_INPUT_DIR}/${DATE}/real/wrflowinp_d${CR_DOMAIN}_${START_FILE_DATE} wrflowinp_d${CR_DOMAIN}
 #
 # Get WRF-Chem emissions files
-         export L_DATE=${START_DATE}
+         export L_DATE=${START_DATE}00
          while [[ ${L_DATE} -le ${END_DATE} ]]; do
             export L_YY=`echo ${L_DATE} | cut -c1-4`
             export L_MM=`echo ${L_DATE} | cut -c5-6`
@@ -109,13 +104,10 @@
             export L_FILE_DATE=${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00
 #
             if [[ ${L_HH} -eq 00 || ${L_HH} -eq 03 || ${L_HH} -eq 06 || ${L_HH} -eq 09 || ${L_HH} -eq 12 || ${L_HH} -eq 15 || ${L_HH} -eq 18 || ${L_HH} -eq 21 ]]; then
-##               cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}
-               cp ${APM_TEST_DIR}/wrfchem_bio/wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE} wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}
+               cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}
             fi
-##            cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}
-##            cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}
-            cp ${APM_TEST_DIR}/wrfchem_chemi/wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE} wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}
-            cp ${APM_TEST_DIR}/wrfchem_fire/wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE} wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}
+            cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}
+            cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}
             export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} +1 -f ccyymmddhhnn 2>/dev/null)
          done
 #
@@ -132,11 +124,6 @@
 	 else
              qsub job.ksh
 	 fi
-
-
-exit
-
-	 
          let IMEM=${IMEM}+1
       done
 #
@@ -144,8 +131,6 @@ exit
       if [[ ${WRFCHEM_JOB_CLASS} != devel ]]; then
          ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
       fi
-#
-# APM: May need to copy update bio emssions from wrfout to wrfbiochemi
 #
 # Clean directory
       let IMEM=1

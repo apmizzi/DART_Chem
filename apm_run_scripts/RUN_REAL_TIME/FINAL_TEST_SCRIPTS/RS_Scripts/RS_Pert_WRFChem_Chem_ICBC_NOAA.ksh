@@ -52,18 +52,25 @@ met_file_prefix    = 'met_em'
 met_file_suffix    = '.nc'
 met_file_separator = '.'
 moz_var_suffix     = '${MOZBC_SUFFIX}'
-spc_map =  'o3 -> 0.0*O3',
-           'no -> 0.0*NO',
-           'no2 -> 0.0*NO2',
-           'macr -> 0.0*MACR',
-           'n2o5 -> 0.0*N2O5',
-           'hno3 -> 0.0*HNO3',
-           'h2o2 -> 0.0*H2O2',
-           'hcho -> 0.0*CH2O',
-           'so2 -> 0.0*SO2',
-           'co -> 0.0*CO',
-           'iso -> 0.0*C5H8',
-           'pan -> 0.0*PAN',
+spc_map =  'o3 -> O3',
+           'h2o2 -> H2O2',
+           'no -> NO',
+           'no2 -> NO2',
+           'n2o5 -> N2O5',
+           'hno3 -> HNO3',
+           'so2 -> SO2',
+           'co -> CO',
+           'eth -> C2H6',
+           'ete -> C2H4',
+           'iso -> C5H8',
+           'hcho -> CH2O',
+           'macr -> MACR',
+           'pan -> PAN',
+           'mpan -> MPAN',
+           'nh3 -> NH3',
+           'moh -> CH3OH',
+           'paa -> CH3COOOH',
+           'eoh -> C2H5OOH',
 /
 EOF
 #
@@ -86,18 +93,25 @@ met_file_prefix    = 'met_em'
 met_file_suffix    = '.nc'
 met_file_separator = '.'
 moz_var_suffix     = '${MOZBC_SUFFIX}'
-spc_map =  'o3 -> 0.0*O3',
-           'no -> 0.0*NO',
-           'no2 -> 0.0*NO2',
-           'macr -> 0.0*MACR',
-           'n2o5 -> 0.0*N2O5',
-           'hno3 -> 0.0*HNO3',
-           'h2o2 -> 0.0*H2O2',
-           'hcho -> 0.0*CH2O',
-           'so2 -> 0.0*SO2',
-           'co -> 0.0*CO',
-           'iso -> 0.0*C5H8',
-           'pan -> 0.0*PAN',
+spc_map =  'o3 -> O3',
+           'h2o2 -> H2O2',
+           'no -> NO',
+           'no2 -> NO2',
+           'n2o5 -> N2O5',
+           'hno3 -> HNO3',
+           'so2 -> SO2',
+           'co -> CO',
+           'eth -> C2H6',
+           'ete -> C2H4',
+           'iso -> C5H8',
+           'hcho -> CH2O',
+           'macr -> MACR',
+           'pan -> PAN',
+           'mpan -> MPAN',
+           'nh3 -> NH3',
+           'moh -> CH3OH',
+           'paa -> CH3COOOH',
+           'eoh -> C2H5OOH',
 /
 EOF
 #
@@ -139,12 +153,6 @@ EOF
 # GENERATE CHEMISTRY IC/BC ENSEMBLE MEMBERS   
    mv wrfinput_d01 ${WRFINP_CR}
    mv wrfbdy_d01 ${WRFBDY_CR}
-
-
-
-exit
-
-
 #
 # CREATE NAMELIST
    export WRFINPEN=wrfinput_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00
@@ -196,9 +204,6 @@ EOF
       cp ${WRFBDY_FLD_RW} ${WRFBDY_FLD_RW}.${CMEM}   
       let MEM=MEM+1
    done
-#   cp ${WRFINPUT_FLD_RW} ${WRFINPUT_FLD_RW}_mean
-#   cp ${WRFINPUT_FLD_RW} ${WRFINPUT_FLD_RW}_sprd
-#   cp ${WRFINPUT_FLD_RW} ${WRFINPUT_FLD_RW}_frac
 #
    RANDOM=$$
    export JOBRND=${RANDOM}_cr_icbc_pert
@@ -208,47 +213,77 @@ EOF
 #
    qsub -Wblock=true job.ksh
 #
-   let MEM=1
-   while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
-      export CMEM=e${MEM}
-      if [[ ${MEM} -lt 100 ]]; then export CMEM=e0${MEM}; fi
-      if [[ ${MEM} -lt 10  ]]; then export CMEM=e00${MEM}; fi
-      mv ${WRFINPUT_FLD_RW}.${CMEM} ${WRFINPEN}.${CMEM}
-      mv ${WRFBDY_FLD_RW}.${CMEM} ${WRFBDYEN}.${CMEM}
-      let MEM=MEM+1
-   done
+# Recenter the perturbed ensemble
+   rm jobx.ksh
+   touch jobx.ksh
+   chmod +x jobx.ksh
+   cat<<EOF > jobx.ksh
+#!/bin/ksh -aux
+ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}.e001 ens_mean_inp
+ncea -O -n ${NUM_MEMBERS},3,1 wrfbdy_d${CR_DOMAIN}.e001 ens_mean_bdy
+ncdiff -O ens_mean_inp wrfinput_d01 mean_diff_inp
+ncdiff -O ens_mean_bdy wrfbdy_d01 mean_diff_bdy
+let MEM=1
+while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
+   export CMEM=e\${MEM}
+   if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
+   if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
+   ncdiff -O wrfinput_d${CR_DOMAIN}.\${CMEM} mean_diff_inp wrfinput_d${CR_DOMAIN}.\${CMEM}
+   ncdiff -O wrfbdy_d${CR_DOMAIN}.\${CMEM} mean_diff_bdy wrfbdy_d${CR_DOMAIN}.\${CMEM}
+   let MEM=MEM+1
+done
+ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}.e001 new_mean_inp
+ncea -O -n ${NUM_MEMBERS},3,1 wrfbdy_d${CR_DOMAIN}.e001 new_mean_bdy
+#
+let MEM=1
+while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
+export CMEM=e\${MEM}
+   if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
+   if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
+   mv ${WRFINPUT_FLD_RW}.\${CMEM} ${WRFINPEN}.\${CMEM}
+   mv ${WRFBDY_FLD_RW}.\${CMEM} ${WRFBDYEN}.\${CMEM}
+   let MEM=MEM+1
+done
 #
 # COMBINE WRFCHEM WITH WRF CR PARENT FILES
-#   ncks -A ${EXPERIMENT_DUST_DIR}/EROD_d${CR_DOMAIN} ${WRFINPEN}
-   ncks -A ${REAL_DIR}/${WRFINPEN} ${WRFINPEN}
-   ncks -A ${REAL_DIR}/${WRFBDYEN} ${WRFBDYEN}
+#ncks -A ${EXPERIMENT_DUST_DIR}/EROD_d${CR_DOMAIN} ${WRFINPEN}
+ncks -A ${REAL_DIR}/${WRFINPEN} ${WRFINPEN}
+ncks -A ${REAL_DIR}/${WRFBDYEN} ${WRFBDYEN}
 #
 # COMBINE WRFCHEM WITH WRF FR DOMAIN PARENT FILES
-#   export WRFINPEN=wrfinput_d${FR_DOMAIN}_${YYYY}-${MM}-${DD}_${HH}:00:00
-#   ncks -A ${REAL_DIR}/${WRFINPEN} ${WRFINPEN}
-#   ncks -A ${EXPERIMENT_DUST_DIR}/EROD_d${FR_DOMAIN} ${WRFINPEN}
+#export WRFINPEN=wrfinput_d${FR_DOMAIN}_${YYYY}-${MM}-${DD}_${HH}:00:00
+#ncks -A ${REAL_DIR}/${WRFINPEN} ${WRFINPEN}
+#ncks -A ${EXPERIMENT_DUST_DIR}/EROD_d${FR_DOMAIN} ${WRFINPEN}
 #
 # LOOP THROUGH ALL MEMBERS IN THE ENSEMBLE
-   let MEM=1
-   while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
-      export CMEM=e${MEM}
-      if [[ ${MEM} -lt 100 ]]; then export CMEM=e0${MEM}; fi
-      if [[ ${MEM} -lt 10  ]]; then export CMEM=e00${MEM}; fi
+let MEM=1
+while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
+   export CMEM=e\${MEM}
+   if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
+   if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
 #
 # COMBINE WRFCHEM WITH WRF CR DOMAIN
-      export WRFINPEN=wrfinput_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00.${CMEM}
-      export WRFBDYEN=wrfbdy_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00.${CMEM}
-#      ncks -A ${EXPERIMENT_DUST_DIR}/EROD_d${CR_DOMAIN} ${WRFINPEN}
-      ncks -A ${WRFCHEM_MET_IC_DIR}/${WRFINPEN} ${WRFINPEN}
-      ncks -A ${WRFCHEM_MET_BC_DIR}/${WRFBDYEN} ${WRFBDYEN}
+   export WRFINPEN=wrfinput_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00.\${CMEM}
+   export WRFBDYEN=wrfbdy_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00.\${CMEM}
+#   ncks -A ${EXPERIMENT_DUST_DIR}/EROD_d${CR_DOMAIN} ${WRFINPEN}
+   ncks -A ${WRFCHEM_MET_IC_DIR}/\${WRFINPEN} \${WRFINPEN}
+   ncks -A ${WRFCHEM_MET_BC_DIR}/\${WRFBDYEN} \${WRFBDYEN}
 #
 # COMBINE WRFCHEM WITH WRF FR DOMAIN
-#      export WRFINPEN=wrfinput_d${FR_DOMAIN}_${YYYY}-${MM}-${DD}_${HH}:00:00.${CMEM}
-#      ncks -A ${WRFCHEM_MET_IC_DIR}/${WRFINPEN} ${WRFINPEN}
-#      ncks -A ${EXPERIMENT_DUST_DIR}/EROD_d${FR_DOMAIN} ${WRFINPEN}
+#   export WRFINPEN=wrfinput_d${FR_DOMAIN}_${YYYY}-${MM}-${DD}_${HH}:00:00.\${CMEM}
+#   ncks -A ${WRFCHEM_MET_IC_DIR}/\${WRFINPEN} \${WRFINPEN}
+#   ncks -A ${EXPERIMENT_DUST_DIR}/EROD_d${FR_DOMAIN} \${WRFINPEN}
 #
-      let MEM=MEM+1
-   done
+   let MEM=MEM+1
+done
+EOF
+   TRANDOM=$$
+   export JOBRND=${TRANDOM}_nco
+   ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${GENERAL_MODEL}
+   qsub -Wblock=true job.ksh
+#   rm ens_mean_inp mean_diff_inp
+#   rm ens_mean_bdy mean_diff_bdy
+#
 #
 # Clean directory
 #   rm *_cr_icbc_pert* job,ksh met_em.d* mozbc* perturb_chem_*

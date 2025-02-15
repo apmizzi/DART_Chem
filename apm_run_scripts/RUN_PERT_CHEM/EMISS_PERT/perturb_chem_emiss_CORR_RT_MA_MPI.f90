@@ -231,7 +231,7 @@ program main
       if(.not.sw_corr_tm) then
          if(sw_chem) then
             unita=30
-            filenm=trim(pert_path_pr)//'/pert_chem_icbc'
+            filenm=trim(pert_path_pr)//'/pert_chem_emis'
             open(unit=unita,file=trim(filenm), &
             form='unformatted',status='unknown')
             rewind(unita)
@@ -239,7 +239,7 @@ program main
 !         
          if(sw_fire) then
             unitb=40
-            filenm=trim(pert_path_pr)//'/pert_fire_icbc'
+            filenm=trim(pert_path_pr)//'/pert_fire_emis'
             open(unit=unitb,file=trim(filenm), &
             form='unformatted',status='unknown')
             rewind(unitb)
@@ -247,7 +247,7 @@ program main
 !
          if(sw_biog) then
             unitc=50
-            filenm=trim(pert_path_pr)//'/pert_biog_icbc'
+            filenm=trim(pert_path_pr)//'/pert_biog_emis'
             open(unit=unitc,file=trim(filenm), &
             form='unformatted',status='unknown')
             rewind(unitc)
@@ -303,7 +303,7 @@ program main
 !
       if(sw_chem) then
          unita=30
-         filenm=trim(pert_path_po)//'/pert_chem_icbc_temp'
+         filenm=trim(pert_path_po)//'/pert_chem_emis_temp'
          open(unit=unita,file=trim(filenm), &
          form='unformatted',status='unknown')
          rewind(unita)
@@ -311,7 +311,7 @@ program main
 !
       if(sw_fire) then
          unita=40
-         filenm=trim(pert_path_po)//'/pert_fire_icbc_temp'
+         filenm=trim(pert_path_po)//'/pert_fire_emis_temp'
          open(unit=unita,file=trim(filenm), &
          form='unformatted',status='unknown')
          rewind(unita)
@@ -319,7 +319,7 @@ program main
 !
       if(sw_biog) then
          unita=50
-         filenm=trim(pert_path_po)//'/pert_biog_icbc_temp'
+         filenm=trim(pert_path_po)//'/pert_biog_emis_temp'
          open(unit=unita,file=trim(filenm), &
          form='unformatted',status='unknown')
          rewind(unita)
@@ -721,19 +721,19 @@ program main
    if (rank.eq.1) then
       if(sw_chem) then
          unita=30
-         filenm=trim(pert_path_po)//'/pert_chem_icbc_temp'
+         filenm=trim(pert_path_po)//'/pert_chem_emis_temp'
          open(unit=unita,file=trim(filenm),form='unformatted',status='unknown')
          rewind(unita)
       endif
       if(sw_fire) then
          unita=40
-         filenm=trim(pert_path_po)//'/pert_fire_icbc_temp'
+         filenm=trim(pert_path_po)//'/pert_fire_emis_temp'
          open(unit=unita,file=trim(filenm),form='unformatted',status='unknown')
          rewind(unita)
       endif
       if(sw_biog) then
          unita=50
-         filenm=trim(pert_path_po)//'/pert_biog_icbc_temp'
+         filenm=trim(pert_path_po)//'/pert_biog_emis_temp'
          open(unit=unita,file=trim(filenm),form='unformatted',status='unknown')
          rewind(unita)
       endif

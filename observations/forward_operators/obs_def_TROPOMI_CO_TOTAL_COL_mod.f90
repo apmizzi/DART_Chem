@@ -508,8 +508,8 @@ subroutine get_expected_tropomi_co_total_col(state_handle, ens_size, location, k
 ! Adjust the TROPOMI pressure for WRF-Chem lower/upper boudary pressure
 ! (TROPOMI CO vertical grid is top to bottom)
       prs_tropomi_mem(:)=prs_tropomi(:)
-      if (prs_sfc(imem).gt.prs_tropomi_mem(1)) then
-         prs_tropomi_mem(1)=prs_sfc(imem)
+      if (prs_sfc(imem).gt.prs_tropomi_mem(level_tropomi)) then
+         prs_tropomi_mem(level_tropomi)=prs_sfc(imem)
       endif   
    
 ! Process the vertical summation

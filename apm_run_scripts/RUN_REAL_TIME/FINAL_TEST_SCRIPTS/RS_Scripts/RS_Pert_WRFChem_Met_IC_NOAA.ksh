@@ -89,13 +89,11 @@
             export NL_SEED_ARRAY1=$(${BUILD_DIR}/da_advance_time.exe ${DATE} 0 -f hhddmmyycc)
             export NL_SEED_ARRAY2=`echo ${MEM} \* 100000 | bc -l `
             ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wrfda_namelist_NOAA.ksh
-
-            cp ${EXPERIMENT_PREPBUFR_DIR}/${L_YYYY}/April/prepbufr.gdas.${L_YYYY}${L_MM}${L_DD}${L_HH}*nr ./ob.bufr
+            cp ${EXPERIMENT_PREPBUFR_DIR}/${L_YYYY}/${L_MM}/${L_DD}/prepbufr.gdas.${L_YYYY}${L_MM}${L_DD}${L_HH}*nr ./ob.bufr
             cp ${DA_INPUT_FILE} fg
             cp ${BE_DIR}/be.dat.cv3 be.dat
             cp ${WRFDA_DIR}/run/LANDUSE.TBL ./.
             cp ${WRFDA_DIR}/var/da/da_wrfvar.exe ./.
-#
             export JOBRND=${TRANDOM}_wrfda_cr
             ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_has.ksh ${JOBRND} ${WRFDA_JOB_CLASS} ${WRFDA_TIME_LIMIT} ${WRFDA_NODES} ${WRFDA_TASKS} da_wrfvar.exe SERIAL ${ACCOUNT}
             qsub job.ksh
@@ -134,8 +132,6 @@
 #            qsub job.ksh
             let MEM=${MEM}+1
          done
-#
-# Wait for WRFDA to complete for all members
          cd ${RUN_DIR}/${DATE}/wrfchem_met_ic
          ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
 #
@@ -149,42 +145,40 @@
             if [[ -e ${LCR_DIR}/wrfvar_output ]]; then
                cp ${LCR_DIR}/wrfvar_output wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
             else
-               sleep 45
                cp ${LCR_DIR}/wrfvar_output wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
             fi 
-#            if [[ -e ${LFR_DIR}/wrfvar_output ]]; then
-#               cp ${LFR_DIR}/wrfvar_output wrfinput_d${FR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
-#            else
-#               sleep 45
-#               cp ${LFR_DIR}/wrfvar_output wrfinput_d${FR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
-#            fi
             let MEM=${MEM}+1
          done
 #
 # Chia-Hua Recentering Fix
-# Ensemble mean
-         ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}'.e001' ens_mean
-#
-# Mean difference
-         ncdiff -O ens_mean ${RUN_DIR}/${DATE}/real/wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}  mean_diff
-#
-# Recenter each member
-         let MEM=1
-         while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
-            export CMEM=e${MEM}
-            if [[ ${MEM} -lt 100 ]]; then export CMEM=e0${MEM}; fi
-            if [[ ${MEM} -lt 10  ]]; then export CMEM=e00${MEM}; fi
-            ncdiff -O wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM} mean_diff mem.${CMEM}
-            mv mem.${CMEM} wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
-            let MEM=${MEM}+1
-         done
-         ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}'.e001' wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}_new_mean
-         rm -rf ens_mean
-         rm -rf mean_diff
-# End Recentering Fix
-#	 
+         rm jobx.ksh
+         touch jobx.ksh
+         chmod +x jobx.ksh
+         cat << EOF > jobx.ksh
+#!/bin/ksh -aux
+ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}'.e001' ens_mean
+ncdiff -O ens_mean ${RUN_DIR}/${DATE}/real/wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}  mean_diff
+let MEM=1
+while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
+   export CMEM=e${MEM}
+   if [[ ${MEM} -lt 100 ]]; then export CMEM=e0${MEM}; fi
+   if [[ ${MEM} -lt 10  ]]; then export CMEM=e00${MEM}; fi
+   ncdiff -O wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM} mean_diff mem.${CMEM}
+   mv mem.${CMEM} wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
+   let MEM=${MEM}+1
+done
+ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}'.e001' wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}_new_mean
+rm -rf ens_mean
+rm -rf mean_diff
+EOF
+         TRANDOM=$$
+         export JOBRND=${TRANDOM}_nco
+         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${GENERAL_MODEL}
+         qsub -Wblock=true job.ksh
          export P_DATE=$(${BUILD_DIR}/da_advance_time.exe ${P_DATE} ${LBC_FREQ_TEXT} -f ccyymmddhhnn 2>/dev/null)
       done
+#
+# Reset dual resolution cycling parameters      
       export NL_E_WE=${NNXP_STAG_CR},${NNXP_STAG_FR}
       export NL_E_SN=${NNYP_STAG_CR},${NNYP_STAG_FR}
       export NL_DX=${DX_CR},${DX_FR}

@@ -439,8 +439,11 @@ call static_init_obs_sequence()
 call static_init_model()
 call init_ensemble_manager(dummy_ens, 1, 1_i8)
 
+print *, 'APM: before find_namelist_in_file '
 call find_namelist_in_file("input.nml", "wrf_obs_preproc_nml", iunit)
+print *, 'APM: before read namelist '
 read(iunit, nml = wrf_obs_preproc_nml, iostat = io)
+print *, 'APM: before check namelist read '
 call check_namelist_read(iunit, io, "wrf_obs_preproc_nml")
 
 print *, 'APM: after check namelist '

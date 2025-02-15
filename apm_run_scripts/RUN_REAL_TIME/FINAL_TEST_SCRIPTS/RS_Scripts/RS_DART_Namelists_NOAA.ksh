@@ -93,6 +93,23 @@
 # &model_nml
    export NL_ADD_EMISS=.${L_ADD_EMISS}.
    export NL_DEFAULT_STATE_VARIABLES=.false.
+   export NL_CONV_PREPROCESS_STATE_VARIABLES="'U',     'QTY_U_WIND_COMPONENT',     'TYPE_U',  'UPDATE','999',
+          'V',     'QTY_V_WIND_COMPONENT',     'TYPE_V',  'UPDATE','999',
+          'W',     'QTY_VERTICAL_VELOCITY',    'TYPE_W',  'UPDATE','999',
+          'PH',    'QTY_GEOPOTENTIAL_HEIGHT',  'TYPE_GZ', 'UPDATE','999',
+          'T',     'QTY_POTENTIAL_TEMPERATURE','TYPE_T',  'UPDATE','999',
+          'MU',    'QTY_PRESSURE',             'TYPE_MU', 'UPDATE','999',
+          'QVAPOR','QTY_VAPOR_MIXING_RATIO',   'TYPE_QV', 'UPDATE','999',
+          'QRAIN', 'QTY_RAINWATER_MIXING_RATIO','TYPE_QRAIN', 'UPDATE','999',
+          'QCLOUD','QTY_CLOUD_LIQUID_WATER',   'TYPE_QCLOUD', 'UPDATE','999',
+          'QSNOW', 'QTY_SNOW_MIXING_RATIO',    'TYPE_QSNOW', 'UPDATE','999',
+          'QICE',  'QTY_CLOUD_ICE',            'TYPE_QICE',  'UPDATE','999',
+          'U10',   'QTY_U_WIND_COMPONENT',     'TYPE_U10',   'UPDATE','999',
+          'V10',   'QTY_V_WIND_COMPONENT',     'TYPE_V10',   'UPDATE','999',
+          'T2',    'QTY_TEMPERATURE',          'TYPE_T2',    'UPDATE','999',
+          'TH2',   'QTY_POTENTIAL_TEMPERATURE','TYPE_TH2',   'UPDATE','999',
+          'Q2',    'QTY_SPECIFIC_HUMIDITY',    'TYPE_Q2',    'UPDATE','999',
+          'PSFC',  'QTY_PRESSURE',             'TYPE_PS',    'UPDATE','999'"
    export NL_CONV_STATE_VARIABLES="'U',     'QTY_U_WIND_COMPONENT',     'TYPE_U',  'UPDATE','999',
           'V',     'QTY_V_WIND_COMPONENT',     'TYPE_V',  'UPDATE','999',
           'W',     'QTY_VERTICAL_VELOCITY',    'TYPE_W',  'UPDATE','999',

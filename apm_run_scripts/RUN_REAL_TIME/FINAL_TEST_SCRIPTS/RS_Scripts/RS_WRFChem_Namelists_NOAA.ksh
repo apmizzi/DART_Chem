@@ -352,7 +352,7 @@
 #   export NL_DUST_OPT=0
    export NL_DUST_OPT=0
    export NL_DMSEMIS_OPT=0
-   export NL_BIOMASS_BURN_OPT=0,0
+   export NL_BIOMASS_BURN_OPT=4,4
    export NL_PLUMERISEFIRE_FRQ=15,15
    export NL_SCALE_FIRE_EMISS=".true.",".true."
    export NL_HAVE_BCS_CHEM=".true.",".true."
