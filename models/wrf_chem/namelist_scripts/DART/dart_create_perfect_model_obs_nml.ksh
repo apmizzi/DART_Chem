@@ -6,14 +6,15 @@
 #########################################################################
 #
 # Generate namelist section
+echo ${NL_FIRST_OBS_DAYS}
 rm -f input.nml_temp
 touch input.nml_temp
 cat > input.nml_temp << EOF
 &perfect_model_obs_nml
    first_obs_days               = ${NL_FIRST_OBS_DAYS:-148816},
    first_obs_seconds            = ${NL_FIRST_OBS_SECONDS:-75601},
-   init_time_days               = ${NL_INIT_TIME_DAYS:--1},
-   init_time_seconds            = ${NL_INIT_TIME_SECONDS:--1},
+   init_time_days               = ${DAY_GREG:--1},
+   init_time_seconds            = ${SEC_GREG:--1},
    last_obs_days                = ${NL_LAST_OBS_DAYS:-148817},
    obs_seq_in_file_name         = ${NL_OBS_SEQ_IN_FILE_NAME:-'obs_seq.in'},
    obs_seq_out_file_name        = ${NL_OBS_SEQ_OUT_FILE_NAME:-'obs_seq.out'},

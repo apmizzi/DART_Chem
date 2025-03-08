@@ -27,7 +27,7 @@
       export LD_PAST_MM=${L_PAST_MM}
       export LD_PAST_DD=${L_PAST_DD}
       export LD_PAST_HH=${L_PAST_HH}
-      if [[ ${HH} -eq 00 ]]; then
+      if [[ ${HH} -eq 00 || ${HH} -eq 03 ]]; then
          export LD_DATE=${L_PAST_YYYY}${L_PAST_MM}${L_PAST_DD}00
          export LD_YYYY=${L_PAST_YYYY}
          export LD_YY=${L_PAST_YY}
@@ -40,15 +40,15 @@
          export LD_NEXT_MM=$(echo ${LD_NEXT_DATE} | cut -c5-6)
          export LD_NEXT_DD=$(echo ${LD_NEXT_DATE} | cut -c7-8)
          export LD_NEXT_HH=24
+         (( LDD_NEXT_YYYY = ${LD_NEXT_YYYY} + 0 ))
+         (( LDD_NEXT_MM = ${LD_NEXT_MM} + 0 ))
+         (( LDD_NEXT_DD = ${LD_NEXT_DD} + 0 ))
+         (( LDD_NEXT_HH = ${LD_NEXT_HH} + 0 ))
       fi
       (( LDD_YYYY = ${LD_YYYY} + 0 ))
       (( LDD_MM = ${LD_MM} + 0 ))
       (( LDD_DD = ${LD_DD} + 0 ))
       (( LDD_HH = ${LD_HH} + 0 ))
-      (( LDD_NEXT_YYYY = ${LD_NEXT_YYYY} + 0 ))
-      (( LDD_NEXT_MM = ${LD_NEXT_MM} + 0 ))
-      (( LDD_NEXT_DD = ${LD_NEXT_DD} + 0 ))
-      (( LDD_NEXT_HH = ${LD_NEXT_HH} + 0 ))
 #
       export S_DATE=${L_YYYY}${L_MM}${L_DD}06
       export S_YYYY=${L_YYYY}
@@ -133,14 +133,14 @@
       cp ${WRFCHEM_DART_WORK_DIR}/obs_sequence_tool ./.
       if [[ ${HH} -eq 03 ]]; then
          export NL_NUM_INPUT_FILES=2
-         export NL_FILENAME_SEQ=\'obs_seq${LD_YYYY}${LD__MM}${LD_DD}24\',\'obs_seq${LD_NEXT_YYYY}${LD_NEXT_MM}${LD_NEXT_DD}06\'
+         export NL_FILENAME_SEQ=\'obs_seq${LD_YYYY}${LD_MM}${LD_DD}24\',\'obs_seq${LD_NEXT_YYYY}${LD_NEXT_MM}${LD_NEXT_DD}06\'
          ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_dart_input_nml.ksh
          ./obs_sequence_tool > index_obs_seq.html 2>&1
          mv obs_seq.proc obs_seq_prep_${LD_NEXT_YYYY}${LD_NEXT_MM}${LD_NEXT_DD}03.out
       fi
       if [[ ${HH} -eq 09 ]]; then
          export NL_NUM_INPUT_FILES=2
-         export NL_FILENAME_SEQ=\'obs_seq${LD_YYYY}${LD_MM}${LD_DD}06\',\'obs_seq${LD_YYYY},${LD_MM}${LD_DD}12\'
+         export NL_FILENAME_SEQ=\'obs_seq${LD_YYYY}${LD_MM}${LD_DD}06\',\'obs_seq${LD_YYYY}${LD_MM}${LD_DD}12\'
          ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_dart_input_nml.ksh
          ./obs_sequence_tool > index_obs_seq.html 2>&1
          mv obs_seq.proc obs_seq_prep_${LD_YYYY}${LD_MM}${LD_DD}09.out

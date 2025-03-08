@@ -19,25 +19,21 @@
       export BIN_BEG_MM=${ASIM_MN_MM}
       export BIN_BEG_DD=${ASIM_MN_DD}
       export BIN_BEG_HH=${ASIM_MN_HH}
-      export BIN_BEG_MN=0
-      export BIN_BEG_SS=0
-      let HH_END=${ASIM_MX_HH}
-      let HHM_END=${HH_END}-1
+      export BIN_BEG_MN=${ASIM_MN_MN}
+      export BIN_BEG_SS=${ASIM_MN_SS}
       export BIN_END_YY=${ASIM_MX_YYYY}
       export BIN_END_MM=${ASIM_MX_MM}
       export BIN_END_DD=${ASIM_MX_DD}
-      export BIN_END_HH=${HHM_END}
-      export BIN_END_MN=59
-      export BIN_END_SS=59
-      export FLG=0
-      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
-         export FLG=1
+      export BIN_END_HH=${ASIM_MX_HH}
+      export BIN_END_MN=${ASIM_MX_MN}
+      export BIN_END_SS=${ASIM_MX_SS}
+      if [[ ${HH} -eq 0 ]]; then
          export BIN_BEG_YY=${ASIM_MX_YYYY}
          export BIN_BEG_MM=${ASIM_MX_MM}
          export BIN_BEG_DD=${ASIM_MX_DD}
-         export BIN_BEG_HH=0
-         export BIN_BEG_MN=0
-         export BIN_BEG_SS=0
+         export BIN_BEG_HH=00
+         export BIN_BEG_MN=00
+         export BIN_BEG_SS=01
       fi
       let HH_BEG=${BIN_BEG_HH}
       let MN_BEG=${BIN_BEG_MN}
@@ -73,20 +69,20 @@
 	 rm -rf ${OUTFILE_NQ}
       fi
 #
-# END OF PREVIOUS DAY (hours 21 to 24 obs)
-      if [[ ${FLG} -eq 1 ]];  then
+# END OF PREVIOUS DAY
+      if [[ ${HH} -eq 0 ]];  then
          export BIN_BEG_YY=${ASIM_MIN_YYYY}
          export BIN_BEG_MM=${ASIM_MIN_MM}
          export BIN_BEG_DD=${ASIM_MIN_DD}
          export BIN_BEG_HH=${ASIM_MIN_HH}
-         export BIN_BEG_MN=0
-         export BIN_BEG_SS=0
-         export BIN_END_YY=${ASIM_MIN_YYYY}
-         export BIN_END_MM=${ASIM_MIN_MM}
-         export BIN_END_DD=${ASIM_MIN_DD}
-         export BIN_END_HH=23
-         export BIN_END_MN=59
-         export BIN_END_SS=59
+         export BIN_BEG_MN=${ASIM_MIN_MN}
+         export BIN_BEG_SS=${ASIM_MIN_SS}
+         export BIN_END_YY=${ASIM_MAX_YYYY}
+         export BIN_END_MM=${ASIM_MAX_MM}
+         export BIN_END_DD=${ASIM_MAX_DD}
+         export BIN_END_HH=00
+         export BIN_END_MN=00
+         export BIN_END_SS=00
          export INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${YYYY}/${MM}/${DD}/${MOPITT_FILE_PRE}${PAST_YYYY}${PAST_MM}${PAST_DD}${MOPITT_FILE_EXT}\'
          export OUTFILE=TEMP_FILE.dat
          export OUTFILE_NQ=TEMP_FILE.dat
@@ -97,8 +93,8 @@
          rm -rf ${FILE}
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/${FILE} ./.
          mcc -m mopitt_v8_co_profile_extract.m -o mopitt_v8_co_profile_extract
-      ./run_mopitt_v8_co_profile_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${MOPITT_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
-#
+      ./run_mopitt_v8_co_profile_extract.sh ${MATLAB} ${INFILE} ${OUTFILE} ${MOPITT_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
+
       fi   
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
@@ -134,13 +130,11 @@
       export NL_DAY=${D_DD}
       export NL_HOUR=${D_HH}
       export BIN_BEG_HH=${ASIM_MN_HH}
-      export BIN_BEG_MN=0
-      export BIN_BEG_SS=0
-      let HH_END=${ASIM_MX_HH}
-      let HHM_END=${HH_END}-1
-      export BIN_END_HH=${HHM_END}
-      export BIN_END_MN=59
-      export BIN_END_SS=59
+      export BIN_BEG_MN=${ASIM_MN_MN}
+      export BIN_BEG_SS=${ASIM_MN_SS}
+      export BIN_END_HH=${ASIM_MX_HH}
+      export BIN_END_MN=${ASIM_MX_MN}
+      export BIN_END_SS=${ASIM_MX_SS}
       let HH_BEG=${BIN_BEG_HH}
       let MN_BEG=${BIN_BEG_MN}
       let SS_BEG=${BIN_BEG_SS}

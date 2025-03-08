@@ -67,13 +67,14 @@
 	 
          ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wrfchem_namelist_REAL_NOAA.ksh
 #
-#         RANDOM=$$
-#         export JOBRND=${RANDOM}_real
-#         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} real.exe SERIAlessL ${ACCOUNT}
-#         qsub -Wblock=true job.ksh
-         rm -rf index.html
-         chmod +x real.exe
-         ./real.exe > index.html 2>&1
+         RANDOM=$$
+         export JOBRND=${RANDOM}_real
+         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} real.exe SERIAL ${ACCOUNT} ${WRFCHEM_MODEL}
+         qsub -Wblock=true job.ksh
+#
+#	 rm -rf index.html
+#         chmod +x real.exe
+#         ./real.exe > index.html 2>&1
 #
          mv wrfinput_d${CR_DOMAIN} wrfinput_d${CR_DOMAIN}_$(${BUILD_DIR}/da_advance_time.exe ${P_DATE} 0 -W 2>/dev/null)
          mv wrfbdy_d${CR_DOMAIN} wrfbdy_d${CR_DOMAIN}_$(${BUILD_DIR}/da_advance_time.exe ${P_DATE} 0 -W 2>/dev/null)
