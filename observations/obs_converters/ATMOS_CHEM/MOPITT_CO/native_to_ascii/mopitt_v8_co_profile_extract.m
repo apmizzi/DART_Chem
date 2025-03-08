@@ -226,7 +226,7 @@ function mopitt_v8_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,c
          mopdate=single(convert_time_ref(yyyy_mop,mn_mop,dy_mop,hh_mop,mm_mop,ss_mop,1993));
 %
 % Check time
-%         fprintf('min %d date %d max %d \n',windate_min,omidate,windate_max)
+         fprintf('min %d date %d max %d \n',windate_min,mopdate,windate_max)
          if(mopdate<windate_min | mopdate>windate_max)
             continue
          end

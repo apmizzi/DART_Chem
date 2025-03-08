@@ -7,16 +7,14 @@
       export BIN_BEG_MM=${ASIM_MN_MM}
       export BIN_BEG_DD=${ASIM_MN_DD}
       export BIN_BEG_HH=${ASIM_MN_HH}
-      export BIN_BEG_MN=0
-      export BIN_BEG_SS=0
+      export BIN_BEG_MN=${ASIM_MN_MN}
+      export BIN_BEG_SS=${ASIM_MN_SS}
       export BIN_END_YR=${ASIM_MX_YYYY}
       export BIN_END_MM=${ASIM_MX_MM}
       export BIN_END_DD=${ASIM_MX_DD}
-      let HH_END=${ASIM_MX_HH}
-      let HHM_END=${HH_END}-1
-      export BIN_END_HH=${HHM_END}
-      export BIN_END_MN=59
-      export BIN_END_SS=59
+      export BIN_END_HH=${ASIM_MX_HH}
+      export BIN_END_MN=${ASIM_MX_MN}
+      export BIN_END_SS=${ASIM_MX_SS}
 #
       export INFILE=airnow_o3_hourly_csv_data
       rm -rf ${INFILE}

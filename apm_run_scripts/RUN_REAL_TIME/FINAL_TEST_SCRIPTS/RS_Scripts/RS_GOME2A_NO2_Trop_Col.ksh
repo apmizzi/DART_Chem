@@ -19,26 +19,21 @@
       export BIN_BEG_MM=${ASIM_MN_MM}
       export BIN_BEG_DD=${ASIM_MN_DD}
       export BIN_BEG_HH=${ASIM_MN_HH}
-      export BIN_BEG_MN=0
-      export BIN_BEG_SS=0
-      let HH_END=${ASIM_MX_HH}
-      let HHM_END=${HH_END}-1
+      export BIN_BEG_MN=${ASIM_MN_MN}
+      export BIN_BEG_SS=${ASIM_MN_SS}
       export BIN_END_YY=${ASIM_MX_YYYY}
       export BIN_END_MM=${ASIM_MX_MM}
       export BIN_END_DD=${ASIM_MX_DD}
-      export BIN_END_HH=${HHM_END}
-      export BIN_END_HH=${HHM_END}
-      export BIN_END_MN=59
-      export BIN_END_SS=59
-      export FLG=0
-      if [[ ${ASIM_MX_HH} -eq 3 ]]; then
-         export FLG=1 
+      export BIN_END_HH=${ASIM_MX_HH}
+      export BIN_END_MN=${ASIM_MX_MN}
+      export BIN_END_SS=${ASIM_MX_SS}
+      if [[ ${HH} -eq 0 ]]; then
          export BIN_BEG_YY=${ASIM_MX_YYYY}
          export BIN_BEG_MM=${ASIM_MX_MM}
          export BIN_BEG_DD=${ASIM_MX_DD}
-         export BIN_BEG_HH=0
-         export BIN_BEG_MN=0
-         export BIN_BEG_SS=0
+         export BIN_BEG_HH=00
+         export BIN_BEG_MN=00
+         export BIN_BEG_SS=01
       fi
       let HH_BEG=${BIN_BEG_HH}
       let MN_BEG=${BIN_BEG_MN}
@@ -69,20 +64,20 @@
          rm -rf ${OUTFILE}
       fi
 #
-# END OF PREVIOUS DAY (hours 21 to 24 obs)
-      if [[ ${FLG} -eq 1 ]]; then	 
+# END OF PREVIOUS DAY
+      if [[ ${HH} -eq 0 ]]; then	 
          export BIN_BEG_YY=${ASIM_MIN_YYYY}
          export BIN_BEG_MM=${ASIM_MIN_MM}
          export BIN_BEG_DD=${ASIM_MIN_DD}
          export BIN_BEG_HH=${ASIM_MIN_HH}
-         export BIN_BEG_MN=0
-         export BIN_BEG_SS=0
-         export BIN_END_YY=${ASIM_MIN_YYYY}
-         export BIN_END_MM=${ASIM_MIN_MM}
-         export BIN_END_DD=${ASIM_MIN_DD}
-         export BIN_END_HH=23
-         export BIN_END_MN=59
-         export BIN_END_SS=59
+         export BIN_BEG_MN=${ASIM_MIN_MN}
+         export BIN_BEG_SS=${ASIM_MIN_SS}
+         export BIN_END_YY=${ASIM_MAX_YYYY}
+         export BIN_END_MM=${ASIM_MAX_MM}
+         export BIN_END_DD=${ASIM_MAX_DD}
+         export BIN_END_HH=00
+         export BIN_END_MN=00
+         export BIN_END_SS=00
          export TMP_INFILE=\'${EXPERIMENT_GOME2A_NO2_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}/${GOME2A_FILE_PRE}\'
 #
 # COPY EXECUTABLE
@@ -122,13 +117,11 @@
       export NL_NZ_MODEL=${NNZP_CR}
 #
       export BIN_BEG_HH=${ASIM_MN_HH}
-      export BIN_BEG_MN=0
-      export BIN_BEG_SS=0
-      let HH_END=${ASIM_MX_HH}
-      let HHM_END=${HH_END}-1
-      export BIN_END_HH=${HHM_END}
-      export BIN_END_MN=59
-      export BIN_END_SS=59
+      export BIN_BEG_MN=${ASIM_MN_MN}
+      export BIN_BEG_SS=${ASIM_MN_SS}
+      export BIN_END_HH=${ASIM_MX_HH}
+      export BIN_END_MN=${ASIM_MX_MN}
+      export BIN_END_SS=${ASIM_MX_SS}
       let HH_BEG=${BIN_BEG_HH}
       let MN_BEG=${BIN_BEG_MN}
       let SS_BEG=${BIN_BEG_SS}

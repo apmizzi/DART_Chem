@@ -14,13 +14,17 @@
    export NL_OBS_SEQUENCE_OUT_NAME="'obs_seq.final'"
    export NL_RESTART_IN_FILE_NAME="'filter_ic_old'"       
    export NL_RESTART_OUT_FILE_NAME="'filter_ic_new'"       
-   set -A temp `echo ${ASIM_MIN_DATE} 0 -g | ${WRFCHEM_DART_WORK_DIR}/advance_time`
-   (( temp[1]=${temp[1]}+1 ))
-   export NL_FIRST_OBS_DAYS=${temp[0]}
-   export NL_FIRST_OBS_SECONDS=${temp[1]}
-   set -A temp `echo ${ASIM_MAX_DATE} 0 -g | ${WRFCHEM_DART_WORK_DIR}/advance_time`
-   export NL_LAST_OBS_DAYS=${temp[0]}
-   export NL_LAST_OBS_SECONDS=${temp[1]}
+#   set -A temp `echo ${ASIM_MIN_DATE} 0 -g | ${WRFCHEM_DART_WORK_DIR}/advance_time`
+#   (( temp[1]=${temp[1]}+1 ))
+#   export NL_FIRST_OBS_DAYS=${temp[0]}
+#   export NL_FIRST_OBS_SECONDS=${temp[1]}
+   export NL_FIRST_OBS_DAYS=${ASIM_MIN_DAY_GREG}
+   export NL_FIRST_OBS_SECONDS=${ASIM_MIN_SEC_GREG}
+#   set -A temp `echo ${ASIM_MAX_DATE} 0 -g | ${WRFCHEM_DART_WORK_DIR}/advance_time`
+#   export NL_LAST_OBS_DAYS=${temp[0]}
+#   export NL_LAST_OBS_SECONDS=${temp[1]}
+   export NL_LAST_OBS_DAYS=${ASIM_MAX_DAY_GREG}
+   export NL_LAST_OBS_SECONDS=${ASIM_MAX_SEC_GREG}
    export NL_NUM_OUTPUT_STATE_MEMBERS=0
    export NL_NUM_OUTPUT_OBS_MEMBERS=${NUM_MEMBERS}
    if ${USE_DART_INFL}; then

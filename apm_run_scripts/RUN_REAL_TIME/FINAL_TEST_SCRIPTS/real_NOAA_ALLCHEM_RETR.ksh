@@ -52,10 +52,10 @@ export FIRST_DART_INFLATE_DATE=2019040203
 export FIRST_EMISS_INV_DATE=2019040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2019040206
+export CYCLE_STR_DATE=2019040215
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2019040206
+export CYCLE_END_DATE=2019040218
 
 # For emissions estimation
 export ADD_EMISS=false
@@ -74,10 +74,10 @@ export LS_CHEM_DZ=32
 export LS_CHEM_DT=360
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=false
+export RUN_INPUT_OBS=true
 export RUN_MOPITT_V8_CO_PROFILE_OBS=true           # (done)  TRACER I
 export RUN_MODIS_AOD_TOTAL_COL_OBS=true            # (done)  TRACER I
-export RUN_OMI_O3_PROFILE_OBS=true                 # (done)  TRACER I
+export RUN_OMI_O3_PROFILE_OBS=false                 # (done)  TRACER I
 export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true        # (done)  TRACER I
 export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
 export RUN_TES_CO_PROFILE_OBS=true                 # (done)  TRACER I
@@ -85,10 +85,10 @@ export RUN_TES_O3_PROFILE_OBS=true                 # (done)  TRACER I
 export RUN_GOME2A_NO2_TROP_COL_OBS=true            # (done)  TRACER I
 export RUN_MLS_O3_PROFILE_OBS=true                 # (done)  TRACER I
 export RUN_MLS_HNO3_PROFILE_OBS=true               # (done)  TRACER I
-export RUN_AIRNOW_CO_OBS=false                      # (done)  TRACER I
-export RUN_AIRNOW_O3_OBS=false                      # (done)  TRACER I
-export RUN_AIRNOW_NO2_OBS=false                     # (done)  TRACER I
-export RUN_AIRNOW_SO2_OBS=false                     # (done)  TRACER I
+export RUN_AIRNOW_CO_OBS=true                      # (done)  TRACER I
+export RUN_AIRNOW_O3_OBS=true                      # (done)  TRACER I
+export RUN_AIRNOW_NO2_OBS=true                     # (done)  TRACER I
+export RUN_AIRNOW_SO2_OBS=true                     # (done)  TRACER I
 export RUN_AIRNOW_PM10_OBS=false                    # (done)  TRACER I
 export RUN_AIRNOW_PM25_OBS=false                    # (done)  TRACER I
 export RUN_MET_OBS=true                             # (done)  TRACER I
@@ -141,7 +141,7 @@ export RUN_SPECIAL_FORECAST=false
 export NUM_SPECIAL_FORECAST=0
 export SPECIAL_FORECAST_FAC=1.
 #
-export SPECIAL_FORECAST_MEM[1]=5
+export SPECIAL_FORECAST_MEM[1]=4
 export SPECIAL_FORECAST_MEM[2]=6
 export SPECIAL_FORECAST_MEM[3]=7
 export SPECIAL_FORECAST_MEM[4]=14
@@ -207,12 +207,12 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_WRFCHEM_INITIAL=true
          export RUN_WRFCHEM_CYCLE_CR=false
       else
-         export RUN_DART_FILTER=false
+         export RUN_DART_FILTER=true
          export RUN_BIAS_CORRECTION=false
-         export RUN_UPDATE_BC=false
+         export RUN_UPDATE_BC=true
          export RUN_ENSEMBLE_MEAN_INPUT=true
          export RUN_WRFCHEM_INITIAL=false
-         export RUN_WRFCHEM_CYCLE_CR=false
+         export RUN_WRFCHEM_CYCLE_CR=true
       fi	  
       export RUN_WRFCHEM_CYCLE_FR=false
       export RUN_ENSMEAN_CYCLE_FR=false
@@ -274,7 +274,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    rm -rf index_RS_Experiment_Dirs_${DATE}
    source ${RS_SCRIPTS_DIR}/RS_Experiment_Dirs.ksh > index_RS_Experiment_Dirs_${DATE} 2>&1
    rm -rf index_RS_Set_Time_Vars_${DATE}
-   source ${RS_SCRIPTS_DIR}/RS_Set_Time_Vars.ksh > index_RS_Set_Time_Vars_${DATE} 2>&1
+   source ${RS_SCRIPTS_DIR}/RS_Set_Time_Vars_NOAA.ksh > index_RS_Set_Time_Vars_${DATE} 2>&1
    rm -rf index_RS_Run_Dirs_${DATE}
    source ${RS_SCRIPTS_DIR}/RS_Run_Dirs.ksh > index_RS_Run_Dirs_${DATE} 2>&1
    rm -rf index_RS_Computer_Settings_${DATE}
@@ -353,7 +353,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # Haswell   
    export FILTER_JOB_CLASS=normal
-   export FILTER_TIME_LIMIT=01:59:00
+   export FILTER_TIME_LIMIT=02:59:00
    export FILTER_NODES=5
    export FILTER_TASKS=24
    export FILTER_MODEL=has

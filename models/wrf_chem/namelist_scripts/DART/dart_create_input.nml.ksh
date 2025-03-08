@@ -5,7 +5,10 @@
 #
 #########################################################################
 #
+echo ${NL_FIRST_OBS_DAYS}
+
 echo off
+${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_perfect_model_obs_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_assim_model_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_assim_tools_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_cov_cutoff_nml.ksh
@@ -20,7 +23,6 @@ ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_seq_coverage_n
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_seq_to_netcdf_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_sequence_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_obs_sequence_tool_nml.ksh
-${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_perfect_model_obs_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_preprocess_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_reg_factor_nml.ksh
 ${DART_DIR}/models/wrf_chem/namelist_scripts/DART/dart_create_replace_wrf_fields_nml.ksh
