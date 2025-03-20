@@ -216,13 +216,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export MEGAN_BIO_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_MEGAN_BIO
    export EXPERIMENT_WRFFIRECHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/fire_emissions/fire_emissions_v1.5
    export FINN_FIRE_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_FINN_FIRE
-   if [[ ${YYYY} -eq 2005 ]]; then      
-      export NL_FIRE_FILE=GLOBAL_FINNv15_2005_MOZ4_7112014.txt
-   elif [[ ${YYYY} -eq 2013 ]]; then      
-      export NL_FIRE_FILE=GLOBAL_FINNv15_2013_MOZ4_7112014.txt
-   elif [[ ${YYYY} -eq 2019 ]]; then
-       export NL_FIRE_FILE=GLOBAL_FINNv15_2019_MOZART_06022020.txt
-   fi
+   export NL_FIRE_FILE=GLOBAL_FINNv15_2019_MOZART_06022020.txt
    export EXPERIMENT_WRFCHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/anthro_emissions
    export MOZBC_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/tcr2_data
    export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
@@ -232,11 +226,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export ADJUST_EMISS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_EMISS_INV
    export PERT_CHEM_EMISS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_PERT_CHEM/EMISS_PERT
 #   
-   export GENERAL_JOB_CLASS=devel
-   export GENERAL_TIME_LIMIT=00:20:00
-   export GENERAL_NODES=1
-   export GENERAL_TASKS=16
-#
 # PERT_ICBC (Used for settings in call to RS script)
 # (NSPCS x NUM_MEMS) + 2
 # (19 x 10) + 2
@@ -260,11 +249,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export L_EMISS_PERT_TASKS=27
    export L_EMISS_PERT_MODEL=bro
 #   
-#   export PERT_JOB_CLASS=devel
-#   export PERT_TIME_LIMIT=01:59:00
-#   export PERT_NODES=1
-#   export PERT_TASKS=4
-#
    export NL_FAC_OBS_ERROR_OMI_SO2=1.75         # good
    export NL_FAC_OBS_ERROR_MLS_HNO3=2.00        # good
    export NL_FAC_OBS_ERROR_MLS_O3=1.50          # good

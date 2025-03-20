@@ -55,12 +55,8 @@ EOF
 #
          RANDOM=$$
          export JOBRND=${RANDOM}_bio
-#         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${BIO_JOB_CLASS} ${BIO_TIME_LIMIT} ${BIO_NODES} ${BIO_TASKS} "megan_bio_emiss.exe < megan_bio_emiss.inp" SERIAL ${ACCOUNT}
-#         qsub -Wblock=true job.ksh
-#
-         rm -rf index.html
-         chmod +x megan_bio_emiss.exe
-         ./megan_bio_emiss.exe < megan_bio_emiss.inp > index.html 2>&1
+         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${BIO_JOB_CLASS} ${BIO_TIME_LIMIT} ${BIO_NODES} ${BIO_TASKS} "megan_bio_emiss.exe < megan_bio_emiss.inp" SERIAL ${ACCOUNT} ${BIO_MODEL}
+         qsub -Wblock=true job.ksh
 #
 # TEST WHETHER OUTPUT EXISTS
          export FILE_CR=wrfbiochemi_d${CR_DOMAIN}

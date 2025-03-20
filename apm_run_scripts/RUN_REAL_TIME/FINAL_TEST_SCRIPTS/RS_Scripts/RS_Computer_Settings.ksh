@@ -13,7 +13,7 @@
    export GENERAL_JOB_CLASS=normal
    export GENERAL_TIME_LIMIT=00:20:00
    export GENERAL_NODES=1
-   export GENERAL_TASKS=24
+   export GENERAL_TASKS=1
    export GENERAL_MODEL=has
 #
    export WRFDA_JOB_CLASS=normal
@@ -35,14 +35,14 @@
    export BIO_MODEL=has
 #
    export FILTER_JOB_CLASS=normal
-   export FILTER_TIME_LIMIT=06:59:00
-   export FILTER_NODES=3
+   export FILTER_TIME_LIMIT=03:59:00
+   export FILTER_NODES=5
    export FILTER_TASKS=24
    export FILTER_MODEL=has
 #
    export WRFCHEM_JOB_CLASS=normal
-   export WRFCHEM_TIME_LIMIT=00:30:00
-   export WRFCHEM_NODES=3
+   export WRFCHEM_TIME_LIMIT=00:40:00
+   export WRFCHEM_NODES=5
    export WRFCHEM_TASKS=24
    export WRFCHEM_MODEL=has
 #

@@ -40,8 +40,8 @@ export EXPERIMENT_DIR=${SCRATCH_DIR}
 #export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_REAL_TIME_DATA
 export EXPERIMENT_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS
 #
-export RUN_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2013
-export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2013
+export RUN_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2018
+export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2018
 export EXPERIMENT_INPUT_OBS=NOAA
 #
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
@@ -55,16 +55,16 @@ export CYCLE_PERIOD=3
 export FCST_PERIOD=3
 #
 # CYCLE TIME SETTINGS (NOAA has extra digits for ss)
-export INITIAL_DATE=2013040200
-export FIRST_FILTER_DATE=2013040203
-export FIRST_DART_INFLATE_DATE=2013040203
-export FIRST_EMISS_INV_DATE=2013040203
+export INITIAL_DATE=2018040200
+export FIRST_FILTER_DATE=2018040203
+export FIRST_DART_INFLATE_DATE=2018040203
+export FIRST_EMISS_INV_DATE=2018040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2013040215
+export CYCLE_STR_DATE=2018040200
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2013040218
+export CYCLE_END_DATE=2018040200
 #
 # Special DATE for emissions perturbations
 export RUN_SPECIAL_PERT_DATE=false
@@ -216,7 +216,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export MEGAN_BIO_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_MEGAN_BIO
    export EXPERIMENT_WRFFIRECHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/fire_emissions/fire_emissions_v1.5
    export FINN_FIRE_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_FINN_FIRE
-   export NL_FIRE_FILE=GLOBAL_FINNv15_2013_MOZ4_7112014.txt
+   export NL_FIRE_FILE=GLOBAL_FINNv15_2018_MOZART_04232020.txt
    export EXPERIMENT_WRFCHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/anthro_emissions
    export MOZBC_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/tcr2_data
    export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
@@ -226,11 +226,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export ADJUST_EMISS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_EMISS_INV
    export PERT_CHEM_EMISS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_PERT_CHEM/EMISS_PERT
 #   
-   export GENERAL_JOB_CLASS=normal
-   export GENERAL_TIME_LIMIT=00:20:00
-   export GENERAL_NODES=1
-   export GENERAL_TASKS=16
-#
 # PERT_ICBC (Used for settings in call to RS script)
 # (NSPCS x NUM_MEMS) + 2
 # (19 x 10) + 2

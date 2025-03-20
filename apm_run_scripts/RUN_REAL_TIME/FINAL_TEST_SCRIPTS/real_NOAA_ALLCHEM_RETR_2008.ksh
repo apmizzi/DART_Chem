@@ -36,8 +36,8 @@ export INPUT_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1
 export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
 export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/TRACER1_OBS
-export RUN_DIR=${EXPERIMENT_DIR}/NOAA_ALLCHEM_RETR_2013
-export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2013
+export RUN_DIR=${EXPERIMENT_DIR}/NOAA_ALLCHEM_RETR_2008
+export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2008
 export EXPERIMENT_INPUT_OBS=NOAA_RUNTIME_OBS
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
 export WRFCHEM_TEMPLATE_FILE=wrfinput_d01_2019-04-02_03:00:00.e001
@@ -46,16 +46,16 @@ export CYCLE_PERIOD=3
 export FCST_PERIOD=3
 #
 # CYCLE TIME SETTINGS (NOAA has extra digits for ss)
-export INITIAL_DATE=2013040200
-export FIRST_FILTER_DATE=2013040203
-export FIRST_DART_INFLATE_DATE=2013040203
-export FIRST_EMISS_INV_DATE=2013040203
+export INITIAL_DATE=2008040200
+export FIRST_FILTER_DATE=2008040203
+export FIRST_DART_INFLATE_DATE=2008040203
+export FIRST_EMISS_INV_DATE=2008040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2013040212
+export CYCLE_STR_DATE=2008040200
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2013040218
+export CYCLE_END_DATE=2008040200
 
 # For emissions estimation
 export ADD_EMISS=false
@@ -83,7 +83,7 @@ export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
 export RUN_TES_CO_PROFILE_OBS=true                 # (done)  TRACER I
 export RUN_TES_O3_PROFILE_OBS=true                 # (done)  TRACER I
 export RUN_GOME2A_NO2_TROP_COL_OBS=true            # (done)  TRACER I
-export RUN_GOME2A_NO2_TROP_COL_OBS=false           # (done)  TRACER I
+export RUN_GOME2B_NO2_TROP_COL_OBS=false           # (done)  TRACER I
 export RUN_MLS_O3_PROFILE_OBS=true                 # (done)  TRACER I
 export RUN_MLS_HNO3_PROFILE_OBS=true               # (done)  TRACER I
 export RUN_AIRNOW_CO_OBS=true                      # (done)  TRACER I
@@ -345,13 +345,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export AISH_PERT_CHEM_INPUT_DIR=/nobackupp28/amizzi/TRUNK/DART_AISH/apm_run_scripts/RUN_PERT_CHEM/ICBC_PERT
    export ADJUST_EMISS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_EMISS_INV
    export PERT_CHEM_EMISS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_PERT_CHEM/EMISS_PERT
-#   
-   export WRFCHEM_JOB_CLASS=normal
-   export WRFCHEM_TIME_LIMIT=01:59:00
-   export WRFCHEM_TIME_LIMIT=00:40:00
-   export WRFCHEM_NODES=5
-   export WRFCHEM_TASKS=24
-   export WRFCHEM_MODEL=has
 #
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
    export RUN_MOPITT_CO_PROFILE_OBS=false
