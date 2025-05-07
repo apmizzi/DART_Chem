@@ -61,10 +61,10 @@ export FIRST_DART_INFLATE_DATE=2022040203
 export FIRST_EMISS_INV_DATE=2022040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2022040200
+export CYCLE_STR_DATE=2022040203
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2022040200
+export CYCLE_END_DATE=2022040203
 #
 # Special DATE for emissions perturbations
 export RUN_SPECIAL_PERT_DATE=false
@@ -134,7 +134,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_LOCALIZATION=true
 #
    export RUN_MOPITT_V8_CO_PROFILE_OBS=true           # (done)  TRACER I
-   export RUN_MODIS_AOD_TOTAL_COL_OBS=true            # (done)  TRACER I
+   export RUN_MODIS_AOD_TOTAL_COL_OBS=false           # (done)  TRACER I
    export RUN_OMI_O3_PROFILE_OBS=true                 # (done)  TRACER I
    export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true        # (done)  TRACER I
    export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
@@ -216,7 +216,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export MEGAN_BIO_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_MEGAN_BIO
    export EXPERIMENT_WRFFIRECHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/fire_emissions/fire_emissions_v1.5
    export FINN_FIRE_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_FINN_FIRE
-   export NL_FIRE_FILE=GLOBAL_FINNv15_2022_MOZ4.txt
+   export NL_FIRE_FILE=GLOBAL_FINNv15_{YYYY}_MOZ4.txt
    export EXPERIMENT_WRFCHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/anthro_emissions
    export MOZBC_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/tcr2_data
    export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'

@@ -98,6 +98,7 @@ EOF
          export JOBRND=${TRANDOM}_nco
          ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${GENERAL_MODEL}
          qsub -Wblock=true job.ksh
+	 mv index.html index_nco1.html
 #
 # Copy template files
          cp wrfinput_d${CR_DOMAIN}_e001 wrfinput_d${CR_DOMAIN}      
@@ -169,6 +170,7 @@ EOF
          export JOBRND=${RANDOM}_filter
          ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${FILTER_JOB_CLASS} ${FILTER_TIME_LIMIT} ${FILTER_NODES} ${FILTER_TASKS} filter PARALLEL ${ACCOUNT} ${FILTER_MODEL}
          qsub -Wblock=true job.ksh
+	 mv index.html index_dart.html
       fi
 #
 # Check whether DART worked properly
@@ -183,7 +185,7 @@ EOF
       chmod +x jobx.ksh
       cat << EOF > jobx.ksh
 #!/bin/ksh -aux
-let MEM=1
+let MEM=${DART_MEM_STR}
 while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
    export CMEM=e\${MEM}
    export KMEM=\${MEM}
@@ -211,3 +213,6 @@ EOF
       export JOBRND=${TRANDOM}_nco
       ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${GENERAL_MODEL}
       qsub -Wblock=true job.ksh
+      sleep 30
+      mv index.html index_nco2.html
+#

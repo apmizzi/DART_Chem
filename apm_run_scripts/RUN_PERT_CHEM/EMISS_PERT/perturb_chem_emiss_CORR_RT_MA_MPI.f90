@@ -435,7 +435,7 @@ program main
                call cpu_time(cpu_str)
                call perturb_fields(chem_fac_old,chem_fac_new, &
                lat,lon,A_chem,nx,ny,nz_chem,nchem_spcs,ngrid_corr,sw_corr_tm, &
-               corr_lngth_hz,rank)
+               corr_lngth_hz,rank,sprd_chem)
                call cpu_time(cpu_end)
                cpu_dif=cpu_end-cpu_str
                print *, 'RANK: ',itask(imem,icnt),' imem,isp, ',imem,isp,' perturb_fields: chem time ',cpu_dif
@@ -486,7 +486,7 @@ program main
                call cpu_time(cpu_str)
                call perturb_fields(fire_fac_old,fire_fac_new, &
                lat,lon,A_fire,nx,ny,nz_fire,nfire_spcs,ngrid_corr,sw_corr_tm, &
-               corr_lngth_hz,rank)
+               corr_lngth_hz,rank,sprd_fire)
                call cpu_time(cpu_end)
                cpu_dif=cpu_end-cpu_str
                print *, 'RANK: ',itask(imem,icnt),' imem,isp, ',imem,isp,' perturb_fields: fire time ',cpu_dif
@@ -537,7 +537,7 @@ program main
                call cpu_time(cpu_str)
                call perturb_fields(biog_fac_old,biog_fac_new, &
                lat,lon,A_biog,nx,ny,nz_biog,nbiog_spcs,ngrid_corr,sw_corr_tm, &
-               corr_lngth_hz,rank)
+               corr_lngth_hz,rank,sprd_biog)
                call cpu_time(cpu_end)
                cpu_dif=cpu_end-cpu_str
                print *, 'RANK: ',itask(imem,icnt),' imem,isp, ',imem,isp,' perturb_fields: biog time ',cpu_dif
@@ -878,47 +878,63 @@ subroutine vertical_transform(A_chem,geo_ht,nx,ny,nz,nz_chem,corr_lngth_vt)
             do j=1,ny
                vcov=1.-abs(geo_ht(i,j,k)-geo_ht(i,j,l))/corr_lngth_vt
                if(vcov.lt.0.) vcov=0.
-! row 1         
-               if(k.eq.1 .and. l.eq.1) then
-                  A_chem(i,j,k,l)=1.
-               elseif(k.eq.1 .and. l.gt.1) then
-                  A_chem(i,j,k,l)=0.
-               endif
-! row 2         
-               if(k.eq.2 .and. l.eq.1) then
-                  A_chem(i,j,k,l)=vcov
-               elseif(k.eq.2 .and. l.eq.2) then
-                  A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l-1)*A_chem(i,j,k,l-1))
-               elseif (k.eq.2 .and. l.gt.2) then
-                  A_chem(i,j,k,l)=0.
-               endif
-! row 3 and greater         
-               if(k.ge.3) then
-                  if(l.eq.1) then
-                     A_chem(i,j,k,l)=vcov
-                  elseif(l.lt.k .and. l.ne.1) then
-                     do ll=1,l-1
-                        A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,l,ll)*A_chem(i,j,k,ll)
-                     enddo
-                     if(A_chem(i,j,l,l).ne.0) A_chem(i,j,k,l)=(vcov-A_chem(i,j,k,l))/A_chem(i,j,l,l)
-                  elseif(l.eq.k) then
-                     do ll=1,l-1
-                        A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,k,ll)*A_chem(i,j,k,ll)
-                     enddo
-                     A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l))
-                  endif
+!
+! linear decrease
+!               A_chem(i,j,k,l)=vcov
+!
+! exponential decrease
+!               if(vcov.ne.0.) then               
+!                  A_chem(i,j,k,l)=exp(1. - 1./vcov)
+!               endif
+!
+! square root decrease
+               A_chem(i,j,k,l)=vcov    
+               if(vcov.ne.1.) then               
+                  A_chem(i,j,k,l)=sqrt(1. - (1.-vcov)*(1.-vcov))
                endif
             enddo
          enddo
       enddo
    enddo
+!
+! Old code
+! row 1         
+!               if(k.eq.1 .and. l.eq.1) then
+!                  A_chem(i,j,k,l)=1.
+!               elseif(k.eq.1 .and. l.gt.1) then
+!                  A_chem(i,j,k,l)=0.
+!               endif
+! row 2         
+!               if(k.eq.2 .and. l.eq.1) then
+!                  A_chem(i,j,k,l)=vcov
+!               elseif(k.eq.2 .and. l.eq.2) then
+!                  A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l-1)*A_chem(i,j,k,l-1))
+!               elseif (k.eq.2 .and. l.gt.2) then
+!                  A_chem(i,j,k,l)=0.
+!               endif
+! row 3 and greater         
+!               if(k.ge.3) then
+!                  if(l.eq.1) then
+!                     A_chem(i,j,k,l)=vcov
+!                  elseif(l.lt.k .and. l.ne.1) then
+!                     do ll=1,l-1
+!                        A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,l,ll)*A_chem(i,j,k,ll)
+!                     enddo
+!                     if(A_chem(i,j,l,l).ne.0) A_chem(i,j,k,l)=(vcov-A_chem(i,j,k,l))/A_chem(i,j,l,l)
+!                  elseif(l.eq.k) then
+!                     do ll=1,l-1
+!                        A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,k,ll)*A_chem(i,j,k,ll)
+!                     enddo
+!                     A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l))
+!                  endif
+!               endif
 end subroutine vertical_transform
 
 !-------------------------------------------------------------------------------
 
 subroutine perturb_fields(chem_fac_old,chem_fac_new, &
 lat,lon,A_chem,nx,ny,nz,nchem_spcs,ngrid_corr,sw_corr_tm, &
-corr_lngth_hz,rank)
+corr_lngth_hz,rank,sprd_chem)
 
 !   use apm_utilities_mod,  only :get_dist
   
@@ -926,7 +942,7 @@ corr_lngth_hz,rank)
    integer,                               intent(in)   :: nx,ny,nz,rank
    integer,                               intent(in)   :: sw_corr_tm
    integer,                               intent(in)   :: ngrid_corr,nchem_spcs
-   real,                                  intent(in)   :: corr_lngth_hz
+   real,                                  intent(in)   :: corr_lngth_hz,sprd_chem
    real,dimension(nx,ny),                 intent(in)   :: lat,lon
    real,dimension(nx,ny,nz,nz),           intent(in)   :: A_chem
    real,dimension(nx,ny,nz),              intent(out)  :: chem_fac_old
@@ -958,7 +974,7 @@ corr_lngth_hz,rank)
                if(u_ran_1.eq.0.) call random_number(u_ran_1)
                call random_number(u_ran_2)
                if(u_ran_2.eq.0.) call random_number(u_ran_2)
-               pert_chem_old(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+               pert_chem_old(i,j,k)=sprd_chem*sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
             enddo
          enddo
       enddo
@@ -970,7 +986,7 @@ corr_lngth_hz,rank)
             if(u_ran_1.eq.0.) call random_number(u_ran_1)
             call random_number(u_ran_2)
             if(u_ran_2.eq.0.) call random_number(u_ran_2)
-            pert_chem_new(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+            pert_chem_new(i,j,k)=sprd_chem*sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
          enddo
       enddo
    enddo
@@ -994,11 +1010,13 @@ corr_lngth_hz,rank)
             jndx(:)=0
             call horiz_grid_wts(i,j,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
             ngrid_corr,corr_lngth_hz,rank)
-            if(ncnt.eq.0) then
+            do icnt=1,ncnt
+               ii=indx(icnt)
+               jj=jndx(icnt)
                do k=1,nz
-                  chem_fac_old(i,j,k)=pert_chem_old(i,j,k)
+                  chem_fac_old(ii,jj,k)=pert_chem_old(ii,jj,k)
                enddo
-            endif
+            enddo
             do icnt=1,ncnt
                ii=indx(icnt)
                jj=jndx(icnt)
@@ -1027,11 +1045,13 @@ corr_lngth_hz,rank)
          jndx(:)=0
          call horiz_grid_wts(i,j,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
          ngrid_corr,corr_lngth_hz,rank)
-         if(ncnt.eq.0) then   
+         do icnt=1,ncnt
+            ii=indx(icnt)
+            jj=jndx(icnt)
             do k=1,nz
-               chem_fac_new(i,j,k)=pert_chem_new(i,j,k)
+               chem_fac_new(ii,jj,k)=pert_chem_new(ii,jj,k)
             enddo
-         endif
+         enddo
          do icnt=1,ncnt
             ii=indx(icnt)
             jj=jndx(icnt)
@@ -1063,13 +1083,15 @@ corr_lngth_hz,rank)
          do j=1,ny
             pert_chem_sum_old(:)=0.
             do k=1,nz
+               wgt_sum=0.
                do kk=1,nz
                   pert_chem_sum_old(k)=pert_chem_sum_old(k)+A_chem(i,j,k,kk)* &
                   chem_fac_old(i,j,kk)
+                  wgt_sum=wgt_sum+A_chem(i,j,k,kk)
                enddo
             enddo
             do k=1,nz
-               chem_fac_old(i,j,k)=pert_chem_sum_old(k)
+               chem_fac_old(i,j,k)=pert_chem_sum_old(k)/wgt_sum
             enddo
          enddo
       enddo
@@ -1091,13 +1113,15 @@ corr_lngth_hz,rank)
       do j=1,ny
          pert_chem_sum_new(:)=0.
          do k=1,nz
+            wgt_sum=0.
             do kk=1,nz
                pert_chem_sum_new(k)=pert_chem_sum_new(k)+A_chem(i,j,k,kk)* &
                chem_fac_new(i,j,kk)
+               wgt_sum=wgt_sum+A_chem(i,j,k,kk)
             enddo
          enddo
          do k=1,nz
-            chem_fac_new(i,j,k)=pert_chem_sum_new(k)
+            chem_fac_new(i,j,k)=pert_chem_sum_new(k)/wgt_sum
          enddo
       enddo
    enddo

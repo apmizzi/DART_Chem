@@ -1,16 +1,16 @@
 #!/bin/ksh -aux
 #
-   cd ${RUN_DIR}/${DATE}/mls_hno3_profile_obs
+   cd ${RUN_DIR}/${DATE}/gome2ab_no2_trop_col_obs
 #
-# SET MLS PARAMETERS
+# SET GOME2AB PARAMETERS
       export NL_PATH_MODEL=${WRFCHEM_TEMPLATE_DIR}
       export NL_FILE_MODEL=${WRFCHEM_TEMPLATE_FILE}
       export NL_NX_MODEL=${NNXP_CR}
       export NL_NY_MODEL=${NNYP_CR}
-      export MLS_FILE_PRE=MLS-Aura_L2GP-HNO3_v04-
-      export MLS_FILE_EXT=.he5
+      export GOME2AB_FILE_PRE=GOME_O3-NO2-NO2Tropo-BrO-SO2-H2O-HCHO_L2_
+      export GOME2AB_FILE_EXT=_DLR_06.HDF5
       export OUTFILE=TEMP_FILE.dat
-      export TMP_OUTFILE=MLS_HNO3_${DATE}.dat
+      export TMP_OUTFILE=GOME2AB_NO2_${DATE}.dat
       rm -rf ${OUTFILE}
       rm -rf ${TMP_OUTFILE}
 #
@@ -44,15 +44,19 @@
       let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
       let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
 #
-# SET MLS INPUT DATA DIR
-      export TMP_INFILE=\'${EXPERIMENT_MLS_HNO3_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}/${MLS_FILE_PRE}\'
+# SET GOME2AB INPUT DATA DIR
+      export TMP_INFILE=${EXPERIMENT_GOME2AB_NO2_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}/${GOME2AB_FILE_PRE}
 #
 # COPY EXECUTABLE
-      export FILE=mls_hno3_profile_extract.m
+      export FILE=gome2ab_no2_trop_col_extract.m
       rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/native_to_ascii/${FILE} ./.
-      mcc -m mls_hno3_profile_extract.m -o mls_hno3_profile_extract
-      ./run_mls_hno3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} >> index_mat1.html 2>&1
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2AB_NO2/native_to_ascii/${FILE} ./.
+      mcc -m gome2ab_no2_trop_col_extract.m -o gome2ab_no2_trop_col_extract
+      ./run_gome2ab_no2_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${GOME2AB_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
+
+
+exit
+
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
       if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
@@ -78,14 +82,14 @@
          export BIN_END_HH=00
          export BIN_END_MN=00
          export BIN_END_SS=00
-         export TMP_INFILE=\'${EXPERIMENT_MLS_HNO3_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}/${MLS_FILE_PRE}\'
+         export TMP_INFILE=\'${EXPERIMENT_GOME2AB_NO2_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}/${GOME2AB_FILE_PRE}\'
 #
 # COPY EXECUTABLE
-         export FILE=mls_hno3_profile_extract.m
+         export FILE=gome2ab_no2_trop_col_extract.m
          rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/native_to_ascii/${FILE} ./.
-         mcc -m mls_hno3_profile_extract.m -o mls_hno3_profile_extract
-         ./run_mls_hno3_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${MLS_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2AB_NO2/native_to_ascii/${FILE} ./.
+         mcc -m gome2ab_no2_trop_col_extract.m -o gome2ab_no2_trop_col_extract
+         ./run_gome2ab_no2_trop_col_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${GOME2AB_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
 #
       fi
 #
@@ -99,16 +103,15 @@
          rm -rf ${OUTFILE}
       fi
       if [[ ! -e ${TMP_OUTFILE} ]]; then
-         touch NO_MLS_HNO3_${DATE}_DATA
+         touch NO_GOME2AB_NO2_${DATE}_DATA
       fi
 #
-# SET NAMELIST TO CONVERT MLS HNO3 ASCII TO OBS_SEQ 
+# SET NAMELIST TO CONVERT GOME2AB NO2 ASCII TO OBS_SEQ 
       export NL_FILEDIR=\'./\' 
       export NL_FILENAME=\'${TMP_OUTFILE}\'
-      export NL_FILEOUT=\'obs_seq_mls_hno3_profile_${DATE}.out\'
-      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_MLS_HNO3}
-      export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
-      export NL_USE_LOG_HNO3=${USE_LOG_HNO3_LOGIC}
+      export NL_FILEOUT=\'obs_seq_gome2ab_no2_trop_col_${DATE}.out\'
+      export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_GOME2AB_NO2}
+      export NL_USE_LOG_NO2=${USE_LOG_NO2_LOGIC}
 #
 # MODEL PROFILE SETTINGS
       export NL_PATH_MODEL=\'${WRFCHEM_TEMPLATE_DIR}\'
@@ -134,23 +137,27 @@
       export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
       export NL_BIN_END_SEC=${BIN_END_SEC}
 #      
-# USE MLS DATA 
+# USE GOME2AB DATA 
       rm -rf input.nml
-      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_mls_input_nml.ksh
+      ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_gome2ab_input_nml.ksh
 #
 # DO THINNING
-      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/work/mls_hno3_profile_thinner ./.
-      ./mls_hno3_profile_thinner > index_thinner.html 2>&1
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2AB_NO2/work/gome2ab_no2_trop_col_thinner ./.
+      ./gome2ab_no2_trop_col_thinner > index_thinner.html 2>&1
+#
+# DO THINNING
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2AB_NO2/work/gome2ab_no2_trop_col_thinner ./.
+      ./gome2ab_no2_trop_col_thinner > index_thinner.html 2>&1
 #
 # GET EXECUTABLE
-      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MLS_HNO3/work/mls_hno3_profile_ascii_to_obs ./.
-      ./mls_hno3_profile_ascii_to_obs > index_ascii.html 2>&1
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/GOME2AB_NO2/work/gome2ab_no2_trop_col_ascii_to_obs ./.
+      ./gome2ab_no2_trop_col_ascii_to_obs > index_ascii.html 2>&1
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
       if [[ -s ${NL_FILEOUT} ]]; then
-         touch NO_MLS_HNO3_${DATE}
+         touch NO_GOME2AB_NO2_${DATE}
       fi
 #
 # Clean directory
 #      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
-#      rm requiredMCRP* run_mls_hno3* mls_hno3_profile* unresolved* *.dat
+#      rm requiredMCRP* run_gome2ab_no2* gome2ab_no2_trop* unresolved* *.dat

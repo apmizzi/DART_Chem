@@ -52,11 +52,11 @@ export FIRST_DART_INFLATE_DATE=2010040203
 export FIRST_EMISS_INV_DATE=2010040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2010040200
+export CYCLE_STR_DATE=2010040218
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2010040200
-
+export CYCLE_END_DATE=2010040218
+#
 # For emissions estimation
 export ADD_EMISS=false
 export EMISS_DAMP_CYCLE=1.0
@@ -64,6 +64,7 @@ export EMISS_DAMP_INTRA_CYCLE=1.0
 #
 # Switch to process filter output without calling filter
 export SKIP_FILTER=false
+export DART_MEM_STR=1
 #
 # Set large scale chemisty file
 export NL_UPPER_DATA_FILE_NAME=/h0001.nc
@@ -77,7 +78,7 @@ export LS_CHEM_DT=360
 export RUN_INPUT_OBS=true
 export RUN_MOPITT_V8_CO_PROFILE_OBS=true           # (done)  TRACER I
 export RUN_MODIS_AOD_TOTAL_COL_OBS=false           # (done)  TRACER I
-export RUN_OMI_O3_PROFILE_OBS=true                 # (done)  TRACER I
+export RUN_OMI_O3_PROFILE_OBS=false                 # (done)  TRACER I
 export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true        # (done)  TRACER I
 export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
 export RUN_TES_CO_PROFILE_OBS=true                 # (done)  TRACER I
@@ -142,16 +143,16 @@ export RUN_SPECIAL_FORECAST=false
 export NUM_SPECIAL_FORECAST=0
 export SPECIAL_FORECAST_FAC=1.
 #
-export SPECIAL_FORECAST_MEM[1]=4
-export SPECIAL_FORECAST_MEM[2]=6
-export SPECIAL_FORECAST_MEM[3]=7
-export SPECIAL_FORECAST_MEM[4]=14
-export SPECIAL_FORECAST_MEM[5]=15
-export SPECIAL_FORECAST_MEM[6]=16
-export SPECIAL_FORECAST_MEM[7]=17
-export SPECIAL_FORECAST_MEM[8]=18
-export SPECIAL_FORECAST_MEM[9]=19
-export SPECIAL_FORECAST_MEM[10]=20
+export SPECIAL_FORECAST_MEM[1]=1
+export SPECIAL_FORECAST_MEM[2]=2
+export SPECIAL_FORECAST_MEM[3]=3
+export SPECIAL_FORECAST_MEM[4]=4
+export SPECIAL_FORECAST_MEM[5]=5
+export SPECIAL_FORECAST_MEM[6]=6
+export SPECIAL_FORECAST_MEM[7]=7
+export SPECIAL_FORECAST_MEM[8]=8
+export SPECIAL_FORECAST_MEM[9]=9
+export SPECIAL_FORECAST_MEM[10]=10
 #
 # Set observation error scaling and retention factors (assign constants)
 source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
@@ -321,6 +322,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
    export WRF_VER=WRFCHEM_NOAACSLv4.2.2
    export WRFCHEM_VER=WRFCHEM_NOAACSLv4.2.2
+   export NNL_TIME_STEP=40
 #   export WRF_VER=WRFCHEM_NOAACSL
 #   export WRFCHEM_VER=WRFCHEM_NOAACSL
 #   export WRF_VER=WRFCHEMv4.3.2_dmpar
@@ -336,7 +338,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export MEGAN_BIO_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_MEGAN_BIO
    export EXPERIMENT_WRFFIRECHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/fire_emissions
    export FINN_FIRE_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_FINN_FIRE
-   export NL_FIRE_FILE=GLOBAL_FINNv15_2019_MOZART_06022020.txt
+   export NL_FIRE_FILE=GLOBAL_FINNv15_2010_MOZ4.txt
    export EXPERIMENT_WRFCHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/anthro_emissions
    export MOZBC_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/tcr2_data/${YYYY}/${MM}
    export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'

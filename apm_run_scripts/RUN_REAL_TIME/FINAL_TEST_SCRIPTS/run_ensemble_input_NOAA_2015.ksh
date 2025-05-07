@@ -61,10 +61,10 @@ export FIRST_DART_INFLATE_DATE=2015040203
 export FIRST_EMISS_INV_DATE=2015040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2015040200
+export CYCLE_STR_DATE=2015040215
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2015040200
+export CYCLE_END_DATE=2015040215
 #
 # Special DATE for emissions perturbations
 export RUN_SPECIAL_PERT_DATE=false
@@ -77,6 +77,14 @@ fi
 export ADD_EMISS=false
 export EMISS_DAMP_CYCLE=1.0
 export EMISS_DAMP_INTRA_CYCLE=1.0
+#
+# Run temporal interpolation for missing background files
+# RUN_UNGRIB, RUN_METGRID, and RUN_REAL must all be false for the interpolation and for cycling
+# Currently set up for 6 hr forecasts. It can handle up to 24 hr forecasts
+export RUN_INTERPOLATE=false
+export BACK_DATE=2015040118
+export FORW_DATE=2015040212
+BACK_WT=.2
 #
 # Set large scale chemisty file
 export NL_UPPER_DATA_FILE_NAME=/h0001.nc
@@ -117,24 +125,24 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # SELECT COMPONENT RUN OPTIONS:
    export RUN_GEOGRID=false
-   export RUN_UNGRIB=true
-   export RUN_METGRID=true
-   export RUN_REAL=true
-   export RUN_PERT_WRFCHEM_MET_IC=true
-   export RUN_PERT_WRFCHEM_MET_BC=true
-   export RUN_EXO_COLDENS=true
-   export RUN_SEASON_WES=true
-   export RUN_WRFCHEM_BIO=true
-   export RUN_WRFCHEM_FIRE=true
-   export RUN_WRFCHEM_CHEMI=true
-   export RUN_PERT_WRFCHEM_CHEM_ICBC=true
+   export RUN_UNGRIB=false
+   export RUN_METGRID=false
+   export RUN_REAL=false
+   export RUN_PERT_WRFCHEM_MET_IC=false
+   export RUN_PERT_WRFCHEM_MET_BC=false
+   export RUN_EXO_COLDENS=false
+   export RUN_SEASON_WES=false
+   export RUN_WRFCHEM_BIO=false
+   export RUN_WRFCHEM_FIRE=false
+   export RUN_WRFCHEM_CHEMI=false
+   export RUN_PERT_WRFCHEM_CHEM_ICBC=false
    export RUN_PERT_WRFCHEM_CHEM_EMISS=true
    export RUN_COMBINE_OBS=true
    export RUN_PREPROCESS_OBS=true
    export RUN_LOCALIZATION=true
 #
    export RUN_MOPITT_V8_CO_PROFILE_OBS=true           # (done)  TRACER I
-   export RUN_MODIS_AOD_TOTAL_COL_OBS=true            # (done)  TRACER I
+   export RUN_MODIS_AOD_TOTAL_COL_OBS=false           # (done)  TRACER I
    export RUN_OMI_O3_PROFILE_OBS=true                 # (done)  TRACER I
    export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true        # (done)  TRACER I
    export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
@@ -216,7 +224,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export MEGAN_BIO_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_MEGAN_BIO
    export EXPERIMENT_WRFFIRECHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/fire_emissions/fire_emissions_v1.5
    export FINN_FIRE_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_FINN_FIRE
-   export NL_FIRE_FILE=GLOBAL_FINNv15_2015_MOZ4_11032016.txt
+   export NL_FIRE_FILE=GLOBAL_FINNv15_${YYYY}_MOZ4.txt
    export EXPERIMENT_WRFCHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/anthro_emissions
    export MOZBC_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/tcr2_data
    export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
@@ -421,6 +429,22 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          cd ${RUN_DIR}/${DATE}/real
       fi
       source ${RS_SCRIPTS_DIR}/RS_Real_NOAA.ksh > index_rs.html 2>&1
+   fi
+#
+#########################################################################
+#
+# RUN INTERPOLATION FOR MISSING BACKGROUND FORECAST
+#
+#########################################################################
+#
+   if [[ ${RUN_INTERPOLATE} = "true" ]]; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/metgrid ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/metgrid
+      fi
+      if [[ ! -d ${RUN_DIR}/${DATE}/real ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/real
+      fi
+      source ${RS_SCRIPTS_DIR}/RS_Interpolation.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################

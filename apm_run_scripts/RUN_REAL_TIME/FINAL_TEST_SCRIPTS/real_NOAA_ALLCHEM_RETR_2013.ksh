@@ -52,7 +52,7 @@ export FIRST_DART_INFLATE_DATE=2013040203
 export FIRST_EMISS_INV_DATE=2013040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2013040212
+export CYCLE_STR_DATE=2013040218
 #
 # END CYCLE DATE-TIME:
 export CYCLE_END_DATE=2013040218
@@ -64,6 +64,7 @@ export EMISS_DAMP_INTRA_CYCLE=1.0
 #
 # Switch to process filter output without calling filter
 export SKIP_FILTER=false
+export DART_MEM_STR=1
 #
 # Set large scale chemisty file
 export NL_UPPER_DATA_FILE_NAME=/h0001.nc
@@ -77,7 +78,7 @@ export LS_CHEM_DT=360
 export RUN_INPUT_OBS=true
 export RUN_MOPITT_V8_CO_PROFILE_OBS=true           # (done)  TRACER I
 export RUN_MODIS_AOD_TOTAL_COL_OBS=false           # (done)  TRACER I
-export RUN_OMI_O3_PROFILE_OBS=true                 # (done)  TRACER I
+export RUN_OMI_O3_PROFILE_OBS=false                 # (done)  TRACER I
 export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true        # (done)  TRACER I
 export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
 export RUN_TES_CO_PROFILE_OBS=true                 # (done)  TRACER I

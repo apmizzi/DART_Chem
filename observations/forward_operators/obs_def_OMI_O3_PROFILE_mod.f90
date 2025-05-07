@@ -236,7 +236,6 @@ subroutine read_omi_o3_profile(key, ifile, fform)
    call set_obs_def_omi_o3_profile(key, pressure_1(1:nlayer_1+1), avg_kernel_1(1:nlayer_1), &
    prior_1(1:nlayer_1), nlayer_1, klev_1, kend_1)
 
-   
    deallocate(pressure_1, avg_kernel_1, prior_1)
    
 end subroutine read_omi_o3_profile
@@ -322,6 +321,7 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
    integer :: interp_new
    integer :: icnt,ncnt,kstart
    integer :: date_obs,datesec_obs
+   integer :: isum
    integer, dimension(ens_size) :: zstatus,kbnd_1,kbnd_n
    
    real(r8) :: eps, AvogN, Rd, Ru, Cp, grav, msq2cmsq
@@ -358,6 +358,7 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
    missing  = -888888_r8
    tmp_max  = 600.
    del_prs  = 5000.
+   pi       = 4.*atan(1.)
    rad2deg  = 360./(2.*pi)
    VMR_conv = 28.9644/47.9982
 ! 
@@ -382,7 +383,6 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
    endif
    
 ! Assign vertical grid information (OMI O3 grid is top to bottom)
-
    layer_omi = nlayer(key)
    level_omi = nlayer(key)+1
    klev_omi  = klev(key)
@@ -395,7 +395,6 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
    prs_omi(1:level_omi)=pressure(key,1:level_omi)*100.  ! Pa
 
 ! Get location infomation
-
    mloc = get_location(location)
 
    if (mloc(2) >  90.0_r8) then
@@ -554,7 +553,12 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
                kstart=k-1
                exit
             endif
-         enddo
+         enddo 
+!         do k=1,kstart
+!            write(string1, *) &
+!            'APM: member,prs,o3 ',imem,k,prs_omi(k)/100.,o3_val(imem,k)
+!            call error_handler(E_MSG, routine, string1, source)
+!         enddo
          ncnt=kstart
          allocate(prs_omi_top(ncnt))
          allocate(o3_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
@@ -570,30 +574,81 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
          call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
          ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_omi_top, &
          ncnt,o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+         do k=1,kstart
+            write(string1, *) &
+            'APM: tcr2 o3 bdy data ',k,prs_omi(k)/100.,o3_prf_mdl(k)
+            call error_handler(E_MSG, routine, string1, source)
+         enddo
+         isum=0
+         do k=1,kstart
+            if(o3_prf_mdl(k).le.0.) then
+               isum=isum+1
+            endif
+         enddo
 !
-! Impose ensemble perturbations from level kstart+1      
+! Upper bdy file has no data. Asssume met file always has data.         
+         if(isum.eq.kstart) then
+            do k=1,kstart
+               o3_val(imem,k)=prs_omi_top(k)/prs_mdl_n(imem)*o3_val(imem,k)
+            enddo   
+!
+! Upper bdy file has data. Impose chem field perturbations from level kstart+1
+         else
+            do k=1,kstart 
+               o3_val(imem,k)=o3_prf_mdl(k)*o3_val(imem,kstart+1)/ &
+               (sum(o3_val(:,kstart+1))/real(ens_size))
+            enddo
+         endif
+!
+! Met data perturbations         
          do k=1,kstart 
-            o3_val(imem,k)=o3_prf_mdl(k)*o3_val(imem,kstart+1)/ &
-            (sum(o3_val(:,kstart+1))/real(ens_size))
             tmp_val(imem,k)=tmp_prf_mdl(k)*tmp_val(imem,kstart+1)/ &
             (sum(tmp_val(:,kstart+1))/real(ens_size))
             qmr_val(imem,k)=qmr_prf_mdl(k)*qmr_val(imem,kstart+1)/ &
             (sum(qmr_val(:,kstart+1))/real(ens_size))
          enddo
+!
+! Print results
+!         do k=1,kstart
+!            write(string1, *) &
+!            'APM: o3,tmp,qmr ',k,o3_prf_mdl(k),tmp_prf_mdl(k),qmr_prf_mdl(k)
+!            call error_handler(E_MSG, routine, string1, source)
+!         enddo
+         do k=1,level_omi
+            write(string1, *) &
+            'APM: prs,o3,tmp,qmr ',k,prs_omi(k)/100.,o3_val(imem,k), &
+            tmp_val(imem,k),qmr_val(imem,k)
+            call error_handler(E_MSG, routine, string1, source)
+         enddo
          deallocate(prs_omi_top)
          deallocate(o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
       endif
    enddo
+   istatus(:)=0
+   zstatus(:)=0.
+   expct_val(:)=0.0
+   return
+
+
+
+
 !
 ! Print full profile
-!   do imem=1,1
-!      do k=1,level_omi
-!         write(string1, *) &
-!         'APM: prs,o3,tmp,qmr ',k,prs_omi(k)/100.,o3_val(imem,k), &
-!         tmp_val(imem,k),qmr_val(imem,k)
-!         call error_handler(E_MSG, routine, string1, source)
-!      enddo
-!   enddo
+   do imem=1,1
+      do k=1,level_omi
+         write(string1, *) &
+         'APM: prs,o3,tmp,qmr ',k,prs_omi(k)/100.,o3_val(imem,k), &
+         tmp_val(imem,k),qmr_val(imem,k)
+         call error_handler(E_MSG, routine, string1, source)
+      enddo
+   enddo
+
+   istatus(:)=0
+   zstatus(:)=0.
+   expct_val(:)=0.0
+   return
+
+   
 !
 ! Check full profile for negative/missing values
    do imem=1,ens_size

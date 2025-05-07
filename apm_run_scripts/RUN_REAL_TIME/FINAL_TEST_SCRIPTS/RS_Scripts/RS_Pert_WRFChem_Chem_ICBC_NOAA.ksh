@@ -74,7 +74,7 @@ spc_map =  'o3 -> O3',
 /
 EOF
 #
-   ./mozbc.exe < wrfchem.namelist.input 2>&1 log_ic.txt 
+   ./mozbc.exe < wrfchem.namelist.input > log_ic.txt 2>&1
 #
 # CREATE BCs
    rm -rf wrfchem.namelist.input
@@ -115,7 +115,7 @@ spc_map =  'o3 -> O3',
 /
 EOF
 #
-   ./mozbc.exe < wrfchem.namelist.input 2>&1 log_bc.txt 
+   ./mozbc.exe < wrfchem.namelist.input > log_bc.txt  2>&1
 #
 # CREATE INPUT FILES FINE DOMAIN (APM this is the old code version)
 # Use the CR code as a templaste for the new FR code   
@@ -281,8 +281,8 @@ EOF
    export JOBRND=${TRANDOM}_nco
    ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${GENERAL_MODEL}
    qsub -Wblock=true job.ksh
-#   rm ens_mean_inp mean_diff_inp
-#   rm ens_mean_bdy mean_diff_bdy
+#  rm ens_mean_inp mean_diff_inp
+#  rm ens_mean_bdy mean_diff_bdy
 #
 #
 # Clean directory

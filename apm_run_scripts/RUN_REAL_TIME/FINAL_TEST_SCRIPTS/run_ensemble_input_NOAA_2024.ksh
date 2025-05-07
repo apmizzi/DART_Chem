@@ -40,8 +40,8 @@ export EXPERIMENT_DIR=${SCRATCH_DIR}
 #export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_REAL_TIME_DATA
 export EXPERIMENT_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS
 #
-export RUN_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2020
-export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2020
+export RUN_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2024
+export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2024
 export EXPERIMENT_INPUT_OBS=NOAA
 #
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
@@ -55,16 +55,16 @@ export CYCLE_PERIOD=3
 export FCST_PERIOD=3
 #
 # CYCLE TIME SETTINGS (NOAA has extra digits for ss)
-export INITIAL_DATE=2020040200
-export FIRST_FILTER_DATE=2020040203
-export FIRST_DART_INFLATE_DATE=2020040203
-export FIRST_EMISS_INV_DATE=2020040203
+export INITIAL_DATE=2024040200
+export FIRST_FILTER_DATE=2024040203
+export FIRST_DART_INFLATE_DATE=2024040203
+export FIRST_EMISS_INV_DATE=2024040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2020040203
+export CYCLE_STR_DATE=2024040200
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2020040203
+export CYCLE_END_DATE=2024040200
 #
 # Special DATE for emissions perturbations
 export RUN_SPECIAL_PERT_DATE=false
@@ -117,9 +117,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 # SELECT COMPONENT RUN OPTIONS:
    export RUN_GEOGRID=false
-   export RUN_UNGRIB=true
-   export RUN_METGRID=true 
-   export RUN_REAL=true
+   export RUN_UNGRIB=false
+   export RUN_METGRID=false
+   export RUN_REAL=false
    export RUN_PERT_WRFCHEM_MET_IC=true
    export RUN_PERT_WRFCHEM_MET_BC=true
    export RUN_EXO_COLDENS=true
@@ -134,7 +134,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_LOCALIZATION=true
 #
    export RUN_MOPITT_V8_CO_PROFILE_OBS=true           # (done)  TRACER I
-   export RUN_MODIS_AOD_TOTAL_COL_OBS=false            # (done)  TRACER I
+   export RUN_MODIS_AOD_TOTAL_COL_OBS=false           # (done)  TRACER I
    export RUN_OMI_O3_PROFILE_OBS=true                 # (done)  TRACER I
    export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true        # (done)  TRACER I
    export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
