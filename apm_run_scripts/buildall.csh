@@ -11,7 +11,7 @@ set startdir=`pwd`
 
 foreach project ( RUN_FINN_FIRE RUN_MEGAN_BIO RUN_PERT_CHEM/ICBC_PERT \
                   RUN_PERT_CHEM/EMISS_PERT RUN_EMISS_INV RUN_WES_COLDENS \
-                  RUN_WES_COLDENS RUN_TIME_INTERP )
+                  RUN_BIAS_CORR RUN_TIME_INTERP )
 
    echo
    echo "==================================================="
