@@ -146,8 +146,6 @@ subroutine get_expected_modis_aod_total_col(state_handle, ens_size, location, ke
    real(r8) :: thick(ens_size)       ! Layer Thickness 
 !
    real(r8) :: so4(ens_size)         ! Sulfate
-   real(r8) :: so4ai(ens_size)       ! Sulfate (Aitken)
-   real(r8) :: so4aj(ens_size)       ! Sulfate (accumulation)
    real(r8) :: bc1(ens_size)         ! Hydrophobic Black Carbon 
    real(r8) :: bc2(ens_size)         ! Hydrophilic Black Carbon 
    real(r8) :: oc1(ens_size)         ! Hydrophobic Organic Carbon
@@ -161,16 +159,6 @@ subroutine get_expected_modis_aod_total_col(state_handle, ens_size, location, ke
    real(r8) :: ss2(ens_size)         ! Sea Salt 2
    real(r8) :: ss3(ens_size)         ! Sea Salt 3
    real(r8) :: ss4(ens_size)         ! Sea Salt 4
-   real(r8) :: pm25i(ens_size)        ! PM 2.5 (Aitken)
-   real(r8) :: pm25j(ens_size)        ! PM 2.5 (accumulation)
-   real(r8) :: soila(ens_size) 
-   real(r8) :: eci(ens_size) 
-   real(r8) :: ecj(ens_size) 
-   real(r8) :: seas(ens_size) 
-   real(r8) :: claj(ens_size) 
-   real(r8) :: naaj(ens_size) 
-   real(r8) :: orgpai(ens_size) 
-   real(r8) :: orgpaj(ens_size) 
    real(r8) :: eps
    real(r8) :: Rd                    ! gas constant dry air
    real(r8) :: Ru                    ! universal gas constant
@@ -298,68 +286,101 @@ subroutine get_expected_modis_aod_total_col(state_handle, ens_size, location, ke
 !
 ! so4 (ppmv) at this location - this calls the model_mod code.
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, nloc, QTY_SO4, so4ai(:), zstatus)
-      zstatus(:)=0
-      call interpolate(state_handle, ens_size, nloc, QTY_SO4, so4aj(:), zstatus)
+      call interpolate(state_handle, ens_size, nloc, QTY_SO4, so4(:), zstatus)
 !
-! Convert from ug/kg to kg/m^2
-      so4(:) = .5 * (10.*so4ai(:) + 1.12*so4aj(:)) * 1.e-9 * fac(:)
+! Convert from ppmv to kg/m^2
+      so4(:) = so4(:) * 1.e-6 * fac(:)
 !
 ! dust (ug/kg - dry air) at this location - this calls the model_mod code.
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, nloc, QTY_DST01, pm25i(:), zstatus)
+      call interpolate(state_handle, ens_size, nloc, QTY_DST01, dust1(:), zstatus)
 !
 ! Convert from ug/kg to kg/m^2
-      dust1(:) = .8547*pm25i(:) * 1.e-9 * fac(:)
+      dust1(:) = dust1(:) * 1.e-9 * fac(:)
 !
 ! dust (ug/kg - dry air) at this location - this calls the model_mod code.
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, nloc, QTY_DST02, pm25j(:), zstatus)
+      call interpolate(state_handle, ens_size, nloc, QTY_DST02, dust2(:), zstatus)
 !
 ! Convert from ug/kg to kg/m^2
-      dust2(:) = .8547*pm25j(:) * 1.e-9 * fac(:)
+      dust2(:) = dust2(:) * 1.e-9 * fac(:)
 !
 ! dust (ug/kg - dry air) at this location - this calls the model_mod code.
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, nloc, QTY_DST03, soila(:), zstatus)
+      call interpolate(state_handle, ens_size, nloc, QTY_DST03, dust3(:), zstatus)
 !
 ! Convert from ug/kg to kg/m^2
-      dust3(:) = .3333*soila(:) * 1.e-9 * fac(:)
-      dust4(:) = .3333*soila(:) * 1.e-9 * fac(:)
-      dust5(:) = .3333*soila(:) * 1.e-9 * fac(:)
+      dust3(:) = dust3(:) * 1.e-9 * fac(:)
+!
+! dust (ug/kg - dry air) at this location - this calls the model_mod code.
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, nloc, QTY_DST04, dust4(:), zstatus)
+!
+! Convert from ug/kg to kg/m^2
+      dust4(:) = dust4(:) * 1.e-9 * fac(:)
+!
+! dust (ug/kg - dry air) at this location - this calls the model_mod code.
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, nloc, QTY_DST05, dust5(:), zstatus)
+!
+! Convert from ug/kg to kg/m^2
+      dust5(:) = dust5(:) * 1.e-9 * fac(:)
 !
 ! hydrophilic black carbon (ug/kg - dry air) at this location - this calls the model_mod code.
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, nloc, QTY_BC1, eci(:), zstatus)
-      zstatus(:)=0
-      call interpolate(state_handle, ens_size, nloc, QTY_BC1, ecj(:), zstatus)
+      call interpolate(state_handle, ens_size, nloc, QTY_BC1, bc1(:), zstatus)
 !
 ! Convert from ug/kg to kg/m^2
-      bc1(:) = .3 * (eci(:)*10. + 1.12*ecj(:)) * 1.e-9 * fac(:)
-      bc2(:) = .7 * (eci(:)*10. + 1.12*ecj(:)) * 1.e-9 * fac(:)
+      bc1(:) = bc1(:) * 1.e-9 * fac(:)
+!
+! hydrophilic black carbon (ug/kg - dry air) at this location - this calls the model_mod code.
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, nloc, QTY_BC2, bc2(:), zstatus)
+!
+! Convert from ug/kg to kg/m^2
+      bc2(:) = bc2(:) * 1.e-9 * fac(:)
 !
 ! hydrophilic organic carbon (ug/kg - dry air) at this location - this calls the model_mod code.
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, nloc, QTY_OC1, orgpai(:), zstatus)
-      call interpolate(state_handle, ens_size, nloc, QTY_OC1, orgpaj(:), zstatus)
+      call interpolate(state_handle, ens_size, nloc, QTY_OC1, oc1(:), zstatus)
 !
 ! Convert from ug/kg to kg/m^2
-      oc1(:) = .3 * (orgpai(:)*10. + 1.12*orgpaj(:)) * 1.e-9 * fac(:)
-      oc2(:) = .7 * (orgpai(:)*10. + 1.12*orgpaj(:)) * 1.e-9 * fac(:)
+      oc1(:) = oc1(:) * 1.e-9 * fac(:)
+!
+! hydrophilic organic carbon (ug/kg - dry air) at this location - this calls the model_mod code.
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, nloc, QTY_OC2, oc2(:), zstatus)
+!
+! Convert from ug/kg to kg/m^2
+      oc2(:) = oc2(:) * 1.e-9 * fac(:)
 !
 ! sea salt (ug/kg - dry air) at this location - this calls the model_mod code.
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, nloc, QTY_SSLT01, claj(:), zstatus)
-      zstatus(:)=0
-      call interpolate(state_handle, ens_size, nloc, QTY_SSLT01, naaj(:), zstatus)
-      zstatus(:)=0
-      call interpolate(state_handle, ens_size, nloc, QTY_SSLT01, seas(:), zstatus)
+      call interpolate(state_handle, ens_size, nloc, QTY_SSLT01, ss1(:), zstatus)
 !
 ! Convert from ug/kg to kg/m^2
-      ss1(:) = (1.67*claj(:) + 2.5*naaj) * 1.e-9 * fac(:)
-      ss2(:) = .33*seas(:) * 1.e-9 * fac(:)
-      ss3(:) = .33*seas(:) * 1.e-9 * fac(:)
-      ss4(:) = .33*seas(:) * 1.e-9 * fac(:)
+      ss1(:) = ss1(:) * 1.e-9 * fac(:)
+!
+! sea salt (ug/kg - dry air) at this location - this calls the model_mod code.
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, nloc, QTY_SSLT02, ss2(:), zstatus)
+!
+! Convert from ug/kg to kg/m^2
+      ss2(:) = ss2(:) * 1.e-9 * fac(:)
+!
+! sea salt (ug/kg - dry air) at this location - this calls the model_mod code.
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, nloc, QTY_SSLT03, ss3(:), zstatus)
+!
+! Convert from ug/kg to kg/m^2
+      ss3(:) = ss3(:) * 1.e-9 * fac(:)
+!
+! sea salt (ug/kg - dry air) at this location - this calls the model_mod code.
+      zstatus(:)=0
+      call interpolate(state_handle, ens_size, nloc, QTY_SSLT04, ss4(:), zstatus)
+!
+! Convert from ug/kg to kg/m^2
+      ss4(:) = ss4(:) * 1.e-9 * fac(:)
 !
 ! Check for missing values
    if(any(so4.lt.0.) .or. any(bc1.lt.0) .or. any(bc2.lt.0) .or. &

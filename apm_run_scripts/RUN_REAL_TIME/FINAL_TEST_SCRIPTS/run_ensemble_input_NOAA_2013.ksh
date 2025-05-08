@@ -61,10 +61,10 @@ export FIRST_DART_INFLATE_DATE=2013040203
 export FIRST_EMISS_INV_DATE=2013040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2013040209
+export CYCLE_STR_DATE=2013040215
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2013040218
+export CYCLE_END_DATE=2013040215
 #
 # Special DATE for emissions perturbations
 export RUN_SPECIAL_PERT_DATE=false
@@ -134,7 +134,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_LOCALIZATION=true
 #
    export RUN_MOPITT_V8_CO_PROFILE_OBS=true           # (done)  TRACER I
-   export RUN_MODIS_AOD_TOTAL_COL_OBS=true            # (done)  TRACER I
+   export RUN_MODIS_AOD_TOTAL_COL_OBS=false            # (done)  TRACER I
    export RUN_OMI_O3_PROFILE_OBS=true                 # (done)  TRACER I
    export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true        # (done)  TRACER I
    export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
@@ -142,7 +142,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_TES_O3_PROFILE_OBS=true                 # (done)  TRACER I
    export RUN_SCIAM_NO2_TROP_COL_OBS=true            # (check)  TRACER I
    export RUN_GOME2A_NO2_TROP_COL_OBS=true            # (done)  TRACER I
-   export RUN_GOME2B_NO2_TROP_COL_OBS=false           # (check)  TRACER I
+   export RUN_GOME2B_NO2_TROP_COL_OBS=false            # (done)  TRACER I
    export RUN_MLS_O3_PROFILE_OBS=true                 # (done)  TRACER I
    export RUN_MLS_HNO3_PROFILE_OBS=true               # (done)  TRACER I
    export RUN_AIRNOW_CO_OBS=true                      # (done)  TRACER I
@@ -216,13 +216,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export MEGAN_BIO_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_MEGAN_BIO
    export EXPERIMENT_WRFFIRECHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/fire_emissions/fire_emissions_v1.5
    export FINN_FIRE_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_FINN_FIRE
-   if [[ ${YYYY} -eq 2005 ]]; then      
-      export NL_FIRE_FILE=GLOBAL_FINNv15_2005_MOZ4_7112014.txt
-   elif [[ ${YYYY} -eq 2013 ]]; then      
-      export NL_FIRE_FILE=GLOBAL_FINNv15_2013_MOZ4_7112014.txt
-   elif [[ ${YYYY} -eq 2019 ]]; then
-       export NL_FIRE_FILE=GLOBAL_FINNv15_2019_MOZART_06022020.txt
-   fi
+   export NL_FIRE_FILE=GLOBAL_FINNv15_${YYYY}.MOZ4.txt
    export EXPERIMENT_WRFCHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/anthro_emissions
    export MOZBC_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/tcr2_data
    export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
@@ -260,11 +254,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export L_EMISS_PERT_TASKS=27
    export L_EMISS_PERT_MODEL=bro
 #   
-#   export PERT_JOB_CLASS=devel
-#   export PERT_TIME_LIMIT=01:59:00
-#   export PERT_NODES=1
-#   export PERT_TASKS=4
-#
    export NL_FAC_OBS_ERROR_OMI_SO2=1.75         # good
    export NL_FAC_OBS_ERROR_MLS_HNO3=2.00        # good
    export NL_FAC_OBS_ERROR_MLS_O3=1.50          # good
@@ -272,7 +261,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_FAC_OBS_ERROR_TES_O3=3.75          # good
    export NL_FAC_OBS_ERROR_MODIS_AOD=1.00       # good
    export NL_FAC_OBS_ERROR_GOME2A_NO2=0.75      # good
-   export NL_FAC_OBS_ERROR_GOME2B_NO2=0.75      # need to test
+   export NL_FAC_OBS_ERROR_GOME2B_NO2=0.75      # good
    export NL_FAC_OBS_ERROR_MOPITT_CO=0.40       # good
    export NL_FAC_OBS_ERROR_OMI_NO2_DOMINO=1.00  # good
    export NL_FAC_OBS_ERROR_OMI_O3=0.075         # good
@@ -1787,7 +1776,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/gome2a_no2_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_GOME2A_NO2_Total_Col.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_GOME2AB_NO2_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1803,7 +1792,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/gome2a_no2_trop_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_GOME2A_NO2_Trop_Col.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_GOME2AB_NO2_Trop_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1819,7 +1808,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/gome2b_no2_total_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_GOME2B_NO2_Total_Col.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_GOME2AB_NO2_Total_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################
@@ -1835,7 +1824,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/gome2b_no2_trop_col_obs
       fi
-      source ${RS_SCRIPTS_DIR}/RS_GOME2B_NO2_Trop_Col.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_GOME2AB_NO2_Trop_Col.ksh > index_rs.html 2>&1
    fi
 #
 ########################################################################

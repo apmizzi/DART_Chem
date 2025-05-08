@@ -169,7 +169,6 @@ subroutine get_expected_modis_aod_total_col(state_handle, ens_size, location, ke
    real(r8) :: seas(ens_size) 
    real(r8) :: claj(ens_size) 
    real(r8) :: naaj(ens_size) 
-   real(r8) :: orgpai(ens_size) 
    real(r8) :: orgpaj(ens_size) 
    real(r8) :: eps
    real(r8) :: Rd                    ! gas constant dry air
@@ -317,6 +316,7 @@ subroutine get_expected_modis_aod_total_col(state_handle, ens_size, location, ke
       call interpolate(state_handle, ens_size, nloc, QTY_DST02, pm25j(:), zstatus)
 !
 ! Convert from ug/kg to kg/m^2
+      dust2(:) = dust2(:) * 1.e-9 * fac(:)
       dust2(:) = .8547*pm25j(:) * 1.e-9 * fac(:)
 !
 ! dust (ug/kg - dry air) at this location - this calls the model_mod code.
@@ -340,12 +340,11 @@ subroutine get_expected_modis_aod_total_col(state_handle, ens_size, location, ke
 !
 ! hydrophilic organic carbon (ug/kg - dry air) at this location - this calls the model_mod code.
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, nloc, QTY_OC1, orgpai(:), zstatus)
       call interpolate(state_handle, ens_size, nloc, QTY_OC1, orgpaj(:), zstatus)
 !
 ! Convert from ug/kg to kg/m^2
-      oc1(:) = .3 * (orgpai(:)*10. + 1.12*orgpaj(:)) * 1.e-9 * fac(:)
-      oc2(:) = .7 * (orgpai(:)*10. + 1.12*orgpaj(:)) * 1.e-9 * fac(:)
+      oc1(:) = .3 * (orgpai*10. + 1.12*orgpaj(:)) * 1.e-9 * fac(:)
+      oc2(:) = .7 * (orgpai*10. + 1.12*orgpaj(:)) * 1.e-9 * fac(:)
 !
 ! sea salt (ug/kg - dry air) at this location - this calls the model_mod code.
       zstatus(:)=0

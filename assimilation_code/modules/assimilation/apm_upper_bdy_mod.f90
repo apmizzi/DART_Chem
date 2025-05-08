@@ -90,8 +90,11 @@ lat_obs,prs_obs,nprs_obs,fld_prf_mdl,date_obs,datesec_obs)
 ! waccm
    elseif (trim(model).eq.'waccm' .or. trim(model).eq.'WACCM') then
       call get_MOZART_REAL_DATA(data_file,trim(fld),nx,ny,nz,ntim,fld_glb)
+! tcr2
+   elseif (trim(model).eq.'tcr2' .or. trim(model).eq.'TCR2') then
+      call get_MOZART_REAL_DATA(data_file,trim(fld),nx,ny,nz,ntim,fld_glb)
    else
-      print *, 'APM: Large scale model type does not exist '
+      print *, 'APM: Large scale model type does not exist ',trim(model)
       call exit_all(-77)
    endif
    lon_glb(:)=lon_glb(:)/rad2deg
@@ -557,8 +560,11 @@ fld_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
 ! waccm
    elseif (trim(model).eq.'waccm' .or. trim(model).eq.'WACCM') then
       call get_MOZART_REAL_DATA(data_file,trim(fld),nx,ny,nz,ntim,fld_glb)
+! tcr2
+   elseif (trim(model).eq.'tcr2' .or. trim(model).eq.'TCR2') then
+      call get_MOZART_REAL_DATA(data_file,trim(fld),nx,ny,nz,ntim,fld_glb)
    else
-      print *, 'APM: Large scale model type does not exist '
+      print *, 'APM: Large scale model type does not exist ',trim(model)
       call exit_all(-77)
    endif
    call get_MOZART_REAL_DATA(data_file,'T',nx,ny,nz,ntim,tmp_glb)

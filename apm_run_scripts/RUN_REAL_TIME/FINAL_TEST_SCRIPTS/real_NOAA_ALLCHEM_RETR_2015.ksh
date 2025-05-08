@@ -36,8 +36,8 @@ export INPUT_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1
 export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
 export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/TRACER1_OBS
-export RUN_DIR=${EXPERIMENT_DIR}/NOAA_ALLCHEM_RETR_2005
-export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2005
+export RUN_DIR=${EXPERIMENT_DIR}/NOAA_ALLCHEM_RETR_2015
+export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2015
 export EXPERIMENT_INPUT_OBS=NOAA_RUNTIME_OBS
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
 export WRFCHEM_TEMPLATE_FILE=wrfinput_d01_2019-04-02_03:00:00.e001
@@ -46,16 +46,16 @@ export CYCLE_PERIOD=3
 export FCST_PERIOD=3
 #
 # CYCLE TIME SETTINGS (NOAA has extra digits for ss)
-export INITIAL_DATE=2005040200
-export FIRST_FILTER_DATE=2005040203
-export FIRST_DART_INFLATE_DATE=2005040203
-export FIRST_EMISS_INV_DATE=2005040203
+export INITIAL_DATE=2015040200
+export FIRST_FILTER_DATE=2015040203
+export FIRST_DART_INFLATE_DATE=2015040203
+export FIRST_EMISS_INV_DATE=2015040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2005040218
+export CYCLE_STR_DATE=2015040218
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2005040218
+export CYCLE_END_DATE=2015040218
 
 # For emissions estimation
 export ADD_EMISS=false
@@ -68,33 +68,32 @@ export DART_MEM_STR=1
 #
 # Set large scale chemisty file
 export NL_UPPER_DATA_FILE_NAME=/h0001.nc
-export NL_UPPER_DATA_MODEL=\'TCR2\'
+export NL_UPPER_DATA_MODEL=\'MOZART\'
 export LS_CHEM_DX=78
 export LS_CHEM_DY=35
 export LS_CHEM_DZ=32
 export LS_CHEM_DT=360
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=false
-export RUN_MOPITT_V8_CO_PROFILE_OBS=false           # (done)  TRACER I
-export RUN_MODIS_AOD_TOTAL_COL_OBS=false            # (done)  TRACER I
-export RUN_OMI_O3_PROFILE_OBS=true                  # (done)  TRACER I
-export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false        # (done)  TRACER I
-export RUN_OMI_SO2_PBL_COL_OBS=false                # (done)  TRACER I
-export RUN_TES_CO_PROFILE_OBS=false                 # (done)  TRACER I
-export RUN_TES_O3_PROFILE_OBS=false                 # (done)  TRACER I
-export RUN_GOME2A_NO2_TROP_COL_OBS=false            # (done)  TRACER I
+export RUN_INPUT_OBS=true
+export RUN_MOPITT_V8_CO_PROFILE_OBS=true           # (done)  TRACER I
+export RUN_MODIS_AOD_TOTAL_COL_OBS=false           # (done)  TRACER I
+export RUN_OMI_O3_PROFILE_OBS=false                 # (done)  TRACER I
+export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true        # (done)  TRACER I
+export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
+export RUN_TES_CO_PROFILE_OBS=true                 # (done)  TRACER I
+export RUN_TES_O3_PROFILE_OBS=true                 # (done)  TRACER I
+export RUN_GOME2A_NO2_TROP_COL_OBS=true            # (done)  TRACER I
 export RUN_GOME2B_NO2_TROP_COL_OBS=false           # (done)  TRACER I
-export RUN_SCIAM_NO2_TROP_COL_OBS=false             # (done)  TRACER I
-export RUN_MLS_O3_PROFILE_OBS=false                 # (done)  TRACER I
-export RUN_MLS_HNO3_PROFILE_OBS=false               # (done)  TRACER I
-export RUN_AIRNOW_CO_OBS=false                      # (done)  TRACER I
-export RUN_AIRNOW_O3_OBS=false                      # (done)  TRACER I
-export RUN_AIRNOW_NO2_OBS=false                     # (done)  TRACER I
-export RUN_AIRNOW_SO2_OBS=false                     # (done)  TRACER I
+export RUN_MLS_O3_PROFILE_OBS=true                 # (done)  TRACER I
+export RUN_MLS_HNO3_PROFILE_OBS=true               # (done)  TRACER I
+export RUN_AIRNOW_CO_OBS=true                      # (done)  TRACER I
+export RUN_AIRNOW_O3_OBS=true                      # (done)  TRACER I
+export RUN_AIRNOW_NO2_OBS=true                     # (done)  TRACER I
+export RUN_AIRNOW_SO2_OBS=true                     # (done)  TRACER I
 export RUN_AIRNOW_PM10_OBS=false                    # (done)  TRACER I
 export RUN_AIRNOW_PM25_OBS=false                    # (done)  TRACER I
-export RUN_MET_OBS=false                             # (done)  TRACER I
+export RUN_MET_OBS=true                             # (done)  TRACER I
 #
 # Setup DART namelist parameters for which observations to assimilate/evaluate
 # &obs_kind_nml
@@ -323,7 +322,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
    export WRF_VER=WRFCHEM_NOAACSLv4.2.2
    export WRFCHEM_VER=WRFCHEM_NOAACSLv4.2.2
-   export NNL_TIME_STEP=40
+   export NNL_TIME_STEP=30
 #   export WRF_VER=WRFCHEM_NOAACSL
 #   export WRFCHEM_VER=WRFCHEM_NOAACSL
 #   export WRF_VER=WRFCHEMv4.3.2_dmpar
@@ -339,7 +338,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export MEGAN_BIO_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_MEGAN_BIO
    export EXPERIMENT_WRFFIRECHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/fire_emissions
    export FINN_FIRE_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_FINN_FIRE
-   export NL_FIRE_FILE=GLOBAL_FINNv15_2005_MOZ4.txt
+   export NL_FIRE_FILE=GLOBAL_FINNv15_2019_MOZART_06022020.txt
    export EXPERIMENT_WRFCHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/anthro_emissions
    export MOZBC_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/tcr2_data/${YYYY}/${MM}
    export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
@@ -418,6 +417,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_CRIS_PAN_PROFILE_OBS=false 
    export RUN_CRIS_PAN_CPSR_OBS=false
    export RUN_SCIAM_NO2_TOTAL_COL_OBS=false
+   export RUN_SCIAM_NO2_TROP_COL_OBS=false
    export RUN_GOME2A_NO2_TOTAL_COL_OBS=false
    export RUN_MLS_O3_TOTAL_COL_OBS=false
    export RUN_MLS_O3_CPSR_OBS=false

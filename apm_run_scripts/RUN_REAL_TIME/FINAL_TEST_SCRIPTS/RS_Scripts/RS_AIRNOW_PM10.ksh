@@ -3,10 +3,6 @@
       cd ${RUN_DIR}/${DATE}/airnow_pm10_obs
 #
 # GET AIRNOW DATA
-      if [[ ! -e airnow_pm10_hourly_csv_data ]]; then
-         cp ${EXPERIMENT_AIRNOW_DIR}/airnow_pm10_hourly_csv_data ./.
-      fi
-#
       export BIN_BEG_YR=${ASIM_MN_YYYY}
       export BIN_BEG_MM=${ASIM_MN_MM}
       export BIN_BEG_DD=${ASIM_MN_DD}
@@ -20,8 +16,12 @@
       export BIN_END_MN=${ASIM_MX_MN}
       export BIN_END_SS=${ASIM_MX_SS}
 #
+      export INFILE=airnow_pm10_hourly_csv_data
+      rm -rf ${INFILE}
+      cp ${EXPERIMENT_AIRNOW_DIR}/airnow_pm10_hourly_csv_data/${BIN_BEG_YR}/${INFILE} ./.
+#
 # RUN_AIRNOW_PM10_ASCII_TO_DART
-      export NL_FILENAME=\'airnow_pm10_hourly_csv_data\'
+      export NL_FILENAME=\'${INFILE}\'
       export NL_LAT_MN=${NL_MIN_LAT}
       export NL_LAT_MX=${NL_MAX_LAT}
       export NL_LON_MN=${NL_MIN_LON}

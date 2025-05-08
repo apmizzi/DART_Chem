@@ -40,8 +40,8 @@ export EXPERIMENT_DIR=${SCRATCH_DIR}
 #export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_REAL_TIME_DATA
 export EXPERIMENT_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS
 #
-export RUN_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2005
-export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2005
+export RUN_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2014
+export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2014
 export EXPERIMENT_INPUT_OBS=NOAA
 #
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
@@ -55,16 +55,16 @@ export CYCLE_PERIOD=3
 export FCST_PERIOD=3
 #
 # CYCLE TIME SETTINGS (NOAA has extra digits for ss)
-export INITIAL_DATE=2005040200
-export FIRST_FILTER_DATE=2005040203
-export FIRST_DART_INFLATE_DATE=2005040203
-export FIRST_EMISS_INV_DATE=2005040203
+export INITIAL_DATE=2014040200
+export FIRST_FILTER_DATE=2014040203
+export FIRST_DART_INFLATE_DATE=2014040203
+export FIRST_EMISS_INV_DATE=2014040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2005040200
+export CYCLE_STR_DATE=2014040215
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2005040200
+export CYCLE_END_DATE=2014040215
 #
 # Special DATE for emissions perturbations
 export RUN_SPECIAL_PERT_DATE=false
@@ -126,32 +126,32 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_SEASON_WES=false
    export RUN_WRFCHEM_BIO=false
    export RUN_WRFCHEM_FIRE=false
-   export RUN_WRFCHEM_CHEMI=false
-   export RUN_PERT_WRFCHEM_CHEM_ICBC=true
-   export RUN_PERT_WRFCHEM_CHEM_EMISS=false
-   export RUN_COMBINE_OBS=false
-   export RUN_PREPROCESS_OBS=false
-   export RUN_LOCALIZATION=false
+   export RUN_WRFCHEM_CHEMI=true
+   export RUN_PERT_WRFCHEM_CHEM_ICBC=false
+   export RUN_PERT_WRFCHEM_CHEM_EMISS=true
+   export RUN_COMBINE_OBS=true
+   export RUN_PREPROCESS_OBS=true
+   export RUN_LOCALIZATION=true
 #
-   export RUN_MOPITT_V8_CO_PROFILE_OBS=false           # (done)  TRACER I
+   export RUN_MOPITT_V8_CO_PROFILE_OBS=true           # (done)  TRACER I
    export RUN_MODIS_AOD_TOTAL_COL_OBS=false            # (done)  TRACER I
-   export RUN_OMI_O3_PROFILE_OBS=false                 # (done)  TRACER I
-   export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false        # (done)  TRACER I
-   export RUN_OMI_SO2_PBL_COL_OBS=false                # (done)  TRACER I
-   export RUN_TES_CO_PROFILE_OBS=false                 # (done)  TRACER I
-   export RUN_TES_O3_PROFILE_OBS=false                # (done)  TRACER I
-   export RUN_SCIAM_NO2_TROP_COL_OBS=false            # (check)  TRACER I
-   export RUN_GOME2A_NO2_TROP_COL_OBS=false            # (done)  TRACER I
+   export RUN_OMI_O3_PROFILE_OBS=true                 # (done)  TRACER I
+   export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true        # (done)  TRACER I
+   export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
+   export RUN_TES_CO_PROFILE_OBS=true                 # (done)  TRACER I
+   export RUN_TES_O3_PROFILE_OBS=true                 # (done)  TRACER I
+   export RUN_SCIAM_NO2_TROP_COL_OBS=true            # (check)  TRACER I
+   export RUN_GOME2A_NO2_TROP_COL_OBS=true            # (done)  TRACER I
    export RUN_GOME2B_NO2_TROP_COL_OBS=false           # (check)  TRACER I
-   export RUN_MLS_O3_PROFILE_OBS=false                 # (done)  TRACER I
-   export RUN_MLS_HNO3_PROFILE_OBS=false               # (done)  TRACER I
-   export RUN_AIRNOW_CO_OBS=false                      # (done)  TRACER I
-   export RUN_AIRNOW_O3_OBS=false                      # (done)  TRACER I
-   export RUN_AIRNOW_NO2_OBS=false                     # (done)  TRACER I
-   export RUN_AIRNOW_SO2_OBS=false                     # (done)  TRACER I
+   export RUN_MLS_O3_PROFILE_OBS=true                 # (done)  TRACER I
+   export RUN_MLS_HNO3_PROFILE_OBS=true               # (done)  TRACER I
+   export RUN_AIRNOW_CO_OBS=true                      # (done)  TRACER I
+   export RUN_AIRNOW_O3_OBS=true                      # (done)  TRACER I
+   export RUN_AIRNOW_NO2_OBS=true                     # (done)  TRACER I
+   export RUN_AIRNOW_SO2_OBS=true                     # (done)  TRACER I
    export RUN_AIRNOW_PM10_OBS=false                    # (done)  TRACER I
-   export RUN_AIRNOW_PM25_OBS=true                    # (done)  TRACER I
-   export RUN_MET_OBS=false                            # (done)  TRACER I
+   export RUN_AIRNOW_PM25_OBS=false                    # (done)  TRACER I
+   export RUN_MET_OBS=true                            # (done)  TRACER I
 #
    rm -rf index_RS_Code_Versions_${DATE}   
    source ${RS_SCRIPTS_DIR}/RS_Code_Versions.ksh > index_RS_Code_Versions_${DATE} 2>&1
@@ -234,7 +234,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # Broadwell 28 nodes per core
 # Broadwell
    export L_ICBC_PERT_JOB_CLASS=normal
-   export L_ICBC_PERT_TIME_LIMIT=06:10:00
+   export L_ICBC_PERT_TIME_LIMIT=02:45:00
    export L_ICBC_PERT_NODES=7
    export L_ICBC_PERT_TASKS=28
    export L_ICBC_PERT_MODEL=bro

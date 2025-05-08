@@ -8,8 +8,8 @@
       rm -rf ${FILE_FR}
       ln -sf ${REAL_DIR}/${FILE_CR}_${FILE_DATE} ${FILE_CR}   
       ln -sf ${REAL_DIR}/${FILE_FR}_${FILE_DATE} ${FILE_FR}   
-      rm -rf GLOBAL*.txt
-      ln -sf ${EXPERIMENT_WRFFIRECHEMI_DIR}/GLOBAL*.txt ./.
+      rm -rf *FINN*.txt
+      ln -sf ${EXPERIMENT_WRFFIRECHEMI_DIR}/*FINN*.txt ./.
       export FILE=fire_emis.exe
       rm -rf ${FILE}
       ln -sf ${FINN_FIRE_DIR}/work/${FILE} ${FILE}

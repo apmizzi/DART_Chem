@@ -52,10 +52,10 @@ export FIRST_DART_INFLATE_DATE=2013040203
 export FIRST_EMISS_INV_DATE=2013040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2013040200
+export CYCLE_STR_DATE=2013040218
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2013040200
+export CYCLE_END_DATE=2013040218
 
 # For emissions estimation
 export ADD_EMISS=false
@@ -64,6 +64,7 @@ export EMISS_DAMP_INTRA_CYCLE=1.0
 #
 # Switch to process filter output without calling filter
 export SKIP_FILTER=false
+export DART_MEM_STR=1
 #
 # Set large scale chemisty file
 export NL_UPPER_DATA_FILE_NAME=/h0001.nc
@@ -76,13 +77,14 @@ export LS_CHEM_DT=360
 # SELECT OBSERVATION OPTIONS:
 export RUN_INPUT_OBS=true
 export RUN_MOPITT_V8_CO_PROFILE_OBS=true           # (done)  TRACER I
-export RUN_MODIS_AOD_TOTAL_COL_OBS=true            # (done)  TRACER I
-export RUN_OMI_O3_PROFILE_OBS=true                 # (done)  TRACER I
+export RUN_MODIS_AOD_TOTAL_COL_OBS=false           # (done)  TRACER I
+export RUN_OMI_O3_PROFILE_OBS=false                 # (done)  TRACER I
 export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true        # (done)  TRACER I
 export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
 export RUN_TES_CO_PROFILE_OBS=true                 # (done)  TRACER I
 export RUN_TES_O3_PROFILE_OBS=true                 # (done)  TRACER I
 export RUN_GOME2A_NO2_TROP_COL_OBS=true            # (done)  TRACER I
+export RUN_GOME2A_NO2_TROP_COL_OBS=false           # (done)  TRACER I
 export RUN_MLS_O3_PROFILE_OBS=true                 # (done)  TRACER I
 export RUN_MLS_HNO3_PROFILE_OBS=true               # (done)  TRACER I
 export RUN_AIRNOW_CO_OBS=true                      # (done)  TRACER I
@@ -337,7 +339,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export FINN_FIRE_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_FINN_FIRE
    export NL_FIRE_FILE=GLOBAL_FINNv15_2019_MOZART_06022020.txt
    export EXPERIMENT_WRFCHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/anthro_emissions
-   export MOZBC_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/tcr2_data
+   export MOZBC_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/tcr2_data/${YYYY}/${MM}
    export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
    export PERT_CHEM_INPUT_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_PERT_CHEM/ICBC_PERT
    export NL_UPPER_DATA_FILE_NAME=/h0001.nc
@@ -345,19 +347,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export ADJUST_EMISS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_EMISS_INV
    export PERT_CHEM_EMISS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_PERT_CHEM/EMISS_PERT
 #   
-   export GENERAL_JOB_CLASS=normal
-   export GENERAL_TIME_LIMIT=01:00:00
-   export GENERAL_NODES=1
-   export GENERAL_TASKS=1
-   export GENERAL_MODEL=has
-#
-# Haswell   
-   export FILTER_JOB_CLASS=normal
-   export FILTER_TIME_LIMIT=02:59:00
-   export FILTER_NODES=5
-   export FILTER_TASKS=24
-   export FILTER_MODEL=has
-#
    export WRFCHEM_JOB_CLASS=normal
    export WRFCHEM_TIME_LIMIT=01:59:00
    export WRFCHEM_TIME_LIMIT=00:40:00
