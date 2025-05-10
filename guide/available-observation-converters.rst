@@ -11,6 +11,7 @@ Each directory has at least one converter:
 -  ``AURA``: See ``DART/observations/obs_converters/AURA``
 -  ``Aviso+/CMEMS``: :doc:`../observations/obs_converters/AVISO/AVISO`
 -  ``Ameriflux``: :doc:`../observations/obs_converters/Ameriflux/level4_to_obs`
+-  ``BATS``: :doc:`../observations/obs_converters/BATS/readme`
 -  ``CHAMP``: :doc:`../observations/obs_converters/CHAMP/work/README`
 -  ``cice``: :doc:`../observations/obs_converters/cice/cice_to_obs`
 -  ``CNOFS``: See ``DART/observations/obs_converters/CNOFS``
@@ -59,8 +60,8 @@ In addition the following external program produces DART observation sequence
 files:
 
 -  `Observation Processing And Wind Synthesis
-   (OPAWS) <http://code.google.com/p/opaws/>`__: OPAWS can process NCAR Dorade
-   (sweep) and NCAR EOL Foray (netCDF) radar data. It analyzes (grids) data in
+   (OPAWS) <http://code.google.com/p/opaws/>`__: OPAWS can process NSF NCAR Dorade
+   (sweep) and NSF NCAR EOL Foray (netCDF) radar data. It analyzes (grids) data in
    either two-dimensions (on the conical surface of each sweep) or
    three-dimensions (Cartesian). Analyses are output in netCDF, Vis5d, and/or
    DART (Data Assimilation Research Testbed) formats.

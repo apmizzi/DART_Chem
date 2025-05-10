@@ -26,7 +26,8 @@ use         utilities_mod, only : register_module, error_handler, &
 
 use  netcdf_utilities_mod, only : nc_check, nc_add_global_attribute, &
                                   nc_synchronize_file, nc_end_define_mode, &
-                                  nc_add_global_creation_time, nc_begin_define_mode
+                                  nc_add_global_creation_time, nc_begin_define_mode, &
+                                  nc_get_dimension_size, nc_open_file_readonly
 
 use obs_def_utilities_mod, only : track_status
 
@@ -43,7 +44,8 @@ use distributed_state_mod, only : get_state
 
 use      dart_time_io_mod, only : write_model_time
 
-use     default_model_mod, only : adv_1step, nc_write_model_vars
+use     default_model_mod, only : adv_1step, nc_write_model_vars, parse_variables_clamp, &
+                                  MAX_STATE_VARIABLE_FIELDS_CLAMP
 
 use        noah_hydro_mod, only : configure_lsm, configure_hydro, &
                                   n_link, linkLong, linkLat, linkAlt, get_link_tree, &
@@ -114,15 +116,6 @@ character(len=512) :: string1, string2, string3
 integer(i8) :: model_size
 type(time_type) :: time_step
 
-! Codes for interpreting the columns of the variable_table
-integer, parameter :: VT_VARNAMEINDX  = 1 ! ... variable name
-integer, parameter :: VT_KINDINDX     = 2 ! ... DART kind
-integer, parameter :: VT_MINVALINDX   = 3 ! ... minimum value if any
-integer, parameter :: VT_MAXVALINDX   = 4 ! ... maximum value if any
-integer, parameter :: VT_STATEINDX    = 5 ! ... update (state) or not
-integer, parameter :: MAX_STATE_VARIABLES     = 40
-integer, parameter :: NUM_STATE_TABLE_COLUMNS = 5
-
 integer :: domain_count
 integer :: idom, idom_hydro = -1, idom_parameters = -1, idom_lsm = -1
 
@@ -139,9 +132,9 @@ real(r8)            :: streamflow_4_local_multipliers = 1.0e-5
 character(len=256)  :: perturb_distribution           = 'lognormal'
 
 character(len=obstypelength) :: &
-    lsm_variables(  NUM_STATE_TABLE_COLUMNS,MAX_STATE_VARIABLES) = '', &
-    hydro_variables(NUM_STATE_TABLE_COLUMNS,MAX_STATE_VARIABLES) = '', &
-    parameters(     NUM_STATE_TABLE_COLUMNS,MAX_STATE_VARIABLES) = ''
+    lsm_variables(MAX_STATE_VARIABLE_FIELDS_CLAMP) = '', &
+    hydro_variables(MAX_STATE_VARIABLE_FIELDS_CLAMP) = '', &
+    parameters(MAX_STATE_VARIABLE_FIELDS_CLAMP) = ''
 
 namelist /model_nml/ assimilation_period_days,       &
                      assimilation_period_seconds,    &
@@ -176,15 +169,7 @@ subroutine static_init_model()
 character(len=*), parameter :: routine = 'static_init_model'
 
 integer  :: iunit, io, domainID
-integer  :: n_lsm_fields
-integer  :: n_hydro_fields
-integer  :: n_parameters
 integer  :: vsize
-
-character(len=obstypelength) :: var_names(MAX_STATE_VARIABLES)
-real(r8) :: var_ranges(MAX_STATE_VARIABLES,2)
-logical  :: var_update(MAX_STATE_VARIABLES)
-integer  :: var_qtys(  MAX_STATE_VARIABLES)
 
 character(len=256) :: domain_name
 
@@ -249,13 +234,9 @@ DOMAINS: do domainID = 1,size(domain_order)
 
       call configure_hydro()
       call read_hydro_global_atts(domain_shapefiles(domainID))
-      call verify_variables(hydro_variables, domain_shapefiles(domainID), &
-                  n_hydro_fields, var_names, var_qtys, var_ranges, var_update)
+
       idom_hydro = add_domain(domain_shapefiles(domainID), &
-                       n_hydro_fields, var_names, &
-                         kind_list=var_qtys, &
-                        clamp_vals=var_ranges(1:n_hydro_fields,:), &
-                       update_list=var_update)
+                              parse_variables_clamp(hydro_variables))
 
       if (debug > 99) call state_structure_info(idom_hydro)
 
@@ -272,13 +253,9 @@ DOMAINS: do domainID = 1,size(domain_order)
 
    elseif (index(domain_name,'PARAMETER') > 0) then
 
-      call verify_variables(parameters, domain_shapefiles(domainID), n_parameters, &
-                       var_names, var_qtys, var_ranges, var_update)
       idom_parameters = add_domain(domain_shapefiles(domainID), &
-                            n_parameters, var_names, &
-                              kind_list=var_qtys, &
-                             clamp_vals=var_ranges(1:n_parameters,:), &
-                            update_list=var_update )
+                                   parse_variables_clamp(parameters))
+
       if (debug > 99) call state_structure_info(idom_parameters)
 
       !>@todo check the size of the parameter variables against nlinks
@@ -287,14 +264,10 @@ DOMAINS: do domainID = 1,size(domain_order)
 
       call configure_lsm(lsm_model_choice)
       call read_noah_global_atts(domain_shapefiles(domainID))
-      call verify_variables(lsm_variables, domain_shapefiles(domainID), n_lsm_fields, &
-                       var_names, var_qtys, var_ranges, var_update)
-      idom_lsm = add_domain(domain_shapefiles(domainID), &
-                     n_lsm_fields, var_names, &
-                         kind_list=var_qtys, &
-                        clamp_vals=var_ranges(1:n_lsm_fields,:), &
-                       update_list=var_update)
-      if (debug > 99) call state_structure_info(idom_lsm)
+      idom_hydro = add_domain(domain_shapefiles(domainID), &
+                              parse_variables_clamp(lsm_variables))
+
+       if (debug > 99) call state_structure_info(idom_lsm)
 
    else
 
@@ -534,14 +507,19 @@ character(len=STRINGLENGTH), allocatable, dimension(:) :: datestring
 character(len=STRINGLENGTH)                            :: datestring_scalar
 integer :: year, month, day, hour, minute, second
 integer :: DimID, VarID, strlen, ntimes
-logical :: isLsmFile
+logical :: isLsmFile, isClimFile
 integer :: ncid, io
+integer :: c_link
 
 io = nf90_open(filename, NF90_NOWRITE, ncid)
 call nc_check(io,routine,'open',filename)
 
 ! Test if "Time" is a dimension in the file.
 isLsmFile = nf90_inq_dimid(ncid, 'Time', DimID) == NF90_NOERR
+
+! Test if "time" is a dimension 
+! Only read model time from the restart, use a dummy one here!
+isClimFile = nf90_inq_varid(ncid, 'static_time', VarID) == NF90_NOERR
 
 if(isLsmFile) then ! Get the time from the LSM restart file
 
@@ -575,6 +553,28 @@ if(isLsmFile) then ! Get the time from the LSM restart file
 
    io = nf90_get_var(ncid, VarID, datestring)
    call nc_check(io, routine, 'get_var','Times',filename)
+
+elseif (isClimFile) then 
+
+   ! Dummy time for static files
+   ntimes = 1
+   allocate(datestring(ntimes))
+   datestring(1) = '1980-01-01_00:00:00'
+
+   ! Also check if the state in the climatology is consistent 
+   ! with the state in the restarts
+   ncid   = nc_open_file_readonly(filename, routine)
+   c_link = nc_get_dimension_size(ncid, 'links', routine)
+
+   if ( c_link /= n_link ) then
+      write(string1,'(A)')'The size of the state in the climatology files is not consistent with the current domain size.'
+      write(string2, *   )'number of links: ', c_link, &
+                      ' from "'//trim(filename)//'"'
+      write(string3,*)'number of links: ',int(n_link,i8), &
+                      ' from "'//get_hydro_domain_filename()//'"'
+      call error_handler(E_ERR, routine, string1, &
+                 source, revision, revdate, text2=string2, text3=string3)
+   endif
 
 else ! Get the time from the hydro or parameter file
 
@@ -637,7 +637,7 @@ call get_model_variable_indices(index_in, iloc, jloc, kloc, varid, domid, var_ty
 
 location = domain_info(domid)%location(iloc,jloc,kloc)
 
-if (do_output() .and. debug > 99) then
+if (do_output() .and. debug > 1000) then
    call write_location(0,location,charstring=string1)
    write(*,*)'gsmd index,i,j,k = ',index_in, iloc, jloc, kloc, trim(string1)
 endif
@@ -1225,90 +1225,6 @@ end subroutine end_model
 !=======================================================================
 
 !-----------------------------------------------------------------------
-!> given the list of variables and a filename, check user input
-!> return the handle to the open netCDF file and the number of variables
-!> in this 'domain'
-
-subroutine verify_variables( variable_table, filename, ngood, &
-                       var_names, var_qtys, var_ranges, var_update)
-
-character(len=*), intent(in)  :: variable_table(:,:)
-character(len=*), intent(in)  :: filename
-integer,          intent(out) :: ngood
-character(len=*), intent(out) :: var_names(:)
-real(r8),         intent(out) :: var_ranges(:,:)
-logical,          intent(out) :: var_update(:)
-integer ,         intent(out) :: var_qtys(:)
-
-character(len=*), parameter :: routine = 'verify_variables'
-
-integer  :: io, i, quantity
-real(r8) :: minvalue, maxvalue
-
-character(len=NF90_MAX_NAME) :: varname
-character(len=NF90_MAX_NAME) :: dartstr
-character(len=NF90_MAX_NAME) :: minvalstring
-character(len=NF90_MAX_NAME) :: maxvalstring
-character(len=NF90_MAX_NAME) :: state_or_aux
-
-ngood = 0
-MyLoop : do i = 1, size(variable_table,2)
-
-   varname      = variable_table(VT_VARNAMEINDX,i)
-   dartstr      = variable_table(VT_KINDINDX   ,i)
-   minvalstring = variable_table(VT_MINVALINDX ,i)
-   maxvalstring = variable_table(VT_MAXVALINDX ,i)
-   state_or_aux = variable_table(VT_STATEINDX  ,i)
-
-   if ( varname == ' ' .and. dartstr == ' ' ) exit MyLoop ! Found end of list.
-
-   if ( varname == ' ' .or.  dartstr == ' ' ) then
-      string1 = 'model_nml: variable list not fully specified'
-      string2 = 'reading from "'//trim(filename)//'"'
-      call error_handler(E_ERR,routine, string1, &
-                 source, revision, revdate, text2=string2)
-   endif
-
-   ! The internal DART routines check if the variable name is valid.
-
-   ! Make sure DART kind is valid
-   quantity = get_index_for_quantity(dartstr)
-   if( quantity < 0 ) then
-      write(string1,'(''there is no obs_kind "'',a,''" in obs_kind_mod.f90'')') &
-                    trim(dartstr)
-      call error_handler(E_ERR,routine,string1,source,revision,revdate)
-   endif
-
-   ! All good to here - fill the output variables
-
-   ngood = ngood + 1
-   var_names( ngood)   = varname
-   var_qtys(  ngood)   = quantity
-   var_ranges(ngood,:) = (/ MISSING_R8, MISSING_R8 /)
-   var_update(ngood)   = .false.   ! at least initially
-
-   ! convert the [min,max]valstrings to numeric values if possible
-   read(minvalstring,*,iostat=io) minvalue
-   if (io == 0) var_ranges(ngood,1) = minvalue
-
-   read(maxvalstring,*,iostat=io) maxvalue
-   if (io == 0) var_ranges(ngood,2) = maxvalue
-
-   call to_upper(state_or_aux)
-   if (state_or_aux == 'UPDATE') var_update(ngood) = .true.
-
-enddo MyLoop
-
-if (ngood == MAX_STATE_VARIABLES) then
-   string1 = 'WARNING: you may need to increase "MAX_STATE_VARIABLES"'
-   write(string2,'(''you have specified at least '',i4,'' perhaps more.'')') ngood
-   call error_handler(E_MSG,routine,string1,source,revision,revdate,text2=string2)
-endif
-
-end subroutine verify_variables
-
-
-!-----------------------------------------------------------------------
 !> Sets the location information arrays for each domain
 !> Each location array is declared to be 3D to make it easy to use
 !> the state_structure routines.
@@ -1385,22 +1301,39 @@ integer,          intent(out) :: num_close
 integer,          intent(out) :: close_ind(:)
 real(r8),         intent(out) :: dist(:)
 
-integer :: itask, isuper
+integer, dimension(:), allocatable :: index_map
+integer :: i, idx, il, ir
 
 num_close = 0
 
-do itask = 1,size(my_task_indices)
-   do isuper = 1,num_superset
+! Determine the range of my_task_indices
+il = minval(my_task_indices)
+ir = maxval(my_task_indices)
 
-      ! if stuff on my task ... equals ... global stuff I want ...
-      if ( my_task_indices(itask) == superset_indices(isuper) ) then
-          num_close            = num_close + 1
-          close_ind(num_close) = itask
-          dist(num_close)      = superset_distances(isuper)
-      endif
+! Create a map for quick lookup
+allocate(index_map(il:ir))
+index_map = 0
+do i = 1, num_superset
+  idx = superset_indices(i)
+  if (idx >= il .and. idx <= ir) then
+    index_map(idx) = i
+  end if
+end do
 
-   enddo
-enddo
+! Loop over my_task_indices and find matches using the map
+do i = 1, size(my_task_indices)
+  idx = my_task_indices(i)
+  if (idx >= il .and. idx <= ir) then
+    if (index_map(idx) > 0) then
+      num_close = num_close + 1
+      close_ind(num_close) = i
+      dist(num_close) = superset_distances(index_map(idx))
+    end if
+  end if
+end do
+
+! Deallocate the map
+deallocate(index_map)
 
 end subroutine get_my_close
 

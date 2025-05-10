@@ -10,18 +10,18 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
+import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
 
 project = 'DART'
-copyright = '2022, University Corporation for Atmospheric Research'
+copyright = '2023, University Corporation for Atmospheric Research'
 author = 'Data Assimilation Research Section'
 
 # The full version, including alpha/beta/rc tags
-release = '10.8.5'
+release = '11.11.0'
 root_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
@@ -30,6 +30,7 @@ root_doc = 'index'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+     'sphinx_copybutton',
      'sphinx_rtd_theme',
      'sphinx.ext.autodoc',
      'sphinx.ext.mathjax'
@@ -71,7 +72,7 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'models/gitm/testdata1/*
 #
 html_theme = 'sphinx_rtd_theme'
 html_show_sphinx = False
-html_logo = 'guide/_static/ncar-dart-logo-navy.svg'
+html_logo = 'guide/_static/nsf-ncar-dart.png'
 html_theme_options = {
     'logo_only': True,
     'includehidden': False
@@ -86,3 +87,9 @@ templates_path = ['guide/_templates']
 html_static_path = ['guide/_static']
 
 html_css_files = ['css/custom.css']
+
+# include references
+with open(os.path.join(os.path.dirname(__file__), 'guide/references.rst')) as f:
+    references_content = f.read()
+
+rst_prolog = references_content
