@@ -573,6 +573,13 @@ subroutine get_expected_tes_o3_profile(state_handle, ens_size, location, key, ob
          ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_tes_top, &
          ncnt,o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
 !
+! Check for zeros         
+         do k=kstart,layer_tes
+            kk=k-kstart+1
+            if(o3_prf_mdl(kk).le.0.) then
+               o3_prf_mdl(kk)=o3_min
+            endif
+         enddo
 !
 ! Impose ensemble perturbations from level kstart(imem)-1      
          do k=kstart,layer_tes

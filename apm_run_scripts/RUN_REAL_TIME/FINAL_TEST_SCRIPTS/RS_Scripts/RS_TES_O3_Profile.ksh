@@ -24,7 +24,7 @@
       export BIN_END_YY=${ASIM_MX_YYYY}
       export BIN_END_MM=${ASIM_MX_MM}
       export BIN_END_DD=${ASIM_MX_DD}
-      export BIN_END_HH=${ASIM_MX_DD}
+      export BIN_END_HH=${ASIM_MX_HH}
       export BIN_END_MN=${ASIM_MX_MN}
       export BIN_END_SS=${ASIM_MX_SS}
       if [[ ${HH} -eq 0 ]]; then

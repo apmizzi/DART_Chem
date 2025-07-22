@@ -18,15 +18,19 @@
    (( NNXP_STAG_FR=${NNXP_FR}+1 ))
    (( NNYP_STAG_FR=${NNYP_FR}+1 ))
    (( NNZP_STAG_FR=${NNZP_FR}+1 ))
-   export NSPCS=19
    export NNZ_CHEM=20
-   export NNCHEM_SPC=29
-   export NNFIRE_SPC=8
-   export NNBIO_SPC=1
    export NZ_CHEMI=${NNZ_CHEM}
    export NZ_FIRECHEMI=1
-   export NCHEMI_EMISS=4
-   export NFIRECHEMI_EMISS=3
+# number of species to perturb   
+   export NSPCS=19
+   export NNCHEM_SPC=20
+   export NNFIRE_SPC=8
+   export NNBIO_SPC=1
+# total number of species
+   export NICBC_SPC=39   
+   export NCHEMI_EMISS=49
+   export NFIRECHEMI_EMISS=19
+   export NBIOCHEMI_EMISS=1
    export ISTR_CR=1
    export JSTR_CR=1
    export ISTR_FR=51

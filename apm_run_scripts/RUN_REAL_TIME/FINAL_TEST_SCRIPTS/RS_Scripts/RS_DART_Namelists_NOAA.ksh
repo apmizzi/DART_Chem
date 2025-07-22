@@ -131,14 +131,12 @@
           'TH2',   'QTY_POTENTIAL_TEMPERATURE','TYPE_TH2',   'UPDATE','999',
           'Q2',    'QTY_SPECIFIC_HUMIDITY',    'TYPE_Q2',    'UPDATE','999',
           'PSFC',  'QTY_PRESSURE',             'TYPE_PS',    'UPDATE','999',
+          'co',    'QTY_CO',                   'TYPE_CO',    'UPDATE','999',
           'o3',    'QTY_O3',                   'TYPE_O3',    'UPDATE','999',
-          'h2o2',  'QTY_H2O2',                 'TYPE_H2O2',  'UPDATE','999',
           'no',    'QTY_NO',                   'TYPE_NO',    'UPDATE','999',
           'no2',   'QTY_NO2',                  'TYPE_NO2',   'UPDATE','999',
-          'n2o5',  'QTY_N2O5',                 'TYPE_N2O5',  'UPDATE','999',
-          'hno3',  'QTY_HNO3',                 'TYPE_HNO3',  'UPDATE','999',
           'so2',   'QTY_SO2',                  'TYPE_SO2',   'UPDATE','999',
-          'co',    'QTY_CO',                   'TYPE_CO',    'UPDATE','999'"
+          'hno3',  'QTY_HNO3',                 'TYPE_HNO3',  'UPDATE','999'"
 #
 # Both of these need kind and type definitions.
 # Also need to modify the WRF-Chem model_mod.f90 to
@@ -148,45 +146,35 @@
    export WRFCHEMI_DARTVARS="E_CO,E_NO,E_NO2,E_SO2"
 #
 # The next line should be the same as NL_EMISS_FIRECHEMI_VARIABLES without quotes etc.
-   export WRFFIRECHEMI_DARTVARS="ebu_in_co,ebu_in_no,ebu_in_no2,ebu_in_so2,ebu_in_c2h4,ebu_in_ch2o,ebu_in_ch3oh"
+   export WRFFIRECHEMI_DARTVARS="ebu_in_co,ebu_in_no,ebu_in_no2,ebu_in_so2"
 #
-   export NL_EMISS_CHEMI_VARIABLES="'E_NO',    'QTY_E_NO',    'TYPE_E_NO',     'UPDATE','999',
-          'E_NO2'       ,'QTY_E_NO2',          'TYPE_E_NO2',  'UPDATE','999',
-          'E_SO2'       ,'QTY_E_SO2',          'TYPE_E_SO2',  'UPDATE','999',
-          'E_CO'        ,'QTY_E_CO',           'TYPE_E_CO',   'UPDATE','999'"
+   export NL_EMISS_CHEMI_VARIABLES="'E_CO',    'QTY_E_CO',    'TYPE_E_CO',     'UPDATE','999',
+          'E_NO',       'QTY_E_NO',            'TYPE_E_NO',   'UPDATE','999',
+          'E_NO2',      'QTY_E_NO2',           'TYPE_E_NO2',  'UPDATE','999',
+          'E_SO2',      'QTY_E_SO2',           'TYPE_E_SO2',  'UPDATE','999'"
    export NL_EMISS_FIRECHEMI_VARIABLES="'ebu_in_co'   ,'QTY_EBU_CO',         'TYPE_EBU_CO',  'UPDATE','999',
           'ebu_in_no'    ,'QTY_EBU_NO',         'TYPE_EBU_NO',   'UPDATE','999',
           'ebu_in_no2'   ,'QTY_EBU_NO2',        'TYPE_EBU_NO2',  'UPDATE','999',
-          'ebu_in_so2'   ,'QTY_EBU_SO2',        'TYPE_EBU_SO2',  'UPDATE','999',
-          'ebu_in_c2h4'  ,'QTY_EBU_C2H4',       'TYPE_EBU_C2H4', 'UPDATE','999',
-          'ebu_in_ch2o'  ,'QTY_EBU_CH2O',       'TYPE_EBU_CH2O', 'UPDATE','999',
-          'ebu_in_ch3oh' ,'QTY_EBU_CH3OH',      'TYPE_EBU_CH3OH','UPDATE','999'"
-          'ebu_in_nh3'   ,'QTY_EBU_NH3',        'TYPE_EBU_NH3',  'UPDATE','999'"
+          'ebu_in_so2'   ,'QTY_EBU_SO2',        'TYPE_EBU_SO2',  'UPDATE','999'"
    export NL_WRF_STATE_BOUNDS="'QVAPOR','0.0','NULL','CLAMP',
           'QRAIN', '0.0','NULL','CLAMP',
           'QCLOUD','0.0','NULL','CLAMP',
           'QSNOW', '0.0','NULL','CLAMP',
           'QICE',  '0.0','NULL','CLAMP',
+          'CO',    '${CO_MIN}','${CO_MAX}','CLAMP',
           'O3',    '${O3_MIN}','${O3_MAX}','CLAMP',
-          'H2O2',  '0.0','NULL','CLAMP',
           'NO',    '${NO_MIN}','${NO_MAX}','CLAMP',
           'NO2',   '${NO2_MIN}','${NO2_MAX}','CLAMP',
-          'N2O5',  '0.0','NULL','CLAMP',
-          'HNO3',  '0.0','NULL','CLAMP',
           'SO2',   '${SO2_MIN}','${SO2_MAX}','CLAMP',
-          'CO',    '${CO_MIN}','${CO_MAX}','CLAMP',
-          'E_NO','0.0','NULL','CLAMP',
-          'E_NO2','0.0','NULL','CLAMP',
-          'E_SO2','0.0','NULL','CLAMP',
-          'E_CO','0.0','NULL','CLAMP',
+          'HNO3',  '0.0','NULL','CLAMP',
+          'E_CO',  '0.0','NULL','CLAMP',
+          'E_NO',  '0.0','NULL','CLAMP',
+          'E_NO2', '0.0','NULL','CLAMP',
+          'E_SO2', '0.0','NULL','CLAMP',
           'ebu_in_co','0.0','NULL','CLAMP',
           'ebu_in_no','0.0','NULL','CLAMP',
           'ebu_in_no2','0.0','NULL','CLAMP',
-          'ebu_in_so2','0.0','NULL','CLAMP',
-          'ebu_in_c2h4','0.0','NULL','CLAMP',
-          'ebu_in_ch2o','0.0','NULL','CLAMP',
-          'ebu_in_ch3oh','0.0','NULL','CLAMP'"
-          'ebu_in_nh3','0.0','NULL','CLAMP'"
+          'ebu_in_so2','0.0','NULL','CLAMP'"
    export NL_OUTPUT_STATE_VECTOR=.false.
    export NL_NUM_DOMAINS=${CR_DOMAIN}
    export NL_CALENDAR_TYPE=3

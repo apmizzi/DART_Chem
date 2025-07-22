@@ -84,7 +84,7 @@ while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
    if [[ \${MEM} -lt 10 ]]; then export KMEM=000\${MEM}; export CMEM=e00\${MEM}; fi
    ncrename -d emissions_zdim,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM}
    ncrename -d emissions_zdim_stag,fire_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM}
-   ncks -A -C -v ${WRFCHEMI_DARTVARS} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM} wrfinput_d${CR_DOMAIN}_${CMEM}
+   ncks -A -C -v ${WRFCHEMI_DARTVARS} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM} wrfinput_d${CR_DOMAIN}_\${CMEM}
    ncks -A -C -v ${WRFFIRECHEMI_DARTVARS} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM} wrfinput_d${CR_DOMAIN}_\${CMEM}
 #
 # Add files to the DART input and output list

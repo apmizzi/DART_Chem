@@ -262,9 +262,10 @@ function mls_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %      field='/HDFEOS/SWATHS/O3 column/Data Fields/Status';
 %      o3_col_obs_status=h5read(file_in,field);
 %
-% O3 A Priori (layer,ntime)
+% O3 A Priori (layer,ntime) (VMR)
       field='/HDFEOS/SWATHS/O3-APriori/Data Fields/L2gpValue';
       o3_prior=h5read(file_in,field);
+      o3_prior_units=h5readatt(file_in,field,'Units');
 %
 % O3 Prior Error (ntime)  
       field='/HDFEOS/SWATHS/O3-APriori/Data Fields/L2gpPrecision';

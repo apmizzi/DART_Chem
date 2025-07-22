@@ -49,10 +49,8 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
    day_secs_end=whh_mx*60.*60. + wmm_mx*60. + wss_mx;
 %
 % Print input data
-   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn, ...
-   wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
-   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx, ...
-   wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
+   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
+   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
 %
 % Read model grid
    lon_mdl=ncread(strcat(path_mdl,'/',file_mdl),'XLONG');

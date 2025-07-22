@@ -101,7 +101,6 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       nobs=size(utc_time);  % 14
       time_start=cell2mat(utc_time(1));
       time_end=cell2mat(utc_time(nobs(1)));
-
       file_str_yy=str2double(time_start(1:4));
       file_str_mm=str2double(time_start(6:7));
       file_str_dd=str2double(time_start(9:10));
@@ -114,7 +113,6 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       file_end_hh=str2double(time_end(12:13));
       file_end_mn=str2double(time_end(15:16));
       file_end_ss=round(str2double(time_end(18:23)));
-      
       file_str_secs=file_str_hh*3600 + file_str_mn*60 + file_str_ss;
       file_end_secs=file_end_hh*3600 + file_end_mn*60 + file_end_ss;
       fprintf('%d %s \n',ifile,file_in);
@@ -260,11 +258,8 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          ss_tes=round(str2double(utcc_time(18:23)));
          tesdate=single(convert_time_ref(yyyy_tes,mn_tes, ...
          dy_tes,hh_tes,mm_tes,ss_tes,2000));
-         fprintf('yr,mn,dy,hh,mm %d %d %d %d %d \n', ...
-         yyyy_tes,mn_tes,dy_tes,hh_tes,mm_tes) 	 
 %
 % Check time
-%	 fprintf('APM: Time test - %d %d %d \n',windate_min,tesdate,windate_max)
          if(tesdate<windate_min | tesdate>windate_max)
             continue
          end
@@ -324,6 +319,9 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 	 xmdl_sw,delx,cen_lon,truelat1,truelat2);
          i_min = round(xi);
          j_min = round(xj);
+%        fprintf('lon,lat: %d %d \n',x_obser,y_obser)
+%        fprintf('imin,jmin,nx,ny: %d %d %d %d \n', ...
+%         i_min,j_min,nx_mdl,ny_mdl)
          reject = 0;
 %
 % Check lower bounds
@@ -358,17 +356,14 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
             reject=1;
          end
          if(reject==1)
-            fprintf('x_mdl_min, x_obs, x_mdl_max: %6.2f %6.2f %6.2f \n',xmdl_sw, ...
-            x_obser,xmdl_mx)
-            fprintf('y_mdl_min, y_obs, y_mdl_max: %6.2f %6.2f %6.2f \n',lat_mdl(1,1), ...
-            y_obser,lat_mdl(nx_mdl,ny_mdl))
-            fprintf('i_min %d j_min %d \n',i_min,j_min)
+%            fprintf('i_min %d j_min %d \n',i_min,j_min)
             continue
          end
          if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
-            fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
+%            fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
             continue
          end
+%        fprintf('APM: Time test - %d %d %d \n',windate_min,tesdate,windate_max)
 %
 % Save data to ascii file
          icnt=icnt+1;

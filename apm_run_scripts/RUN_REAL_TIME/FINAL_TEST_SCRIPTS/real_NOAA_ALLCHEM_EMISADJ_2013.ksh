@@ -32,33 +32,36 @@ export WORK_DIR=/nobackupp28/amizzi
 export TRUNK_DIR=${WORK_DIR}/TRUNK
 export REAL_TIME_DIR=${TRUNK_DIR}/${DART_VER}/apm_run_scripts/RUN_REAL_TIME
 export RS_SCRIPTS_DIR=${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS/RS_Scripts
-export INPUT_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1
+export INPUT_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS
 export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
-export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/TRACER1_OBS
-export RUN_DIR=${EXPERIMENT_DIR}/NOAA_ALLCHEM_RETR_2006
-export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2006
-export EXPERIMENT_INPUT_OBS=NOAA_RUNTIME_OBS
+export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}
+#
+export RUN_DIR=${EXPERIMENT_DIR}/NOAA_ALLCHEM_EMISADJ_2013
+export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_EMISADJ_NOAA_2013
+export EXPERIMENT_INPUT_OBS=NOAA
+#
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
+
 export WRFCHEM_TEMPLATE_FILE=wrfinput_d01_2019-04-02_03:00:00.e001
 export NUM_MEMBERS=10
 export CYCLE_PERIOD=3
 export FCST_PERIOD=3
 #
 # CYCLE TIME SETTINGS (NOAA has extra digits for ss)
-export INITIAL_DATE=2006040200
-export FIRST_FILTER_DATE=2006040203
-export FIRST_DART_INFLATE_DATE=2006040203
-export FIRST_EMISS_INV_DATE=2006040203
+export INITIAL_DATE=2013040215
+export FIRST_FILTER_DATE=2013040218
+export FIRST_DART_INFLATE_DATE=2013040218
+export FIRST_EMISS_INV_DATE=2013040218
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2006040218
+export CYCLE_STR_DATE=2013040218
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2006040218
-
+export CYCLE_END_DATE=2013040218
+#
 # For emissions estimation
-export ADD_EMISS=false
+export ADD_EMISS=true
 export EMISS_DAMP_CYCLE=1.0
 export EMISS_DAMP_INTRA_CYCLE=1.0
 #
@@ -68,41 +71,47 @@ export DART_MEM_STR=1
 #
 # Set large scale chemisty file
 export NL_UPPER_DATA_FILE_NAME=/h0001.nc
-export NL_UPPER_DATA_MODEL=\'MOZART\'
+export NL_UPPER_DATA_MODEL=\'TCR2\'
 export LS_CHEM_DX=78
 export LS_CHEM_DY=35
 export LS_CHEM_DZ=32
 export LS_CHEM_DT=360
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=false
-export RUN_MOPITT_V8_CO_PROFILE_OBS=true           # (done)  TRACER I
-export RUN_MODIS_AOD_TOTAL_COL_OBS=false           # (done)  TRACER I
-export RUN_OMI_O3_PROFILE_OBS=false                 # (done)  TRACER I
-export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true        # (done)  TRACER I
-export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
-export RUN_TES_CO_PROFILE_OBS=true                 # (done)  TRACER I
-export RUN_TES_O3_PROFILE_OBS=true                 # (done)  TRACER I
-export RUN_GOME2A_NO2_TROP_COL_OBS=true            # (done)  TRACER I
-export RUN_GOME2B_NO2_TROP_COL_OBS=false           # (done)  TRACER I
-export RUN_MLS_O3_PROFILE_OBS=true                 # (done)  TRACER I
-export RUN_MLS_HNO3_PROFILE_OBS=true               # (done)  TRACER I
-export RUN_AIRNOW_CO_OBS=true                      # (done)  TRACER I
-export RUN_AIRNOW_O3_OBS=true                      # (done)  TRACER I
-export RUN_AIRNOW_NO2_OBS=true                     # (done)  TRACER I
-export RUN_AIRNOW_SO2_OBS=true                     # (done)  TRACER I
-export RUN_AIRNOW_PM10_OBS=false                    # (done)  TRACER I
-export RUN_AIRNOW_PM25_OBS=false                    # (done)  TRACER I
+export RUN_INPUT_OBS=true
+export RUN_MOPITT_V8_CO_PROFILE_OBS=true            # (done)  TRACER I
+export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true         # (done)  TRACER I
+export RUN_OMI_SO2_PBL_COL_OBS=true                 # (done)  TRACER I
+export RUN_TES_CO_PROFILE_OBS=true                  # (done)  TRACER I
+export RUN_GOME2A_NO2_TROP_COL_OBS=true             # (done)  TRACER I
+export RUN_SCIAM_NO2_TROP_COL_OBS=true              # (done)  TRACER I
+export RUN_AIRNOW_CO_OBS=false                      # (done)  TRACER I
+export RUN_AIRNOW_O3_OBS=false                      # (done)  TRACER I
+export RUN_AIRNOW_NO2_OBS=false                     # (done)  TRACER I
+export RUN_AIRNOW_SO2_OBS=false                     # (done)  TRACER I
 export RUN_MET_OBS=true                             # (done)  TRACER I
+#
+export RUN_MODIS_AOD_TOTAL_COL_OBS=false            # (done)  TRACER I - leave false
+export RUN_OMI_O3_PROFILE_OBS=false                 # (done)  TRACER I - leave false 
+export RUN_TES_O3_PROFILE_OBS=false                 # (done)  TRACER I - leave false
+export RUN_GOME2B_NO2_TROP_COL_OBS=false            # (done)  TRACER I - leave false
+export RUN_MLS_O3_PROFILE_OBS=false                 # (done)  TRACER I - leave false
+export RUN_MLS_HNO3_PROFILE_OBS=false               # (done)  TRACER I - leave false
+export RUN_AIRNOW_PM10_OBS=false                    # (done)  TRACER I - leave false
+export RUN_AIRNOW_PM25_OBS=false                    # (done)  TRACER I - leave false
+#
+if [[ ${ADD_EMISS} == true ]]; then 
+   export RUN_POST_EMISS_INFLATION=true
+else    
+   export RUN_POST_EMISS_INFLATION=false
+fi
 #
 # Setup DART namelist parameters for which observations to assimilate/evaluate
 # &obs_kind_nml
 export NL_EVALUATE_THESE_OBS_TYPES="'AIRNOW_CO',
                                    'AIRNOW_O3',
                                    'AIRNOW_NO2',
-                                   'AIRNOW_SO2',
-                                   'AIRNOW_PM10',
-                                   'AIRNOW_PM25'"
+                                   'AIRNOW_SO2'"
 #
 export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'RADIOSONDE_U_WIND_COMPONENT',
@@ -127,15 +136,20 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'LAND_SFC_ALTIMETER',
                                    'SAT_U_WIND_COMPONENT',
                                    'SAT_V_WIND_COMPONENT',
-                                   'MOPITT_CO_PROFILE',
+                                   'MOPITT_V8_CO_PROFILE',
                                    'OMI_O3_PROFILE',
                                    'OMI_NO2_DOMINO_TROP_COL',
                                    'OMI_SO2_PBL_COL',
                                    'GOME2A_NO2_TROP_COL',
+                                   'SCIAM_NO2_TROP_COL',
                                    'MLS_O3_PROFILE',
                                    'MLS_HNO3_PROFILE',
                                    'TES_CO_PROFILE',
                                    'TES_O3_PROFILE'"
+                                   'AIRNOW_CO',
+                                   'AIRNOW_O3',
+                                   'AIRNOW_NO2',
+                                   'AIRNOW_SO2'"
 #
 # Run WRF-Chem for failed forecasts (will not work with adaptive time step)
 export RUN_SPECIAL_FORECAST=false
@@ -182,7 +196,7 @@ fi
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
 while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
-   cd ${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS    
+   cd ${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS
    export DATE=${CYCLE_DATE}
    export EXP_INPUT_OBS=${RUN_INPUT_DIR}/${DATE}/${EXPERIMENT_INPUT_OBS}
    export L_ADD_EMISS=${ADD_EMISS} 
@@ -214,11 +228,14 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_ENSEMBLE_MEAN_INPUT=true
          export RUN_WRFCHEM_INITIAL=false
          export RUN_WRFCHEM_CYCLE_CR=true
-      fi	  
+      fi
       export RUN_WRFCHEM_CYCLE_FR=false
       export RUN_ENSMEAN_CYCLE_FR=false
       export RUN_ENSEMBLE_MEAN_OUTPUT=true
       export RUN_BAND_DEPTH=false
+      if [[ RUN_DART_FILTER == false ]]; then
+         export RUN_POST_EMISS_INFLATION=false
+      fi  
    fi
    if [[ ${RUN_SPECIAL_FORECAST} == true ]]; then
 #
@@ -227,6 +244,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_COMBINE_OBS=false
       export RUN_PREPROCESS_OBS=false
       export RUN_DART_FILTER=false
+      export RUN_POST_EMISS_INFLATION=false
       export RUN_BIAS_CORRECTION=false
       export RUN_UPDATE_BC=false
       export RUN_ENSEMBLE_MEAN_INPUT=false
@@ -254,6 +272,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_PREPROCESS_OBS=false
       fi
       export RUN_DART_FILTER=false
+      export RUN_POST_EMISS_INFLATION=false
       export RUN_BIAS_CORRECTION=false
       export RUN_UPDATE_BC=false
       export RUN_ENSEMBLE_MEAN_INPUT=false
@@ -285,7 +304,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    rm -rf index_RS_Chemistry_Pert_Params_${DATE}
    source ${RS_SCRIPTS_DIR}/RS_Chemistry_Pert_Params.ksh > index_RS_Chemistry_Pert_Params_${DATE} 2>&1
 #
-# NOAA   
+# NOAAS  
    rm -rf index_RS_Forecast_Time_Domain_Params_NOAA_${DATE}
    source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Params_NOAA.ksh > index_RS_Forecast_Time_Domain_Params_NOAA_${DATE} 2>&1
    rm -rf index_RS_WRFChem_Namelists_NOAA_${DATE}
@@ -315,9 +334,31 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 #########################################################################
 #
-# SET LOCAL ENVIRONMENT VARIABLE CHANGES
+# LOCAL ENVIRONMENT VARIABLE SETTINGS
 #
 #########################################################################
+#
+   export GENERAL_JOB_CLASS=normal
+   export GENERAL_TIME_LIMIT=00:50:00
+   export GENERAL_NODES=1
+   export GENERAL_TASKS=1
+   export GENERAL_MODEL=bro
+#   
+   export FILTER_JOB_CLASS=normal
+#   export FILTER_TIME_LIMIT=01:59:00
+   export FILTER_TIME_LIMIT=03:59:00
+   export FILTER_NODES=8
+   export FILTER_TASKS=28
+   export FILTER_MODEL=bro
+#
+   export WRFCHEM_JOB_CLASS=normal
+   export WRFCHEM_TIME_LIMIT=01:59:00
+   export WRFCHEM_NODES=5
+   export WRFCHEM_TASKS=28
+   export WRFCHEM_MODEL=bro
+#
+   export WRFCHEMI_DARTVARS="E_CO,E_NO,E_NO2,E_SO2"
+   export WRFFIRECHEMI_DARTVARS="ebu_in_co,ebu_in_no,ebu_in_no2,ebu_in_so2"
 #
    export WRF_VER=WRFCHEM_NOAACSLv4.2.2
    export WRFCHEM_VER=WRFCHEM_NOAACSLv4.2.2
@@ -325,28 +366,29 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #   export WRF_VER=WRFCHEM_NOAACSL
 #   export WRFCHEM_VER=WRFCHEM_NOAACSL
 #   export WRF_VER=WRFCHEMv4.3.2_dmpar
-#   export WRFCHEM_VER=WRFCHEMv4.3.2_dmpar
-#   
+#   export WRFCHEM_VER=WRFCHEMv4.3.2_dmpar 
    export WRF_DIR=/nobackupp28/amizzi/TRUNK/${WRF_VER}
    export WRFCHEM_DIR=/nobackupp28/amizzi/TRUNK/${WRFCHEM_VER}
-   export EXPERIMENT_HIST_IO_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/hist_io_files
-   export EXPERIMENT_COLDENS_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/wes_coldens
-   export EXPERIMENT_PHOT_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/phot_data
-   export WES_COLDENS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_WES_COLDENS
-   export EXPERIMENT_WRFBIOCHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/bio_emissions
-   export MEGAN_BIO_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_MEGAN_BIO
-   export EXPERIMENT_WRFFIRECHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/fire_emissions
-   export FINN_FIRE_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_FINN_FIRE
-   export NL_FIRE_FILE=GLOBAL_FINNv15_2006_MOZ4.txt
-   export EXPERIMENT_WRFCHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/anthro_emissions
-   export MOZBC_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/tcr2_data/${YYYY}/${MM}
+#
+   export EXPERIMENT_HIST_IO_DIR=${EXPERIMENT_DATA_DIR}/hist_io_files
+   export EXPERIMENT_COLDENS_DIR=${EXPERIMENT_DATA_DIR}/wes_coldens
+   export EXPERIMENT_PHOT_DIR= ${EXPERIMENT_DATA_DIR}/phot_data
+   export WES_COLDENS_DIR=${DART_DIR}/apm_run_scripts/RUN_WES_COLDENS
+   export EXPERIMENT_WRFBIOCHEMI_DIR=${EXPERIMENT_DATA_DIR}/bio_emissions
+   export MEGAN_BIO_DIR=${DART_DIR}/apm_run_scripts/RUN_MEGAN_BIO
+#   export EXPERIMENT_WRFFIRECHEMI_DIR=${EXPERIMENT_DATA_DIR}/fire_emissions/fire_emissions_v1.5
+   export EXPERIMENT_WRFFIRECHEMI_DIR=${EXPERIMENT_DATA_DIR}/fire_emissions/fire_emissions_v2.5
+   export FINN_FIRE_DIR=${DART_DIR}/apm_run_scripts/RUN_FINN_FIRE
+#   export NL_FIRE_FILE=GLOBAL_FINNv15_${YYYY}_MOZ4.txt
+   export NL_FIRE_FILE=GLOBAL_FINNv25_${YYYY}_MOZ4.txt
+   export EXPERIMENT_WRFCHEMI_DIR=${EXPERIMENT_DATA_DIR}/anthro_emissions
+   export MOZBC_DATA_DIR=${EXPERIMENT_DATA_DIR}/tcr2_data/${YYYY}/${MM}
    export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
-   export PERT_CHEM_INPUT_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_PERT_CHEM/ICBC_PERT
+   export PERT_CHEM_INPUT_DIR=${DART_DIR}/apm_run_scripts/RUN_PERT_CHEM/ICBC_PERT
    export NL_UPPER_DATA_FILE_NAME=/h0001.nc
-   export AISH_PERT_CHEM_INPUT_DIR=/nobackupp28/amizzi/TRUNK/DART_AISH/apm_run_scripts/RUN_PERT_CHEM/ICBC_PERT
-   export ADJUST_EMISS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_EMISS_INV
-   export PERT_CHEM_EMISS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_PERT_CHEM/EMISS_PERT
-#   
+   export ADJUST_EMISS_DIR=${DART_DIR}/apm_run_scripts/RUN_EMISS_INV
+   export PERT_CHEM_EMISS_DIR=${DART_DIR}/apm_run_scripts/RUN_PERT_CHEM/EMISS_PERT
+#
    export RUN_MOPITT_CO_TOTAL_COL_OBS=false
    export RUN_MOPITT_CO_PROFILE_OBS=false
    export RUN_MOPITT_CO_CPSR_OBS=false
@@ -416,7 +458,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_CRIS_PAN_PROFILE_OBS=false 
    export RUN_CRIS_PAN_CPSR_OBS=false
    export RUN_SCIAM_NO2_TOTAL_COL_OBS=false
-   export RUN_SCIAM_NO2_TROP_COL_OBS=false
    export RUN_GOME2A_NO2_TOTAL_COL_OBS=false
    export RUN_MLS_O3_TOTAL_COL_OBS=false
    export RUN_MLS_O3_CPSR_OBS=false
@@ -467,11 +508,17 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       fi
       source ${RS_SCRIPTS_DIR}/RS_DART_Filter_NOAA.ksh > index_rs.html 2>&1 
    fi
-
-
-exit
-
-   
+#
+#########################################################################
+#
+# RUN POST ASSIMILATION EMISSIONS INFLATION
+#
+#########################################################################
+#
+   if [[ ${RUN_POST_EMISS_INFLATION} == true && ${DATE} -ge ${FIRST_EMISS_INV_DATE} ]]; then
+      cd ${RUN_DIR}/${DATE}/dart_filter
+      source ${RS_SCRIPTS_DIR}/RS_Post_DART_Emiss_Inflation_NOAA.ksh > index_rs.html 2>&1 
+   fi
 #
 #########################################################################
 #

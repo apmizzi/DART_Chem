@@ -391,8 +391,8 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
 !
       interp_new=0
       do imem=1,ens_size
-         if(no2_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
-         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
+         if(no2_mdl_1(imem).lt.0. .or. tmp_mdl_1(imem).lt.0. .or. &
+         qmr_mdl_1(imem).lt.0. .or. prs_mdl_1(imem).lt.0.) then
             interp_new=1
             exit
          else
@@ -431,8 +431,8 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
 !
       interp_new=0
       do imem=1,ens_size
-         if(no2_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
-         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
+         if(no2_mdl_n(imem).lt.0. .or. tmp_mdl_n(imem).lt.0. .or. &
+         qmr_mdl_n(imem).lt.0. .or. prs_mdl_n(imem).lt.0.) then
             interp_new=1
             exit
          else
@@ -490,40 +490,68 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
 !      write(string1, *)'APM: qmr ',key,k,qmr_val(1,k)
 !      call error_handler(E_ALLMSG, routine, string1, source)
 !
-! Check data for missing values      
-      do imem=1,ens_size
-         if(no2_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
-         qmr_val(imem,k).eq.missing_r8) then
-            zstatus(:)=20
-            expct_val(:)=missing_r8
-            write(string1, *) &
-            'APM: Input data has missing values '
-            call error_handler(E_MSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            return
-         endif
-      enddo
-!
 ! Convert units for no2 from ppmv
       no2_val(:,k) = no2_val(:,k) * 1.e-6_r8
    enddo
-!   imem=1
-!   do k=1,level_omi
-!      write(string1, *)'APM: ',k,prs_omi(k), &
-!      no2_val(imem,k)*1.e6_8,tmp_val(imem,k),qmr_val(imem,k)
-!      call error_handler(E_MSG, routine, string1, source)
-!   enddo
+   no2_mdl_1(:)=no2_mdl_1(:) * 1.e-6_r8
+   no2_mdl_n(:)=no2_mdl_n(:) * 1.e-6_r8
 !
+! Use large scale no2 data above the regional model top
+! APM: Modified to use retrieval prior above the regional model top   
+! OMI vertical is from top to bottom
+!
+! APM: No old code
+!
+! Check full profile for negative values
+   do imem=1,ens_size
+      do k=1,level_omi   
+         if(no2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         qmr_val(imem,k).lt.0.) then
+            write(string1, *) &
+            'APM: Recentered full profile has negative values for key,imem ',key,imem
+            call error_handler(E_MSG, routine, string1, source)
+            zstatus(:)=20
+            expct_val(:)=missing_r8
+            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+            deallocate(prs_omi)
+            deallocate(prs_omi_mem)
+            deallocate(no2_val)
+            deallocate(tmp_val)
+            deallocate(qmr_val)
+            return
+         endif
+      enddo
+   enddo
+!
+! Calculate the expected retrievals   
    istatus(:)=0
    zstatus(:)=0
    expct_val(:)=0.0
-   allocate(thick(layer_omi))
-
    prs_omi_mem(:)=prs_omi(:)
+   allocate(thick(layer_omi))
+!
+! Find OMI index for first layer above top of regional model (not needed)
+! OMI vertical is from bottom to top
    do imem=1,ens_size
-
+!      kstart=-1
+!      write(string1, *) &
+!      'APM: imem,prs_omi,prs_mdl ',imem,prs_omi(level_omi),prs_omi(level_omi-1), &
+!      prs_mdl_n(imem)
+!      call error_handler(E_ALLMSG, routine, string1, source)
+!      if ((prs_omi(level_omi)+prs_omi(level_omi-1))/2..lt.prs_mdl_n(imem)) then
+!         do k=level_omi,1,-1
+!            if ((prs_omi(k)+prs_omi(k-1))/2.ge.prs_mdl_n(imem)) then
+!               kstart=k
+!               write(string1, *) &
+!               'APM: imem,kstart,prs_omi,prs_mdl ',imem,kstart,prs_omi(k),prs_omi(k-1), &
+!               prs_mdl_n(imem)
+!               call error_handler(E_ALLMSG, routine, string1, source)
+!               exit
+!            endif
+!         enddo
+!      endif
+!
 ! Calculate the thicknesses (grid is bottom to top)
-
       thick(:)=0.
       do k=1,kend_omi
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
@@ -534,16 +562,9 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
          tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
          thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
          log(prs_omi_mem(k)/prs_omi_mem(k+1))
-
-!         write(string1, *) &
-!         'APM: Key, Thickness calcs ', key, k, thick(k), up_wt, dw_wt, tmp_vir_k,tmp_vir_kp, &
-!         prs_omi_mem(k), prs_omi_mem(k+1)     
-!         call error_handler(E_MSG, routine, string1, source)
-
       enddo
-   
+!   
 ! Process the vertical summation (OMI NO2 DOMINO units are molec/cm^2)
-
       do k=1,kend_omi+1
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
          up_wt=log(prs_omi_mem(k))-lnpr_mid
@@ -560,9 +581,8 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
             (dw_wt*prs_omi(k)+up_wt*prs_omi(k+1)) / &
             (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
          endif
-
+!
 ! Get expected observation (convert mol/m^2 to molec/cm^2)
-
          expct_val(imem) = expct_val(imem) + thick(k) * no2_val_conv * &
          AvogN/msq2cmsq * scat_wt(key,k) 
 
@@ -570,7 +590,6 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
 !         'APM: Key, Expected Value Terms ',key,k,expct_val(imem),thick(k),no2_val_conv, &
 !         AvogN/msq2cmsq, scat_wt(key,k)     
 !         call error_handler(E_MSG, routine, string1, source)
-
       enddo
 
       if(isnan(expct_val(imem))) then

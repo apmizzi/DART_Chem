@@ -300,7 +300,7 @@ program sciam_no2_trop_col_ascii_to_obs
       print *, 'slnt col ',o3_slnt_col,o3_slnt_col_err
       prs_obs(:)=prs_obs(:)*100.
       prs_obs_r8(:)=prs_obs(:)
-      avgk_obs_r8(:)=avgk_obs(:)
+      avgk_obs_r8(:)=avgk_obs(:)*amf_trop_obs
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
       amf_trop_obs_r8=amf_trop_obs

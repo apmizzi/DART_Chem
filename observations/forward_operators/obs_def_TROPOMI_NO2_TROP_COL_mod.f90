@@ -360,7 +360,7 @@ subroutine get_expected_tropomi_no2_trop_col(state_handle, ens_size, location, k
 
 ! pressure at model surface (Pa)
 
-   zstatus=0
+   zstatus(:)=0
    level=0.0_r8
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
    call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus) 
@@ -375,11 +375,11 @@ subroutine get_expected_tropomi_no2_trop_col(state_handle, ens_size, location, k
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
       call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_mdl_1, zstatus) ! ppmv 
-      zstatus=0
+      zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_1, zstatus) ! K 
-      zstatus=0
+      zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg / kg 
-      zstatus=0
+      zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
 !
       interp_new=0
@@ -395,13 +395,13 @@ subroutine get_expected_tropomi_no2_trop_col(state_handle, ens_size, location, k
       endif    
    enddo
 
-!   write(string1, *)'APM: no2 lower bound 1 ',no2_mdl_1
+!   write(string1, *)'APM: no2 lower bound ',no2_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: tmp lower bound 1 ',tmp_mdl_1
+!   write(string1, *)'APM: tmp lower bound ',tmp_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: qmr lower bound 1 ',qmr_mdl_1
+!   write(string1, *)'APM: qmr lower bound ',qmr_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: prs lower bound 1 ',prs_mdl_1
+!   write(string1, *)'APM: prs lower bound ',prs_mdl_1
 !   call error_handler(E_MSG, routine, string1, source)
 
    no2_mdl_n(:)=missing_r8
@@ -414,11 +414,11 @@ subroutine get_expected_tropomi_no2_trop_col(state_handle, ens_size, location, k
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)  
       call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_mdl_n, zstatus) ! ppmv
-      zstatus=0
+      zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_n, zstatus) ! K 
-      zstatus=0
+      zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, zstatus) ! kg / kg 
-      zstatus=0
+      zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, zstatus) ! Pa
 !
       interp_new=0
@@ -434,13 +434,13 @@ subroutine get_expected_tropomi_no2_trop_col(state_handle, ens_size, location, k
       endif    
    enddo
 
-!   write(string1, *)'APM: no2 upper bound 1 ',no2_mdl_n
+!   write(string1, *)'APM: no2 upper bound ',no2_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: tmp upper bound 1 ',tmp_mdl_n
+!   write(string1, *)'APM: tmp upper bound ',tmp_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: qmr upper bound 1 ',qmr_mdl_n
+!   write(string1, *)'APM: qmr upper bound ',qmr_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
-!   write(string1, *)'APM: prs upper bound 1 ',prs_mdl_n
+!   write(string1, *)'APM: prs upper bound ',prs_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
 
 ! Get profiles at TROPOMI pressure levels
@@ -450,12 +450,12 @@ subroutine get_expected_tropomi_no2_trop_col(state_handle, ens_size, location, k
    allocate(qmr_val(ens_size,level_tropomi))
 
    do k=1,level_tropomi
-      zstatus=0
+      zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), prs_tropomi(k), VERTISPRESSURE)
       call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_val(:,k), zstatus)  
-      zstatus=0
+      zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_val(:,k), zstatus)  
-      zstatus=0
+      zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_val(:,k), zstatus)  
 !
 ! Correcting for expected failures near the surface
@@ -464,7 +464,6 @@ subroutine get_expected_tropomi_no2_trop_col(state_handle, ens_size, location, k
             no2_val(imem,k) = no2_mdl_1(imem)
             tmp_val(imem,k) = tmp_mdl_1(imem)
             qmr_val(imem,k) = qmr_mdl_1(imem)
-            cycle
          endif
 
 ! Correcting for expected failures near the top
@@ -472,7 +471,6 @@ subroutine get_expected_tropomi_no2_trop_col(state_handle, ens_size, location, k
             no2_val(imem,k) = no2_mdl_n(imem)
             tmp_val(imem,k) = tmp_mdl_n(imem)
             qmr_val(imem,k) = qmr_mdl_n(imem)
-            cycle
          endif
       enddo
 !
@@ -489,8 +487,7 @@ subroutine get_expected_tropomi_no2_trop_col(state_handle, ens_size, location, k
          qmr_val(imem,k).eq.missing_r8) then
             zstatus(:)=20
             expct_val(:)=missing_r8
-            write(string1, *) &
-            'APM: Input data has missing values '
+            write(string1, *) 'APM: Input data has missing values '
             call error_handler(E_MSG, routine, string1, source)
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
             return
@@ -501,7 +498,7 @@ subroutine get_expected_tropomi_no2_trop_col(state_handle, ens_size, location, k
       no2_val(:,k) = no2_val(:,k) * 1.e-6_r8
    enddo
 
-   istatus=0
+   istatus(:)=0
    zstatus(:)=0
    expct_val(:)=0.0
    allocate(thick(layer_tropomi))

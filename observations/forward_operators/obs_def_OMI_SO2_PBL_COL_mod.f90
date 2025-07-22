@@ -425,8 +425,10 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 
       interp_new=0
       do imem=1,ens_size
-         if(so2_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
-         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
+!         if(so2_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
+!         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
+         if(so2_mdl_1(imem).lt.0. .or. tmp_mdl_1(imem).lt.0. .or. &
+         qmr_mdl_1(imem).lt.0. .or. prs_mdl_1(imem).lt.0.) then
             interp_new=1
             exit
          endif
@@ -468,8 +470,10 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 !
       interp_new=0
       do imem=1,ens_size
-         if(so2_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
-         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
+!         if(so2_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
+!         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
+         if(so2_mdl_n(imem).lt.0. .or. tmp_mdl_n(imem).lt.0. .or. &
+         qmr_mdl_n(imem).lt.0. .or. prs_mdl_n(imem).lt.0.) then
             interp_new=1
             exit
          endif
@@ -528,15 +532,69 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 !      write(string1, *)'APM: qmr ',k,qmr_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
 !
-! Check data for missing values      
-      do imem=1,ens_size
-         if(so2_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
-         qmr_val(imem,k).eq.missing_r8) then
+! Convert units for so2 from ppmv
+      so2_val(:,k) = so2_val(:,k) * 1.e-6_r8
+   enddo
+   so2_mdl_1(:)=so2_mdl_1(:) * 1.e-6_r8
+   so2_mdl_n(:)=so2_mdl_n(:) * 1.e-6_r8
+!
+! Use large scale so2 data above the regional model top
+! APM: Modified to use retrieval prior above the regional model top   
+! OMI vertical is from top to bottom   
+!
+! APM: Before old code
+!   kstart=-1
+!   do imem=1,ens_size
+!      if (prs_omi(1).lt.prs_mdl_n(imem)) then
+!         do k=1,level_omi
+!            if (prs_omi(k).ge.prs_mdl_n(imem)) then
+!               kstart=k
+!               exit
+!            endif
+!         enddo
+!         ncnt=kstart
+!         allocate(prs_omi_top(ncnt))
+!         allocate(so2_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
+!         do k=1,kstart
+!            prs_omi_top(k)=prs_omi(k)
+!         enddo
+!         prs_omi_top(:)=prs_omi_top(:)/100.
+!
+!         lon_obs=mloc(1)/rad2deg
+!         lat_obs=mloc(2)/rad2deg
+!         call get_time(obs_time,datesec_obs,date_obs)
+!
+!         data_file=trim(upper_data_file)
+!         model=trim(upper_data_model)
+!         call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
+!         ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_omi_top, &
+!         ncnt,so2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+!
+! Impose ensemble perturbations from level kstart+1      
+!         do k=1,kstart 
+!            so2_val(imem,k)=so2_prf_mdl(k)*so2_val(imem,kstart+1)/ &
+!            (sum(so2_val(:,kstart+1))/real(ens_size))
+!            tmp_val(imem,k)=tmp_prf_mdl(k)*tmp_val(imem,kstart+1)/ &
+!            (sum(tmp_val(:,kstart+1))/real(ens_size))
+!            qmr_val(imem,k)=qmr_prf_mdl(k)*qmr_val(imem,kstart+1)/ &
+!            (sum(qmr_val(:,kstart+1))/real(ens_size))
+!         enddo
+!         deallocate(prs_omi_top)
+!         deallocate(so2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
+!      endif
+!   enddo
+! APM: After old code
+!
+! Check full profile for negative values
+   do imem=1,ens_size
+      do k=1,level_omi   
+         if(so2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         qmr_val(imem,k).lt.0.) then
+            write(string1, *) &
+            'APM: Recentered full profile has negative values for key,imem ',key,imem
+            call error_handler(E_MSG, routine, string1, source)
             zstatus(:)=20
             expct_val(:)=missing_r8
-            write(string1, *) &
-            'APM: Input data has missing values '
-            call error_handler(E_MSG, routine, string1, source)
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
             deallocate(prs_omi)
             deallocate(prs_omi_mem)
@@ -546,104 +604,35 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
             return
          endif
       enddo
-!
-! Convert units for so2 from ppmv
-      so2_val(:,k) = so2_val(:,k) * 1.e-6_r8
-   enddo
-   so2_mdl_1(:)=so2_mdl_1(:) * 1.e-6_r8
-   so2_mdl_n(:)=so2_mdl_n(:) * 1.e-6_r8
-!   imem=1
-!   do k=1,level_omi
-!      write(string1, *)'APM: ',k,prs_omi(k), &
-!      so2_val(imem,k)*1.e6_8,tmp_val(imem,k),qmr_val(imem,k)
-!      call error_handler(E_MSG, routine, string1, source)
-!   enddo                                                                                                    
-!
-! Use large scale so2 data above the regional model top
-! OMI vertical is from top to bottom   
-   kstart=-1
-   do imem=1,ens_size
-      if (prs_omi(1).lt.prs_mdl_n(imem)) then
-         do k=1,level_omi
-            if (prs_omi(k).ge.prs_mdl_n(imem)) then
-               kstart=k
-               exit
-            endif
-         enddo
-         ncnt=kstart
-         allocate(prs_omi_top(ncnt))
-         allocate(so2_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
-         do k=1,kstart
-            prs_omi_top(k)=prs_omi(k)
-         enddo
-         prs_omi_top(:)=prs_omi_top(:)/100.
-!
-         lon_obs=mloc(1)/rad2deg
-         lat_obs=mloc(2)/rad2deg
-         call get_time(obs_time,datesec_obs,date_obs)
-!
-         data_file=trim(upper_data_file)
-         model=trim(upper_data_model)
-         call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
-         ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_omi_top, &
-         ncnt,so2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
-!
-! Impose ensemble perturbations from level kstart+1      
-         do k=1,kstart 
-            so2_val(imem,k)=so2_prf_mdl(k)*so2_val(imem,kstart+1)/ &
-            (sum(so2_val(:,kstart+1))/real(ens_size))
-            tmp_val(imem,k)=tmp_prf_mdl(k)*tmp_val(imem,kstart+1)/ &
-            (sum(tmp_val(:,kstart+1))/real(ens_size))
-            qmr_val(imem,k)=qmr_prf_mdl(k)*qmr_val(imem,kstart+1)/ &
-            (sum(qmr_val(:,kstart+1))/real(ens_size))
-         enddo
-         deallocate(prs_omi_top)
-         deallocate(so2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
-      endif
    enddo
 !
-! Print full profile examples
-!   do imem=1,1
-!      do k=1,level_omi
-!         write(string1, *) &
-!         'APM: prs,so2,tmp,qmr ',k,prs_omi(k)/100.,so2_val(imem,k), &
-!         tmp_val(imem,k),qmr_val(imem,k)
-!         call error_handler(E_MSG, routine, string1, source)
-!      enddo
-!   enddo
-!
-! Check full profile for negative values
-   do imem=1,ens_size
-      flg=0
-      do k=1,level_omi   
-         if(so2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
-         qmr_val(imem,k).lt.0.) then
-            flg=1   
-            write(string1, *) &
-            'APM: Recentered full profile has negative values for key,imem ',key,imem
-            call error_handler(E_MSG, routine, string1, source)
-         endif
-      enddo
-      if(flg.eq.1) then
-         zstatus(:)=20
-         expct_val(:)=missing_r8
-         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-         deallocate(prs_omi)
-         deallocate(prs_omi_mem)
-         deallocate(so2_val)
-         deallocate(tmp_val)
-         deallocate(qmr_val)
-         return
-      endif
-   enddo
-!
-! Calculate the expected retrieval   
+! Calculate the expected retrievals   
    istatus(:)=0
    zstatus(:)=0.
    expct_val(:)=0.0
    prs_omi_mem(:)=prs_omi(:)
    allocate(thick(layer_omi))
+!
+! Find OMI index for first layer above top of regional model      
+! OMI vertical is from top to bottom   
    do imem=1,ens_size
+      kstart=-1
+!      write(string1, *) &
+!      'APM: imem,prs_omi,prs_mdl ',imem,prs_omi(level_omi),prs_omi(level_omi+1), &
+!      prs_mdl_n(imem)
+!      call error_handler(E_ALLMSG, routine, string1, source)
+      if ((prs_omi(1)+prs_omi(2))/2..lt.prs_mdl_n(imem)) then
+         do k=1,level_omi
+            if ((prs_omi(k)+prs_omi(k+1))/2.ge.prs_mdl_n(imem)) then
+               kstart=k
+!               write(string1, *) &
+!               'APM: imem,kstart,prs_omi,prs_mdl ',imem,kstart,prs_omi(k),prs_omi(k+1), &
+!               prs_mdl_n(imem)
+!               call error_handler(E_ALLMSG, routine, string1, source)
+               exit
+            endif
+         enddo
+      endif
 !
 ! Calculate the thicknesses (grid is top to bottom)
       thick(:)=0.
@@ -681,14 +670,12 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          AvogN/msq2cmsq * scat_wt(key,k)
 !
 !         write(string1, *) &
-!         'APM: Key, Expected Value Terms ',k, expct_val(imem), thick(k), &
-!         thick(k)*so2_val_conv, so2_val_conv, scat_wt(key,k)
+!         'APM: k,expct_val,thick,so2,AvogN/msq2cmsq,scat,contr_trm ',k,expct_val(imem), &
+!          thick(k),so2_val_conv,AvogN/msq2cmsq,scat_wt(key,k),thick(k)*so2_val_conv* &
+!          AvogN/msq2cmsq*scat_wt(key,k)
 !         call error_handler(E_MSG, routine, string1, source)
       enddo
-!      write(string1, *) &
-!      'APM: Expected Value is ',imem, expct_val(imem)
-!      call error_handler(E_MSG, routine, string1, source)
-
+!
       if(isnan(expct_val(imem))) then
          zstatus(imem)=20
          expct_val(:)=missing_r8

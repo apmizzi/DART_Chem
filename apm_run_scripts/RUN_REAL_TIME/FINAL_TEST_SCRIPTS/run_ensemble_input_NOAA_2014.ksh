@@ -61,10 +61,10 @@ export FIRST_DART_INFLATE_DATE=2014040203
 export FIRST_EMISS_INV_DATE=2014040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2014040215
+export CYCLE_STR_DATE=2014040218
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2014040215
+export CYCLE_END_DATE=2014040218
 #
 # Special DATE for emissions perturbations
 export RUN_SPECIAL_PERT_DATE=false
@@ -126,32 +126,32 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_SEASON_WES=false
    export RUN_WRFCHEM_BIO=false
    export RUN_WRFCHEM_FIRE=false
-   export RUN_WRFCHEM_CHEMI=true
+   export RUN_WRFCHEM_CHEMI=false
    export RUN_PERT_WRFCHEM_CHEM_ICBC=false
-   export RUN_PERT_WRFCHEM_CHEM_EMISS=true
-   export RUN_COMBINE_OBS=true
-   export RUN_PREPROCESS_OBS=true
-   export RUN_LOCALIZATION=true
+   export RUN_PERT_WRFCHEM_CHEM_EMISS=false
+   export RUN_COMBINE_OBS=false
+   export RUN_PREPROCESS_OBS=false
+   export RUN_LOCALIZATION=false
 #
-   export RUN_MOPITT_V8_CO_PROFILE_OBS=true           # (done)  TRACER I
+   export RUN_MOPITT_V8_CO_PROFILE_OBS=false           # (done)  TRACER I
    export RUN_MODIS_AOD_TOTAL_COL_OBS=false            # (done)  TRACER I
-   export RUN_OMI_O3_PROFILE_OBS=true                 # (done)  TRACER I
-   export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true        # (done)  TRACER I
-   export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
-   export RUN_TES_CO_PROFILE_OBS=true                 # (done)  TRACER I
-   export RUN_TES_O3_PROFILE_OBS=true                 # (done)  TRACER I
-   export RUN_SCIAM_NO2_TROP_COL_OBS=true            # (check)  TRACER I
-   export RUN_GOME2A_NO2_TROP_COL_OBS=true            # (done)  TRACER I
-   export RUN_GOME2B_NO2_TROP_COL_OBS=false           # (check)  TRACER I
-   export RUN_MLS_O3_PROFILE_OBS=true                 # (done)  TRACER I
-   export RUN_MLS_HNO3_PROFILE_OBS=true               # (done)  TRACER I
-   export RUN_AIRNOW_CO_OBS=true                      # (done)  TRACER I
-   export RUN_AIRNOW_O3_OBS=true                      # (done)  TRACER I
-   export RUN_AIRNOW_NO2_OBS=true                     # (done)  TRACER I
-   export RUN_AIRNOW_SO2_OBS=true                     # (done)  TRACER I
+   export RUN_OMI_O3_PROFILE_OBS=false                 # (done)  TRACER I
+   export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false        # (done)  TRACER I
+   export RUN_OMI_SO2_PBL_COL_OBS=false                # (done)  TRACER I
+   export RUN_TES_CO_PROFILE_OBS=false                 # (done)  TRACER I
+   export RUN_TES_O3_PROFILE_OBS=false                 # (done)  TRACER I
+   export RUN_SCIAM_NO2_TROP_COL_OBS=false             # (check)  TRACER I
+   export RUN_GOME2A_NO2_TROP_COL_OBS=true             # (done)  TRACER I
+   export RUN_GOME2B_NO2_TROP_COL_OBS=false            # (check)  TRACER I
+   export RUN_MLS_O3_PROFILE_OBS=false                 # (done)  TRACER I
+   export RUN_MLS_HNO3_PROFILE_OBS=false               # (done)  TRACER I
+   export RUN_AIRNOW_CO_OBS=false                      # (done)  TRACER I
+   export RUN_AIRNOW_O3_OBS=false                      # (done)  TRACER I
+   export RUN_AIRNOW_NO2_OBS=false                     # (done)  TRACER I
+   export RUN_AIRNOW_SO2_OBS=false                     # (done)  TRACER I
    export RUN_AIRNOW_PM10_OBS=false                    # (done)  TRACER I
    export RUN_AIRNOW_PM25_OBS=false                    # (done)  TRACER I
-   export RUN_MET_OBS=true                            # (done)  TRACER I
+   export RUN_MET_OBS=false                            # (done)  TRACER I
 #
    rm -rf index_RS_Code_Versions_${DATE}   
    source ${RS_SCRIPTS_DIR}/RS_Code_Versions.ksh > index_RS_Code_Versions_${DATE} 2>&1
@@ -214,9 +214,11 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export WES_COLDENS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_WES_COLDENS
    export EXPERIMENT_WRFBIOCHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/bio_emissions
    export MEGAN_BIO_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_MEGAN_BIO
-   export EXPERIMENT_WRFFIRECHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/fire_emissions/fire_emissions_v1.5
+#   export EXPERIMENT_WRFFIRECHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/fire_emissions/fire_emissions_v1.5
+   export EXPERIMENT_WRFFIRECHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/fire_emissions/fire_emissions_v2.5
    export FINN_FIRE_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_FINN_FIRE
-   export NL_FIRE_FILE=GLOBAL_FINNv15_${YYYY}_MOZ4.txt
+#   export NL_FIRE_FILE=GLOBAL_FINNv15_${YYYY}_MOZ4.txt
+   export NL_FIRE_FILE=GLOBAL_FINNv25_${YYYY}_MOZ4.txt
    export EXPERIMENT_WRFCHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/anthro_emissions
    export MOZBC_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/tcr2_data
    export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
@@ -515,7 +517,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_fire
       fi
-      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Fire_NOAA.ksh > index_rs.html 2>&1
+#      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Fire_NOAA_FINNv1.5.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Fire_NOAA_FINNv2.5.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -547,7 +550,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_chem_icbc
       fi
-      export NL_CHEM_ICBC_SPECIES='o3','h2o2','no','no2','n2o5','hno3','so2','co','eth','ete','iso','hcho','macr','pan','mpan','nh3','moh','paa','eoh'
+      export NL_CHEM_ICBC_SPECIES='api','lim','hc3','olt','ald','ket','moh','o3','h2o2','ho2','macr','no','no2','n2o5','hno3','so2','co','eth','ete','iso','hcho','pan','mpan','nh3','eoh','paa'
 #
 # PERT_ICBC
       export PERT_JOB_CLASS=${L_ICBC_PERT_JOB_CLASS}

@@ -147,14 +147,14 @@
       fi
       if [[ ${HH} -eq 15 ]]; then
          export NL_NUM_INPUT_FILES=2
-         export NL_FILENAME_SEQ=\'obs_seq${LD_YYYY}${LD_MM}${LD_DD}12\',\'obs_seq${LD_YYYY},${LD_MM}${LD_DD}18\'
+         export NL_FILENAME_SEQ=\'obs_seq${LD_YYYY}${LD_MM}${LD_DD}12\',\'obs_seq${LD_YYYY}${LD_MM}${LD_DD}18\'
          ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_dart_input_nml.ksh
          ./obs_sequence_tool > index_obs_seq.html 2>&1
          mv obs_seq.proc obs_seq_prep_${LD_YYYY}${LD_MM}${LD_DD}15.out
       fi
       if [[ ${HH} -eq 21 ]]; then
          export NL_NUM_INPUT_FILES=2
-         export NL_FILENAME_SEQ=\'obs_seq${LD_YYYY}${LD_MM}${LD_DD}18\',\'obs_seq${LD_YYYY},${LD_MM}${LD_DD}24\'
+         export NL_FILENAME_SEQ=\'obs_seq${LD_YYYY}${LD_MM}${LD_DD}18\',\'obs_seq${LD_YYYY}${LD_MM}${LD_DD}24\'
          ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_dart_input_nml.ksh
          ./obs_sequence_tool > index_obs_seq.html 2>&1
          mv obs_seq.proc obs_seq_prep_${LD_YYYY}${LD_MM}${LD_DD}21.out

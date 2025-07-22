@@ -1,0 +1,9 @@
+Some observation types, like satellite total/partial and/or profile retrieval observations, depend on the vertical profile of various model state variables like T, q, P, no2, etc. The observation forward operators use the model_mod interpolator to interpolate the model state variables to the observation location or the observation forward operator grid. 
+
+This interpolation code begins near line 1426. The xyz_loc (x, y, z location is based on the observation). The vertical cordinate stuff (line 1493 to 1686) is based on the observation vertical cordinate. The variable 'v_p' contains the model vertical pressure cordinate grid which is dependent on ensemble member .
+
+The procedure 'pres_to_zk_distrib' return the variable 'zloc' which is the model level corresponding to the observation or forward operator vertical coordinate for each ensemble member. In lines 1509 to 1641, the model_mod is checking for vertical coordinte type provided by the interpolation calling statement. The 'pressure' vertical coordiante code is at lines 1513 to 1553.
+
+Line 1643 to 1687 check whether any of the 'zloc' values are missing values. 'wrf%dom(id)%bt' is the vertical grid array dimension. 
+
+The horizontal interpolation code is at line 1687 to 4468.

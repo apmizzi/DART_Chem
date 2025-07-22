@@ -219,6 +219,11 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
             end
          end
       end
+
+
+return
+
+      
 %      
 % o3_prior_lay(layer,npixel,ntime) (DU)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/O3Apriori';
