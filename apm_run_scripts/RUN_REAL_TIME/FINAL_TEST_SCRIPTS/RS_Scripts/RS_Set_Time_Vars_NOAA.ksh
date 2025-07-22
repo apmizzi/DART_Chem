@@ -87,7 +87,7 @@
    export NEXT_DAY_GREG=${GREG_DATA[0]}
    export NEXT_SEC_GREG=${GREG_DATA[1]}
 #
-   export ASIM_WINDOW=1hr29m
+   export ASIM_WINDOW=1hr30m
    export ASIM_MIN_DATE=$($BUILD_DIR/da_advance_time.exe ${DATE}00 -$ASIM_WINDOW -f ccyymmddhhnn 2>/dev/null)
    export ASIM_MIN_YYYY=$(echo $ASIM_MIN_DATE | cut -c1-4)
    export ASIM_MIN_YY=$(echo $ASIM_MIN_DATE | cut -c3-4)
@@ -95,7 +95,7 @@
    export ASIM_MIN_DD=$(echo $ASIM_MIN_DATE | cut -c7-8)
    export ASIM_MIN_HH=$(echo $ASIM_MIN_DATE | cut -c9-10)
    export ASIM_MIN_MN=$(echo $ASIM_MIN_DATE | cut -c11-12)
-   export ASIM_MIN_SS=59
+   export ASIM_MIN_SS=01
 #
    export ASIM_WINDOW=1hr30m
    export ASIM_MAX_DATE=$($BUILD_DIR/da_advance_time.exe ${DATE}00 +$ASIM_WINDOW -f ccyymmddhhnn 2>/dev/null)
@@ -116,7 +116,7 @@
    export ASIM_MAX_SEC_GREG=${temp[1]}
 #
 # ASSIMILATION WINDOW PARAMETERS
-   export ASIM_WINDOW=1hr29m
+   export ASIM_WINDOW=1hr30m
    export ASIM_DATE_MIN=$(${BUILD_DIR}/da_advance_time.exe ${DATE} -${ASIM_WINDOW} -f ccyymmddhhnn 2>/dev/null)
    export ASIM_WINDOW=1hr30m
    export ASIM_DATE_MAX=$(${BUILD_DIR}/da_advance_time.exe ${DATE} +${ASIM_WINDOW} -f ccyymmddhhnn 2>/dev/null)
@@ -125,7 +125,7 @@
    export ASIM_MN_DD=$(echo $ASIM_DATE_MIN | cut -c7-8)
    export ASIM_MN_HH=$(echo $ASIM_DATE_MIN | cut -c9-10)
    export ASIM_MN_MN=$(echo $ASIM_DATE_MIN | cut -c11-12)
-   export ASIM_MN_SS=59
+   export ASIM_MN_SS=01
 #
    export ASIM_MX_YYYY=$(echo $ASIM_DATE_MAX | cut -c1-4)
    export ASIM_MX_MM=$(echo $ASIM_DATE_MAX | cut -c5-6)

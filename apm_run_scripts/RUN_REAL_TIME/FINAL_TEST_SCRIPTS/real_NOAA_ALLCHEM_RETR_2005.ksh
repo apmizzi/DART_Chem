@@ -36,7 +36,7 @@ export INPUT_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1
 export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
 export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/TRACER1_OBS
-export RUN_DIR=${EXPERIMENT_DIR}/NOAA_ALLCHEM_RETR_2005
+export RUN_DIR=${EXPERIMENT_DIR}/NOAA_ALLCHEM_EMISADJ_2005
 export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2005
 export EXPERIMENT_INPUT_OBS=NOAA_RUNTIME_OBS
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
@@ -46,19 +46,19 @@ export CYCLE_PERIOD=3
 export FCST_PERIOD=3
 #
 # CYCLE TIME SETTINGS (NOAA has extra digits for ss)
-export INITIAL_DATE=2005040200
-export FIRST_FILTER_DATE=2005040203
-export FIRST_DART_INFLATE_DATE=2005040203
-export FIRST_EMISS_INV_DATE=2005040203
+export INITIAL_DATE=2005040215
+export FIRST_FILTER_DATE=2005040218
+export FIRST_DART_INFLATE_DATE=2005040218
+export FIRST_EMISS_INV_DATE=2005040218
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2005040218
+export CYCLE_STR_DATE=2005040215
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2005040218
+export CYCLE_END_DATE=2005040215
 
 # For emissions estimation
-export ADD_EMISS=false
+export ADD_EMISS=true
 export EMISS_DAMP_CYCLE=1.0
 export EMISS_DAMP_INTRA_CYCLE=1.0
 #
@@ -75,17 +75,17 @@ export LS_CHEM_DZ=32
 export LS_CHEM_DT=360
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=false
-export RUN_MOPITT_V8_CO_PROFILE_OBS=false           # (done)  TRACER I
+export RUN_INPUT_OBS=true
+export RUN_MOPITT_V8_CO_PROFILE_OBS=true           # (done)  TRACER I
 export RUN_MODIS_AOD_TOTAL_COL_OBS=false            # (done)  TRACER I
-export RUN_OMI_O3_PROFILE_OBS=true                  # (done)  TRACER I
-export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false        # (done)  TRACER I
-export RUN_OMI_SO2_PBL_COL_OBS=false                # (done)  TRACER I
-export RUN_TES_CO_PROFILE_OBS=false                 # (done)  TRACER I
+export RUN_OMI_O3_PROFILE_OBS=false                  # (done)  TRACER I
+export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true        # (done)  TRACER I
+export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
+export RUN_TES_CO_PROFILE_OBS=true                 # (done)  TRACER I
 export RUN_TES_O3_PROFILE_OBS=false                 # (done)  TRACER I
-export RUN_GOME2A_NO2_TROP_COL_OBS=false            # (done)  TRACER I
+export RUN_GOME2A_NO2_TROP_COL_OBS=true            # (done)  TRACER I
 export RUN_GOME2B_NO2_TROP_COL_OBS=false           # (done)  TRACER I
-export RUN_SCIAM_NO2_TROP_COL_OBS=false             # (done)  TRACER I
+export RUN_SCIAM_NO2_TROP_COL_OBS=true             # (done)  TRACER I
 export RUN_MLS_O3_PROFILE_OBS=false                 # (done)  TRACER I
 export RUN_MLS_HNO3_PROFILE_OBS=false               # (done)  TRACER I
 export RUN_AIRNOW_CO_OBS=false                      # (done)  TRACER I
@@ -96,14 +96,18 @@ export RUN_AIRNOW_PM10_OBS=false                    # (done)  TRACER I
 export RUN_AIRNOW_PM25_OBS=false                    # (done)  TRACER I
 export RUN_MET_OBS=false                             # (done)  TRACER I
 #
+if [[ ${ADD_EMISS} == true ]]; then 
+   export RUN_POST_EMISS_INFLATION=true
+else    
+   export RUN_POST_EMISS_INFLATION=false
+fi
+#
 # Setup DART namelist parameters for which observations to assimilate/evaluate
 # &obs_kind_nml
 export NL_EVALUATE_THESE_OBS_TYPES="'AIRNOW_CO',
                                    'AIRNOW_O3',
                                    'AIRNOW_NO2',
-                                   'AIRNOW_SO2',
-                                   'AIRNOW_PM10',
-                                   'AIRNOW_PM25'"
+                                   'AIRNOW_SO2'"
 #
 export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'RADIOSONDE_U_WIND_COMPONENT',
@@ -129,11 +133,11 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'SAT_U_WIND_COMPONENT',
                                    'SAT_V_WIND_COMPONENT',
                                    'MOPITT_V8_CO_PROFILE',
-                                   'MODIS_AOD_TOTAL_COL',
                                    'OMI_O3_PROFILE',
                                    'OMI_NO2_DOMINO_TROP_COL',
                                    'OMI_SO2_PBL_COL',
                                    'GOME2A_NO2_TROP_COL',
+                                   'SCIAM_NO2_TROP_COL',
                                    'MLS_O3_PROFILE',
                                    'MLS_HNO3_PROFILE',
                                    'TES_CO_PROFILE',
@@ -216,11 +220,14 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_ENSEMBLE_MEAN_INPUT=true
          export RUN_WRFCHEM_INITIAL=false
          export RUN_WRFCHEM_CYCLE_CR=true
-      fi	  
+      fi
       export RUN_WRFCHEM_CYCLE_FR=false
       export RUN_ENSMEAN_CYCLE_FR=false
       export RUN_ENSEMBLE_MEAN_OUTPUT=true
       export RUN_BAND_DEPTH=false
+      if [[ RUN_DART_FILTER == false ]]; then
+         export RUN_POST_EMISS_INFLATION=false
+      fi  
    fi
    if [[ ${RUN_SPECIAL_FORECAST} == true ]]; then
 #
@@ -229,6 +236,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_COMBINE_OBS=false
       export RUN_PREPROCESS_OBS=false
       export RUN_DART_FILTER=false
+      export RUN_POST_EMISS_INFLATION=false
       export RUN_BIAS_CORRECTION=false
       export RUN_UPDATE_BC=false
       export RUN_ENSEMBLE_MEAN_INPUT=false
@@ -256,6 +264,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_PREPROCESS_OBS=false
       fi
       export RUN_DART_FILTER=false
+      export RUN_POST_EMISS_INFLATION=false
       export RUN_BIAS_CORRECTION=false
       export RUN_UPDATE_BC=false
       export RUN_ENSEMBLE_MEAN_INPUT=false
@@ -321,6 +330,18 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 #########################################################################
 #
+   export GENERAL_JOB_CLASS=normal
+   export GENERAL_TIME_LIMIT=00:50:00
+   export GENERAL_NODES=1
+   export GENERAL_TASKS=1
+   export GENERAL_MODEL=has
+#   
+   export FILTER_JOB_CLASS=normal
+   export FILTER_TIME_LIMIT=01:59:00
+   export FILTER_NODES=1
+   export FILTER_TASKS=14
+   export FILTER_MODEL=bro
+#   
    export WRF_VER=WRFCHEM_NOAACSLv4.2.2
    export WRFCHEM_VER=WRFCHEM_NOAACSLv4.2.2
    export NNL_TIME_STEP=40
@@ -467,6 +488,17 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          cd ${RUN_DIR}/${DATE}/dart_filter
       fi
       source ${RS_SCRIPTS_DIR}/RS_DART_Filter_NOAA.ksh > index_rs.html 2>&1 
+   fi
+#
+#########################################################################
+#
+# RUN POST ASSIMILATION EMISSIONS INFLATION
+#
+#########################################################################
+#
+   if [[ ${RUN_POST_EMISS_INFLATION} == true && ${DATE} -ge ${FIRST_EMISS_INV_DATE} ]]; then
+      cd ${RUN_DIR}/${DATE}/dart_filter
+      source ${RS_SCRIPTS_DIR}/RS_Post_DART_Emiss_Inflation_NOAA.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################

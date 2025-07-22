@@ -49,6 +49,7 @@ program main
    integer                                  :: nx,ny,nxy,nz,nzp,nz_chem,nz_fire,nz_biog
    integer                                  :: nchem_spcs,nfire_spcs,nbiog_spcs,num_mems
    integer                                  :: i,j,k,isp,imem,ntotal_spcs
+   integer                                  :: itask1_chem,itask1_fire,itask1_biog
    integer,dimension(MPI_STATUS_SIZE)       :: stat
    integer,allocatable,dimension(:,:)       :: itask
    real                                     :: pi,grav,zfac,zmin,fac_min,nnum_mem
@@ -100,34 +101,34 @@ program main
    rewind(unit)   
    read(unit,perturb_chem_emiss_corr_nml)
    close(unit)
-!   if(rank.eq.0) then
-!      print *, 'date               ',date
-!      print *, 'nx                 ',nx
-!      print *, 'ny                 ',ny
-!      print *, 'nz                 ',nz
-!      print *, 'nz_chem            ',nz_chem
-!      print *, 'nchem_spcs         ',nchem_spcs
-!      print *, 'nfire_spcs         ',nfire_spcs
-!      print *, 'nbiog_spcs         ',nbiog_spcs
-!      print *, 'pert_path_pr       ',trim(pert_path_pr)
-!      print *, 'pert_path_po       ',trim(pert_path_po)
-!      print *, 'num_mem            ',nnum_mem
-!      print *, 'wrfchemi           ',trim(wrfchemi)
-!      print *, 'wrffirechemi       ',trim(wrffirechemi)
-!      print *, 'wrfbiogchemi       ',trim(wrfbiogchemi)
-!      print *, 'sprd_chem          ',sprd_chem
-!      print *, 'sprd_fire          ',sprd_fire
-!      print *, 'sprd_biog          ',sprd_biog
-!      print *, 'sw_corr_tm         ',sw_corr_tm
-!      print *, 'sw_seed            ',sw_seed
-!      print *, 'sw_chem            ',sw_chem
-!      print *, 'sw_fire            ',sw_fire
-!      print *, 'sw_biog            ',sw_biog
-!      print *, 'corr_lngth_hz      ',corr_lngth_hz
-!      print *, 'corr_lngth_vt      ',corr_lngth_vt
-!      print *, 'corr_lngth_tm      ',corr_lngth_tm
-!      print *, 'corr_tm_delt       ',corr_tm_delt
-!   endif
+   if(rank.eq.0) then
+      print *, 'date               ',date
+      print *, 'nx                 ',nx
+      print *, 'ny                 ',ny
+      print *, 'nz                 ',nz
+      print *, 'nz_chem            ',nz_chem
+      print *, 'nchem_spcs         ',nchem_spcs
+      print *, 'nfire_spcs         ',nfire_spcs
+      print *, 'nbiog_spcs         ',nbiog_spcs
+      print *, 'pert_path_pr       ',trim(pert_path_pr)
+      print *, 'pert_path_po       ',trim(pert_path_po)
+      print *, 'num_mem            ',nnum_mem
+      print *, 'wrfchemi           ',trim(wrfchemi)
+      print *, 'wrffirechemi       ',trim(wrffirechemi)
+      print *, 'wrfbiogchemi       ',trim(wrfbiogchemi)
+      print *, 'sprd_chem          ',sprd_chem
+      print *, 'sprd_fire          ',sprd_fire
+      print *, 'sprd_biog          ',sprd_biog
+      print *, 'sw_corr_tm         ',sw_corr_tm
+      print *, 'sw_seed            ',sw_seed
+      print *, 'sw_chem            ',sw_chem
+      print *, 'sw_fire            ',sw_fire
+      print *, 'sw_biog            ',sw_biog
+      print *, 'corr_lngth_hz      ',corr_lngth_hz
+      print *, 'corr_lngth_vt      ',corr_lngth_vt
+      print *, 'corr_lngth_tm      ',corr_lngth_tm
+      print *, 'corr_tm_delt       ',corr_tm_delt
+   endif
 !
    nxy=nx*ny   
    nzp=nz+1
@@ -135,18 +136,21 @@ program main
 !
 ! Allocate arrays
    allocate(ch_chem_spc(nchem_spcs),ch_fire_spc(nfire_spcs),ch_biog_spc(nbiog_spcs))
+!   if(rank.eq.0) print *, 'Allocate Anthro '
    if(sw_chem) then
       allocate(A_chem(nx,ny,nz_chem,nz_chem))
       A_chem(:,:,:,:)=0.
    else
       nchem_spcs=0
    endif
+!   if(rank.eq.0) print *, 'Allocate Fire '
    if(sw_fire) then
       allocate(A_fire(nx,ny,nz_fire,nz_fire))
       A_fire(:,:,:,:)=0.
    else
       nfire_spcs=0
    endif
+!   if(rank.eq.0) print *, 'Allocate Biog '
    if(sw_biog) then
       allocate(A_biog(nx,ny,nz_biog,nz_biog))
       A_biog(:,:,:,:)=0.
@@ -209,21 +213,32 @@ program main
    allocate(itask(num_mems,ntotal_spcs))
    icnt=0
    do imem=1,num_mems
-      do isp=1,nchem_spcs
-         icnt=icnt+1
-         itask(imem,icnt)=mod(icnt-1,num_procs-icnt_tsk)+icnt_tsk
-!         if(rank.eq.0) print *,'CHEM imem,isp,icnt,itask ',imem,isp,icnt,itask(imem,icnt) 
-      enddo
+      if(sw_chem) then
+         do isp=1,nchem_spcs
+            icnt=icnt+1
+            itask(imem,icnt)=mod(icnt-1,num_procs-icnt_tsk)+icnt_tsk
+            if(isp.eq.1) itask1_chem=itask(1,icnt)
+!            if(rank.eq.0) print *,'CHEM imem,isp,icnt,itask ',imem,isp,icnt,itask(imem,icnt) 
+         enddo
+      endif   
+      if(sw_fire) then
       do isp=1,nfire_spcs
-         icnt=icnt+1
-         itask(imem,icnt)=mod(((imem-1)*ntotal_spcs+icnt-1),num_procs)
-!         if(rank.eq.0) print *,'FIRE imem,isp,icnt,itask ',imem,isp,icnt,itask(imem,icnt) 
+            icnt=icnt+1
+!            itask(imem,icnt)=mod(((imem-1)*ntotal_spcs+icnt-1),num_procs)
+            itask(imem,icnt)=mod(icnt-1,num_procs-icnt_tsk)+icnt_tsk
+            if(isp.eq.1) itask1_fire=itask(1,icnt)
+!            if(rank.eq.0) print *,'FIRE imem,isp,icnt,itask ',imem,isp,icnt,itask(imem,icnt) 
+         enddo
+      endif
+      if(sw_biog) then
+         do isp=1,nbiog_spcs
+            icnt=icnt+1
+!            itask(imem,icnt)=mod(((imem-1)*ntotal_spcs+icnt-1),num_procs)
+            itask(imem,icnt)=mod(icnt-1,num_procs-icnt_tsk)+icnt_tsk
+            if(isp.eq.1) itask1_biog=itask(1,icnt)
+!            if(rank.eq.0) print *,'BIOG imem,isp,icnt,itask ',imem,isp,icnt,itask(imem,icnt) 
       enddo
-      do isp=1,nbiog_spcs
-         icnt=icnt+1
-         itask(imem,icnt)=mod(((imem-1)*ntotal_spcs+icnt-1),num_procs)
-!         if(rank.eq.0) print *,'BIOG imem,isp,icnt,itask ',imem,isp,icnt,itask(imem,icnt) 
-      enddo
+      endif
    enddo
 !
 ! Read old scaling factors if they exist   
@@ -255,48 +270,54 @@ program main
 !
          icnt=0
          do imem=1,num_mems
-            unita=30
-            allocate(chem_fac_old(nx,ny,nz_chem))
-            allocate(tmp_arry(nx*ny*nz_chem))
-            do isp=1,nchem_spcs
-               icnt=icnt+1
-               read(unita) chem_fac_old
-               call apm_pack(tmp_arry,chem_fac_old,nx,ny,nz_chem)
-               call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
-               itask(imem,icnt),1,MPI_COMM_WORLD,ierr)
-            enddo
-            deallocate(chem_fac_old)
-            deallocate(tmp_arry)
+            if(sw_chem) then
+               unita=30
+               allocate(chem_fac_old(nx,ny,nz_chem))
+               allocate(tmp_arry(nx*ny*nz_chem))
+               do isp=1,nchem_spcs
+                  icnt=icnt+1
+                  read(unita) chem_fac_old
+                  call apm_pack(tmp_arry,chem_fac_old,nx,ny,nz_chem)
+                  call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
+                  itask(imem,icnt),1,MPI_COMM_WORLD,ierr)
+               enddo
+               deallocate(chem_fac_old)
+               deallocate(tmp_arry)
+            endif
 !
-            unitb=40
-            allocate(fire_fac_old(nx,ny,nz_fire))
-            allocate(tmp_arry(nx*ny*nz_fire))
-            do isp=1,nfire_spcs
-               icnt=icnt+1
-               read(unitb) fire_fac_old
-               call apm_pack(tmp_arry,fire_fac_old,nx,ny,nz_fire)
-               call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-               itask(imem,icnt),2,MPI_COMM_WORLD,ierr)
-            enddo
-            deallocate(fire_fac_old)
-            deallocate(tmp_arry)
+            if(sw_fire) then                
+               unitb=40
+               allocate(fire_fac_old(nx,ny,nz_fire))
+               allocate(tmp_arry(nx*ny*nz_fire))
+               do isp=1,nfire_spcs
+                  icnt=icnt+1
+                  read(unitb) fire_fac_old
+                  call apm_pack(tmp_arry,fire_fac_old,nx,ny,nz_fire)
+                  call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
+                  itask(imem,icnt),2,MPI_COMM_WORLD,ierr)
+               enddo
+               deallocate(fire_fac_old)
+               deallocate(tmp_arry)
+            endif
 !
-            unitc=50
-            allocate(biog_fac_old(nx,ny,nz_biog))
-            allocate(tmp_arry(nx*ny*nz_biog))
-            do isp=1,nbiog_spcs
-               icnt=icnt+1
-               read(unitc) biog_fac_old
-               call apm_pack(tmp_arry,biog_fac_old,nx,ny,nz_biog)
-               call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-               itask(imem,icnt),3,MPI_COMM_WORLD,ierr)
-            enddo
-            deallocate(biog_fac_old)
-            deallocate(tmp_arry)
+            if(sw_biog) then            
+               unitc=50
+               allocate(biog_fac_old(nx,ny,nz_biog))
+               allocate(tmp_arry(nx*ny*nz_biog))
+               do isp=1,nbiog_spcs
+                  icnt=icnt+1
+                  read(unitc) biog_fac_old
+                  call apm_pack(tmp_arry,biog_fac_old,nx,ny,nz_biog)
+                  call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
+                  itask(imem,icnt),3,MPI_COMM_WORLD,ierr)
+               enddo
+               deallocate(biog_fac_old)
+               deallocate(tmp_arry)
+            endif
          enddo
-         close(unita)
-         close(unitb)
-         close(unitc)
+         if(sw_chem) close(unita)
+         if(sw_fire) close(unitb)
+         if(sw_biog) close(unitc)
       endif
 !      
       call mpi_recv(flg,1,MPI_FLOAT,1,3,MPI_COMM_WORLD,stat,ierr)
@@ -330,77 +351,83 @@ program main
          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
          if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-         unita=30
-         do isp=1,nchem_spcs
-            icnt=icnt+1
-            allocate(chem_fac_end(nx,ny,nz_chem))
-            allocate(tmp_arry(nx*ny*nz_chem))
-            read(unita) chem_fac_end
-            call apm_pack(tmp_arry,chem_fac_end,nx,ny,nz_chem)
-            call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
-            itask(imem,icnt),4,MPI_COMM_WORLD,ierr)
-            deallocate(chem_fac_end)
-            deallocate(tmp_arry)
+         if(sw_chem) then
+            unita=30
+            do isp=1,nchem_spcs
+               icnt=icnt+1
+               allocate(chem_fac_end(nx,ny,nz_chem))
+               allocate(tmp_arry(nx*ny*nz_chem))
+               read(unita) chem_fac_end
+               call apm_pack(tmp_arry,chem_fac_end,nx,ny,nz_chem)
+               call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
+               itask(imem,icnt),4,MPI_COMM_WORLD,ierr)
+               deallocate(chem_fac_end)
+               deallocate(tmp_arry)
 !
-            wrfchem_file=trim(wrfchemi)
-            allocate(chem_data3d(nx,ny,nz_chem))
-            allocate(tmp_arry(nx*ny*nz_chem))
-            call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
-            nx,ny,nz_chem)
-            call apm_pack(tmp_arry,chem_data3d,nx,ny,nz_chem)
-            call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
-            itask(imem,icnt),5,MPI_COMM_WORLD,ierr)
-            deallocate(chem_data3d)
-            deallocate(tmp_arry)
-         enddo
+               wrfchem_file=trim(wrfchemi)
+               allocate(chem_data3d(nx,ny,nz_chem))
+               allocate(tmp_arry(nx*ny*nz_chem))
+               call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
+               nx,ny,nz_chem)
+               call apm_pack(tmp_arry,chem_data3d,nx,ny,nz_chem)
+               call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
+               itask(imem,icnt),5,MPI_COMM_WORLD,ierr)
+               deallocate(chem_data3d)
+               deallocate(tmp_arry)
+            enddo
+         endif
 !
-         unita=40
-         do isp=1,nfire_spcs
-            icnt=icnt+1
-            allocate(fire_fac_end(nx,ny,nz_fire))
-            allocate(tmp_arry(nx*ny*nz_fire))
-            read(unita) fire_fac_end
-            call apm_pack(tmp_arry,fire_fac_end,nx,ny,nz_fire)
-            call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-            itask(imem,icnt),6,MPI_COMM_WORLD,ierr)
-            deallocate(fire_fac_end)
-            deallocate(tmp_arry)
+         if(sw_fire) then         
+            unita=40
+            do isp=1,nfire_spcs
+               icnt=icnt+1
+               allocate(fire_fac_end(nx,ny,nz_fire))
+               allocate(tmp_arry(nx*ny*nz_fire))
+               read(unita) fire_fac_end
+               call apm_pack(tmp_arry,fire_fac_end,nx,ny,nz_fire)
+               call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
+               itask(imem,icnt),6,MPI_COMM_WORLD,ierr)
+               deallocate(fire_fac_end)
+               deallocate(tmp_arry)
+!   
+               wrfchem_file=trim(wrffirechemi)
+               allocate(chem_data3d(nx,ny,nz_fire))
+               allocate(tmp_arry(nx*ny*nz_fire))
+               call get_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),chem_data3d, &
+               nx,ny,nz_fire)
+               call apm_pack(tmp_arry,chem_data3d,nx,ny,nz_fire)
+               call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
+               itask(imem,icnt),7,MPI_COMM_WORLD,ierr)
+               deallocate(chem_data3d)
+               deallocate(tmp_arry)
+            enddo
+         endif   
 !
-            wrfchem_file=trim(wrffirechemi)
-            allocate(chem_data3d(nx,ny,nz_fire))
-            allocate(tmp_arry(nx*ny*nz_fire))
-            call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
-            nx,ny,nz_fire)
-            call apm_pack(tmp_arry,chem_data3d,nx,ny,nz_fire)
-            call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-            itask(imem,icnt),7,MPI_COMM_WORLD,ierr)
-            deallocate(chem_data3d)
-            deallocate(tmp_arry)
-        enddo
-!
-         unita=50
-         do isp=1,nbiog_spcs
-            icnt=icnt+1
-            allocate(biog_fac_end(nx,ny,nz_biog))
-            allocate(tmp_arry(nx*ny*nz_biog))
-            read(unita) biog_fac_end
-            call apm_pack(tmp_arry,biog_fac_end,nx,ny,nz_biog)
-            call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-            itask(imem,icnt),8,MPI_COMM_WORLD,ierr)
-            deallocate(biog_fac_end)
-            deallocate(tmp_arry)
-!
-            wrfchem_file=trim(wrfbiogchemi)
-            allocate(chem_data3d(nx,ny,nz_biog))
-            allocate(tmp_arry(nx*ny*nz_biog))
-            call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
-            nx,ny,nz_biog)
-            call apm_pack(tmp_arry,chem_data3d,nx,ny,nz_biog)
-            call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-            itask(imem,icnt),9,MPI_COMM_WORLD,ierr)
-            deallocate(chem_data3d)
-            deallocate(tmp_arry)            
-         enddo
+         if(sw_biog) then
+            unita=50
+            do isp=1,nbiog_spcs
+               icnt=icnt+1
+               allocate(biog_fac_end(nx,ny,nz_biog))
+               allocate(tmp_arry(nx*ny*nz_biog))
+               read(unita) biog_fac_end
+               call apm_pack(tmp_arry,biog_fac_end,nx,ny,nz_biog)
+               call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
+               itask(imem,icnt),8,MPI_COMM_WORLD,ierr)
+               deallocate(biog_fac_end)
+               deallocate(tmp_arry)
+!           
+               wrfchem_file=trim(wrfbiogchemi)
+               allocate(chem_data3d(nx,ny,nz_biog))
+               allocate(tmp_arry(nx*ny*nz_biog))
+               call get_WRFCHEM_emiss_data(wrfchem_file,ch_biog_spc(isp),chem_data3d, &
+               nx,ny,nz_biog)
+               call apm_pack(tmp_arry,chem_data3d,nx,ny,nz_biog)
+               call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
+               itask(imem,icnt),9,MPI_COMM_WORLD,ierr)
+               deallocate(chem_data3d)
+               deallocate(tmp_arry)            
+            enddo
+         endif
       enddo
    endif
 !
@@ -413,157 +440,163 @@ program main
          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
          if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-         allocate(chem_fac_old(nx,ny,nz_chem))
-         allocate(chem_fac_new(nx,ny,nz_chem))
-         allocate(chem_fac_end(nx,ny,nz_chem))
-         allocate(chem_data3d(nx,ny,nz_chem))      
-         do isp=1,nchem_spcs
-            icnt=icnt+1
-            if(rank.eq.itask(imem,icnt)) then
-               if (rank.eq.3) then
+         if(sw_chem) then
+            allocate(chem_fac_old(nx,ny,nz_chem))
+            allocate(chem_fac_new(nx,ny,nz_chem))
+            allocate(chem_fac_end(nx,ny,nz_chem))
+            allocate(chem_data3d(nx,ny,nz_chem))
+            do isp=1,nchem_spcs
+               icnt=icnt+1
+               if(rank.eq.itask(imem,icnt)) then
+                  if (rank.eq.itask1_chem) then
+                     call cpu_time(cpu_str)
+                     print *, 'APM: Before chem pert_flds rank,imem,isp ',rank,imem,isp,cpu_str
+                  endif
+                  if(.not.sw_corr_tm) then
+                     allocate(tmp_arry(nx*ny*nz_chem))
+                     call mpi_recv(tmp_arry,nx*ny*nz_chem, &
+                     MPI_FLOAT,0,1,MPI_COMM_WORLD,stat,ierr)
+                     call apm_unpack(tmp_arry,chem_fac_old,nx,ny,nz_chem)
+                     deallocate(tmp_arry)
+                  endif
+                  if(sw_seed) call init_const_random_seed(rank,date)
                   call cpu_time(cpu_str)
-                  print *, 'APM: Before chem pert_flds rank,imem,isp ',rank,imem,isp,cpu_str
-               endif
-               if(.not.sw_corr_tm) then
-                  allocate(tmp_arry(nx*ny*nz_chem))
-                  call mpi_recv(tmp_arry,nx*ny*nz_chem, &
-                  MPI_FLOAT,0,1,MPI_COMM_WORLD,stat,ierr)
-                  call apm_unpack(tmp_arry,chem_fac_old,nx,ny,nz_chem)
-                  deallocate(tmp_arry)
-               endif
-               if(sw_seed) call init_const_random_seed(rank,date)
-               call cpu_time(cpu_str)
-               call perturb_fields(chem_fac_old,chem_fac_new, &
-               lat,lon,A_chem,nx,ny,nz_chem,nchem_spcs,ngrid_corr,sw_corr_tm, &
-               corr_lngth_hz,rank)
-               call cpu_time(cpu_end)
-               cpu_dif=cpu_end-cpu_str
-               print *, 'RANK: ',itask(imem,icnt),' imem,isp, ',imem,isp,' perturb_fields: chem time ',cpu_dif
+                  call perturb_fields(chem_fac_old,chem_fac_new, &
+                  lat,lon,A_chem,nx,ny,nz_chem,nchem_spcs,ngrid_corr,sw_corr_tm, &
+                  corr_lngth_hz,rank,sprd_chem)
+                  call cpu_time(cpu_end)
+                  cpu_dif=cpu_end-cpu_str
+!                  print *, 'RANK: ',itask(imem,icnt),' imem,isp, ',imem,isp,' perturb_fields: chem time ',cpu_dif
 !
 ! Impose temporal correlations
-               wgt_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
-               chem_fac_end(:,:,:)=wgt_end*chem_fac_old(:,:,:)+(1.-wgt_end)* &
-               chem_fac_new(:,:,:)
+                  wgt_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
+                  chem_fac_end(:,:,:)=(1.-wgt_end)*chem_fac_old(:,:,:)+wgt_end* &
+                  chem_fac_new(:,:,:)
 !               
 ! Send chem_fac_end to rank 1 for writing to archive file            
-               allocate(tmp_arry(nx*ny*nz_chem))
-               call apm_pack(tmp_arry,chem_fac_end,nx,ny,nz_chem)
-               call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
-               1,21,MPI_COMM_WORLD,ierr)
-               deallocate(tmp_arry)
-               if (rank.eq.3) then
+                  allocate(tmp_arry(nx*ny*nz_chem))
+                  call apm_pack(tmp_arry,chem_fac_end,nx,ny,nz_chem)
+                  call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
+                  1,21,MPI_COMM_WORLD,ierr)
+                  deallocate(tmp_arry)
+                  if (rank.eq.itask1_chem) then
+                     call cpu_time(cpu_end)
+                     cpu_dif=cpu_end-cpu_str
+                     print *, 'APM: After chem pert_flds rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+                  endif
+               endif
+            enddo
+            deallocate(chem_fac_old)
+            deallocate(chem_fac_new)
+            deallocate(chem_fac_end)
+            deallocate(chem_data3d)
+         endif
+!
+         if(sw_fire) then         
+            allocate(fire_fac_old(nx,ny,nz_fire))
+            allocate(fire_fac_new(nx,ny,nz_fire))
+            allocate(fire_fac_end(nx,ny,nz_fire))
+            allocate(chem_data3d(nx,ny,nz_fire))      
+            do isp=1,nfire_spcs
+               icnt=icnt+1
+               if(rank.eq.itask(imem,icnt)) then
+                  if (rank.eq.3) then
+                     call cpu_time(cpu_str)
+                     print *, 'APM: Before fire pert_flds rank,imem,isp ',rank,imem,isp,cpu_str
+                  endif
+                  if(.not.sw_corr_tm) then
+                     allocate(tmp_arry(nx*ny*nz_fire))
+                     call mpi_recv(tmp_arry,nx*ny*nz_fire, &
+                     MPI_FLOAT,0,2,MPI_COMM_WORLD,stat,ierr)
+                     call apm_unpack(tmp_arry,fire_fac_old,nx,ny,nz_fire)
+                     deallocate(tmp_arry)
+                  endif
+!       
+                  if(sw_seed) call init_const_random_seed(rank,date)
+                  call cpu_time(cpu_str)
+                  call perturb_fields(fire_fac_old,fire_fac_new, &
+                  lat,lon,A_fire,nx,ny,nz_fire,nfire_spcs,ngrid_corr,sw_corr_tm, &
+                  corr_lngth_hz,rank,sprd_fire)
                   call cpu_time(cpu_end)
                   cpu_dif=cpu_end-cpu_str
-                  print *, 'APM: After chem pert_flds rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
-               endif
-            endif
-         enddo
-         deallocate(chem_fac_old)
-         deallocate(chem_fac_new)
-         deallocate(chem_fac_end)
-         deallocate(chem_data3d)      
-!
-         allocate(fire_fac_old(nx,ny,nz_fire))
-         allocate(fire_fac_new(nx,ny,nz_fire))
-         allocate(fire_fac_end(nx,ny,nz_fire))
-         allocate(chem_data3d(nx,ny,nz_fire))      
-         do isp=1,nfire_spcs
-            icnt=icnt+1
-            if(rank.eq.itask(imem,icnt)) then
-               if (rank.eq.3) then
-                  call cpu_time(cpu_str)
-                  print *, 'APM: Before fire pert_flds rank,imem,isp ',rank,imem,isp,cpu_str
-               endif
-               if(.not.sw_corr_tm) then
-                  allocate(tmp_arry(nx*ny*nz_fire))
-                  call mpi_recv(tmp_arry,nx*ny*nz_fire, &
-                  MPI_FLOAT,0,2,MPI_COMM_WORLD,stat,ierr)
-                  call apm_unpack(tmp_arry,fire_fac_old,nx,ny,nz_fire)
-                  deallocate(tmp_arry)
-               endif
-!
-               if(sw_seed) call init_const_random_seed(rank,date)
-               call cpu_time(cpu_str)
-               call perturb_fields(fire_fac_old,fire_fac_new, &
-               lat,lon,A_fire,nx,ny,nz_fire,nfire_spcs,ngrid_corr,sw_corr_tm, &
-               corr_lngth_hz,rank)
-               call cpu_time(cpu_end)
-               cpu_dif=cpu_end-cpu_str
-               print *, 'RANK: ',itask(imem,icnt),' imem,isp, ',imem,isp,' perturb_fields: fire time ',cpu_dif
-!
+!                  print *, 'RANK: ',itask(imem,icnt),' imem,isp, ',imem,isp,' perturb_fields: fire time ',cpu_dif
+!       
 ! Impose temporal correlations
-               wgt_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
-               fire_fac_end(:,:,:)=wgt_end*fire_fac_old(:,:,:)+(1.-wgt_end)* &
-               fire_fac_new(:,:,:)
+                  wgt_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
+                  fire_fac_end(:,:,:)=(1.-wgt_end)*fire_fac_old(:,:,:)+wgt_end* &
+                  fire_fac_new(:,:,:)
 !               
-! Send fire_fac_end to rank 1 for writing to archive file            
-               allocate(tmp_arry(nx*ny*nz_fire))
-               call apm_pack(tmp_arry,fire_fac_end,nx,ny,nz_fire)
-               call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-               1,22,MPI_COMM_WORLD,ierr)
-               deallocate(tmp_arry)             
-               if (rank.eq.3) then
+! Send fire_fac_end to rank 1 for writing to archive file
+                  allocate(tmp_arry(nx*ny*nz_fire))
+                  call apm_pack(tmp_arry,fire_fac_end,nx,ny,nz_fire)
+                  call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
+                  1,22,MPI_COMM_WORLD,ierr)
+                  deallocate(tmp_arry)             
+                  if (rank.eq.3) then
+                     call cpu_time(cpu_end)
+                     cpu_dif=cpu_end-cpu_str
+                     print *, 'APM: After fire chem pert_flds rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+                  endif
+               endif
+            enddo
+            deallocate(fire_fac_old)
+            deallocate(fire_fac_new)
+            deallocate(fire_fac_end)
+            deallocate(chem_data3d)      
+         endif
+!      
+         if(sw_biog) then
+            allocate(biog_fac_old(nx,ny,nz_biog))
+            allocate(biog_fac_new(nx,ny,nz_biog))
+            allocate(biog_fac_end(nx,ny,nz_biog))
+            allocate(chem_data3d(nx,ny,nz_biog))      
+            do isp=1,nbiog_spcs
+               icnt=icnt+1
+               if(rank.eq.itask(imem,icnt)) then
+                  if (rank.eq.itask1_biog) then
+                     call cpu_time(cpu_str)
+                     print *, 'APM: Before biog pert_flds rank,imem,isp ',rank,imem,isp,cpu_str
+                  endif
+                  if(.not.sw_corr_tm) then
+                     allocate(tmp_arry(nx*ny*nz_biog))
+                     call mpi_recv(tmp_arry,nx*ny*nz_biog, &
+                     MPI_FLOAT,0,3,MPI_COMM_WORLD,stat,ierr)
+                     call apm_unpack(tmp_arry,biog_fac_old,nx,ny,nz_biog)
+                     deallocate(tmp_arry)
+                  endif
+!      
+                  if(sw_seed) call init_const_random_seed(rank,date)
+                  call cpu_time(cpu_str)
+                  call perturb_fields(biog_fac_old,biog_fac_new, &
+                  lat,lon,A_biog,nx,ny,nz_biog,nbiog_spcs,ngrid_corr,sw_corr_tm, &
+                  corr_lngth_hz,rank,sprd_biog)
                   call cpu_time(cpu_end)
                   cpu_dif=cpu_end-cpu_str
-                  print *, 'APM: fire chem pert_flds rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
-               endif
-            endif
-         enddo
-         deallocate(fire_fac_old)
-         deallocate(fire_fac_new)
-         deallocate(fire_fac_end)
-         deallocate(chem_data3d)      
-!
-         allocate(biog_fac_old(nx,ny,nz_biog))
-         allocate(biog_fac_new(nx,ny,nz_biog))
-         allocate(biog_fac_end(nx,ny,nz_biog))
-         allocate(chem_data3d(nx,ny,nz_biog))      
-         do isp=1,nbiog_spcs
-            icnt=icnt+1
-            if(rank.eq.itask(imem,icnt)) then
-               if (rank.eq.3) then
-                  call cpu_time(cpu_str)
-                  print *, 'APM: Before biog pert_flds rank,imem,isp ',rank,imem,isp,cpu_str
-               endif
-               if(.not.sw_corr_tm) then
-                  allocate(tmp_arry(nx*ny*nz_biog))
-                  call mpi_recv(tmp_arry,nx*ny*nz_biog, &
-                  MPI_FLOAT,0,3,MPI_COMM_WORLD,stat,ierr)
-                  call apm_unpack(tmp_arry,biog_fac_old,nx,ny,nz_biog)
-                  deallocate(tmp_arry)
-               endif
-!
-               if(sw_seed) call init_const_random_seed(rank,date)
-               call cpu_time(cpu_str)
-               call perturb_fields(biog_fac_old,biog_fac_new, &
-               lat,lon,A_biog,nx,ny,nz_biog,nbiog_spcs,ngrid_corr,sw_corr_tm, &
-               corr_lngth_hz,rank)
-               call cpu_time(cpu_end)
-               cpu_dif=cpu_end-cpu_str
-               print *, 'RANK: ',itask(imem,icnt),' imem,isp, ',imem,isp,' perturb_fields: biog time ',cpu_dif
+!                  print *, 'RANK: ',itask(imem,icnt),' imem,isp, ',imem,isp,' perturb_fields: biog time ',cpu_dif
 !
 ! Impose temporal correlations
-               wgt_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
-               biog_fac_end(:,:,:)=wgt_end*biog_fac_old(:,:,:)+(1.-wgt_end)* &
-               biog_fac_new(:,:,:)
+                  wgt_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
+                  biog_fac_end(:,:,:)=(1.-wgt_end)*biog_fac_old(:,:,:)+wgt_end* &
+                  biog_fac_new(:,:,:)
 !               
 ! Send biog_fac_end to rank 1 for writing to archive file
-               allocate(tmp_arry(nx*ny*nz_biog))
-               call apm_pack(tmp_arry,biog_fac_end,nx,ny,nz_biog)
-               call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-               1,23,MPI_COMM_WORLD,ierr)
-               deallocate(tmp_arry) 
-               if (rank.eq.3) then
-                  call cpu_time(cpu_end)
-                  cpu_dif=cpu_end-cpu_str
-                  print *, 'APM: biog chem pert_flds rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+                  allocate(tmp_arry(nx*ny*nz_biog))
+                  call apm_pack(tmp_arry,biog_fac_end,nx,ny,nz_biog)
+                  call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
+                  1,23,MPI_COMM_WORLD,ierr)
+                  deallocate(tmp_arry) 
+                  if (rank.eq.itask1_biog) then
+                     call cpu_time(cpu_end)
+                     cpu_dif=cpu_end-cpu_str
+                     print *, 'APM: biog chem pert_flds rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+                  endif
                endif
-            endif
-         enddo
-         deallocate(biog_fac_old)
-         deallocate(biog_fac_new)
-         deallocate(biog_fac_end)
-         deallocate(chem_data3d)      
+            enddo
+            deallocate(biog_fac_old)
+            deallocate(biog_fac_new)
+            deallocate(biog_fac_end)
+            deallocate(chem_data3d)
+         endif
       enddo
 !
       icnt=0
@@ -571,149 +604,155 @@ program main
          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
          if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-         allocate (chem_fac_end(nx,ny,nz_chem))
-         allocate (chem_data3d(nx,ny,nz_chem))
-         do isp=1,nchem_spcs
-            icnt=icnt+1
-            if(rank.eq.itask(imem,icnt)) then
-               if (rank.eq.3) then
-                  call cpu_time(cpu_str)
-                  print *, 'APM: Before chem smoothing rank,imem,isp ',rank,imem,isp,cpu_str
-               endif
-               allocate(tmp_arry(nx*ny*nz_chem))
-               call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
-               0,4,MPI_COMM_WORLD,stat,ierr)
-               call apm_unpack(tmp_arry,chem_fac_end,nx,ny,nz_chem)
-               deallocate(tmp_arry)
-!                                                                                                          
-               allocate(tmp_arry(nx*ny*nz_chem))
-               call mpi_recv(tmp_arry,nx*ny*nz_chem, &
-               MPI_FLOAT,0,5,MPI_COMM_WORLD,stat,ierr)
-               call apm_unpack(tmp_arry,chem_data3d,nx,ny,nz_chem)
-               deallocate(tmp_arry)
-!
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_chem
-                        if(chem_data3d(i,j,k)*(1.+chem_fac_end(i,j,k)) .le. 0.) then
-                           chem_data3d(i,j,k)=fac_min*chem_data3d(i,j,k)
-                        else
-                           chem_data3d(i,j,k)=chem_data3d(i,j,k)*(1.+chem_fac_end(i,j,k))
-                        endif
+         if(sw_chem) then
+            allocate (chem_fac_end(nx,ny,nz_chem))
+            allocate (chem_data3d(nx,ny,nz_chem))
+            do isp=1,nchem_spcs
+               icnt=icnt+1
+               if(rank.eq.itask(imem,icnt)) then
+                  if (rank.eq.itask1_chem) then
+                     call cpu_time(cpu_str)
+                     print *, 'APM: Before chem smoothing rank,imem,isp ',rank,imem,isp,cpu_str
+                  endif
+                  allocate(tmp_arry(nx*ny*nz_chem))
+                  call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
+                  0,4,MPI_COMM_WORLD,stat,ierr)
+                  call apm_unpack(tmp_arry,chem_fac_end,nx,ny,nz_chem)
+                  deallocate(tmp_arry)
+!                                                                                                             
+                  allocate(tmp_arry(nx*ny*nz_chem))
+                  call mpi_recv(tmp_arry,nx*ny*nz_chem, &
+                  MPI_FLOAT,0,5,MPI_COMM_WORLD,stat,ierr)
+                  call apm_unpack(tmp_arry,chem_data3d,nx,ny,nz_chem)
+                  deallocate(tmp_arry)
+!        
+                  do i=1,nx
+                     do j=1,ny
+                        do k=1,nz_chem
+                           if(chem_data3d(i,j,k)*(1.+chem_fac_end(i,j,k)) .le. 0.) then
+                              chem_data3d(i,j,k)=fac_min*chem_data3d(i,j,k)
+                           else
+                              chem_data3d(i,j,k)=chem_data3d(i,j,k)*(1.+chem_fac_end(i,j,k))
+                           endif
+                        enddo
                      enddo
                   enddo
-               enddo
-!
-               allocate(tmp_arry(nx*ny*nz_chem))
-               call apm_pack(tmp_arry,chem_data3d,nx,ny,nz_chem)
-               call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
-               1,24,MPI_COMM_WORLD,ierr)
-               deallocate(tmp_arry)
-               if (rank.eq.3) then
-                  call cpu_time(cpu_end)
-                  cpu_dif=cpu_end-cpu_str
-                  print *, 'APM: After chem smoothing rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+!        
+                  allocate(tmp_arry(nx*ny*nz_chem))
+                  call apm_pack(tmp_arry,chem_data3d,nx,ny,nz_chem)
+                  call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
+                  1,24,MPI_COMM_WORLD,ierr)
+                  deallocate(tmp_arry)
+                  if (rank.eq.itask1_chem) then
+                     call cpu_time(cpu_end)
+                     cpu_dif=cpu_end-cpu_str
+                     print *, 'APM: After chem smoothing rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+                  endif
                endif
-            endif
-         enddo      
-         deallocate (chem_fac_end)
-         deallocate (chem_data3d)
+            enddo
+            deallocate (chem_fac_end)
+            deallocate (chem_data3d)
+         endif
 !
-         allocate (fire_fac_end(nx,ny,nz_fire))
-         allocate (chem_data3d(nx,ny,nz_fire))
-         do isp=1,nfire_spcs
-            icnt=icnt+1
-            if(rank.eq.itask(imem,icnt)) then
-               if (rank.eq.3) then
-                  call cpu_time(cpu_str)
-                  print *, 'APM: Before fire smoothing rank,imem,isp ',rank,imem,isp,cpu_str
-               endif
-               allocate(tmp_arry(nx*ny*nz_fire))
-               call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-               0,6,MPI_COMM_WORLD,stat,ierr)
-               call apm_unpack(tmp_arry,fire_fac_end,nx,ny,nz_fire)
-               deallocate(tmp_arry)
-!                                                                                                          
-               allocate(tmp_arry(nx*ny*nz_fire))
-               call mpi_recv(tmp_arry,nx*ny*nz_fire, &
-               MPI_FLOAT,0,7,MPI_COMM_WORLD,stat,ierr)
-               call apm_unpack(tmp_arry,chem_data3d,nx,ny,nz_fire)
-               deallocate(tmp_arry)
-!
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_fire
-                        if(chem_data3d(i,j,k)*(1.+fire_fac_end(i,j,k)) .le. 0.) then
-                           chem_data3d(i,j,k)=fac_min*chem_data3d(i,j,k)
-                        else
-                           chem_data3d(i,j,k)=chem_data3d(i,j,k)*(1.+fire_fac_end(i,j,k))
-                        endif
+         if(sw_fire) then
+            allocate (fire_fac_end(nx,ny,nz_fire))
+            allocate (chem_data3d(nx,ny,nz_fire))
+            do isp=1,nfire_spcs
+               icnt=icnt+1
+               if(rank.eq.itask(imem,icnt)) then
+                  if (rank.eq.3-itask1_fire) then
+                     call cpu_time(cpu_str)
+                     print *, 'APM: Before fire smoothing rank,imem,isp ',rank,imem,isp,cpu_str
+                  endif
+                  allocate(tmp_arry(nx*ny*nz_fire))
+                  call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
+                  0,6,MPI_COMM_WORLD,stat,ierr)
+                  call apm_unpack(tmp_arry,fire_fac_end,nx,ny,nz_fire)
+                  deallocate(tmp_arry)
+!                                                                                                             
+                  allocate(tmp_arry(nx*ny*nz_fire))
+                  call mpi_recv(tmp_arry,nx*ny*nz_fire, &
+                  MPI_FLOAT,0,7,MPI_COMM_WORLD,stat,ierr)
+                  call apm_unpack(tmp_arry,chem_data3d,nx,ny,nz_fire)
+                  deallocate(tmp_arry)
+!       
+                  do i=1,nx
+                     do j=1,ny
+                        do k=1,nz_fire
+                           if(chem_data3d(i,j,k)*(1.+fire_fac_end(i,j,k)) .le. 0.) then
+                              chem_data3d(i,j,k)=fac_min*chem_data3d(i,j,k)
+                           else
+                              chem_data3d(i,j,k)=chem_data3d(i,j,k)*(1.+fire_fac_end(i,j,k))
+                           endif
+                        enddo
                      enddo
                   enddo
-               enddo
-!
-               allocate(tmp_arry(nx*ny*nz_fire))
-               call apm_pack(tmp_arry,chem_data3d,nx,ny,nz_fire)
-               call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-               1,25,MPI_COMM_WORLD,ierr)
-               deallocate(tmp_arry)
-               if (rank.eq.3) then
-                  call cpu_time(cpu_end)
-                  cpu_dif=cpu_end-cpu_str
-                  print *, 'APM: After fire smoothing rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+!       
+                  allocate(tmp_arry(nx*ny*nz_fire))
+                  call apm_pack(tmp_arry,chem_data3d,nx,ny,nz_fire)
+                  call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
+                  1,25,MPI_COMM_WORLD,ierr)
+                  deallocate(tmp_arry)
+                  if (rank.eq.itask1_fire) then
+                     call cpu_time(cpu_end)
+                     cpu_dif=cpu_end-cpu_str
+                     print *, 'APM: After fire smoothing rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+                  endif
                endif
-            endif
-         enddo      
-         deallocate (fire_fac_end)
-         deallocate (chem_data3d)
+            enddo      
+            deallocate (fire_fac_end)
+            deallocate (chem_data3d)
+         endif
 !
-         allocate (biog_fac_end(nx,ny,nz_biog))
-         allocate (chem_data3d(nx,ny,nz_biog))
-         do isp=1,nbiog_spcs
-            icnt=icnt+1
-            if(rank.eq.itask(imem,icnt)) then
-               if (rank.eq.3) then
-                  call cpu_time(cpu_str)
-                  print *, 'APM: Before biog smoothing rank,imem,isp ',rank,imem,isp,cpu_str
-               endif
-               allocate(tmp_arry(nx*ny*nz_biog))
-               call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-               0,8,MPI_COMM_WORLD,stat,ierr)
-               call apm_unpack(tmp_arry,biog_fac_end,nx,ny,nz_biog)
-               deallocate(tmp_arry)
-!                                                                                                          
-               allocate(tmp_arry(nx*ny*nz_biog))
-               call mpi_recv(tmp_arry,nx*ny*nz_biog, &
-               MPI_FLOAT,0,9,MPI_COMM_WORLD,stat,ierr)
-               call apm_unpack(tmp_arry,chem_data3d,nx,ny,nz_biog)
-               deallocate(tmp_arry)
-!
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_biog
-                        if(chem_data3d(i,j,k)*(1.+biog_fac_end(i,j,k)) .le. 0.) then
-                           chem_data3d(i,j,k)=fac_min*chem_data3d(i,j,k)
-                        else
-                           chem_data3d(i,j,k)=chem_data3d(i,j,k)*(1.+biog_fac_end(i,j,k))
-                        endif
+         if(sw_biog) then
+            allocate (biog_fac_end(nx,ny,nz_biog))
+            allocate (chem_data3d(nx,ny,nz_biog))
+            do isp=1,nbiog_spcs
+               icnt=icnt+1
+               if(rank.eq.itask(imem,icnt)) then
+                  if (rank.eq.itask1_biog) then
+                     call cpu_time(cpu_str)
+                     print *, 'APM: Before biog smoothing rank,imem,isp ',rank,imem,isp,cpu_str
+                  endif
+                  allocate(tmp_arry(nx*ny*nz_biog))
+                  call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
+                  0,8,MPI_COMM_WORLD,stat,ierr)
+                  call apm_unpack(tmp_arry,biog_fac_end,nx,ny,nz_biog)
+                  deallocate(tmp_arry)
+!                                                                                                             
+                  allocate(tmp_arry(nx*ny*nz_biog))
+                  call mpi_recv(tmp_arry,nx*ny*nz_biog, &
+                  MPI_FLOAT,0,9,MPI_COMM_WORLD,stat,ierr)
+                  call apm_unpack(tmp_arry,chem_data3d,nx,ny,nz_biog)
+                  deallocate(tmp_arry)
+!        
+                  do i=1,nx
+                     do j=1,ny
+                        do k=1,nz_biog
+                           if(chem_data3d(i,j,k)*(1.+biog_fac_end(i,j,k)) .le. 0.) then
+                              chem_data3d(i,j,k)=fac_min*chem_data3d(i,j,k)
+                           else
+                              chem_data3d(i,j,k)=chem_data3d(i,j,k)*(1.+biog_fac_end(i,j,k))
+                           endif
+                        enddo
                      enddo
                   enddo
-               enddo
-!
-               allocate(tmp_arry(nx*ny*nz_biog))
-               call apm_pack(tmp_arry,chem_data3d,nx,ny,nz_biog)
-               call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-               1,26,MPI_COMM_WORLD,ierr)
-               deallocate(tmp_arry)
-               if (rank.eq.3) then
-                  call cpu_time(cpu_end)
-                  cpu_dif=cpu_end-cpu_str
-                  print *, 'APM: After biog smoothing rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+!        
+                  allocate(tmp_arry(nx*ny*nz_biog))
+                  call apm_pack(tmp_arry,chem_data3d,nx,ny,nz_biog)
+                  call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
+                  1,26,MPI_COMM_WORLD,ierr)
+                  deallocate(tmp_arry)
+                  if (rank.eq.itask1_biog) then
+                     call cpu_time(cpu_end)
+                     cpu_dif=cpu_end-cpu_str
+                     print *, 'APM: After biog smoothing rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+                  endif
                endif
-            endif
-         enddo
-         deallocate (biog_fac_end)
-         deallocate (chem_data3d)         
+            enddo
+            deallocate (biog_fac_end)
+            deallocate (chem_data3d)         
+         endif
       enddo
    endif
 !
@@ -739,48 +778,54 @@ program main
       endif
       icnt=0
       do imem=1,num_mems
-         unita=30
-         allocate(chem_fac_end(nx,ny,nz_chem))
-         do isp=1,nchem_spcs
-            icnt=icnt+1
-            allocate(tmp_arry(nx*ny*nz_chem))
-            call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
-            itask(imem,icnt),21,MPI_COMM_WORLD,stat,ierr)
-            call apm_unpack(tmp_arry,chem_fac_end,nx,ny,nz_chem)
-            write(unita) chem_fac_end
-            deallocate(tmp_arry)
-         enddo
-         deallocate(chem_fac_end)
-!         
-         unitb=40
-         allocate(fire_fac_end(nx,ny,nz_fire))
-         do isp=1,nfire_spcs
-            icnt=icnt+1
-            allocate(tmp_arry(nx*ny*nz_fire))
-            call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-            itask(imem,icnt),22,MPI_COMM_WORLD,stat,ierr)
-            call apm_unpack(tmp_arry,fire_fac_end,nx,ny,nz_fire)
-            write(unitb) fire_fac_end
-            deallocate(tmp_arry)
-         enddo
-         deallocate(fire_fac_end)
+         if(sw_chem) then
+            unita=30
+            allocate(chem_fac_end(nx,ny,nz_chem))
+            do isp=1,nchem_spcs
+               icnt=icnt+1
+               allocate(tmp_arry(nx*ny*nz_chem))
+               call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
+               itask(imem,icnt),21,MPI_COMM_WORLD,stat,ierr)
+               call apm_unpack(tmp_arry,chem_fac_end,nx,ny,nz_chem)
+               write(unita) chem_fac_end
+               deallocate(tmp_arry)
+            enddo
+            deallocate(chem_fac_end)
+         endif
 !
-         unitc=50
-         allocate(biog_fac_end(nx,ny,nz_biog))
-         do isp=1,nbiog_spcs
-            icnt=icnt+1
-            allocate(tmp_arry(nx*ny*nz_biog))
-            call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-            itask(imem,icnt),23,MPI_COMM_WORLD,stat,ierr)
-            call apm_unpack(tmp_arry,biog_fac_end,nx,ny,nz_biog)
-            write(unitc) biog_fac_end
-            deallocate(tmp_arry)
-         enddo
-         deallocate(biog_fac_end)
+         if(sw_fire) then
+            unitb=40
+            allocate(fire_fac_end(nx,ny,nz_fire))
+            do isp=1,nfire_spcs
+               icnt=icnt+1
+               allocate(tmp_arry(nx*ny*nz_fire))
+               call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
+               itask(imem,icnt),22,MPI_COMM_WORLD,stat,ierr)
+               call apm_unpack(tmp_arry,fire_fac_end,nx,ny,nz_fire)
+               write(unitb) fire_fac_end
+               deallocate(tmp_arry)
+            enddo
+            deallocate(fire_fac_end)
+         endif
+!
+         if(sw_biog) then
+            unitc=50
+            allocate(biog_fac_end(nx,ny,nz_biog))
+            do isp=1,nbiog_spcs
+               icnt=icnt+1
+               allocate(tmp_arry(nx*ny*nz_biog))
+               call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
+               itask(imem,icnt),23,MPI_COMM_WORLD,stat,ierr)
+               call apm_unpack(tmp_arry,biog_fac_end,nx,ny,nz_biog)
+               write(unitc) biog_fac_end
+               deallocate(tmp_arry)
+            enddo
+            deallocate(biog_fac_end)
+         endif
       enddo
-      close(unita)
-      close(unitb)
-      close(unitc)
+      if(sw_chem) close(unita)
+      if(sw_fire) close(unitb)
+      if(sw_biog) close(unitc)
 !
       call mpi_send(1.,1,MPI_FLOAT,0,3,MPI_COMM_WORLD,ierr)
 !
@@ -789,47 +834,53 @@ program main
          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
          if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-         do isp=1,nchem_spcs
-            icnt=icnt+1
-            allocate(chem_data3d(nx,ny,nz_chem))
-            allocate(tmp_arry(nx*ny*nz_chem))
-            call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
-            itask(imem,icnt),24,MPI_COMM_WORLD,stat,ierr)
-            call apm_unpack(tmp_arry,chem_data3d,nx,ny,nz_chem)
-            wrfchem_file=trim(wrfchemi)//trim(cmem)
-            call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
-            nx,ny,nz_chem)
-            deallocate(chem_data3d)
-            deallocate(tmp_arry)
-         enddo
+         if(sw_chem) then
+            do isp=1,nchem_spcs
+               icnt=icnt+1
+               allocate(chem_data3d(nx,ny,nz_chem))
+               allocate(tmp_arry(nx*ny*nz_chem))
+               call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
+               itask(imem,icnt),24,MPI_COMM_WORLD,stat,ierr)
+               call apm_unpack(tmp_arry,chem_data3d,nx,ny,nz_chem)
+               wrfchem_file=trim(wrfchemi)//trim(cmem)
+               call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
+               nx,ny,nz_chem)
+               deallocate(chem_data3d)
+               deallocate(tmp_arry)
+            enddo
+         endif
 !
-         do isp=1,nfire_spcs
-            icnt=icnt+1
-            allocate(chem_data3d(nx,ny,nz_fire))
-            allocate(tmp_arry(nx*ny*nz_fire))
-            call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-            itask(imem,icnt),25,MPI_COMM_WORLD,stat,ierr)
-            call apm_unpack(tmp_arry,chem_data3d,nx,ny,nz_fire)
-            wrfchem_file=trim(wrffirechemi)//trim(cmem)
-            call put_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),chem_data3d, &
-            nx,ny,nz_fire)
-            deallocate(chem_data3d)
-            deallocate(tmp_arry)
-         enddo
+         if(sw_fire) then
+            do isp=1,nfire_spcs
+               icnt=icnt+1
+               allocate(chem_data3d(nx,ny,nz_fire))
+               allocate(tmp_arry(nx*ny*nz_fire))
+               call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
+               itask(imem,icnt),25,MPI_COMM_WORLD,stat,ierr)
+               call apm_unpack(tmp_arry,chem_data3d,nx,ny,nz_fire)
+               wrfchem_file=trim(wrffirechemi)//trim(cmem)
+               call put_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),chem_data3d, &
+               nx,ny,nz_fire)
+               deallocate(chem_data3d)
+               deallocate(tmp_arry)
+            enddo
+         endif
 !
-         do isp=1,nbiog_spcs
-            icnt=icnt+1
-            allocate(chem_data3d(nx,ny,nz_fire))
-            allocate(tmp_arry(nx*ny*nz_fire))
-            call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-            itask(imem,icnt),26,MPI_COMM_WORLD,stat,ierr)
-            call apm_unpack(tmp_arry,chem_data3d,nx,ny,nz_biog)
-            wrfchem_file=trim(wrfbiogchemi)//trim(cmem)
-            call put_WRFCHEM_emiss_data(wrfchem_file,ch_biog_spc(isp),chem_data3d, &
-            nx,ny,nz_biog)
-            deallocate(chem_data3d)
-            deallocate(tmp_arry)
-         enddo
+         if(sw_biog) then
+            do isp=1,nbiog_spcs
+               icnt=icnt+1
+               allocate(chem_data3d(nx,ny,nz_fire))
+               allocate(tmp_arry(nx*ny*nz_fire))
+               call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
+               itask(imem,icnt),26,MPI_COMM_WORLD,stat,ierr)
+               call apm_unpack(tmp_arry,chem_data3d,nx,ny,nz_biog)
+               wrfchem_file=trim(wrfbiogchemi)//trim(cmem)
+               call put_WRFCHEM_emiss_data(wrfchem_file,ch_biog_spc(isp),chem_data3d, &
+               nx,ny,nz_biog)
+               deallocate(chem_data3d)
+               deallocate(tmp_arry)
+            enddo
+         endif
       enddo
    endif
    deallocate(ch_chem_spc)
@@ -878,47 +929,63 @@ subroutine vertical_transform(A_chem,geo_ht,nx,ny,nz,nz_chem,corr_lngth_vt)
             do j=1,ny
                vcov=1.-abs(geo_ht(i,j,k)-geo_ht(i,j,l))/corr_lngth_vt
                if(vcov.lt.0.) vcov=0.
-! row 1         
-               if(k.eq.1 .and. l.eq.1) then
-                  A_chem(i,j,k,l)=1.
-               elseif(k.eq.1 .and. l.gt.1) then
-                  A_chem(i,j,k,l)=0.
-               endif
-! row 2         
-               if(k.eq.2 .and. l.eq.1) then
-                  A_chem(i,j,k,l)=vcov
-               elseif(k.eq.2 .and. l.eq.2) then
-                  A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l-1)*A_chem(i,j,k,l-1))
-               elseif (k.eq.2 .and. l.gt.2) then
-                  A_chem(i,j,k,l)=0.
-               endif
-! row 3 and greater         
-               if(k.ge.3) then
-                  if(l.eq.1) then
-                     A_chem(i,j,k,l)=vcov
-                  elseif(l.lt.k .and. l.ne.1) then
-                     do ll=1,l-1
-                        A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,l,ll)*A_chem(i,j,k,ll)
-                     enddo
-                     if(A_chem(i,j,l,l).ne.0) A_chem(i,j,k,l)=(vcov-A_chem(i,j,k,l))/A_chem(i,j,l,l)
-                  elseif(l.eq.k) then
-                     do ll=1,l-1
-                        A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,k,ll)*A_chem(i,j,k,ll)
-                     enddo
-                     A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l))
-                  endif
+!
+! linear decrease
+!               A_chem(i,j,k,l)=vcov
+!
+! exponential decrease
+!               if(vcov.ne.0.) then               
+!                  A_chem(i,j,k,l)=exp(1. - 1./vcov)
+!               endif
+!
+! square root decrease
+               A_chem(i,j,k,l)=vcov    
+               if(vcov.ne.1.) then               
+                  A_chem(i,j,k,l)=sqrt(1. - (1.-vcov)*(1.-vcov))
                endif
             enddo
          enddo
       enddo
    enddo
+!
+! Old code
+! row 1         
+!               if(k.eq.1 .and. l.eq.1) then
+!                  A_chem(i,j,k,l)=1.
+!               elseif(k.eq.1 .and. l.gt.1) then
+!                  A_chem(i,j,k,l)=0.
+!               endif
+! row 2         
+!               if(k.eq.2 .and. l.eq.1) then
+!                  A_chem(i,j,k,l)=vcov
+!               elseif(k.eq.2 .and. l.eq.2) then
+!                  A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l-1)*A_chem(i,j,k,l-1))
+!               elseif (k.eq.2 .and. l.gt.2) then
+!                  A_chem(i,j,k,l)=0.
+!               endif
+! row 3 and greater         
+!               if(k.ge.3) then
+!                  if(l.eq.1) then
+!                     A_chem(i,j,k,l)=vcov
+!                  elseif(l.lt.k .and. l.ne.1) then
+!                     do ll=1,l-1
+!                        A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,l,ll)*A_chem(i,j,k,ll)
+!                     enddo
+!                     if(A_chem(i,j,l,l).ne.0) A_chem(i,j,k,l)=(vcov-A_chem(i,j,k,l))/A_chem(i,j,l,l)
+!                  elseif(l.eq.k) then
+!                     do ll=1,l-1
+!                        A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,k,ll)*A_chem(i,j,k,ll)
+!                     enddo
+!                     A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l))
+!                  endif
+!               endif
 end subroutine vertical_transform
 
 !-------------------------------------------------------------------------------
 
 subroutine perturb_fields(chem_fac_old,chem_fac_new, &
 lat,lon,A_chem,nx,ny,nz,nchem_spcs,ngrid_corr,sw_corr_tm, &
-corr_lngth_hz,rank)
+corr_lngth_hz,rank,sprd_chem)
 
 !   use apm_utilities_mod,  only :get_dist
   
@@ -926,7 +993,7 @@ corr_lngth_hz,rank)
    integer,                               intent(in)   :: nx,ny,nz,rank
    integer,                               intent(in)   :: sw_corr_tm
    integer,                               intent(in)   :: ngrid_corr,nchem_spcs
-   real,                                  intent(in)   :: corr_lngth_hz
+   real,                                  intent(in)   :: corr_lngth_hz,sprd_chem
    real,dimension(nx,ny),                 intent(in)   :: lat,lon
    real,dimension(nx,ny,nz,nz),           intent(in)   :: A_chem
    real,dimension(nx,ny,nz),              intent(out)  :: chem_fac_old
@@ -935,9 +1002,10 @@ corr_lngth_hz,rank)
    integer                             :: i,j,k,isp,ii,jj,kk,nxy
    integer                             :: ii_str,ii_end,jj_str,jj_end,icnt,ncnt
    integer,allocatable,dimension(:)    :: indx,jndx
-   real                                :: pi,get_dist,wgt_sum
+   real                                :: pi,get_dist,wwgt,wgt_sum
    real                                :: u_ran_1,u_ran_2,zdist
    real,allocatable,dimension(:)       :: pert_chem_sum_old,pert_chem_sum_new,wgt
+   real,allocatable,dimension(:,:,:)   :: wwgt_sum
    real,allocatable,dimension(:,:,:)   :: pert_chem_old,pert_chem_new
    real                                :: cpu_str,cpu_end,cpu_dif
 !
@@ -958,7 +1026,7 @@ corr_lngth_hz,rank)
                if(u_ran_1.eq.0.) call random_number(u_ran_1)
                call random_number(u_ran_2)
                if(u_ran_2.eq.0.) call random_number(u_ran_2)
-               pert_chem_old(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+               pert_chem_old(i,j,k)=sprd_chem*sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
             enddo
          enddo
       enddo
@@ -970,7 +1038,7 @@ corr_lngth_hz,rank)
             if(u_ran_1.eq.0.) call random_number(u_ran_1)
             call random_number(u_ran_2)
             if(u_ran_2.eq.0.) call random_number(u_ran_2)
-            pert_chem_new(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+            pert_chem_new(i,j,k)=sprd_chem*sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
          enddo
       enddo
    enddo
@@ -980,76 +1048,115 @@ corr_lngth_hz,rank)
       chem_fac_old(:,:,:)=0.
    endif
    chem_fac_new(:,:,:)=0.
-   allocate(indx(nxy),jndx(nxy),wgt(nxy))
-   if(sw_corr_tm) then
+!   allocate(indx(nxy),jndx(nxy),wgt(nxy))
+   allocate(wwgt_sum(nx,ny,nz))   
 !
 ! chem_fac_old calc takes one hour for each member/species for TRACER-I  
-      if(rank.eq.3) then
-         call cpu_time(cpu_str)
-         print *, 'APM: Before chem_fac_old ', cpu_str
-      endif
-      do i=1,nx
-         do j=1,ny
-            indx(:)=0
-            jndx(:)=0
-            call horiz_grid_wts(i,j,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
-            ngrid_corr,corr_lngth_hz,rank)
-            if(ncnt.eq.0) then
-               do k=1,nz
-                  chem_fac_old(i,j,k)=pert_chem_old(i,j,k)
-               enddo
-            endif
-            do icnt=1,ncnt
-               ii=indx(icnt)
-               jj=jndx(icnt)
-               do k=1,nz
-                  chem_fac_old(i,j,k)=chem_fac_old(i,j,k)+wgt(icnt)* &
-                  pert_chem_old(ii,jj,k)/wgt_sum
-               enddo
-            enddo
-         enddo
-      enddo
-      if(rank.eq.3) then
-         call cpu_time(cpu_end)
-         cpu_dif=cpu_end-cpu_str
-         print *, 'APM: After chem_fac_old ', cpu_end, cpu_dif
-      endif      
-   endif
-!
-! chem_fac_new takes one hour for each member/species for TRACER-I
    if(rank.eq.3) then
       call cpu_time(cpu_str)
-      print *, 'APM: Before chem_fac_new ', cpu_str
+      print *, 'APM: Before chem_fac_old and chem_fac_new ', cpu_str
    endif
+!
+! New code APM TEST
+   wwgt_sum(:,:,:)=0.   
    do i=1,nx
       do j=1,ny
-         indx(:)=0
-         jndx(:)=0
-         call horiz_grid_wts(i,j,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
-         ngrid_corr,corr_lngth_hz,rank)
-         if(ncnt.eq.0) then   
+         ii_str=max(1,i-ngrid_corr)
+         ii_end=min(nx,i+ngrid_corr)
+         jj_str=max(1,j-ngrid_corr)
+         jj_end=min(ny,j+ngrid_corr)
+         do ii=ii_str,ii_end
+            do jj=jj_str,jj_end
+               zdist=get_dist(lat(ii,jj),lat(i,j),lon(ii,jj),lon(i,j))
+               if(zdist.le.2.0*corr_lngth_hz) then
+                  wwgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
+                  if(sw_corr_tm) then
+                     do k=1,nz
+                        chem_fac_old(i,j,k)=chem_fac_old(i,j,k)+wwgt*pert_chem_old(ii,jj,k)
+                        wwgt_sum(i,j,k)=wwgt_sum(i,j,k)+wwgt
+                     enddo
+                  endif
+                  do k=1,nz
+                     chem_fac_new(i,j,k)=chem_fac_new(i,j,k)+wwgt*pert_chem_new(ii,jj,k)
+                     wwgt_sum(i,j,k)=wwgt_sum(i,j,k)+wwgt
+                  enddo
+               endif
+            enddo
+         enddo
+         if(sw_corr_tm) then
             do k=1,nz
-               chem_fac_new(i,j,k)=pert_chem_new(i,j,k)
+               if(wwgt_sum(i,j,k).gt.0) then
+                  chem_fac_old(i,j,k)=chem_fac_old(i,j,k)/wwgt_sum(i,j,k)
+               else
+                  chem_fac_old(i,j,k)=pert_chem_old(i,j,k)
+               endif                            
             enddo
          endif
-         do icnt=1,ncnt
-            ii=indx(icnt)
-            jj=jndx(icnt)
-            do k=1,nz
-               chem_fac_new(i,j,k)=chem_fac_new(i,j,k)+wgt(icnt)* &
-               pert_chem_new(ii,jj,k)/wgt_sum
-            enddo
+         do k=1,nz
+            if(wwgt_sum(i,j,k).gt.0) then
+               chem_fac_new(i,j,k)=chem_fac_new(i,j,k)/wwgt_sum(i,j,k)
+            else
+               chem_fac_new(i,j,k)=pert_chem_new(i,j,k)
+            endif                            
          enddo
       enddo
    enddo
-   deallocate(indx,jndx,wgt)
-   deallocate(pert_chem_old)
-   deallocate(pert_chem_new)
    if(rank.eq.3) then
       call cpu_time(cpu_end)
       cpu_dif=cpu_end-cpu_str
-      print *, 'APM: After chem_fac_new ', cpu_end, cpu_dif
+      print *, 'APM: After chem_fac_old and chem_fac_new ', cpu_end, cpu_dif
    endif
+!
+! Old code
+!            indx(:)=0
+!            jndx(:)=0
+!            call horiz_grid_wts(i,j,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
+!            ngrid_corr,corr_lngth_hz,rank)
+!            do icnt=1,ncnt
+!               ii=indx(icnt)
+!               jj=jndx(icnt)
+!               do k=1,nz
+!                  chem_fac_old(ii,jj,k)=pert_chem_old(ii,jj,k)
+!               enddo
+!            enddo
+!            do icnt=1,ncnt
+!               ii=indx(icnt)
+!               jj=jndx(icnt)
+!               do k=1,nz
+!                  chem_fac_old(i,j,k)=chem_fac_old(i,j,k)+wgt(icnt)* &
+!                  pert_chem_old(ii,jj,k)/wgt_sum
+!               enddo
+!            enddo
+!
+! chem_fac_new takes one hour for each member/species for TRACER-I
+!   if(rank.eq.3) then
+!      call cpu_time(cpu_str)
+!      print *, 'APM: Before chem_fac_new ', cpu_str
+!   endif
+!
+!         indx(:)=0
+!         jndx(:)=0
+!         call horiz_grid_wts(i,j,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
+!         ngrid_corr,corr_lngth_hz,rank)
+!         do icnt=1,ncnt
+!            ii=indx(icnt)
+!            jj=jndx(icnt)
+!            do k=1,nz
+!               chem_fac_new(ii,jj,k)=pert_chem_new(ii,jj,k)
+!            enddo
+!         enddo
+!         do icnt=1,ncnt
+!            ii=indx(icnt)
+!            jj=jndx(icnt)
+!            do k=1,nz
+!               chem_fac_new(i,j,k)=chem_fac_new(i,j,k)+wgt(icnt)* &
+!               pert_chem_new(ii,jj,k)/wgt_sum
+!            enddo
+!         enddo
+!   deallocate(indx,jndx,wgt)
+   deallocate(pert_chem_old)
+   deallocate(pert_chem_new)
+   deallocate(wwgt_sum)
 !
 ! Apply vertical correlations
 ! takes 30 sec for chem_fac_old   
@@ -1063,13 +1170,15 @@ corr_lngth_hz,rank)
          do j=1,ny
             pert_chem_sum_old(:)=0.
             do k=1,nz
+               wgt_sum=0.
                do kk=1,nz
                   pert_chem_sum_old(k)=pert_chem_sum_old(k)+A_chem(i,j,k,kk)* &
                   chem_fac_old(i,j,kk)
+                  wgt_sum=wgt_sum+A_chem(i,j,k,kk)
                enddo
             enddo
             do k=1,nz
-               chem_fac_old(i,j,k)=pert_chem_sum_old(k)
+               chem_fac_old(i,j,k)=pert_chem_sum_old(k)/wgt_sum
             enddo
          enddo
       enddo
@@ -1091,13 +1200,15 @@ corr_lngth_hz,rank)
       do j=1,ny
          pert_chem_sum_new(:)=0.
          do k=1,nz
+            wgt_sum=0.
             do kk=1,nz
                pert_chem_sum_new(k)=pert_chem_sum_new(k)+A_chem(i,j,k,kk)* &
                chem_fac_new(i,j,kk)
+               wgt_sum=wgt_sum+A_chem(i,j,k,kk)
             enddo
          enddo
          do k=1,nz
-            chem_fac_new(i,j,k)=pert_chem_sum_new(k)
+            chem_fac_new(i,j,k)=pert_chem_sum_new(k)/wgt_sum
          enddo
       enddo
    enddo

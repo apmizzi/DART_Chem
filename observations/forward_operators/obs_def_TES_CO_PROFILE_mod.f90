@@ -542,7 +542,7 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
       if (prs_tes(layer_tes).lt.prs_mdl_n(imem)) then
          do k=1,layer_tes
             if (prs_tes(k).le.prs_mdl_n(imem)) then
-               kstart=k-1
+               kstart=k
                exit
             endif
          enddo
@@ -563,6 +563,14 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
          call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
          ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_tes_top, &
          ncnt,co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+!
+! Check for zeros         
+         do k=kstart,layer_tes
+            kk=k-kstart+1
+            if(co_prf_mdl(kk).le.0.) then
+               co_prf_mdl(kk)=co_min
+            endif
+         enddo
 !
 ! Impose ensemble perturbations from level kstart-1      
          do k=kstart,layer_tes

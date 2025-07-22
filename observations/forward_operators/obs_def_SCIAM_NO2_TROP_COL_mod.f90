@@ -51,6 +51,14 @@
 
 module obs_def_sciam_no2_trop_col_mod
 
+use         apm_upper_bdy_mod, only :get_upper_bdy_fld, &
+                                     get_MOZART_INT_DATA, &
+                                     get_MOZART_REAL_DATA, &
+                                     wrf_dart_ubval_interp, &
+                                     apm_get_exo_coldens, &
+                                     apm_get_upvals, &
+                                     apm_interpolate
+
 use             types_mod, only : r8, MISSING_R8
 
 use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &
@@ -76,6 +84,8 @@ use          obs_kind_mod, only : QTY_NO2, QTY_TEMPERATURE, QTY_SURFACE_PRESSURE
 use  ensemble_manager_mod, only : ensemble_type
 
 use obs_def_utilities_mod, only : track_status
+
+use mpi_utilities_mod,     only : my_task_id
 
 implicit none
 private
@@ -294,17 +304,15 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
    integer, dimension(ens_size) :: zstatus
 
    real(r8) :: eps, AvogN, Rd, Ru, Cp, grav, msq2cmsq
-   real(r8) :: missing,no2_min,tmp_max
-   real(r8) :: level,del_prs
+   real(r8) :: missing,no2_min,tmp_max,del_prs
+   real(r8) :: level
    real(r8) :: tmp_vir_k, tmp_vir_kp
    real(r8) :: mloc(3)
    real(r8) :: no2_val_conv
    real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
    real(r8), dimension(ens_size) :: no2_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
-   real(r8), dimension(ens_size) :: no2_mdl_1p, tmp_mdl_1p, qmr_mdl_1p, prs_mdl_1p
    real(r8), dimension(ens_size) :: no2_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
-   real(r8), dimension(ens_size) :: no2_mdl_nm, tmp_mdl_nm, qmr_mdl_nm, prs_mdl_nm
-   real(r8), dimension(ens_size) :: no2_temp, tmp_temp, qmr_temp, prs_sfc
+   real(r8), dimension(ens_size) :: prs_sfc
 
    real(r8), allocatable, dimension(:)   :: thick, prs_sciam, prs_sciam_mem
    real(r8), allocatable, dimension(:,:) :: no2_val, tmp_val, qmr_val
@@ -339,7 +347,6 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
    allocate(prs_sciam(level_sciam))
    allocate(prs_sciam_mem(level_sciam))
    prs_sciam(1:level_sciam)=pressure(key,1:level_sciam)
-
 ! Get location infomation
 
    mloc = get_location(location)
@@ -358,8 +365,7 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
    return_now=.false.
 
 ! pressure at model surface (Pa)
-
-   zstatus=0
+   zstatus(:)=0
    level=0.0_r8
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
    call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus) 
@@ -374,21 +380,18 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_mdl_1, zstatus) 
+      call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_mdl_1, zstatus) ! ppmv 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_1, &
-      zstatus) 
+      call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_mdl_1, zstatus) ! K 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, &
-      zstatus) 
+      call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg/kg 
       zstatus(:)=0
-      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, &
-      zstatus) 
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
 !
       interp_new=0
       do imem=1,ens_size
-         if(no2_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
-         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
+         if(no2_mdl_1(imem).lt.0. .or. tmp_mdl_1(imem).lt.0. .or. &
+         qmr_mdl_1(imem).lt.0. .or. prs_mdl_1(imem).lt.0.) then
             interp_new=1
             exit
          endif
@@ -426,8 +429,8 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
 !
       interp_new=0
       do imem=1,ens_size
-         if(no2_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
-         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
+         if(no2_mdl_n(imem).lt.0. .or. tmp_mdl_n(imem).lt.0. .or. &
+         qmr_mdl_n(imem).lt.0. .or. prs_mdl_n(imem).lt.0.) then
             interp_new=1
             exit
          endif
@@ -436,7 +439,7 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
          exit
       endif    
    enddo
-   
+!   
 !   write(string1, *)'APM: no2 upper bound ',no2_mdl_n
 !   call error_handler(E_MSG, routine, string1, source)
 !   write(string1, *)'APM: tmp upper bound ',tmp_mdl_n
@@ -456,7 +459,7 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), prs_sciam(k), VERTISPRESSURE)
       call interpolate(state_handle, ens_size, loc2, QTY_NO2, no2_val(:,k), zstatus)  
-      zstatus(:)=0
+      zstatus(:)=0 
       call interpolate(state_handle, ens_size, loc2, QTY_TEMPERATURE, tmp_val(:,k), zstatus)  
       zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_val(:,k), zstatus)  
@@ -467,7 +470,6 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
             no2_val(imem,k) = no2_mdl_1(imem)
             tmp_val(imem,k) = tmp_mdl_1(imem)
             qmr_val(imem,k) = qmr_mdl_1(imem)
-            cycle
          endif
 
 ! Correcting for expected failures near the top
@@ -475,7 +477,6 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
             no2_val(imem,k) = no2_mdl_n(imem)
             tmp_val(imem,k) = tmp_mdl_n(imem)
             qmr_val(imem,k) = qmr_mdl_n(imem)
-            cycle
          endif
       enddo
 !
@@ -486,90 +487,128 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
 !      write(string1, *)'APM: qmr ',k,qmr_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
 !
-! Check data for missing values      
-      do imem=1,ens_size
-         if(no2_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
-         qmr_val(imem,k).eq.missing_r8) then
-            zstatus(:)=20
-            expct_val(:)=missing_r8
-            write(string1, *) &
-            'APM: Input data has missing values '
-            call error_handler(E_MSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            return
-         endif
-      enddo
-!      
 ! Convert units for no2 from ppmv
       no2_val(:,k) = no2_val(:,k) * 1.e-6_r8
    enddo
-
+   no2_mdl_1(:)=no2_mdl_1(:) * 1.e-6_r8
+   no2_mdl_n(:)=no2_mdl_n(:) * 1.e-6_r8
+!
+! Use large scale no2 data above the regional model top
+! APM: Modified to use retrieval prior above the regional model top   
+! SCIAMACHY vertical is from bottom to top
+!
+! APM: No old code
+! Check full profile for negative values
+   do imem=1,ens_size
+      do k=1,level_sciam   
+         if(no2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         qmr_val(imem,k).lt.0.) then
+            write(string1, *) &
+            'APM: Recentered full profile has negative values for key,imem ',key,imem
+            call error_handler(E_MSG, routine, string1, source)
+            zstatus(:)=20
+            expct_val(:)=missing_r8
+            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+            deallocate(prs_sciam)
+            deallocate(prs_sciam_mem)
+            deallocate(no2_val)
+            deallocate(tmp_val)
+            deallocate(qmr_val)
+            return
+         endif
+      enddo
+   enddo
+!
+! Calculate the expected retrievals   
    istatus(:)=0.
    zstatus(:)=0.
    expct_val(:)=0.0
    allocate(thick(layer_sciam))
 !
+! Find SCIAMACHY index for first layer above top of regional model (not needed)
+! SCIAMACHY vertical is from bottom to top
    do imem=1,ens_size
-! Adjust the SCIAM pressure for WRF-Chem lower/upper boudary pressure
-! (SCIAM NO2 vertical grid is bottom to top)
-      prs_sciam_mem(:)=prs_sciam(:)
-      if (prs_sfc(imem).gt.prs_sciam_mem(1)) then
-         prs_sciam_mem(1)=prs_sfc(imem)
-      endif   
-
-! Calculate the thicknesses
-
+!      kstart=-1
+!      write(string1, *) &
+!      'APM: imem,prs_sciam,prs_mdl ',imem,prs_sciam(level_sciam),prs_sciam(level_sciam-1), &
+!      prs_mdl_n(imem)
+!      call error_handler(E_ALLMSG, routine, string1, source)
+!      if ((prs_sciam(level_omi)+prs_sciam(level_omi-1))/2..lt.prs_mdl_n(imem)) then
+!         do k=level_sciam,1,-1
+!            if ((prs_sciam(k)+prs_sciam(k-1))/2.ge.prs_mdl_n(imem)) then
+!               kstart=k
+!               write(string1, *) &
+!               'APM: imem,kstart,prs_sciam,prs_mdl ',imem,kstart,prs_sciam(k),prs_sciam(k-1), &
+!               prs_mdl_n(imem)
+!               call error_handler(E_ALLMSG, routine, string1, source)
+!               exit
+!            endif
+!         enddo
+!      endif
+!
+! Calculate the thicknesses (grid is bottom to top)
+      thick(:)=0.
       do k=1,kend_sciam
-         lnpr_mid=(log(prs_sciam_mem(k+1))+log(prs_sciam_mem(k)))/2.
-         up_wt=log(prs_sciam_mem(k))-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_sciam_mem(k+1))
-         tl_wt=up_wt+dw_wt
-      
+         lnpr_mid=(log(prs_sciam(k+1))+log(prs_sciam(k)))/2.
+         up_wt=log(prs_sciam(k))-lnpr_mid
+         dw_wt=lnpr_mid-log(prs_sciam(k+1))
+         tl_wt=up_wt+dw_wt      
          tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
          tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
          thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
-                   log(prs_sciam_mem(k)/prs_sciam_mem(k+1))
+         log(prs_sciam(k)/prs_sciam(k+1))
       enddo
-
-! Process the vertical summation
-
-      do k=1,kend_sciam
-         lnpr_mid=(log(prs_sciam_mem(k+1))+log(prs_sciam_mem(k)))/2.
-         up_wt=log(prs_sciam_mem(k))-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_sciam_mem(k+1))
+!
+! Process the vertical summation (SCIAMACHY NO2 units are molec/cm^2)
+      do k=1,kend_sciam+1
+         lnpr_mid=(log(prs_sciam(k+1))+log(prs_sciam(k)))/2.
+         up_wt=log(prs_sciam(k))-lnpr_mid
+         dw_wt=lnpr_mid-log(prs_sciam(k+1))
          tl_wt=up_wt+dw_wt
 
 ! Convert from VMR to molar density (mol/m^3)
          if(use_log_no2) then
             no2_val_conv = (dw_wt*exp(no2_val(imem,k))+up_wt*exp(no2_val(imem,k+1)))/tl_wt * &
-            (dw_wt*prs_sciam_mem(k)+up_wt*prs_sciam_mem(k+1)) / &
+            (dw_wt*prs_sciam(k)+up_wt*prs_sciam(k+1)) / &
             (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
          else
             no2_val_conv = (dw_wt*no2_val(imem,k)+up_wt*no2_val(imem,k+1))/tl_wt * &
-            (dw_wt*prs_sciam_mem(k)+up_wt*prs_sciam_mem(k+1)) / &
+            (dw_wt*prs_sciam(k)+up_wt*prs_sciam(k+1)) / &
             (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
          endif
- 
-! Get expected observation
+! 
+! Get expected observation (convert mol/m^2 to molec/cm^2
 
          expct_val(imem) = expct_val(imem) + thick(k) * no2_val_conv * &
-         AvogN / msq2cmsq * scat_wts(key,k)
-!         write(string1, *) 'APM: key,k,imem,expc_val,thick,no2_conv,scwt ', &
-!         key,k,imem,expct_val(imem),thick(k),no2_val_conv,scat_wts(key,k)
+         AvogN/msq2cmsq * scat_wts(key,k)
+
+!         write(string1, *) &
+!         'APM: Key, Expected Value Terms ',key,k,expct_val(imem),thick(k),no2_val_conv, &
+!          AvogN/msq22cmsq, scat_wts(key,k)
 !         call error_handler(E_MSG, routine, string1, source)
       enddo
-
+!
+      if(isnan(expct_val(imem))) then
+         zstatus(imem)=20
+         expct_val(:)=missing_r8
+         write(string1, *) &
+         'APM NOTICE: SCIAM NO2 expected value is NaN ',key
+         call error_handler(E_MSG, routine, string1, source)
+         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         return
+      endif
+!
       if(expct_val(imem).lt.0) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
          write(string1, *) &
-         'APM NOTICE: TROPOMI NO2 expected value is negative '
+         'APM NOTICE:SCIAM NO2 expected value is negative '
          call error_handler(E_MSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
    enddo
-
+!
 ! Clean up and return
    deallocate(no2_val, tmp_val, qmr_val)
    deallocate(thick)

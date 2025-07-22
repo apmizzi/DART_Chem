@@ -1640,7 +1640,6 @@ else
 
    endif
 
-
    ! Deal with missing vertical coordinates -- return with istatus .ne. 0
    ! HK This is annoying.  Back to earlier question of QC if one ensemble fails do we
    ! discard all the obervations?
@@ -1660,14 +1659,16 @@ else
       if(zloc(e) == missing_r8) then
           failedcopies(e) = missing_r8
           istatus(e) = 2
+          if(debug) print *,'WRFChem model_mod.f90: zloc(e) is missing ', zloc(e),e
       endif
    enddo
 
    ! Set a working integer k value -- if (int(zloc) < 1), then k = 1
    k = max(1,int(zloc)) !HK k is now ensemble size
+   if(debug) print *,'WRFChem model_mod: k values ', k
 
-
-   ! Find the unique k values
+   ! Find the unique k values across the ensemble members so that
+   ! the interpolation is done for the unique k values only
    ksort = sort(k)
 
    count = 1
@@ -1684,6 +1685,7 @@ else
          uk = uk + 1
       endif
    enddo
+   if(debug) print *,'WRFChem model_mod.f90: uniquek values ', uniquek
 
    ! The big horizontal interp loop below computes the data values in the level
    ! below and above the actual location, and then does a separate vertical
@@ -1891,12 +1893,10 @@ else
                               endif
                            endif
                         enddo
-                    enddo
-                   endif
-
+                     enddo
+                  endif
                enddo
-
-          endif
+         endif
 
       ! This is for surface wind fields -- NOTE: surface winds are on Mass grid 
       ! (therefore, TYPE_T), not U-grid & V-grid.  
@@ -2019,92 +2019,114 @@ else
    !-----------------------------------------------------
    ! 1.b Sensible Temperature (T, T2)
 
+   ! This is for 3D temperature field -- surface temps later 
+   ! APM: Interpolation algorithm modified to avoid return of missing values when possible (removed problems)
    elseif ( obs_kind == QTY_TEMPERATURE ) then
-      ! This is for 3D temperature field -- surface temps later
-      !print*, 'k ', k
-
       if ( wrf%dom(id)%type_t >= 0 ) then
-
-         do uk = 1, count ! for the different ks
-
-            ! Check to make sure retrieved integer gridpoints are in valid range
+         do uk = 1, count
             if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_t ) .and. &
-                 boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_t ) .and. &
-                 boundsCheck( uniquek(uk), .false.,                id, dim=3, type=wrf%dom(id)%type_t ) ) then
-
+               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_t ) .and. &
+               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_t ) ) then
                call getCorners(i, j, id, wrf%dom(id)%type_t, ll, ul, lr, ur, rc )
-               if ( rc .ne. 0 ) &
-                    print*, 'model_mod.f90 :: model_interpolate :: getCorners T rc = ', rc
-            
-               ! Interpolation for T field at level k
+               if ( rc .ne. 0 ) then
+                  print*, 'model_mod.f90 :: model_interpolate :: getCorners T rc = ', rc
+!                  call exit_all (-77) 
+               endif
+!
+! Interpolation for T field at level k
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id), wrf%dom(id)%type_t)
                iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id), wrf%dom(id)%type_t)
                ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id), wrf%dom(id)%type_t)
                iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id), wrf%dom(id)%type_t)
-
                x_iul = get_state(iul, state_handle)
                x_ill = get_state(ill, state_handle)
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
-
-               ! In terms of perturbation potential temperature
+!
+! APM: old form
                a1 = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
-
+! APM: new form
+!               call apm_interpolate(a1(:), obs_kind, ens_size, k, uk, uniquek, &
+!               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
+!
+! Pressure at location
                pres1 = model_pressure_t_distrib(ll(1), ll(2), uniquek(uk), id, state_handle, ens_size)
                pres2 = model_pressure_t_distrib(lr(1), lr(2), uniquek(uk), id, state_handle, ens_size)
                pres3 = model_pressure_t_distrib(ul(1), ul(2), uniquek(uk), id, state_handle, ens_size)
                pres4 = model_pressure_t_distrib(ur(1), ur(2), uniquek(uk), id, state_handle, ens_size)
-
-               ! Pressure at location
+!
+! APM: old form
                pres = dym*( dxm*pres1 + dx*pres2 ) + dy*( dxm*pres3 + dx*pres4 )
-
+! APM: new form
+!               call apm_interpolate(pres(:), obs_kind, ens_size, k, uk, uniquek, &
+!               count, dx, dy, dxm, dym, pres1, pres2, pres3, pres4, domain_id(id), .false.)
+!
+! Full sensible temperature field
                do e = 1, ens_size
                   if ( k(e) == uniquek(uk) ) then
-                     ! Full sensible temperature field
                      fld(1, e) = (ts0 + a1(e))*(pres(e)/ps0)**kappa
                   endif
                enddo
-
-               ! Interpolation for T field at level k+1
-               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
-               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
-               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
-               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
-
-               x_ill = get_state(ill, state_handle)
-               x_iul = get_state(iul, state_handle)
-               x_iur = get_state(iur, state_handle)
-               x_ilr = get_state(ilr, state_handle)
-
-               ! In terms of perturbation potential temperature
-               a1 = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
-
-               pres1 = model_pressure_t_distrib(ll(1), ll(2), uniquek(uk)+1, id, state_handle, ens_size)
-               pres2 = model_pressure_t_distrib(lr(1), lr(2), uniquek(uk)+1, id, state_handle, ens_size)
-               pres3 = model_pressure_t_distrib(ul(1), ul(2), uniquek(uk)+1, id, state_handle, ens_size)
-               pres4 = model_pressure_t_distrib(ur(1), ur(2), uniquek(uk)+1, id, state_handle, ens_size)
-
-               ! Pressure at location
-               pres = dym*( dxm*pres1 + dx*pres2 ) + dy*( dxm*pres3 + dx*pres4 )
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                  ! Full sensible temperature field
-                  fld(2, e) = (ts0 + a1(e))*(pres(e)/ps0)**kappa
-                  endif
-               enddo
+!
+! Interpolation for T field at level k+1 (check whether k+1 is greater than the upper bound).
+!               if (uniquek(uk)+1 .le. wrf%dom(id)%bt) then                
+                  ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
+                  iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
+                  ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
+                  iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
+                  x_ill = get_state(ill, state_handle)
+                  x_iul = get_state(iul, state_handle)
+                  x_iur = get_state(iur, state_handle)
+                  x_ilr = get_state(ilr, state_handle)
+!
+! APM: old form
+                  a1 = dym*( dxm*x_ill + dx*x_ilr ) + dy*( dxm*x_iul + dx*x_iur )
+! APM: new form
+!                  call apm_interpolate(a1(:), obs_kind, ens_size, k, uk, uniquek, &
+!                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
+!
+! Pressure at location
+                  pres1 = model_pressure_t_distrib(ll(1), ll(2), uniquek(uk)+1, id, state_handle, ens_size)
+                  pres2 = model_pressure_t_distrib(lr(1), lr(2), uniquek(uk)+1, id, state_handle, ens_size)
+                  pres3 = model_pressure_t_distrib(ul(1), ul(2), uniquek(uk)+1, id, state_handle, ens_size)
+                  pres4 = model_pressure_t_distrib(ur(1), ur(2), uniquek(uk)+1, id, state_handle, ens_size)
+!
+! APM: old form
+                  pres = dym*( dxm*pres1 + dx*pres2 ) + dy*( dxm*pres3 + dx*pres4 )
+! APM: new form
+!                  call apm_interpolate(pres(:), obs_kind, ens_size, k, uk, uniquek, &
+!                  count, dx, dy, dxm, dym, pres1, pres2, pres3, pres4, domain_id(id), .false.)
+!
+! Full sensible temperature field
+                  do e = 1, ens_size
+                     if ( k(e) == uniquek(uk) ) then
+                        fld(2, e) = (ts0 + a1(e))*(pres(e)/ps0)**kappa
+                     endif
+                  enddo
+!               else
+!                  do e = 1, ens_size
+!                     if ( k(e) == uniquek(uk) ) then
+!                        fld(2, e) = fld(1, e)
+!                     endif
+!                  enddo
+!               endif
             endif
          enddo
+!         do e = 1,ens_size
+!            if(fld(1,e).ne.missing_r8 .and. fld(2,e).eq.missing_r8) then
+!               fld(2,e)=fld(1,e)
+!            else if(fld(1,e).eq.missing_r8 .and. fld(2,e).ne.missing_r8) then
+!               fld(1,e)=fld(2,e)
+!            endif
+!         enddo
       else
          fld = missing_r8
-      end if
+      endif
    elseif (obs_kind == QTY_2M_TEMPERATURE) then
       ! This is for 2-meter temperature
       if ( wrf%dom(id)%type_t2 >= 0 ) then ! HK is there a better way to do this?
          call surface_interp_distrib(fld, wrf, id, i, j, obs_kind, wrf%dom(id)%type_t2, dxm, dx, dy, dym, ens_size, state_handle)
          if (all(fld == missing_r8)) goto 200
-      else
-         fld = missing_r8
       endif
 
    !-----------------------------------------------------
@@ -2357,15 +2379,72 @@ else
          endif
       endif
 
-
    !-----------------------------------------------------
-   ! 1.g Vapor Mixing Ratio (QV, Q2)  
+   ! 1.g Vapor Mixing Ratio (QV, Q2)
+      
+   ! This is for 3D vapor mixing ratio -- surface QV later
+   ! APM: Interpolation algorithm modified to avoid return of missing values when possible   
    else if( obs_kind == QTY_VAPOR_MIXING_RATIO ) then
-
-      ! This is for 3D vapor mixing ratio -- surface QV later
       if(.not. surf_var) then
-         call simple_interp_distrib(fld, wrf, id, i, j, k, obs_kind, dxm, dx, dy, dym, uniquek, ens_size, state_handle )
-         if (all(fld == missing_r8)) goto 200
+! 
+! APM: old form
+!         call simple_interp_distrib(fld, wrf, id, i, j, k, obs_kind, dxm, dx, dy, dym, &
+!         uniquek, ens_size, state_handle )
+!         if (all(fld == missing_r8)) goto 200
+! APM: new form      
+         if ( wrf%dom(id)%type_qv >= 0 ) then
+            do uk = 1, count
+               if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_t ) .and. &
+               boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_t ) .and. &
+               boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_t ) ) then
+                  call getCorners(i, j, id, wrf%dom(id)%type_qv, ll, ul, lr, ur, rc )
+                  if ( rc .ne. 0 ) then
+                     print*, 'model_mod.f90 :: model_interpolate :: getCorners QV rc = ', rc
+                     call exit_all (-77) 
+                  endif
+!
+! Interpolation for QV field at level k
+                  ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id), wrf%dom(id)%type_qv)
+                  iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id), wrf%dom(id)%type_qv)
+                  ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id), wrf%dom(id)%type_qv)
+                  iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id), wrf%dom(id)%type_qv)
+                  x_iul = get_state(iul, state_handle)
+                  x_ill = get_state(ill, state_handle)
+                  x_ilr = get_state(ilr, state_handle)
+                  x_iur = get_state(iur, state_handle)
+                  call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
+!
+! Interpolation for QV field at level k+1
+                  if (uniquek(uk)+1 .le. wrf%dom(id)%bt) then                  
+                     ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_qv)
+                     iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_qv)
+                     ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_qv)
+                     iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_qv)
+                     x_ill = get_state(ill, state_handle)
+                     x_iul = get_state(iul, state_handle)
+                     x_ilr = get_state(ilr, state_handle)
+                     x_iur = get_state(iur, state_handle)
+                     call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+                     count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
+                  else
+                     do e = 1, ens_size
+                        if ( k(e) == uniquek(uk) ) then
+                           fld(2, e) = fld(1, e)
+                        endif
+                     enddo
+                  endif
+               endif
+            enddo
+            do e = 1,ens_size
+               if(fld(1,e).ne.missing_r8 .and. fld(2,e).eq.missing_r8) then
+                  fld(2,e)=fld(1,e)
+               else if(fld(1,e).eq.missing_r8 .and. fld(2,e).ne.missing_r8) then
+                  fld(1,e)=fld(2,e)
+               endif
+            enddo
+         endif   
+!
       else ! This is for surface QV (Q2)
          ! Confirm that right field is in the DART state vector
          if ( wrf%dom(id)%type_q2 >= 0 ) then
@@ -2374,10 +2453,10 @@ else
             if (all(fld == missing_r8)) goto 200
          endif
       endif
-
-      ! Don't accept negative water vapor amounts (?)
-     fld = max(0.0_r8, fld)
-
+!
+! Don't accept negative water vapor amounts (?)
+!     fld = max(0.0_r8, fld)
+!
    else if (obs_kind == QTY_2M_SPECIFIC_HUMIDITY ) then
       ! FIXME: Q2 is actually a mixing ratio, not a specific humidity
       if ( wrf%dom(id)%type_q2 >= 0 ) then
@@ -3244,7 +3323,7 @@ else
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
                call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the O3 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_o3)
@@ -3256,7 +3335,7 @@ else
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
                call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
             endif
          enddo
       endif
@@ -3285,7 +3364,7 @@ else
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
                call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the CO field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_co)
@@ -3297,7 +3376,7 @@ else
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
                call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
             endif
          enddo
       endif
@@ -3330,7 +3409,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for TAUAER1 at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer1)
@@ -3342,7 +3421,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -3371,7 +3450,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for TAUAER2 at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer2)
@@ -3383,7 +3462,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -3412,7 +3491,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation at TAUAER3 level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer3)
@@ -3424,7 +3503,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -3453,7 +3532,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for TAUAER4 at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer4)
@@ -3465,7 +3544,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -3495,20 +3574,35 @@ else
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
                call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the NO2 field at level k+1
-               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
-               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
-               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
-               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
-               x_ill = get_state(ill, state_handle)
-               x_iul = get_state(iul, state_handle)
-               x_ilr = get_state(ilr, state_handle)
-               x_iur = get_state(iur, state_handle)
-               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))               
+               if (uniquek(uk)+1 .le. wrf%dom(id)%bt) then
+                  ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
+                  iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
+                  ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
+                  iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
+                  x_ill = get_state(ill, state_handle)
+                  x_iul = get_state(iul, state_handle)
+                  x_ilr = get_state(ilr, state_handle)
+                  x_iur = get_state(iur, state_handle)
+                  call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
+               else
+                  do e = 1, ens_size
+                     if ( k(e) == uniquek(uk) ) then
+                        fld(2, e) = fld(1, e)
+                     endif
+                  enddo
+               endif
             endif
+            do e = 1,ens_size
+               if(fld(1,e).ne.missing_r8 .and. fld(2,e).eq.missing_r8) then
+                  fld(2,e)=fld(1,e)
+               else if(fld(1,e).eq.missing_r8 .and. fld(2,e).ne.missing_r8) then
+                  fld(1,e)=fld(2,e)
+               endif
+            enddo
          enddo
       endif
 !
@@ -3535,7 +3629,7 @@ else
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
                call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the HNO3 field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_hno3)
@@ -3547,7 +3641,7 @@ else
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
                call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))               
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)               
             endif
          enddo
       endif
@@ -3578,7 +3672,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the SO2 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so2)
@@ -3590,7 +3684,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif 
             enddo
          endif
@@ -3619,7 +3713,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the SO4 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_so4)
@@ -3631,7 +3725,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif 
             enddo
          endif
@@ -3664,7 +3758,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the BC1 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc1)
@@ -3676,7 +3770,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif      
@@ -3705,7 +3799,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the BC2 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_bc2)
@@ -3717,7 +3811,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -3750,7 +3844,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the OC1 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc1)
@@ -3762,7 +3856,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -3791,7 +3885,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the OC2 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_oc2)
@@ -3803,7 +3897,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -3837,7 +3931,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the DST01 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst01)
@@ -3849,7 +3943,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -3878,7 +3972,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the DST02 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst02)
@@ -3890,7 +3984,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -3919,7 +4013,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the DST03 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst03)
@@ -3931,7 +4025,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -3960,7 +4054,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the DST04 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst04)
@@ -3972,7 +4066,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -4001,7 +4095,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the DST05 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_dst05)
@@ -4013,7 +4107,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -4047,7 +4141,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the SSLT01 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt01)
@@ -4059,7 +4153,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -4088,7 +4182,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the SSLT02 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt02)
@@ -4100,7 +4194,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -4129,7 +4223,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the SSLT03 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt03)
@@ -4141,7 +4235,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -4170,7 +4264,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the SSLT04 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_sslt04)
@@ -4182,7 +4276,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -4215,7 +4309,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the PM25 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm25)
@@ -4227,7 +4321,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -4256,7 +4350,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the PM10 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_pm10)
@@ -4268,7 +4362,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -4301,7 +4395,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the P25 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p25)
@@ -4313,7 +4407,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -4342,7 +4436,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the P10 field at level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_p10)
@@ -4354,7 +4448,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif
             enddo
          endif
@@ -4383,7 +4477,7 @@ else
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
                call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the HCHO field at level k+1
                ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_hcho)
@@ -4395,7 +4489,7 @@ else
                x_ilr = get_state(ilr, state_handle)
                x_iur = get_state(iur, state_handle)
                call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id))               
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)               
             endif
          enddo
       endif
@@ -4453,7 +4547,7 @@ else
 
             ! First make sure fld(2,:) is no longer a missing value
             if ( fld(2,e) == missing_r8 ) then !HK should be any?
-               print *,'fld 2 is missing',surf_var
+               print *,'WRFChem model.mod: fld 2 is missing'
 
                expected_obs(e) = missing_r8
 
@@ -4521,7 +4615,7 @@ end subroutine model_interpolate
 !#######################################################################
 !
 subroutine apm_interpolate(fld_intrp, obs_kind, ens_size, kval, kndx, uniquek, &
-   count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, dom_id)
+   count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, dom_id, allow_negs)
    integer, intent(in)          :: obs_kind
    integer, intent(in)          :: count
    integer, intent(in)          :: ens_size
@@ -4529,6 +4623,7 @@ subroutine apm_interpolate(fld_intrp, obs_kind, ens_size, kval, kndx, uniquek, &
    integer, intent(in)          :: dom_id
    integer, intent(in)          :: kval(ens_size)
    integer, intent(in)          :: uniquek(count)
+   logical, intent(in)          :: allow_negs
    real(r8), intent(in)         :: dx,dy,dxm,dym
    real(r8), intent(inout)      :: x_ill(ens_size),x_iul(ens_size),x_ilr(ens_size),x_iur(ens_size)
    real(r8), intent(out)        :: fld_intrp(ens_size)
@@ -4544,26 +4639,24 @@ subroutine apm_interpolate(fld_intrp, obs_kind, ens_size, kval, kndx, uniquek, &
 !
    var_id=get_varid_from_kind(dom_id,obs_kind)
    minval=get_io_clamping_minval(dom_id,var_id)
-   
-   where(x_ill.lt.0. .and. x_ill.ne.missing_r8)
-      x_ill=missing_r8
-   endwhere
+
+   if(allow_negs.ne..true.) then
+      where(x_ill.lt.0. .and. x_ill.ne.missing_r8)
+         x_ill=missing_r8
+      endwhere
 !
-   where(x_iul.lt.0. .and. x_iul.ne.missing_r8)
-      x_iul=missing_r8
-   endwhere
+      where(x_iul.lt.0. .and. x_iul.ne.missing_r8)
+         x_iul=missing_r8
+      endwhere
 !
-   where(x_ilr.lt.0. .and. x_ilr.ne.missing_r8)
-      x_ilr=missing_r8
-   endwhere
+      where(x_ilr.lt.0. .and. x_ilr.ne.missing_r8)
+         x_ilr=missing_r8
+      endwhere
 !
-   where(x_iur.lt.0. .and. x_iur.ne.missing_r8)
-      x_iur=missing_r8
-   endwhere
-!
-!   if(any(x_ill.lt.0.) .or. any(x_iul.lt.0.) .or. any(x_ilr.lt.0.) .or. any(x_iur.lt.0.)) then
-!      print *,'APM: x_ill, x_iul, x_ilr, x_iur ',x_ill,x_iul,x_ilr,x_iur
-!   endif
+      where(x_iur.lt.0. .and. x_iur.ne.missing_r8)
+         x_iur=missing_r8
+      endwhere
+   endif 
 !
    ddx=dx   
    ddy=dy   
@@ -4571,127 +4664,103 @@ subroutine apm_interpolate(fld_intrp, obs_kind, ens_size, kval, kndx, uniquek, &
    ddym=dym
 !
    do e = 1, ens_size
-      xx_ill=x_ill(e)
-      xx_ilr=x_ilr(e)
-      xx_iul=x_iul(e)
-      xx_iur=x_iur(e)
+      if (kval(e) == uniquek(kndx)) then
+         xx_ill=x_ill(e)
+         xx_ilr=x_ilr(e)
+         xx_iul=x_iul(e)
+         xx_iur=x_iur(e)
 !
 ! none missing
-      if(xx_ill/=missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul/=missing_r8 &
-      .and. xx_iur/=missing_r8) then
-         if (kval(e) == uniquek(kndx)) then
+         if(xx_ill/=missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul/=missing_r8 &
+         .and. xx_iur/=missing_r8) then
             fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
 !
 ! one missing point
-      elseif(xx_ill==missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul/=missing_r8 &
-      .and. xx_iur/=missing_r8) then
-         xx_ill=xx_ilr
-         if (kval(e) == uniquek(kndx)) then
+         elseif(xx_ill==missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul/=missing_r8 &
+         .and. xx_iur/=missing_r8) then
+            xx_ill=xx_ilr
             fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
-      elseif(xx_ill/=missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul/=missing_r8 &
-      .and. xx_iur/=missing_r8) then
-         xx_ilr=xx_ill
-         if (kval(e) == uniquek(kndx)) then
+         elseif(xx_ill/=missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul/=missing_r8 &
+         .and. xx_iur/=missing_r8) then
+            xx_ilr=xx_ill
             fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
-      elseif(xx_ill/=missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul==missing_r8 &
-      .and. xx_iur/=missing_r8) then
-         xx_iul=xx_iur
-         if (kval(e) == uniquek(kndx)) then
+         elseif(xx_ill/=missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul==missing_r8 &
+         .and. xx_iur/=missing_r8) then
+            xx_iul=xx_iur
+               fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         elseif(xx_ill/=missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul/=missing_r8 &
+         .and. xx_iur==missing_r8) then
+            xx_iur=xx_iul
             fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
-      elseif(xx_ill/=missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul/=missing_r8 &
-      .and. xx_iur==missing_r8) then
-         xx_iur=xx_iul
-         if (kval(e) == uniquek(kndx)) then
-            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
 !
 ! two missing points
-      elseif(xx_ill==missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul/=missing_r8 &
-      .and. xx_iur/=missing_r8) then
-         xx_ill=xx_iul
-         xx_ilr=xx_iur   
-         if (kval(e) == uniquek(kndx)) then
+         elseif(xx_ill==missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul/=missing_r8 &
+         .and. xx_iur/=missing_r8) then
+            xx_ill=xx_iul
+            xx_ilr=xx_iur   
             fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
-      elseif(xx_ill/=missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul==missing_r8 &
-      .and. xx_iur==missing_r8) then
-         xx_iul=xx_ill   
-         xx_iur=xx_ilr   
-         if (kval(e) == uniquek(kndx)) then
+         elseif(xx_ill/=missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul==missing_r8 &
+         .and. xx_iur==missing_r8) then
+            xx_iul=xx_ill   
+            xx_iur=xx_ilr   
             fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
-      elseif(xx_ill==missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul==missing_r8 &
-      .and. xx_iur/=missing_r8) then
-         xx_ill=xx_ilr   
-         xx_iul=xx_iur   
-         if (kval(e) == uniquek(kndx)) then
+         elseif(xx_ill==missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul==missing_r8 &
+         .and. xx_iur/=missing_r8) then
+            xx_ill=xx_ilr   
+            xx_iul=xx_iur   
+               fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
+         elseif(xx_ill/=missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul/=missing_r8 &
+         .and. xx_iur==missing_r8) then
+            xx_ilr=xx_ill   
+            xx_iur=xx_iul
             fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
-      elseif(xx_ill/=missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul/=missing_r8 &
-      .and. xx_iur==missing_r8) then
-         xx_ilr=xx_ill   
-         xx_iur=xx_iul
-         if (kval(e) == uniquek(kndx)) then
+         elseif(xx_ill==missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul/=missing_r8 &
+         .and. xx_iur==missing_r8) then
+            xx_ill=xx_ilr   
+            xx_iur=xx_iul   
             fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
-      elseif(xx_ill==missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul/=missing_r8 &
-      .and. xx_iur==missing_r8) then
-         xx_ill=xx_ilr   
-         xx_iur=xx_iul   
-         if (kval(e) == uniquek(kndx)) then
+         elseif(xx_ill/=missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul==missing_r8 &
+         .and. xx_iur/=missing_r8) then
+            xx_ilr=xx_ill   
+            xx_iul=xx_iur   
             fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
-      elseif(xx_ill/=missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul==missing_r8 &
-      .and. xx_iur/=missing_r8) then
-         xx_ilr=xx_ill   
-         xx_iul=xx_iur   
-         if (kval(e) == uniquek(kndx)) then
-            fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
 !
 ! three missing points
-      elseif(xx_ill==missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul==missing_r8 &
-      .and. xx_iur/=missing_r8) then
-         xx_ill=xx_iur
-         xx_ilr=xx_iur
-         xx_iul=xx_iur
-         if (kval(e) == uniquek(kndx)) then
+         elseif(xx_ill==missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul==missing_r8 &
+         .and. xx_iur/=missing_r8) then
+            xx_ill=xx_iur
+            xx_ilr=xx_iur
+            xx_iul=xx_iur
             fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
-      elseif(xx_ill/=missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul==missing_r8 &
-      .and. xx_iur==missing_r8) then
-         xx_ilr=xx_ill
-         xx_iul=xx_ill
-         xx_iur=xx_ill
-         if (kval(e) == uniquek(kndx)) then
+         elseif(xx_ill/=missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul==missing_r8 &
+         .and. xx_iur==missing_r8) then
+            xx_ilr=xx_ill
+            xx_iul=xx_ill
+            xx_iur=xx_ill
             fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
-      elseif(xx_ill==missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul==missing_r8 &
-      .and. xx_iur==missing_r8) then
-         xx_ill=xx_ilr
-         xx_iul=xx_ilr
-         xx_iur=xx_ilr
-         if (kval(e) == uniquek(kndx)) then
+         elseif(xx_ill==missing_r8 .and. xx_ilr/=missing_r8 .and. xx_iul==missing_r8 &
+         .and. xx_iur==missing_r8) then
+            xx_ill=xx_ilr
+            xx_iul=xx_ilr
+            xx_iur=xx_ilr
             fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
-      elseif(xx_ill==missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul/=missing_r8 &
-      .and. xx_iur==missing_r8) then
-         xx_ill=xx_iul
-         xx_ilr=xx_iul
-         xx_iur=xx_iul
-         if (kval(e) == uniquek(kndx)) then
+         elseif(xx_ill==missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul/=missing_r8 &
+         .and. xx_iur==missing_r8) then
+            xx_ill=xx_iul
+            xx_ilr=xx_iul
+            xx_iur=xx_iul
             fld_intrp(e) = ddym*(ddxm*xx_ill + ddx*xx_ilr) + ddy*(ddxm*xx_iul + ddx*xx_iur)
-         endif
 !
 ! four missing
-      elseif(xx_ill==missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul==missing_r8 &
-      .and. xx_iur==missing_r8) then
-!         fld_intrp(e)=missing_r8
-         fld_intrp(e)=minval
+         elseif(xx_ill==missing_r8 .and. xx_ilr==missing_r8 .and. xx_iul==missing_r8 &
+         .and. xx_iur==missing_r8) then
+            fld_intrp(e)=minval
+         endif
+!
+         if((fld_intrp(e).lt.0. .and. allow_negs.ne..true.) .or. fld_intrp(e)==missing_r8 .or. &
+         isnan(fld_intrp(e))) then
+            fld_intrp(e)=minval
+         endif
       endif
    enddo
 !                  
@@ -10310,13 +10379,13 @@ character(len=NF90_MAX_NAME)  :: dimname
 
 ! get wrf grid dimensions
 
-   call nc_check( nf90_inq_dimid(ncid, "chemi_zdim_stag", dim_id), &
-                       'read_emiss_dimensions', &
-                       'inq_dimid chemi_zdim_stag "'//trim(fname)//'"')
+!   call nc_check( nf90_inq_dimid(ncid, "chemi_zdim_stag", dim_id), &
+!                       'read_emiss_dimensions', &
+!                       'inq_dimid chemi_zdim_stag "'//trim(fname)//'"')
 
-   call nc_check( nf90_inquire_dimension(ncid, dim_id, name=dimname, len=e_bt), &
-                       'read_emiss_dimensions', &
-                       'inquire_dimension chemi_zdim_stag "'//trim(fname)//'"')
+!   call nc_check( nf90_inquire_dimension(ncid, dim_id, name=dimname, len=e_bt), &
+!                       'read_emiss_dimensions', &
+!                       'inquire_dimension chemi_zdim_stag "'//trim(fname)//'"')
 
    call nc_check( nf90_inq_dimid(ncid, "south_north", dim_id), &
                        'read_emiss_dimensions', &

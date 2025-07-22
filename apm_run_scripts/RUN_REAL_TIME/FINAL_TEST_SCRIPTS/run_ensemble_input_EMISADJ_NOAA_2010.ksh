@@ -33,46 +33,44 @@ export WORK_DIR=/nobackupp28/amizzi
 export TRUNK_DIR=${WORK_DIR}/TRUNK
 export REAL_TIME_DIR=${TRUNK_DIR}/${DART_VER}/apm_run_scripts/RUN_REAL_TIME
 export RS_SCRIPTS_DIR=${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS/RS_Scripts
-export INPUT_DATA_DIR=/nobackupp28/amizzi/INPUT_DATA
+export INPUT_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS
 export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
-# NOAA
-#export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_REAL_TIME_DATA
-export EXPERIMENT_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS
+export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}
 #
-export RUN_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2005
-export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_NOAA_2005
+export RUN_DIR=${EXPERIMENT_DIR}/INPUT_DATA_EMISADJ_NOAA_2010
+export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_DATA_EMISADJ_NOAA_2010
 export EXPERIMENT_INPUT_OBS=NOAA
 #
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
 #
-# APM - Need NOAA template file
 export WRFCHEM_TEMPLATE_FILE=wrfinput_d01_2019-04-02_03:00:00.e001
 export NUM_MEMBERS=10
-#
-# NOAA
 export CYCLE_PERIOD=3
 export FCST_PERIOD=3
 #
 # CYCLE TIME SETTINGS (NOAA has extra digits for ss)
-export INITIAL_DATE=2005040200
-export FIRST_FILTER_DATE=2005040203
-export FIRST_DART_INFLATE_DATE=2005040203
-export FIRST_EMISS_INV_DATE=2005040203
+export INITIAL_DATE=2010040200
+export FIRST_FILTER_DATE=2010040203
+export FIRST_DART_INFLATE_DATE=2010040203
+export FIRST_EMISS_INV_DATE=2010040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2005040200
+export CYCLE_STR_DATE=2010040206
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2005040200
+export CYCLE_END_DATE=2010040206
 #
 # Special DATE for emissions perturbations
 export RUN_SPECIAL_PERT_DATE=false
-export SPECIAL_PERT_DATE=${CYCLE_STR_DATE}00
+export SPECIAL_PERT_DATE=${CYCLE_STR_DATE}
 if [[ ${RUN_SPECIAL_PERT_DATE} = "true" ]]; then
-   export SPECIAL_PERT_DATE=201904020300
+   export SPECIAL_PERT_DATE=2019040203
 fi
-#    
+#
+# Special skip for emission perturbations (scaling factor propagation only)
+export SPECIAL_PERT_NO_SKIP=true
+#
 # For emissions estimation
 export ADD_EMISS=true
 export EMISS_DAMP_CYCLE=1.0
@@ -107,7 +105,7 @@ source ${RS_SCRIPTS_DIR}/RS_Miscellaneous_Constants.ksh
 #
 export CYCLE_DATE=${CYCLE_STR_DATE}
 while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
-   cd ${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS 
+   cd ${REAL_TIME_DIR}/FINAL_TEST_SCRIPTS
    export DATE=${CYCLE_DATE}
    export EXP_INPUT_OBS=${RUN_INPUT_DIR}/${DATE}/${EXPERIMENT_INPUT_OBS}
    export L_ADD_EMISS=${ADD_EMISS} 
@@ -116,7 +114,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    fi
 #
 # SELECT COMPONENT RUN OPTIONS:
-   export RUN_GEOGRID=false
+   export RUN_GEOGRID=false                # after the initial cycle, this may be set to false
    export RUN_UNGRIB=false
    export RUN_METGRID=false
    export RUN_REAL=false
@@ -129,29 +127,30 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export RUN_WRFCHEM_CHEMI=false
    export RUN_PERT_WRFCHEM_CHEM_ICBC=false
    export RUN_PERT_WRFCHEM_CHEM_EMISS=true
-   export RUN_COMBINE_OBS=false
-   export RUN_PREPROCESS_OBS=false
-   export RUN_LOCALIZATION=false
+   export RUN_COMBINE_OBS=true
+   export RUN_PREPROCESS_OBS=true
+   export RUN_LOCALIZATION=true
 #
-   export RUN_MOPITT_V8_CO_PROFILE_OBS=false           # (done)  TRACER I
-   export RUN_MODIS_AOD_TOTAL_COL_OBS=false            # (done)  TRACER I
-   export RUN_OMI_O3_PROFILE_OBS=false                 # (done)  TRACER I
-   export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false        # (done)  TRACER I
-   export RUN_OMI_SO2_PBL_COL_OBS=false                # (done)  TRACER I
-   export RUN_TES_CO_PROFILE_OBS=false                 # (done)  TRACER I
-   export RUN_TES_O3_PROFILE_OBS=false                # (done)  TRACER I
-   export RUN_SCIAM_NO2_TROP_COL_OBS=false            # (check)  TRACER I
-   export RUN_GOME2A_NO2_TROP_COL_OBS=false            # (done)  TRACER I
-   export RUN_GOME2B_NO2_TROP_COL_OBS=false           # (check)  TRACER I
-   export RUN_MLS_O3_PROFILE_OBS=false                 # (done)  TRACER I
-   export RUN_MLS_HNO3_PROFILE_OBS=false               # (done)  TRACER I
-   export RUN_AIRNOW_CO_OBS=false                      # (done)  TRACER I
-   export RUN_AIRNOW_O3_OBS=false                      # (done)  TRACER I
-   export RUN_AIRNOW_NO2_OBS=false                     # (done)  TRACER I
-   export RUN_AIRNOW_SO2_OBS=false                     # (done)  TRACER I
-   export RUN_AIRNOW_PM10_OBS=false                    # (done)  TRACER I
-   export RUN_AIRNOW_PM25_OBS=false                    # (done)  TRACER I
-   export RUN_MET_OBS=false                            # (done)  TRACER I
+   export RUN_MOPITT_V8_CO_PROFILE_OBS=true            # (done)  TRACER I
+   export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true         # (done)  TRACER I
+   export RUN_OMI_SO2_PBL_COL_OBS=true                 # (done)  TRACER I
+   export RUN_TES_CO_PROFILE_OBS=true                  # (done)  TRACER I
+   export RUN_SCIAM_NO2_TROP_COL_OBS=true              # (check) TRACER I
+   export RUN_GOME2A_NO2_TROP_COL_OBS=true             # (done)  TRACER I
+   export RUN_AIRNOW_CO_OBS=true                       # (done)  TRACER I
+   export RUN_AIRNOW_O3_OBS=true                       # (done)  TRACER I
+   export RUN_AIRNOW_NO2_OBS=true                      # (done)  TRACER I
+   export RUN_AIRNOW_SO2_OBS=true                      # (done)  TRACER I
+   export RUN_MET_OBS=true                             # (done)  TRACER I
+#
+   export RUN_MODIS_AOD_TOTAL_COL_OBS=false            # (done)  TRACER I - leave false
+   export RUN_OMI_O3_PROFILE_OBS=false                 # (done)  TRACER I - leave false
+   export RUN_TES_O3_PROFILE_OBS=false                 # (done)  TRACER I - leave false
+   export RUN_GOME2B_NO2_TROP_COL_OBS=false            # (check) TRACER I - leave false
+   export RUN_MLS_O3_PROFILE_OBS=false                 # (done)  TRACER I - leave false
+   export RUN_MLS_HNO3_PROFILE_OBS=false               # (done)  TRACER I - leave false
+   export RUN_AIRNOW_PM10_OBS=false                    # (done)  TRACER I - leave false
+   export RUN_AIRNOW_PM25_OBS=false                    # (done)  TRACER I - leave false
 #
    rm -rf index_RS_Code_Versions_${DATE}   
    source ${RS_SCRIPTS_DIR}/RS_Code_Versions.ksh > index_RS_Code_Versions_${DATE} 2>&1
@@ -205,28 +204,32 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 #########################################################################
 #
+   export WRFCHEMI_DARTVARS="E_CO,E_NO,E_NO2,E_SO2"
+   export WRFFIRECHEMI_DARTVARS="ebu_in_co,ebu_in_no,ebu_in_no2,ebu_in_so2"
+#
    export WRF_VER=WRFCHEM_NOAACSLv4.2.2
    export WRFCHEM_VER=WRFCHEM_NOAACSLv4.2.2
 #   export WRF_VER=WRFv4.3.2_dmpar
-#   export WRFCHEM_VER=WRFCHEMv4.3.2_dmparr
-   export EXPERIMENT_HIST_IO_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/hist_io_files
-   export EXPERIMENT_COLDENS_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/wes_coldens
-   export WES_COLDENS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_WES_COLDENS
-   export EXPERIMENT_WRFBIOCHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/bio_emissions
-   export MEGAN_BIO_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_MEGAN_BIO
-#   export EXPERIMENT_WRFFIRECHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/fire_emissions/fire_emissions_v1.5
-   export EXPERIMENT_WRFFIRECHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/fire_emissions/fire_emissions_v2.5
-   export FINN_FIRE_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_FINN_FIRE
+#   export WRFCHEM_VER=WRFCHEMv4.3.2_dmpar
+#
+   export EXPERIMENT_HIST_IO_DIR=${EXPERIMENT_DATA_DIR}/hist_io_files
+   export EXPERIMENT_COLDENS_DIR=${EXPERIMENT_DATA_DIR}/wes_coldens
+   export EXPERIMENT_PHOT_DIR=${EXPERIMENT_DATA_DIR}/phot_data
+   export WES_COLDENS_DIR=${DART_DIR}/apm_run_scripts/RUN_WES_COLDENS
+   export EXPERIMENT_WRFBIOCHEMI_DIR=${EXPERIMENT_DATA_DIR}/bio_emissions
+   export MEGAN_BIO_DIR=${DART_DIR}/apm_run_scripts/RUN_MEGAN_BIO
+#   export EXPERIMENT_WRFFIRECHEMI_DIR=${EXPERIMENT_DATA_DIR}/fire_emissions/fire_emissions_v1.5
+   export EXPERIMENT_WRFFIRECHEMI_DIR=${EXPERIMENT_DATA_DIR}/fire_emissions/fire_emissions_v2.5
+   export FINN_FIRE_DIR=${DART_DIR}/apm_run_scripts/RUN_FINN_FIRE
 #   export NL_FIRE_FILE=GLOBAL_FINNv15_${YYYY}_MOZ4.txt
    export NL_FIRE_FILE=GLOBAL_FINNv25_${YYYY}_MOZ4.txt
-   export EXPERIMENT_WRFCHEMI_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/anthro_emissions
-   export MOZBC_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS/tcr2_data
-   export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
-   export PERT_CHEM_INPUT_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_PERT_CHEM/ICBC_PERT
+   export EXPERIMENT_WRFCHEMI_DIR=${EXPERIMENT_DATA_DIR}/anthro_emissions
+   export MOZBC_DATA_DIR=${EXPERIMENT_DATA_DIR}/tcr2_data
+   export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}/${YYYY}/${MM}${NL_UPPER_DATA_FILE_NAME}\'
+   export PERT_CHEM_INPUT_DIR=${DART_DIR}/apm_run_scripts/RUN_PERT_CHEM/ICBC_PERT
    export NL_UPPER_DATA_FILE_NAME=/h0001.nc
-   export AISH_PERT_CHEM_INPUT_DIR=/nobackupp28/amizzi/TRUNK/DART_AISH/apm_run_scripts/RUN_PERT_CHEM/ICBC_PERT
-   export ADJUST_EMISS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_EMISS_INV
-   export PERT_CHEM_EMISS_DIR=/nobackupp28/amizzi/TRUNK/DART_development/apm_run_scripts/RUN_PERT_CHEM/EMISS_PERT
+   export ADJUST_EMISS_DIR=${DART_DIR}/apm_run_scripts/RUN_EMISS_INV
+   export PERT_CHEM_EMISS_DIR=${DART_DIR}/apm_run_scripts/RUN_PERT_CHEM/EMISS_PERT
 #
    export NL_PERT_CHEM=true
    export NL_PERT_FIRE=true
@@ -240,15 +243,15 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #   
 # PERT_ICBC (Used for settings in call to RS script)
 # (NSPCS x NUM_MEMS) + 2
-# (20 x 10) + 2
+# (32 x 10) + 2
 # Ivy 20 nodes per core   
 # Haswell 24 nodes per core   
 # Broadwell 28 nodes per core
 # Broadwell
    export L_ICBC_PERT_JOB_CLASS=normal
    export L_ICBC_PERT_TIME_LIMIT=4:30:00
-   export L_ICBC_PERT_NODES=8
-   export L_ICBC_PERT_TASKS=26
+   export L_ICBC_PERT_NODES=12
+   export L_ICBC_PERT_TASKS=27
    export L_ICBC_PERT_MODEL=bro
 #
 # PERT_EMISS (Used for settings in call to  RS script)
@@ -256,7 +259,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # ((20 + 18 + 0) x 10) + 2
 # Broadwell
    export L_EMISS_PERT_JOB_CLASS=normal
-   export L_EMISS_PERT_TIME_LIMIT=01:59:00
+   export L_EMISS_PERT_TIME_LIMIT=03:59:00
    export L_EMISS_PERT_NODES=11
    export L_EMISS_PERT_TASKS=28
    export L_EMISS_PERT_MODEL=bro
@@ -560,6 +563,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_chem_icbc
       fi
+#      export NL_CHEM_ICBC_SPECIES='co','o3','no','no2','so2','hno3','hcho','pan','nh3','iso','hc3','olt','ald','ket','moh','eth','ete','mpan','paa','orgpai','orgpaj','eci','ecj','so4ai','so4aj','no3ai','no3aj','seas','soila','antha','nh4ai','nh4aj'
       export NL_CHEM_ICBC_SPECIES='co','o3','no','no2','so2','hno3','hcho','pan','nh3','iso','hc3','olt','ald','ket','moh','eth','ete','mpan','paa'
 #
 # PERT_ICBC
@@ -596,11 +600,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export PERT_MODEL=${L_EMISS_PERT_MODEL}
       source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Chem_Emiss_NOAA.ksh > index_rs.html 2>&1
    fi
-
-
-exit
-
-   
 #
 ########################################################################
 #

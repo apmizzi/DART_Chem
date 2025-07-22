@@ -334,17 +334,14 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
    real(r8) :: co_val_conv, VMR_conv
    real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
    real(r8) :: lon_obs,lat_obs,pi,rad2deg
-   real(r8) :: exobs_mean,exobs_var
    
    real(r8), dimension(ens_size) :: co_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
    real(r8), dimension(ens_size) :: co_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
    real(r8), dimension(ens_size) :: prs_sfc
-   real(r8), allocatable,dimension(:) :: co_mean,co_var
    
    real(r8), allocatable, dimension(:)   :: thick, prs_mopitt, prs_mopitt_mem
    real(r8), allocatable, dimension(:,:) :: co_val, tmp_val, qmr_val
    logical  :: return_now,co_return_now,tmp_return_now,qmr_return_now
-   real(r8)                      :: expobs_mean, expobs_var
 !
 ! Upper BC variables   
    real(r8), allocatable, dimension(:)   :: co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl
@@ -394,8 +391,6 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
    klay_mopitt  = kobs(key,2)
    layer_mdl = nlayer_model
    level_mdl = nlayer_model+1
-   allocate(co_mean(layer_mopitt))
-   allocate(co_var(layer_mopitt))
    allocate(prs_mopitt(level_mopitt))
    allocate(prs_mopitt_mem(level_mopitt))
    prs_mopitt(1:level_mopitt)=pressure(key,1:level_mopitt)*100.
@@ -450,8 +445,10 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
 !
       interp_new=0
       do imem=1,ens_size
-         if(co_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
-         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
+!         if(co_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
+!         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
+         if(co_mdl_1(imem).lt.0. .or. tmp_mdl_1(imem).lt.0. .or. &
+         qmr_mdl_1(imem).lt.0. .or. prs_mdl_1(imem).lt.0.) then
             interp_new=1
             exit
          endif
@@ -492,8 +489,10 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
 !
       interp_new=0
       do imem=1,ens_size
-         if(co_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
-         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
+!         if(co_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
+!         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
+         if(co_mdl_n(imem).lt.0. .or. tmp_mdl_n(imem).lt.0. .or. &
+         qmr_mdl_n(imem).lt.0. .or. prs_mdl_n(imem).lt.0.) then
             interp_new=1
             exit
          endif
@@ -542,7 +541,7 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
             qmr_val(imem,k) = qmr_mdl_n(imem)
          endif
       enddo
-
+!
 !      write(string1, *)'APM: co ',k,co_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
 !      write(string1, *)'APM: tmp ',k,tmp_val(1,k)
@@ -557,95 +556,87 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
    co_mdl_n(:) = co_mdl_n(:) * 1.e-6_r8
 !
 ! Use large scale carbon monoxide data above the regional model top
-! MOPITT vertical is from bottom to top   
-   kstart=-1
-   do imem=ens_size+10,ens_size
+! APM: Modified to use retrieval prior above the regional model top   
+! MOPITT vertical grid is from bottom to top   
+!
+! APM: Before oLd code         
+!   kstart=-1
+!   do imem=1,ens_size
 !      write(string1, *)'APM: imem,prs_mopitt,prs_model ',imem,prs_mopitt(level_mopitt),prs_mdl_n(imem)
 !      call error_handler(E_MSG, routine, string1, source)
-      if (prs_mopitt(level_mopitt).lt.prs_mdl_n(imem)) then
-         do k=level_mopitt,1,-1
-            if (prs_mopitt(k).gt.prs_mdl_n(imem)) then
-               kstart=k
-               exit
-            endif
-         enddo
-         ncnt=level_mopitt-kstart
-         allocate(prs_mopitt_top(ncnt))
-         allocate(co_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
-         do k=kstart+1,level_mopitt
-            prs_mopitt_top(k)=prs_mopitt(k)
-         enddo
-         prs_mopitt_top(:)=prs_mopitt_top(:)/100.
+!      if (prs_mopitt(level_mopitt).lt.prs_mdl_n(imem)) then
+!         do k=level_mopitt,1,-1
+!            if (prs_mopitt(k).gt.prs_mdl_n(imem)) then
+!               kstart=k
+!               exit
+!            endif
+!         enddo
+!         ncnt=level_mopitt-kstart
+!         allocate(prs_mopitt_top(ncnt))
+!         allocate(co_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
+!         do k=kstart+1,level_mopitt
+!            prs_mopitt_top(k)=prs_mopitt(k)
+!         enddo
+!         prs_mopitt_top(:)=prs_mopitt_top(:)/100.
 !
-         lon_obs=mloc(1)/rad2deg
-         lat_obs=mloc(2)/rad2deg
-         call get_time(obs_time,datesec_obs,date_obs)
+!         lon_obs=mloc(1)/rad2deg
+!         lat_obs=mloc(2)/rad2deg
+!         call get_time(obs_time,datesec_obs,date_obs)
 !
-         data_file=trim(upper_data_file)
-         model=trim(upper_data_model)
-
+!         data_file=trim(upper_data_file)
+!         model=trim(upper_data_model)
+!
 !         write(string1, *)'APM: kstart ',kstart
 !         call error_handler(E_MSG, routine, string1, source)
 !         do k=1,ncnt
 !            write(string1, *)'APM: k,prs ',prs_mopitt_top(k)
 !            call error_handler(E_MSG, routine, string1, source)
 !         enddo
-            
-         call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
-         ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_mopitt_top, &
-         ncnt,co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
-
+!            
+!         call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
+!         ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_mopitt_top, &
+!         ncnt,co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+!
 !         do k=1,ncnt
 !            write(string1, *)'APM: k,co,prs ',co_prf_mdl(k),prs_mopitt_top(k)
 !            call error_handler(E_MSG, routine, string1, source)
 !         enddo
-
 !
 ! Impose ensemble perturbations from level kstart+1      
-         do k=kstart+1,level_mopitt
-            co_val(imem,k)=co_prf_mdl(k)*co_val(imem,kstart)/ &
-            (sum(co_val(:,kstart))/real(ens_size))
-            tmp_val(imem,k)=tmp_prf_mdl(k)*tmp_val(imem,kstart)/ &
-            (sum(tmp_val(:,kstart))/real(ens_size))
-            qmr_val(imem,k)=qmr_prf_mdl(k)*qmr_val(imem,kstart)/ &
-            (sum(qmr_val(:,kstart))/real(ens_size))
-         enddo
-
+!         do k=kstart+1,level_mopitt
+!            co_val(imem,k)=co_prf_mdl(k)*co_val(imem,kstart)/ &
+!            (sum(co_val(:,kstart))/real(ens_size))
+!            tmp_val(imem,k)=tmp_prf_mdl(k)*tmp_val(imem,kstart)/ &
+!            (sum(tmp_val(:,kstart))/real(ens_size))
+!            qmr_val(imem,k)=qmr_prf_mdl(k)*qmr_val(imem,kstart)/ &
+!            (sum(qmr_val(:,kstart))/real(ens_size))
+!         enddo
+!
 !         do k=kstart+1,level_mopitt
 !            write(string1, *)'APM: k,co,prs ',co_prf_mdl(k),prs_mopitt_top(k)
 !            call error_handler(E_MSG, routine, string1, source)
 !         enddo
-
-         deallocate(prs_mopitt_top)
-         deallocate(co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
-      endif
-   enddo
+!
+!         deallocate(prs_mopitt_top)
+!         deallocate(co_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
+!      endif
+!   enddo
+! APM: After old code         
 !
 ! Check full profile for negative values
    do imem=1,ens_size
-      flg=0
       do k=1,level_mopitt
          if(co_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0. .or. prs_mopitt(k).lt.0.) then
-            flg=1
-            zstatus(:)=20
-            expct_val(:)=missing_r8
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
             call error_handler(E_MSG, routine, string1, source)
+            zstatus(:)=20
+            expct_val(:)=missing_r8
+            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+            return
          endif
       enddo
-      if(flg.eq.1) then
-         do kk=1,level_mopitt
-            write(string1, *)'APM: k,prs,co,tmp,qmr ',kk,prs_mopitt(kk),co_val(1,kk), &
-            tmp_val(1,kk),qmr_val(1,kk)
-            call error_handler(E_MSG, routine, string1, source)
-         enddo
-         zstatus(:)=20
-         expct_val(:)=missing_r8
-         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-         return
-      endif
    enddo
 !
 ! Calculate the expected retrievals   
@@ -654,9 +645,27 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
    expct_val(:)=0.0
    allocate(thick(layer_mopitt))
    prs_mopitt_mem(:)=prs_mopitt(:)
-   co_mean(:)=0.
-   co_var(:)=0.
+!
+! Find MOPITT index for first layer above top of regional model      
+! MOPITT vertical grid is from bottom to top   
    do imem=1,ens_size
+      kstart=-1
+!      write(string1, *) &
+!      'APM: imem,prs_mopitt,prs_mdl ',imem,prs_mopitt(level_mopitt),prs_mopitt(level_mopitt-1), &
+!      prs_mdl_n(imem)
+!      call error_handler(E_ALLMSG, routine, string1, source)
+      if ((prs_mopitt(level_mopitt)+prs_mopitt(level_mopitt-1))/2..lt.prs_mdl_n(imem)) then
+         do k=level_mopitt,1,-1
+            if ((prs_mopitt(k)+prs_mopitt(k-1))/2..gt.prs_mdl_n(imem)) then
+               kstart=k
+               write(string1, *) &
+               'APM: imem,kstart,prs_mopitt,prs_mdl ',imem,kstart,prs_mopitt(k),prs_mopitt(k-1), &
+               prs_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               exit
+            endif
+         enddo
+      endif
 !      
 ! Calculate the thicknesses
 !      thick(:)=0.
@@ -670,7 +679,7 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
 !         thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
 !         log(prs_mopitt_mem(k)/prs_mopitt_mem(k+1))
 !      enddo
-      
+!      
 ! Process the vertical summation      
       do k=1,layer_mopitt
          if(prior(key,k).lt.0.) then
@@ -699,8 +708,10 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
 !            (dw_wt*prs_mopitt_mem(k)+up_wt*prs_mopitt_mem(k+1)) / &
 !            (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
             co_val_conv = (dw_wt*co_val(imem,k)+up_wt*co_val(imem,k+1))/tl_wt*1.e9_r8
-            co_mean(k)=co_mean(k)+co_val_conv
          endif
+!
+! Use retrieval prior above regional model top         
+         if(k.ge.kstart .and. kstart.gt.0) co_val_conv=prior(key,k)
  
 ! Get expected observation (MOPITT prior is VMR ppbv)
 
@@ -716,26 +727,21 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
          endif
 
 !         write(string1, *) &
-!         'APM: Expected_Val, CO_TRM. PRIOR_TRM, co_val, prior, avgk, avgk_trm: ', &
-!         k,expct_val(imem),log10(co_val_conv)*avg_kernel(key,k),prior_term*log10(prior(key,k)), &
-!         co_val_conv,prior(key,k),avg_kernel(key,k),prior_term
+!         'APM: K,expct_val,avgk_trm,prior_trm ',k,expct_val(imem), &
+!         log10(co_val_conv)*avg_kernel(key,k),prior_term*log10(prior(key,k))
 !         call error_handler(E_ALLMSG, routine, string1, source)
-
+         
       enddo
 !
 ! Convert expected observation from log10(ppbv) to ppbv         
-!      write(string1, *) &
-!      'APM: CO_Expected Value - key,ilv,val,10^val: ',key,klay_mopitt, &
-!      expct_val(imem),10.**expct_val(imem)
-!      call error_handler(E_ALLMSG, routine, string1, source)
       expct_val(imem)=10.**expct_val(imem)
 
       if(isnan(expct_val(imem))) then
          zstatus(:)=20
          expct_val(:)=missing_r8
-!         write(string1, *) &
-!         'APM NOTICE: MOPITT CO expected value is NaN '
-!         call error_handler(E_ALLMSG, routine, string1, source)
+         write(string1, *) &
+         'APM NOTICE: MOPITT CO expected value is NaN '
+         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
@@ -743,54 +749,19 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
       if(expct_val(imem).lt.0) then
          zstatus(:)=20
          expct_val(:)=missing_r8
-!         write(string1, *) &
-!         'APM NOTICE: MOPITT CO expected value is negative'
-!         call error_handler(E_ALLMSG, routine, string1, source)
+         write(string1, *) &
+         'APM NOTICE: MOPITT CO expected value is negative'
+         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
    enddo
-   exobs_mean=sum(expct_val)/real(ens_size)
-   exobs_var=sum((expct_val-exobs_mean)**2)/real(ens_size-1)
-!   do k=1,nlayer_mopitt
-!      write(string1, *) &
-!      'APM: key,ilv,co_mean,co_std,prior,avgk: ', &
-!      key,k,co_mean(k),sqrt(co_var(k)),prior(key,k),avg_kernel(key,k)
-!      call error_handler(E_ALLMSG, routine, string1, source)
-!   enddo
 !   call exit_all(-77)
-   if(exobs_var.eq.0.) then
-      do k=1,layer_mopitt
-         co_mean(k)=co_mean(k)/real(ens_size)
-         lnpr_mid=(log(prs_mopitt_mem(k))+log(prs_mopitt_mem(k+1)))/2.
-         up_wt=log(prs_mopitt_mem(k))-lnpr_mid
-         dw_wt=lnpr_mid-log(prs_mopitt_mem(k+1))
-         tl_wt=up_wt+dw_wt
-         do imem=1,ens_size
-            co_val_conv = (dw_wt*co_val(imem,k)+up_wt*co_val(imem,k+1))/tl_wt*1.e9_r8
-            co_var(k) = co_var(k)+(co_val_conv-co_mean(k))**2
-         enddo
-         co_var(k)=co_var(k)/real(ens_size-1)
-      enddo
-!      write(string1, *) &
-!      'APM : key,klay,mean,var ',key,klay_mopitt,expobs_mean,expobs_var
-!      call error_handler(E_ALLMSG, routine, string1, source)
-!      do k=1,nlayer_mopitt
-!         write(string1, *) &
-!         'APM: key,ilv,co_mean,co_std,prior,avgk: ', &
-!         key,k,co_mean(k),sqrt(co_var(k)),prior(key,k),avg_kernel(key,k)
-!         call error_handler(E_ALLMSG, routine, string1, source)
-!      enddo
-      zstatus(:)=20
-      expct_val(:)=missing_r8
-      call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-      return
-   endif
+!
 ! Clean up and return
    deallocate(co_val, tmp_val, qmr_val)
    deallocate(thick)
    deallocate(prs_mopitt, prs_mopitt_mem)
-   deallocate(co_mean,co_var)
 end subroutine get_expected_mopitt_v8_co_profile
 
 !-------------------------------------------------------------------------------

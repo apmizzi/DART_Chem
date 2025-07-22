@@ -52,6 +52,7 @@
    export EXPERIMENT_CRIS_CH4_DIR=${EXPERIMENT_DATA_DIR}/cris_ch4_nc_data
    export EXPERIMENT_CRIS_PAN_DIR=${EXPERIMENT_DATA_DIR}/cris_pan_nc_data
    export EXPERIMENT_SCIAM_NO2_DIR=${EXPERIMENT_DATA_DIR}/sciam_no2_nc_data
+   export EXPERIMENT_GOME2A_NO2_DIR=${EXPERIMENT_DATA_DIR}/gome2a_no2_nc_data
    export EXPERIMENT_GOME2AB_NO2_DIR=${EXPERIMENT_DATA_DIR}/gome2ab_no2_repo/gome2a_no2_nc_data_repo
    export EXPERIMENT_MLS_O3_DIR=${EXPERIMENT_DATA_DIR}/mls_o3_hdf_data
    export EXPERIMENT_MLS_HNO3_DIR=${EXPERIMENT_DATA_DIR}/mls_hno3_hdf_data

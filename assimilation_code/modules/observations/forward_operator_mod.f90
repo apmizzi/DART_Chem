@@ -15,9 +15,9 @@ use types_mod,             only : r8, i8, missing_r8
 
 use time_manager_mod,      only : time_type
 
-use utilities_mod,         only : error_handler, E_ERR
+use utilities_mod,         only : error_handler, E_ERR, E_MSG, do_output, timestamp
 
-use mpi_utilities_mod,     only : my_task_id
+use mpi_utilities_mod,     only : my_task_id, task_sync
 
 use obs_sequence_mod,      only : init_obs, destroy_obs, obs_sequence_type, &
                                   obs_type, get_obs_values, get_qc,         &
@@ -59,7 +59,46 @@ character(len=*), parameter :: source = 'forward_operator_mod.f90'
 character(len=512) :: string1, string2
 
 contains
+!
+! APM Debugging +++
+subroutine apm_trace_message(msg, label, threshold)
 
+character(len=*), intent(in)           :: msg
+character(len=*), intent(in), optional :: label
+integer,          intent(in), optional :: threshold
+
+! Write message to stdout and log file.
+integer :: t
+
+t = 0
+if (present(threshold)) t = threshold
+
+if (present(label)) then
+   call error_handler(E_MSG,trim(label),trim(msg))
+else
+   call error_handler(E_MSG,' forward_operator trace:',trim(msg))
+endif
+
+end subroutine apm_trace_message
+
+subroutine apm_timestamp_message(msg, sync)
+
+character(len=*), intent(in) :: msg
+logical, intent(in), optional :: sync
+
+! Write current time and message to stdout and log file.
+! if sync is present and true, sync mpi jobs before printing time.
+
+if (present(sync)) then
+  if (sync) call task_sync()
+endif
+
+if (do_output()) call timestamp(' '//trim(msg), pos='brief')
+
+end subroutine apm_timestamp_message
+
+! APM Debugging ---
+!  
 !------------------------------------------------------------------------------
 !> Subroutine get_obs_ens_distrib_state
 !> 
@@ -116,6 +155,9 @@ type(obs_type)     :: observation
 ! It is also assumed that the ensemble members are in the same
 ! order in each of the handles
 
+!call     apm_trace_message('APM: Forward Operator Mod Start')
+!call apm_timestamp_message('APM: Forward Operator Mod Start')
+
 num_copies_to_calc = copies_in_window(ens_handle)
 
 allocate(istatus(num_copies_to_calc))
@@ -130,8 +172,12 @@ call create_state_window(ens_handle, obs_fwd_op_ens_handle, qc_ens_handle)
 
 ens_size = ens_handle%num_copies - ens_handle%num_extras
 
+!call     apm_trace_message('APM: At get_allow_transpose conditional')
+!call apm_timestamp_message('APM: At get_allow_transpose conditional')
 if(get_allow_transpose(ens_handle)) then ! giant if for transpose or distributed forward op
 
+!   call     apm_trace_message('APM: At Transpose branch')
+!   call apm_timestamp_message('APM: At Transpose branch')
    my_copy_indices(:) = ens_handle%my_copies(1:num_copies_to_calc) ! var-complete forward operators
 
    ! Loop through all observations in the set
@@ -231,6 +277,8 @@ if(get_allow_transpose(ens_handle)) then ! giant if for transpose or distributed
    end do ALL_OBSERVATIONS
 
 else ! distributed state
+!   call     apm_trace_message('APM: At Distributed State branch')
+!   call apm_timestamp_message('APM: At Distributed State branch')
 
    do i = 1, num_copies_to_calc
       my_copy_indices(i) = i  ! copy-complete fwd operator so indices are 1 to ens_size
@@ -273,9 +321,15 @@ else ! distributed state
 
    obs_err_var = get_obs_def_error_variance(obs_def)
 
+!   call     apm_trace_message('APM: Begin get_expected_obs_distrib_state')
+!   call apm_timestamp_message('APM: Begin get_expected_obs_distrib_state')
+
    call get_expected_obs_distrib_state(seq, thiskey, &
       dummy_time, isprior, istatus, &
       assimilate_this_ob, evaluate_this_ob, ens_handle, num_copies_to_calc, my_copy_indices, expected_obs)
+
+!      call     apm_trace_message('APM: Finish get_expected_obs_distrib_state')
+!      call apm_timestamp_message('APM: Finish get_expected_obs_distrib_state')
 
       obs_fwd_op_ens_handle%copies(1:num_copies_to_calc, j) = expected_obs
 
@@ -296,6 +350,9 @@ else ! distributed state
                                istatus, expected_obs, thiskey(1))
 
    end do MY_OBSERVATIONS
+
+!   call     apm_trace_message('APM: Finished my observations loop')
+!   call apm_timestamp_message('APM: Finished my observations loop')
 
 endif
 
@@ -409,6 +466,10 @@ istatus = 0
 call init_obs(obs, 0, 0)
 
 !>@todo do you ever use this with more than one obs?
+
+!call     apm_trace_message('APM: get_expected_obs_distrib_state begin i loop')
+!call apm_timestamp_message('APM: get_expected_obs_distrib_state begin i loop')
+
 do i = 1, num_obs
    call get_obs_from_key(seq, keys(i), obs)
    call get_obs_def(obs, obs_def)
@@ -417,6 +478,7 @@ do i = 1, num_obs
 
    !location = get_obs_def_location(obs_def)
    
+
    ! Check in kind for negative for identity obs
    if(obs_kind_ind < 0) then
       if ( -obs_kind_ind > state_ens_handle%num_vars ) then
@@ -437,12 +499,21 @@ do i = 1, num_obs
    
    else ! do forward operator for this kind
 
+!      call     apm_trace_message('APM: get_expected_obs_distrib_state call obs_from_def')
+!      call apm_timestamp_message('APM: get_expected_obs_distrib_state call obs_from_def')
+
       call get_expected_obs_from_def_distrib_state(state_ens_handle, num_ens, copy_indices, keys(i), &
          obs_def, obs_kind_ind, state_time, isprior, &
          assimilate_this_ob, evaluate_this_ob, expected_obs, istatus)
 
+!      call     apm_trace_message('APM: get_expected_obs_distrib_state return obs_from_def')
+!      call apm_timestamp_message('APM: get_expected_obs_distrib_state return obs_from_def')
+
    endif
 end do
+
+!call     apm_trace_message('APM: get_expected_obs_distrib_state end i loop')
+!call apm_timestamp_message('APM: get_expected_obs_distrib_state end i loop')
 
 ! need to free any observation specific storage that
 ! might have been allocated.

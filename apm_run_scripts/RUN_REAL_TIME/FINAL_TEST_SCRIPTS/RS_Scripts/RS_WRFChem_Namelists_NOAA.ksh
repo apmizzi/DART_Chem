@@ -232,7 +232,7 @@
    export NL_ENSDIM=144
 #
    export NL_SWINT_OPT=1
-   export NL_AER_OPT=0
+   export NL_AER_OPT=1
    export NL_SLOPE_RAD=0
    export NL_TOPO_SHADING=1
    export NL_SHADLEN=25000.
@@ -345,14 +345,13 @@
    export NL_VERTMIX_ONOFF=1,1
    export NL_CHEM_CONV_TR=1,0
    export NL_CONV_TR_WETSCAV=1,1
-   export NL_CONV_TR_AQCHEM=0,0
-   export NL_SEAS_OPT=0
+   export NL_CONV_TR_AQCHEM=1,0
+   export NL_SEAS_OPT=1
 #
 # APM NO_CHEM
-#   export NL_DUST_OPT=0
-   export NL_DUST_OPT=0
+   export NL_DUST_OPT=5
    export NL_DMSEMIS_OPT=0
-   export NL_BIOMASS_BURN_OPT=4,4
+   export NL_BIOMASS_BURN_OPT=1,1
    export NL_PLUMERISEFIRE_FRQ=15,15
    export NL_SCALE_FIRE_EMISS=".true.",".true."
    export NL_HAVE_BCS_CHEM=".true.",".true."

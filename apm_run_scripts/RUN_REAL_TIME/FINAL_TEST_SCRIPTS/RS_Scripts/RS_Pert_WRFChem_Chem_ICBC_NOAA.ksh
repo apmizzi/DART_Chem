@@ -9,7 +9,8 @@
    cp ${METGRID_DIR}/met_em.d${CR_DOMAIN}.*.nc ./.
 #   cp ${METGRID_DIR}/met_em.d${FR_DOMAIN}.*.nc ./.
    cp ${PERT_CHEM_INPUT_DIR}/work/perturb_chem_icbc_CORR_RT_MA_MPI.exe ./.
-   cp ${AISH_PERT_CHEM_INPUT_DIR}/work/mozbc.exe ./mozbc.exe
+   cp ${PERT_CHEM_INPUT_DIR}/work/mozbc.exe ./mozbc.exe
+#   cp ${AISH_PERT_CHEM_INPUT_DIR}/work/mozbc.exe ./mozbc.exe
 #
 # SELECT MOZART DATA FILE
    export MOZBC_DATA=${NL_UPPER_DATA_FILE_NAME}
@@ -52,29 +53,50 @@ met_file_prefix    = 'met_em'
 met_file_suffix    = '.nc'
 met_file_separator = '.'
 moz_var_suffix     = '${MOZBC_SUFFIX}'
-spc_map =  'o3 -> O3',
-           'h2o2 -> H2O2',
-           'no -> NO',
+spc_map =  'api -> 0.5*C10H16',
+           'lim -> 0.5*C10H16',
+           'hc3 -> C3H8',
+           'olt -> C5H8',
+           'ald -> CH3CHO',
+           'ket -> CH3COCH3',
+           'moh -> CH3OH',
+            'o3 -> O3',
+          'h2o2 -> H2O2',
+           'ho2 -> ISOOH',
+          'macr -> MACR',
+            'no -> NO',
            'no2 -> NO2',
-           'n2o5 -> N2O5',
-           'hno3 -> HNO3',
+          'n2o5 -> N2O5',
+          'hno3 -> HNO3',
            'so2 -> SO2',
-           'co -> CO',
+            'co -> CO',
            'eth -> C2H6',
            'ete -> C2H4',
            'iso -> C5H8',
-           'hcho -> CH2O',
-           'macr -> MACR',
+          'hcho -> CH2O',
            'pan -> PAN',
-           'mpan -> MPAN',
+          'mpan -> MPAN',
            'nh3 -> NH3',
-           'moh -> CH3OH',
-           'paa -> CH3COOOH',
            'eoh -> C2H5OOH',
+           'paa -> CH3COOOH',
+        'orgpai -> 0.1*OC;0.414e9',
+        'orgpaj -> 0.9*OC;0.414e9',
+           'eci -> 0.1*BC;0.414e9',
+           'ecj -> 0.9*BC;0.414e9',
+         'so4ai -> 0.1*SULF;3.31e9',
+         'so4aj -> 0.9*SULF;3.31e9',
+         'no3ai -> 0.1*NITR;2.13e9',
+         'no3aj -> 0.9*NITR;2.13e9',
+          'seas -> SALT;2.e9',
+         'soila -> DUST;1.171e9',
+         'antha -> 0.041*OC;1.e9',
+         'nh4ai -> 0.1*NH4;0.622e9',
+         'nh4aj -> 0.9*NH4;0.622e9',
 /
 EOF
 #
    ./mozbc.exe < wrfchem.namelist.input > log_ic.txt 2>&1
+   
 #
 # CREATE BCs
    rm -rf wrfchem.namelist.input
@@ -93,29 +115,50 @@ met_file_prefix    = 'met_em'
 met_file_suffix    = '.nc'
 met_file_separator = '.'
 moz_var_suffix     = '${MOZBC_SUFFIX}'
-spc_map =  'o3 -> O3',
-           'h2o2 -> H2O2',
-           'no -> NO',
+spc_map =  'api -> 0.5*C10H16',
+           'lim -> 0.5*C10H16',
+           'hc3 -> C3H8',
+           'olt -> C5H8',
+           'ald -> CH3CHO',
+           'ket -> CH3COCH3',
+           'moh -> CH3OH',
+            'o3 -> O3',
+          'h2o2 -> H2O2',
+           'ho2 -> ISOOH',
+          'macr -> MACR',
+            'no -> NO',
            'no2 -> NO2',
-           'n2o5 -> N2O5',
-           'hno3 -> HNO3',
+          'n2o5 -> N2O5',
+          'hno3 -> HNO3',
            'so2 -> SO2',
-           'co -> CO',
+            'co -> CO',
            'eth -> C2H6',
            'ete -> C2H4',
            'iso -> C5H8',
-           'hcho -> CH2O',
-           'macr -> MACR',
+          'hcho -> CH2O',
            'pan -> PAN',
-           'mpan -> MPAN',
+          'mpan -> MPAN',
            'nh3 -> NH3',
-           'moh -> CH3OH',
-           'paa -> CH3COOOH',
            'eoh -> C2H5OOH',
+           'paa -> CH3COOOH',
+        'orgpai -> 0.1*OC;0.414e9',
+        'orgpaj -> 0.9*OC;0.414e9',
+           'eci -> 0.1*BC;0.414e9',
+           'ecj -> 0.9*BC;0.414e9',
+         'so4ai -> 0.1*SULF;3.31e9',
+         'so4aj -> 0.9*SULF;3.31e9',
+         'no3ai -> 0.1*NITR;2.13e9',
+         'no3aj -> 0.9*NITR;2.13e9',
+          'seas -> SALT;2.e9',
+         'soila -> DUST;1.171e9',
+         'antha -> 0.041*OC;1.e9',
+         'nh4ai -> 0.1*NH4;0.622e9',
+         'nh4aj -> 0.9*NH4;0.622e9',
 /
 EOF
 #
    ./mozbc.exe < wrfchem.namelist.input > log_bc.txt  2>&1
+   
 #
 # CREATE INPUT FILES FINE DOMAIN (APM this is the old code version)
 # Use the CR code as a templaste for the new FR code   
@@ -210,8 +253,9 @@ EOF
 #
 # PARALLEL ON ${MODEL}
    ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_icbc_CORR_RT_MA_MPI.exe PARALLEL ${ACCOUNT} ${PERT_MODEL}
-#
+   #
    qsub -Wblock=true job.ksh
+   mv index.html index_pert.html
 #
 # Recenter the perturbed ensemble
    rm jobx.ksh
@@ -281,6 +325,8 @@ EOF
    export JOBRND=${TRANDOM}_nco
    ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${GENERAL_MODEL}
    qsub -Wblock=true job.ksh
+   mv index.html index_nco.html
+#   
 #  rm ens_mean_inp mean_diff_inp
 #  rm ens_mean_bdy mean_diff_bdy
 #

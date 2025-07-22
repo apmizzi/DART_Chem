@@ -83,6 +83,8 @@ function sciam_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
       ref_hh=str2double(time_ref(12:13));
       ref_mn=str2double(time_ref(15:16));
       ref_ss=str2double(time_ref(18:19));
+%      fprintf('%d %d %d \n',ref_yy,ref_mm,ref_dd);
+%      fprintf('%d %d %d \n',ref_hh,ref_mn,ref_ss);
       ref_secs=single(convert_time_ref(ref_yy,ref_mm,ref_dd,ref_hh,ref_mn,ref_ss,1995));
       file_str_yy=str2double(time_start(1:4));
       file_str_mm=str2double(time_start(6:7));
@@ -148,15 +150,15 @@ function sciam_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
 %
 % delta_time(nscan,ntim) (milliseconds)
       field='/PRODUCT/delta_time';
-      delta_time=ncread(file_in,field);
-      delta_time=delta_time/1000.;
+      delta_time_tmp=ncread(file_in,field);
+      delta_time=double(delta_time_tmp)/1000.;
       units=ncreadatt(file_in,field,'units');
 %
-% no2_trop_col (npxl,nscan,ntim)
+% no2_trop_col (npxl,nscan,ntim) (molec/cm^2)
       field='/PRODUCT/tropospheric_no2_vertical_column';
       no2_trop_col=ncread(file_in,field);
 %
-% no2_trop_col_err (npxl,nscan,ntim)
+% no2_trop_col_err (npxl,nscan,ntim) (molec/cm^2)
       field='/PRODUCT/tropospheric_no2_vertical_column_uncertainty';
       no2_trop_col_err=ncread(file_in,field);
 %
@@ -265,15 +267,24 @@ function sciam_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
             if(isnan(delta_time(iscan,itim)))
                continue
             end
-            time_cur=ref_secs+delta_time(iscan,itim);
-            [year,month,day,hour,minute,second]=invert_time_ref(time_cur,1995);
-	    yyyy_sciam=year;
-	    mn_sciam=month;
-	    dy_sciam=day;
-	    hh_sciam=hour;
-	    mm_sciam=minute;
-	    ss_sciam=second;
-%	    [jult]=convert_time_ref(year,month,day,hour,minute,second,1995);
+            hh_tmp=floor(delta_time(iscan,itim)/60./60.);
+	    mn_tmp=floor((delta_time(iscan,itim)-hh_tmp*60.*60.)/60.);
+            ss_tmp=delta_time(iscan,itim) - hh_tmp*60.*60 - mn_tmp*60.;
+%            fprintf('current day hh mn, ss: %d %d %d \n',ref_yy,ref_mm,ref_dd);
+%		 
+	    year=ref_yy;
+	    month=ref_mm;
+	    day=ref_dd;
+	    hour=hh_tmp;
+	    minute=mn_tmp;
+	    second=ss_tmp;
+%
+	    yyyy_sciam=ref_yy;
+	    mn_sciam=ref_mm;
+	    dy_sciam=ref_dd;
+	    hh_sciam=hh_tmp;
+	    mm_sciam=mn_tmp;
+	    ss_sciam=ss_tmp;
             sciamdate=single(convert_time_ref(year,month,day,hour,minute,second,1995));
 %
 % Check time

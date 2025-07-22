@@ -23,6 +23,7 @@ EOF
       export JOBRND=${TRANDOM}_nco
       ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${GENERAL_MODEL}
       qsub -Wblock=true job.ksh
+      mv index.html index_nco_1.html
 #
 # GET DART UTILITIES
       cp ${WRFCHEM_DART_WORK_DIR}/wrf_dart_obs_preprocess ./.
@@ -51,6 +52,8 @@ EOF
       TRANDOM=$$      
       export JOBRND=${TRANDOM}_prepr
       ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} "wrf_dart_obs_preprocess ${DAY_GREG} ${SEC_GREG}" SERIAL ${ACCOUNT} ${GENERAL_MODEL}
+      sleep 15
       qsub -Wblock=true job.ksh
+      mv index.html index_prepr.html
       mv obs_seq.new obs_seq_comb_filtered_${DATE}.out
 #      rm -rf advance_time dart_log* input.nml job.ksh obs_seq.old wrf*

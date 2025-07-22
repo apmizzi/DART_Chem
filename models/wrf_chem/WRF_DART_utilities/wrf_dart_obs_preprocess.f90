@@ -409,7 +409,6 @@ type(obs_sequence_type) :: seq_all, seq_rawin, seq_sfc, seq_acars, seq_satwnd, &
                            seq_panda_co, seq_panda_o3, seq_panda_pm25
 ! APM/JB ---
 
-
 type(time_type)         :: anal_time
 
 type(ensemble_type)     :: dummy_ens
@@ -435,14 +434,21 @@ read( sgsec, '(i10)' ) gsec
 call set_calendar_type(GREGORIAN)
 anal_time = set_time(gsec, gday)
 
+print *, 'APM: before static_init_obs_sequence '
 call static_init_obs_sequence()
+
+print *, 'APM: before static_init_model '
 call static_init_model()
+
+print *, 'APM: before init_ensemble_manager '
 call init_ensemble_manager(dummy_ens, 1, 1_i8)
 
 print *, 'APM: before find_namelist_in_file '
 call find_namelist_in_file("input.nml", "wrf_obs_preproc_nml", iunit)
+
 print *, 'APM: before read namelist '
 read(iunit, nml = wrf_obs_preproc_nml, iostat = io)
+
 print *, 'APM: before check namelist read '
 call check_namelist_read(iunit, io, "wrf_obs_preproc_nml")
 

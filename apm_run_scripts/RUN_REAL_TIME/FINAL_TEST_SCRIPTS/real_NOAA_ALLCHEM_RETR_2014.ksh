@@ -75,10 +75,10 @@ export LS_CHEM_DZ=32
 export LS_CHEM_DT=360
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=true
+export RUN_INPUT_OBS=false
 export RUN_MOPITT_V8_CO_PROFILE_OBS=true           # (done)  TRACER I
 export RUN_MODIS_AOD_TOTAL_COL_OBS=false           # (done)  TRACER I
-export RUN_OMI_O3_PROFILE_OBS=false                 # (done)  TRACER I
+export RUN_OMI_O3_PROFILE_OBS=true                 # (done)  TRACER I
 export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true        # (done)  TRACER I
 export RUN_OMI_SO2_PBL_COL_OBS=true                # (done)  TRACER I
 export RUN_TES_CO_PROFILE_OBS=true                 # (done)  TRACER I
@@ -100,9 +100,7 @@ export RUN_MET_OBS=true                             # (done)  TRACER I
 export NL_EVALUATE_THESE_OBS_TYPES="'AIRNOW_CO',
                                    'AIRNOW_O3',
                                    'AIRNOW_NO2',
-                                   'AIRNOW_SO2',
-                                   'AIRNOW_PM10',
-                                   'AIRNOW_PM25'"
+                                   'AIRNOW_SO2'"
 #
 export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'RADIOSONDE_U_WIND_COMPONENT',
@@ -128,7 +126,6 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'SAT_U_WIND_COMPONENT',
                                    'SAT_V_WIND_COMPONENT',
                                    'MOPITT_V8_CO_PROFILE',
-                                   'MODIS_AOD_TOTAL_COL',
                                    'OMI_O3_PROFILE',
                                    'OMI_NO2_DOMINO_TROP_COL',
                                    'OMI_SO2_PBL_COL',
