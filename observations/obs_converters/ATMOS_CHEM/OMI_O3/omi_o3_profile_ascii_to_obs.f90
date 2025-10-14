@@ -251,30 +251,6 @@ program omi_o3_profile_ascii_to_obs
    calendar_type=3                          !Gregorian
    call set_calendar_type(calendar_type)
 !
-! Read model data
-!   allocate(lon(nx_model,ny_model))
-!   allocate(lat(nx_model,ny_model))
-!   allocate(psfc_fld(nx_model,ny_model))
-!   allocate(prs_prt(nx_model,ny_model,nz_model))
-!   allocate(prs_bas(nx_model,ny_model,nz_model))
-!   allocate(prs_fld(nx_model,ny_model,nz_model))
-!   allocate(tmp_prt(nx_model,ny_model,nz_model))
-!   allocate(tmp_fld(nx_model,ny_model,nz_model))
-!   allocate(qmr_fld(nx_model,ny_model,nz_model))
-!   allocate(o3_fld(nx_model,ny_model,nz_model))
-!   file_in=trim(path_model)//'/'//trim(file_model)
-!   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
-!   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
-!   call get_DART_diag_data(trim(file_in),'PSFC',psfc_fld,nx_model,ny_model,1,1)   
-!   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
-!   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
-!   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
-!   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
-!   call get_DART_diag_data(file_in,'o3',o3_fld,nx_model,ny_model,nz_model,1)
-!   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-!   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-!   o3_fld(:,:,:)=o3_fld(:,:,:)*1.e-6
-!
 ! Open OMI O3 binary file
    fileid=100
    write(6,*)'opening ',TRIM(filedir)//TRIM(filename)
@@ -336,7 +312,7 @@ program omi_o3_profile_ascii_to_obs
             kk=nlev_obs-k+1
             if(prs_obs(kk).lt.0.) then
                nlev_adj=nlev_adj-1
-               nlay_adj=nlev_adj-1
+               nlay_adj=nlay_adj-1
             else
                exit
             endif

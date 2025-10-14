@@ -1329,7 +1329,7 @@ logical, parameter  :: restrict_polar = .false.
 logical, parameter  :: use_old_vortex = .true.   ! set to .false. to use circ code
 real(r8), parameter :: drad = pi / 18.0_r8
 real(r8)            :: xloc, yloc, xloc_u, yloc_v, xyz_loc(3)
-integer             :: i, i_u, j, j_v, k2
+integer             :: i, i_u, j, j_v, k2, kk
 real(r8)            :: dx,dy,dxm,dym,dx_u,dxm_u,dy_v,dym_v
 integer             :: id
 logical             :: surf_var
@@ -3337,6 +3337,22 @@ else
                call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
                count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
             endif
+         enddo ! uk loop
+!
+! Fix if upper or lower field is missing but other is not missing
+         do e = 1, ens_size
+            if(fld(1,e).eq.missing_r8 .and. fld(2,e) .ne.missing_r8) fld(1,e)=fld(2,e)
+            if(fld(2,e).eq.missing_r8 .and. fld(1,e) .ne.missing_r8) fld(2,e)=fld(1,e)
+         enddo
+!
+! Check for negative values                                                                                                    
+         do e=1,ens_size
+            if(fld(1,e).lt.0. .or. fld(2,e).lt.0.) then
+               print *,'APM: HORIZ INTERP O3 ERROR k=',k
+               print *,'FLD(1) ',(fld(1,kk),kk=1,ens_size)
+               print *,'FLD(2) ',(fld(2,kk),kk=1,ens_size)
+               exit
+            endif
          enddo
       endif
 !
@@ -3377,6 +3393,22 @@ else
                x_iur = get_state(iur, state_handle)
                call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
                count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
+            endif
+         enddo ! uk loop
+!
+! Fix if upper or lower field is missing but other is not missing
+         do e = 1, ens_size
+            if(fld(1,e).eq.missing_r8 .and. fld(2,e) .ne.missing_r8) fld(1,e)=fld(2,e)
+            if(fld(2,e).eq.missing_r8 .and. fld(1,e) .ne.missing_r8) fld(2,e)=fld(1,e)
+         enddo
+!
+! Check for negative values         
+         do e=1,ens_size            
+            if(fld(1,e).lt.0. .or. fld(2,e).lt.0.) then
+               print *,'APM: HORIZ INTERP CO ERROR k=',k
+               print *,'FLD(1) ',(fld(1,kk),kk=1,ens_size)
+               print *,'FLD(2) ',(fld(2,kk),kk=1,ens_size)
+               exit
             endif
          enddo
       endif
@@ -3491,7 +3523,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(1,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)                  
 !
 ! Interpolation at TAUAER3 level k+1
                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk+1), domain_id(id),wrf%dom(id)%type_tauaer3)
@@ -3503,7 +3535,7 @@ else
                   x_ilr = get_state(ilr, state_handle)
                   x_iur = get_state(iur, state_handle)
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
+                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)                  
                endif
             enddo
          endif
@@ -3577,32 +3609,33 @@ else
                count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
 !
 ! Interpolation for the NO2 field at level k+1
-               if (uniquek(uk)+1 .le. wrf%dom(id)%bt) then
-                  ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
-                  iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
-                  ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
-                  iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
-                  x_ill = get_state(ill, state_handle)
-                  x_iul = get_state(iul, state_handle)
-                  x_ilr = get_state(ilr, state_handle)
-                  x_iur = get_state(iur, state_handle)
-                  call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
-                  count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
-               else
-                  do e = 1, ens_size
-                     if ( k(e) == uniquek(uk) ) then
-                        fld(2, e) = fld(1, e)
-                     endif
-                  enddo
-               endif
+               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
+               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
+               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
+               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id),wrf%dom(id)%type_no2)
+               x_ill = get_state(ill, state_handle)
+               x_iul = get_state(iul, state_handle)
+               x_ilr = get_state(ilr, state_handle)
+               x_iur = get_state(iur, state_handle)
+               call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
+               count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
             endif
-            do e = 1,ens_size
-               if(fld(1,e).ne.missing_r8 .and. fld(2,e).eq.missing_r8) then
-                  fld(2,e)=fld(1,e)
-               else if(fld(1,e).eq.missing_r8 .and. fld(2,e).ne.missing_r8) then
-                  fld(1,e)=fld(2,e)
-               endif
-            enddo
+         enddo ! uk loop
+!
+! Fix if upper or lower field is missing but other is not missing
+         do e = 1, ens_size
+            if(fld(1,e).eq.missing_r8 .and. fld(2,e) .ne.missing_r8) fld(1,e)=fld(2,e)
+            if(fld(2,e).eq.missing_r8 .and. fld(1,e) .ne.missing_r8) fld(2,e)=fld(1,e)
+         enddo
+!
+! Check for negative values         
+         do e=1,ens_size            
+            if(fld(1,e).lt.0. .or. fld(2,e).lt.0.) then
+               print *,'APM: HORIZ INTERP NO2 ERROR k=',k
+               print *,'FLD(1) ',(fld(1,kk),kk=1,ens_size)
+               print *,'FLD(2) ',(fld(2,kk),kk=1,ens_size)
+               exit
+            endif
          enddo
       endif
 !
@@ -3643,13 +3676,27 @@ else
                call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
                count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)               
             endif
+         enddo ! uk loop
+!
+! Fix if upper or lower field is missing but other is not missing
+         do e = 1, ens_size
+            if(fld(1,e).eq.missing_r8 .and. fld(2,e) .ne.missing_r8) fld(1,e)=fld(2,e)
+            if(fld(2,e).eq.missing_r8 .and. fld(1,e) .ne.missing_r8) fld(2,e)=fld(1,e)
+         enddo
+!
+! Check for negative values         
+         do e=1,ens_size            
+            if(fld(1,e).lt.0. .or. fld(2,e).lt.0.) then
+               print *,'APM: HORIZ INTERP HNO3 ERROR k=',k
+               print *,'FLD(1) ',(fld(1,kk),kk=1,ens_size)
+               print *,'FLD(2) ',(fld(2,kk),kk=1,ens_size)
+               exit
+            endif
          enddo
       endif
 !-----------------------------------------------------
 !5.ze SULFUR DIOXIDE (SO2); SULFATE (SO4)
    elseif ( obs_kind == QTY_SO2 .or. obs_kind == QTY_SO4 ) then
-!
-! SO2 
       if( obs_kind == QTY_SO2) then               
          if ( wrf%dom(id)%type_so2 >= 0 ) then
             do uk = 1, count
@@ -3686,11 +3733,26 @@ else
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
                   count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif 
-            enddo
+            enddo ! uk loop
          endif
+!
+! Fix if upper or lower field is missing but other is not missing
+         do e = 1, ens_size
+            if(fld(1,e).eq.missing_r8 .and. fld(2,e) .ne.missing_r8) fld(1,e)=fld(2,e)
+            if(fld(2,e).eq.missing_r8 .and. fld(1,e) .ne.missing_r8) fld(2,e)=fld(1,e)
+         enddo
+!
+! Check for negative values         
+         do e=1,ens_size            
+            if(fld(1,e).lt.0. .or. fld(2,e).lt.0.) then
+               print *,'APM: HORIZ INTERP SO2 ERROR k=',k
+               print *,'FLD(1) ',(fld(1,kk),kk=1,ens_size)
+               print *,'FLD(2) ',(fld(2,kk),kk=1,ens_size)
+               exit
+            endif
+         enddo
       endif
 !
-! SO4
       if( obs_kind == QTY_SO4) then               
          if ( wrf%dom(id)%type_so4 >= 0 ) then
             do uk = 1, count
@@ -3727,8 +3789,24 @@ else
                   call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
                   count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)
                endif 
-            enddo
+            enddo ! uk loop
          endif
+!
+! Fix if upper or lower field is missing but other is not missing
+         do e = 1, ens_size
+            if(fld(1,e).eq.missing_r8 .and. fld(2,e) .ne.missing_r8) fld(1,e)=fld(2,e)
+            if(fld(2,e).eq.missing_r8 .and. fld(1,e) .ne.missing_r8) fld(2,e)=fld(1,e)
+         enddo
+!
+! Check for negative values         
+         do e=1,ens_size            
+            if(fld(1,e).lt.0. .or. fld(2,e).lt.0.) then
+               print *,'APM: HORIZ INTERP SO4 ERROR k=',k
+               print *,'FLD(1) ',(fld(1,kk),kk=1,ens_size)
+               print *,'FLD(2) ',(fld(2,kk),kk=1,ens_size)
+               exit
+            endif
+         enddo
       endif
 !
 !-----------------------------------------------------
@@ -4491,6 +4569,22 @@ else
                call apm_interpolate(fld(2,:), obs_kind, ens_size, k, uk, uniquek, &
                count, dx, dy, dxm, dym, x_ill, x_iul, x_ilr, x_iur, domain_id(id), .false.)               
             endif
+         enddo ! uk loop
+!
+! Fix if upper or lower field is missing but other is not missing
+         do e = 1, ens_size
+            if(fld(1,e).eq.missing_r8 .and. fld(2,e) .ne.missing_r8) fld(1,e)=fld(2,e)
+            if(fld(2,e).eq.missing_r8 .and. fld(1,e) .ne.missing_r8) fld(2,e)=fld(1,e)
+         enddo
+!
+! Check for negative values         
+         do e=1,ens_size            
+            if(fld(1,e).lt.0. .or. fld(2,e).lt.0.) then
+               print *,'APM: HORIZ INTERP HCHO ERROR k=',k
+               print *,'FLD(1) ',(fld(1,kk),kk=1,ens_size)
+               print *,'FLD(2) ',(fld(2,kk),kk=1,ens_size)
+               exit
+            endif
          enddo
       endif
 ! APM ---
@@ -4508,7 +4602,6 @@ else
       return
 
    endif
-
 
    !----------------------------------
    ! 2. Vertical Interpolation 
@@ -4528,9 +4621,20 @@ else
    !HK I am unsure as to whether this should be done on the array expected_obs or one ensemble
    ! member (e) at a time.
    do e = 1, ens_size
-
+!
+! APM debug code      
+      if( obs_kind == QTY_NO2 ) then
+         if ( wrf%dom(id)%type_no2 >= 0 ) then
+            if (fld(1,e).lt.0. .or. fld(2,e).lt.0.) then
+               print *,'APM: VERT INTERP FLD NEGATIVE '
+               print *,'FLD(1) ',(fld(1,kk),kk=1,ens_size)
+               print *,'FLD(2) ',(fld(2,kk),kk=1,ens_size)
+            endif
+         endif
+      endif
+            
       if ( fld(1,e) == missing_r8 ) then
-
+         print *,'WRFChem model.mod: fld 1 is missing'
          expected_obs(e) = missing_r8
    
       else ! We purposefully changed fld(1,e), so continue onward
@@ -4548,7 +4652,6 @@ else
             ! First make sure fld(2,:) is no longer a missing value
             if ( fld(2,e) == missing_r8 ) then !HK should be any?
                print *,'WRFChem model.mod: fld 2 is missing'
-
                expected_obs(e) = missing_r8
 
             ! Do vertical interpolation -- at this point zloc is >= 1 unless
@@ -4639,7 +4742,19 @@ subroutine apm_interpolate(fld_intrp, obs_kind, ens_size, kval, kndx, uniquek, &
 !
    var_id=get_varid_from_kind(dom_id,obs_kind)
    minval=get_io_clamping_minval(dom_id,var_id)
-
+!
+   ddx=dx   
+   ddy=dy   
+   ddxm=dxm   
+   ddym=dym
+!
+! If all horizontal weights are missing, return missing for all members   
+   if(dx.eq.missing_r8 .and. dxm.eq.missing_r8 .and. dy.eq.missing_r8 .and. dym.eq.missing_r8) then
+      fld_intrp(:)=missing_r8
+      return
+   endif
+!
+! If negatives are not allowed, replace negatives with missing    
    if(allow_negs.ne..true.) then
       where(x_ill.lt.0. .and. x_ill.ne.missing_r8)
          x_ill=missing_r8
@@ -4656,13 +4771,9 @@ subroutine apm_interpolate(fld_intrp, obs_kind, ens_size, kval, kndx, uniquek, &
       where(x_iur.lt.0. .and. x_iur.ne.missing_r8)
          x_iur=missing_r8
       endwhere
-   endif 
+   endif
 !
-   ddx=dx   
-   ddy=dy   
-   ddxm=dxm   
-   ddym=dym
-!
+! Perform interpolation for members with kval == uniquek   
    do e = 1, ens_size
       if (kval(e) == uniquek(kndx)) then
          xx_ill=x_ill(e)
@@ -4756,14 +4867,9 @@ subroutine apm_interpolate(fld_intrp, obs_kind, ens_size, kval, kndx, uniquek, &
          .and. xx_iur==missing_r8) then
             fld_intrp(e)=minval
          endif
-!
-         if((fld_intrp(e).lt.0. .and. allow_negs.ne..true.) .or. fld_intrp(e)==missing_r8 .or. &
-         isnan(fld_intrp(e))) then
-            fld_intrp(e)=minval
-         endif
       endif
    enddo
-!                  
+!
 end subroutine apm_interpolate
 !
 !#######################################################################

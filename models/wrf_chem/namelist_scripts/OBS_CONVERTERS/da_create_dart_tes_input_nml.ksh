@@ -27,10 +27,10 @@ cat > input.nml << EOF
    use_log_co2                 = ${NL_USE_LOG_CO2}
    use_log_ch4                 = ${NL_USE_LOG_CH4}
    use_log_nh3                 = ${NL_USE_LOG_NH3}
-   lon_min                     = ${NNL_MIN_LON}
-   lon_max                     = ${NNL_MAX_LON}
-   lat_min                     = ${NNL_MIN_LAT}
-   lat_max                     = ${NNL_MAX_LAT}
+   lon_min                     = ${NL_MIN_LON}
+   lon_max                     = ${NL_MAX_LON}
+   lat_min                     = ${NL_MIN_LAT}
+   lat_max                     = ${NL_MAX_LAT}
    path_model                  = ${NL_PATH_MODEL}
    file_model                  = ${NL_FILE_MODEL}
    nx_model                    = ${NL_NX_MODEL}
@@ -75,37 +75,37 @@ cat > input.nml << EOF
 &obs_def_TES_CO_nml
    use_log_co                  = ${NL_USE_LOG_CO}
    nlayer_model                = ${NL_NLAYER_MODEL:-36},
-   nlayer_tes_co_total_col     = ${NL_NLAYER_TES_CO_TOTAL_COL:-14},
-   nlayer_tes_co_trop_col      = ${NL_NLAYER_TES_CO_TROP_COL:-14},
-   nlayer_tes_co_profile       = ${NL_NLAYER_TES_CO_PROFILE:-14},
+   nlayer_tes_co_total_col     = ${NL_NLAYER_TES_CO_TOTAL_COL:-70},
+   nlayer_tes_co_trop_col      = ${NL_NLAYER_TES_CO_TROP_COL:-70},
+   nlayer_tes_co_profile       = ${NL_NLAYER_TES_CO_PROFILE:-70},
 /
 &obs_def_TES_CO2_nml
    use_log_co2                  = ${NL_USE_LOG_CO2}
    nlayer_model                 = ${NL_NLAYER_MODEL:-36},
-   nlayer_tes_co2_total_col     = ${NL_NLAYER_TES_CO2_TOTAL_COL:-14},
-   nlayer_tes_co2_trop_col      = ${NL_NLAYER_TES_CO2_TROP_COL:-14},
-   nlayer_tes_co2_profile       = ${NL_NLAYER_TES_CO2_PROFILE:-14},
+   nlayer_tes_co2_total_col     = ${NL_NLAYER_TES_CO2_TOTAL_COL:-70},
+   nlayer_tes_co2_trop_col      = ${NL_NLAYER_TES_CO2_TROP_COL:-70},
+   nlayer_tes_co2_profile       = ${NL_NLAYER_TES_CO2_PROFILE:-70},
 /
 &obs_def_TES_O3_nml
    use_log_o3                  = ${NL_USE_LOG_O3}
    nlayer_model                = ${NL_NLAYER_MODEL:-36},
-   nlayer_tes_o3_total_col     = ${NL_NLAYER_TES_O3_TOTAL_COL:-14},
-   nlayer_tes_o3_trop_col      = ${NL_NLAYER_TES_O3_TROP_COL:-14},
-   nlayer_tes_o3_profile       = ${NL_NLAYER_TES_O3_PROFILE:-14}, 
+   nlayer_tes_o3_total_col     = ${NL_NLAYER_TES_O3_TOTAL_COL:-70},
+   nlayer_tes_o3_trop_col      = ${NL_NLAYER_TES_O3_TROP_COL:-70},
+   nlayer_tes_o3_profile       = ${NL_NLAYER_TES_O3_PROFILE:-70}, 
 /
 &obs_def_TES_NH3_nml
    use_log_nh3                  = ${NL_USE_LOG_NH3}
    nlayer_model                = ${NL_NLAYER_MODEL:-36},
-   nlayer_tes_nh3_total_col     = ${NL_NLAYER_TES_NH3_TOTAL_COL:-14},
-   nlayer_tes_nh3_trop_col      = ${NL_NLAYER_TES_NH3_TROP_COL:-14},
-   nlayer_tes_nh3_profile       = ${NL_NLAYER_TES_NH3_PROFILE:-14},
+   nlayer_tes_nh3_total_col     = ${NL_NLAYER_TES_NH3_TOTAL_COL:-70},
+   nlayer_tes_nh3_trop_col      = ${NL_NLAYER_TES_NH3_TROP_COL:-70},
+   nlayer_tes_nh3_profile       = ${NL_NLAYER_TES_NH3_PROFILE:-70},
 /
 &obs_def_TES_CH4_nml
    use_log_ch4                  = ${NL_USE_LOG_CH4}
    nlayer_model                = ${NL_NLAYER_MODEL:-36},
-   nlayer_tes_ch4_total_col     = ${NL_NLAYER_TES_CH4_TOTAL_COL:-14},
-   nlayer_tes_ch4_trop_col      = ${NL_NLAYER_TES_CH4_TROP_COL:-14},
-   nlayer_tes_ch4_profile       = ${NL_NLAYER_TES_CH4_PROFILE:-14},
+   nlayer_tes_ch4_total_col     = ${NL_NLAYER_TES_CH4_TOTAL_COL:-70},
+   nlayer_tes_ch4_trop_col      = ${NL_NLAYER_TES_CH4_TROP_COL:-70},
+   nlayer_tes_ch4_profile       = ${NL_NLAYER_TES_CH4_PROFILE:-70},
 /
 EOF
 

@@ -421,7 +421,7 @@ function omi_so2_pbl_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_m
             fprintf(fid,'%14.8g \n',rad_cld_frac(ipxl,ilin));
             fprintf(fid,'%14.8g \n',slnt_col_amt(ipxl,ilin));
             fprintf(fid,'%14.8g \n',zenang(ipxl,ilin));
-1<            fprintf(fid,'%14.8g ',scat_wt(1:layer,ipxl,ilin));
+            fprintf(fid,'%14.8g ',scat_wt(1:layer,ipxl,ilin));
             fprintf(fid,'\n');
             fprintf(fid,'%14.8g ',prs_lev(1:level));
             fprintf(fid,'\n');

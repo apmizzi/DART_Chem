@@ -49,8 +49,8 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
    day_secs_end=whh_mx*60.*60. + wmm_mx*60. + wss_mx;
 %
 % Print input data
-   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
-   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
+%   fprintf('obs window str %d %d %d %d %d %d \n',wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn)
+%   fprintf('obs window end %d %d %d %d %d %d \n',wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx)
 %
 % Read model grid
    lon_mdl=ncread(strcat(path_mdl,'/',file_mdl),'XLONG');
@@ -76,7 +76,7 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       clear o3_lay vert_col_total vert_col_trop
       clear prior_lay prior_err_lay prs_lev
       clear trop_indx avgk_lay avgk_diag_lay noise_corr info_content
-      file_in=char(file_list(ifile));
+      file_in=char(file_list(ifile))
       if(isempty(file_in))
          continue
       end
@@ -115,13 +115,11 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       file_end_ss=round(str2double(time_end(18:23)));
       file_str_secs=file_str_hh*3600 + file_str_mn*60 + file_str_ss;
       file_end_secs=file_end_hh*3600 + file_end_mn*60 + file_end_ss;
-      fprintf('%d %s \n',ifile,file_in);
       fprintf('If file_str_secs %d <= day_secs_end %d, and \n',file_str_secs,day_secs_end);
       fprintf('If file_end_secs %d >= day_secs_beg %d, then process data \n',file_end_secs,day_secs_beg);
       if(file_str_secs>day_secs_end | file_end_secs<day_secs_beg)
          continue
       end
-      fprintf('READ TES DATA \n')
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -142,8 +140,8 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       field='/HDFEOS/SWATHS/O3NadirSwath/Data Fields/AveragingKernel';
       avgk_lay=h5read(file_in,field);
       dims=size(avgk_lay);
-      layer=dims(1);
-      level=layer+1;
+      layer=dims(1)
+      level=layer+1
       nobs=dims(3);
       units=h5readatt(file_in,field,'Units');
 %
@@ -261,6 +259,8 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %
 % Check time
          if(tesdate<windate_min | tesdate>windate_max)
+            fprintf('tesdate %d < windate_min %d  OR \n',tesdate,windate_min)
+            fprintf('tesdate %d > windate_max %d  \n',tesdate,windate_max)
             continue
          end
 %
@@ -319,9 +319,6 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 	 xmdl_sw,delx,cen_lon,truelat1,truelat2);
          i_min = round(xi);
          j_min = round(xj);
-%        fprintf('lon,lat: %d %d \n',x_obser,y_obser)
-%        fprintf('imin,jmin,nx,ny: %d %d %d %d \n', ...
-%         i_min,j_min,nx_mdl,ny_mdl)
          reject = 0;
 %
 % Check lower bounds
@@ -356,11 +353,11 @@ function tes_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
             reject=1;
          end
          if(reject==1)
-%            fprintf('i_min %d j_min %d \n',i_min,j_min)
+            fprintf('NO REJECT 1: i_min %d j_min %d \n',i_min,j_min)
             continue
          end
          if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)
-%            fprintf('NO REJECT: i_min %d j_min %d \n',i_min,j_min)
+            fprintf('NO REJECT 2: i_min %d j_min %d \n',i_min,j_min)
             continue
          end
 %        fprintf('APM: Time test - %d %d %d \n',windate_min,tesdate,windate_max)

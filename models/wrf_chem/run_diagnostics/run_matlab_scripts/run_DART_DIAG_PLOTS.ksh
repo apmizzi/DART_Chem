@@ -4,8 +4,6 @@
    export CODE_DIR=${ROOT_DIR}/TRUNK/DART_development/models/wrf_chem/run_diagnostics/run_matlab_scripts
    export RUN_DIR=${ROOT_DIR}/OUTPUT_DATA/DART_DIAG_PLOTS
    export FILE=run_plot_rmse_xxx_evolution.m
-#   export FILE=run_plot_obs_netcdf.m
-#   export FILE=run_plot_profile.m
 #
    mkdir ${RUN_DIR}
    cd ${RUN_DIR}

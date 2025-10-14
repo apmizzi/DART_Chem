@@ -53,7 +53,7 @@ module obs_def_gome2a_no2_trop_col_mod
 
 use             types_mod, only : r8, MISSING_R8
 
-use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &
+use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, E_ALLMSG, &
                                   nmlfileunit, check_namelist_read, &
                                   find_namelist_in_file, do_nml_file, do_nml_term, &
                                   ascii_file_format, &
@@ -312,11 +312,11 @@ subroutine get_expected_gome2a_no2_trop_col(state_handle, ens_size, location, ke
 
    if ( .not. module_initialized ) call initialize_module
 
-   eps      =  0.61_r8
+   eps      = 0.61_r8
    Rd       = 287.05_r8     ! J/kg
    Ru       = 8.316_r8      ! J/kg
    Cp       = 1006.0        ! J/kg/K
-   grav     =   9.8_r8
+   grav     = 9.8_r8
    no2_min  = 1.e-6_r8
    msq2cmsq = 1.e4_r8
    AvogN    = 6.02214e23_r8
@@ -343,7 +343,6 @@ subroutine get_expected_gome2a_no2_trop_col(state_handle, ens_size, location, ke
 ! Get location infomation
 
    mloc = get_location(location)
-
    if (mloc(2) >  90.0_r8) then
       mloc(2) =  90.0_r8
    elseif (mloc(2) < -90.0_r8) then
@@ -393,9 +392,7 @@ subroutine get_expected_gome2a_no2_trop_col(state_handle, ens_size, location, ke
             exit
          endif
       enddo
-      if(interp_new.eq.0) then
-         exit
-      endif    
+      if(interp_new.eq.0) exit
    enddo
 
 !   write(string1, *)'APM: no2 lower bound ',no2_mdl_1
@@ -412,7 +409,7 @@ subroutine get_expected_gome2a_no2_trop_col(state_handle, ens_size, location, ke
    qmr_mdl_n(:)=missing_r8
    prs_mdl_n(:)=missing_r8
 
-   do k=layer_mdl,1,-1
+   do k=layer_mdl-1,1,-1
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
@@ -432,9 +429,7 @@ subroutine get_expected_gome2a_no2_trop_col(state_handle, ens_size, location, ke
             exit
          endif
       enddo
-      if(interp_new.eq.0) then
-         exit
-      endif    
+      if(interp_new.eq.0) exit
    enddo
    
 !   write(string1, *)'APM: no2 upper bound ',no2_mdl_n
@@ -486,53 +481,70 @@ subroutine get_expected_gome2a_no2_trop_col(state_handle, ens_size, location, ke
 !      write(string1, *)'APM: qmr ',k,qmr_val(1,k)
 !      call error_handler(E_MSG, routine, string1, source)
 !
-! Check data for missing values      
-      do imem=1,ens_size
-         if(no2_val(imem,k).eq.missing_r8 .or. tmp_val(imem,k).eq.missing_r8 .or. &
-         qmr_val(imem,k).eq.missing_r8) then
-            zstatus(:)=20
-            expct_val(:)=missing_r8
-            write(string1, *) &
-            'APM: Input data has missing values '
-            call error_handler(E_MSG, routine, string1, source)
-            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-            return
-         endif
-      enddo
-!      
 ! Convert units for no2 from ppmv
       no2_val(:,k) = no2_val(:,k) * 1.e-6_r8
    enddo
-
+   no2_mdl_1(:)=no2_mdl_1(:) * 1.e-6_r8
+   no2_mdl_n(:)=no2_mdl_n(:) * 1.e-6_r8
+!
+! Use large scale no2 data above the regional model top
+! APM: Modified to use retrieval prior above the regional model top   
+! GOME2A vertical is from top to bottom
+!
+! APM: No old code
+!
+! Check full profile for negative values
+   do imem=1,ens_size
+      do k=1,level_gome2a
+         if((no2_val(imem,k).lt.0. .and. no2_val(imem,k).ne.missing_r8) .or. &
+         (tmp_val(imem,k).lt.0. .and. tmp_val(imem,k).ne.missing_r8) .or. &
+         (qmr_val(imem,k).lt.0. .and. qmr_val(imem,k).ne.missing_r8)) then
+            write(string1, *) &
+            'APM: Recentered full profile has negative values for key,imem ',key,imem
+            call error_handler(E_ALLMSG, routine, string1, source)
+         else if(no2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         qmr_val(imem,k).lt.0.) then
+            zstatus(:)=20
+            expct_val(:)=missing_r8
+            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+            deallocate(prs_gome2a)
+            deallocate(prs_gome2a_mem)
+            deallocate(no2_val)
+            deallocate(tmp_val)
+            deallocate(qmr_val)
+            return
+         endif
+      enddo
+   enddo
+!
+! Calculate the expected retrievals   
    istatus(:)=0.
    zstatus(:)=0.
    expct_val(:)=0.0
    allocate(thick(layer_gome2a))
 !
    do imem=1,ens_size
+!
 ! Adjust the GOME2A pressure for WRF-Chem lower/upper boudary pressure
 ! (GOME2A NO2 vertical grid is bottom to top)
       prs_gome2a_mem(:)=prs_gome2a(:)
       if (prs_sfc(imem).gt.prs_gome2a_mem(1)) then
          prs_gome2a_mem(1)=prs_sfc(imem)
       endif   
-
+!
 ! Calculate the thicknesses
-
       do k=1,kend_gome2a
          lnpr_mid=(log(prs_gome2a_mem(k+1))+log(prs_gome2a_mem(k)))/2.
          up_wt=log(prs_gome2a_mem(k))-lnpr_mid
          dw_wt=lnpr_mid-log(prs_gome2a_mem(k+1))
-         tl_wt=up_wt+dw_wt
-      
+         tl_wt=up_wt+dw_wt     
          tmp_vir_k  = (1.0_r8 + eps*qmr_val(imem,k))*tmp_val(imem,k)
          tmp_vir_kp = (1.0_r8 + eps*qmr_val(imem,k+1))*tmp_val(imem,k+1)
          thick(k)   = Rd*(dw_wt*tmp_vir_k + up_wt*tmp_vir_kp)/tl_wt/grav* &
-                   log(prs_gome2a_mem(k)/prs_gome2a_mem(k+1))
+         log(prs_gome2a_mem(k)/prs_gome2a_mem(k+1))
       enddo
 
 ! Process the vertical summation
-
       do k=1,kend_gome2a
          lnpr_mid=(log(prs_gome2a_mem(k+1))+log(prs_gome2a_mem(k)))/2.
          up_wt=log(prs_gome2a_mem(k))-lnpr_mid
@@ -549,26 +561,33 @@ subroutine get_expected_gome2a_no2_trop_col(state_handle, ens_size, location, ke
             (dw_wt*prs_gome2a_mem(k)+up_wt*prs_gome2a_mem(k+1)) / &
             (Ru*(dw_wt*tmp_val(imem,k)+up_wt*tmp_val(imem,k+1)))
          endif
- 
+!
 ! Get expected observation
-
          expct_val(imem) = expct_val(imem) + thick(k) * no2_val_conv * &
          AvogN / msq2cmsq * scat_wts(key,k)
-!         write(string1, *) 'APM: key,k,imem,expc_val,thick,no2_conv,scwt ', &
-!         key,k,imem,expct_val(imem),thick(k),no2_val_conv,scat_wts(key,k)
-!         call error_handler(E_MSG, routine, string1, source)
       enddo
-
+!
+      if(isnan(expct_val(imem))) then
+         zstatus(imem)=20
+         expct_val(:)=missing_r8
+         write(string1, *) &
+         'APM NOTICE: GOME2A NO2 expected value is NaN ',key
+         call error_handler(E_ALLMSG, routine, string1, source)
+         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         return
+      endif
+!
       if(expct_val(imem).lt.0) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
          write(string1, *) &
-         'APM NOTICE: TROPOMI NO2 expected value is negative '
-         call error_handler(E_MSG, routine, string1, source)
+         'APM NOTICE: GOME2A NO2 expected value is negative '
+         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
    enddo
+!   call exit_all(-77)
 
 ! Clean up and return
    deallocate(no2_val, tmp_val, qmr_val)

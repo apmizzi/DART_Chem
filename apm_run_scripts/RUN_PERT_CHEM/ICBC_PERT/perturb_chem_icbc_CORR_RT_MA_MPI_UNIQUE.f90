@@ -175,7 +175,7 @@ program main
 !   endif
 
    call cpu_time(cpu_str)
-   if(rank.eq.0) print *, 'APM: Before vertical transform: time str ', cpu_str
+   if(rank.eq.0) print *, 'APM: Rank all - Before vertical transform: time str ', cpu_str
 !
 ! Construct the vertical weights
    call vertical_transform(A_chem,geo_ht,nx,ny,nz,nz,corr_lngth_vt)
@@ -188,7 +188,7 @@ program main
 
    call cpu_time(cpu_end)
    cpu_dif=cpu_end-cpu_str
-   if(rank.eq.0) print *, 'APM: After vertical transform: time dif', cpu_dif
+   if(rank.eq.0) print *, 'APM: Rank all -After vertical transform: time dif', cpu_dif
 !
 ! Allocate processors (reserve tasks 0 and 1)
    allocate(itask(num_mems,nchem_spcs))
@@ -199,36 +199,59 @@ program main
       enddo
    enddo
 !
-! Read old scaling factors if they exist      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! Rank: 0
+!   
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
    if(rank.eq.0) then
+!
+! Read old scaling factors if they exist      
       if(.not.sw_corr_tm) then
-         unita=30
+         unit=10
          filenm=trim(pert_path_old)//'/pert_chem_icbc'
-         open(unit=unita,file=trim(filenm), &
+         open(unit=unit,file=trim(filenm), &
          form='unformatted',status='unknown')
-         rewind(unita)
-         do imem=1,num_mems
-            do isp=1,nchem_spcs
-               allocate(chem_fac_old(nx,ny,nz))
-               allocate(tmp_arry(nx*ny*nz))
-               unita=30
-               read(unita) chem_fac_old
+         rewind (unit)   
+      endif
+!
+      call cpu_time(cpu_str)
+      print *, 'APM: Rank 0 - Before chem_fac_old send ',cpu_str
+!
+      allocate(chem_fac_old(nx,ny,nz))
+      allocate(tmp_arry(nx*ny*nz))
+      do imem=1,num_mems
+         do isp=1,nchem_spcs
+            if(.not.sw_corr_tm) then
+               unit=10
+               read(unit) chem_fac_old
                call apm_pack_3d(tmp_arry,chem_fac_old,nx,ny,nz)
                call mpi_send(tmp_arry,nx*ny*nz,MPI_FLOAT, &
                itask(imem,isp),1,MPI_COMM_WORLD,ierr)
-               deallocate(chem_fac_old)
-               deallocate(tmp_arry)
-            enddo
+            endif
          enddo
-         close(unita)
-      endif
-!      
-      call mpi_recv(flg,1,MPI_FLOAT,1,3,MPI_COMM_WORLD,stat,ierr)
+      enddo
+      close(unit)
+      deallocate(chem_fac_old)
+      deallocate(tmp_arry)
 !
-      unita=30
+      call cpu_time(cpu_str)
+      print *, 'APM: Rank 0 - After chem_fac_old send ',cpu_str
+!
+      call mpi_recv(flg,1,MPI_FLOAT,1,1,MPI_COMM_WORLD,stat,ierr)
+!
+! Read new new scaling factors and send to itask(imem,isp)      
+      unit=20
       filenm=trim(pert_path_new)//'/pert_chem_icbc'
-      open(unit=unita,file=trim(filenm),form='unformatted',status='unknown')
-      rewind(unita)
+      open(unit=unit,file=trim(filenm), &
+      form='unformatted',status='unknown')
+      rewind(unit)
+!
+      call cpu_time(cpu_str)
+      print *, 'APM: Rank 0 - Before chem_fac_end etc. send ',cpu_str
+!
+      allocate(chem_fac_end(nx,ny,nz))
       do imem=1,num_mems
          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
@@ -236,22 +259,18 @@ program main
          wrfchem_file_ic=trim(wrfinput_fld_new)//trim(cmem)
          wrfchem_file_bc=trim(wrfbdy_fld_new)//trim(cmem)
          do isp=1,nchem_spcs
-            allocate(chem_fac_end(nx,ny,nz))
+            read(unit) chem_fac_end
             allocate(tmp_arry(nx*ny*nz))
-            read(unita) chem_fac_end
             call apm_pack_3d(tmp_arry,chem_fac_end,nx,ny,nz)
             call mpi_send(tmp_arry,nx*ny*nz,MPI_FLOAT, &
-            itask(imem,isp),1,MPI_COMM_WORLD,ierr)
-            deallocate(chem_fac_end)
-            deallocate(tmp_arry)
+            itask(imem,isp),2,MPI_COMM_WORLD,ierr)
 !
             allocate(chem_data3d(nx,ny,nz,1))
-            allocate(tmp_arry(nx*ny*nz))
             call get_WRFCHEM_icbc_data(wrfchem_file_ic,ch_chem_spc(isp), &
             chem_data3d,nx,ny,nz,1)
             call apm_pack_4d(tmp_arry,chem_data3d,nx,ny,nz,1)
             call mpi_send(tmp_arry,nx*ny*nz,MPI_FLOAT, &               
-            itask(imem,isp),2,MPI_COMM_WORLD,ierr)
+            itask(imem,isp),3,MPI_COMM_WORLD,ierr)
             deallocate(chem_data3d)     
             deallocate(tmp_arry)
 !
@@ -263,29 +282,38 @@ program main
                chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
                call apm_pack_4d(tmp_arry,chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
                call mpi_send(tmp_arry,bdy_dims(ibdy)*nz*nhalo*nt,MPI_FLOAT, &               
-               itask(imem,isp),ibdy+2,MPI_COMM_WORLD,ierr)
+               itask(imem,isp),ibdy+3,MPI_COMM_WORLD,ierr)
                deallocate(chem_databdy)
                deallocate(tmp_arry)
             enddo
          enddo
       enddo
-      close(unita)
+!
+      call cpu_time(cpu_str)
+      print *, 'APM: Rank 0 - After chem_fac_end etc. send ',cpu_str
+!
+      close(unit)
    endif
 !
-! Loop through member and species. Assign one member/species to each processor
-! Note: the perturb_fields step is very slow; need to have at least (num_mems * nchem_spcs) + 2
-! processors
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! Rank: itask(imem,isp)
+!   
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
    if(rank.ne.0 .and. rank.ne.1) then   
       allocate(chem_fac_old(nx,ny,nz))
       allocate(chem_fac_new(nx,ny,nz))
       allocate(chem_fac_end(nx,ny,nz))
       allocate(chem_data3d(nx,ny,nz,1))
+!
+! Loop through member and species. Assign one member/species to each processor
       do imem=1,num_mems
          do isp=1,nchem_spcs
             if(rank.eq.itask(imem,isp)) then
                if (rank.eq.3) then
                   call cpu_time(cpu_str)
-                 print *, 'APM: Before pert_flds rank,imem,isp ',rank,imem,isp,cpu_str
+                 print *, 'APM: Rank itask - Before pert_flds rank,imem,isp ',rank,imem,isp,cpu_str
                endif
                if(.not.sw_corr_tm) then
                   allocate(tmp_arry(nx*ny*nz))
@@ -310,17 +338,18 @@ program main
                allocate(tmp_arry(nx*ny*nz))
                call apm_pack_3d(tmp_arry,chem_fac_end,nx,ny,nz)
                call mpi_send(tmp_arry,nx*ny*nz,MPI_FLOAT, &
-               1,21,MPI_COMM_WORLD,ierr)
+               1,1,MPI_COMM_WORLD,ierr)
                deallocate(tmp_arry)
                if (rank.eq.3) then
                   call cpu_time(cpu_end)
                   cpu_dif=cpu_end-cpu_str
-                  print *, 'APM: After pert_flds rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
+                  print *, 'APM: Rank itask - After pert_flds rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
                endif
             endif
          enddo
       enddo
 !
+! Loop through members and species to apply scaling factors
       do imem=1,num_mems
          if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
          if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
@@ -329,17 +358,18 @@ program main
             if(rank.eq.itask(imem,isp)) then
                if (rank.eq.3) then
                   call cpu_time(cpu_str)
-                  print *, 'APM: Before smoothing rank,imem,isp ',rank,imem,trim(ch_chem_spc(isp)),cpu_str
+                  print *, 'APM: Rank itask - Before smoothing rank,imem,isp ',rank,imem, &
+                  trim(ch_chem_spc(isp)),cpu_str
                endif
                allocate(tmp_arry(nx*ny*nz))
                call mpi_recv(tmp_arry,nx*ny*nz,MPI_FLOAT, &
-               0,1,MPI_COMM_WORLD,stat,ierr)
+               0,2,MPI_COMM_WORLD,stat,ierr)
                call apm_unpack_3d(tmp_arry,chem_fac_end,nx,ny,nz)
                deallocate(tmp_arry)
 !
                allocate(tmp_arry(nx*ny*nz))
                call mpi_recv(tmp_arry,nx*ny*nz, &
-               MPI_FLOAT,0,2,MPI_COMM_WORLD,stat,ierr)
+               MPI_FLOAT,0,3,MPI_COMM_WORLD,stat,ierr)
                call apm_unpack_4d(tmp_arry,chem_data3d,nx,ny,nz,1)
                deallocate(tmp_arry)
 ! ICs
@@ -358,7 +388,7 @@ program main
                allocate(tmp_arry(nx*ny*nz))
                call apm_pack_4d(tmp_arry,chem_data3d,nx,ny,nz,1)
                call mpi_send(tmp_arry,nx*ny*nz,MPI_FLOAT, &
-               1,22,MPI_COMM_WORLD,ierr)
+               1,2,MPI_COMM_WORLD,ierr)
                deallocate(tmp_arry)              
 ! BCs              
                do ibdy=1,nbdy_exts
@@ -367,7 +397,7 @@ program main
                   allocate(chem_databdy(bdy_dims(ibdy),nz,nhalo,nt))
                   allocate(tmp_arry(bdy_dims(ibdy)*nz*nhalo*nt))
                   call mpi_recv(tmp_arry,bdy_dims(ibdy)*nz*nhalo*nt, &
-                  MPI_FLOAT,0,ibdy+2,MPI_COMM_WORLD,stat,ierr)
+                  MPI_FLOAT,0,ibdy+3,MPI_COMM_WORLD,stat,ierr)
                   call apm_unpack_4d(tmp_arry,chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
                   deallocate(tmp_arry)
 !
@@ -375,6 +405,7 @@ program main
 ! non-tendency terms
                      if(ibdy.eq.1.or.ibdy.eq.2) then
                         chem_data_sav_1(:,:,:,:,ibdy)=chem_databdy(:,:,:,:)
+!
                         i=1
                         if(ibdy/2*2.eq.ibdy) i=nx 
                         do h=1,nhalo
@@ -382,6 +413,7 @@ program main
                               do j=1,bdy_dims(ibdy)
                                  chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k)+ &
                                  (1.-wgt_bc_mid)* chem_fac_end(i,j,k)
+!                                 
                                  if(chem_databdy(j,k,h,1)*(1.+chem_fac_end(i,j,k)) &
                                  .le. 0.) then
                                     chem_databdy(j,k,h,1)=fac_min*chem_databdy(j,k,h,1)
@@ -389,6 +421,7 @@ program main
                                     chem_databdy(j,k,h,1)=chem_databdy(j,k,h,1)*(1.+ &
                                     chem_fac_end(i,j,k))
                                  endif
+!
                                  if(chem_databdy(j,k,h,2)*(1.+chem_fac_mid) .le. 0) then
                                     chem_databdy(j,k,h,2)=fac_min*chem_databdy(j,k,h,2)
                                  else
@@ -401,8 +434,14 @@ program main
 ! Tendency terms need to account for a temporal change in the perturbation
 ! Form: d(Af)/dt = dA/dt*f + A*df/dt; chem_databdy is dA/dt; chem_data_sav_1 is A
                         allocate(chem_data_end(bdy_dims(ibdy),nz,nhalo))
+! APM: FP error                        
                         chem_data_end(:,:,:)=chem_databdy(:,:,:,2)*corr_tm_delt/2.*tfac+ &
                         chem_data_sav_1(:,:,:,2,ibdy-4)
+
+! APM: Error is in chem_databdy
+!                        chem_data_end(:,:,:)=chem_databdy(:,:,:,2)*corr_tm_delt/2.*tfac
+! This line works        chem_data_end(:,:,:)=chem_data_sav_1(:,:,:,2,ibdy-4)              
+!
                         i=1
                         if(ibdy/2*2.eq.ibdy) i=nx
                         do h=1,nhalo
@@ -431,6 +470,7 @@ program main
 ! non-tendency terms
                      if(ibdy.eq.3.or.ibdy.eq.4) then
                         chem_data_sav_2(:,:,:,:,ibdy-2)=chem_databdy(:,:,:,:)
+!
                         j=1  
                         if(ibdy/2*2.eq.ibdy) j=ny
                         do h=1,nhalo
@@ -438,6 +478,7 @@ program main
                               do i=1,bdy_dims(ibdy)
                                  chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k)+(1.- &
                                  wgt_bc_mid)*chem_fac_end(i,j,k)
+!
                                  if(chem_databdy(i,k,h,1)*(1.+chem_fac_old(i,j,k)) &
                                  .le.0.) then
                                     chem_databdy(i,k,h,1)=fac_min*chem_databdy(i,k,h,1)
@@ -445,6 +486,7 @@ program main
                                     chem_databdy(i,k,h,1)=chem_databdy(i,k,h,1)*(1.+ &
                                     chem_fac_old(i,j,k))
                                  endif
+! 
                                  if(chem_databdy(i,k,h,2)*(1.+chem_fac_mid).le.0.) then
                                     chem_databdy(i,k,h,2)=fac_min*chem_databdy(i,k,h,2)
                                  else
@@ -457,8 +499,11 @@ program main
 ! Tendency terms need to account for a temporal change in the perturbation
 ! Form: d(Af)/dt = dA/dt*f + A*df/dt; chem_databdy is dA/dt; chem_data_sav_2 is A
                         allocate(chem_data_end(bdy_dims(ibdy),nz,nhalo))
+! APM: FP Error
                         chem_data_end(:,:,:)=chem_databdy(:,:,:,2)*(corr_tm_delt/2.)*tfac+ &
                         chem_data_sav_2(:,:,:,2,ibdy-6)
+! This line works       chem_data_end(:,:,:)=chem_data_sav_2(:,:,:,2,ibdy-6)
+!
                         j=1  
                         if(ibdy/2*2.eq.ibdy) j=ny
                         do h=1,nhalo
@@ -487,7 +532,7 @@ program main
                   allocate(tmp_arry(bdy_dims(ibdy)*nz*nhalo*nt))
                   call apm_pack_4d(tmp_arry,chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
                   call mpi_send(tmp_arry,bdy_dims(ibdy)*nz*nhalo*nt,MPI_FLOAT, &
-                  1,ibdy+22,MPI_COMM_WORLD,ierr)
+                  1,ibdy+3,MPI_COMM_WORLD,ierr)
                   deallocate(tmp_arry)
                   deallocate(chem_databdy)
                enddo
@@ -496,7 +541,7 @@ program main
                if (rank.eq.3) then
                   call cpu_time(cpu_end)
                   cpu_dif=cpu_end-cpu_str
-                  print *, 'APM: After smoothing rank,imem,isp ',rank,imem,trim(ch_chem_spc(isp)),cpu_end,cpu_dif
+                  print *, 'APM: Rank itask - After smoothing rank,imem,isp ',rank,imem,trim(ch_chem_spc(isp)),cpu_end,cpu_dif
                endif
             endif
          enddo
@@ -507,29 +552,45 @@ program main
       deallocate(chem_data3d)
    endif
 !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! Rank: 1
+!   
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
 ! Save the correlation factors for next cycle
    if (rank.eq.1) then
+!
       call cpu_time(cpu_str)
-      print *, 'APM: Before final writes ',rank,imem,isp,cpu_str
-      unitb=40
+      print *, 'APM: Rank 1 - Before chem_fac_end write ',cpu_str
+!
+      unit=20
       filenm=trim(pert_path_new)//'/pert_chem_icbc'
-      open(unit=unitb,file=trim(filenm),form='unformatted',status='unknown')
-      rewind(unitb)
+      open(unit=unit,file=trim(filenm),form='unformatted',status='unknown')
+      rewind(unit)
       allocate(chem_fac_end(nx,ny,nz))
+      allocate(tmp_arry(nx*ny*nz))
       do imem=1,num_mems
          do isp=1,nchem_spcs
-            allocate(tmp_arry(nx*ny*nz))
             call mpi_recv(tmp_arry,nx*ny*nz,MPI_FLOAT, &
-            itask(imem,isp),21,MPI_COMM_WORLD,stat,ierr)
+            itask(imem,isp),1,MPI_COMM_WORLD,stat,ierr)
             call apm_unpack_3d(tmp_arry,chem_fac_end,nx,ny,nz)
-            write(unitb) chem_fac_end
-            deallocate(tmp_arry)
+            write(unit) chem_fac_end
          enddo
       enddo
       deallocate(chem_fac_end)
-      close(unitb)
+      deallocate(tmp_arry)
+      close(unit)
 !
-      call mpi_send(1.,1,MPI_FLOAT,0,3,MPI_COMM_WORLD,ierr)
+      call cpu_time(cpu_str)
+      print *, 'APM: Rank 1 - After chem_fac_end write ',cpu_str
+!
+      call mpi_send(1,1,MPI_FLOAT,0,1,MPI_COMM_WORLD,ierr)
+!
+! Save the perturbed fields
+!
+      call cpu_time(cpu_str)
+      print *, 'APM: Rank 1 Before IC/BC write ',cpu_str
 !
       allocate(chem_data3d(nx,ny,nz,1))
       do imem=1,num_mems
@@ -539,10 +600,10 @@ program main
          wrfchem_file_ic=trim(wrfinput_fld_new)//trim(cmem)
          wrfchem_file_bc=trim(wrfbdy_fld_new)//trim(cmem)
          do isp=1,nchem_spcs
-            allocate(tmp_arry(nx*ny*nz))            
 ! ICs
+            allocate(tmp_arry(nx*ny*nz))            
             call mpi_recv(tmp_arry,nx*ny*nz,MPI_FLOAT, &
-            itask(imem,isp),22,MPI_COMM_WORLD,stat,ierr)
+            itask(imem,isp),2,MPI_COMM_WORLD,stat,ierr)
             call apm_unpack_4d(tmp_arry,chem_data3d,nx,ny,nz,1)
             call put_WRFCHEM_icbc_data(wrfchem_file_ic,ch_chem_spc(isp), &
             chem_data3d,nx,ny,nz,1)
@@ -553,7 +614,7 @@ program main
                allocate(chem_databdy(bdy_dims(ibdy),nz,nhalo,nt))
                allocate(tmp_arry(bdy_dims(ibdy)*nz*nhalo*nt))
                call mpi_recv(tmp_arry,bdy_dims(ibdy)*nz*nhalo*nt,MPI_FLOAT, &
-               itask(imem,isp),ibdy+22,MPI_COMM_WORLD,stat,ierr)
+               itask(imem,isp),ibdy+3,MPI_COMM_WORLD,stat,ierr)
                call apm_unpack_4d(tmp_arry,chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
                call put_WRFCHEM_icbc_data(wrfchem_file_bc,ch_spcs, &
                chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
@@ -563,11 +624,18 @@ program main
          enddo
       enddo
       deallocate(chem_data3d)
-      close(unitb)
-      call cpu_time(cpu_end)
-      cpu_dif=cpu_end-cpu_str
-      print *, 'APM: After final writes ',rank,imem,isp,cpu_end,cpu_dif
+!
+      call cpu_time(cpu_str)
+      print *, 'APM: Rank 1 - After IC/BC write ',cpu_str
+!
    endif
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! Rank: all
+!   
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
    deallocate(ch_chem_spc)
    deallocate(A_chem)
    deallocate(lat,lon)
@@ -744,7 +812,7 @@ corr_lngth_hz,rank,sprd_chem)
 ! chem_fac_old calc takes one hour for each member/species for TRACER-I
    if(rank.eq.3) then
       call cpu_time(cpu_str)
-      print *, 'APM: Before chem_fac_old and chem_fac_new ', cpu_str
+      print *, 'APM: Rank itask - Before chem_fac_old and chem_fac_new ', cpu_str
    endif
 !
 ! New code APM TEST
@@ -794,7 +862,7 @@ corr_lngth_hz,rank,sprd_chem)
    if(rank.eq.3) then
       call cpu_time(cpu_end)
       cpu_dif=cpu_end-cpu_str
-      print *, 'APM: After chem_fac_old and chem_fac_new ', cpu_end, cpu_dif
+      print *, 'APM: Rank itask - After chem_fac_old and chem_fac_new ', cpu_end, cpu_dif
    endif
 !
 ! Old code            
@@ -821,7 +889,7 @@ corr_lngth_hz,rank,sprd_chem)
 ! chem_fac_new calc takes one hour for each member/species for TRACER-I
 !   if(rank.eq.3) then
 !      call cpu_time(cpu_str)
-!      print *, 'APM: Before chem_fac_new ', cpu_str
+!      print *, 'APM: Rank itask - Before chem_fac_new ', cpu_str
 !   endif
 !
 !         indx(:)=0
@@ -853,7 +921,7 @@ corr_lngth_hz,rank,sprd_chem)
    if(sw_corr_tm) then
       if(rank.eq.3) then
          call cpu_time(cpu_str)
-         print *, 'APM: Before chem_fac_old vert_corr calc ', cpu_str
+         print *, 'APM: Rank itask - Before chem_fac_old vert_corr calc ', cpu_str
       endif
       allocate(pert_chem_sum_old(nz))
       do i=1,nx
@@ -876,14 +944,14 @@ corr_lngth_hz,rank,sprd_chem)
       if(rank.eq.3) then
          call cpu_time(cpu_end)
          cpu_dif=cpu_end-cpu_str
-         print *, 'APM: After chem_fac_old vert_corr calc ', cpu_end, cpu_dif
+         print *, 'APM: Rank itask - After chem_fac_old vert_corr calc ', cpu_end, cpu_dif
       endif
    endif
 !
 ! takes 30 sec for chem_fac_new
    if(rank.eq.3) then
       call cpu_time(cpu_str)
-      print *, 'APM: Before chem_fac_new vert_corr calc ', cpu_str
+      print *, 'APM: Rank itask - Before chem_fac_new vert_corr calc ', cpu_str
    endif
    allocate(pert_chem_sum_new(nz))
    do i=1,nx
@@ -906,7 +974,7 @@ corr_lngth_hz,rank,sprd_chem)
    if(rank.eq.3) then
       call cpu_time(cpu_end)
       cpu_dif=cpu_end-cpu_str
-      print *, 'APM: After chem_fac_new vert_corr calc ', cpu_end, cpu_dif
+      print *, 'APM: Rank itask - After chem_fac_new vert_corr calc ', cpu_end, cpu_dif
    endif
 end subroutine perturb_fields
 

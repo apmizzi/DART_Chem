@@ -70,7 +70,7 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %
 % Process satellite data
    for ifile=1:nfile
-      file_in=char(file_list(ifile));
+      file_in=char(file_list(ifile))
       if(isempty(file_in))
          continue
       end
@@ -96,7 +96,6 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       title=h5readatt(file_in,field,'Title');
       defn=h5readatt(file_in,field,'UniqueFieldDefinition');
       units=h5readatt(file_in,field,'Units');
-      fprintf('READ OMI DATA \n')
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -137,7 +136,6 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       missing=h5readatt(file_in,field,'MissingValue');
       offset=h5readatt(file_in,field,'Offset');
       scalef=h5readatt(file_in,field,'ScaleFactor');
-      units=h5readatt(file_in,field,'Units');
       title=h5readatt(file_in,field,'Title');
       defn=h5readatt(file_in,field,'UniqueFieldDefinition');
       units=h5readatt(file_in,field,'Units');
@@ -219,11 +217,6 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
             end
          end
       end
-
-
-return
-
-      
 %      
 % o3_prior_lay(layer,npixel,ntime) (DU)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/O3Apriori';

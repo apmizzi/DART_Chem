@@ -19,266 +19,366 @@
 
 program main
 
-implicit none
+   implicit none
 
 ! version controlled file description for error handling, do not edit
-character(len=*), parameter :: source   = 'perturb_chem_emiss_CORR_RT_MA_MPI.f90'
-character(len=*), parameter :: revision = ''
-character(len=*), parameter :: revdate  = ''
-
-             integer                                  :: unit,unita,unitb,num_procs,rank,stat
-             integer                                  :: nx,ny,nz,nzp,nz_chem,nz_fire,nz_biog
-             integer                                  :: nchem_spcs,nfire_spcs,nbiog_spcs
-             integer                                  :: i,ii,j,jj,k,kk,l,ll,isp,num_mem,imem,ierr
-             integer                                  :: ngrid_corr
-             integer                                  :: ii_str,ii_end,ii_npt,ii_sft
-             integer                                  :: jj_str,jj_end,jj_npt,jj_sft
-             integer                                  :: year,month,day,hour
-             real                                     :: pi,grav,u_ran_1,u_ran_2,nnum_mem
-             real                                     :: sprd_chem,sprd_fire,sprd_biog
-             real                                     :: zdist,zfac,tmp,zmin,fac
-             real                                     :: grid_length,vcov
-             real                                     :: corr_lngth_hz
-             real                                     :: corr_lngth_vt
-             real                                     :: corr_lngth_tm
-             real                                     :: corr_tm_delt
-             real                                     :: wgt,wgt_summ,wgt_end
-             real,allocatable,dimension(:)            :: pert_chem_sum_old
-             real,allocatable,dimension(:)            :: pert_chem_sum_new
-             real                                     :: mean,std,get_dist
-             real                                     :: atime1,atime2,atime3,atime4,atime5,atime6
-
-             real,allocatable,dimension(:)            :: tmp_arry
-             real,allocatable,dimension(:,:)          :: xland,lat,lon
-             real,allocatable,dimension(:,:,:)        :: geo_ht,wgt_sum
-             real,allocatable,dimension(:,:,:,:)      :: A_chem,A_fire,A_biog
-             real,allocatable,dimension(:,:,:)        :: pert_chem_old
-             real,allocatable,dimension(:,:,:)        :: pert_chem_new
-             real,allocatable,dimension(:,:,:)        :: pert_chem_end,pert_fire_end,pert_biog_end
-             real,allocatable,dimension(:,:)          :: chem_data2d
-             real,allocatable,dimension(:,:,:)        :: chem_data3d
-             real,allocatable,dimension(:,:,:,:)      :: chem_data3d_sav,chem_data3d_sav1, chem_data3d_sav2
-             real,allocatable,dimension(:,:,:)        :: chem_data3d_sum
-             real,allocatable,dimension(:,:,:)        :: chem_data3d_mean_prior
-             real,allocatable,dimension(:,:,:)        :: chem_data3d_mean_post
-             real,allocatable,dimension(:,:,:)        :: chem_data3d_sprd_prior
-             real,allocatable,dimension(:,:,:)        :: chem_data3d_sprd_post
-             real,allocatable,dimension(:,:,:)        :: chem_data3d_sprd_post_adj
-             real,allocatable,dimension(:,:,:)        :: chem_data3d_frac
-             real,allocatable,dimension(:,:,:)        :: chem_fac_mem_old, chem_fac_mem_new
-             real,allocatable,dimension(:,:,:,:)      :: chem_fac_old,fire_fac_old,biog_fac_old
-             real,allocatable,dimension(:,:,:,:)      :: chem_fac_new,fire_fac_new,biog_fac_new
-             real,allocatable,dimension(:,:,:,:)      :: chem_fac_end,fire_fac_end,biog_fac_end
-             real,allocatable,dimension(:,:,:,:)      :: chem_fac,fire_fac,biog_fac,dist
-             real,allocatable,dimension(:)            :: mems,pers,pert_chem_sum
-             character(len=150)                       :: pert_path_pr,pert_path_po
-             character(len=150)                       :: wrfchemi,wrffirechemi,wrfbiogchemi
-             character(len=20)                        :: cmem
-
-
-             character(len=150)                       :: wrfchem_file,wrffire_file,wrfbiog_file
-             character(len=150),allocatable,dimension(:) :: ch_chem_spc 
-             character(len=150),allocatable,dimension(:) :: ch_fire_spc 
-             character(len=150),allocatable,dimension(:) :: ch_biog_spc 
-             logical                                  :: sw_corr_tm,sw_seed,sw_chem,sw_fire,sw_biog
-             namelist /post_emiss_inflation_nml/nx,ny,nz,nz_chem,nchem_spcs, &
-             pert_path_pr,pert_path_po,nnum_mem,wrfchemi,fac
-             namelist /post_emiss_inflation_spec_nml/ch_chem_spc
+   character(len=*), parameter :: source   = 'perturb_chem_emiss_CORR_RT_MA_MPI.f90'
+   character(len=*), parameter :: revision = ''
+   character(len=*), parameter :: revdate  = ''
+!
+   integer                                  :: unit,unita,unitb,num_procs,rank,stat
+   integer                                  :: nx,ny,nz,nzp,nz_chem,nz_fire,nz_biog
+   integer                                  :: nchem_spcs,nfire_spcs,nbiog_spcs
+   integer                                  :: i,ii,j,jj,k,kk,l,ll,isp,num_mem,imem,ierr
+   integer                                  :: ngrid_corr
+   integer                                  :: ii_str,ii_end,ii_npt,ii_sft
+   integer                                  :: jj_str,jj_end,jj_npt,jj_sft
+   integer                                  :: year,month,day,hour
+   real                                     :: pi,grav,u_ran_1,u_ran_2,nnum_mem
+   real                                     :: sprd_chem,sprd_fire,sprd_biog
+   real                                     :: zdist,zfac,tmp,zmin,fac
+   real                                     :: grid_length,vcov
+   real                                     :: corr_lngth_hz
+   real                                     :: corr_lngth_vt
+   real                                     :: corr_lngth_tm
+   real                                     :: corr_tm_delt
+   real                                     :: wgt,wgt_summ,wgt_end
+   real,allocatable,dimension(:)            :: pert_chem_sum_old
+   real,allocatable,dimension(:)            :: pert_chem_sum_new
+   real                                     :: mean,std,get_dist
+   real                                     :: atime1,atime2,atime3,atime4,atime5,atime6
+!
+   real,allocatable,dimension(:)            :: tmp_arry
+   real,allocatable,dimension(:,:)          :: xland,lat,lon
+   real,allocatable,dimension(:,:,:)        :: geo_ht,wgt_sum
+   real,allocatable,dimension(:,:,:,:)      :: A_chem,A_fire,A_biog
+   real,allocatable,dimension(:,:,:)        :: pert_chem_old
+   real,allocatable,dimension(:,:,:)        :: pert_chem_new
+   real,allocatable,dimension(:,:,:)        :: pert_chem_end,pert_fire_end,pert_biog_end
+   real,allocatable,dimension(:,:)          :: chem_data2d
+   real,allocatable,dimension(:,:,:)        :: chem_data2d_sav,chem_data2d_sav1, chem_data2d_sav2
+   real,allocatable,dimension(:,:)          :: chem_data2d_mean_prior
+   real,allocatable,dimension(:,:)          :: chem_data2d_mean_post
+   real,allocatable,dimension(:,:)          :: chem_data2d_sprd_prior
+   real,allocatable,dimension(:,:)          :: chem_data2d_sprd_post
+   real,allocatable,dimension(:,:)          :: chem_data2d_sprd_post_adj
+   real,allocatable,dimension(:,:)          :: chem_data2d_frac
+   real,allocatable,dimension(:,:,:)        :: chem_data3d
+   real,allocatable,dimension(:,:,:,:)      :: chem_data3d_sav,chem_data3d_sav1, chem_data3d_sav2
+   real,allocatable,dimension(:,:,:)        :: chem_data3d_sum
+   real,allocatable,dimension(:,:,:)        :: chem_data3d_mean_prior
+   real,allocatable,dimension(:,:,:)        :: chem_data3d_mean_post
+   real,allocatable,dimension(:,:,:)        :: chem_data3d_sprd_prior
+   real,allocatable,dimension(:,:,:)        :: chem_data3d_sprd_post
+   real,allocatable,dimension(:,:,:)        :: chem_data3d_sprd_post_adj
+   real,allocatable,dimension(:,:,:)        :: chem_data3d_frac
+   real,allocatable,dimension(:,:,:)        :: chem_fac_mem_old, chem_fac_mem_new
+   real,allocatable,dimension(:,:,:,:)      :: chem_fac_old,fire_fac_old,biog_fac_old
+   real,allocatable,dimension(:,:,:,:)      :: chem_fac_new,fire_fac_new,biog_fac_new
+   real,allocatable,dimension(:,:,:,:)      :: chem_fac_end,fire_fac_end,biog_fac_end
+   real,allocatable,dimension(:,:,:,:)      :: chem_fac,fire_fac,biog_fac,dist
+   real,allocatable,dimension(:)            :: mems,pers,pert_chem_sum
+   character(len=150)                       :: pert_path_pr,pert_path_po
+   character(len=150)                       :: wrfchemi,wrffirechemi,wrfbiogchemi
+   character(len=20)                        :: cmem
+!
+   character(len=150)                       :: wrfchem_file,wrffire_file,wrfbiog_file
+   character(len=150),allocatable,dimension(:) :: ch_chem_spc 
+   character(len=150),allocatable,dimension(:) :: ch_fire_spc 
+   character(len=150),allocatable,dimension(:) :: ch_biog_spc 
+   logical                                  :: sw_corr_tm,sw_seed,sw_chem,sw_fire,sw_biog
+   namelist /post_emiss_inflation_nml/nx,ny,nz,nz_chem,nchem_spcs,nfire_spcs, &
+   nnum_mem,wrfchemi,wrffirechemi,fac
+   namelist /post_emiss_inflation_spec_nml/ch_chem_spc,ch_fire_spc
 !
 ! Assign constants
-             pi=4.*atan(1.)
-             grav=9.8
-             nz_fire=1
-             nz_biog=1
-             zfac=2.
-             zmin=1.e-10
+   pi=4.*atan(1.)
+   grav=9.8
+   nz_fire=1
+   nz_biog=1
+   zfac=2.
+   zmin=1.e-10
 !
 ! Read control namelist
-             unit=20
-             open(unit=unit,file='post_emiss_inflation_nml.nl',form='formatted', &
-             status='old',action='read')
-             read(unit,post_emiss_inflation_nml)
-             close(unit)
-                print *, 'nx                 ',nx
-                print *, 'ny                 ',ny
-                print *, 'nz                 ',nz
-                print *, 'nz_chem            ',nz_chem
-                print *, 'nchem_spcs         ',nchem_spcs
-                print *, 'pert_path_pr       ',trim(pert_path_pr)
-                print *, 'pert_path_po       ',trim(pert_path_po)
-                print *, 'num_mem            ',nnum_mem
-                print *, 'wrfchemi           ',trim(wrfchemi)
-                print *, 'fac                ',fac
-             num_mem=nint(nnum_mem)
+   unit=20
+   open(unit=unit,file='post_emiss_inflation_nml.nl',form='formatted', &
+   status='old',action='read')
+   read(unit,post_emiss_inflation_nml)
+   close(unit)
+   print *, 'nx                 ',nx
+   print *, 'ny                 ',ny
+   print *, 'nz                 ',nz
+   print *, 'nz_chem            ',nz_chem
+   print *, 'nchem_spcs         ',nchem_spcs
+   print *, 'nfire_spcs         ',nfire_spcs
+   print *, 'num_mem            ',nnum_mem
+   print *, 'wrfchemi           ',trim(wrfchemi)
+   print *, 'wrffirechemi       ',trim(wrffirechemi)
+   print *, 'fac                ',fac
+   num_mem=nint(nnum_mem)
 !
 ! Allocate arrays
-             allocate(ch_chem_spc(nchem_spcs))
+   allocate(ch_chem_spc(nchem_spcs))
+   allocate(ch_fire_spc(nfire_spcs))
 !
 ! Read the species namelist
-             unit=20
-             open(unit=unit,file='post_emiss_inflation_spec_nml.nl',form='formatted', &
-             status='old',action='read')
-             read(unit,post_emiss_inflation_spec_nml)
-             close(unit)
-
-
-! Posterioir emissions inflation
-
-                   allocate(chem_data3d(nx,ny,nz_chem))
-                   do isp=1,nchem_spcs
-                      print *, 'Post inflation for the chemi EMISSs ',trim(ch_chem_spc(isp))
-                      allocate(chem_data3d_sav(nx,ny,nz_chem,num_mem))
-                      allocate(chem_data3d_sav1(nx,ny,nz_chem,num_mem))
-                      allocate(chem_data3d_sav2(nx,ny,nz_chem,num_mem))
-
-! Read in Prior ensemble member and compute spread
-                       
-                      do imem=1,num_mem
-                         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-                         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-                         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-                         wrfchem_file=trim(wrfchemi)//trim(cmem)//trim('_old')
-                         call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d,nx,ny,nz_chem)
-                         do i=1,nx
-                            do j=1,ny
-                               do k=1,nz_chem
-                                      chem_data3d_sav(i,j,k,imem)=chem_data3d(i,j,k)
-                               enddo
-                            enddo
-                         enddo
-!                         call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d,nx,ny,nz_chem)                                  
-                      enddo                       ! members loop
-
-
-                      allocate(mems(num_mem),pers(num_mem))
-                      allocate(chem_data3d_mean_prior(nx,ny,nz_chem))
-                      allocate(chem_data3d_sprd_prior(nx,ny,nz_chem))
-                      allocate(chem_data3d_mean_post(nx,ny,nz_chem))
-                      allocate(chem_data3d_sprd_post(nx,ny,nz_chem))
-                      allocate(chem_data3d_sprd_post_adj(nx,ny,nz_chem))
-!                      allocate(chem_data3d_frac(nx,ny,nz_chem))
-
-                      do i=1,nx
-                         do j=1,ny
-                            do k=1,nz_chem
-                               mems(:)=chem_data3d_sav(i,j,k,1:num_mem)
-                               mean=sum(mems)/real(num_mem)
-                               pers(:)=(mems(:)-mean)*(mems(:)-mean)
-                               std=sqrt(sum(pers)/real(num_mem-1))
-                               chem_data3d_mean_prior(i,j,k)=mean
-                               chem_data3d_sprd_prior(i,j,k)=std
-!                               chem_data3d_frac(i,j,k)=std/mean
-                            enddo
-                         enddo
-                      enddo
-
+   unit=20
+   open(unit=unit,file='post_emiss_inflation_spec_nml.nl',form='formatted', &
+   status='old',action='read')
+   read(unit,post_emiss_inflation_spec_nml)
+   close(unit)
+!
+! Posterior emissions inflation
+! Anthropogenic emissions
+  allocate(chem_data3d(nx,ny,nz_chem))
+  do isp=1,nchem_spcs
+     print *, 'Post inflation for the chemi EMISSs ',trim(ch_chem_spc(isp))
+     allocate(chem_data3d_sav(nx,ny,nz_chem,num_mem))
+     allocate(chem_data3d_sav1(nx,ny,nz_chem,num_mem))
+     allocate(chem_data3d_sav2(nx,ny,nz_chem,num_mem))
+     do imem=1,num_mem
+        if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+        if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+        if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+        wrfchem_file=trim(wrfchemi)//trim(cmem)//trim('_old')
+        call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d,nx,ny,nz_chem)
+        do i=1,nx
+           do j=1,ny
+              do k=1,nz_chem
+                 chem_data3d_sav(i,j,k,imem)=chem_data3d(i,j,k)
+              enddo
+           enddo
+        enddo
+     enddo
+!
+     allocate(mems(num_mem),pers(num_mem))
+     allocate(chem_data3d_mean_prior(nx,ny,nz_chem))
+     allocate(chem_data3d_sprd_prior(nx,ny,nz_chem))
+     allocate(chem_data3d_mean_post(nx,ny,nz_chem))
+     allocate(chem_data3d_sprd_post(nx,ny,nz_chem))
+     allocate(chem_data3d_sprd_post_adj(nx,ny,nz_chem))
+     do i=1,nx
+        do j=1,ny
+           do k=1,nz_chem
+              mems(:)=chem_data3d_sav(i,j,k,1:num_mem)
+              mean=sum(mems)/real(num_mem)
+              pers(:)=(mems(:)-mean)*(mems(:)-mean)
+              std=sqrt(sum(pers)/real(num_mem-1))
+              chem_data3d_mean_prior(i,j,k)=mean
+              chem_data3d_sprd_prior(i,j,k)=std
+           enddo
+        enddo
+     enddo
 
 ! Read in posterior ensemble member and adjust spread
-
-
-                      do imem=1,num_mem
-                         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-                         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-                         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-                         wrfchem_file=trim(wrfchemi)//trim(cmem)
-                         call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d,nx,ny,nz_chem)
-                         do i=1,nx
-                            do j=1,ny
-                               do k=1,nz_chem
-                                      chem_data3d_sav1(i,j,k,imem)=chem_data3d(i,j,k)
-                               enddo
-                            enddo
-                         enddo
-                      enddo                       ! members loop
-
-                      do i=1,nx
-                         do j=1,ny
-                            do k=1,nz_chem
-                               mems(:)=chem_data3d_sav1(i,j,k,1:num_mem)
-                               mean=sum(mems)/real(num_mem)
-                               pers(:)=(mems(:)-mean)*(mems(:)-mean)
-                               std=sqrt(sum(pers)/real(num_mem-1))
-                               chem_data3d_mean_post(i,j,k)=mean
-                               chem_data3d_sprd_post(i,j,k)=std
-                            enddo
-                         enddo
-                      enddo
-
-! Posterior inflation to 50% of prior spread
-
-                      do i=1,nx
-                         do j=1,ny
-                            do k=1,nz_chem
-                               mems(:)=chem_data3d_sav1(i,j,k,1:num_mem)
-                               mean=sum(mems)/real(num_mem)
-                               chem_data3d_sav2(i,j,k,1:num_mem) = mems(:)
-!                               if (chem_data3d_sprd_prior(i,j,k) .gt. 0. .and. chem_data3d_sprd_post(i,j,k) .gt. 0. ) then
-
-                               if (chem_data3d_sprd_prior(i,j,k) .gt. 0. .and. chem_data3d_sprd_post(i,j,k) .gt. 0. &
-                                  .and. chem_data3d_sprd_post(i,j,k) .lt. fac*chem_data3d_sprd_prior(i,j,k)) then
-                                 chem_data3d_sav2(i,j,k,1:num_mem) = (mems(:) - mean)* &
-                                 (fac*chem_data3d_sprd_prior(i,j,k))/chem_data3d_sprd_post(i,j,k) + mean
-                               endif
-
-                                 mems(:)=chem_data3d_sav2(i,j,k,1:num_mem)
-                                 mean=sum(mems)/real(num_mem)
-                                 pers(:)=(mems(:)-mean)*(mems(:)-mean)                             
-                                 std=sqrt(sum(pers)/real(num_mem-1)) 
-                                 chem_data3d_sprd_post_adj(i,j,k)=std                       
-
-!                               endif
-                            enddo
-                         enddo
-                      enddo
-          
-                      do imem=1,num_mem                      
-                         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-                         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-                         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-                         wrfchem_file=trim(wrfchemi)//trim(cmem)
-
-                         do i=1,nx
-                            do j=1,ny
-                               do k=1,nz_chem
-! CHH: remove negative value
-                                  if (chem_data3d_sav2(i,j,k,imem) .lt. 0) then
-                                         chem_data3d_sav2(i,j,k,imem)=0
-                                  endif
-                               enddo
-                            enddo
-                         enddo
-                         call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_sav2(:,:,:,imem),nx,ny,nz_chem)
-                      enddo
+     do imem=1,num_mem
+        if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+        if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+        if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+        wrfchem_file=trim(wrfchemi)//trim(cmem)
+        call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d,nx,ny,nz_chem)
+        do i=1,nx
+           do j=1,ny
+              do k=1,nz_chem
+                 chem_data3d_sav1(i,j,k,imem)=chem_data3d(i,j,k)
+              enddo
+           enddo
+        enddo
+     enddo
 !
-!                      print *, 'save mean and variance ',trim(ch_chem_spc(isp))
-                      deallocate(mems,pers)                   
-!                      wrfchem_file=trim(wrfchemi)//'_mean'
-!                      print *, 'put the mean ',trim(wrfchem_file)
-!                      call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_mean,nx,ny,nz_chem)
-                      wrfchem_file=trim(wrfchemi)//'_sprd_post'
-                      print *, 'put the spread ',trim(wrfchem_file)
-                      call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_sprd_post,nx,ny,nz_chem)
-                      wrfchem_file=trim(wrfchemi)//'_sprd_post_adj'
-                      print *, 'put the spread ',trim(wrfchem_file)
-                      call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_sprd_post_adj,nx,ny,nz_chem)
-
-!                      wrfchem_file=trim(wrfchemi)//'_frac'
-!                      print *, 'put the fraction ',trim(wrfchem_file)
-!                      call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_frac,nx,ny,nz_chem)
-!                      print *, 'finished ',trim(wrfchem_file)
-                      deallocate(chem_data3d_sav)
-                      deallocate(chem_data3d_sav1)
-                      deallocate(chem_data3d_sav2)
-                      deallocate(chem_data3d_mean_prior)
-                      deallocate(chem_data3d_sprd_prior)
-                      deallocate(chem_data3d_mean_post)
-                      deallocate(chem_data3d_sprd_post)                     
-                      deallocate(chem_data3d_sprd_post_adj) 
-                    
-                   enddo                              ! species loop
-                   deallocate(chem_data3d)
-             stop
-          end program main
+     do i=1,nx
+        do j=1,ny
+           do k=1,nz_chem
+              mems(:)=chem_data3d_sav1(i,j,k,1:num_mem)
+              mean=sum(mems)/real(num_mem)
+              pers(:)=(mems(:)-mean)*(mems(:)-mean)
+              std=sqrt(sum(pers)/real(num_mem-1))
+              chem_data3d_mean_post(i,j,k)=mean
+              chem_data3d_sprd_post(i,j,k)=std
+           enddo
+        enddo
+     enddo
+!
+! Posterior inflation to 50% of prior spread
+     do i=1,nx
+        do j=1,ny
+           do k=1,nz_chem
+              mems(:)=chem_data3d_sav1(i,j,k,1:num_mem)
+              mean=sum(mems)/real(num_mem)
+              chem_data3d_sav2(i,j,k,1:num_mem) = mems(:)
+              if (chem_data3d_sprd_prior(i,j,k) .gt. 0. .and. chem_data3d_sprd_post(i,j,k) .gt. 0. &
+              .and. chem_data3d_sprd_post(i,j,k) .lt. fac*chem_data3d_sprd_prior(i,j,k)) then
+                 chem_data3d_sav2(i,j,k,1:num_mem) = (mems(:) - mean)* &
+                 (fac*chem_data3d_sprd_prior(i,j,k))/chem_data3d_sprd_post(i,j,k) + mean
+              endif
+              mems(:)=chem_data3d_sav2(i,j,k,1:num_mem)
+              mean=sum(mems)/real(num_mem)
+              pers(:)=(mems(:)-mean)*(mems(:)-mean)                             
+              std=sqrt(sum(pers)/real(num_mem-1)) 
+              chem_data3d_sprd_post_adj(i,j,k)=std                       
+           enddo
+        enddo
+     enddo
+!          
+     do imem=1,num_mem                      
+        if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+        if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+        if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+        wrfchem_file=trim(wrfchemi)//trim(cmem)
+!
+! remove negative value
+        do i=1,nx
+           do j=1,ny
+              do k=1,nz_chem
+                 if (chem_data3d_sav2(i,j,k,imem) .lt. 0) then
+                    chem_data3d_sav2(i,j,k,imem)=0
+                 endif
+              enddo
+           enddo
+        enddo
+        call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_sav2(:,:,:,imem),nx,ny,nz_chem)
+     enddo
+     deallocate(mems,pers)                   
+     wrfchem_file=trim(wrfchemi)//'_sprd_post'
+     print *, 'put the spread ',trim(wrfchem_file)
+     call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_sprd_post,nx,ny,nz_chem)
+     wrfchem_file=trim(wrfchemi)//'_sprd_post_adj'
+     print *, 'put the spread ',trim(wrfchem_file)
+     call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d_sprd_post_adj,nx,ny,nz_chem)
+!
+     deallocate(chem_data3d_sav)
+     deallocate(chem_data3d_sav1)
+     deallocate(chem_data3d_sav2)
+     deallocate(chem_data3d_mean_prior)
+     deallocate(chem_data3d_sprd_prior)
+     deallocate(chem_data3d_mean_post)
+     deallocate(chem_data3d_sprd_post)                     
+     deallocate(chem_data3d_sprd_post_adj) 
+  enddo
+  deallocate(chem_data3d)
+!
+! Biomass burning emissions
+  allocate(chem_data3d(nx,ny,1))
+  do isp=1,nfire_spcs
+     print *, 'Post inflation for the firechemi EMISSs ',trim(ch_fire_spc(isp))
+     allocate(chem_data2d_sav(nx,ny,num_mem))
+     allocate(chem_data2d_sav1(nx,ny,num_mem))
+     allocate(chem_data2d_sav2(nx,ny,num_mem))
+     allocate(chem_data3d_sav2(nx,ny,nz_chem,num_mem))
+     do imem=1,num_mem
+        if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+        if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+        if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+        wrfchem_file=trim(wrffirechemi)//trim(cmem)//trim('_old')
+        call get_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),chem_data3d,nx,ny,1)
+        do i=1,nx
+           do j=1,ny
+              chem_data2d_sav(i,j,imem)=chem_data3d(i,j,1)
+           enddo
+        enddo
+     enddo
+!
+     allocate(mems(num_mem),pers(num_mem))
+     allocate(chem_data2d_mean_prior(nx,ny))
+     allocate(chem_data2d_sprd_prior(nx,ny))
+     allocate(chem_data2d_mean_post(nx,ny))
+     allocate(chem_data2d_sprd_post(nx,ny))
+     allocate(chem_data2d_sprd_post_adj(nx,ny))
+     do i=1,nx
+        do j=1,ny
+           mems(:)=chem_data2d_sav(i,j,1:num_mem)
+           mean=sum(mems)/real(num_mem)
+           pers(:)=(mems(:)-mean)*(mems(:)-mean)
+           std=sqrt(sum(pers)/real(num_mem-1))
+           chem_data2d_mean_prior(i,j)=mean
+           chem_data2d_sprd_prior(i,j)=std
+        enddo
+     enddo
+!
+! Read in posterior ensemble member and adjust spread
+     do imem=1,num_mem
+        if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+        if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+        if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+        wrfchem_file=trim(wrffirechemi)//trim(cmem)
+        call get_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),chem_data3d,nx,ny,1)
+        do i=1,nx
+           do j=1,ny
+              chem_data2d_sav1(i,j,imem)=chem_data3d(i,j,1)
+           enddo
+        enddo
+     enddo
+!
+     do i=1,nx
+        do j=1,ny
+           mems(:)=chem_data2d_sav1(i,j,1:num_mem)
+           mean=sum(mems)/real(num_mem)
+           pers(:)=(mems(:)-mean)*(mems(:)-mean)
+           std=sqrt(sum(pers)/real(num_mem-1))
+           chem_data2d_mean_post(i,j)=mean
+           chem_data2d_sprd_post(i,j)=std
+        enddo
+     enddo
+!
+! Posterior inflation to 50% of prior spread
+     do i=1,nx
+        do j=1,ny
+           mems(:)=chem_data2d_sav1(i,j,1:num_mem)
+           mean=sum(mems)/real(num_mem)
+           chem_data2d_sav2(i,j,1:num_mem) = mems(:)
+!
+           if (chem_data2d_sprd_prior(i,j) .gt. 0. .and. chem_data2d_sprd_post(i,j) .gt. 0. &
+           .and. chem_data2d_sprd_post(i,j) .lt. fac*chem_data2d_sprd_prior(i,j)) then
+              chem_data2d_sav2(i,j,1:num_mem) = (mems(:) - mean)* &
+              (fac*chem_data2d_sprd_prior(i,j))/chem_data2d_sprd_post(i,j) + mean
+           endif
+           mems(:)=chem_data2d_sav2(i,j,1:num_mem)
+           mean=sum(mems)/real(num_mem)
+           pers(:)=(mems(:)-mean)*(mems(:)-mean)                             
+           std=sqrt(sum(pers)/real(num_mem-1)) 
+           chem_data2d_sprd_post_adj(i,j)=std                       
+        enddo
+     enddo
+!          
+     do imem=1,num_mem                      
+        if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+        if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+        if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+        wrfchem_file=trim(wrffirechemi)//trim(cmem)
+!
+! remove negative value
+        do i=1,nx
+           do j=1,ny
+              if (chem_data2d_sav2(i,j,imem) .lt. 0) then
+                 chem_data2d_sav2(i,j,imem)=0
+              endif
+           enddo
+        enddo
+        chem_data3d_sav2(:,:,1,imem)=chem_data2d_sav2(:,:,imem)
+        call put_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),chem_data3d_sav2(:,:,1,imem),nx,ny,1)
+     enddo
+     deallocate(mems,pers)                   
+     wrfchem_file=trim(wrffirechemi)//'_sprd_post'
+     print *, 'put the spread ',trim(wrfchem_file)
+     chem_data3d(:,:,1)=chem_data2d_sprd_post(:,:)
+     call put_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),chem_data3d,nx,ny,1)
+     wrfchem_file=trim(wrffirechemi)//'_sprd_post_adj'
+     print *, 'put the spread ',trim(wrfchem_file)
+     chem_data3d(:,:,1)=chem_data2d_sprd_post_adj(:,:)
+     call put_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),chem_data3d,nx,ny,1)
+!
+     deallocate(chem_data2d_sav)
+     deallocate(chem_data2d_sav1)
+     deallocate(chem_data2d_sav2)
+     deallocate(chem_data3d_sav2)
+     deallocate(chem_data2d_mean_prior)
+     deallocate(chem_data2d_sprd_prior)
+     deallocate(chem_data2d_mean_post)
+     deallocate(chem_data2d_sprd_post)                     
+     deallocate(chem_data2d_sprd_post_adj) 
+  enddo
+  deallocate(chem_data3d)
+end program
 !
           function get_dist(lat1,lat2,lon1,lon2)
 ! returns distance in km

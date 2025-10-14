@@ -1,22 +1,6 @@
 %
 path='/nobackupp28/amizzi/OUTPUT_DATA/DART_OBS_DIAG';
-%
-%exp         = '/FRAPPE_CONTROL/obs_diag_output_profile.nc';
-%exp         = '/FRAPPE_ALLCHEM/obs_diag_output_profile.nc';
-%exp         = '/FRAPPE_EMISADJ/obs_diag_output_profile.nc';
-%
-%exp         = '/FIREX_CONTROL/obs_diag_output_profile.nc';
-%exp         = '/FIREX_ALLCHEM/obs_diag_output_profile.nc';
-%exp         = '/FIREX_EMISADJ/obs_diag_output_profile.nc';
-%
-%exp         = '/FRAPPE_CONTROL_CO_RETR/obs_diag_output_profile.nc';
-%exp         = '/FRAPPE_ALLCHEM_CO_RETR/obs_diag_output_profile.nc';
-%exp         = '/FRAPPE_ALLCHEM_CO_CPSR/obs_diag_output_profile.nc';
-%exp         = '/FRAPPE_EMISADJ_CO_RETR/obs_diag_output_profile.nc';
-%exp         = '/FRAPPE_EMISADJ_CO_CPSR/obs_diag_output_profile.nc';
-%
-exp         = '/TRACER_I_ALLCHEM/obs_diag_output_profile.nc';
-exp         = '/FRAPPE_ALLCHEM_CO_RETR/obs_diag_output_profile.nc';
+exp         = '/TRACER-I/obs_diag_output_profile.nc';
 %
 fname=strcat(path,exp)
 copystring    = 'totalspread';
@@ -37,8 +21,8 @@ copystring    = 'totalspread';
 %obsname      = 'MODIS_AOD_TOTAL_COL';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
-%obsname      = 'OMI_O3_PROFILE';
-%plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
+obsname      = 'OMI_O3_PROFILE';
+plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
 %obsname      = 'OMI_O3_CPSR';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
@@ -52,6 +36,9 @@ copystring    = 'totalspread';
 %obsname      = 'OMI_SO2_PBL_COL';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
+%obsname      = 'SCIAM_NO2_TROP_COL';
+%plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
+%
 %obsname      = 'OMI_HCHO_TOTAL_COL';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
@@ -61,8 +48,8 @@ copystring    = 'totalspread';
 %obsname      = 'TES_CO_CPSR';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
-%obsname      = 'TES_O3_PROFILE';
-%plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
+obsname      = 'TES_O3_PROFILE';
+plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
 %obsname      = 'TES_O3_CPSR';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
@@ -70,14 +57,14 @@ copystring    = 'totalspread';
 %obsname      = 'GOME2A_NO2_TROP_COL';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
-%obsname      = 'MLS_O3_PROFILE';
-%plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
+obsname      = 'MLS_O3_PROFILE';
+plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
 %obsname      = 'MLS_O3_CPSR';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
-%obsname      = 'MLS_HNO3_PROFILE';
-%plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
+obsname      = 'MLS_HNO3_PROFILE';
+plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
 %obsname      = 'MLS_HNO3_CPSR';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
@@ -109,14 +96,14 @@ copystring    = 'totalspread';
 %obsname      = 'AIRNOW_O3';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
-obsname      = 'AIRNOW_NO2';
-plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
+%obsname      = 'AIRNOW_NO2';
+%plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
 %obsname      = 'AIRNOW_SO2';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
-obsname      = 'AIRNOW_PM10';
-plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
+%obsname      = 'AIRNOW_PM10';
+%plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);
 %
 %obsname      = 'AIRNOW_PM25';
 %plot = plot_rmse_xxx_evolution(fname,copystring,'obsname',obsname);

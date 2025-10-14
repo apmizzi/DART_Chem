@@ -61,7 +61,7 @@ use         apm_upper_bdy_mod, only :get_upper_bdy_fld, &
 
 use             types_mod, only : r8, MISSING_R8
 
-use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, &
+use         utilities_mod, only : register_module, error_handler, E_ERR, E_MSG, E_ALLMSG,&
                                   nmlfileunit, check_namelist_read, &
                                   find_namelist_in_file, do_nml_file, do_nml_term, &
                                   ascii_file_format, &
@@ -299,8 +299,9 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
 
    integer :: layer_sciam,level_sciam
    integer :: layer_mdl,level_mdl
-   integer :: k,imem,kend_sciam
+   integer :: k,kk,imem,kend_sciam
    integer :: interp_new
+   integer :: icnt=0
    integer, dimension(ens_size) :: zstatus
 
    real(r8) :: eps, AvogN, Rd, Ru, Cp, grav, msq2cmsq
@@ -320,11 +321,11 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
 
    if ( .not. module_initialized ) call initialize_module
 
-   eps      =  0.61_r8
+   eps      = 0.61_r8
    Rd       = 287.05_r8     ! J/kg
    Ru       = 8.316_r8      ! J/kg
    Cp       = 1006.0        ! J/kg/K
-   grav     =   9.8_r8
+   grav     = 9.8_r8
    no2_min  = 1.e-6_r8
    msq2cmsq = 1.e4_r8
    AvogN    = 6.02214e23_r8
@@ -347,10 +348,10 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
    allocate(prs_sciam(level_sciam))
    allocate(prs_sciam_mem(level_sciam))
    prs_sciam(1:level_sciam)=pressure(key,1:level_sciam)
+
 ! Get location infomation
 
    mloc = get_location(location)
-
    if (mloc(2) >  90.0_r8) then
       mloc(2) =  90.0_r8
    elseif (mloc(2) < -90.0_r8) then
@@ -396,9 +397,7 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
             exit
          endif
       enddo
-      if(interp_new.eq.0) then
-         exit
-      endif    
+      if(interp_new.eq.0) exit
    enddo
 
 !   write(string1, *)'APM: no2 lower bound ',no2_mdl_1
@@ -415,7 +414,7 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
    qmr_mdl_n(:)=missing_r8
    prs_mdl_n(:)=missing_r8
 
-   do k=layer_mdl,1,-1
+   do k=layer_mdl-1,1,-1
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
@@ -435,9 +434,7 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
             exit
          endif
       enddo
-      if(interp_new.eq.0) then
-         exit
-      endif    
+      if(interp_new.eq.0) exit
    enddo
 !   
 !   write(string1, *)'APM: no2 upper bound ',no2_mdl_n
@@ -498,14 +495,18 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
 ! SCIAMACHY vertical is from bottom to top
 !
 ! APM: No old code
+!
 ! Check full profile for negative values
    do imem=1,ens_size
-      do k=1,level_sciam   
-         if(no2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
-         qmr_val(imem,k).lt.0.) then
+      do k=1,level_sciam
+         if((no2_val(imem,k).lt.0. .and. no2_val(imem,k).ne.missing_r8) .or. &
+         (tmp_val(imem,k).lt.0. .and. tmp_val(imem,k).ne.missing_r8) .or. &
+         (qmr_val(imem,k).lt.0. .and. qmr_val(imem,k).ne.missing_r8)) then
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
-            call error_handler(E_MSG, routine, string1, source)
+            call error_handler(E_ALLMSG, routine, string1, source)
+         else if(no2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         qmr_val(imem,k).lt.0.) then
             zstatus(:)=20
             expct_val(:)=missing_r8
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
@@ -525,26 +526,7 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
    expct_val(:)=0.0
    allocate(thick(layer_sciam))
 !
-! Find SCIAMACHY index for first layer above top of regional model (not needed)
-! SCIAMACHY vertical is from bottom to top
    do imem=1,ens_size
-!      kstart=-1
-!      write(string1, *) &
-!      'APM: imem,prs_sciam,prs_mdl ',imem,prs_sciam(level_sciam),prs_sciam(level_sciam-1), &
-!      prs_mdl_n(imem)
-!      call error_handler(E_ALLMSG, routine, string1, source)
-!      if ((prs_sciam(level_omi)+prs_sciam(level_omi-1))/2..lt.prs_mdl_n(imem)) then
-!         do k=level_sciam,1,-1
-!            if ((prs_sciam(k)+prs_sciam(k-1))/2.ge.prs_mdl_n(imem)) then
-!               kstart=k
-!               write(string1, *) &
-!               'APM: imem,kstart,prs_sciam,prs_mdl ',imem,kstart,prs_sciam(k),prs_sciam(k-1), &
-!               prs_mdl_n(imem)
-!               call error_handler(E_ALLMSG, routine, string1, source)
-!               exit
-!            endif
-!         enddo
-!      endif
 !
 ! Calculate the thicknesses (grid is bottom to top)
       thick(:)=0.
@@ -560,7 +542,7 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
       enddo
 !
 ! Process the vertical summation (SCIAMACHY NO2 units are molec/cm^2)
-      do k=1,kend_sciam+1
+      do k=1,kend_sciam
          lnpr_mid=(log(prs_sciam(k+1))+log(prs_sciam(k)))/2.
          up_wt=log(prs_sciam(k))-lnpr_mid
          dw_wt=lnpr_mid-log(prs_sciam(k+1))
@@ -578,14 +560,8 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
          endif
 ! 
 ! Get expected observation (convert mol/m^2 to molec/cm^2
-
          expct_val(imem) = expct_val(imem) + thick(k) * no2_val_conv * &
          AvogN/msq2cmsq * scat_wts(key,k)
-
-!         write(string1, *) &
-!         'APM: Key, Expected Value Terms ',key,k,expct_val(imem),thick(k),no2_val_conv, &
-!          AvogN/msq22cmsq, scat_wts(key,k)
-!         call error_handler(E_MSG, routine, string1, source)
       enddo
 !
       if(isnan(expct_val(imem))) then
@@ -593,7 +569,7 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
          expct_val(:)=missing_r8
          write(string1, *) &
          'APM NOTICE: SCIAM NO2 expected value is NaN ',key
-         call error_handler(E_MSG, routine, string1, source)
+         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
@@ -603,11 +579,12 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
          expct_val(:)=missing_r8
          write(string1, *) &
          'APM NOTICE:SCIAM NO2 expected value is negative '
-         call error_handler(E_MSG, routine, string1, source)
+         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
    enddo
+!   call exit_all(-77)
 !
 ! Clean up and return
    deallocate(no2_val, tmp_val, qmr_val)

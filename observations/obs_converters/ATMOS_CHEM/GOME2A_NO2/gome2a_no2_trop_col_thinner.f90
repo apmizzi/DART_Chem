@@ -123,8 +123,7 @@ program gome2a_no2_thinner
    write(6,*)'opening ',TRIM(TRIM(filedir)//TRIM(filename))
    open(unit=fileid,file=TRIM(TRIM(filedir)//TRIM(filename)), &
    form='formatted', status='old', iostat=ios)
-   read(fileid,*,iostat=ios) data_type, obs_id, &
-   i_min, j_min
+   read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
    gome2a_data(i_min,j_min)%data_type=data_type
    gome2a_data(i_min,j_min)%obs_id=obs_id
    do while (ios == 0)

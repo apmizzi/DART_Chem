@@ -195,7 +195,6 @@ program omi_so2_pbl_col_ascii_to_obs
    pi=4.*atan(1.)
    rad2deg=360./(2.*pi)
    re=6371000.
-   fac_err=.3
    days_last=-9999.
    seconds_last=-9999.
    level_crit=50000.
@@ -203,6 +202,7 @@ program omi_so2_pbl_col_ascii_to_obs
    sum_accept=0
    sum_total=0
    obs_accept=0
+   fac_err=.3
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)

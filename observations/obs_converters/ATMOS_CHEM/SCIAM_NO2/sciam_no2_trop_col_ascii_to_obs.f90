@@ -167,7 +167,7 @@ program sciam_no2_trop_col_ascii_to_obs
    character*129                   :: data_type,cmd
    character*129                   :: path_model,file_model,file_in
 !
-   logical                         :: use_log_o3,use_log_no2
+   logical                         :: use_log_3,use_log_no2
 !
 ! Species-specific variables
    integer                         :: trop_indx
@@ -179,8 +179,8 @@ program sciam_no2_trop_col_ascii_to_obs
    real*8                          :: amf_trop_obs_r8, amf_total_obs_r8
    real                            :: lat_obs,lon_obs
    real*8                          :: lat_obs_r8,lon_obs_r8
-   real,allocatable,dimension(:)   :: avgk_obs
-   real*8,allocatable,dimension(:) :: avgk_obs_r8
+   real,allocatable,dimension(:)   :: avgk_obs, scwt_obs
+   real*8,allocatable,dimension(:) :: avgk_obs_r8, scwt_obs_r8
    real,allocatable,dimension(:)   :: prs_obs
    real*8,allocatable,dimension(:) :: prs_obs_r8
    real,allocatable,dimension(:)   :: prf_locl,prf_full
@@ -205,7 +205,7 @@ program sciam_no2_trop_col_ascii_to_obs
    sum_accept=0
    sum_total=0
    obs_accept=0
-   fac_err=0.3
+   fac_err=.3
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
@@ -247,28 +247,6 @@ program sciam_no2_trop_col_ascii_to_obs
    calendar_type=3                          !Gregorian
    call set_calendar_type(calendar_type)
 !
-! Read model data
-!   allocate(lon(nx_model,ny_model))
-!   allocate(lat(nx_model,ny_model))
-!   allocate(prs_prt(nx_model,ny_model,nz_model))
-!   allocate(prs_bas(nx_model,ny_model,nz_model))
-!   allocate(prs_fld(nx_model,ny_model,nz_model))
-!   allocate(tmp_prt(nx_model,ny_model,nz_model))
-!   allocate(tmp_fld(nx_model,ny_model,nz_model))
-!   allocate(qmr_fld(nx_model,ny_model,nz_model))
-!   allocate(no2_fld(nx_model,ny_model,nz_model))
-!   file_in=trim(path_model)//'/'//trim(file_model)
-!   call get_DART_diag_data(trim(file_in),'XLONG',lon,nx_model,ny_model,1,1)
-!   call get_DART_diag_data(trim(file_in),'XLAT',lat,nx_model,ny_model,1,1)
-!   call get_DART_diag_data(trim(file_in),'P',prs_prt,nx_model,ny_model,nz_model,1)
-!   call get_DART_diag_data(trim(file_in),'PB',prs_bas,nx_model,ny_model,nz_model,1)
-!   call get_DART_diag_data(trim(file_in),'T',tmp_prt,nx_model,ny_model,nz_model,1)
-!   call get_DART_diag_data(trim(file_in),'QVAPOR',qmr_fld,nx_model,ny_model,nz_model,1)
-!   call get_DART_diag_data(file_in,'no2',no2_fld,nx_model,ny_model,nz_model,1)
-!   prs_fld(:,:,:)=prs_bas(:,:,:)+prs_prt(:,:,:)
-!   tmp_fld(:,:,:)=300.+tmp_prt(:,:,:)
-!   no2_fld(:,:,:)=no2_fld(:,:,:)*1.e-6
-!
 ! Open SCIAM NO2 binary file
    fileid=100
    write(6,*)'opening ',TRIM(filedir)//TRIM(filename)
@@ -287,8 +265,10 @@ program sciam_no2_trop_col_ascii_to_obs
       read(fileid,*,iostat=ios) trop_indx
       allocate(prs_obs(nlev_obs))
       allocate(avgk_obs(nlay_obs))
+      allocate(scwt_obs(nlay_obs))
       allocate(prs_obs_r8(nlev_obs))
       allocate(avgk_obs_r8(nlay_obs))
+      allocate(scwt_obs_r8(nlay_obs))
       read(fileid,*,iostat=ios) prs_obs(1:nlev_obs)
       read(fileid,*,iostat=ios) avgk_obs(1:nlay_obs)
       read(fileid,*,iostat=ios) no2_trop_col_obs, no2_trop_col_obs_err
@@ -300,7 +280,9 @@ program sciam_no2_trop_col_ascii_to_obs
       print *, 'slnt col ',o3_slnt_col,o3_slnt_col_err
       prs_obs(:)=prs_obs(:)*100.
       prs_obs_r8(:)=prs_obs(:)
-      avgk_obs_r8(:)=avgk_obs(:)*amf_trop_obs
+!
+! AMF = SC / VC  --> VC * AMF = SC      
+      scwt_obs_r8(:)=avgk_obs(:)*amf_trop_obs
       lon_obs_r8=lon_obs
       lat_obs_r8=lat_obs
       amf_trop_obs_r8=amf_trop_obs
@@ -343,7 +325,7 @@ program sciam_no2_trop_col_ascii_to_obs
          call set_obs_def_time(obs_def, obs_time)
          call set_obs_def_error_variance(obs_def, obs_err_var)
          call set_obs_def_sciam_no2_trop_col(qc_count, prs_obs_r8, &
-         avgk_obs_r8, amf_trop_obs_r8, trop_indx, nlay_obs)
+         scwt_obs_r8, amf_trop_obs_r8, trop_indx, nlay_obs)
          call set_obs_def_key(obs_def, qc_count)
          call set_obs_values(obs, obs_val, 1)
          call set_qc(obs, sciam_qc, num_qc)

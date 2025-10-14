@@ -417,7 +417,7 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
    prs_mdl_n(:)=missing_r8
 
    kbnd_n(:)=layer_mdl
-   do k=layer_mdl,1,-1
+   do k=layer_mdl-1,1,-1
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
@@ -504,21 +504,24 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
 !
 ! Check full profile for negative values
    do imem=1,ens_size
-      do k=1,level_omi   
-         if(no2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
-         qmr_val(imem,k).lt.0.) then
+      do k=1,level_omi
+         if((no2_val(imem,k).lt.0. .and. no2_val(imem,k).ne.missing_r8) .or. &
+         (tmp_val(imem,k).lt.0. .and. tmp_val(imem,k).ne.missing_r8) .or. &
+         (qmr_val(imem,k).lt.0. .and. qmr_val(imem,k).ne.missing_r8)) then
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
-            call error_handler(E_MSG, routine, string1, source)
+            call error_handler(E_ALLMSG, routine, string1, source)
+         else if(no2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         qmr_val(imem,k).lt.0.) then
             zstatus(:)=20
             expct_val(:)=missing_r8
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+            return
             deallocate(prs_omi)
             deallocate(prs_omi_mem)
             deallocate(no2_val)
             deallocate(tmp_val)
             deallocate(qmr_val)
-            return
          endif
       enddo
    enddo
@@ -565,7 +568,7 @@ subroutine get_expected_omi_no2_domino_trop_col(state_handle, ens_size, location
       enddo
 !   
 ! Process the vertical summation (OMI NO2 DOMINO units are molec/cm^2)
-      do k=1,kend_omi+1
+      do k=1,kend_omi
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
          up_wt=log(prs_omi_mem(k))-lnpr_mid
          dw_wt=lnpr_mid-log(prs_omi_mem(k+1))

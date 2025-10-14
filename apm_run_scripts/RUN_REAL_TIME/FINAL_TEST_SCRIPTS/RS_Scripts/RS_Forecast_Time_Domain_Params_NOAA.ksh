@@ -21,6 +21,7 @@
    export NNZ_CHEM=20
    export NZ_CHEMI=${NNZ_CHEM}
    export NZ_FIRECHEMI=1
+   export NZ_BIOGCHEMI=1
 # number of species to perturb   
    export NSPCS=19
    export NNCHEM_SPC=20
