@@ -597,7 +597,8 @@ subroutine get_expected_omi_o3_profile(state_handle, ens_size, location, key, ob
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
             call error_handler(E_ALLMSG, routine, string1, source)
-         else if(o3_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         endif
+         if(o3_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             zstatus(:)=20
             expct_val(:)=missing_r8

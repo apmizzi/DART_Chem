@@ -13,31 +13,27 @@
 #   cp ${METGRID_DIR}/met_em.d${FR_DOMAIN}.*.nc ./.
    cp ${PERT_CHEM_INPUT_DIR}/work/perturb_chem_icbc_CORR_RT_MA_MPI_NEW_PERT.exe ./perturb_chem_icbc.exe
    cp ${PERT_CHEM_INPUT_DIR}/work/mozbc.exe ./mozbc.exe
-#   cp ${AISH_PERT_CHEM_INPUT_DIR}/work/mozbc.exe ./mozbc.exe
 #
 # SELECT MOZART DATA FILE
    export MOZBC_DATA=${NL_UPPER_DATA_FILE_NAME}
 #
 # CREATE INPUT FILES COARSE DOMAIN
-   export L_DATE=${DATE}00   
+   export L_DATE=${DATE}0000
    export L_YY=$(echo $L_DATE | cut -c1-4)
    export L_MM=$(echo $L_DATE | cut -c5-6)
    export L_DD=$(echo $L_DATE | cut -c7-8)
    export L_HH=$(echo $L_DATE | cut -c9-10)
    export L_MN=$(echo $L_DATE | cut -c11-12)
    export L_SS=$(echo $L_DATE | cut -c13-14)
-   export L_SS=00
-#   if [[ ${L_HH} -ge 00 && ${L_HH} -lt 03 ]]; then export L_HH=00; fi
-#   if [[ ${L_HH} -ge 03 && ${L_HH} -lt 06 ]]; then export L_HH=03; fi
-#   if [[ ${L_HH} -ge 12 && ${L_HH} -lt 18 ]]; then export L_HH=12; fi
-#   if [[ ${L_HH} -ge 18 && ${L_HH} -lt 24 ]]; then export L_HH=18; fi
 #
-   export WRFINP_CR=wrfinput_d01_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
-   export WRFBDY_CR=wrfbdy_d01_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
-   cp ${REAL_DIR}/${WRFINP_CR} ./
-   cp ${REAL_DIR}/${WRFBDY_CR} ./
-   mv ${WRFINP_CR} wrfinput_d01
-   mv ${WRFBDY_CR} wrfbdy_d01
+   export WRFINPEN=wrfinput_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
+   export WRFBDYEN=wrfbdy_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
+   export WRFINPUT_FLD_RW=wrfinput_d${CR_DOMAIN}
+   export WRFBDY_FLD_RW=wrfbdy_d${CR_DOMAIN}
+   cp ${REAL_DIR}/${WRFINPEN} ./
+   cp ${REAL_DIR}/${WRFBDYEN} ./
+   cp ${WRFINPEN} ${WRFINPUT_FLD_RW}
+   cp ${WRFBDYEN} ${WRFBDY_FLD_RW}
 #
 # CREATE ICs   
    rm -rf wrfchem.namelist.input
@@ -99,7 +95,6 @@ spc_map =  'api -> 0.5*C10H16',
 EOF
 #
    ./mozbc.exe < wrfchem.namelist.input > log_ic.txt 2>&1
-   
 #
 # CREATE BCs
    rm -rf wrfchem.namelist.input
@@ -163,16 +158,8 @@ EOF
    ./mozbc.exe < wrfchem.namelist.input > log_bc.txt  2>&1
 #
 # GENERATE CHEMISTRY IC/BC ENSEMBLE MEMBERS   
-   mv wrfinput_d01 ${WRFINP_CR}
-   mv wrfbdy_d01 ${WRFBDY_CR}
 #
 # CREATE NAMELIST
-   export WRFINPEN=wrfinput_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00
-   export WRFBDYEN=wrfbdy_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00
-   export WRFINPUT_FLD_RW=wrfinput_d${CR_DOMAIN}
-   export WRFBDY_FLD_RW=wrfbdy_d${CR_DOMAIN}
-   mv ${WRFINPEN} ${WRFINPUT_FLD_RW}
-   mv ${WRFBDYEN} ${WRFBDY_FLD_RW}
    rm -rf perturb_chem_icbc_corr_nml.nl
    cat << EOF > perturb_chem_icbc_corr_nml.nl
 &perturb_chem_icbc_corr_nml
@@ -205,6 +192,8 @@ ch_chem_spc=${NL_CHEM_ICBC_SPECIES}
 /
 EOF
 #
+   cp ${WRFINPUT_FLD_RW} ${WRFINPEN}
+   cp ${WRFBDY_FLD_RW} ${WRFBDYEN}
    let MEM=1
    while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
       export CMEM=e${MEM}
@@ -220,7 +209,7 @@ EOF
 #
 # PARALLEL ON ${MODEL}
    ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_icbc.exe PARALLEL ${ACCOUNT} ${PERT_MODEL}
-   #
+#
    qsub -Wblock=true job.ksh
    mv index.html index_pert.html
 #
@@ -230,10 +219,12 @@ EOF
    chmod +x jobx.ksh
    cat<<EOF > jobx.ksh
 #!/bin/ksh -aux
+#
+# Recenter chemistry fields
 ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}.e001 ens_mean_inp
 ncea -O -n ${NUM_MEMBERS},3,1 wrfbdy_d${CR_DOMAIN}.e001 ens_mean_bdy
-ncdiff -O ens_mean_inp wrfinput_d01 mean_diff_inp
-ncdiff -O ens_mean_bdy wrfbdy_d01 mean_diff_bdy
+ncdiff -O ens_mean_inp wrfinput_d${CR_DOMAIN} mean_diff_inp
+ncdiff -O ens_mean_bdy wrfbdy_d${CR_DOMAIN} mean_diff_bdy
 let MEM=1
 while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
    export CMEM=e\${MEM}
@@ -241,10 +232,16 @@ while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
    if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
    ncdiff -O wrfinput_d${CR_DOMAIN}.\${CMEM} mean_diff_inp wrfinput_d${CR_DOMAIN}.\${CMEM}
    ncdiff -O wrfbdy_d${CR_DOMAIN}.\${CMEM} mean_diff_bdy wrfbdy_d${CR_DOMAIN}.\${CMEM}
-   let MEM=MEM+1
+   let MEM=\${MEM}+1
 done
-ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}.e001 new_mean_inp
-ncea -O -n ${NUM_MEMBERS},3,1 wrfbdy_d${CR_DOMAIN}.e001 new_mean_bdy
+#ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}.e001 new_mean_inp
+#ncea -O -n ${NUM_MEMBERS},3,1 wrfbdy_d${CR_DOMAIN}.e001 new_mean_bdy
+rm ens_mean_inp
+rm ens_mean_bdy
+rm mean_diff_inp
+rm mean_diff_bdy
+#rm new_meab_inp
+#rm new_meab_bdy
 #
 let MEM=1
 while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
@@ -253,16 +250,20 @@ export CMEM=e\${MEM}
    if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
    mv ${WRFINPUT_FLD_RW}.\${CMEM} ${WRFINPEN}.\${CMEM}
    mv ${WRFBDY_FLD_RW}.\${CMEM} ${WRFBDYEN}.\${CMEM}
-   let MEM=MEM+1
+   let MEM=\${MEM}+1
 done
 #
-# COMBINE WRFCHEM WITH WRF CR PARENT FILES
+# Combine with met fields
+#export WRFINPEN=wrfinput_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
+#export WRFBDYEN=wrfbdy_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
 #ncks -A ${EXPERIMENT_DUST_DIR}/EROD_d${CR_DOMAIN} ${WRFINPEN}
 ncks -A ${REAL_DIR}/${WRFINPEN} ${WRFINPEN}
 ncks -A ${REAL_DIR}/${WRFBDYEN} ${WRFBDYEN}
+mv ${WRFINPEN} ${WRFINPEN}_parent
+mv ${WRFBDYEN} ${WRFBDYEN}_parent
 #
 # COMBINE WRFCHEM WITH WRF FR DOMAIN PARENT FILES
-#export WRFINPEN=wrfinput_d${FR_DOMAIN}_${YYYY}-${MM}-${DD}_${HH}:00:00
+#export WRFINPEN=wrfinput_d${FR_DOMAIN}_${YYYY}-${MM}-${DD}_${HH}:${L_MN}:${L_SS}
 #ncks -A ${REAL_DIR}/${WRFINPEN} ${WRFINPEN}
 #ncks -A ${EXPERIMENT_DUST_DIR}/EROD_d${FR_DOMAIN} ${WRFINPEN}
 #
@@ -274,19 +275,24 @@ while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
    if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
 #
 # COMBINE WRFCHEM WITH WRF CR DOMAIN
-   export WRFINPEN=wrfinput_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00.\${CMEM}
-   export WRFBDYEN=wrfbdy_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00.\${CMEM}
+   export WRFINPEN=wrfinput_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}.\${CMEM}
+   export WRFBDYEN=wrfbdy_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}.\${CMEM}
 #   ncks -A ${EXPERIMENT_DUST_DIR}/EROD_d${CR_DOMAIN} ${WRFINPEN}
    ncks -A ${WRFCHEM_MET_IC_DIR}/\${WRFINPEN} \${WRFINPEN}
    ncks -A ${WRFCHEM_MET_BC_DIR}/\${WRFBDYEN} \${WRFBDYEN}
 #
 # COMBINE WRFCHEM WITH WRF FR DOMAIN
-#   export WRFINPEN=wrfinput_d${FR_DOMAIN}_${YYYY}-${MM}-${DD}_${HH}:00:00.\${CMEM}
+#   export WRFINPEN=wrfinput_d${FR_DOMAIN}_${YYYY}-${MM}-${DD}_${HH}:${L_MN}:${L_SS}.\${CMEM}
 #   ncks -A ${WRFCHEM_MET_IC_DIR}/\${WRFINPEN} \${WRFINPEN}
 #   ncks -A ${EXPERIMENT_DUST_DIR}/EROD_d${FR_DOMAIN} \${WRFINPEN}
 #
-   let MEM=MEM+1
+   let MEM=\${MEM}+1
 done
+#
+export WRFINPEN=wrfinput_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
+export WRFBDYEN=wrfbdy_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
+ncea -O -n ${NUM_MEMBERS},3,1 \${WRFINPEN}.e001 \${WRFINPEN}_new_mean
+ncea -O -n ${NUM_MEMBERS},3,1 \${WRFBDYEN}.e001 \${WRFBDYEN}_new_mean
 EOF
    TRANDOM=$$
    export JOBRND=${TRANDOM}_nco
@@ -294,10 +300,6 @@ EOF
    qsub -Wblock=true job.ksh
    mv index.html index_nco.html
 #   
-#  rm ens_mean_inp mean_diff_inp
-#  rm ens_mean_bdy mean_diff_bdy
-#
-#
 # Clean directory
 #   rm *_cr_icbc_pert* job,ksh met_em.d* mozbc* perturb_chem_*
 #   rm runICBC_parent_* run_mozbc_rt_* set00* wrfbdy_d01 wrfinput_d01

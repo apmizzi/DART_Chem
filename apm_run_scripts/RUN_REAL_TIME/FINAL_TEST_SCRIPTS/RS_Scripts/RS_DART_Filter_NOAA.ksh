@@ -68,19 +68,19 @@ while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
       export L_DD=\$(echo \$L_DATE | cut -c7-8)
       export L_HH=\$(echo \$L_DATE | cut -c9-10)
       export L_FILE_DATE=\${L_YY}-\${L_MM}-\${L_DD}_\${L_HH}:00:00
-!
+#
       export NL_WRFCHEMI=${RUN_INPUT_DIR}/${DATE}/wrfchem_chem_emiss/wrfchemi_d${CR_DOMAIN}_\${L_FILE_DATE}.\${CMEM}
       export NL_WRFCHEMI_OLD[\${ICNT}]=wrfchemi_d${CR_DOMAIN}_\${L_FILE_DATE}.\${CMEM}_old
       export NL_WRFCHEMI_NEW[\${ICNT}]=wrfchemi_d${CR_DOMAIN}_\${L_FILE_DATE}.\${CMEM}_new
       export NL_WRFFIRECHEMI=${RUN_INPUT_DIR}/${DATE}/wrfchem_chem_emiss/wrffirechemi_d${CR_DOMAIN}_\${L_FILE_DATE}.\${CMEM}
       export NL_WRFFIRECHEMI_OLD[\${ICNT}]=wrffirechemi_d${CR_DOMAIN}_\${L_FILE_DATE}.\${CMEM}_old
       export NL_WRFFIRECHEMI_NEW[\${ICNT}]=wrffirechemi_d${CR_DOMAIN}_\${L_FILE_DATE}.\${CMEM}_new
-!
+#
       cp \${NL_WRFCHEMI} \${NL_WRFCHEMI_OLD[\${ICNT}]}
       cp \${NL_WRFCHEMI_OLD[\${ICNT}]} \${NL_WRFCHEMI_NEW[\${ICNT}]}
       cp \${NL_WRFFIRECHEMI} \${NL_WRFFIRECHEMI_OLD[\${ICNT}]}
       cp \${NL_WRFFIRECHEMI_OLD[\${ICNT}]} \${NL_WRFFIRECHEMI_NEW[\${ICNT}]}
-!
+#
       let ICNT=\${ICNT}+1
       export L_DATE=\$(${BUILD_DIR}/da_advance_time.exe \${L_DATE} +1 -f ccyymmddhhnn 2>/dev/null)
    done
@@ -129,7 +129,7 @@ EOFF
    rm -rf \${NL_WRFCHEMI_POST}
    rm -rf \${NL_WRFFIRECHEMI_PRIOR}
    rm -rf \${NL_WRFFIRECHEMI_POST}
-let MEM=MEM+1
+let MEM=\${MEM}+1
 done
 EOF
 #
@@ -204,39 +204,42 @@ EOF
       done
 #
 # Rename the emissions dimensions and copy to input files
+      sleep 10
       rm -rf input_list.txt
       rm -rf output_list.txt
       touch input_list.txt
       touch output_list.txt
-      rm jobx.ksh
-      touch jobx.ksh
-      chmod +x jobx.ksh
-      cat << EOF > jobx.ksh
+      TRANDOM=$$
+      let MEM=1
+      while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
+         export CMEM=e${MEM}
+         export KMEM=${MEM}
+         if [[ ${MEM} -lt 1000 ]]; then export KMEM=0${MEM}; fi
+         if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
+         if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
+         rm jobx.ksh
+         touch jobx.ksh
+         chmod +x jobx.ksh
+         cat << EOF > jobx.ksh
 #!/bin/ksh -aux
-let MEM=1
-while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
-   export CMEM=e\${MEM}
-   export KMEM=\${MEM}
-   if [[ \${MEM} -lt 1000 ]]; then export KMEM=0\${MEM}; fi
-   if [[ \${MEM} -lt 100 ]]; then export KMEM=00\${MEM}; export CMEM=e0\${MEM}; fi
-   if [[ \${MEM} -lt 10 ]]; then export KMEM=000\${MEM}; export CMEM=e00\${MEM}; fi
-   ncrename -d emissions_zdim,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM}
-   ncrename -d emissions_zdim_stag,fire_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM}
-   ncks -A -C -v ${WRFCHEMI_DARTVARS} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM} wrfinput_d${CR_DOMAIN}_\${CMEM}
-   ncks -A -C -v ${WRFFIRECHEMI_DARTVARS} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM} wrfinput_d${CR_DOMAIN}_\${CMEM}
-#
-# Add files to the DART input and output list
-   echo wrfinput_d${CR_DOMAIN}_\${CMEM} >> input_list.txt
-   echo wrfinput_d${CR_DOMAIN}_\${CMEM} >> output_list.txt
-   let MEM=\${MEM}+1
-done
+ncrename -d emissions_zdim,chemi_zdim_stag -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+ncrename -d emissions_zdim_stag,fire_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+ncks -A -C -v ${WRFCHEMI_DARTVARS} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfinput_d${CR_DOMAIN}_${CMEM}
+ncks -A -C -v ${WRFFIRECHEMI_DARTVARS} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfinput_d${CR_DOMAIN}_${CMEM}
 EOF
 #
-      TRANDOM=$$
-      export JOBRND=${TRANDOM}_nco
-      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${GENERAL_MODEL}
-      qsub -Wblock=true job.ksh
-      mv index.html index_nco1.html
+         export JOBRND=${TRANDOM}_nco_${MEM}
+         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${GENERAL_MODEL}
+         qsub -Wblock=true job.ksh
+         mv index.html index_nco1_${MEM}.html
+#
+# Add files to the DART input and output list
+         echo wrfinput_d${CR_DOMAIN}_${CMEM} >> input_list.txt
+         echo wrfinput_d${CR_DOMAIN}_${CMEM} >> output_list.txt
+	 let MEM=${MEM}+1
+      done
+#      
+#      ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}      
 #
 # Copy template files
       cp wrfinput_d${CR_DOMAIN}_e001 wrfinput_d${CR_DOMAIN}      
@@ -310,34 +313,35 @@ EOF
       fi
 #
 # Remove emissions fields from the DART output files and copy to the emissions input files
-      rm jobx.ksh
-      touch jobx.ksh
-      chmod +x jobx.ksh
-      cat << EOF > jobx.ksh
+      TRANDOM=$$
+      let MEM=${DART_MEM_STR}
+      while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
+         export CMEM=e${MEM}
+         export KMEM=${MEM}
+         if [[ ${MEM} -lt 1000 ]]; then export KMEM=0${MEM}; fi
+         if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
+         if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
+         rm jobx.ksh
+         touch jobx.ksh
+         chmod +x jobx.ksh
+         cat << EOF > jobx.ksh
 #!/bin/ksh -aux
-let MEM=${DART_MEM_STR}
-while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
-   export CMEM=e\${MEM}
-   export KMEM=\${MEM}
-   if [[ \${MEM} -lt 1000 ]]; then export KMEM=0\${MEM}; fi
-   if [[ \${MEM} -lt 100 ]]; then export KMEM=00\${MEM}; export CMEM=e0\${MEM}; fi
-   if [[ \${MEM} -lt 10 ]]; then export KMEM=000\${MEM}; export CMEM=e00\${MEM}; fi
 #
 # Copy the adjusted emissions fields from the wrfinput files to the emissions input files
-   ncks -O -x -v ${WRFCHEMI_DARTVARS} wrfinput_d${CR_DOMAIN}_\${CMEM} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.\${CMEM}
-   ncks -O -x -v ${WRFFIRECHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.\${CMEM} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.\${CMEM}
-   ncks -A -C -v ${WRFCHEMI_DARTVARS} wrfinput_d${CR_DOMAIN}_\${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM}
-   ncks -A -C -v ${WRFFIRECHEMI_DARTVARS} wrfinput_d${CR_DOMAIN}_\${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM}
-   ncrename -d chemi_zdim_stag,emissions_zdim -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM}
-   ncrename -d fire_zdim_stag,emissions_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.\${CMEM}
-   rm -rf wrfinput_d${CR_DOMAIN}_\${CMEM}
-   let MEM=\${MEM}+1
-done
+ncks -O -x -v ${WRFCHEMI_DARTVARS} wrfinput_d${CR_DOMAIN}_${CMEM} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM}
+ncks -O -x -v ${WRFFIRECHEMI_DARTVARS} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM} wrfout_d${CR_DOMAIN}_${FILE_DATE}_filt.${CMEM}
+ncks -A -C -v ${WRFCHEMI_DARTVARS} wrfinput_d${CR_DOMAIN}_${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+ncks -A -C -v ${WRFFIRECHEMI_DARTVARS} wrfinput_d${CR_DOMAIN}_${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+ncrename -d chemi_zdim_stag,emissions_zdim -O wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+ncrename -d fire_zdim_stag,emissions_zdim_stag -O wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+rm -rf wrfinput_d${CR_DOMAIN}_${CMEM}
 EOF
 #
-      TRANDOM=$$
-      export JOBRND=${TRANDOM}_nco
-      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${GENERAL_MODEL}
-      qsub -Wblock=true job.ksh
-      mv index.html index_nco2.html
+         export JOBRND=${TRANDOM}_nco_${MEM}
+         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${GENERAL_MODEL}
+         qsub -Wblock=true job.ksh
+         mv index.html index_nco2_${MEM}.html
+         let MEM=${MEM}+1
+      done
+#      ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}      
 #

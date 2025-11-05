@@ -58,6 +58,7 @@ EOF
       chmod +x jobx.ksh
       cat << EOF > jobx.ksh
 #!/bin/ksh -aux
+cp ${RUN_DIR}/${DATE}/real/wrfbdy_d${CR_DOMAIN}_${ANALYSIS_DATE} wrfbdy_d${CR_DOMAIN}_${ANALYSIS_DATE}_parent
 ncea -O -n ${NUM_MEMBERS},3,1 wrfbdy_d${CR_DOMAIN}_${ANALYSIS_DATE}'.e001' ens_mean
 ncdiff -O ens_mean ${RUN_DIR}/${DATE}/real/wrfbdy_d${CR_DOMAIN}_${ANALYSIS_DATE}  mean_diff
 let MEM=1

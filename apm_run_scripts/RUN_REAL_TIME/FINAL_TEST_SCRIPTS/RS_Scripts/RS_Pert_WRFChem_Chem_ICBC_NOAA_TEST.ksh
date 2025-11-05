@@ -243,7 +243,7 @@ while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
    if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
    ncdiff -O wrfinput_d${CR_DOMAIN}.\${CMEM} mean_diff_inp wrfinput_d${CR_DOMAIN}.\${CMEM}
    ncdiff -O wrfbdy_d${CR_DOMAIN}.\${CMEM} mean_diff_bdy wrfbdy_d${CR_DOMAIN}.\${CMEM}
-   let MEM=MEM+1
+   let MEM=\${MEM}+1
 done
 ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}.e001 new_mean_inp
 ncea -O -n ${NUM_MEMBERS},3,1 wrfbdy_d${CR_DOMAIN}.e001 new_mean_bdy
@@ -255,7 +255,7 @@ export CMEM=e\${MEM}
    if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
    mv wrfinput_d${CR_DOMAIN}.\${CMEM} ${WRFINPEN}.\${CMEM}
    mv wrfbdy_d${CR_DOMAIN}.\${CMEM} ${WRFBDYEN}.\${CMEM}
-   let MEM=MEM+1
+   let MEM=\${MEM}+1
 done
 #
 # COMBINE WRFCHEM WITH WRF CR PARENT FILES
@@ -274,7 +274,7 @@ while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
    export LWRFBDYEN=wrfbdy_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00.\${CMEM}
    ncks -A ${WRFCHEM_MET_IC_DIR}/\${LWRFINPEN} \${LWRFINPEN}
    ncks -A ${WRFCHEM_MET_BC_DIR}/\${LWRFBDYEN} \${LWRFBDYEN}
-   let MEM=MEM+1
+   let MEM=\${MEM}+1
 done
 EOF
    TRANDOM=$$

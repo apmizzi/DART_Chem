@@ -1,4 +1,4 @@
-#!/bin/ksh -aux
+.#!/bin/ksh -aux
 #
       cd ${RUN_DIR}/${DATE}/wrfchem_met_ic
 #
@@ -120,15 +120,12 @@ export MPI_DSM_DISTRIBUTE=0
 parallel 'cd wrfda_cr_{1}; ./da_wrfvar.exe >& index.log' ::: ${DIR_LABEL_LIST}
 EOF
       qsub -Wblock=true jobx.ksh
-
-# TEST GNU PARALLEL
-exit
-
 #
 # LOOP THROUGH ALL BDY TENDENCY TIMES
-      export P_DATE=${DATE}
+      export P_DATE=${DATE}00
       export P_END_DATE=$(${BUILD_DIR}/da_advance_time.exe ${P_DATE} ${FCST_PERIOD} -f ccyymmddhhnn 2>/dev/null)
       while [[ ${P_DATE} -le ${P_END_DATE} ]] ; do
+         export ANALYSIS_DATE=$(${BUILD_DIR}/da_advance_time.exe ${P_DATE} 0 -W 2>/dev/null)
          export L_YYYY=$(echo $P_DATE | cut -c1-4)
          export L_MM=$(echo $P_DATE | cut -c5-6)
          export L_DD=$(echo $P_DATE | cut -c7-8)
@@ -143,13 +140,8 @@ exit
             export CMEM=e${MEM}
             if [[ ${MEM} -lt 100 ]]; then export CMEM=e0${MEM}; fi
             if [[ ${MEM} -lt 10  ]]; then export CMEM=e00${MEM}; fi
-            export LCR_DIR=wrfda_cr_${MEM}
-            export LFR_DIR=wrfda_fr_${MEM}
-            if [[ -e ${LCR_DIR}/wrfvar_output ]]; then
-               cp ${LCR_DIR}/wrfvar_output wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
-            else
-               cp ${LCR_DIR}/wrfvar_output wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
-            fi 
+            export LCR_DIR=wrfda_cr_${MEM}_${P_DATE}
+            cp ${LCR_DIR}/wrfvar_output wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
             let MEM=${MEM}+1
          done
 #
@@ -159,16 +151,17 @@ exit
          chmod +x jobx.ksh
          cat << EOF > jobx.ksh
 #!/bin/ksh -aux
+cp ${RUN_DIR}/${DATE}/real/wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE} wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}_parent
 ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}'.e001' ens_mean
 ncdiff -O ens_mean ${RUN_DIR}/${DATE}/real/wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}  mean_diff
 let MEM=1
-while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
-   export CMEM=e${MEM}
-   if [[ ${MEM} -lt 100 ]]; then export CMEM=e0${MEM}; fi
-   if [[ ${MEM} -lt 10  ]]; then export CMEM=e00${MEM}; fi
-   ncdiff -O wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM} mean_diff mem.${CMEM}
-   mv mem.${CMEM} wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
-   let MEM=${MEM}+1
+while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
+   export CMEM=e\${MEM}
+   if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
+   if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
+   ncdiff -O wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.$\{CMEM} mean_diff mem.\${CMEM}
+   mv mem.\${CMEM} wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.\${CMEM}
+   let MEM=\${MEM}+1
 done
 ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}'.e001' wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}_new_mean
 rm -rf ens_mean

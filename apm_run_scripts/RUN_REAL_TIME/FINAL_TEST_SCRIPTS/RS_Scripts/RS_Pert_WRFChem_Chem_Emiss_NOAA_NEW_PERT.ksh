@@ -169,9 +169,7 @@ EOF
             cat << EOF > jobx.ksh
 #!/bin/ksh -aux
 if [[ ${NL_PERT_CHEM} = "true" ]]; then
-   rm -rf ens_mean_chem
-   rm -rf mean_diff_chem
-   rm -rf new_mean_chem_${L_DATE}
+   rm -rf ${WRFCHEMI}_new_mean
    ncea -O -n ${NUM_MEMBERS},3,1 ${WRFCHEMI}.e001 ens_mean_chem
    ncdiff -O ens_mean_chem ${WRFCHEMI} mean_diff_chem
    let MEM=1
@@ -180,14 +178,15 @@ if [[ ${NL_PERT_CHEM} = "true" ]]; then
       if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
       if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
       ncdiff -O ${WRFCHEMI}.\${CMEM} mean_diff_chem ${WRFCHEMI}.\${CMEM}
-      let MEM=MEM+1
+      let MEM=\${MEM}+1
    done
-   ncea -O -n ${NUM_MEMBERS},3,1 ${WRFCHEMI}.e001 new_mean_chem_${L_DATE}
+   ncea -O -n ${NUM_MEMBERS},3,1 ${WRFCHEMI}.e001 ${WRFCHEMI}_new_mean
+   mv ${WRFCHEMI} ${WRFCHEMI}_parent
+   rm -rf ens_mean_chem
+   rm -rf mean_diff_chem
 fi
 if [[ ${NL_PERT_FIRE} = "true" ]]; then
-   rm -rf ens_mean_fire
-   rm -rf mean_diff_fire
-   rm -rf new_mean_fire_${L_DATE}
+   rm -rf ${WRFFIRECHEMI}_new_mean
    ncea -O -n ${NUM_MEMBERS},3,1 ${WRFFIRECHEMI}.e001 ens_mean_fire
    ncdiff -O ens_mean_fire ${WRFFIRECHEMI} mean_diff_fire
    let MEM=1
@@ -196,14 +195,15 @@ if [[ ${NL_PERT_FIRE} = "true" ]]; then
       if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
       if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
       ncdiff -O ${WRFFIRECHEMI}.\${CMEM} mean_diff_fire ${WRFFIRECHEMI}.\${CMEM}
-      let MEM=MEM+1
+      let MEM=\${MEM}+1
    done
-   ncea -O -n ${NUM_MEMBERS},3,1 ${WRFFIRECHEMI}.e001 new_mean_fire_${L_DATE}
+   ncea -O -n ${NUM_MEMBERS},3,1 ${WRFFIRECHEMI}.e001 ${WRFFIRECHEMI}_new_mean
+   mv ${WRFFIRECHEMI} ${WRFFIRECHEMI}_parent
+   rm -rf ens_mean_fire
+   rm -rf mean_diff_fire
 fi
 if [[ ${NL_PERT_BIO} = "true" ]]; then
-   rm -rf ens_mean_bio
-   rm -rf mean_diff_bio
-   rm -rf new_mean_bio_${L_DATE}
+   rm -rf ${WRFBIOCHEMI}_new_mean
    ncea -O -n ${NUM_MEMBERS},3,1 ${WRFBIOCHEMI}.e001 ens_mean_bio
    ncdiff -O ens_mean_bio ${WRFBIOCHEMI} mean_diff_bio
    let MEM=1
@@ -212,9 +212,12 @@ if [[ ${NL_PERT_BIO} = "true" ]]; then
       if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
       if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
       ncdiff -O ${WRFBIOCHEMI}.\${CMEM} mean_diff_bio ${WRFBIOCHEMI}.\${CMEM}
-      let MEM=MEM+1
+      let MEM=\${MEM}+1
    done
-   ncea -O -n ${NUM_MEMBERS},3,1 ${WRFBIOCHEMI}.e001 new_mean_bio_${L_DATE}
+   ncea -O -n ${NUM_MEMBERS},3,1 ${WRFBIOCHEMI}.e001 ${WRFBIOCHEMI}_new_mean
+   mv ${WRFBIOCHEMI} ${WRFBIOCHEMI}_parent
+   rm -rf ens_mean_bio
+   rm -rf mean_diff_bio
 fi
 EOF
          TRANDOM=$$

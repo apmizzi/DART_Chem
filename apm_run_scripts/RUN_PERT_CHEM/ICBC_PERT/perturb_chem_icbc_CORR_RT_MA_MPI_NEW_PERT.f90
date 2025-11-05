@@ -30,7 +30,7 @@ program main
 !
    integer                                     :: ierr,rank,num_procs,num_procs_avail
    integer                                     :: nt,unit,unita,unitb,date,nx,ny,nz,nxy,nxyz,nzp,nchem_spcs
-   integer                                     :: num_mems,status,ngrid_corr
+   integer                                     :: num_mems,status,ngrid_corr,zfac_fld,zfac_bdy
    integer                                     :: h,i,ii,j,ij,n,jj,k,kk,l,isp,imem,ibdy,bdy_idx
    integer                                     :: ifile,icnt,ncnt,ntasks,icnt_tsk,seed_trm
    integer,dimension(8)                        :: date_time_vals
@@ -82,6 +82,8 @@ program main
    grav=9.8
    nt=2
    zfac=1.
+   zfac_fld=4.
+   zfac_bdy=4.
    tfac=60.*60.
    icnt_tsk=1
    scl_fac_ics=16.
@@ -264,6 +266,10 @@ program main
                      enddo
                   enddo
                enddo
+!
+! Check the distribution extrema
+!               call limit_fld_maxnmin(chem_data3d,nx,ny,nz,zfac_fld)
+!               
                wrfchem_file=trim(pert_path_new)//'/'//trim(wrfinput_file_new)//trim(cmem)
                call put_WRFCHEM_icbc_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
                chem_data4d,nx,ny,nz,1)
@@ -368,6 +374,10 @@ program main
                         enddo
                      enddo
                   enddo
+!
+! Check the distribution extrema
+!               call limit_bdy_maxnmin(bdy_data4d,bdy_dims(ibdy),nhalo,nt,zfac_bdy)
+!               
                else
 ! boundary tendencies may be negative
                   do ij=1,bdy_dims(ibdy)
@@ -1745,3 +1755,103 @@ ngrid_corr,corr_lngth_hz,rank)
       enddo
    enddo
 end subroutine horiz_grid_wts
+
+!-------------------------------------------------------------------------------
+ 
+subroutine limit_fld_maxnmin(fld,nx,ny,nz,nt,zfac)
+   implicit none
+   integer,                          intent(in)      :: nx,ny,nz,nt
+   integer                                           :: i,j,k,l
+   real,                             intent(in)      :: zfac
+   real, dimension(nx,ny,nz,nt),     intent(inout)   :: fld
+   real, dimension(nz,nt)                            :: fld_mn,fld_std
+   real, dimension(nx,ny,nz,nt)                      :: fld_tmp
+!
+! Calculate mean
+   fld_mn(:,:)=0.
+   do l=1,nt
+      do k=1,nz
+         do i=1,nx
+            do j=1,ny
+               fld_mn(k,l)=fld_mn(k,l)+fld(i,j,k,l)
+            enddo
+         enddo
+         fld_mn(k,l)=fld_mn(k,l)/real(nx*ny)
+      enddo
+   enddo
+!
+! Calculate spatial standard deviation
+   fld_std(:,:)=0.
+   do l=1,nt
+      do k=1,nz
+         do i=1,nx
+            do j=1,ny
+               fld_std(k,l)=fld_std(k,l)+(fld(i,j,k,l)-fld_mn(k,l))*(fld(i,j,k,l)-fld_mn(k,l))
+            enddo
+         enddo
+         fld_std(k,l)=sqrt(fld_std(k,l)/real(nx*ny-1))
+      enddo
+   enddo
+!
+!   Check and limit the distribution extreme values
+   do l=1,nt
+      do k=1,nz
+         do i=1,nx
+            do j=1,ny
+               if(fld(i,j,k,l).gt.fld_mn(k,l)+zfac*fld_std(k,l)) fld(i,j,k,l)=fld_mn(k,l)+zfac*fld_std(k,l)
+!               if(fld(i,j,k,l).lt.fld_mn(k,l)-zfac*fld_std(k,l)) fld(i,j,k,l)=fld_mn(k,l)-zfac*fld_std(k,l)
+            enddo
+         enddo
+      enddo
+   enddo
+end subroutine limit_fld_maxnmin
+
+!-------------------------------------------------------------------------------
+ 
+subroutine limit_bdy_maxnmin(fld,nxy,nz,nhalo,nt,zfac)
+   implicit none
+   integer,                          intent(in)      :: nxy,nz,nhalo,nt
+   integer                                           :: ij,k,h,l
+   real,                             intent(in)      :: zfac
+   real, dimension(nxy,nz,nhalo,nt), intent(inout)   :: fld
+   real, dimension(nz,nt)                            :: fld_mn,fld_std
+!
+! Calculate mean
+   fld_mn(:,:)=0.
+   do l=1,nt
+      do k=1,nz
+         do ij=1,nxy
+            do h=1,nhalo
+               fld_mn(k,l)=fld_mn(k,l)+fld(ij,k,h,l)
+            enddo
+         enddo
+         fld_mn(k,l)=fld_mn(k,l)/real(nxy*nhalo)
+      enddo
+   enddo
+!
+! Calculate spatial standard deviation
+   fld_std(:,:)=0.
+   do l=1,nt
+      do k=1,nz
+         do ij=1,nxy
+            do h=1,nhalo
+               fld_std(k,l)=fld_std(k,l)+(fld(ij,k,h,l)-fld_mn(k,l))*(fld(ij,k,h,l)-fld_mn(k,l))
+            enddo
+         enddo
+         fld_std(k,l)=sqrt(fld_std(k,l)/real(nxy*nhalo-1))
+      enddo
+   enddo
+!
+!   Check and limit the distribution extreme values
+   do l=1,nt
+      do k=1,nz
+         do ij=1,nxy
+            do h=1,nhalo
+               if(fld(ij,k,h,l).gt.fld_mn(k,l)+zfac*fld_std(k,l)) fld(ij,k,h,l)=fld_mn(k,l)+zfac*fld_std(k,l)
+!               if(fld(ij,k,h,l).lt.fld_mn(k,l)-zfac*fld_std(k,l)) fld(ij,k,h,l)=fld_mn(k,l)-zfac*fld_std(k,l)
+            enddo
+         enddo
+      enddo
+   enddo
+end subroutine limit_bdy_maxnmin
+!

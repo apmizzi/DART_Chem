@@ -156,16 +156,17 @@
          chmod +x jobx.ksh
          cat << EOF > jobx.ksh
 #!/bin/ksh -aux
+cp ${RUN_DIR}/${DATE}/real/wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE} wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}_parent
 ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}'.e001' ens_mean
-ncdiff -O ens_mean ${RUN_DIR}/${DATE}/real/wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}  mean_diff
+ncdiff -O ens_mean ${RUN_DIR}/${DATE}/real/wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE} mean_diff
 let MEM=1
-while [[ ${MEM} -le ${NUM_MEMBERS} ]]; do
-   export CMEM=e${MEM}
-   if [[ ${MEM} -lt 100 ]]; then export CMEM=e0${MEM}; fi
-   if [[ ${MEM} -lt 10  ]]; then export CMEM=e00${MEM}; fi
-   ncdiff -O wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM} mean_diff mem.${CMEM}
-   mv mem.${CMEM} wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.${CMEM}
-   let MEM=${MEM}+1
+while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
+   export CMEM=e\${MEM}
+   if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
+   if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
+   ncdiff -O wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.\${CMEM} mean_diff mem.\${CMEM}
+   mv mem.\${CMEM} wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.\${CMEM}
+   let MEM=\${MEM}+1
 done
 ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}'.e001' wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}_new_mean
 rm -rf ens_mean

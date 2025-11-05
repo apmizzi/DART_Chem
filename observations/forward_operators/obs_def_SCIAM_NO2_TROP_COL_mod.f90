@@ -505,7 +505,8 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
             call error_handler(E_ALLMSG, routine, string1, source)
-         else if(no2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         endif
+         if(no2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             zstatus(:)=20
             expct_val(:)=missing_r8

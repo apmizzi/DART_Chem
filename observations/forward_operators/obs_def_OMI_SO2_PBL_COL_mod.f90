@@ -537,7 +537,8 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
             call error_handler(E_ALLMSG, routine, string1, source)
-         else if(so2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         endif
+         if(so2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             zstatus(:)=20
             expct_val(:)=missing_r8
@@ -587,12 +588,12 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
       enddo
 !      
 ! Process the vertical summation (OMI SO2 units are mole per m^2)
-      do k=1,layer_omi
+      do k=kstart,layer_omi
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
          up_wt=log(prs_omi_mem(k+1))-lnpr_mid
          dw_wt=lnpr_mid-log(prs_omi_mem(k))
          tl_wt=up_wt+dw_wt
-
+!
 ! Convert from VMR to molar density (mol/m^3)
          if(use_log_so2) then
             so2_val_conv = (up_wt*exp(so2_val(imem,k))+dw_wt*exp(so2_val(imem,k+1)))/tl_wt * &

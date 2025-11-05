@@ -206,7 +206,7 @@ if [[ ${NL_PERT_CHEM} = "true" ]]; then
       if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
       if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
       ncdiff -O ${CHEMI_NEW}.\${CMEM} mean_diff_chem ${CHEMI_NEW}.\${CMEM}
-      let MEM=MEM+1
+      let MEM=\${MEM}+1
    done
    ncea -O -n ${NUM_MEMBERS},3,1 ${CHEMI_NEW}.e001 new_mean_chem_${L_DATE}
 fi
@@ -222,7 +222,7 @@ if [[ ${NL_PERT_FIRE} = "true" ]]; then
       if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
       if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
       ncdiff -O ${FIRECHEMI_NEW}.\${CMEM} mean_diff_fire ${FIRECHEMI_NEW}.\${CMEM}
-      let MEM=MEM+1
+      let MEM=\${MEM}+1
    done
    ncea -O -n ${NUM_MEMBERS},3,1 ${FIRECHEMI_NEW}.e001 new_mean_fire_${L_DATE}
 fi
@@ -238,7 +238,7 @@ if [[ ${NL_PERT_BIO} = "true" ]]; then
       if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
       if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
       ncdiff -O ${BIOGCHEMI_NEW}.\${CMEM} mean_diff_bio ${BIOGCHEMI_NEW}.\${CMEM}
-      let MEM=MEM+1
+      let MEM=\${MEM}+1
    done
    ncea -O -n ${NUM_MEMBERS},3,1 ${BIOGCHEMI_NEW}.e001 new_mean_bio_${L_DATE}
 fi

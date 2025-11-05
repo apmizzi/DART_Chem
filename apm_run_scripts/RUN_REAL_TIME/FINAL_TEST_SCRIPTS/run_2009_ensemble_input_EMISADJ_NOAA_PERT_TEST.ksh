@@ -56,10 +56,10 @@ export FIRST_DART_INFLATE_DATE=2009040203
 export FIRST_EMISS_INV_DATE=2009040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2009040321
+export CYCLE_STR_DATE=2009040203
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2009040321
+export CYCLE_END_DATE=2009040203
 #
 # Special skip for emission perturbations (scaling factor propagation only)
 export RUN_SPECIAL_PERT_SKIP=false
@@ -116,14 +116,14 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_UNGRIB=false
       export RUN_METGRID=false
       export RUN_REAL=false
-      export RUN_PERT_WRFCHEM_MET_IC=false
-      export RUN_PERT_WRFCHEM_MET_BC=false
+      export RUN_PERT_WRFCHEM_MET_IC=true
+      export RUN_PERT_WRFCHEM_MET_BC=true
       export RUN_EXO_COLDENS=false
       export RUN_SEASON_WES=false
       export RUN_WRFCHEM_BIO=false
       export RUN_WRFCHEM_FIRE=false
       export RUN_WRFCHEM_CHEMI=false
-      export RUN_PERT_WRFCHEM_CHEM_ICBC=false
+      export RUN_PERT_WRFCHEM_CHEM_ICBC=true
       export RUN_PERT_WRFCHEM_CHEM_EMISS=true
       export RUN_COMBINE_OBS=true
       export RUN_PREPROCESS_OBS=true
@@ -297,7 +297,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # ((NNCHEM_SPC + MNFIRE_SPC + NNBIO_SPC) x NUM_MEMS) + 1
 # ((20 + 8 + 0) x 10) + 1
 # Broadwell
-   export L_EMISS_PERT_JOB_CLASS=devel
+   export L_EMISS_PERT_JOB_CLASS=normal
    export L_EMISS_PERT_TIME_LIMIT=01:59:00
    export L_EMISS_PERT_NODES=11
    export L_EMISS_PERT_TASKS=26
@@ -491,6 +491,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          cd ${RUN_DIR}/${DATE}/wrfchem_met_ic
       fi
       source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_IC_NOAA.ksh > index_rs.html 2>&1
+#      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_IC_NOAA_OPTM.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -508,6 +509,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       fi
       source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_BC_NOAA.ksh > index_rs.html 2>&1
    fi
+
+exit
+
+   
 #
 #########################################################################
 #

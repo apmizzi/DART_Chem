@@ -39,7 +39,7 @@ program main
    real                                     :: sprd_chem,sprd_fire,sprd_biog
    real                                     :: corr_lngth_hz,corr_lngth_vt
    real                                     :: corr_lngth_tm,corr_tm_delt
-   real                                     :: grid_length,get_dist
+   real                                     :: grid_length,get_dist,zfac_chem,zfac_fire,zfac_biog
    real                                     :: mean,std,wgt_end,scl_fac_chem,scl_fac_fire,scl_fac_biog
    real                                     :: cpu_str,cpu_end,cpu_dif,flg
    real,allocatable,dimension(:)            :: tmp_arry
@@ -74,6 +74,9 @@ program main
    nz_fire=1
    nz_biog=1
    zfac=2.
+   zfac_chem=4.
+   zfac_fire=4.
+   zfac_biog=4.
    zmin=1.e-10
    fac_min=0.01
    icnt_tsk=1
@@ -377,6 +380,10 @@ program main
                      enddo
                   enddo
                enddo
+!
+! Check the distribution extrema
+!               call limit_emiss_maxnmin(chem_data3d,nx,ny,nz_chem,1,zfac_chem)
+!
                wrfchem_file=trim(wrfchemi)//trim(cmem)
                call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
                nx,ny,nz_chem)
@@ -426,6 +433,10 @@ program main
                      enddo
                   enddo
                enddo
+!
+! Check the distribution extrema
+!               call limit_emiss_maxnmin(fire_data3d,nx,ny,nz_fire,1,zfac_fire)
+!
                wrfchem_file=trim(wrffirechemi)//trim(cmem)
                call put_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),fire_data3d, &
                nx,ny,nz_fire)
@@ -476,6 +487,10 @@ program main
                      enddo
                   enddo
                enddo
+!
+! Check the distribution extrema
+!               call limit_emiss_maxnmin(biog_data3d,nx,ny,nz_biog,1,zfac_biog)
+!
                wrfchem_file=trim(wrfbiogchemi)//trim(cmem)
                call put_WRFCHEM_emiss_data(wrfchem_file,ch_biog_spc(isp),chem_data3d, &
                nx,ny,nz_biog)
@@ -1645,3 +1660,53 @@ ngrid_corr,corr_lngth_hz,rank)
       enddo
    enddo
 end subroutine horiz_grid_wts
+
+!-------------------------------------------------------------------------------
+ 
+subroutine limit_emiss_maxnmin(fld,nx,ny,nz,nt,zfac)
+   implicit none
+   integer,                          intent(in)      :: nx,ny,nz,nt
+   integer                                           :: i,j,k,l
+   real,                             intent(in)      :: zfac
+   real, dimension(nx,ny,nz,nt),     intent(inout)   :: fld
+   real, dimension(nz,nt)                            :: fld_mn,fld_std
+   real, dimension(nx,ny,nz,nt)                      :: fld_tmp
+!
+! Calculate mean
+   fld_mn(:,:)=0.
+   do l=1,nt
+      do k=1,nz
+         do i=1,nx
+            do j=1,ny
+               fld_mn(k,l)=fld_mn(k,l)+fld(i,j,k,l)
+            enddo
+         enddo
+         fld_mn(k,l)=fld_mn(k,l)/real(nx*ny)
+      enddo
+   enddo
+!
+! Calculate spatial standard deviation
+   fld_std(:,:)=0.
+   do l=1,nt
+      do k=1,nz
+         do i=1,nx
+            do j=1,ny
+               fld_std(k,l)=fld_std(k,l)+(fld(i,j,k,l)-fld_mn(k,l))*(fld(i,j,k,l)-fld_mn(k,l))
+            enddo
+         enddo
+         fld_std(k,l)=sqrt(fld_std(k,l)/real(nx*ny-1))
+      enddo
+   enddo
+!
+!   Check and limit the distribution extreme values
+   do l=1,nt
+      do k=1,nz
+         do i=1,nx
+            do j=1,ny
+               if(fld(i,j,k,l).gt.fld_mn(k,l)+zfac*fld_std(k,l)) fld(i,j,k,l)=fld_mn(k,l)+zfac*fld_std(k,l)
+!               if(fld(i,j,k,l).lt.fld_mn(k,l)-zfac*fld_std(k,l)) fld(i,j,k,l)=fld_mn(k,l)-zfac*fld_std(k,l)
+            enddo
+         enddo
+      enddo
+   enddo
+end subroutine limit_emiss_maxnmin

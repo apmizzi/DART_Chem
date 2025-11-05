@@ -553,9 +553,10 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
          (tmp_val(imem,k).lt.0. .and. tmp_val(imem,k).ne.missing_r8) .or. &
          (qmr_val(imem,k).lt.0. .and. qmr_val(imem,k).ne.missing_r8)) then
             write(string1, *) &
-            'APM: Recentered full profile has negative values for key,imem ',key,imem
+            'APM: Recentered full profile has negative values for key,imem,k ',key,imem,k
             call error_handler(E_ALLMSG, routine, string1, source)
-         else if(co_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         endif
+         if(co_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
             zstatus(:)=20
             expct_val(:)=missing_r8
@@ -620,6 +621,17 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
 !
 ! Use retrieval prior above regional model top         
          if(k.ge.kstart .and. kstart.gt.0) co_val_conv=prior(key,k)
+
+         
+         if(co_val_conv.le.0 .or. prior(key,k).le.0) then
+            write(string1, *) &
+            'APM: k,kstart,mem,co_val_conv,prior ',k,kstart,imem,co_val_conv,prior(key,k)
+            call error_handler(E_ALLMSG, routine, string1, source)
+            write(string1, *) &
+            'APM: co_val_k,co_val_k+1,prs_k,prs_k+1 ',co_val(imem,k),co_val(imem,k+1),prs_mopitt_mem(k),prs_mopitt_mem(k+1)
+            call error_handler(E_ALLMSG, routine, string1, source)
+         endif
+         
  
 ! Get expected observation (MOPITT prior is VMR ppbv)
 
