@@ -365,7 +365,7 @@ character(len=*), parameter :: revdate  = ''
                             do ii=ii_str,ii_end
                                do jj=jj_str,jj_end
                                   zdist=get_dist(lat(ii,jj),lat(i,j),lon(ii,jj),lon(i,j))
-                                  if(zdist.le.2.0*corr_lngth_hz) then
+                                  if(zdist.le.corr_lngth_hz) then
                                      wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
                                      do k=1,nz_chem
                                         wgt_sum(i,j,k)=wgt_sum(i,j,k)+wgt
@@ -396,7 +396,7 @@ character(len=*), parameter :: revdate  = ''
                          do ii=ii_str,ii_end
                             do jj=jj_str,jj_end
                                zdist=get_dist(lat(ii,jj),lat(i,j),lon(ii,jj),lon(i,j))
-                               if(zdist.le.2.0*corr_lngth_hz) then
+                               if(zdist.le.corr_lngth_hz) then
                                   do k=1,nz_chem
                                      wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
                                      wgt_sum(i,j,k)=wgt_sum(i,j,k)+wgt
@@ -512,7 +512,7 @@ character(len=*), parameter :: revdate  = ''
                             do ii=ii_str,ii_end
                                do jj=jj_str,jj_end
                                   zdist=get_dist(lat(ii,jj),lat(i,j),lon(ii,jj),lon(i,j))
-                                  if(zdist.le.2.0*corr_lngth_hz) then
+                                  if(zdist.le.corr_lngth_hz) then
                                      wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
                                      do k=1,nz_fire
                                         wgt_sum(i,j,k)=wgt_sum(i,j,k)+wgt
@@ -543,7 +543,7 @@ character(len=*), parameter :: revdate  = ''
                          do ii=ii_str,ii_end
                             do jj=jj_str,jj_end
                                zdist=get_dist(lat(ii,jj),lat(i,j),lon(ii,jj),lon(i,j))
-                               if(zdist.le.2.0*corr_lngth_hz) then
+                               if(zdist.le.corr_lngth_hz) then
                                   do k=1,nz_fire
                                      wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
                                      wgt_sum(i,j,k)=wgt_sum(i,j,k)+wgt
@@ -653,7 +653,7 @@ character(len=*), parameter :: revdate  = ''
                             do ii=ii_str,ii_end
                                do jj=jj_str,jj_end
                                   zdist=get_dist(lat(ii,jj),lat(i,j),lon(ii,jj),lon(i,j))
-                                  if(zdist.le.2.0*corr_lngth_hz) then
+                                  if(zdist.le.corr_lngth_hz) then
                                      wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
                                      do k=1,nz_biog
                                         wgt_sum(i,j,k)=wgt_sum(i,j,k)+wgt
@@ -684,7 +684,7 @@ character(len=*), parameter :: revdate  = ''
                          do ii=ii_str,ii_end
                             do jj=jj_str,jj_end
                                zdist=get_dist(lat(ii,jj),lat(i,j),lon(ii,jj),lon(i,j))
-                               if(zdist.le.2.0*corr_lngth_hz) then
+                               if(zdist.le.corr_lngth_hz) then
                                   do k=1,nz_biog
                                      wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
                                      wgt_sum(i,j,k)=wgt_sum(i,j,k)+wgt

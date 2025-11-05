@@ -23,10 +23,10 @@ cat > input.nml << EOF
    bin_end_sec                 = ${NL_BIN_END_SEC}
    fac_obs_error               = ${NL_FAC_OBS_ERROR}
    use_log_no2                 = ${NL_USE_LOG_NO2}
-   lon_min                     = ${NNL_MIN_LON}
-   lon_max                     = ${NNL_MAX_LON}
-   lat_min                     = ${NNL_MIN_LAT}
-   lat_max                     = ${NNL_MAX_LAT}
+   lon_min                     = ${NL_MIN_LON}
+   lon_max                     = ${NL_MAX_LON}
+   lat_min                     = ${NL_MIN_LAT}
+   lat_max                     = ${NL_MAX_LAT}
    path_model                  = ${NL_PATH_MODEL}
    file_model                  = ${NL_FILE_MODEL}
    nx_model                    = ${NL_NX_MODEL}
@@ -66,9 +66,9 @@ cat > input.nml << EOF
 /
 &obs_def_SCIAM_NO2_nml
    use_log_no2                 = ${NL_USE_LOG_NO2:-.false.},
-   nlayer_model                = ${NL_NLAYER_MODEL:-36},
-   nlayer_sciam_no2_total_col  = ${NL_NLAYER_SCIAM_NO2_TOTAL_COL:-14},
-   nlayer_sciam_no2_trop_col   = ${NL_NLAYER_SCIAM_NO2_TROP_COL:-14},
+   nlayer_model                = ${NL_NLAYER_MODEL:-50},
+   nlayer_sciam_no2_total_col  = ${NL_NLAYER_SCIAM_NO2_TOTAL_COL:-67},
+   nlayer_sciam_no2_trop_col   = ${NL_NLAYER_SCIAM_NO2_TROP_COL:-67},
 / 
 EOF
 

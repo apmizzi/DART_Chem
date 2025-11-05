@@ -391,8 +391,7 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
 
 ! Get location infomation
 
-   mloc = get_location(location)
-   
+   mloc = get_location(location)   
    if (mloc(2) >  90.0_r8) then
       mloc(2) =  90.0_r8
    elseif (mloc(2) < -90.0_r8) then
@@ -407,7 +406,6 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
    return_now=.false.
    
 ! pressure at model surface (Pa)
-
    zstatus=0
    level=0.0_r8
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
@@ -438,9 +436,7 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
             exit
          endif
       enddo
-      if(interp_new.eq.0) then
-         exit
-      endif    
+      if(interp_new.eq.0) exit
    enddo
 
 !   write(string1, *)'APM: co lower bound 1 ',co_mdl_1
@@ -457,7 +453,7 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
    qmr_mdl_n(:)=missing_r8
    prs_mdl_n(:)=missing_r8
 
-   do k=layer_mdl,1,-1
+   do k=layer_mdl-1,1,-1
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
@@ -477,9 +473,7 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
             exit
          endif
       enddo
-      if(interp_new.eq.0) then
-         exit
-      endif    
+      if(interp_new.eq.0) exit
    enddo
 
 !   write(string1, *)'APM: co upper bound 1 ',co_mdl_n
@@ -587,34 +581,28 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
       endif             
    enddo
 !
-! Print full profile examples
-!   do imem=1,1
-!      do k=1,layer_tes
-!         write(string1, *) &
-!         'APM: prs,co,tmp,qmr ',k,prs_tes(k)/100.,co_val(imem,k), &
-!         tmp_val(imem,k),qmr_val(imem,k)
-!         call error_handler(E_MSG, routine, string1, source)
-!      enddo
-!   enddo
-!
 ! Check full profile for negative values
    do imem=1,ens_size
-      flg=0
-      do k=1,layer_tes   
-         if(co_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
-         qmr_val(imem,k).lt.0.) then
-            flg=1   
+      do k=1,layer_tes
+         if((co_val(imem,k).lt.0. .and. co_val(imem,k).ne.missing_r8) .or. &
+         (tmp_val(imem,k).lt.0. .and. tmp_val(imem,k).ne.missing_r8) .or. &
+         (qmr_val(imem,k).lt.0. .and. qmr_val(imem,k).ne.missing_r8)) then
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
             call error_handler(E_ALLMSG, routine, string1, source)
          endif
+         if(co_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         qmr_val(imem,k).lt.0.) then
+            zstatus(:)=20
+            expct_val(:)=missing_r8
+            call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+            deallocate(prs_tes)
+            deallocate(co_val)
+            deallocate(tmp_val)
+            deallocate(qmr_val)
+            return
+         endif
       enddo
-      if(flg.eq.1) then
-         zstatus(:)=20
-         expct_val(:)=missing_r8
-         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-         return
-      endif
    enddo
 !
 ! Calculate the expected retrievals
@@ -622,35 +610,45 @@ subroutine get_expected_tes_co_profile(state_handle, ens_size, location, key, ob
    zstatus(:)=0.
    expct_val(:)=0.0
 !      
-! Process the vertical summation
    do imem=1,ens_size
       do k=1,layer_tes
+         if(prior(key,k).lt.0.) then
+            write(string1, *) &
+            'APM: TES CO Prior is negative. Level may be below surface. Key,Layer: ',key,k
+            call error_handler(E_ALLMSG, routine, string1, source)
+            cycle
+         endif
+!
+! Get expected observation
          prior_term=-1.*avg_kernel(key,k)
          if(k.eq.klev_tes) prior_term=(1.0_r8 - avg_kernel(key,k)) 
-
          expct_val(imem) = expct_val(imem) + log(co_val(imem,k)) * &
          avg_kernel(key,k) + prior_term * log(prior(key,k))
-
-!         write(string1, *) 'APM: exp_val, co, avgk, prior_trm, prior',imem,k, &
-!         expct_val(imem),co_val(imem,k),avg_kernel(key,k),prior_term,prior(key,k)
-!         call error_handler(E_MSG, routine, string1, source)
       enddo
-
       expct_val(imem)=exp(expct_val(imem))      
-!      write(string1, *) 'APM: Finished vertical summation loop ',key,imem
-!      call error_handler(E_MSG, routine, string1, source)
-      
+!      
       if(isnan(expct_val(imem))) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
-!         write(string1, *) &
-!         'APM NOTICE: TES CO expected value is NaN'
-!         call error_handler(E_ALLMSG, routine, string1, source)
+         write(string1, *) &
+         'APM NOTICE: TES CO expected value is NaN'
+         call error_handler(E_ALLMSG, routine, string1, source)
+         call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+         return
+      endif
+!
+      if(expct_val(imem).lt.0) then
+         zstatus(imem)=20
+         expct_val(:)=missing_r8
+         write(string1, *) &
+         'APM NOTICE:TES_CO expected value is negative '
+         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
    enddo
-
+!   call exit_all(-77)
+!
 ! Clean up and return
    deallocate(co_val, tmp_val, qmr_val)
    deallocate(prs_tes)

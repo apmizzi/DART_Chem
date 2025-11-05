@@ -176,6 +176,7 @@ program omi_so2_pbl_col_ascii_to_obs
    real                            :: zenang,obs_sum
    real                            :: prs_loc,pbl_sum
    real                            :: lat_obs,lon_obs
+   real                            :: du2molcpm2,msq2cmsq
    real*8                          :: lat_obs_r8,lon_obs_r8
    real,allocatable,dimension(:)   :: scat_wt,prs_obs,hgt_obs,layer_wt,layer_wt_pbl
    real*8,allocatable,dimension(:) :: scat_wt_r8,prs_obs_r8
@@ -195,7 +196,6 @@ program omi_so2_pbl_col_ascii_to_obs
    pi=4.*atan(1.)
    rad2deg=360./(2.*pi)
    re=6371000.
-   fac_err=.3
    days_last=-9999.
    seconds_last=-9999.
    level_crit=50000.
@@ -203,6 +203,9 @@ program omi_so2_pbl_col_ascii_to_obs
    sum_accept=0
    sum_total=0
    obs_accept=0
+   fac_err=.3
+   du2molcpm2=2.6867e20
+   msq2cmsq=1.e4
 !
 ! Record the current time, date, etc. to the logfile
    call initialize_utilities(source)
@@ -332,7 +335,9 @@ program omi_so2_pbl_col_ascii_to_obs
 ! Obs value is the tropospheric slant column
 ! APM: Do literature review to find uncertainty setting
          obs_val(:)=col_amt_pbl*amf
-         obs_err_var=(fac_obs_error*fac_err*col_amt_pbl*amf)**2.
+!         obs_err_var=(fac_obs_error*fac_err*col_amt_pbl*amf)**2.
+! Error based on Miyasaki et al. (2020 - )
+         obs_err_var=(0.25*col_pbl_amf*du2molcpm2/msq2cmsq)**2.
          omi_qc(:)=0
 !
          obs_time=set_date(yr_obs,mn_obs,dy_obs,hh_obs,mm_obs,ss_obs)

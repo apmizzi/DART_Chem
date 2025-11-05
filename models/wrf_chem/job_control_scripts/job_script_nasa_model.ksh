@@ -39,7 +39,7 @@ if [[ ${TYPE} == PARALLEL ]]; then
 #PBS -N ${JOBID}
 #PBS -l walltime=${TIME_LIMIT}
 #PBS -q ${CLASS}
-#PBS -l site=needed=/home1+/nobackupp28
+#PBS -l site=needed=/home1+/nobackupp28+/nobackupp27
 #PBS -j oe
 #PBS -l select=${NODES}:ncpus=${TASKS}:mpiprocs=${TASKS}:model=${MODEL}
 export MPI_LAUNCH_TIMEOUT=100
@@ -63,7 +63,7 @@ elif [[ ${TYPE} == SERIAL ]]; then
 #PBS -N ${JOBID}
 #PBS -l walltime=${TIME_LIMIT}
 #PBS -q ${CLASS}
-#PBS -l site=needed=/home1+/nobackupp28
+#PBS -l site=needed=/home1+/nobackupp28+/nobackupp27
 #PBS -j oe
 #PBS -l select=${NODES}:ncpus=1:model=${MODEL}
 ./${EXECUTE}  > index.html 2>&1 

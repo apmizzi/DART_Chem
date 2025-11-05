@@ -399,8 +399,7 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
 
 ! Get location infomation
 
-   mloc = get_location(location)
-   
+   mloc = get_location(location)   
    if (mloc(2) >  90.0_r8) then
       mloc(2) =  90.0_r8
    elseif (mloc(2) < -90.0_r8) then
@@ -414,10 +413,11 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
 
    istatus(:) = 0  ! set this once at the beginning
    return_now=.false.
-   
+
+! pressure at model surface (Pa)
+   zstatus(:)=0
    level=0.0_r8
    loc2 = set_location(mloc(1), mloc(2), level, VERTISSURFACE)
-   zstatus=0
    call interpolate(state_handle, ens_size, loc2, QTY_SURFACE_PRESSURE, prs_sfc, zstatus)
 !
    hno3_mdl_1(:)=missing_r8
@@ -439,17 +439,13 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
 !
       interp_new=0
       do imem=1,ens_size
-!         if(hno3_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
-!         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
          if(hno3_mdl_1(imem).lt.0. .or. tmp_mdl_1(imem).lt.0. .or. &
          qmr_mdl_1(imem).lt.0. .or. prs_mdl_1(imem).lt.0.) then
             interp_new=1
             exit
          endif
       enddo
-      if(interp_new.eq.0) then
-         exit
-      endif
+      if(interp_new.eq.0) exit
    enddo
 
 !   write(string1, *) 'APM: hno3 lower bound ',key,hno3_mdl_1
@@ -466,7 +462,7 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
    qmr_mdl_n(:)=missing_r8
    prs_mdl_n(:)=missing_r8
 
-   do k=layer_mdl,1,-1
+   do k=layer_mdl-1,1,-1
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
@@ -480,17 +476,13 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
 !
       interp_new=0
       do imem=1,ens_size
-!         if(hno3_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
-!         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
          if(hno3_mdl_n(imem).lt.0. .or. tmp_mdl_n(imem).lt.0. .or. &
          qmr_mdl_n(imem).lt.0. .or. prs_mdl_n(imem).lt.0.) then
             interp_new=1
             exit
          endif
       enddo
-      if(interp_new.eq.0) then
-         exit
-      endif
+      if(interp_new.eq.0) exit
    enddo
 
 !   write(string1, *) 'APM: hno3 upper bound ',key,hno3_mdl_n
@@ -539,73 +531,32 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
    hno3_mdl_1(:) = hno3_mdl_1(:) * 1.e-6_r8
    hno3_mdl_n(:) = hno3_mdl_n(:) * 1.e-6_r8
 !
-! Print profile values    
-!   do imem=1,1
-!      do k=1,layer_mls
-!         write(string1, *)'APM: k,prs,hno3,tmp,qmr ',k,prs_mls(k)/100., &
-!         hno3_val(imem,k),tmp_val(imem,k),qmr_val(imem,k)
-!         call error_handler(E_MSG, routine, string1, source)
-!      enddo
-!   enddo
-!
-! Use large scale hno3 data above the regional model top
+! Use large scale o3 data above the regional model top
 ! MLS vertical grid is from bottom to top
 ! APM: Modified to use retrieval prior above the regional model top   
 !
-! APM: Before old code   
-!   kstart=-1
-!   do imem=1,ens_size
-!      if (prs_mls(layer_mls).lt.prs_mdl_n(imem)) then
-!         do k=1,layer_mls
-!            if (prs_mls(k).lt.prs_mdl_n(imem)) then
-!               kstart=k
-!               exit
-!            endif
-!         enddo
-!         ncnt=layer_mls-kstart+1
-!         allocate(prs_mls_top(ncnt))
-!         allocate(hno3_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
-!         do k=kstart,layer_mls
-!            prs_mls_top(k-kstart+1)=prs_mls(k)
-!         enddo
-!         prs_mls_top(:)=prs_mls_top(:)/100.
-!         lon_obs=mloc(1)/rad2deg
-!         lat_obs=mloc(2)/rad2deg
-!         call get_time(obs_time,datesec_obs,date_obs)
-!         data_file=trim(upper_data_file)
-!         model=trim(upper_data_model)
-!
-!         call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
-!         ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_mls_top, &
-!         ncnt,hno3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
-!
-! Impose ensemble perturbations from level kstart-1
-!         do k=kstart,layer_mls
-!            kk=k-kstart+1
-!            hno3_val(imem,k)=hno3_prf_mdl(kk)*hno3_val(imem,kstart-1)/ &
-!            (sum(hno3_val(:,kstart-1))/real(ens_size))
-!            tmp_val(imem,k)=tmp_prf_mdl(kk)*tmp_val(imem,kstart-1)/ &
-!            (sum(tmp_val(:,kstart-1))/real(ens_size))
-!            qmr_val(imem,k)=qmr_prf_mdl(kk)*qmr_val(imem,kstart-1)/ &
-!            (sum(qmr_val(:,kstart-1))/real(ens_size))
-!         enddo
-!         deallocate(prs_mls_top)
-!         deallocate(hno3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
-!      endif             
-!   enddo
-! APM: After old code
+! APM: No old code    
 !
 ! Check full profile for negative values
    do imem=1,ens_size
       do k=1,layer_mls
-         if(hno3_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
-         qmr_val(imem,k).lt.0.) then
+         if((hno3_val(imem,k).lt.0. .and. hno3_val(imem,k).ne.missing_r8) .or. &
+         (tmp_val(imem,k).lt.0. .and. tmp_val(imem,k).ne.missing_r8) .or. &
+         (qmr_val(imem,k).lt.0. .and. qmr_val(imem,k).ne.missing_r8)) then
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
             call error_handler(E_ALLMSG, routine, string1, source)
-            zstatus(imem)=20
+         endif
+         if(hno3_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         qmr_val(imem,k).lt.0.) then
+            zstatus(:)=20
             expct_val(:)=missing_r8
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
+            deallocate(prs_mls)
+            deallocate(prs_mls_mem)
+            deallocate(hno3_val)
+            deallocate(tmp_val)
+            deallocate(qmr_val)
             return
          endif
       enddo
@@ -616,20 +567,15 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
    zstatus(:)=0
    expct_val(:)=0.0
 !
+   do imem=1,ens_size
+!
 ! Find MLS index for first layer above top of regional model      
 ! MLS vertical grid is from bottom to top
-   do imem=1,ens_size
       kstart=-1
-!      write(string1, *) &
-!      'APM: imem,prs_mo,prs_mdl ',imem,prs_mls(layer_mls),prs_mdl_n(imem)
-!      call error_handler(E_ALLMSG, routine, string1, source)
       if (prs_mls(layer_mls).lt.prs_mdl_n(imem)) then
          do k=layer_mls,1,-1
             if (prs_mls(k).gt.prs_mdl_n(imem)) then
                kstart=k
-!               write(string1, *) &
-!               'APM: imem,kstart,prs_mls,prs_mdl ',imem,kstart,prs_mls(k),prs_mdl_n(imem)
-!               call error_handler(E_ALLMSG, routine, string1, source)
                exit
             endif
          enddo
@@ -641,23 +587,22 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
          if(k.gt.kstart .and. kstart.gt.0) hno3_val_conv=prior(key,k)
          prior_term=-1.*avg_kernel(key,k)
          if(k.eq.klev_mls) prior_term=1.0_r8-avg_kernel(key,k)
-!
-! expected retrieval
          expct_val(imem) = expct_val(imem) + hno3_val_conv * &
          avg_kernel(key,k) + prior_term*prior(key,k)
 !
-         write(string1, *)'APM: k,expc_val,trm1,trm2,hno3_val,avgk,prior_term,prior ', &
-         k,expct_val(imem),hno3_val_conv*avg_kernel(key,k),prior_term*prior(key,k),hno3_val_conv, &
-         avg_kernel(key,k),prior_term,prior(key,k)
-         call error_handler(E_MSG, routine, string1, source)
+!         write(string1, *) &
+!         'APM: EX_VAL,HNO3_VAL,AVGK,PRIOR,TRM1,TRM2 ',k,klev_mls, &
+!         expct_val(imem),hno3_val_conv,avg_kernel(key,k),prior(key,k),&
+!         hno3_val_conv*avg_kernel(key,k),prior_term*prior(key,k)
+!         call error_handler(E_MSG, routine, string1, source)
 !
       enddo
 !
       if(isnan(expct_val(imem))) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
-!         write(string1, *) 'APM NOTICE: MLS HNO3 expected value is NaN '
-!         call error_handler(E_MSG, routine, string1, source)
+         write(string1, *) 'APM NOTICE: MLS HNO3 expected value is NaN '
+         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
@@ -665,12 +610,13 @@ subroutine get_expected_mls_hno3_profile(state_handle, ens_size, location, key, 
       if(expct_val(imem).lt.0) then
          zstatus(imem)=20
          expct_val(:)=missing_r8
-!         write(string1, *) 'APM NOTICE: MLS HNO3 expected value is negative '
-!         call error_handler(E_MSG, routine, string1, source)
+         write(string1, *) 'APM NOTICE: MLS HNO3 expected value is negative '
+         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
          return
       endif
    enddo
+!   call exit_all(-77)
 
 ! Clean up and return
    deallocate(hno3_val, tmp_val, qmr_val)

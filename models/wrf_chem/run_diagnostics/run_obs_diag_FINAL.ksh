@@ -10,42 +10,11 @@
 #
 ############################################################################### 
 #
-   export START_DATE=2014072618
-   export END_DATE=2014072718
-#
-    export TRUNK_DIR=/nobackupp28/amizzi/TRUNK
-    export DART_DIR=DART_development
-    export CODE_DIR=apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS
-    export RS_SCRIPTS_DIR=${TRUNK_DIR}/${DART_DIR}/${CODE_DIR}/RS_Scripts
-#
-# Define EXPERIMENT path
-   export DIR_NAME=TRACER_I_ALLCHEM
-   export DIR_NAME=FRAPPE_ALLCHEM_CO_RETR
-   export NUM_MEMBERS=20
-#
-# Set large scale chemisty file
-   export NL_UPPER_DATA_FILE_NAME=/h0004.nc
-   export NL_UPPER_DATA_MODEL=\'MOZART\'
-   export LS_CHEM_DX=17
-   export LS_CHEM_DY=13
-   export LS_CHEM_DZ=56
-   export LS_CHEM_DT=368
-   export INPUT_DATA_DIR=/nobackupp28/amizzi/INPUT_DATA
-   export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}/FRAPPE_REAL_TIME_DATA
-   export MOZBC_DATA_DIR=${EXPERIMENT_DATA_DIR}/large_scale_chem_forecasts
-   export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
-#
-# Define FILTER path
-   export DART_FILTER=dart_filter
-#
-   export DELETE_FLG=true
-   export DOMAIN=01
-   export CYCLE_PERIOD=6
-   export FCST_PERIOD=6
-   export ASIM_PERIOD=3
-   export LBC_FREQ=3
-   (( INTERVAL_SEC=${LBC_FREQ}*60*60 ))
-   (( CYCLE_PERIOD_SEC=${CYCLE_PERIOD}*60*60 ))
+# Plotting dates
+   export START_DATE=2009040206
+   export END_DATE=2009040318
+   export EXP_NAME=OUTPUT_2009_NOAA_EMISADJ_10MEMS
+   export DIR_NAME=TRACER-I
 #
 # Define code versions
    export DART_VER=DART_development
@@ -53,22 +22,46 @@
    export WRF_VER=WRFv4.3.2_dmpar
    export WRFDA_VER=WRFDAv4.3.2_dmpar
 #
-# Independent path settings
-   export SCRATCH_DIR=/nobackupp28/amizzi/OUTPUT_DATA
-   export PROJECT_DIR=/nobackupp28/amizzi
-   export DATA_DIR=/nobackupp28/amizzi/INPUT_DATA
+   export NUM_MEMBERS=10
+   export NL_UPPER_DATA_FILE_NAME=/h0001.nc
+   export NL_UPPER_DATA_MODEL=\'TCR2\'
+   export LS_CHEM_DX=78
+   export LS_CHEM_DY=35
+   export LS_CHEM_DZ=32
+   export LS_CHEM_DT=360
 #
-# Dependent path settings
-   export RUN_DIR=${SCRATCH_DIR}/DART_OBS_DIAG/${DIR_NAME}
-   export EXP_DIR=${SCRATCH_DIR}/${DIR_NAME}
-   export TRUNK_DIR=${PROJECT_DIR}/TRUNK
-#
+# Path settings
+   export OUTPUT_DATA_DIR=/nobackupp28/amizzi/OUTPUT_DATA
+   export INPUT_DATA_DIR=/nobackupp27/nex/datapool/TRACER-1/TRACER1_OBS
+   export TRUNK_DIR=/nobackupp28/amizzi/TRUNK
    export DART_DIR=${TRUNK_DIR}/${DART_VER}
    export WRF_DIR=${TRUNK_DIR}/${WRF_VER}
    export WRFCHEM_DIR=${TRUNK_DIR}/${WRFCHEM_VER}
    export WRFDA_DIR=${TRUNK_DIR}/${WRFDA_VER}/var
+   export CODE_DIR=${DART_DIR}/apm_run_scripts/RUN_REAL_TIME/FINAL_TEST_SCRIPTS
+   export RS_SCRIPTS_DIR=${CODE_DIR}/RS_Scripts
+   export MOZBC_DATA_DIR=${INPUT_DATA_DIR}/tcr2_data
+   export NL_UPPER_DATA_FILE=\'${MOZBC_DATA_DIR}${NL_UPPER_DATA_FILE_NAME}\'
 #
-# Copy necessary executables from DART to $RUN_DIR
+   export RUN_DIR=${OUTPUT_DATA_DIR}/DART_OBS_DIAG/${DIR_NAME}
+   export EXP_DIR=${OUTPUT_DATA_DIR}/${EXP_NAME}
+   export EXPERIMENT_DIR=${OUTPUT_DATA_DIR}/${EXP_NAME}
+#
+# Define FILTER path
+   export DART_FILTER=dart_filter_OMI_SO2
+   export DART_FILTER=dart_filter_SCIA_NO2
+   export DART_FILTER=dart_filter_TEST
+   export DART_FILTER=dart_filter
+   export OBS_SEQ_FILE=obs_seq.final
+   export DELETE_FLG=true
+   export DOMAIN=01
+   export CYCLE_PERIOD=3
+   export FCST_PERIOD=3
+   export ASIM_PERIOD=1hr30m
+   export LBC_FREQ=1.5
+   (( INTERVAL_SEC=${LBC_FREQ}*60*60 ))
+   (( CYCLE_PERIOD_SEC=${CYCLE_PERIOD}*60*60 ))
+#
    if [[ ! -d ${RUN_DIR} ]]; then mkdir -p ${RUN_DIR}; fi
    cd ${RUN_DIR}
    cp ${DART_DIR}/models/wrf_chem/work/input.nml ./.
@@ -96,30 +89,30 @@
       export NEXT_FILE_DATE=${NEXT_YY}-${NEXT_MM}-${NEXT_DD}_${NEXT_HH}:00:00
 #
 # Create obs_seq file list
-      export FILE=obs_seq.final
       if [[ ! -d ${RUN_DIR}/${L_DATE}/${DART_FILTER} ]]; then
          mkdir -p ${RUN_DIR}/${L_DATE}/${DART_FILTER}
          cd ${RUN_DIR}/${L_DATE}/${DART_FILTER}
       else
          cd ${RUN_DIR}/${L_DATE}/${DART_FILTER}
       fi
-      if [[ -f ${FILE} && ${DELETE_FLG} == true ]]; then
-         rm -rf ${FILE}
+      if [[ -f ${OBS_SEQ_FILE} && ${DELETE_FLG} == true ]]; then
+         rm -rf ${OBS_SEQ_FILE}
       fi
-      if [[ ! -f ${FILE} ]]; then
-         cp ${EXP_DIR}/${L_DATE}/${DART_FILTER}/${FILE} ${FILE}
+      if [[ ! -f ${OBS_SEQ_FILE} ]]; then
+         cp ${EXP_DIR}/${L_DATE}/${DART_FILTER}/${OBS_SEQ_FILE} ${OBS_SEQ_FILE}
       fi
       cd ${RUN_DIR}
-      if [[ -f ${RUN_DIR}/${L_DATE}/${DART_FILTER}/${FILE} ]]; then
-         echo ${RUN_DIR}/${L_DATE}/${DART_FILTER}/${FILE} >> file_list.txt
+      if [[ -f ${RUN_DIR}/${L_DATE}/${DART_FILTER}/${OBS_SEQ_FILE} ]]; then
+         echo ${RUN_DIR}/${L_DATE}/${DART_FILTER}/${OBS_SEQ_FILE} >> file_list.txt
       else
-         echo APM: cp failed for ${RUN_DIR}/${L_DATE}/${DART_FILTER}/${FILE}
+         echo APM: cp failed for ${RUN_DIR}/${L_DATE}/${DART_FILTER}/${OBS_SEQ_FILE}
          exit
       fi
 #
 # Loop to next cycle time   
       export L_DATE=${NEXT_DATE}
    done
+#   
    cd ${RUN_DIR}
 #
 ###############################################################################
@@ -131,52 +124,64 @@
    export STR_MM=`echo $START_DATE | cut -c5-6`
    export STR_DD=`echo $START_DATE | cut -c7-8`
    export STR_HH=`echo $START_DATE | cut -c9-10`
+   export STR_MN=`echo $START_DATE | cut -c11-12`
 #
    export END_YY=`echo $END_DATE | cut -c1-4`
    export END_MM=`echo $END_DATE | cut -c5-6`
    export END_DD=`echo $END_DATE | cut -c7-8`
    export END_HH=`echo $END_DATE | cut -c9-10`
+   export END_MN=`echo $END_DATE | cut -c11-12`
 #
-   export ASIM_MIN_DATE_STR=`echo ${START_DATE} -${ASIM_PERIOD}h | ./advance_time` 
+   export ASIM_MIN_DATE_STR=`echo ${START_DATE} -${ASIM_PERIOD} | ./advance_time` 
    export ASIM_MIN_YY_STR=`echo $ASIM_MIN_DATE_STR | cut -c1-4`
    export ASIM_MIN_MM_STR=`echo $ASIM_MIN_DATE_STR | cut -c5-6`
    export ASIM_MIN_DD_STR=`echo $ASIM_MIN_DATE_STR | cut -c7-8`
    export ASIM_MIN_HH_STR=`echo $ASIM_MIN_DATE_STR | cut -c9-10`
-   export ASIM_MAX_DATE_STR=`echo ${START_DATE} +${ASIM_PERIOD}h | ./advance_time` 
+   export ASIM_MIN_MN_STR=`echo $ASIM_MIN_DATE_STR | cut -c11-12`
+   export ASIM_MAX_DATE_STR=`echo ${START_DATE} +${ASIM_PERIOD} | ./advance_time` 
    export ASIM_MAX_YY_STR=`echo $ASIM_MAX_DATE_STR | cut -c1-4`
    export ASIM_MAX_MM_STR=`echo $ASIM_MAX_DATE_STR | cut -c5-6`
    export ASIM_MAX_DD_STR=`echo $ASIM_MAX_DATE_STR | cut -c7-8`
    export ASIM_MAX_HH_STR=`echo $ASIM_MAX_DATE_STR | cut -c9-10`
+   export ASIM_MAX_MN_STR=`echo $ASIM_MAX_DATE_STR | cut -c11-12`
 #
-   export ASIM_MIN_DATE_END=`echo ${END_DATE} -${ASIM_PERIOD}h | ./advance_time` 
+   export ASIM_MIN_DATE_END=`echo ${END_DATE} -${ASIM_PERIOD} | ./advance_time` 
    export ASIM_MIN_YY_END=`echo $ASIM_MIN_DATE_END | cut -c1-4`
    export ASIM_MIN_MM_END=`echo $ASIM_MIN_DATE_END | cut -c5-6`
    export ASIM_MIN_DD_END=`echo $ASIM_MIN_DATE_END | cut -c7-8`
    export ASIM_MIN_HH_END=`echo $ASIM_MIN_DATE_END | cut -c9-10`
-   export ASIM_MAX_DATE_END=`echo ${END_DATE} +${ASIM_PERIOD}h | ./advance_time` 
+   export ASIM_MIN_MN_END=`echo $ASIM_MIN_DATE_END | cut -c11-12`
+   export ASIM_MAX_DATE_END=`echo ${END_DATE} +${ASIM_PERIOD} | ./advance_time` 
    export ASIM_MAX_YY_END=`echo $ASIM_MAX_DATE_END | cut -c1-4`
    export ASIM_MAX_MM_END=`echo $ASIM_MAX_DATE_END | cut -c5-6`
    export ASIM_MAX_DD_END=`echo $ASIM_MAX_DATE_END | cut -c7-8`
    export ASIM_MAX_HH_END=`echo $ASIM_MAX_DATE_END | cut -c9-10`
-   
+   export ASIM_MAX_MN_END=`echo $ASIM_MAX_DATE_END | cut -c11-12`
+#   
    (( STR_MM = ${STR_MM} + 0 ))
    (( STR_DD = ${STR_DD} + 0 ))
-   (( STR_HH = ${STR_HH} + 0 ))     
+   (( STR_HH = ${STR_HH} + 0 ))
+   (( STR_MN = ${STR_MN} + 0 ))
    (( END_MM = ${END_MM} + 0 ))
    (( END_DD = ${END_DD} + 0 ))
-   (( END_HH = ${END_HH} + 0 ))     
+   (( END_HH = ${END_HH} + 0 ))
+   (( END_MN = ${END_MN} + 0 ))
    (( ASIM_MIN_MM_STR = ${ASIM_MIN_MM_STR} + 0 ))
    (( ASIM_MIN_DD_STR = ${ASIM_MIN_DD_STR} + 0 ))
    (( ASIM_MIN_HH_STR = ${ASIM_MIN_HH_STR} + 0 ))
+   (( ASIM_MIN_MN_STR = ${ASIM_MIN_MN_STR} + 0 ))
    (( ASIM_MAX_MM_STR = ${ASIM_MAX_MM_STR} + 0 ))
    (( ASIM_MAX_DD_STR = ${ASIM_MAX_DD_STR} + 0 ))
    (( ASIM_MAX_HH_STR = ${ASIM_MAX_HH_STR} + 0 ))
+   (( ASIM_MAX_MN_STR = ${ASIM_MAX_MN_STR} + 0 ))
    (( ASIM_MIN_MM_END = ${ASIM_MIN_MM_END} + 0 ))
    (( ASIM_MIN_DD_END = ${ASIM_MIN_DD_END} + 0 ))
    (( ASIM_MIN_HH_END = ${ASIM_MIN_HH_END} + 0 ))
+   (( ASIM_MIN_MN_END = ${ASIM_MIN_MN_END} + 0 ))
    (( ASIM_MAX_MM_END = ${ASIM_MAX_MM_END} + 0 ))
    (( ASIM_MAX_DD_END = ${ASIM_MAX_DD_END} + 0 ))
    (( ASIM_MAX_HH_END = ${ASIM_MAX_HH_END} + 0 ))
+   (( ASIM_MAX_MN_END = ${ASIM_MAX_MN_END} + 0 ))
 #
 # &obs_diag_nml
    export NL_OBS_SEQUENCE_NAME="''"
@@ -185,18 +190,18 @@
    export NL_FIRST_BIN_CENTER_MM=${STR_MM}
    export NL_FIRST_BIN_CENTER_DD=${STR_DD}
    export NL_FIRST_BIN_CENTER_HH=${STR_HH}
-   export NL_FIRST_BIN_CENTER_MN=0
+   export NL_FIRST_BIN_CENTER_MN=${STR_MN}
    export NL_FIRST_BIN_CENTER_SS=0
    export NL_LAST_BIN_CENTER_YY=${END_YY}
    export NL_LAST_BIN_CENTER_MM=${END_MM}
    export NL_LAST_BIN_CENTER_DD=${END_DD}
    export NL_LAST_BIN_CENTER_HH=${END_HH}
-   export NL_LAST_BIN_CENTER_MN=0
+   export NL_LAST_BIN_CENTER_MN=${END_MN}
    export NL_LAST_BIN_CENTER_SS=0
    export NL_BIN_SEPARATION_YY=0
    export NL_BIN_SEPARATION_MM=0
    export NL_BIN_SEPARATION_DD=0
-   export NL_BIN_SEPARATION_HH=${CYCLEPERIOD}
+   export NL_BIN_SEPARATION_HH=${CYCLE_PERIOD}
    export NL_BIN_SEPARATION_MN=0
    export NL_BIN_SEPARATION_SS=0
    export NL_BIN_WIDTH_YY=0
@@ -234,25 +239,25 @@
    export NL_FIRST_BIN_START_MM=${ASIM_MIN_MM_STR}
    export NL_FIRST_BIN_START_DD=${ASIM_MIN_DD_STR}
    export NL_FIRST_BIN_START_HH=${ASIM_MIN_HH_STR}
-   export NL_FIRST_BIN_START_MN=0
+   export NL_FIRST_BIN_START_MN=${ASIM_MIN_MN_STR}
    export NL_FIRST_BIN_START_SS=0
    export NL_FIRST_BIN_END_YY=${ASIM_MAX_YY_STR}
    export NL_FIRST_BIN_END_MM=${ASIM_MAX_MM_STR}
    export NL_FIRST_BIN_END_DD=${ASIM_MAX_DD_STR}
    export NL_FIRST_BIN_END_HH=${ASIM_MAX_HH_STR}
-   export NL_FIRST_BIN_END_MN=0
+   export NL_FIRST_BIN_END_MN=${ASIM_MAX_MN_STR}
    export NL_FIRST_BIN_END_SS=0
    export NL_LAST_BIN_START_YY=${ASIM_MIN_YY_END}
    export NL_LAST_BIN_START_MM=${ASIM_MIN_MM_END}
    export NL_LAST_BIN_START_DD=${ASIM_MIN_DD_END}
    export NL_LAST_BIN_START_HH=${ASIM_MIN_HH_END}
-   export NL_LAST_BIN_START_MN=0
+   export NL_LAST_BIN_START_MN=${ASIM_MIN_MN_END}
    export NL_LAST_BIN_START_SS=0
    export NL_LAST_BIN_END_YY=${ASIM_MAX_YY_END}
    export NL_LAST_BIN_END_MM=${ASIM_MAX_MM_END}
    export NL_LAST_BIN_END_DD=${ASIM_MAX_DD_END}
    export NL_LAST_BIN_END_HH=${ASIM_MAX_HH_END}
-   export NL_LAST_BIN_END_MN=0
+   export NL_LAST_BIN_END_MN=${ASIM_MAX_MN_END}
    export NL_LAST_BIN_END_SS=0
    export NL_BIN_INTERVAL_DAYS=0
    export NL_BIN_INTERVAL_SECONDS=${CYCLE_PERIOD_SEC}

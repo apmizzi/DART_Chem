@@ -139,10 +139,12 @@ LIBS = -L$(NETCDF)/lib -lnetcdff -lnetcdf \
 #
 # FFLAGS = -O3 -traceback -mcmodel=medium -shared-intel $(INCS)
 
+# for debugging
  FFLAGS = -g -C -check noarg_temp_created -fpe0 \
          -fp-model precise  -ftrapuv -traceback \
          -warn declarations,uncalled,unused $(INCS)
-
+#
+# for production
 # FFLAGS = -O3 -traceback -mcmodel=large -shared-intel -assume buffered_io $(INCS)
 
 LDFLAGS = $(FFLAGS) $(LIBS)

@@ -1,5 +1,10 @@
 #!/bin/ksh -aux
 #
+rm jobx.ksh
+touch jobx.ksh
+chmod +x jobx.ksh
+cat << EOF > jobx.ksh
+#
       cd ${RUN_DIR}/${DATE}/tes_co_profile_obs
 #
 # SET TES PARAMETERS
@@ -11,8 +16,8 @@
       export TES_FILE_EXT=_C01_F08_11.he5
       export OUTFILE=TEMP_FILE.dat
       export TMP_OUTFILE=TES_CO_${DATE}.dat
-      rm -rf ${OUTFILE}
-      rm -rf ${TMP_OUTFILE}
+      rm -rf \${OUTFILE}
+      rm -rf \${TMP_OUTFILE}
 #
 # SET OBS_WINDOW
       export BIN_BEG_YY=${ASIM_MN_YYYY}
@@ -35,33 +40,39 @@
          export BIN_BEG_MN=00
          export BIN_BEG_SS=01
       fi
-      let HH_BEG=${BIN_BEG_HH}
-      let MN_BEG=${BIN_BEG_MN}
-      let SS_BEG=${BIN_BEG_SS}
-      let HH_END=${BIN_END_HH}
-      let MN_END=${BIN_END_MN}
-      let SS_END=${BIN_END_SS}
-      let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
-      let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
+      let HH_BEG=\${BIN_BEG_HH}
+      let MN_BEG=\${BIN_BEG_MN}
+      let SS_BEG=\${BIN_BEG_SS}
+      let HH_END=\${BIN_END_HH}
+      let MN_END=\${BIN_END_MN}
+      let SS_END=\${BIN_END_SS}
+      let BIN_BEG_SEC=\${HH_BEG}*3600+\${MN_BEG}*60+\${SS_BEG} 
+      let BIN_END_SEC=\${HH_END}*3600+\${MN_END}*60+\${SS_END}
 #
 # SET TES INPUT DATA DIR
-      export TMP_INFILE=\'${EXPERIMENT_TES_CO_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}/${TES_FILE_PRE}\'
+      export TMP_INFILE=\'${EXPERIMENT_TES_CO_DIR}/\${BIN_BEG_YY}/\${BIN_BEG_MM}/\${BIN_BEG_DD}/\${TES_FILE_PRE}\'
 #
 # COPY EXECUTABLE
-      export FILE=tes_co_profile_extract.m
-      rm -rf ${FILE}
-      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/${FILE} ./.
-      mcc -m tes_co_profile_extract.m -o tes_co_profile_extract
-      ./run_tes_co_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat1.html 2>&1
+      rm -rf tes_co_profile_extract.m
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/tes_co_profile_extract.m ./.
+      rm -rf tes_co_profile_extract
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/work/tes_co_profile_extract ./.
+      rm -rf run_tes_co_profile_extract.sh
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/work/run_tes_co_profile_extract.sh ./.
+#
+      export HOME=/tmp
+      cp /home1/amizzi/.Xauthority /tmp/.
+#      mcc -m tes_co_profile_extract.m -o tes_co_profile_extract
+      ./run_tes_co_profile_extract.sh ${MATLAB} \${TMP_INFILE} \${OUTFILE} \${TES_FILE_PRE} \${BIN_BEG_YY} \${BIN_BEG_MM} \${BIN_BEG_DD} \${BIN_BEG_HH} \${BIN_BEG_MN} \${BIN_BEG_SS} \${BIN_END_YY} \${BIN_END_MM} \${BIN_END_DD} \${BIN_END_HH} \${BIN_END_MN} \${BIN_END_SS} \${NL_PATH_MODEL} \${NL_FILE_MODEL} \${NL_NX_MODEL} \${NL_NY_MODEL} > index_mat1.html 2>&1
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
-      if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
-         touch ${TMP_OUTFILE}
-         cat ${OUTFILE} >> ${TMP_OUTFILE}
-         rm -rf ${OUTFILE}
-      elif [[ -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
-         cat ${OUTFILE} >> ${TMP_OUTFILE}
-         rm -rf ${OUTFILE}
+      if [[ ! -e \${TMP_OUTFILE} && -e \${OUTFILE} ]]; then
+         touch \${TMP_OUTFILE}
+         cat \${OUTFILE} >> \${TMP_OUTFILE}
+         rm -rf \${OUTFILE}
+      elif [[ -e \${TMP_OUTFILE} && -e \${OUTFILE} ]]; then
+         cat \${OUTFILE} >> \${TMP_OUTFILE}
+         rm -rf \${OUTFILE}
       fi
 #
 # END OF PREVIOUS DAY
@@ -78,41 +89,51 @@
          export BIN_END_HH=00
          export BIN_END_MN=00
          export BIN_END_SS=00
-         export TMP_INFILE=\'${EXPERIMENT_TES_CO_DIR}/${BIN_BEG_YY}/${BIN_BEG_MM}/${BIN_BEG_DD}/${TES_FILE_PRE}\'
+         export TMP_INFILE=\'${EXPERIMENT_TES_CO_DIR}/\${BIN_BEG_YY}/\${BIN_BEG_MM}/\${BIN_BEG_DD}/\${TES_FILE_PRE}\'
 #
 # COPY EXECUTABLE
-         export FILE=tes_co_profile_extract.m
-         rm -rf ${FILE}
-         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/${FILE} ./.
-         mcc -m tes_co_profile_extract.m -o tes_co_profile_extract
-         ./run_tes_co_profile_extract.sh ${MATLAB} ${TMP_INFILE} ${OUTFILE} ${TES_FILE_PRE} ${BIN_BEG_YY} ${BIN_BEG_MM} ${BIN_BEG_DD} ${BIN_BEG_HH} ${BIN_BEG_MN} ${BIN_BEG_SS} ${BIN_END_YY} ${BIN_END_MM} ${BIN_END_DD} ${BIN_END_HH} ${BIN_END_MN} ${BIN_END_SS} ${NL_PATH_MODEL} ${NL_FILE_MODEL} ${NL_NX_MODEL} ${NL_NY_MODEL} > index_mat2.html 2>&1
+         rm -rf tes_co_profile_extract.m
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/tes_co_profile_extract.m ./.
+         rm -rf tes_co_profile_extract
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/work/tes_co_profile_extract ./.
+         rm -rf run_tes_co_profile_extract.sh
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/native_to_ascii/work/run_tes_co_profile_extract.sh ./.
 #
+         export HOME=/tmp
+         cp /home1/amizzi/.Xauthority /tmp/.
+#         mcc -m tes_co_profile_extract.m -o tes_co_profile_extract
+      ./run_tes_co_profile_extract.sh ${MATLAB} \${TMP_INFILE} \${OUTFILE} \${TES_FILE_PRE} \${BIN_BEG_YY} \${BIN_BEG_MM} \${BIN_BEG_DD} \${BIN_BEG_HH} \${BIN_BEG_MN} \${BIN_BEG_SS} \${BIN_END_YY} \${BIN_END_MM} \${BIN_END_DD} \${BIN_END_HH} \${BIN_END_MN} \${BIN_END_SS} \${NL_PATH_MODEL} \${NL_FILE_MODEL} \${NL_NX_MODEL} \${NL_NY_MODEL} > index_mat2.html 2>&1
       fi
 #
 # CHECK IF OUTFILE EXISTS AND ATTACH TO ARCHIVE FILE
-      if [[ ! -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
-         touch ${TMP_OUTFILE}
-         cat ${OUTFILE} >> ${TMP_OUTFILE}
-         rm -rf ${OUTFILE}
-      elif [[ -e ${TMP_OUTFILE} && -e ${OUTFILE} ]]; then
-         cat ${OUTFILE} >> ${TMP_OUTFILE}
-         rm -rf ${OUTFILE}
-      fi 
-      if [[ ! -e ${TMP_OUTFILE} ]]; then
+      if [[ ! -e \${TMP_OUTFILE} && -e \${OUTFILE} ]]; then
+         touch \${TMP_OUTFILE}
+         cat \${OUTFILE} >> \${TMP_OUTFILE}
+         rm -rf \${OUTFILE}
+      elif [[ -e \${TMP_OUTFILE} && -e \${OUTFILE} ]]; then
+         cat \${OUTFILE} >> \${TMP_OUTFILE}
+         rm -rf \${OUTFILE}
+      fi
+      if [[ ! -e \${TMP_OUTFILE} ]]; then
          touch NO_TES_CO_${DATE}_DATA
       fi
 #
 # SET NAMELIST TO CONVERT TES CO ASCII TO OBS_SEQ 
       export NL_FILEOUT=\'obs_seq_tes_co_profile_${DATE}.out\'
-      if [[ -s ${TMP_OUTFILE} ]]; then
+      if [[ -s \${TMP_OUTFILE} ]]; then
          export NL_FILEDIR=\'./\' 
-         export NL_FILENAME=\'${TMP_OUTFILE}\'
+         export NL_FILENAME=\'\${TMP_OUTFILE}\'
          export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_TES_CO}
          export NL_USE_LOG_CO=${USE_LOG_CO_LOGIC}
          export NL_USE_LOG_O3=${USE_LOG_O3_LOGIC}
          export NL_USE_LOG_CO2=${USE_LOG_CO2_LOGIC}
          export NL_USE_LOG_CH4=${USE_LOG_CH4_LOGIC}
          export NL_USE_LOG_NH3=${USE_LOG_NH3_LOGIC}
+         export NL_TES_CO_RETEN_FREQ=${NNL_TES_CO_RETEN_FREQ}
+         export NL_TES_CO2_RETEN_FREQ=${NNL_TES_CO2_RETEN_FREQ}
+         export NL_TES_O3_RETEN_FREQ=${NNL_TES_O3_RETEN_FREQ}
+         export NL_TES_NH3_RETEN_FREQ=${NNL_TES_NH3_RETEN_FREQ}
+         export NL_TES_CH4_RETEN_FREQ=${NNL_TES_CH4_RETEN_FREQ}
 #
 # MODEL PROFILE SETTINGS
          export NL_PATH_MODEL=\'${WRFCHEM_TEMPLATE_DIR}\'
@@ -120,30 +141,34 @@
          export NL_NX_MODEL=${NNXP_CR}
          export NL_NY_MODEL=${NNYP_CR}
          export NL_NZ_MODEL=${NNZP_CR}
+         export NL_MIN_LON=${NNL_MIN_LON}
+         export NL_MAX_LON=${NNL_MAX_LON}
+         export NL_MIN_LAT=${NNL_MIN_LAT}
+         export NL_MAX_LAT=${NNL_MAX_LAT}
          export BIN_BEG_HH=${ASIM_MN_HH}
          export BIN_BEG_MN=${ASIM_MN_MN}
          export BIN_BEG_SS=${ASIM_MN_SS}
          export BIN_END_HH=${ASIM_MX_HH}
          export BIN_END_MN=${ASIM_MX_MN}
          export BIN_END_SS=${ASIM_MX_SS}
-         let HH_BEG=${BIN_BEG_HH}
-         let MN_BEG=${BIN_BEG_MN}
-         let SS_BEG=${BIN_BEG_SS}
-         let HH_END=${BIN_END_HH}
-         let MN_END=${BIN_END_MN}
-         let SS_END=${BIN_END_SS}
-         let BIN_BEG_SEC=${HH_BEG}*3600+${MN_BEG}*60+${SS_BEG} 
-         let BIN_END_SEC=${HH_END}*3600+${MN_END}*60+${SS_END}
-         export NL_BIN_BEG_SEC=${BIN_BEG_SEC}
-         export NL_BIN_END_SEC=${BIN_END_SEC}
+         let HH_BEG=\${BIN_BEG_HH}
+         let MN_BEG=\${BIN_BEG_MN}
+         let SS_BEG=\${BIN_BEG_SS}
+         let HH_END=\${BIN_END_HH}
+         let MN_END=\${BIN_END_MN}
+         let SS_END=\${BIN_END_SS}
+         let BIN_BEG_SEC=\${HH_BEG}*3600+\${MN_BEG}*60+\${SS_BEG} 
+         let BIN_END_SEC=\${HH_END}*3600+\${MN_END}*60+\${SS_END}
+         export NL_BIN_BEG_SEC=\${BIN_BEG_SEC}
+         export NL_BIN_END_SEC=\${BIN_END_SEC}
 #      
 # USE TES DATA 
          rm -rf input.nml
          ${NAMELIST_SCRIPTS_DIR}/OBS_CONVERTERS/da_create_dart_tes_input_nml.ksh
 #
 # DO THINNER
-         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/work/tes_co_profile_thinner ./.
-         ./tes_co_profile_thinner > index_thinner.html 2>&1
+#         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/work/tes_co_profile_thinner ./.
+#         ./tes_co_profile_thinner > index_thinner.html 2>&1
 #
 # GET EXECUTABLE
          cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/TES_CO/work/tes_co_profile_ascii_to_obs ./.
@@ -151,10 +176,11 @@
       fi
 #
 # COPY OUTPUT TO ARCHIVE LOCATION
-      if [[ -s ${NL_FILEOUT} ]]; then
+      if [[ -s \${NL_FILEOUT} ]]; then
          touch NO_TES_CO_${DATE}
       fi
 #
 # Clean directory
 #      rm dart_log* includedSupport* input.nml mccExcluded* readme.txt
 #      rm requiredMCRP* run_tes_co* tes_co_profile* unresolved* *.dat
+EOF

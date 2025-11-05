@@ -207,10 +207,6 @@ function sciam_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
             end
             prs_lev(ipxl,iscan,nlev)=tm5_prs_a(2,nlay)+tm5_prs_b(2,nlay)* ...
             tm5_prs_sfc(ipxl,iscan);
-%           for k=1:nlay
-%              mid=(prs_lev(ipxl,iscan,k)+prs_lev(ipxl,iscan,k+1))/2.;
-%              fprintf('prs_lay, mid %7.2f, %7.2f \n',prs_lay(ipxl,iscan,k),mid)
-%           end
          end
       end
 %
@@ -218,43 +214,43 @@ function sciam_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
       field='/PRODUCT/SUPPORT_DATA/GEOLOCATIONS/solar_zenith_angle';
       zenang=ncread(file_in,field);
 %
-% no2_slnt_col (npxl,nscan,nstep)
+% no2_slnt_col (npxl,nscan,nstep) (molec/cm^-2)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/scd_no2';
       no2_slnt_col=ncread(file_in,field);
 %
-% no2_slnt_col_err (npxl,nscan,nstep)
+% no2_slnt_col_err (npxl,nscan,nstep) (molec/cm^-2)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/scd_no2_uncertainty';
       no2_slnt_col_err=ncread(file_in,field);
 %
-% o3_slnt_col (npxl,nscan,nstep)
+% o3_slnt_col (npxl,nscan,nstep) (molec/cm^-2)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/scd_o3';
       o3_slnt_col=ncread(file_in,field);
 %
-% o3_slnt_col_err (npxl,nscan,nstep)
+% o3_slnt_col_err (npxl,nscan,nstep) (molec/cm^-2)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/scd_o3_uncertainty';
       o3_slnt_col_err=ncread(file_in,field);
 %
-% no2_vert_col_strat; (npxl,nscan,nstep)
+% no2_vert_col_strat; (npxl,nscan,nstep) (molec/cm^-2)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/stratospheric_no2_vertical_column';
       no2_vert_col_strat=ncread(file_in,field);
 %
-% no2_vert_col_strat_err (npxl,nscan,nstep)
+% no2_vert_col_strat_err (npxl,nscan,nstep) (molec/cm^-2)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/stratospheric_no2_vertical_column_uncertainty';
       no2_vert_col_strat_err_total=ncread(file_in,field);
 %
-% no2_vert_col_total; (npxl,nscan,nstep)
+% no2_vert_col_total; (npxl,nscan,nstep) (molec/cm^-2)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/total_no2_vertical_column';
       no2_vert_col_total=ncread(file_in,field);
 %
-% no2_vert_col_total_err (npxl,nscan,nstep)
+% no2_vert_col_total_err (npxl,nscan,nstep) (molec/cm^-2)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/total_no2_vertical_column_uncertainty';
       no2_vert_col_total_err=ncread(file_in,field);
 %
-% no2_vert_col_summed; (npxl,nscan,nstep)
+% no2_vert_col_summed; (npxl,nscan,nstep) (sum of trop and strat cols, molec/cm^-2)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/summed_no2_total_vertical_column';
       no2_vert_col_summedl=ncread(file_in,field);
 %
-% no2_vert_col_summed_err (npxl,nscan,nstep)
+% no2_vert_col_summed_err (npxl,nscan,nstep) (molec/cm^-2)
       field='/PRODUCT/SUPPORT_DATA/DETAILED_RESULTS/summed_no2_total_vertical_column_uncertainty';
       no2_vert_col_summed_err=ncread(file_in,field);
 %
@@ -373,11 +369,6 @@ function sciam_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
                   reject=1;
                end
                if(reject==1)
-%                  fprintf('x_mdl_min, x_obs, x_mdl_max: %6.2f %6.2f %6.2f \n',xmdl_mn, ...
-%                  x_obser,xmdl_mx)
-%                  fprintf('y_mdl_min, y_obs, y_mdl_max: %6.2f %6.2f %6.2f \n',lat_mdl(1,1), ...
-%                  y_obser,lat_mdl(nx_mdl,ny_mdl))
-%                  fprintf('i_min %d j_min %d \n',i_min,j_min)
                   continue
                end
                if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)

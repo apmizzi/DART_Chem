@@ -30,10 +30,10 @@ cat > input.nml << EOF
    use_log_no2                 = ${NL_USE_LOG_NO2}
    use_log_so2                 = ${NL_USE_LOG_SO2}
    use_log_hcho                = ${NL_USE_LOG_HCHO}
-   lon_min                     = ${NNL_MIN_LON}
-   lon_max                     = ${NNL_MAX_LON}
-   lat_min                     = ${NNL_MIN_LAT}
-   lat_max                     = ${NNL_MAX_LAT}
+   lon_min                     = ${NL_MIN_LON}
+   lon_max                     = ${NL_MAX_LON}
+   lat_min                     = ${NL_MIN_LAT}
+   lat_max                     = ${NL_MAX_LAT}
    path_model                  = ${NL_PATH_MODEL}
    file_model                  = ${NL_FILE_MODEL}
    nx_model                    = ${NL_NX_MODEL}
@@ -77,9 +77,9 @@ cat > input.nml << EOF
  &obs_def_OMI_O3_nml
    use_log_o3   = ${NL_USE_LOG_O3:-.false.},
    nlayer_model = ${NL_NLAYER_MODEL:-36},
-   nlayer_omi_o3_total_col = ${NL_NLAYER_OMI_O3_TOTAL_COL:-11},
-   nlayer_omi_o3_trop_col  = ${NL_NLAYER_OMI_O3_TROP_COL:-11},
-   nlayer_omi_o3_profile   = ${NL_NLAYER_OMI_O3_PROFILE:-11},
+   nlayer_omi_o3_total_col = ${NL_NLAYER_OMI_O3_TOTAL_COL:-35},
+   nlayer_omi_o3_trop_col  = ${NL_NLAYER_OMI_O3_TROP_COL:-35},
+   nlayer_omi_o3_profile   = ${NL_NLAYER_OMI_O3_PROFILE:-35},
 /
  &obs_def_OMI_NO2_nml
    use_log_no2   = ${NL_USE_LOG_NO2:-.false.},

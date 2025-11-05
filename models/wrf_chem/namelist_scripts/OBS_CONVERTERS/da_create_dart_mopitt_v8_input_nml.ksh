@@ -27,10 +27,10 @@ cat > input.nml << EOF
    bin_end_sec                 = ${NL_BIN_END_SEC}
    fac_obs_error               = ${NL_FAC_OBS_ERROR}
    use_log_co                  = ${NL_USE_LOG_CO}
-   lon_min                     = ${NNL_MIN_LON}
-   lon_max                     = ${NNL_MAX_LON}
-   lat_min                     = ${NNL_MIN_LAT}
-   lat_max                     = ${NNL_MAX_LAT}
+   lon_min                     = ${NL_MIN_LON}
+   lon_max                     = ${NL_MAX_LON}
+   lat_min                     = ${NL_MIN_LAT}
+   lat_max                     = ${NL_MAX_LAT}
    path_model                  = ${NL_PATH_MODEL}
    file_model                  = ${NL_FILE_MODEL}
    nx_model                    = ${NL_NX_MODEL}

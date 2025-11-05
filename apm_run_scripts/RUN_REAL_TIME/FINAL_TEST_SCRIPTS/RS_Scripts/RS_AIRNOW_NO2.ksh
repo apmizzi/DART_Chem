@@ -1,4 +1,8 @@
 #!/bin/ksh -aux
+rm jobx.ksh
+touch jobx.ksh
+chmod +x jobx.ksh
+cat << EOF > jobx.ksh
 #
       cd ${RUN_DIR}/${DATE}/airnow_no2_obs
 #
@@ -17,11 +21,11 @@
       export BIN_END_SS=${ASIM_MX_SS}
 #
       export INFILE=airnow_no2_hourly_csv_data
-      rm -rf ${INFILE}
-      cp ${EXPERIMENT_AIRNOW_DIR}/airnow_no2_hourly_csv_data/${BIN_BEG_YR}/${INFILE} ./.
+      rm -rf \${INFILE}
+      cp ${EXPERIMENT_AIRNOW_DIR}/airnow_no2_hourly_csv_data/\${BIN_BEG_YR}/\${INFILE} ./.
 #
 # RUN_AIRNOW_NO2_ASCII_TO_DART
-      export NL_FILENAME=\'${INFILE}\'
+      export NL_FILENAME=\'\${INFILE}\'
       export NL_LAT_MN=${NL_MIN_LAT}
       export NL_LAT_MX=${NL_MAX_LAT}
       export NL_LON_MN=${NL_MIN_LON}
@@ -35,6 +39,12 @@
       export NL_USE_LOG_PM25=${USE_LOG_PM25_LOGIC}
       export NL_USE_LOG_AOD=${USE_LOG_AOD_LOGIC}
       export NL_FAC_OBS_ERROR=${NL_FAC_OBS_ERROR_AIRNOW_NO2}
+      export NL_AIRNOW_CO_RETEN_FREQ=${NNL_AIRNOW_CO_RETEN_FREQ}
+      export NL_AIRNOW_O3_RETEN_FREQ=${NNL_AIRNOW_O3_RETEN_FREQ}
+      export NL_AIRNOW_NO2_RETEN_FREQ=${NNL_AIRNOW_NO2_RETEN_FREQ}
+      export NL_AIRNOW_SO2_RETEN_FREQ=${NNL_AIRNOW_SO2_RETEN_FREQ}
+      export NL_AIRNOW_PM10_RETEN_FREQ=${NNL_AIRNOW_PM10_RETEN_FREQ}
+      export NL_AIRNOW_PM25_RETEN_FREQ=${NNL_AIRNOW_PM25_RETEN_FREQ}
 #
 # GET EXECUTABLE
       cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/AIRNOW/work/airnow_no2_ascii_to_obs ./.
@@ -46,12 +56,13 @@
 # COPY OUTPUT TO ARCHIVE LOCATION
       export AIRNOW_OUT_FILE=airnow_obs_seq
       export AIRNOW_ARCH_FILE=obs_seq_airnow_no2_${DATE}.out
-      if [[ -s ${AIRNOW_OUT_FILE} ]]; then
-         cp ${AIRNOW_OUT_FILE} ${AIRNOW_ARCH_FILE}
-         rm ${AIRNOW_OUT_FILE}
+      if [[ -s \${AIRNOW_OUT_FILE} ]]; then
+         cp \${AIRNOW_OUT_FILE} \${AIRNOW_ARCH_FILE}
+         rm \${AIRNOW_OUT_FILE}
       else
          touch NO_DATA_${D_DATE}
       fi     
 #
 # Clean directory
       rm -rf airnow_no2_* bias_correct* create_airnow* dart_log* input.nml      
+EOF

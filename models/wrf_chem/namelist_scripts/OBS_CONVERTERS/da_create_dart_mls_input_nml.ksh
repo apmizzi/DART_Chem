@@ -24,10 +24,10 @@ cat > input.nml << EOF
    fac_obs_error               = ${NL_FAC_OBS_ERROR}
    use_log_o3                  = ${NL_USE_LOG_O3}
    use_log_hno3                = ${NL_USE_LOG_HNO3}
-   lon_min                     = ${NNL_MIN_LON}
-   lon_max                     = ${NNL_MAX_LON}
-   lat_min                     = ${NNL_MIN_LAT}
-   lat_max                     = ${NNL_MAX_LAT}
+   lon_min                     = ${NL_MIN_LON}
+   lon_max                     = ${NL_MAX_LON}
+   lat_min                     = ${NL_MIN_LAT}
+   lat_max                     = ${NL_MAX_LAT}
    path_model                  = ${NL_PATH_MODEL}
    file_model                  = ${NL_FILE_MODEL}
    nx_model                    = ${NL_NX_MODEL}
@@ -69,16 +69,16 @@ cat > input.nml << EOF
 &obs_def_MLS_O3_nml
    use_log_o3               = ${NL_USE_LOG_O3:-.false.},
    nlayer_model             = ${NL_NLAYER_MODEL:-36},
-   nlayer_mls_o3_total_col  = ${NL_NLAYER_MLS_O3_TOTAL_COL:-14},
-   nlayer_mls_o3_trop_col   = ${NL_NLAYER_MLS_O3_TROP_COL:-14},
-   nlayer_mls_o3_profile    = ${NL_NLAYER_MLS_O3_PROFILE:-14},
+   nlayer_mls_o3_total_col  = ${NL_NLAYER_MLS_O3_TOTAL_COL:-60},
+   nlayer_mls_o3_trop_col   = ${NL_NLAYER_MLS_O3_TROP_COL:-60},
+   nlayer_mls_o3_profile    = ${NL_NLAYER_MLS_O3_PROFILE:-60},
 /
 &obs_def_MLS_HNO3_nml
    use_log_hno3               = ${NL_USE_LOG_HNO3:-.false.},
    nlayer_model               = ${NL_NLAYER_MODEL:-36},
-   nlayer_mls_hno3_total_col  = ${NL_NLAYER_MLS_HNO3_TOTAL_COL:-14},
-   nlayer_mls_hno3_trop_col   = ${NL_NLAYER_MLS_HNO3_TROP_COL:-14},
-   nlayer_mls_hno3_profile    = ${NL_NLAYER_MLS_HNO3_PROFILE:-14},
+   nlayer_mls_hno3_total_col  = ${NL_NLAYER_MLS_HNO3_TOTAL_COL:-60},
+   nlayer_mls_hno3_trop_col   = ${NL_NLAYER_MLS_HNO3_TROP_COL:-60},
+   nlayer_mls_hno3_profile    = ${NL_NLAYER_MLS_HNO3_PROFILE:-60},
 / 
 EOF
 

@@ -172,9 +172,9 @@ subroutine initialize_module
       call error_handler(E_ERR,'initialize_module',string1,source)
    endif
    
-   allocate(   nlayer(max_omi_so2_obs))
-   allocate(   kend(max_omi_so2_obs))
-   allocate( pressure(max_omi_so2_obs,nlayer_omi+1))
+   allocate(  nlayer(max_omi_so2_obs))
+   allocate(  kend(max_omi_so2_obs))
+   allocate(  pressure(max_omi_so2_obs,nlayer_omi+1))
    allocate(  scat_wt(max_omi_so2_obs,nlayer_omi))
 
 end subroutine initialize_module
@@ -336,7 +336,7 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 
    pi       = 4.*atan(1.)
    rad2deg  = 360./(2.*pi)
-   eps      =  0.61_r8
+   eps      = 0.61_r8
    Rd       = 287.05_r8     ! J/kg
    Ru       = 8.316_r8      ! J/kg
    Cp       = 1006.0        ! J/kg/K
@@ -372,7 +372,6 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 
    layer_omi = nlayer(key)
    level_omi = nlayer(key)+1
-!  klev_omi  = klev(key)
    kend_omi  = kend(key)
    layer_mdl = nlayer_model
    level_mdl = nlayer_model+1
@@ -384,7 +383,6 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 ! Get location infomation
 
    mloc = get_location(location)
-
    if (    mloc(2) >  90.0_r8) then
            mloc(2) =  90.0_r8
    elseif (mloc(2) < -90.0_r8) then
@@ -425,17 +423,13 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 
       interp_new=0
       do imem=1,ens_size
-!         if(so2_mdl_1(imem).eq.missing_r8 .or. tmp_mdl_1(imem).eq.missing_r8 .or. &
-!         qmr_mdl_1(imem).eq.missing_r8 .or. prs_mdl_1(imem).eq.missing_r8) then
          if(so2_mdl_1(imem).lt.0. .or. tmp_mdl_1(imem).lt.0. .or. &
          qmr_mdl_1(imem).lt.0. .or. prs_mdl_1(imem).lt.0.) then
             interp_new=1
             exit
          endif
       enddo
-      if(interp_new.eq.0) then
-         exit
-      endif
+      if(interp_new.eq.0) exit
    enddo
 !
 !   write(string1, *) 'APM: so2 lower bound ',key,so2_mdl_1
@@ -453,7 +447,7 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
    prs_mdl_n(:)=missing_r8
 
    kbnd_n(:)=layer_mdl
-   do k=layer_mdl,1,-1
+   do k=layer_mdl-1,1,-1
       level=real(k)
       zstatus(:)=0
       loc2 = set_location(mloc(1), mloc(2), level, VERTISLEVEL)
@@ -470,17 +464,13 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 !
       interp_new=0
       do imem=1,ens_size
-!         if(so2_mdl_n(imem).eq.missing_r8 .or. tmp_mdl_n(imem).eq.missing_r8 .or. &
-!         qmr_mdl_n(imem).eq.missing_r8 .or. prs_mdl_n(imem).eq.missing_r8) then
          if(so2_mdl_n(imem).lt.0. .or. tmp_mdl_n(imem).lt.0. .or. &
          qmr_mdl_n(imem).lt.0. .or. prs_mdl_n(imem).lt.0.) then
             interp_new=1
             exit
          endif
       enddo
-      if(interp_new.eq.0) then
-         exit
-      endif
+      if(interp_new.eq.0) exit
    enddo
 !
 !   write(string1, *) 'APM: so2 upper bound ',key,so2_mdl_n
@@ -538,61 +528,18 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
    so2_mdl_1(:)=so2_mdl_1(:) * 1.e-6_r8
    so2_mdl_n(:)=so2_mdl_n(:) * 1.e-6_r8
 !
-! Use large scale so2 data above the regional model top
-! APM: Modified to use retrieval prior above the regional model top   
-! OMI vertical is from top to bottom   
-!
-! APM: Before old code
-!   kstart=-1
-!   do imem=1,ens_size
-!      if (prs_omi(1).lt.prs_mdl_n(imem)) then
-!         do k=1,level_omi
-!            if (prs_omi(k).ge.prs_mdl_n(imem)) then
-!               kstart=k
-!               exit
-!            endif
-!         enddo
-!         ncnt=kstart
-!         allocate(prs_omi_top(ncnt))
-!         allocate(so2_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
-!         do k=1,kstart
-!            prs_omi_top(k)=prs_omi(k)
-!         enddo
-!         prs_omi_top(:)=prs_omi_top(:)/100.
-!
-!         lon_obs=mloc(1)/rad2deg
-!         lat_obs=mloc(2)/rad2deg
-!         call get_time(obs_time,datesec_obs,date_obs)
-!
-!         data_file=trim(upper_data_file)
-!         model=trim(upper_data_model)
-!         call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
-!         ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_omi_top, &
-!         ncnt,so2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
-!
-! Impose ensemble perturbations from level kstart+1      
-!         do k=1,kstart 
-!            so2_val(imem,k)=so2_prf_mdl(k)*so2_val(imem,kstart+1)/ &
-!            (sum(so2_val(:,kstart+1))/real(ens_size))
-!            tmp_val(imem,k)=tmp_prf_mdl(k)*tmp_val(imem,kstart+1)/ &
-!            (sum(tmp_val(:,kstart+1))/real(ens_size))
-!            qmr_val(imem,k)=qmr_prf_mdl(k)*qmr_val(imem,kstart+1)/ &
-!            (sum(qmr_val(:,kstart+1))/real(ens_size))
-!         enddo
-!         deallocate(prs_omi_top)
-!         deallocate(so2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
-!      endif
-!   enddo
-! APM: After old code
-!
 ! Check full profile for negative values
    do imem=1,ens_size
-      do k=1,level_omi   
-         if(so2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
-         qmr_val(imem,k).lt.0.) then
+      do k=1,level_omi
+         if((so2_val(imem,k).lt.0. .and. so2_val(imem,k).ne.missing_r8) .or. &
+         (tmp_val(imem,k).lt.0. .and. tmp_val(imem,k).ne.missing_r8) .or. &
+         (qmr_val(imem,k).lt.0. .and. qmr_val(imem,k).ne.missing_r8)) then
             write(string1, *) &
             'APM: Recentered full profile has negative values for key,imem ',key,imem
-            call error_handler(E_MSG, routine, string1, source)
+            call error_handler(E_ALLMSG, routine, string1, source)
+         endif
+         if(so2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
+         qmr_val(imem,k).lt.0.) then
             zstatus(:)=20
             expct_val(:)=missing_r8
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
@@ -613,22 +560,15 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
    prs_omi_mem(:)=prs_omi(:)
    allocate(thick(layer_omi))
 !
+   do imem=1,ens_size
+!
 ! Find OMI index for first layer above top of regional model      
 ! OMI vertical is from top to bottom   
-   do imem=1,ens_size
       kstart=-1
-!      write(string1, *) &
-!      'APM: imem,prs_omi,prs_mdl ',imem,prs_omi(level_omi),prs_omi(level_omi+1), &
-!      prs_mdl_n(imem)
-!      call error_handler(E_ALLMSG, routine, string1, source)
       if ((prs_omi(1)+prs_omi(2))/2..lt.prs_mdl_n(imem)) then
          do k=1,level_omi
             if ((prs_omi(k)+prs_omi(k+1))/2.ge.prs_mdl_n(imem)) then
                kstart=k
-!               write(string1, *) &
-!               'APM: imem,kstart,prs_omi,prs_mdl ',imem,kstart,prs_omi(k),prs_omi(k+1), &
-!               prs_mdl_n(imem)
-!               call error_handler(E_ALLMSG, routine, string1, source)
                exit
             endif
          enddo
@@ -648,32 +588,26 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
       enddo
 !      
 ! Process the vertical summation (OMI SO2 units are mole per m^2)
-      do k=1,level_omi-1
+      do k=kstart,layer_omi
          lnpr_mid=(log(prs_omi_mem(k+1))+log(prs_omi_mem(k)))/2.
          up_wt=log(prs_omi_mem(k+1))-lnpr_mid
          dw_wt=lnpr_mid-log(prs_omi_mem(k))
          tl_wt=up_wt+dw_wt
-
+!
 ! Convert from VMR to molar density (mol/m^3)
          if(use_log_so2) then
             so2_val_conv = (up_wt*exp(so2_val(imem,k))+dw_wt*exp(so2_val(imem,k+1)))/tl_wt * &
-            (up_wt*prs_omi_mem(k)+dw_wt*prs_omi_mem(k)) / &
+            (up_wt*prs_omi_mem(k)+dw_wt*prs_omi_mem(k+1)) / &
             (Ru*(up_wt*tmp_val(imem,k)+dw_wt*tmp_val(imem,k+1)))
          else
             so2_val_conv = (up_wt*so2_val(imem,k)+dw_wt*so2_val(imem,k+1))/tl_wt * &
             (up_wt*prs_omi_mem(k)+dw_wt*prs_omi_mem(k+1)) / &
-            (Ru*(up_wt*tmp_val(imem,k)+dw_wt*tmp_val(imem,k)))
+            (Ru*(up_wt*tmp_val(imem,k)+dw_wt*tmp_val(imem,k+1)))
          endif
 !
 ! Get expected observation (molec/cm^2)
          expct_val(imem) = expct_val(imem) + thick(k) * so2_val_conv * &
          AvogN/msq2cmsq * scat_wt(key,k)
-!
-!         write(string1, *) &
-!         'APM: k,expct_val,thick,so2,AvogN/msq2cmsq,scat,contr_trm ',k,expct_val(imem), &
-!          thick(k),so2_val_conv,AvogN/msq2cmsq,scat_wt(key,k),thick(k)*so2_val_conv* &
-!          AvogN/msq2cmsq*scat_wt(key,k)
-!         call error_handler(E_MSG, routine, string1, source)
       enddo
 !
       if(isnan(expct_val(imem))) then
@@ -681,14 +615,8 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          expct_val(:)=missing_r8
          write(string1, *) &
          'APM NOTICE: OMI SO2 expected value is NaN '
-         call error_handler(E_MSG, routine, string1, source)
+         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-         deallocate(prs_omi)
-         deallocate(prs_omi_mem)
-         deallocate(so2_val)
-         deallocate(tmp_val)
-         deallocate(qmr_val)
-         deallocate(thick)
          return
       endif
 !
@@ -697,18 +625,13 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          expct_val(:)=missing_r8
          write(string1, *) &
          'APM NOTICE: OMI SO2 expected value is negative '
-         call error_handler(E_MSG, routine, string1, source)
+         call error_handler(E_ALLMSG, routine, string1, source)
          call track_status(ens_size, zstatus, expct_val, istatus, return_now)
-         deallocate(prs_omi)
-         deallocate(prs_omi_mem)
-         deallocate(so2_val)
-         deallocate(tmp_val)
-         deallocate(qmr_val)
-         deallocate(thick)
          return
       endif
    enddo
-
+!   call exit_all(-77)
+!
 ! Clean up and return
    deallocate(so2_val, tmp_val, qmr_val)
    deallocate(thick)
