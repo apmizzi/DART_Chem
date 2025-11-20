@@ -56,10 +56,10 @@ export FIRST_DART_INFLATE_DATE=2009040203
 export FIRST_EMISS_INV_DATE=2009040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2009040300
+export CYCLE_STR_DATE=2009040315
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2009040300
+export CYCLE_END_DATE=2009040318
 #
 # Special skip for emission perturbations (scaling factor propagation only)
 export RUN_SPECIAL_PERT_SKIP=false
@@ -113,16 +113,16 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # SELECT COMPONENT RUN OPTIONS:
    if [[ ${DATE} -eq ${CYCLE_STR_DATE} ]]; then
       export RUN_GEOGRID=false
-      export RUN_UNGRIB=false
-      export RUN_METGRID=false
-      export RUN_REAL=false
-      export RUN_PERT_WRFCHEM_MET_IC=false
-      export RUN_PERT_WRFCHEM_MET_BC=false
-      export RUN_EXO_COLDENS=false
-      export RUN_SEASON_WES=false
-      export RUN_WRFCHEM_BIO=false
-      export RUN_WRFCHEM_FIRE=false
-      export RUN_WRFCHEM_CHEMI=false
+      export RUN_UNGRIB=true
+      export RUN_METGRID=true
+      export RUN_REAL=true
+      export RUN_PERT_WRFCHEM_MET_IC=true
+      export RUN_PERT_WRFCHEM_MET_BC=true
+      export RUN_EXO_COLDENS=true
+      export RUN_SEASON_WES=true
+      export RUN_WRFCHEM_BIO=true
+      export RUN_WRFCHEM_FIRE=true
+      export RUN_WRFCHEM_CHEMI=true
       export RUN_PERT_WRFCHEM_CHEM_ICBC=true
       export RUN_PERT_WRFCHEM_CHEM_EMISS=true
       export RUN_COMBINE_OBS=true
@@ -649,10 +649,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Chem_Emiss_NOAA.ksh > index_rs.html 2>&1
 #      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Chem_Emiss_NOAA_TEST.ksh > index_rs.html 2>&1
    fi
-
-exit
-
-   
 #
    TRANDOM=$$
 #

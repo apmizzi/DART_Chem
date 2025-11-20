@@ -55,10 +55,10 @@ export FIRST_DART_INFLATE_DATE=2005040203
 export FIRST_EMISS_INV_DATE=2005040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2005040200
+export CYCLE_STR_DATE=2005040203
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2005040200
+export CYCLE_END_DATE=2005040212
 #
 # For emissions estimation
 export ADD_EMISS=true
@@ -80,17 +80,17 @@ export NUM_WRFCHEMI_DARTVARS=4
 export NUM_WRFFIRECHEMI_DARTVARS=4
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=true
+export RUN_INPUT_OBS=false
 export RUN_MOPITT_V8_CO_PROFILE_OBS=true            # (done)  TRACER I
 export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true         # (done)  TRACER I
 export RUN_OMI_SO2_PBL_COL_OBS=true                 # (done)  TRACER I
 export RUN_TES_CO_PROFILE_OBS=true                  # (done)  TRACER I
 export RUN_GOME2A_NO2_TROP_COL_OBS=true             # (done)  TRACER I
 export RUN_SCIAM_NO2_TROP_COL_OBS=true              # (done)  TRACER I
-export RUN_OMI_O3_PROFILE_OBS=true                   # (done)  TRACER I
-export RUN_TES_O3_PROFILE_OBS=true                 # (done)  TRACER I
-export RUN_MLS_O3_PROFILE_OBS=true                # (done)  TRACER I
-export RUN_MLS_HNO3_PROFILE_OBS=true               # (done)  TRACER I
+export RUN_OMI_O3_PROFILE_OBS=true                  # (done)  TRACER I
+export RUN_TES_O3_PROFILE_OBS=true                  # (done)  TRACER I
+export RUN_MLS_O3_PROFILE_OBS=true                  # (done)  TRACER I
+export RUN_MLS_HNO3_PROFILE_OBS=true                # (done)  TRACER I
 export RUN_AIRNOW_CO_OBS=true                       # (done)  TRACER I
 export RUN_AIRNOW_O3_OBS=true                       # (done)  TRACER I
 export RUN_AIRNOW_NO2_OBS=true                      # (done)  TRACER I
@@ -144,22 +144,6 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'TES_CO_PROFILE',
                                    'TES_O3_PROFILE'"
 #
-# Run WRF-Chem for failed forecasts (will not work with adaptive time step)
-export RUN_SPECIAL_FORECAST=false
-export NUM_SPECIAL_FORECAST=0
-export SPECIAL_FORECAST_FAC=1.
-#
-export SPECIAL_FORECAST_MEM[1]=1
-export SPECIAL_FORECAST_MEM[2]=2
-export SPECIAL_FORECAST_MEM[3]=3
-export SPECIAL_FORECAST_MEM[4]=4
-export SPECIAL_FORECAST_MEM[5]=5
-export SPECIAL_FORECAST_MEM[6]=6
-export SPECIAL_FORECAST_MEM[7]=7
-export SPECIAL_FORECAST_MEM[8]=8
-export SPECIAL_FORECAST_MEM[9]=9
-export SPECIAL_FORECAST_MEM[10]=10
-#
 # Set observation error scaling and retention factors (assign constants)
 source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
 #
@@ -197,6 +181,36 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export L_ADD_EMISS=false
    fi
 #
+# Run WRF-Chem for failed forecasts (will not work with adaptive time step)
+   export RUN_SPECIAL_FORECAST=false
+   export NUM_SPECIAL_FORECAST=0
+   export SPECIAL_FORECAST_FAC=1.
+   export SPECIAL_FORECAST_MEM[1]=1
+   export SPECIAL_FORECAST_MEM[2]=2
+   export SPECIAL_FORECAST_MEM[3]=3
+   export SPECIAL_FORECAST_MEM[4]=4
+   export SPECIAL_FORECAST_MEM[5]=5
+   export SPECIAL_FORECAST_MEM[6]=6
+   export SPECIAL_FORECAST_MEM[7]=7
+   export SPECIAL_FORECAST_MEM[8]=8
+   export SPECIAL_FORECAST_MEM[9]=9
+   export SPECIAL_FORECAST_MEM[10]=10
+#
+   if [[ ${DATE} -eq ${CYCLE_STR_DATE}  ]]; then
+      export RUN_SPECIAL_FORECAST=false
+      export NUM_SPECIAL_FORECAST=0
+      export SPECIAL_FORECAST_MEM[1]=1
+      export SPECIAL_FORECAST_MEM[2]=2
+      export SPECIAL_FORECAST_MEM[3]=3
+      export SPECIAL_FORECAST_MEM[4]=4
+      export SPECIAL_FORECAST_MEM[5]=5
+      export SPECIAL_FORECAST_MEM[6]=6
+      export SPECIAL_FORECAST_MEM[7]=7
+      export SPECIAL_FORECAST_MEM[8]=8
+      export SPECIAL_FORECAST_MEM[9]=9
+      export SPECIAL_FORECAST_MEM[10]=10
+   fi
+#
 # SELECT COMPONENT RUN OPTIONS:
 # FOR GENERAL CYCLING   
    if [[ ${RUN_SPECIAL_FORECAST} == false ]]; then
@@ -216,10 +230,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_WRFCHEM_INITIAL=true
          export RUN_WRFCHEM_CYCLE_CR=false
       elif [[ ${DATE} -eq ${CYCLE_STR_DATE}  ]]; then
-         export RUN_DART_FILTER=true
-         export RUN_POST_EMISS_INFLATION=true
+         export RUN_DART_FILTER=false
+         export RUN_POST_EMISS_INFLATION=false
          export RUN_BIAS_CORRECTION=false
-         export RUN_UPDATE_BC=true
+         export RUN_UPDATE_BC=false
          export RUN_ENSEMBLE_MEAN_INPUT=false
          export RUN_WRFCHEM_INITIAL=false
          export RUN_WRFCHEM_CYCLE_CR=true
@@ -338,6 +352,14 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 #########################################################################
 #
+   export NL_EPSSM=0.3
+   export NL_DAMPCOEF=0.3,0.3
+   export NL_DAMP_OPT=3
+   export NL_SMOOTH_OPTION=2
+   export NL_TIME_STEP=30
+   export NNL_TIME_STEP=30
+   export NL_TIME_STEP_SOUND=0
+#   
    export GENERAL_JOB_CLASS=normal
    export GENERAL_TIME_LIMIT=02:30:00
    export GENERAL_NODES=1
@@ -352,7 +374,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #   
    export FILTER_JOB_CLASS=normal
    export FILTER_TIME_LIMIT=03:59:00
-   export FILTER_TIME_LIMIT=01:59:00
+   export FILTER_TIME_LIMIT=03:59:00
    export FILTER_NODES=8
    export FILTER_TASKS=28
    export FILTER_MODEL=bro
@@ -368,7 +390,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
    export WRF_VER=WRFCHEM_NOAACSLv4.2.2
    export WRFCHEM_VER=WRFCHEM_NOAACSLv4.2.2
-   export NNL_TIME_STEP=40
 #   export WRF_VER=WRFCHEM_NOAACSL
 #   export WRFCHEM_VER=WRFCHEM_NOAACSL
 #   export WRF_VER=WRFCHEMv4.3.2_dmpar
@@ -539,8 +560,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/update_bc
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Update.ksh > index_rs.html 2>&1  
-  fi
+      source ${RS_SCRIPTS_DIR}/RS_Update_NOAA.ksh > index_rs.html 2>&1  
+   fi
 #
 #########################################################################
 #

@@ -274,57 +274,7 @@ EOF
          export JOBRND=${TRANDOM}_wrf
          ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${WRFCHEM_JOB_CLASS} ${WRFCHEM_TIME_LIMIT} ${WRFCHEM_NODES} ${WRFCHEM_TASKS} wrf.exe PARALLEL ${ACCOUNT} ${WRFCHEM_MODEL}
          qsub job.ksh
-	 let IMEM=${IMEM}+1
-      done
-      ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
-#
-# Check whether forecasts exist for each ensemble member
-      let IMEM=1
-      while [[ ${IMEM} -le ${L_NUM_MEMBERS} ]]; do
-         export MEM=${IMEM}
-         export NL_TIME_STEP=${NNL_TIME_STEP}
-         if ${RUN_SPECIAL_FORECAST}; then
-            export MEM=${SPECIAL_FORECAST_MEM[${IMEM}]}
-            let NL_TIME_STEP=${NNL_TIME_STEP}*${SPECIAL_FORECAST_FAC}
-         fi
-         export CMEM=e${MEM}
-         export KMEM=${MEM}
-         if [[ ${MEM} -lt 1000 ]]; then export KMEM=0${MEM}; fi
-         if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
-         if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
-         export L_RUN_DIR=run_${CMEM}
-         cd ${RUN_DIR}/${DATE}/wrfchem_cycle_cr/${L_RUN_DIR}
-#
-# Loop to check the forecast files
-	 export MIN_SIZE=1500000000
-         export L_DATE=${START_DATE}00
-         while [[ ${L_DATE} -le ${END_DATE} ]]; do
-            export L_YY=`echo ${L_DATE} | cut -c1-4`
-            export L_MM=`echo ${L_DATE} | cut -c5-6`
-            export L_DD=`echo ${L_DATE} | cut -c7-8`
-            export L_HH=`echo ${L_DATE} | cut -c9-10`
-            export L_FILE_DATE=${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00
-	    export FILENAME=wrfout_d${CR_DOMAIN}_${L_FILE_DATE}
-            export REDO_FLG=0
-            if [[ -e ${FILENAME} ]]; then
-	       FILESIZE=$(stat -c%s "${FILENAME}")
-	       if [[ ${FILESIZE} -le ${MIN_SIZE} ]]; then
-	          export REDO_FLG=1
-		  break 
-	       fi	   
-            else
-	       export REDO_FLG=1
-	       break	
-	    fi
-            export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} +1 -f ccyymmddhhnn 2>/dev/null)
-         done
-	 if [[ ${REDO_FLG} -eq 1 ]]; then
-	    rm -rf wrfout_d${CR_DOMAIN}_* 
-            export JOBRND=${TRANDOM}_wrf
-            ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${WRFCHEM_JOB_CLASS} ${WRFCHEM_TIME_LIMIT} ${WRFCHEM_NODES} ${WRFCHEM_TASKS} wrf.exe PARALLEL ${ACCOUNT} ${WRFCHEM_MODEL}
-            qsub job.ksh
-	 fi
-	 let IMEM=${IMEM}+1
+         let IMEM=${IMEM}+1
       done
       ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
 #
