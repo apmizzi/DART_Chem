@@ -94,7 +94,10 @@ spc_map =  'api -> 0.5*C10H16',
 /
 EOF
 #
-   ./mozbc.exe < wrfchem.namelist.input > log_ic.txt 2>&1
+      RANDOM=$$
+      export JOBRND=${RANDOM}_mozbc_ic
+      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} "mozbc.exe < wrfchem.namelist.input" SERIAL ${ACCOUNT} ${GENERAL_MODEL}
+      qsub -Wblock=true job.ksh
 #
 # CREATE BCs
    rm -rf wrfchem.namelist.input
@@ -155,7 +158,10 @@ spc_map =  'api -> 0.5*C10H16',
 /
 EOF
 #
-   ./mozbc.exe < wrfchem.namelist.input > log_bc.txt  2>&1
+      RANDOM=$$
+      export JOBRND=${RANDOM}_mozbc_bc
+      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} "mozbc.exe < wrfchem.namelist.input" SERIAL ${ACCOUNT} ${GENERAL_MODEL}
+      qsub -Wblock=true job.ksh
 #
 # GENERATE CHEMISTRY IC/BC ENSEMBLE MEMBERS   
 #

@@ -28,9 +28,10 @@ domains = ${MAX_DOMAINS},
 EOF
 #
 # RUN wesely
-      rm -rf index.html
-      chmod +x wesely.exe
-      ./wesely.exe < wesely.inp > index.html 2>&1
+      RANDOM=$$
+      export JOBRND=${RANDOM}_fire
+      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} "wesely.exe < wesely.inp" SERIAL ${ACCOUNT} ${GENERAL_MODEL}
+      qsub -Wblock=true job.ksh
 #
 # TEST WHETHER OUTPUT EXISTS
       export FILE_CR=wrf_season_wes_usgs_d${CR_DOMAIN}.nc

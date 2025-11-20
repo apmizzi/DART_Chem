@@ -2,7 +2,7 @@
 #
       cd ${RUN_DIR}/${DATE}/real
 #
-      cp ${WRF_DIR}/main/real.exe ./.
+      cp ${WRFCHEM_DIR}/main/real.exe ./.
       cp ${EXPERIMENT_HIST_IO_DIR}/hist_io_flds_v1 ./.
       cp ${EXPERIMENT_HIST_IO_DIR}/hist_io_flds_v2 ./.
 #

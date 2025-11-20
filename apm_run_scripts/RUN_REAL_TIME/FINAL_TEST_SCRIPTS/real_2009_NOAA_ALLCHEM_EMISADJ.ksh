@@ -55,10 +55,10 @@ export FIRST_DART_INFLATE_DATE=2009040203
 export FIRST_EMISS_INV_DATE=2009040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2009040200
+export CYCLE_STR_DATE=2009040315
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2009040200
+export CYCLE_END_DATE=2009040318
 #
 # For emissions estimation
 export ADD_EMISS=true
@@ -144,22 +144,6 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
                                    'TES_CO_PROFILE',
                                    'TES_O3_PROFILE'"
 #
-# Run WRF-Chem for failed forecasts (will not work with adaptive time step)
-export RUN_SPECIAL_FORECAST=false
-export NUM_SPECIAL_FORECAST=0
-export SPECIAL_FORECAST_FAC=1.
-#
-export SPECIAL_FORECAST_MEM[1]=1
-export SPECIAL_FORECAST_MEM[2]=2
-export SPECIAL_FORECAST_MEM[3]=3
-export SPECIAL_FORECAST_MEM[4]=4
-export SPECIAL_FORECAST_MEM[5]=5
-export SPECIAL_FORECAST_MEM[6]=6
-export SPECIAL_FORECAST_MEM[7]=7
-export SPECIAL_FORECAST_MEM[8]=8
-export SPECIAL_FORECAST_MEM[9]=9
-export SPECIAL_FORECAST_MEM[10]=10
-#
 # Set observation error scaling and retention factors (assign constants)
 source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh
 #
@@ -195,6 +179,36 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export L_ADD_EMISS=${ADD_EMISS} 
    if [[ ${DATE} -lt ${FIRST_EMISS_INV_DATE} ]]; then
       export L_ADD_EMISS=false
+   fi
+#
+# Run WRF-Chem for failed forecasts (will not work with adaptive time step)
+   export RUN_SPECIAL_FORECAST=false
+   export NUM_SPECIAL_FORECAST=0
+   export SPECIAL_FORECAST_FAC=1.
+   export SPECIAL_FORECAST_MEM[1]=1
+   export SPECIAL_FORECAST_MEM[2]=2
+   export SPECIAL_FORECAST_MEM[3]=3
+   export SPECIAL_FORECAST_MEM[4]=4
+   export SPECIAL_FORECAST_MEM[5]=5
+   export SPECIAL_FORECAST_MEM[6]=6
+   export SPECIAL_FORECAST_MEM[7]=7
+   export SPECIAL_FORECAST_MEM[8]=8
+   export SPECIAL_FORECAST_MEM[9]=9
+   export SPECIAL_FORECAST_MEM[10]=10
+#
+   if [[ ${DATE} -eq ${CYCLE_STR_DATE}  ]]; then
+      export RUN_SPECIAL_FORECAST=true
+      export NUM_SPECIAL_FORECAST=1
+      export SPECIAL_FORECAST_MEM[1]=15
+      export SPECIAL_FORECAST_MEM[2]=2
+      export SPECIAL_FORECAST_MEM[3]=3
+      export SPECIAL_FORECAST_MEM[4]=4
+      export SPECIAL_FORECAST_MEM[5]=5
+      export SPECIAL_FORECAST_MEM[6]=6
+      export SPECIAL_FORECAST_MEM[7]=7
+      export SPECIAL_FORECAST_MEM[8]=8
+      export SPECIAL_FORECAST_MEM[9]=9
+      export SPECIAL_FORECAST_MEM[10]=10
    fi
 #
 # SELECT COMPONENT RUN OPTIONS:
@@ -237,9 +251,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_ENSEMBLE_MEAN_OUTPUT=false
       export RUN_BAND_DEPTH=false
    fi
-   if [[ ${RUN_SPECIAL_FORECAST} == true ]]; then
 #
 # FOR SPECIAL CYCLING       
+   if [[ ${RUN_SPECIAL_FORECAST} == true ]]; then
       export RUN_INPUT_OBS=false
       export RUN_COMBINE_OBS=false
       export RUN_PREPROCESS_OBS=false
@@ -352,13 +366,13 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #   
    export FILTER_JOB_CLASS=normal
    export FILTER_TIME_LIMIT=03:59:00
-   export FILTER_TIME_LIMIT=01:59:00
+   export FILTER_TIME_LIMIT=03:59:00
    export FILTER_NODES=8
    export FILTER_TASKS=28
    export FILTER_MODEL=bro
 #
    export WRFCHEM_JOB_CLASS=normal
-   export WRFCHEM_TIME_LIMIT=01:59:00
+   export WRFCHEM_TIME_LIMIT=02:59:00
    export WRFCHEM_NODES=5
    export WRFCHEM_TASKS=28
    export WRFCHEM_MODEL=bro
@@ -539,7 +553,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/update_bc
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Update.ksh > index_rs.html 2>&1  
+      source ${RS_SCRIPTS_DIR}/RS_Update_NOAA.ksh > index_rs.html 2>&1  
   fi
 #
 #########################################################################
@@ -604,6 +618,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          cd ${RUN_DIR}/${DATE}/wrfchem_cycle_cr
       fi
       source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR_NOAA.ksh > index_rs.html 2>&1
+#      source ${RS_SCRIPTS_DIR}/RS_WRFChem_Cycle_CR_NOAA_OPTM.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################

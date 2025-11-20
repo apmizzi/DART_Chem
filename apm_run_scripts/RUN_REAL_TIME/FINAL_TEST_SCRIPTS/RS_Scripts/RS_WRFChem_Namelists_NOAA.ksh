@@ -268,6 +268,7 @@
    export NL_DIFF_6TH_FACTOR=0.12,0.12
    export NL_KM_OPT=4
    export NL_DAMP_OPT=3
+   export NL_W_CRIT_CFL=1.0,1.0
    export NL_ZDAMP=5000.,5000.,
    export NL_DAMPCOEF=0.2,0.2
    export NL_NON_HYDROSTATIC=".true.",".true."
