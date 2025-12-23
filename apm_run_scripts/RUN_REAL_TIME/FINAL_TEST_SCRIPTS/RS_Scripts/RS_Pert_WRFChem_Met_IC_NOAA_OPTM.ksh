@@ -116,6 +116,7 @@
 #PBS -j oe
 #PBS -l select=1:ncpus=128:model=rom_ait
 cd \$PBS_O_WORKDIR
+. /home7/gkedzior/run_tracer_env
 export MPI_DSM_DISTRIBUTE=0
 parallel 'cd wrfda_cr_{1}; ./da_wrfvar.exe >& index.log' ::: ${DIR_LABEL_LIST}
 EOF

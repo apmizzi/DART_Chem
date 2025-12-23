@@ -147,7 +147,7 @@
          if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
          if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
          export L_RUN_DIR=run_${CMEM}
-         cd ${RUN_DIR}/${DATE}/wrfchem_cycle_cr/${L_RUN_DIR}
+         cd ${RUN_DIR}/${DATE}/wrfchem_initial/${L_RUN_DIR}
 #
 # Loop to check the forecast files
 	 export MIN_SIZE=1500000000
@@ -198,4 +198,4 @@
 	 rm termvels* tr* ubvals* URBPARM* VEGPARM* wrfapm* wrfbdy* wrfbiochemi* wrfchemi*
 	 rm wrf.exe wrffirechemi* wrfinput* wrf_season*
          let IMEM=${IMEM}+1
-      done         
+      done
