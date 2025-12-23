@@ -56,7 +56,7 @@ export FIRST_DART_INFLATE_DATE=2015040203
 export FIRST_EMISS_INV_DATE=2015040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2015040309
+export CYCLE_STR_DATE=2015040312
 #
 # END CYCLE DATE-TIME:
 export CYCLE_END_DATE=2015040318
@@ -280,13 +280,13 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export GENERAL_TIME_LIMIT=00:50:00
    export GENERAL_NODES=1
    export GENERAL_TASKS=1
-   export GENERAL_MODEL=bro
+   export GENERAL_MODEL=mil_ait
 #
    export SINGLE_JOB_CLASS=normal
    export SINGLE_TIME_LIMIT=00:20:00
    export SINGLE_NODES=1
    export SINGLE_TASKS=1
-   export SINGLE_MODEL=bro
+   export SINGLE_MODEL=mil_ait
 #   
 # PERT_ICBC (Used for settings in call to RS script)
 # (NSPCS x NUM_MEMS) + 2
@@ -297,9 +297,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # Broadwell
    export L_ICBC_PERT_JOB_CLASS=normal
    export L_ICBC_PERT_TIME_LIMIT=1:59:00
-   export L_ICBC_PERT_NODES=21
-   export L_ICBC_PERT_TASKS=28
-   export L_ICBC_PERT_MODEL=bro
+   export L_ICBC_PERT_NODES=5
+   export L_ICBC_PERT_TASKS=128
+   export L_ICBC_PERT_MODEL=mil_ait
 #
 # PERT_EMISS (Used for settings in call to  RS script)
 # ((NNCHEM_SPC + MNFIRE_SPC + NNBIO_SPC) x NUM_MEMS) + 2
@@ -307,9 +307,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # Broadwell
    export L_EMISS_PERT_JOB_CLASS=normal
    export L_EMISS_PERT_TIME_LIMIT=01:59:00
-   export L_EMISS_PERT_NODES=31
-   export L_EMISS_PERT_TASKS=28
-   export L_EMISS_PERT_MODEL=bro
+   export L_EMISS_PERT_NODES=7
+   export L_EMISS_PERT_TASKS=128
+   export L_EMISS_PERT_MODEL=mil_ait
 #   
    export NL_FAC_OBS_ERROR_SCIAM_NO2=0.75       # good
    export NL_FAC_OBS_ERROR_OMI_SO2=1.75         # good
