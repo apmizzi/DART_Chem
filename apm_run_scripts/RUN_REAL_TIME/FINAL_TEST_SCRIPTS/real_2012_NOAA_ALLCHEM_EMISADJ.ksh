@@ -367,25 +367,25 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export GENERAL_TIME_LIMIT=02:30:00
    export GENERAL_NODES=1
    export GENERAL_TASKS=1
-   export GENERAL_MODEL=bro
+   export GENERAL_MODEL=mil_ait
 #
    export SINGLE_JOB_CLASS=normal
    export SINGLE_TIME_LIMIT=02:30:00
    export SINGLE_NODES=1
    export SINGLE_TASKS=1
-   export SINGLE_MODEL=bro
+   export SINGLE_MODEL=mil_ait
 #   
    export FILTER_JOB_CLASS=normal
    export FILTER_TIME_LIMIT=03:59:00
-   export FILTER_NODES=10
-   export FILTER_TASKS=28
-   export FILTER_MODEL=bro
+   export FILTER_NODES=3
+   export FILTER_TASKS=128
+   export FILTER_MODEL=mil_ait
 #
    export WRFCHEM_JOB_CLASS=normal
    export WRFCHEM_TIME_LIMIT=01:59:00
-   export WRFCHEM_NODES=7
-   export WRFCHEM_TASKS=28
-   export WRFCHEM_MODEL=bro
+   export WRFCHEM_NODES=3
+   export WRFCHEM_TASKS=128
+   export WRFCHEM_MODEL=mil_ait
 #
    export WRFCHEMI_DARTVARS="E_CO,E_NO,E_NO2,E_SO2"
    export WRFFIRECHEMI_DARTVARS="ebu_in_co,ebu_in_no,ebu_in_no2,ebu_in_so2"
