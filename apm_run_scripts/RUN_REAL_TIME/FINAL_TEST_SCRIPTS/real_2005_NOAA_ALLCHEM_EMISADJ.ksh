@@ -55,10 +55,10 @@ export FIRST_DART_INFLATE_DATE=2005040203
 export FIRST_EMISS_INV_DATE=2005040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2005040203
+export CYCLE_STR_DATE=2005040315
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2005040212
+export CYCLE_END_DATE=2005040318
 #
 # For emissions estimation
 export ADD_EMISS=true
@@ -82,11 +82,13 @@ export NUM_WRFFIRECHEMI_DARTVARS=4
 # SELECT OBSERVATION OPTIONS:
 export RUN_INPUT_OBS=false
 export RUN_MOPITT_V8_CO_PROFILE_OBS=true            # (done)  TRACER I
+export RUN_MOPITT_V9_CO_PROFILE_OBS=false           # (done)  TRACER I
 export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true         # (done)  TRACER I
 export RUN_OMI_SO2_PBL_COL_OBS=true                 # (done)  TRACER I
 export RUN_TES_CO_PROFILE_OBS=true                  # (done)  TRACER I
 export RUN_GOME2A_NO2_TROP_COL_OBS=true             # (done)  TRACER I
 export RUN_SCIAM_NO2_TROP_COL_OBS=true              # (done)  TRACER I
+export RUN_SCIAM_SO2_TROP_COL_OBS=false             # (done)  TRACER I
 export RUN_OMI_O3_PROFILE_OBS=true                  # (done)  TRACER I
 export RUN_TES_O3_PROFILE_OBS=true                  # (done)  TRACER I
 export RUN_MLS_O3_PROFILE_OBS=true                  # (done)  TRACER I
@@ -230,10 +232,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          export RUN_WRFCHEM_INITIAL=true
          export RUN_WRFCHEM_CYCLE_CR=false
       elif [[ ${DATE} -eq ${CYCLE_STR_DATE}  ]]; then
-         export RUN_DART_FILTER=false
-         export RUN_POST_EMISS_INFLATION=false
+         export RUN_DART_FILTER=true
+         export RUN_POST_EMISS_INFLATION=true
          export RUN_BIAS_CORRECTION=false
-         export RUN_UPDATE_BC=false
+         export RUN_UPDATE_BC=true
          export RUN_ENSEMBLE_MEAN_INPUT=false
          export RUN_WRFCHEM_INITIAL=false
          export RUN_WRFCHEM_CYCLE_CR=true
@@ -352,14 +354,15 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 #########################################################################
 #
-   export NL_EPSSM=0.3
-   export NL_DAMPCOEF=0.3,0.3
+   export LOCALIZATION_DIR=/nobackupp28/amizzi/OUTPUT_DATA/STATIC_DATA/localization   
+   export NL_EPSSM=0.1
+   export NL_DAMPCOEF=0.2,0.2
    export NL_DAMP_OPT=3
-   export NL_SMOOTH_OPTION=2
-   export NL_TIME_STEP=30
-   export NNL_TIME_STEP=30
-   export NL_TIME_STEP_SOUND=0
-#   
+   export NL_SMOOTH_OPTION=0
+   export NL_TIME_STEP=40
+   export NNL_TIME_STEP=40
+   export NL_TIME_STEP_SOUND=4
+#
    export GENERAL_JOB_CLASS=normal
    export GENERAL_TIME_LIMIT=02:30:00
    export GENERAL_NODES=1
@@ -373,15 +376,14 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export SINGLE_MODEL=bro
 #   
    export FILTER_JOB_CLASS=normal
-   export FILTER_TIME_LIMIT=03:59:00
-   export FILTER_TIME_LIMIT=03:59:00
-   export FILTER_NODES=8
+   export FILTER_TIME_LIMIT=04:59:00
+   export FILTER_NODES=10
    export FILTER_TASKS=28
    export FILTER_MODEL=bro
 #
    export WRFCHEM_JOB_CLASS=normal
    export WRFCHEM_TIME_LIMIT=01:59:00
-   export WRFCHEM_NODES=5
+   export WRFCHEM_NODES=7
    export WRFCHEM_TASKS=28
    export WRFCHEM_MODEL=bro
 #

@@ -185,7 +185,7 @@ dm_has_traj                         = .true.,
 /
 
 &dynamics
-hybrid_opt                          = 2,                                ! WRF V3.9 vert coord opt (0= no hybrid TF, 2= hybrid HYB)
+hybrid_opt                          = ${NL_HYBRID_OPT},                 ! WRF V3.9 vert coord opt (0= no hybrid TF, 2= hybrid HYB)
 km_opt                              = 4,                                ! horizontal Smagorinsky first order closure (recommended for realdata case)
 km_opt_dfi                          = 1,
 diff_opt                            = 2,                                ! 1 - (default) evaluates 2nd order diffusion term on coordinate surfaces, uses kvdif for vertical diffusion unless PBL option is used, may be used with km_opt = 1 (recommended for real-data case) and 4

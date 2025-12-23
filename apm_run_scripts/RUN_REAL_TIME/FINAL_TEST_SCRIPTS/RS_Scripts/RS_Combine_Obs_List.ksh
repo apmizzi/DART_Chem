@@ -1,6 +1,8 @@
 #!/bin/ksh -aux
 export RUN_MOPITT_CO_TOTAL_COL_OBS=true
 export RUN_MOPITT_CO_PROFILE_OBS=true
+export RUN_MOPITT_V8_CO_PROFILE_OBS=true
+export RUN_MOPITT_V9_CO_PROFILE_OBS=true
 export RUN_MOPITT_CO_CPSR_OBS=true
 export RUN_IASI_CO_TOTAL_COL_OBS=true
 export RUN_IASI_CO_PROFILE_OBS=true

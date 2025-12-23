@@ -260,6 +260,7 @@
 #
 # DYNAMICS NAMELIST:
    export NL_HYBRID_OPT=2
+   export NL_HYBRID_OPT=0
    export NL_ISO_TEMP=200.
    export NL_TRACER_OPT=0,0
    export NL_W_DAMPING=1

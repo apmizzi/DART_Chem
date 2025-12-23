@@ -55,7 +55,7 @@ export FIRST_DART_INFLATE_DATE=2009040203
 export FIRST_EMISS_INV_DATE=2009040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2009040315
+export CYCLE_STR_DATE=2009040306
 #
 # END CYCLE DATE-TIME:
 export CYCLE_END_DATE=2009040318
@@ -80,17 +80,19 @@ export NUM_WRFCHEMI_DARTVARS=4
 export NUM_WRFFIRECHEMI_DARTVARS=4
 #
 # SELECT OBSERVATION OPTIONS:
-export RUN_INPUT_OBS=true
+export RUN_INPUT_OBS=false
 export RUN_MOPITT_V8_CO_PROFILE_OBS=true            # (done)  TRACER I
+export RUN_MOPITT_V9_CO_PROFILE_OBS=false           # (done)  TRACER I
 export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true         # (done)  TRACER I
 export RUN_OMI_SO2_PBL_COL_OBS=true                 # (done)  TRACER I
 export RUN_TES_CO_PROFILE_OBS=true                  # (done)  TRACER I
 export RUN_GOME2A_NO2_TROP_COL_OBS=true             # (done)  TRACER I
 export RUN_SCIAM_NO2_TROP_COL_OBS=true              # (done)  TRACER I
-export RUN_OMI_O3_PROFILE_OBS=true                   # (done)  TRACER I
-export RUN_TES_O3_PROFILE_OBS=true                 # (done)  TRACER I
-export RUN_MLS_O3_PROFILE_OBS=true                # (done)  TRACER I
-export RUN_MLS_HNO3_PROFILE_OBS=true               # (done)  TRACER I
+export RUN_SCIAM_SO2_TROP_COL_OBS=false             # (done)  TRACER I
+export RUN_OMI_O3_PROFILE_OBS=true                  # (done)  TRACER I
+export RUN_TES_O3_PROFILE_OBS=true                  # (done)  TRACER I
+export RUN_MLS_O3_PROFILE_OBS=true                  # (done)  TRACER I
+export RUN_MLS_HNO3_PROFILE_OBS=true                # (done)  TRACER I
 export RUN_AIRNOW_CO_OBS=true                       # (done)  TRACER I
 export RUN_AIRNOW_O3_OBS=true                       # (done)  TRACER I
 export RUN_AIRNOW_NO2_OBS=true                      # (done)  TRACER I
@@ -197,9 +199,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export SPECIAL_FORECAST_MEM[10]=10
 #
    if [[ ${DATE} -eq ${CYCLE_STR_DATE}  ]]; then
-      export RUN_SPECIAL_FORECAST=true
-      export NUM_SPECIAL_FORECAST=1
-      export SPECIAL_FORECAST_MEM[1]=15
+      export RUN_SPECIAL_FORECAST=false
+      export NUM_SPECIAL_FORECAST=0
+      export SPECIAL_FORECAST_MEM[1]=1
       export SPECIAL_FORECAST_MEM[2]=2
       export SPECIAL_FORECAST_MEM[3]=3
       export SPECIAL_FORECAST_MEM[4]=4
@@ -251,9 +253,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_ENSEMBLE_MEAN_OUTPUT=false
       export RUN_BAND_DEPTH=false
    fi
+   if [[ ${RUN_SPECIAL_FORECAST} == true ]]; then
 #
 # FOR SPECIAL CYCLING       
-   if [[ ${RUN_SPECIAL_FORECAST} == true ]]; then
       export RUN_INPUT_OBS=false
       export RUN_COMBINE_OBS=false
       export RUN_PREPROCESS_OBS=false
@@ -352,6 +354,15 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 #########################################################################
 #
+   export LOCALIZATION_DIR=/nobackupp28/amizzi/OUTPUT_DATA/STATIC_DATA/localization   
+   export NL_EPSSM=0.1
+   export NL_DAMPCOEF=0.2,0.2
+   export NL_DAMP_OPT=3
+   export NL_SMOOTH_OPTION=0
+   export NL_TIME_STEP=40
+   export NNL_TIME_STEP=40
+   export NL_TIME_STEP_SOUND=4
+#
    export GENERAL_JOB_CLASS=normal
    export GENERAL_TIME_LIMIT=02:30:00
    export GENERAL_NODES=1
@@ -366,14 +377,13 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #   
    export FILTER_JOB_CLASS=normal
    export FILTER_TIME_LIMIT=03:59:00
-   export FILTER_TIME_LIMIT=03:59:00
-   export FILTER_NODES=8
+   export FILTER_NODES=10
    export FILTER_TASKS=28
    export FILTER_MODEL=bro
 #
    export WRFCHEM_JOB_CLASS=normal
-   export WRFCHEM_TIME_LIMIT=02:59:00
-   export WRFCHEM_NODES=5
+   export WRFCHEM_TIME_LIMIT=01:59:00
+   export WRFCHEM_NODES=7
    export WRFCHEM_TASKS=28
    export WRFCHEM_MODEL=bro
 #
@@ -382,7 +392,6 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
    export WRF_VER=WRFCHEM_NOAACSLv4.2.2
    export WRFCHEM_VER=WRFCHEM_NOAACSLv4.2.2
-   export NNL_TIME_STEP=40
 #   export WRF_VER=WRFCHEM_NOAACSL
 #   export WRFCHEM_VER=WRFCHEM_NOAACSL
 #   export WRF_VER=WRFCHEMv4.3.2_dmpar
@@ -554,7 +563,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
          cd ${RUN_DIR}/${DATE}/update_bc
       fi
       source ${RS_SCRIPTS_DIR}/RS_Update_NOAA.ksh > index_rs.html 2>&1  
-  fi
+   fi
 #
 #########################################################################
 #

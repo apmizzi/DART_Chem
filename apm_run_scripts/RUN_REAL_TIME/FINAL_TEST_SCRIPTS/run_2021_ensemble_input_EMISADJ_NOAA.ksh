@@ -56,10 +56,10 @@ export FIRST_DART_INFLATE_DATE=2021040203
 export FIRST_EMISS_INV_DATE=2021040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2021040212
+export CYCLE_STR_DATE=2021040221
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2021040218
+export CYCLE_END_DATE=2021040318
 #
 # Special skip for emission perturbations (scaling factor propagation only)
 export RUN_SPECIAL_PERT_SKIP=false
@@ -113,72 +113,75 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # SELECT COMPONENT RUN OPTIONS:
    if [[ ${DATE} -eq ${CYCLE_STR_DATE} ]]; then
       export RUN_GEOGRID=false
-      export RUN_UNGRIB=false
-      export RUN_METGRID=false
-      export RUN_REAL=false
-      export RUN_PERT_WRFCHEM_MET_IC=false
-      export RUN_PERT_WRFCHEM_MET_BC=false
-      export RUN_EXO_COLDENS=false
-      export RUN_SEASON_WES=false
-      export RUN_WRFCHEM_BIO=false
-      export RUN_WRFCHEM_FIRE=false
-      export RUN_WRFCHEM_CHEMI=false
+      export RUN_UNGRIB=true
+      export RUN_METGRID=true
+      export RUN_REAL=true
+      export RUN_PERT_WRFCHEM_MET_IC=true
+      export RUN_PERT_WRFCHEM_MET_BC=true
+      export RUN_WRFCHEM_BIO=true
+      export RUN_WRFCHEM_FIRE=true
+      export RUN_WRFCHEM_CHEMI=true
       export RUN_PERT_WRFCHEM_CHEM_ICBC=true
-      export RUN_PERT_WRFCHEM_CHEM_EMISS=false
-      export RUN_COMBINE_OBS=false
-      export RUN_PREPROCESS_OBS=false
-      export RUN_LOCALIZATION=false
+      export RUN_PERT_WRFCHEM_CHEM_EMISS=true
+      export RUN_COMBINE_OBS=true
+      export RUN_PREPROCESS_OBS=true
+      export RUN_CREATE_NOAA_DIR=true
 #
-      export RUN_MOPITT_V8_CO_PROFILE_OBS=false            # (done)  TRACER I
-      export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false         # (done)  TRACER I
-      export RUN_OMI_SO2_PBL_COL_OBS=false                 # (done)  TRACER I
-      export RUN_TES_CO_PROFILE_OBS=false                  # (done)  TRACER I
-      export RUN_SCIAM_NO2_TROP_COL_OBS=false              # (done)  TRACER I
-      export RUN_GOME2A_NO2_TROP_COL_OBS=false             # (done)  TRACER I
-      export RUN_OMI_O3_PROFILE_OBS=false                  # (done)  TRACER I
-      export RUN_TES_O3_PROFILE_OBS=false                  # (done)  TRACER I
-      export RUN_MLS_O3_PROFILE_OBS=false                  # (done)  TRACER I
-      export RUN_MLS_HNO3_PROFILE_OBS=false                # (done)  TRACER I
-      export RUN_AIRNOW_CO_OBS=false                       # (done)  TRACER I
-      export RUN_AIRNOW_O3_OBS=false                       # (done)  TRACER I
-      export RUN_AIRNOW_NO2_OBS=false                      # (done)  TRACER I
-      export RUN_AIRNOW_SO2_OBS=false                      # (done)  TRACER I
-      export RUN_MET_OBS=false                             # (done)  TRACER I
+      export RUN_MOPITT_V8_CO_PROFILE_OBS=true            # (done)  TRACER I
+      export RUN_MOPITT_V9_CO_PROFILE_OBS=false            # (done)  TRACER I
+      export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true         # (done)  TRACER I
+      export RUN_OMI_SO2_PBL_COL_OBS=true                 # (done)  TRACER I
+      export RUN_TES_CO_PROFILE_OBS=true                  # (done)  TRACER I
+      export RUN_SCIAM_NO2_TROP_COL_OBS=true              # (done)  TRACER I
+      export RUN_SCIAM_SO2_TROP_COL_OBS=false              # (done)  TRACER I
+      export RUN_GOME2A_NO2_TROP_COL_OBS=true             # (done)  TRACER I
+      export RUN_OMI_O3_PROFILE_OBS=true                  # (done)  TRACER I
+      export RUN_TES_O3_PROFILE_OBS=true                  # (done)  TRACER I
+      export RUN_MLS_O3_PROFILE_OBS=true                  # (done)  TRACER I
+      export RUN_MLS_HNO3_PROFILE_OBS=true                # (done)  TRACER I
+      export RUN_AIRNOW_CO_OBS=true                       # (done)  TRACER I
+      export RUN_AIRNOW_O3_OBS=true                       # (done)  TRACER I
+      export RUN_AIRNOW_NO2_OBS=true                      # (done)  TRACER I
+      export RUN_AIRNOW_SO2_OBS=true                      # (done)  TRACER I
+      export RUN_MET_OBS=true                             # (done)  TRACER I
    elif [[ ${DATE} -gt ${CYCLE_STR_DATE} ]]; then
       export RUN_GEOGRID=false
-      export RUN_UNGRIB=false
-      export RUN_METGRID=false
-      export RUN_REAL=false
-      export RUN_PERT_WRFCHEM_MET_IC=false
-      export RUN_PERT_WRFCHEM_MET_BC=false
-      export RUN_EXO_COLDENS=false
-      export RUN_SEASON_WES=false
-      export RUN_WRFCHEM_BIO=false
-      export RUN_WRFCHEM_FIRE=false
-      export RUN_WRFCHEM_CHEMI=false
+      export RUN_UNGRIB=true
+      export RUN_METGRID=true
+      export RUN_REAL=true
+      export RUN_PERT_WRFCHEM_MET_IC=true
+      export RUN_PERT_WRFCHEM_MET_BC=true
+      export RUN_WRFCHEM_BIO=true
+      export RUN_WRFCHEM_FIRE=true
+      export RUN_WRFCHEM_CHEMI=true
       export RUN_PERT_WRFCHEM_CHEM_ICBC=true
-      export RUN_PERT_WRFCHEM_CHEM_EMISS=false
-      export RUN_COMBINE_OBS=false
-      export RUN_PREPROCESS_OBS=false
-      export RUN_LOCALIZATION=false
+      export RUN_PERT_WRFCHEM_CHEM_EMISS=true
+      export RUN_COMBINE_OBS=true
+      export RUN_PREPROCESS_OBS=true
+      export RUN_CREATE_NOAA_DIR=true
 #
-      export RUN_MOPITT_V8_CO_PROFILE_OBS=false            # (done)  TRACER I
-      export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false         # (done)  TRACER I
-      export RUN_OMI_SO2_PBL_COL_OBS=false                 # (done)  TRACER I
-      export RUN_TES_CO_PROFILE_OBS=false                  # (done)  TRACER I
-      export RUN_SCIAM_NO2_TROP_COL_OBS=false              # (done)  TRACER I
-      export RUN_GOME2A_NO2_TROP_COL_OBS=false             # (done)  TRACER I
-      export RUN_OMI_O3_PROFILE_OBS=false                  # (done)  TRACER I
-      export RUN_TES_O3_PROFILE_OBS=false                  # (done)  TRACER I
-      export RUN_MLS_O3_PROFILE_OBS=false                  # (done)  TRACER I
-      export RUN_MLS_HNO3_PROFILE_OBS=false                # (done)  TRACER I
-      export RUN_AIRNOW_CO_OBS=false                       # (done)  TRACER I
-      export RUN_AIRNOW_O3_OBS=false                       # (done)  TRACER I
-      export RUN_AIRNOW_NO2_OBS=false                      # (done)  TRACER I
-      export RUN_AIRNOW_SO2_OBS=false                      # (done)  TRACER I
-      export RUN_MET_OBS=false                             # (done)  TRACER I
+      export RUN_MOPITT_V8_CO_PROFILE_OBS=true            # (done)  TRACER I
+      export RUN_MOPITT_V9_CO_PROFILE_OBS=false            # (done)  TRACER I
+      export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true         # (done)  TRACER I
+      export RUN_OMI_SO2_PBL_COL_OBS=true                 # (done)  TRACER I
+      export RUN_TES_CO_PROFILE_OBS=true                  # (done)  TRACER I
+      export RUN_SCIAM_NO2_TROP_COL_OBS=true              # (done)  TRACER I
+      export RUN_SCIAM_SO2_TROP_COL_OBS=false              # (done)  TRACER I
+      export RUN_GOME2A_NO2_TROP_COL_OBS=true             # (done)  TRACER I
+      export RUN_OMI_O3_PROFILE_OBS=true                  # (done)  TRACER I
+      export RUN_TES_O3_PROFILE_OBS=true                  # (done)  TRACER I
+      export RUN_MLS_O3_PROFILE_OBS=true                  # (done)  TRACER I
+      export RUN_MLS_HNO3_PROFILE_OBS=true                # (done)  TRACER I
+      export RUN_AIRNOW_CO_OBS=true                       # (done)  TRACER I
+      export RUN_AIRNOW_O3_OBS=true                       # (done)  TRACER I
+      export RUN_AIRNOW_NO2_OBS=true                      # (done)  TRACER I
+      export RUN_AIRNOW_SO2_OBS=true                      # (done)  TRACER I
+      export RUN_MET_OBS=true                             # (done)  TRACER I
    fi
 #
+   export RUN_EXO_COLDENS=false
+   export RUN_SEASON_WES=false
+   export RUN_LOCALIZATION=false
    export RUN_MODIS_AOD_TOTAL_COL_OBS=false            # (done)  TRACER I - leave false
    export RUN_GOME2B_NO2_TROP_COL_OBS=false            # (check) TRACER I - leave false
    export RUN_AIRNOW_PM10_OBS=false                    # (done)  TRACER I - leave false
@@ -236,6 +239,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 #########################################################################
 #
+   export NL_HYBRID_OPT=0   
    export WRFCHEMI_DARTVARS="E_CO,E_NO,E_NO2,E_SO2"
    export WRFFIRECHEMI_DARTVARS="ebu_in_co,ebu_in_no,ebu_in_no2,ebu_in_so2"
 #
@@ -674,7 +678,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 ########################################################################
 #
-   if ${RUN_MOPITT_CO_PROFILE_OBS} | ${RUN_MOPITT_V8_CO_PROFILE_OBS} ; then
+   if ${RUN_MOPITT_CO_PROFILE_OBS} | ${RUN_MOPITT_V8_CO_PROFILE_OBS} | ${RUN_MOPITT_V9_CO_PROFILE_OBS} ; then
       if [[ ! -d ${RUN_DIR}/${DATE}/mopitt_co_profile_obs ]]; then
          mkdir -p ${RUN_DIR}/${DATE}/mopitt_co_profile_obs
          cd ${RUN_DIR}/${DATE}/mopitt_co_profile_obs
@@ -690,7 +694,15 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
         source ${RS_SCRIPTS_DIR}/RS_MOPITT_V8_CO_Profile_FRAPPE.ksh > index_rs.html 2>&1
         export JOBRND=${TRANDOM}_mopitt
         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${SINGLE_JOB_CLASS} ${SINGLE_TIME_LIMIT} ${SINGLE_NODES} ${SINGLE_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${SINGLE_MODEL}
-         qsub job.ksh
+        qsub job.ksh
+      fi
+#
+      if ${RUN_MOPITT_V9_CO_PROFILE_OBS}; then
+        export  EXPERIMENT_MOPITT_CO_DIR=${EXPERIMENT_DATA_DIR}/mopitt_v9_co_hdf_data
+        source ${RS_SCRIPTS_DIR}/RS_MOPITT_V9_CO_Profile_FRAPPE.ksh > index_rs.html 2>&1
+        export JOBRND=${TRANDOM}_mopitt
+        ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${SINGLE_JOB_CLASS} ${SINGLE_TIME_LIMIT} ${SINGLE_NODES} ${SINGLE_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${SINGLE_MODEL}
+        qsub job.ksh
       fi
    fi
 #
@@ -2248,6 +2260,23 @@ if ${RUN_AIRNOW_PM25_OBS}; then
       cd ${RUN_DIR}/${DATE}/preprocess_obs
       export COMBINE_OBS_DIR=${RUN_DIR}/${DATE}/combine_obs
       source ${RS_SCRIPTS_DIR}/RS_WRFChem_Obs_Preprocess.ksh > index_preprocess.html 2>&1
+   fi
+#
+#########################################################################
+#
+# RUN CREATE NOAA OBSERVATIONS DIRECTORY
+#
+#########################################################################
+#
+   if ${RUN_CREATE_NOAA_DIR}; then
+      if [[ ! -d ${RUN_DIR}/${DATE}/NOAA ]]; then
+         mkdir -p ${RUN_DIR}/${DATE}/NOAA
+         cd ${RUN_DIR}/${DATE}/NOAA
+      else
+         cd ${RUN_DIR}/${DATE}/NOAA
+      fi
+      cd ${RUN_DIR}/${DATE}/NOAA
+      source ${RS_SCRIPTS_DIR}/RS_Create_NOAA_Dir.ksh > index_create_NOAA.html 2>&1
    fi
 #
 ##########################################################################

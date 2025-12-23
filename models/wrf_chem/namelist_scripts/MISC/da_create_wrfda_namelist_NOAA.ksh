@@ -231,7 +231,7 @@ iz0tlnd                             = 1,                                ! Chen-Z
 &scm
 /
 &dynamics
-hybrid_opt                          = 2,  
+hybrid_opt                          = ${NL_HYBRID_OPT},  
 use_baseparam_fr_nml                = ${NL_USE_BASEPARAM_FR_NML},
 w_damping                           = ${NL_W_DAMPING},
 diff_opt                            = ${NL_DIFF_OPT},
