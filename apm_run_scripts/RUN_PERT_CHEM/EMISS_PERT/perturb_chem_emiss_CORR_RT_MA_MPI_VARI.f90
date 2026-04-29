@@ -32,10 +32,7 @@ program main
    integer                                  :: nx,ny,nz,nzp,nz_chem,nz_fire,nz_biog
    integer                                  :: nchem_spcs,nfire_spcs,nbiog_spcs,num_mems
    integer                                  :: i,j,k,kk,isp,imem,ntotal_spcs
-   integer                                  :: chem_ipt,chem_jpt
-   integer                                  :: fire_ipt,fire_jpt
-   integer                                  :: biog_ipt,biog_jpt
-   integer,dimension(8)                     :: date_time_vals
+      integer,dimension(8)                     :: date_time_vals
    integer,dimension(MPI_STATUS_SIZE)       :: stat
    integer,allocatable,dimension(:)         :: itask_chem,itask_fire,itask_biog
    real                                     :: pi,grav,zfac,zmin,fac_min,nnum_mem
@@ -45,22 +42,20 @@ program main
    real                                     :: grid_length,get_dist,zfac_chem,zfac_fire,zfac_biog
    real                                     :: mean,std,wgt_end,scl_fac_chem,scl_fac_fire,scl_fac_biog
    real                                     :: cpu_str,cpu_end,cpu_dif,flg
-   real                                     :: u_ran_1,u_ran_2,ztrm,sum,rsprd_crit,zero_exp
+   real                                     :: u_ran_1,u_ran_2,sum,rsprd_crit
    real,allocatable,dimension(:)            :: tmp_arry
    real,allocatable,dimension(:,:)          :: lat,lon
-   real,allocatable,dimension(:,:,:)        :: geo_ht,zfld,zmean,zmean_save,chem_mem,fire_mem,biog_mem
+   real,allocatable,dimension(:,:,:)        :: geo_ht,zfld,zmean,zmean_save,chem_mem
    real,allocatable,dimension(:,:,:,:)      :: A_chem,A_fire,A_biog
    real,allocatable,dimension(:,:,:)        :: chem_data3d,fire_data3d,biog_data3d
    real,allocatable,dimension(:,:,:)        :: chem_vari3d,fire_vari3d,biog_vari3d
    real,allocatable,dimension(:,:,:)        :: chem_vari_old,chem_vari_new,chem_vari_end
    real,allocatable,dimension(:,:,:)        :: fire_vari_old,fire_vari_new,fire_vari_end
    real,allocatable,dimension(:,:,:)        :: biog_vari_old,biog_vari_new,biog_vari_end
-   real,allocatable,dimension(:,:,:)        :: ens_mean,ens_vari,parent
    character(len=20)                        :: cmem
    character(len=100)                       :: ch_date,ch_time,ch_zone
    character(len=150)                       :: pert_path_pr,pert_path_po,filenm
    character(len=150)                       :: wrfchemi,wrffirechemi,wrfbiogchemi
-   character(len=150)                       :: wrfchemi_old,wrffirechemi_old,wrfbiogchemi_old
    character(len=150)                       :: wrfchemi_vari,wrffirechemi_vari,wrfbiogchemi_vari
    character(len=150)                       :: wrfchem_file,wrffire_file,wrfbiog_file
    character(len=150),allocatable,dimension(:) :: ch_chem_spc,ch_fire_spc,ch_biog_spc 
@@ -68,8 +63,7 @@ program main
 !
    namelist /perturb_chem_emiss_corr_nml/date,nx,ny,nz,nz_chem,nchem_spcs,nfire_spcs,nbiog_spcs, &
    pert_path_pr,pert_path_po,nnum_mem,wrfchemi,wrffirechemi,wrfbiogchemi,sprd_chem,sprd_fire,sprd_biog, &
-   sw_corr_tm,sw_seed,sw_chem,sw_fire,sw_biog,corr_lngth_hz,corr_lngth_vt,corr_lngth_tm,corr_tm_delt, &
-   wrfchemi_old,wrffirechemi_old,wrfbiogchemi_old 
+   sw_corr_tm,sw_seed,sw_chem,sw_fire,sw_biog,corr_lngth_hz,corr_lngth_vt,corr_lngth_tm,corr_tm_delt
    namelist /perturb_chem_emiss_spec_nml/ch_chem_spc,ch_fire_spc,ch_biog_spc
 !
 ! Setup mpi
@@ -90,8 +84,13 @@ program main
    fac_min=0.01
    icnt_tsk=1
    rsprd_crit=3.0
-   zero_exp=-30.
-   zero_exp=0.
+   scl_fac_chem=30.0
+   scl_fac_chem=12.5
+   scl_fac_fire=10.
+   scl_fac_fire=8.5
+   scl_fac_fire=5.5
+   scl_fac_fire=4.0
+   scl_fac_biog=1.
 !
 ! Read control namelist
    unit=20
@@ -112,9 +111,6 @@ program main
       print *, 'pert_path_pr       ',trim(pert_path_pr)
       print *, 'pert_path_po       ',trim(pert_path_po)
       print *, 'num_mem            ',nnum_mem
-      print *, 'wrfchemi_old       ',trim(wrfchemi_old)
-      print *, 'wrffirechemi_old   ',trim(wrffirechemi_old)
-      print *, 'wrfbiogchemi_old   ',trim(wrfbiogchemi_old)
       print *, 'wrfchemi           ',trim(wrfchemi)
       print *, 'wrffirechemi       ',trim(wrffirechemi)
       print *, 'wrfbiogchemi       ',trim(wrfbiogchemi)
@@ -135,6 +131,7 @@ program main
    nzp=nz+1
    num_mems=nint(nnum_mem)
    wgt_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
+   sw_corr_tm=.false.
 !
 ! Allocate arrays
    allocate(ch_chem_spc(nchem_spcs))
@@ -265,115 +262,39 @@ program main
 !      
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-!!!! Read and send new chemi fields from only one member (all members are initially the same)
-!!!      if(sw_chem) then
-!!!         wrfchem_file=trim(pert_path_po)//'/'//trim(wrfchemi)
-!!!         allocate(tmp_arry(nx*ny*nz_chem))
-!!!         allocate(chem_data3d(nx,ny,nz_chem))
-!!!         do isp=1,nchem_spcs
-!!!            call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
-!!!            nx,ny,nz_chem)
-!!!!
-!!!! Use log transform
-!!!            chem_ipt=0
-!!!            chem_jpt=0
-!!!            do i=1,nx
-!!!               do j=1,ny
-!!!                  do k=1,nz_chem
-!!!                     if(chem_data3d(i,j,k).gt.0.) then
-!!!                        chem_data3d(i,j,k)=log(chem_data3d(i,j,k))
-!!!                        if(chem_ipt.eq.0.and.chem_jpt.eq.0) then
-!!!                           chem_ipt=i
-!!!                           chem_jpt=j
-!!!                        endif
-!!!                     else
-!!!                        chem_data3d(i,j,k)=zero_exp
-!!!                     endif
-!!!                  enddo
-!!!               enddo
-!!!            enddo
-!!!            call apm_pack(tmp_arry,chem_data3d,nx,ny,nz_chem)
-!!!            call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
-!!!            itask_chem(isp),1,MPI_COMM_WORLD,ierr)
-!!!         enddo
-!!!         deallocate(chem_data3d)
-!!!         deallocate(tmp_arry)
-!!!      endif
-!!!!
-!!!! Read and send new fire fields from only one member (all members are initially the same)
-!!!      if(sw_fire) then
-!!!         wrffire_file=trim(pert_path_po)//'/'//trim(wrffirechemi)
-!!!         allocate(tmp_arry(nx*ny*nz_fire))
-!!!         allocate(fire_data3d(nx,ny,nz_fire))
-!!!         do isp=1,nfire_spcs
-!!!            call get_WRFCHEM_emiss_data(wrffire_file,ch_fire_spc(isp),fire_data3d, &
-!!!            nx,ny,nz_fire)
-!!!!
-!!!! Use log transform
-!!!            fire_ipt=0
-!!!            fire_jpt=0
-!!!            do i=1,nx
-!!!               do j=1,ny
-!!!                  do k=1,nz_fire
-!!!                     if(fire_data3d(i,j,k).gt.0.) then
-!!!                        fire_data3d(i,j,k)=log(fire_data3d(i,j,k))
-!!!                        if(fire_ipt.eq.0.and.fire_jpt.eq.0) then
-!!!                           fire_ipt=i
-!!!                           fire_jpt=j
-!!!                        endif
-!!!                     else
-!!!                        fire_data3d(i,j,k)=zero_exp
-!!!                     endif
-!!!                  enddo
-!!!               enddo
-!!!            enddo
-!!!            call apm_pack(tmp_arry,fire_data3d,nx,ny,nz_fire)
-!!!            call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-!!!            itask_fire(isp),1,MPI_COMM_WORLD,ierr)
-!!!         enddo
-!!!         deallocate(fire_data3d)
-!!!         deallocate(tmp_arry)
-!!!      endif
-!!!!
-!!!! Read and send new biog fields from only one member (all members are initially the same)
-!!!      if(sw_biog) then
-!!!         wrfbiog_file=trim(pert_path_po)//'/'//trim(wrfbiogchemi)
-!!!         allocate(tmp_arry(nx*ny*nz_biog))
-!!!         allocate(biog_data3d(nx,ny,nz_biog))
-!!!         do isp=1,nbiog_spcs
-!!!            call get_WRFCHEM_emiss_data(wrfbiog_file,ch_biog_spc(isp),biog_data3d, &
-!!!            nx,ny,nz_biog)
-!!!!
-!!!! Use log transform
-!!!            biog_ipt=0
-!!!            biog_jpt=0
-!!!            do i=1,nx
-!!!               do j=1,ny
-!!!                  do k=1,nz_biog
-!!!                     if(biog_data3d(i,j,k).gt.0.) then
-!!!                        biog_data3d(i,j,k)=log(biog_data3d(i,j,k))
-!!!                        if(biog_ipt.eq.0.and.biog_jpt.eq.0) then
-!!!                           biog_ipt=i
-!!!                           biog_jpt=j
-!!!                        endif
-!!!                     else
-!!!                        biog_data3d(i,j,k)=zero_exp
-!!!                     endif
-!!!                  enddo
-!!!               enddo
-!!!            enddo
-!!!            call apm_pack(tmp_arry,biog_data3d,nx,ny,nz_biog)
-!!!            call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-!!!            itask_biog(isp),1,MPI_COMM_WORLD,ierr)
-!!!         enddo
-!!!         deallocate(biog_data3d)
-!!!         deallocate(tmp_arry)
-!!!      endif
+! Read and send new chemi fields from only one member (all members are initially the same)
+      if(sw_chem) then
+         wrfchem_file=trim(pert_path_po)//'/'//trim(wrfchemi)
+         allocate(tmp_arry(nx*ny*nz_chem))
+         allocate(chem_data3d(nx,ny,nz_chem))
+         do isp=1,nchem_spcs
+            call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
+            nx,ny,nz_chem)
+!
+! Use log transform            
+            do i=1,nx
+               do j=1,ny
+                  do k=1,nz_chem
+                     if(chem_data3d(i,j,k).gt.0.) then
+                        chem_data3d(i,j,k)=log(chem_data3d(i,j,k))
+                     else
+                        chem_data3d(i,j,k)=0.
+                     endif
+                  enddo
+               enddo
+            enddo
+            call apm_pack(tmp_arry,chem_data3d,nx,ny,nz_chem)
+            call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
+            itask_chem(isp),1,MPI_COMM_WORLD,ierr)
+         enddo
+         deallocate(chem_data3d)
+         deallocate(tmp_arry)
+      endif
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 ! RECEIVE NEW PERTURBATION VARIANCE FROM OTHER PROCESSORS
-! READ EMISSIONS, APPLY NEW VARIANCE, AND WRITE TO EMISSIONS FILE
+! READ EMISSIONS, APPLY SCALING, AND WRITE TO EMISSIONS FILE
 !      
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -391,6 +312,7 @@ program main
             call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
             itask_chem(isp),4,MPI_COMM_WORLD,stat,ierr)
             call apm_unpack(tmp_arry,chem_vari_new,nx,ny,nz_chem)
+            if(isp.eq.nchem_spcs) print *, 'APM: After receive in RANK 0 ',trim(ch_chem_spc(isp))
 !
 ! Read field to be perturbed              
             wrfchem_file=trim(pert_path_po)//'/'//trim(wrfchemi)
@@ -404,24 +326,25 @@ program main
                      if(chem_data3d(i,j,k).gt.0.) then
                         chem_data3d(i,j,k)=log(chem_data3d(i,j,k))
                      else
-                        chem_data3d(i,j,k)=zero_exp
+                        chem_data3d(i,j,k)=0.
                      endif
                   enddo
                enddo
             enddo
+            if(isp.eq.nchem_spcs) print *, 'APM: After read field to perturb ',trim(ch_chem_spc(isp))
 !
 ! Read old ensemble error variance
             if(sw_corr_tm) then            
-               wrfchemi_vari=trim(pert_path_pr)//'/'//trim(wrfchemi_old)//'_pert_vari'
-               call get_WRFCHEM_emiss_data(wrfchemi_vari,ch_chem_spc(isp),chem_vari3d, &
+               wrfchem_file=trim(pert_path_pr)//'/'//trim(wrfchemi_vari)
+               call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_vari3d, &
                nx,ny,nz_chem)
 !
 ! Calculate temporally smoothed ensemble error variance            
                do i=1,nx
                   do j=1,ny
                      do k=1,nz_chem
-                        chem_vari_end(i,j,k)=wgt_end*chem_vari3d(i,j,k)+ &
-                        (1.-wgt_end)*chem_vari_new(i,j,k)
+                        chem_vari_end(i,j,k)=(1.-wgt_end)*chem_vari3d(i,j,k)+ &
+                        wgt_end*chem_vari_new(i,j,k)
                      enddo
                   enddo
                enddo
@@ -434,6 +357,7 @@ program main
                   enddo
                enddo
             endif
+            if(isp.eq.nchem_spcs) print *, 'APM: After temporal smoothing ',trim(ch_chem_spc(isp))
 !
 ! Limit the new relative spread
 !            do i=1,nx
@@ -449,13 +373,14 @@ program main
 !            enddo
 !
 ! Write new ensemble error variance
-            wrfchemi_vari=trim(wrfchemi)//'_pert_vari'            
+            wrfchemi_vari=trim(wrfchemi)//'_vari'            
             wrfchem_file=trim(pert_path_po)//'/'//trim(wrfchemi_vari)
             call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_vari_end, &
             nx,ny,nz_chem)
+            if(isp.eq.nchem_spcs) print *, 'APM: After write new variance ',trim(ch_chem_spc(isp))
 !
 ! For each ensemble member generate perturbed field
-!!!            allocate(zfld(nx,ny,nz_chem))               
+            allocate(zfld(nx,ny,nz_chem))               
             allocate(chem_mem(nx,ny,nz_chem))
             sum=0.
             do imem=1,num_mems
@@ -463,44 +388,40 @@ program main
                if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
                if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
 !
-! Generate N(0,1) field               
-!!!               do i=1,nx
-!!!                  do j=1,ny
-!!!                     do k=1,nz_chem
-!!!                        call random_number(u_ran_1)
-!!!                        if(u_ran_1.eq.0.) call random_number(u_ran_1)
-!!!                        call random_number(u_ran_2)
-!!!                        if(u_ran_2.eq.0.) call random_number(u_ran_2)
-!!!                        zfld(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
-!!!                     enddo
-!!!                  enddo
-!!!               enddo
-!
-! Impose the temporally smoothed ensemble error variance and new ensemble mean    
-               call random_number(u_ran_1)
-               if(u_ran_1.eq.0.) call random_number(u_ran_1)
-               call random_number(u_ran_2)
-               if(u_ran_2.eq.0.) call random_number(u_ran_2)
-               ztrm=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+! Generate N(0,1) filed               
                do i=1,nx
                   do j=1,ny
                      do k=1,nz_chem
-                        if(chem_data3d(i,j,k).ne.0.) then
-!                           chem_mem(i,j,k)=exp(chem_data3d(i,j,k)+zfld(i,j,k)* &
-!                           sqrt(chem_vari_end(i,j,k)))
-                           chem_mem(i,j,k)=exp(chem_data3d(i,j,k)+ztrm* &
-                           sqrt(chem_vari_end(i,j,k)))
-                        else
-                           chem_mem(i,j,k)=0.
-                        endif
+                        call random_number(u_ran_1)
+                        if(u_ran_1.eq.0.) call random_number(u_ran_1)
+                        call random_number(u_ran_2)
+                        if(u_ran_2.eq.0.) call random_number(u_ran_2)
+                        zfld(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
                      enddo
                   enddo
                enddo
+               if(isp.eq.nchem_spcs.and.imem.eq.num_mems) print *, &
+               'APM: After generate N(0,1) field ',trim(ch_chem_spc(isp))
+!
+! Impose the temporally smoothed ensemble error variance and new ensemble mean    
+               do i=1,nx
+                  do j=1,ny
+                     do k=1,nz_chem
+                        chem_mem(i,j,k)=exp(chem_data3d(i,j,k)+zfld(i,j,k)*sqrt(chem_vari_end(i,j,k)))
+                     enddo
+                  enddo
+               enddo
+               if(isp.eq.nchem_spcs.and.imem.eq.num_mems) print *, &
+               'APM: After generate new member ',trim(ch_chem_spc(isp))
 !
 ! Write data for the perturbed member
                wrfchem_file=trim(pert_path_po)//'/'//trim(wrfchemi)//cmem
+               if(isp.eq.1.and.imem.eq.1) print *,'APM OUTFILE ',trim(wrfchem_file)
+               if(isp.eq.1.and.imem.eq.num_mems) print *,'APM OUTFILE ',trim(wrfchem_file)
                call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_mem, &
                nx,ny,nz_chem)
+               if(isp.eq.nchem_spcs.and.imem.eq.num_mems) print *, &
+               'APM: After write new member ',trim(ch_chem_spc(isp))
 !
 ! Check means and relative spread
                sum=sum+chem_mem(nx/2,ny/2,1)/real(num_mems)
@@ -509,462 +430,14 @@ program main
 !            print *,'APM: ',trim(ch_chem_spc(isp)),sum,chem_data3d(nx/2,ny/2,1), &
 !            sqrt(chem_vari_end(nx/2,ny/2,1))/chem_data3d(nx/2,ny/2,1)*100.,'%'
 ! log form
-            if(chem_data3d(nx/2,ny/2,1).ne.0.) then
-               print *,'APM: ',trim(ch_chem_spc(isp)),sum,exp(chem_data3d(nx/2,ny/2,1))
-            else
-               print *,'APM: ',trim(ch_chem_spc(isp)),sum,chem_data3d(nx/2,ny/2,1)
-            endif
+            print *,'APM: ',trim(ch_chem_spc(isp)),sum,exp(chem_data3d(nx/2,ny/2,1))
 !
-!!!            deallocate(zfld)
+            deallocate(zfld)
             deallocate(chem_mem)
-
          enddo
          deallocate(tmp_arry)
          deallocate(chem_vari3d)
          deallocate(chem_data3d)
-!
-! Calculate ensemble mean, variance, and recenter
-         allocate(ens_mean(nx,ny,nz_chem))
-         allocate(ens_vari(nx,ny,nz_chem))
-         allocate(parent(nx,ny,nz_chem))
-         allocate(chem_data3d(nx,ny,nz_chem))
-         do isp=1,nchem_spcs
-            ens_mean(:,:,:)=0.
-            do imem=1,num_mems
-               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-               wrfchem_file=trim(pert_path_po)//'/'//trim(wrfchemi)//cmem
-               call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
-               nx,ny,nz_chem)
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_chem
-                        ens_mean(i,j,k)=ens_mean(i,j,k)+chem_data3d(i,j,k)
-                     enddo
-                  enddo
-               enddo
-            enddo
-            ens_mean(:,:,:)=ens_mean(:,:,:)/real(num_mems)
-!
-! Calculate ensemble variance
-            ens_vari(:,:,:)=0.
-            do imem=1,num_mems
-               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-               wrfchem_file=trim(pert_path_po)//'/'//trim(wrfchemi)//cmem
-               call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
-               nx,ny,nz_chem)
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_chem
-                        ens_vari(i,j,k)=ens_vari(i,j,k)+(chem_data3d(i,j,k)-ens_mean(i,j,k))**2.
-                     enddo
-                  enddo
-               enddo
-            enddo
-            ens_vari(:,:,:)=ens_vari(:,:,:)/real(num_mems-1)
-!
-! Recenter the ensemble members
-            wrfchem_file=trim(pert_path_po)//'/'//trim(wrfchemi)
-            call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),parent, &
-            nx,ny,nz_chem)
-            do imem=1,num_mems
-               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-               wrfchem_file=trim(pert_path_po)//'/'//trim(wrfchemi)//cmem
-               call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
-               nx,ny,nz_chem)
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_chem
-                        chem_data3d(i,j,k)=chem_data3d(i,j,k)-ens_mean(i,j,k)+parent(i,j,k)
-                     enddo
-                  enddo
-               enddo
-               wrfchem_file=trim(pert_path_po)//'/'//trim(wrfchemi)//cmem
-               call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
-               nx,ny,nz_chem)
-            enddo
-!
-! Write ensemble mean and variance
-            wrfchem_file=trim(pert_path_po)//'/'//trim(wrfchemi)//'_mean'
-            call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),ens_mean, &
-            nx,ny,nz_chem)
-            wrfchem_file=trim(pert_path_po)//'/'//trim(wrfchemi)//'_vari'
-            call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),ens_vari, &
-            nx,ny,nz_chem)
-         enddo
-         deallocate(ens_mean)
-         deallocate(ens_vari)
-         deallocate(parent)
-         deallocate(chem_data3d)
-      endif
-!
-      if(sw_fire) then
-!
-! Receive new perturbation variance, read emissions, scale emissions, and
-! write emissions to archive file
-!
-         allocate(fire_data3d(nx,ny,nz_fire))
-         allocate(fire_vari3d(nx,ny,nz_fire))
-         allocate(tmp_arry(nx*ny*nz_fire))
-         do isp=1,nfire_spcs
-!
-! Receive new ensemble error variance
-            call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-            itask_fire(isp),4,MPI_COMM_WORLD,stat,ierr)
-            call apm_unpack(tmp_arry,fire_vari_new,nx,ny,nz_fire)
-!
-! Read field to be perturbed
-            wrffire_file=trim(pert_path_po)//'/'//trim(wrffirechemi)
-            call get_WRFCHEM_emiss_data(wrffire_file,ch_fire_spc(isp),fire_data3d, &
-            nx,ny,nz_fire)
-!
-! Use log transform   
-            do i=1,nx
-               do j=1,ny
-                  do k=1,nz_fire
-                     if(fire_data3d(i,j,k).gt.0.) then
-                        fire_data3d(i,j,k)=log(fire_data3d(i,j,k))
-                     else
-                        fire_data3d(i,j,k)=zero_exp
-                     endif
-                  enddo
-               enddo
-            enddo
-!
-! Read old ensemble error variance
-            if(sw_corr_tm) then            
-               wrffirechemi_vari=trim(pert_path_pr)//'/'//trim(wrffirechemi_old)//'_pert_vari'
-               call get_WRFCHEM_emiss_data(wrffirechemi_vari,ch_fire_spc(isp),fire_vari3d, &
-               nx,ny,nz_fire)
-!
-! Calculate temporally smoothed ensemble error variance            
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_fire
-                        fire_vari_end(i,j,k)=wgt_end*fire_vari3d(i,j,k)+ &
-                        (1.-wgt_end)*fire_vari_new(i,j,k)
-                     enddo
-                  enddo
-               enddo
-            else
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_fire
-                        fire_vari_end(i,j,k)=fire_vari_new(i,j,k)
-                     enddo
-                  enddo
-               enddo
-            endif
-!
-! Limit the new relative spread
-!            do i=1,nx
-!               do j=1,ny
-!                  do k=1,nz_fire
-!                     if(fire_data3d(i,j,k).gt.0.) then
-!                        if(sqrt(fire_vari_end(i,j,k))/fire_data3d(i,j,k).gt.rsprd_crit) then
-!                           fire_vari_end(i,j,k)=(fire_data3d(i,j,k)*rsprd_crit)**2.
-!                        endif
-!                     endif
-!                  enddo
-!               enddo
-!            enddo
-!
-! Write new ensemble error variance
-            wrffirechemi_vari=trim(wrffirechemi)//'_pert_vari'            
-            wrffire_file=trim(pert_path_po)//'/'//trim(wrffirechemi_vari)
-            call put_WRFCHEM_emiss_data(wrffire_file,ch_fire_spc(isp),fire_vari_end, &
-            nx,ny,nz_fire)
-!
-! For each ensemble member generate perturbed field
-!!!            allocate(zfld(nx,ny,nz_fire))
-            allocate(fire_mem(nx,ny,nz_fire))
-            sum=0.
-            do imem=1,num_mems
-               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-!
-! Generate N(0,1) filed               
-!!!               do i=1,nx
-!!!                  do j=1,ny
-!!!                     do k=1,nz_fire
-!!!                        call random_number(u_ran_1)
-!!!                        if(u_ran_1.eq.0.) call random_number(u_ran_1)
-!!!                        call random_number(u_ran_2)
-!!!                        if(u_ran_2.eq.0.) call random_number(u_ran_2)
-!!!                        zfld(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
-!!!                     enddo
-!!!                  enddo
-!!!               enddo
-!
-! Impose the temporally smoothed ensemble error variance and new ensemble mean    
-               call random_number(u_ran_1)
-               if(u_ran_1.eq.0.) call random_number(u_ran_1)
-               call random_number(u_ran_2)
-               if(u_ran_2.eq.0.) call random_number(u_ran_2)
-               ztrm=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_fire
-                        if(fire_data3d(i,j,k).ne.0) then
-!                           fire_mem(i,j,k)=exp(fire_data3d(i,j,k)+zfld(i,j,k)* &
-!                           sqrt(fire_vari_end(i,j,k)))
-                           fire_mem(i,j,k)=exp(fire_data3d(i,j,k)+ztrm* &
-                           sqrt(fire_vari_end(i,j,k)))
-                        else
-                           fire_mem(i,j,k)=0.
-                        endif
-                     enddo
-                  enddo
-               enddo
-!               'APM: After generate new member ',trim(ch_fire_spc(isp))
-!
-! Write data for the perturbed member
-               wrffire_file=trim(pert_path_po)//'/'//trim(wrffirechemi)//cmem
-               call put_WRFCHEM_emiss_data(wrffire_file,ch_fire_spc(isp),fire_mem, &
-               nx,ny,nz_fire)
-!
-! Check means and relative spread
-               sum=sum+fire_mem(nx/2,ny/2,1)/real(num_mems)
-            enddo
-! non-log form            
-!            print *,'APM: ',trim(ch_fire_spc(isp)),sum,fire_data3d(nx/2,ny/2,1), &
-!            sqrt(fire_vari_end(nx/2,ny/2,1))/fire_data3d(nx/2,ny/2,1)*100.,'%'
-! log form
-            if(fire_data3d(nx/2,ny/2,1).ne.0.) then
-               print *,'APM: ',trim(ch_fire_spc(isp)),sum,exp(fire_data3d(nx/2,ny/2,1))
-            else
-               print *,'APM: ',trim(ch_fire_spc(isp)),sum,fire_data3d(nx/2,ny/2,1)
-            endif
-!
-!!!            deallocate(zfld)
-            deallocate(fire_mem)
-         enddo
-         deallocate(tmp_arry)
-         deallocate(fire_vari3d)
-         deallocate(fire_data3d)
-!
-! Calculate ensemble mean, variance, and recenter
-         allocate(ens_mean(nx,ny,nz_fire))
-         allocate(ens_vari(nx,ny,nz_fire))
-         allocate(parent(nx,ny,nz_fire))
-         allocate(fire_data3d(nx,ny,nz_fire))
-         do isp=1,nfire_spcs
-            ens_mean(:,:,:)=0.
-            do imem=1,num_mems
-               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-               wrffire_file=trim(pert_path_po)//'/'//trim(wrffirechemi)//cmem
-               call get_WRFCHEM_emiss_data(wrffire_file,ch_fire_spc(isp),fire_data3d, &
-               nx,ny,nz_fire)
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_fire
-                        ens_mean(i,j,k)=ens_mean(i,j,k)+fire_data3d(i,j,k)
-                     enddo
-                  enddo
-               enddo
-            enddo
-            ens_mean(:,:,:)=ens_mean(:,:,:)/real(num_mems)
-!
-! Calculate ensemble variance
-            ens_vari(:,:,:)=0.
-            do imem=1,num_mems
-               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-               wrffire_file=trim(pert_path_po)//'/'//trim(wrffirechemi)//cmem
-               call get_WRFCHEM_emiss_data(wrffire_file,ch_fire_spc(isp),fire_data3d, &
-               nx,ny,nz_fire)
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_fire
-                        ens_vari(i,j,k)=ens_vari(i,j,k)+(fire_data3d(i,j,k)-ens_mean(i,j,k))**2.
-                     enddo
-                  enddo
-               enddo
-            enddo
-            ens_vari(:,:,:)=ens_vari(:,:,:)/real(num_mems-1)
-!
-! Recenter the ensemble members
-            wrffire_file=trim(pert_path_po)//'/'//trim(wrffirechemi)
-            call get_WRFCHEM_emiss_data(wrffire_file,ch_fire_spc(isp),parent, &
-            nx,ny,nz_fire)
-            do imem=1,num_mems
-               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-               wrffire_file=trim(pert_path_po)//'/'//trim(wrffirechemi)//cmem
-               call get_WRFCHEM_emiss_data(wrffire_file,ch_fire_spc(isp),fire_data3d, &
-               nx,ny,nz_fire)
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_fire
-                        fire_data3d(i,j,k)=fire_data3d(i,j,k)-ens_mean(i,j,k)+parent(i,j,k)
-                     enddo
-                  enddo
-               enddo
-               wrffire_file=trim(pert_path_po)//'/'//trim(wrffirechemi)//cmem
-               call put_WRFCHEM_emiss_data(wrffire_file,ch_fire_spc(isp),fire_data3d, &
-               nx,ny,nz_fire)
-            enddo
-!
-! Write ensemble mean and variance
-            wrffire_file=trim(pert_path_po)//'/'//trim(wrffirechemi)//'_mean'
-            call put_WRFCHEM_emiss_data(wrffire_file,ch_fire_spc(isp),ens_mean, &
-            nx,ny,nz_fire)
-            wrffire_file=trim(pert_path_po)//'/'//trim(wrffirechemi)//'_vari'
-            call put_WRFCHEM_emiss_data(wrffire_file,ch_fire_spc(isp),ens_vari, &
-            nx,ny,nz_fire)
-         enddo
-         deallocate(ens_mean)
-         deallocate(ens_vari)
-         deallocate(parent)
-         deallocate(fire_data3d)
-      endif
-!
-      if(sw_biog) then
-!
-! Receive new perturbation variance, read emissions, scale emissions, and
-! write emissions to archive file
-!
-         allocate(biog_data3d(nx,ny,nz_biog))
-         allocate(biog_vari3d(nx,ny,nz_biog))
-         allocate(tmp_arry(nx*ny*nz_biog))
-         do isp=1,nbiog_spcs
-!
-! Receive new ensemble error variance
-            call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-            itask_biog(isp),4,MPI_COMM_WORLD,stat,ierr)
-            call apm_unpack(tmp_arry,biog_vari_new,nx,ny,nz_biog)
-!
-! Read field to be perturbed              
-            wrfbiog_file=trim(pert_path_po)//'/'//trim(wrfbiogchemi)
-            call get_WRFCHEM_emiss_data(wrfbiog_file,ch_biog_spc(isp),biog_data3d, &
-            nx,ny,nz_biog)
-!
-! Use log transform            
-            do i=1,nx
-               do j=1,ny
-                  do k=1,nz_biog
-                     if(biog_data3d(i,j,k).gt.0.) then
-                        biog_data3d(i,j,k)=log(biog_data3d(i,j,k))
-                     else
-                        biog_data3d(i,j,k)=zero_exp
-                     endif
-                  enddo
-               enddo
-            enddo
-!
-! Read old ensemble error variance
-            if(sw_corr_tm) then            
-               wrfbiogchemi_vari=trim(pert_path_pr)//'/'//trim(wrfbiogchemi_old)//'_pert_vari'
-               call get_WRFCHEM_emiss_data(wrfbiogchemi_vari,ch_biog_spc(isp),biog_vari3d, &
-               nx,ny,nz_biog)
-!
-! Calculate temporally smoothed ensemble error variance            
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_biog
-                        biog_vari_end(i,j,k)=wgt_end*biog_vari3d(i,j,k)+ &
-                        (1.-wgt_end)*biog_vari_new(i,j,k)
-                     enddo
-                  enddo
-               enddo
-            else
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_biog
-                        biog_vari_end(i,j,k)=biog_vari_new(i,j,k)
-                     enddo
-                  enddo
-               enddo
-            endif
-!
-! Limit the new relative spread
-!            do i=1,nx
-!               do j=1,ny
-!                  do k=1,nz_biog
-!                     if(biog_data3d(i,j,k).gt.0.) then
-!                        if(sqrt(biog_vari_end(i,j,k))/biog_data3d(i,j,k).gt.rsprd_crit) then
-!                           biog_vari_end(i,j,k)=(biog_data3d(i,j,k)*rsprd_crit)**2.
-!                        endif
-!                     endif
-!                  enddo
-!               enddo
-!            enddo
-!
-! Write new ensemble error variance
-            wrfbiogchemi_vari=trim(wrfbiogchemi)//'_pert_vari'            
-            wrfbiog_file=trim(pert_path_po)//'/'//trim(wrfbiogchemi_vari)
-            call put_WRFCHEM_emiss_data(wrfbiog_file,ch_biog_spc(isp),biog_vari_end, &
-            nx,ny,nz_biog)
-!
-! For each ensemble member generate perturbed field
-!!!            allocate(zfld(nx,ny,nz_biog))               
-            allocate(biog_mem(nx,ny,nz_biog))
-            sum=0.
-            do imem=1,num_mems
-               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-!
-! Generate N(0,1) filed               
-!!!               do i=1,nx
-!!!                  do j=1,ny
-!!!                     do k=1,nz_biog
-!!!                        call random_number(u_ran_1)
-!!!                        if(u_ran_1.eq.0.) call random_number(u_ran_1)
-!!!                        call random_number(u_ran_2)
-!!!                        if(u_ran_2.eq.0.) call random_number(u_ran_2)
-!!!                        zfld(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
-!!!                     enddo
-!!!                  enddo
-!!!               enddo
-!
-! Impose the temporally smoothed ensemble error variance and new ensemble mean    
-               call random_number(u_ran_1)
-               if(u_ran_1.eq.0.) call random_number(u_ran_1)
-               call random_number(u_ran_2)
-               if(u_ran_2.eq.0.) call random_number(u_ran_2)
-               ztrm=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
-               do i=1,nx
-                  do j=1,ny
-                     do k=1,nz_biog
-!                        biog_mem(i,j,k)=exp(biog_data3d(i,j,k)+zfld(i,j,k)* &
-!                        sqrt(biog_vari_end(i,j,k)))
-                        biog_mem(i,j,k)=exp(biog_data3d(i,j,k)+ztrm* &
-                        sqrt(biog_vari_end(i,j,k)))
-                     enddo
-                  enddo
-               enddo
-!
-! Write data for the perturbed member
-               wrfbiog_file=trim(pert_path_po)//'/'//trim(wrfbiogchemi)//cmem
-               call put_WRFCHEM_emiss_data(wrfbiog_file,ch_biog_spc(isp),biog_mem, &
-               nx,ny,nz_biog)
-!
-! Check means and relative spread
-               sum=sum+biog_mem(nx/2,ny/2,1)/real(num_mems)
-            enddo
-! non-log form            
-!            print *,'APM: ',trim(ch_biog_spc(isp)),sum,biog_data3d(nx/2,ny/2,1), &
-!            sqrt(biog_vari_end(nx/2,ny/2,1))/biog_data3d(nx/2,ny/2,1)*100.,'%'
-! log form
-            print *,'APM: ',trim(ch_biog_spc(isp)),sum,exp(biog_data3d(nx/2,ny/2,1))
-!
-            deallocate(zfld)
-            deallocate(biog_mem)
-         enddo
-         deallocate(tmp_arry)
-         deallocate(biog_vari3d)
-         deallocate(biog_data3d)
       endif
    endif
 !
@@ -981,20 +454,24 @@ program main
                chem_vari_new(:,:,:)=0.
 !
 ! Receive new chemi fields
-!!!               allocate(tmp_arry(nx*ny*nz_chem))
-!!!               call mpi_recv(tmp_arry,nx*ny*nz_chem, &
-!!!               MPI_FLOAT,0,1,MPI_COMM_WORLD,stat,ierr)
-!!!               call apm_unpack(tmp_arry,chem_vari_new,nx,ny,nz_chem)
-!!!               deallocate(tmp_arry)
+               allocate(tmp_arry(nx*ny*nz_chem))
+               call mpi_recv(tmp_arry,nx*ny*nz_chem, &
+               MPI_FLOAT,0,1,MPI_COMM_WORLD,stat,ierr)
+               call apm_unpack(tmp_arry,chem_vari_new,nx,ny,nz_chem)
+               deallocate(tmp_arry)
 !
 ! Calculate new error variance
 !
-               call date_and_time(ch_date,ch_time,ch_zone,date_time_vals)
-               seed_trm=date_time_vals(5)*date_time_vals(6)*date_time_vals(7)
-               if(sw_seed) call init_const_random_seed(rank,seed_trm)
+!               call date_and_time(ch_date,ch_time,ch_zone,date_time_vals)
+!               seed_trm=date_time_vals(5)*date_time_vals(6)*date_time_vals(7)
+!               if(sw_seed) call init_const_random_seed(rank,seed_trm)
 !
+               if(isp.eq.nchem_spcs) print *, 'APM: Before call to perturb_fields ', &
+               trim(ch_chem_spc(isp))               
                call perturb_fields(chem_vari_new,lat,lon,A_chem,nx,ny,nz_chem, &
-               ngrid_corr_chem,corr_lngth_hz,rank,sprd_chem,nchem_spcs)
+               ngrid_corr_chem,corr_lngth_hz,rank,sprd_chem,itask_chem,nchem_spcs)
+               if(isp.eq.nchem_spcs) print *, 'APM: After call to perturb_fields ', &
+               trim(ch_chem_spc(isp))               
             endif
          enddo
 !
@@ -1005,78 +482,6 @@ program main
                allocate(tmp_arry(nx*ny*nz_chem))
                call apm_pack(tmp_arry,chem_vari_new,nx,ny,nz_chem)
                call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
-               0,4,MPI_COMM_WORLD,ierr)
-               deallocate(tmp_arry)
-            endif
-         enddo
-      endif
-!      
-      if(sw_fire) then
-         do isp=1,nfire_spcs
-            if(rank.eq.itask_fire(isp)) then
-               fire_vari_new(:,:,:)=0.
-!
-! Receive new firei fields
-!!!               allocate(tmp_arry(nx*ny*nz_fire))
-!!!               call mpi_recv(tmp_arry,nx*ny*nz_fire, &
-!!!               MPI_FLOAT,0,1,MPI_COMM_WORLD,stat,ierr)
-!!!               call apm_unpack(tmp_arry,fire_vari_new,nx,ny,nz_fire)
-!!!               deallocate(tmp_arry)
-!
-! Calculate new error variance
-!
-               call date_and_time(ch_date,ch_time,ch_zone,date_time_vals)
-               seed_trm=date_time_vals(5)*date_time_vals(6)*date_time_vals(7)
-               if(sw_seed) call init_const_random_seed(rank,seed_trm)
-!
-               call perturb_fields(fire_vari_new,lat,lon,A_fire,nx,ny,nz_fire, &
-               ngrid_corr_fire,corr_lngth_hz,rank,sprd_fire,nfire_spcs)
-            endif
-         enddo
-!
-         do isp=1,nfire_spcs
-            if(rank.eq.itask_fire(isp)) then
-! 
-! Send new perturbation variance to rank 0
-               allocate(tmp_arry(nx*ny*nz_fire))
-               call apm_pack(tmp_arry,fire_vari_new,nx,ny,nz_fire)
-               call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-               0,4,MPI_COMM_WORLD,ierr)
-               deallocate(tmp_arry)
-            endif
-         enddo
-      endif
-!      
-      if(sw_biog) then
-         do isp=1,nbiog_spcs
-            if(rank.eq.itask_biog(isp)) then
-               biog_vari_new(:,:,:)=0.
-!
-! Receive new biogi fields
-!!!               allocate(tmp_arry(nx*ny*nz_biog))
-!!!               call mpi_recv(tmp_arry,nx*ny*nz_biog, &
-!!!               MPI_FLOAT,0,1,MPI_COMM_WORLD,stat,ierr)
-!!!               call apm_unpack(tmp_arry,biog_vari_new,nx,ny,nz_biog)
-!!!               deallocate(tmp_arry)
-!
-! Calculate new error variance
-!
-               call date_and_time(ch_date,ch_time,ch_zone,date_time_vals)
-               seed_trm=date_time_vals(5)*date_time_vals(6)*date_time_vals(7)
-               if(sw_seed) call init_const_random_seed(rank,seed_trm)
-!
-               call perturb_fields(biog_vari_new,lat,lon,A_biog,nx,ny,nz_biog, &
-               ngrid_corr_biog,corr_lngth_hz,rank,sprd_biog,nbiog_spcs)
-            endif
-         enddo
-!
-         do isp=1,nbiog_spcs
-            if(rank.eq.itask_biog(isp)) then
-! 
-! Send new perturbation variance to rank 0
-               allocate(tmp_arry(nx*ny*nz_biog))
-               call apm_pack(tmp_arry,biog_vari_new,nx,ny,nz_biog)
-               call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
                0,4,MPI_COMM_WORLD,ierr)
                deallocate(tmp_arry)
             endif
@@ -1176,12 +581,13 @@ end subroutine vertical_transform
 !-------------------------------------------------------------------------------
 
 subroutine perturb_fields(chem_vari_new,lat,lon,A_chem,nx,ny,nz, &
-ngrid_corr,corr_lngth_hz,rank,sprd_chem,nspc)
+ngrid_corr,corr_lngth_hz,rank,sprd_chem,itask,nspc)
 !   use apm_utilities_mod,  only :get_dist
   
    implicit none
    integer,                               intent(in)     :: nx,ny,nz,rank,nspc
    integer,                               intent(in)     :: ngrid_corr
+   integer,dimension(nspc),               intent(in)     :: itask
    real,                                  intent(in)     :: corr_lngth_hz,sprd_chem
    real,dimension(nx,ny),                 intent(in)     :: lat,lon
    real,dimension(nx,ny,nz,nz),           intent(in)     :: A_chem
@@ -1189,18 +595,14 @@ ngrid_corr,corr_lngth_hz,rank,sprd_chem,nspc)
 !
    integer                             :: i,j,k,ii,jj,kk
    integer                             :: ii_str,ii_end,jj_str,jj_end,icnt,ncnt
-   real                                :: pi,get_dist,wgt,zero_exp
+   real                                :: pi,get_dist,wgt
    real                                :: u_ran_1,u_ran_2,zdist
    real,allocatable,dimension(:)       :: fld_sum,wgt_sum
    real,allocatable,dimension(:,:,:)   :: pert_chem_new
-   real,allocatable,dimension(:,:,:)   :: chem_vari_newp
    real,allocatable,dimension(:,:,:)   :: chem_vari_new_smth
 !
 ! Constants
    pi=4.*atan(1.)
-   zero_exp=-11.
-   zero_exp=-30.
-   zero_exp=0.
 !
 ! Define perturbation variance
    allocate(pert_chem_new(nx,ny,nz))
@@ -1212,9 +614,10 @@ ngrid_corr,corr_lngth_hz,rank,sprd_chem,nspc)
             if(u_ran_1.eq.0.) call random_number(u_ran_1)
             call random_number(u_ran_2)
             if(u_ran_2.eq.0.) call random_number(u_ran_2)
-!            pert_chem_new(i,j,k)=(chem_vari_new(i,j,k)*sprd_chem*sqrt(-2.*log(u_ran_1))* 7
-!            cos(2.*pi*u_ran_2))**2.
-            pert_chem_new(i,j,k)=(sprd_chem*sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2))**2.
+! white noise stdv
+            pert_chem_new(i,j,k)=(chem_vari_new(i,j,k)*sprd_chem*sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2))**2.
+! constant stdv
+!            pert_chem_new(i,j,k)=(chem_vari_new(i,j,k))**2.
          enddo
       enddo
    enddo
@@ -1222,8 +625,8 @@ ngrid_corr,corr_lngth_hz,rank,sprd_chem,nspc)
 ! Apply horizontal correlations
    allocate(fld_sum(nz))   
    allocate(wgt_sum(nz))
-   allocate(chem_vari_newp(nx,ny,nz))
-   chem_vari_newp(:,:,:)=0.
+!
+   chem_vari_new(:,:,:)=0.
    do i=1,nx
       do j=1,ny
          ii_str=max(1,i-ngrid_corr)
@@ -1238,26 +641,24 @@ ngrid_corr,corr_lngth_hz,rank,sprd_chem,nspc)
                if(zdist.le.corr_lngth_hz) then
                   wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
                   do k=1,nz
-!                     if(pert_chem_new(ii,jj,k).ne.zero_exp) then
-                        fld_sum(k)=fld_sum(k)+wgt*pert_chem_new(ii,jj,k)
-                        wgt_sum(k)=wgt_sum(k)+wgt
-!                     endif
+                     fld_sum(k)=fld_sum(k)+wgt*pert_chem_new(ii,jj,k)
+                     wgt_sum(k)=wgt_sum(k)+wgt
                   enddo
                endif
             enddo
          enddo
          do k=1,nz
             if(wgt_sum(k).gt.0.) then
-               chem_vari_newp(i,j,k)=fld_sum(k)/wgt_sum(k)
+               chem_vari_new(i,j,k)=fld_sum(k)/wgt_sum(k)
             else
-               chem_vari_newp(i,j,k)=pert_chem_new(i,j,k)
+               chem_vari_new(i,j,k)=pert_chem_new(i,j,k)
             endif
          enddo
       enddo
    enddo
-   deallocate(pert_chem_new)
 !
 ! Apply vertical correlations
+!
    allocate(chem_vari_new_smth(nx,ny,nz))
    chem_vari_new_smth(:,:,:)=0.
    do i=1,nx
@@ -1266,23 +667,20 @@ ngrid_corr,corr_lngth_hz,rank,sprd_chem,nspc)
          wgt_sum(:)=0.
          do k=1,nz
             do kk=1,nz
-!               if(chem_vari_newp(i,j,k).ne.zero_exp) then
-                  fld_sum(k)=fld_sum(k)+A_chem(i,j,k,kk)*chem_vari_newp(i,j,kk)
-                  wgt_sum(k)=wgt_sum(k)+A_chem(i,j,k,kk)
-!               endif
+               fld_sum(k)=fld_sum(k)+A_chem(i,j,k,kk)*chem_vari_new(i,j,kk)
+               wgt_sum(k)=wgt_sum(k)+A_chem(i,j,k,kk)
             enddo
          enddo
          do k=1,nz
             if(wgt_sum(k).gt.0.) then
                chem_vari_new_smth(i,j,k)=fld_sum(k)/wgt_sum(k)
             else              
-               chem_vari_new_smth(i,j,k)=chem_vari_newp(i,j,k)
+               chem_vari_new_smth(i,j,k)=chem_vari_new(i,j,k)
             endif
          enddo
       enddo
    enddo
    chem_vari_new(:,:,:)=chem_vari_new_smth(:,:,:)
-   deallocate(chem_vari_newp)
    deallocate(chem_vari_new_smth)
    deallocate(fld_sum)
    deallocate(wgt_sum)

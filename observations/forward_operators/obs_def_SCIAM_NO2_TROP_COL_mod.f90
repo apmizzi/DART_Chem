@@ -29,7 +29,7 @@
 !
 ! BEGIN DART PREPROCESS GET_EXPECTED_OBS_FROM_DEF
 !      case(SCIAM_NO2_TROP_COL)                                                           
-!         call get_expected_sciam_no2_trop_col(state_handle, ens_size, location, obs_def%key, expected_obs, istatus)  
+!         call get_expected_sciam_no2_trop_col(state_handle, ens_size, location, obs_def%key, obs_time, expected_obs, istatus)  
 ! END DART PREPROCESS GET_EXPECTED_OBS_FROM_DEF
 !
 ! BEGIN DART PREPROCESS READ_OBS_DEF
@@ -86,6 +86,12 @@ use  ensemble_manager_mod, only : ensemble_type
 use obs_def_utilities_mod, only : track_status
 
 use mpi_utilities_mod,     only : my_task_id
+
+use      time_manager_mod, only : time_type, get_date, set_date, get_time, set_time
+! get_date gets year, month, day, hour, minute, second from time_type
+! get_time gets julian day and seconds from time_type
+! set_date sets time_type from year, month, day, hour, minute, second
+! set_time sets time_type from julian day and seconds
 
 implicit none
 private
@@ -285,22 +291,27 @@ end subroutine interactive_sciam_no2_trop_col
 
 !-------------------------------------------------------------------------------
 
-subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key, expct_val, istatus)
+subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key, obs_time, expct_val, istatus)
 
    type(ensemble_type), intent(in)  :: state_handle
    type(location_type), intent(in)  :: location
    integer,             intent(in)  :: ens_size
    integer,             intent(in)  :: key
+   type(time_type),     intent(in)  :: obs_time
    integer,             intent(out) :: istatus(:)
    real(r8),            intent(out) :: expct_val(:)
 
    character(len=*), parameter :: routine = 'get_expected_sciam_no2_trop_col'
+   character(len=120)          :: data_file
+   character(len=*),parameter  :: fld = 'NO2_VMR_inst'
    type(location_type) :: loc2
 
    integer :: layer_sciam,level_sciam
    integer :: layer_mdl,level_mdl
    integer :: k,kk,imem,kend_sciam
    integer :: interp_new
+   integer :: ncnt,kstart
+   integer :: date_obs,datesec_obs
    integer :: icnt=0
    integer, dimension(ens_size) :: zstatus
 
@@ -309,15 +320,22 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
    real(r8) :: level
    real(r8) :: tmp_vir_k, tmp_vir_kp
    real(r8) :: mloc(3)
-   real(r8) :: no2_val_conv
+   real(r8) :: no2_val_conv,no2_term
    real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
+   real(r8) :: lon_obs,lat_obs,pi,rad2deg,tcr2_top
+
    real(r8), dimension(ens_size) :: no2_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
    real(r8), dimension(ens_size) :: no2_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
+   real(r8), dimension(ens_size) :: prs_mdl_2, prs_mdl_nm
    real(r8), dimension(ens_size) :: prs_sfc
 
    real(r8), allocatable, dimension(:)   :: thick, prs_sciam, prs_sciam_mem
    real(r8), allocatable, dimension(:,:) :: no2_val, tmp_val, qmr_val
    logical  :: return_now,no2_return_now,tmp_return_now,qmr_return_now
+!
+! Upper BC variables
+   real(r8), allocatable, dimension(:)   :: no2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl
+   real(r8), allocatable, dimension(:)   :: prs_sciam_top
 
    if ( .not. module_initialized ) call initialize_module
 
@@ -332,7 +350,10 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
    missing  = -888888_r8
    tmp_max  = 600.
    del_prs  = 5000.
-
+   pi       = 4.*atan(1.)
+   rad2deg  = 360./(2.*pi)
+   tcr2_top = 4694.
+   
    if(use_log_no2) then
       no2_min = log(no2_min)
    endif
@@ -375,6 +396,7 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
    tmp_mdl_1(:)=missing_r8
    qmr_mdl_1(:)=missing_r8
    prs_mdl_1(:)=missing_r8
+   prs_mdl_2(:)=missing_r8
 
    do k=1,layer_mdl
       level=real(k)
@@ -388,6 +410,9 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg/kg 
       zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level+1., VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_2, zstatus) ! Pa
 !
       interp_new=0
       do imem=1,ens_size
@@ -413,6 +438,7 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
    tmp_mdl_n(:)=missing_r8
    qmr_mdl_n(:)=missing_r8
    prs_mdl_n(:)=missing_r8
+   prs_mdl_nm(:)=missing_r8
 
    do k=layer_mdl-1,1,-1
       level=real(k)
@@ -425,6 +451,10 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, zstatus) ! kg / kg 
       zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, zstatus) ! Pa
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level-1, VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_nm, &
+      zstatus)
 !
       interp_new=0
       do imem=1,ens_size
@@ -492,22 +522,98 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
 !
 ! Use large scale no2 data above the regional model top
 ! APM: Modified to use retrieval prior above the regional model top   
-! SCIAMACHY vertical is from bottom to top
+! SCIAMACHY vertical is from bottom to top in Pa
 !
-! APM: No old code
+   do imem=1,ens_size
+!!      do k=1,level_sciam
+!!         if (prs_sciam(k).lt.prs_mdl_n(imem)) then
+!!            kstart=k
+!!            exit
+!!         endif
+!!      enddo
+!!      ncnt=level_sciam-kstart+1
+!!      allocate(prs_sciam_top(ncnt))
+!!      allocate(no2_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
+!!      do k=kstart,level_sciam
+!!         prs_sciam_top(k-kstart+1)=prs_sciam(k)/100.
+!!      enddo
+!!!
+!!      lon_obs=mloc(1)/rad2deg
+!!      lat_obs=mloc(2)/rad2deg
+!!      call get_time(obs_time,datesec_obs,date_obs)
+!!!
+!!      data_file=trim(upper_data_file)
+!!      model=trim(upper_data_model)
+!!      call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
+!!      ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_sciam_top, &
+!!      ncnt,no2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+!!!
+!!      do k=kstart,level_sciam
+!!         no2_val(imem,k)=no2_prf_mdl(k-kstart+1)*no2_val(imem,kstart-1)/ &
+!!         (sum(no2_val(:,kstart-1))/real(ens_size))
+!!         tmp_val(imem,k)=tmp_prf_mdl(k-kstart+1)*tmp_val(imem,kstart-1)/ &
+!!         (sum(tmp_val(:,kstart-1))/real(ens_size))
+!!         qmr_val(imem,k)=qmr_prf_mdl(k-kstart+1)*qmr_val(imem,kstart-1)/ &
+!!         (sum(qmr_val(:,kstart-1))/real(ens_size))
+!!      enddo
+!!!
+!!      deallocate(prs_sciam_top)
+!!      deallocate(no2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
 !
 ! Check full profile for negative values
-   do imem=1,ens_size
       do k=1,level_sciam
          if((no2_val(imem,k).lt.0. .and. no2_val(imem,k).ne.missing_r8) .or. &
          (tmp_val(imem,k).lt.0. .and. tmp_val(imem,k).ne.missing_r8) .or. &
          (qmr_val(imem,k).lt.0. .and. qmr_val(imem,k).ne.missing_r8)) then
-            write(string1, *) &
-            'APM: Recentered full profile has negative values for key,imem ',key,imem
-            call error_handler(E_ALLMSG, routine, string1, source)
+!
+!            if(prs_sciam(k).le.prs_mdl_1(imem) .and. prs_sciam(k).ge.prs_mdl_2(imem)) then
+            if(prs_sciam(k).le.prs_mdl_1(imem) .and. prs_sciam(k).ge.(prs_mdl_2(imem)-20000.)) then
+               if(no2_val(imem,k).lt.0.) no2_val(imem,k)=no2_mdl_1(imem)
+               if(tmp_val(imem,k).lt.0.) tmp_val(imem,k)=tmp_mdl_1(imem)
+               if(qmr_val(imem,k).lt.0.) qmr_val(imem,k)=qmr_mdl_1(imem)
+!            elseif(prs_sciam(k).le.prs_mdl_nm(imem) .and. prs_sciam(k).ge.prs_mdl_n(imem)) then
+!               if(no2_val(imem,k).lt.0.) no2_val(imem,k)=no2_mdl_n(imem)
+!               if(tmp_val(imem,k).lt.0.) tmp_val(imem,k)=tmp_mdl_n(imem)
+!               if(qmr_val(imem,k).lt.0.) qmr_val(imem,k)=qmr_mdl_n(imem)
+            else
+               write(string1, *) &
+               'APM: Recentered full profile has negative values for key,imem,k ',key,imem,k
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: NO2 VAL ',(no2_val(imem,kk),kk=1,level_sciam)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: TM VAL ',(tmp_val(imem,kk),kk=1,level_sciam)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: QV VAL ',(qmr_val(imem,kk),kk=1,level_sciam)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: PR VAL ',(prs_sciam(kk),kk=1,level_sciam)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: PR BOUNDS ',prs_sfc(imem),prs_mdl_1(imem),prs_mdl_2(imem), &
+               prs_mdl_nm(imem),prs_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: NO2 BOUNDS ',no2_mdl_1(imem),no2_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: TM BOUNDS ',tmp_mdl_1(imem),tmp_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: QV BOUNDS ',qmr_mdl_1(imem),qmr_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)            
+               write(string1, *) &
+               ' '
+               call error_handler(E_ALLMSG, routine, string1, source)
+            endif   
          endif
          if(no2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
+            write(string1, *) &
+            'APM REJECT: Recentered full profile has negative values for key,imem,k ',key,imem,k
+            call error_handler(E_ALLMSG, routine, string1, source)
             zstatus(:)=20
             expct_val(:)=missing_r8
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
@@ -521,7 +627,8 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
       enddo
    enddo
 !
-! Calculate the expected retrievals   
+! Calculate the expected retrievals
+! SCIAM vertical is from bottom to top
    istatus(:)=0.
    zstatus(:)=0.
    expct_val(:)=0.0
@@ -561,7 +668,10 @@ subroutine get_expected_sciam_no2_trop_col(state_handle, ens_size, location, key
          endif
 ! 
 ! Get expected observation (convert mol/m^2 to molec/cm^2
-         expct_val(imem) = expct_val(imem) + thick(k) * no2_val_conv * &
+         no2_term=thick(k)*no2_val_conv
+         if(prs_sciam(k+1).le.tcr2_top) no2_term=0.
+         
+         expct_val(imem) = expct_val(imem) + thick(k) * no2_term * &
          AvogN/msq2cmsq * scat_wts(key,k)
       enddo
 !

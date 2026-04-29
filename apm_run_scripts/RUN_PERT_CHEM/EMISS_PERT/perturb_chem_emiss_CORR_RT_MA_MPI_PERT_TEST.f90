@@ -14,60 +14,53 @@
 ! limitations under the License.
 !
 ! DART $Id: perturb_chem_emiss_CORR_RT_MA_MPI.f90 13171 2019-05-09 16:42:36Z thoar@ucar.edu $
-!
-! Code to perturb the wrfchem emissions files
-!
+
+! code to perturb the wrfchem emission files
+
 program main
    implicit none
+!
+! version controlled file description for error handling, do not edit
+   character(len=*), parameter :: source   = 'perturb_chem_emiss_CORR_RT_MA_MPI.f90'
+   character(len=*), parameter :: revision = ''
+   character(len=*), parameter :: revdate  = ''
    include 'mpif.h'
-   character(len=*), parameter                 :: source   = 'perturb_chem_emiss_CORR_RT_MA_MPI.f90'
-   character(len=*), parameter                 :: revision = ''
-   character(len=*), parameter                 :: revdate  = ''
-!
-   integer                                     :: ierr,rank,task,num_procs,num_procs_avail
-   integer                                     :: icnt_task,unit,date,nx,ny,nz,nz_chem,nz_fire,nz_biog
-   integer                                     :: nxy,nxyz,nzp,nchem_spcs,nfire_spcs,nbiog_spcs
-   integer                                     :: num_mems,status,ngrid_corr,ntotal_spcs
-   integer                                     :: ngrid_corr_chem,ngrid_corr_fire,ngrid_corr_biog
-   integer                                     :: h,i,ii,j,jj,k,kk,l,isp,imem,ibdy,bdy_idx
-   integer                                     :: ifile,icnt,ncnt,ntasks,icnt_tsk,seed_trm
-   integer,dimension(8)                        :: date_time_vals
-   integer,dimension(MPI_STATUS_SIZE)          :: stat
-   integer,allocatable,dimension(:,:)          :: itask_chem,itask_fire,itask_biog
-!
-   real                                        :: pi,grav,zfac,tfac
-   real                                        :: nnum_mems,sprd_chem,sprd_fire,sprd_biog
-   real                                        :: corr_lngth_hz,corr_lngth_vt,corr_lngth_tm
-   real                                        :: corr_tm_delt,grid_length
-   real                                        :: wgt_bc_str,wgt_bc_mid,wgt_bc_end
-   real                                        :: get_dist
-   real,allocatable,dimension(:,:)             :: lat,lon
-   real,allocatable,dimension(:,:,:)           :: geo_ht,chem_data_end
-   real,allocatable,dimension(:,:,:,:)         :: A_chem,A_fire,A_biog
-   real,allocatable,dimension(:,:,:)           :: chem_data3d_old,chem_data3d_new,chem_data3d_smth
-   real,allocatable,dimension(:,:,:)           :: chem_databdy_old,chem_databdy_new,chem_databdy_smth
-   real,allocatable,dimension(:)               :: tmp_arry,wgt
-!
-   character(len=20)                           :: cmem
-   character(len=100)                          :: ch_date,ch_time,ch_zone
-   character(len=300)                          :: ch_spcs
-   character(len=300)                          :: chemi_path_old,chemi_path_new,chemi_path_pert
-   character(len=300)                          :: firechemi_path_old,firechemi_path_new,firechemi_path_pert
-   character(len=300)                          :: biogchemi_path_old,biogchemi_path_new,biogchemi_path_pert
-   character(len=300)                          :: chemi_file_old,chemi_file_new
-   character(len=300)                          :: firechemi_file_old,firechemi_file_new
-   character(len=300)                          :: biogchemi_file_old,biogchemi_file_new
-   character(len=300)                          :: file_old,file_new,file_new_3d,file_new_bdy
+   integer                                  :: ierr,rank,num_procs,seed_trm
+   integer                                  :: unit,unita,unitb,unitc
+   integer                                  :: date,ngrid_corr,icnt,icnt_tsk
+   integer                                  :: ngrid_corr_chem,ngrid_corr_fire,ngrid_corr_biog
+   integer                                  :: nx,ny,nz,nzp,nz_chem,nz_fire,nz_biog
+   integer                                  :: nchem_spcs,nfire_spcs,nbiog_spcs,num_mems
+   integer                                  :: i,j,k,kk,isp,imem,ntotal_spcs
+   integer,dimension(8)                     :: date_time_vals
+   integer,dimension(MPI_STATUS_SIZE)       :: stat
+   integer,allocatable,dimension(:,:)       :: itask_chem,itask_fire,itask_biog
+   real                                     :: pi,grav,zfac,zmin,fac_min,nnum_mem
+   real                                     :: sprd_chem,sprd_fire,sprd_biog
+   real                                     :: corr_lngth_hz,corr_lngth_vt
+   real                                     :: corr_lngth_tm,corr_tm_delt
+   real                                     :: grid_length,get_dist,zfac_chem,zfac_fire,zfac_biog
+   real                                     :: mean,std,wgt_end,scl_fac_chem,scl_fac_fire,scl_fac_biog
+   real                                     :: cpu_str,cpu_end,cpu_dif,flg
+   real,allocatable,dimension(:)            :: tmp_arry
+   real,allocatable,dimension(:,:)          :: lat,lon
+   real,allocatable,dimension(:,:,:)        :: geo_ht
+   real,allocatable,dimension(:,:,:,:)      :: A_chem,A_fire,A_biog
+   real,allocatable,dimension(:,:,:)        :: chem_data3d,fire_data3d,biog_data3d
+   real,allocatable,dimension(:,:,:)        :: chem_fac_old,chem_fac_new,chem_fac_end
+   real,allocatable,dimension(:,:,:)        :: fire_fac_old,fire_fac_new,fire_fac_end
+   real,allocatable,dimension(:,:,:)        :: biog_fac_old,biog_fac_new,biog_fac_end
+   character(len=20)                        :: cmem
+   character(len=100)                       :: ch_date,ch_time,ch_zone
+   character(len=150)                       :: pert_path_pr,pert_path_po,filenm
+   character(len=150)                       :: wrfchemi,wrffirechemi,wrfbiogchemi
+   character(len=150)                       :: wrfchem_file,wrffire_file,wrfbiog_file
    character(len=150),allocatable,dimension(:) :: ch_chem_spc,ch_fire_spc,ch_biog_spc 
+   logical                                  :: sw_corr_tm,sw_seed,sw_chem,sw_fire,sw_biog
 !
-   logical                                     :: sw_corr_tm,sw_seed,sw_chem,sw_fire,sw_biog
-!
-   namelist /perturb_chem_emiss_corr_nml/date,nx,ny,nz,nz_chem,nz_fire,nz_biog,nchem_spcs, &
-   nfire_spcs,nbiog_spcs,chemi_path_old,chemi_path_new,firechemi_path_old,firechemi_path_new, &
-   biogchemi_path_old,biogchemi_path_new,chemi_file_old,chemi_file_new,firechemi_file_old, &
-   firechemi_file_new,biogchemi_file_old,biogchemi_file_new,nnum_mems,sprd_chem,sprd_fire,sprd_biog, &
-   corr_lngth_hz,corr_lngth_vt,corr_lngth_tm,corr_tm_delt,sw_corr_tm,sw_seed,sw_chem, &
-   sw_fire,sw_biog,chemi_path_pert,firechemi_path_pert,biogchemi_path_pert
+   namelist /perturb_chem_emiss_corr_nml/date,nx,ny,nz,nz_chem,nchem_spcs,nfire_spcs,nbiog_spcs, &
+   pert_path_pr,pert_path_po,nnum_mem,wrfchemi,wrffirechemi,wrfbiogchemi,sprd_chem,sprd_fire,sprd_biog, &
+   sw_corr_tm,sw_seed,sw_chem,sw_fire,sw_biog,corr_lngth_hz,corr_lngth_vt,corr_lngth_tm,corr_tm_delt
    namelist /perturb_chem_emiss_spec_nml/ch_chem_spc,ch_fire_spc,ch_biog_spc
 !
 ! Setup mpi
@@ -78,9 +71,26 @@ program main
 ! Assign constants
    pi=4.*atan(1.)
    grav=9.8
+   nz_fire=1
+   nz_biog=1
    zfac=2.
-   tfac=60.*60.
+   zfac_chem=4.
+   zfac_fire=4.
+   zfac_biog=4.
+   zmin=1.e-10
+   fac_min=0.01
    icnt_tsk=1
+   scl_fac_chem=30.0
+   scl_fac_chem=12.5
+   scl_fac_chem=25.0
+!   
+   scl_fac_fire=10.
+   scl_fac_fire=8.5
+   scl_fac_fire=5.5
+   scl_fac_fire=4.0
+   scl_fac_fire=8.0
+!
+   scl_fac_biog=1.
 !
 ! Read control namelist
    unit=20
@@ -90,66 +100,76 @@ program main
    read(unit,perturb_chem_emiss_corr_nml)
    close(unit)
    if(rank.eq.0) then
-      print *, 'date                ',date
-      print *, 'nx                  ',nx
-      print *, 'ny                  ',ny
-      print *, 'nz                  ',nz
-      print *, 'nz_chem             ',nz_chem
-      print *, 'nchem_spcs          ',nchem_spcs
-      print *, 'nfire_spcs          ',nfire_spcs
-      print *, 'nbiog_spcs          ',nbiog_spcs
-      print *, 'chemi_path_old      ',trim(chemi_path_old)
-      print *, 'chemi_path_new      ',trim(chemi_path_new)
-      print *, 'chemi_path_pert     ',trim(chemi_path_pert)
-      print *, 'firechemi_path_old  ',trim(firechemi_path_old)
-      print *, 'firechemi_path_new  ',trim(firechemi_path_new)
-      print *, 'firechemi_path_pert ',trim(firechemi_path_pert)
-      print *, 'biogchemi_path_old  ',trim(biogchemi_path_old)
-      print *, 'biogchemi_path_new  ',trim(biogchemi_path_new)
-      print *, 'biogchemi_path_pert ',trim(biogchemi_path_pert)
-      print *, 'chemi_file_old      ',trim(chemi_file_old)
-      print *, 'chemi_file_new      ',trim(chemi_file_new)
-      print *, 'firechemi_file_old  ',trim(firechemi_file_old)
-      print *, 'firechemi_file_new  ',trim(firechemi_file_new)
-      print *, 'biogchemi_file_old  ',trim(biogchemi_file_old)
-      print *, 'biogchemi_file_new  ',trim(biogchemi_file_new)
-      print *, 'num_mems            ',nnum_mems
-      print *, 'sprd_chem           ',sprd_chem
-      print *, 'sprd_fire           ',sprd_fire
-      print *, 'sprd_biog           ',sprd_biog
-      print *, 'corr_lngth_hz       ',corr_lngth_hz
-      print *, 'corr_lngth_vt       ',corr_lngth_vt
-      print *, 'corr_lngth_tm       ',corr_lngth_tm
-      print *, 'corr_tm_delt        ',corr_tm_delt
-      print *, 'sw_corr_tm          ',sw_corr_tm
-      print *, 'sw_seed             ',sw_seed
-      print *, 'sw_chem             ',sw_chem
-      print *, 'sw_fire             ',sw_fire
-      print *, 'sw_biog             ',sw_biog
+      print *, 'date               ',date
+      print *, 'nx                 ',nx
+      print *, 'ny                 ',ny
+      print *, 'nz                 ',nz
+      print *, 'nz_chem            ',nz_chem
+      print *, 'nchem_spcs         ',nchem_spcs
+      print *, 'nfire_spcs         ',nfire_spcs
+      print *, 'nbiog_spcs         ',nbiog_spcs
+      print *, 'pert_path_pr       ',trim(pert_path_pr)
+      print *, 'pert_path_po       ',trim(pert_path_po)
+      print *, 'num_mem            ',nnum_mem
+      print *, 'wrfchemi           ',trim(wrfchemi)
+      print *, 'wrffirechemi       ',trim(wrffirechemi)
+      print *, 'wrfbiogchemi       ',trim(wrfbiogchemi)
+      print *, 'sprd_chem          ',sprd_chem
+      print *, 'sprd_fire          ',sprd_fire
+      print *, 'sprd_biog          ',sprd_biog
+      print *, 'sw_corr_tm         ',sw_corr_tm
+      print *, 'sw_seed            ',sw_seed
+      print *, 'sw_chem            ',sw_chem
+      print *, 'sw_fire            ',sw_fire
+      print *, 'sw_biog            ',sw_biog
+      print *, 'corr_lngth_hz      ',corr_lngth_hz
+      print *, 'corr_lngth_vt      ',corr_lngth_vt
+      print *, 'corr_lngth_tm      ',corr_lngth_tm
+      print *, 'corr_tm_delt       ',corr_tm_delt
    endif
-   nxy=nx*ny
+!
    nzp=nz+1
-   num_mems=nint(nnum_mems)
+   num_mems=nint(nnum_mem)
 !
 ! Allocate arrays
    allocate(ch_chem_spc(nchem_spcs))
    allocate(ch_fire_spc(nfire_spcs))
    allocate(ch_biog_spc(nbiog_spcs))
 !
+   if(sw_chem) then   
+      allocate(chem_fac_old(nx,ny,nz_chem))
+      allocate(chem_fac_new(nx,ny,nz_chem))
+      allocate(chem_fac_end(nx,ny,nz_chem))
+      chem_fac_old(:,:,:)=0.
+      chem_fac_new(:,:,:)=0.
+      chem_fac_end(:,:,:)=0.
+   endif
+   if(sw_fire) then   
+      allocate(fire_fac_old(nx,ny,nz_fire))
+      allocate(fire_fac_new(nx,ny,nz_fire))
+      allocate(fire_fac_end(nx,ny,nz_fire))
+      fire_fac_old(:,:,:)=0.
+      fire_fac_new(:,:,:)=0.
+      fire_fac_end(:,:,:)=0.
+   endif
+   if(sw_biog) then   
+      allocate(biog_fac_old(nx,ny,nz_biog))
+      allocate(biog_fac_new(nx,ny,nz_biog))
+      allocate(biog_fac_end(nx,ny,nz_biog))
+      biog_fac_old(:,:,:)=0.
+      biog_fac_new(:,:,:)=0.
+      biog_fac_end(:,:,:)=0.
+   endif
+!
 ! Read the species namelist
    unit=20
-   open( unit=unit,file='perturb_emiss_chem_spec_nml.nl',form='formatted', &
+   open(unit=unit,file='perturb_emiss_chem_spec_nml.nl',form='formatted', &
    status='old',action='read')
    rewind(unit)
    read(unit,perturb_chem_emiss_spec_nml)
    close(unit)
-!   if(rank.eq.0) then
-!      print *, 'ch_chem_spcs                ',(ch_chem_spc(k),k=1,nchem_spcs)
-!      print *, 'ch_fire_spcs                ',(ch_fire_spc(k),k=1,nfire_spcs)
-!      print *, 'ch_biog_spcs                ',(ch_biog_spc(k),k=1,nbiog_spcs)
-!   endif
 !
-! Allocate vertical smoothing arrays   
+! Allocate vertical smoothing arrays
    if(sw_chem) then
       allocate(A_chem(nx,ny,nz_chem,nz_chem))
       A_chem(:,:,:,:)=0.
@@ -177,11 +197,11 @@ program main
 !
 ! Get mean geopotential height data
    allocate(geo_ht(nx,ny,nz))
-   call get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp,num_mems)
+   call get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp)
    geo_ht(:,:,:)=geo_ht(:,:,:)/grav
 !
 ! Get horiztonal grid length
-   grid_length=get_dist(lat(nx/2,ny),lat(nx/2+1,ny),lon(nx/2,ny),lon(nx/2+1,ny))
+   grid_length=get_dist(lat(nx/2,ny/2),lat(nx/2+1,ny/2),lon(nx/2,ny/2),lon(nx/2+1,ny/2))
 !
 ! Calculate number of horizontal grid points to be correlated 
    ngrid_corr=ceiling(zfac*corr_lngth_hz/grid_length)+1
@@ -195,12 +215,6 @@ program main
    if(sw_chem) then
       call vertical_transform(A_chem,geo_ht,nx,ny,nz,nz_chem,corr_lngth_vt)
    endif
-!   if(rank.eq.0) then
-!      do k=1,nz_chem
-!         print *,'A_chem level ',k,' : ',(A_chem(nx/2,ny/2,k,kk),kk=1,nz_chem)
-!      enddo
-!   endif
-!
    if(sw_fire) then
       call vertical_transform(A_fire,geo_ht,nx,ny,nz,nz_fire,corr_lngth_vt)
    endif
@@ -209,412 +223,506 @@ program main
    endif
    deallocate(geo_ht)
 !
-! Allocate processors (reserve task 0)
+! Allocate processors (reserve rank 0)
    if(sw_chem) then
-      allocate (itask_chem(num_mems,nchem_spcs))
+      allocate(itask_chem(num_mems,nchem_spcs))
       do imem=1,num_mems
          do isp=1,nchem_spcs
             itask_chem(imem,isp)=mod(((imem-1)*nchem_spcs+isp-1),num_procs-icnt_tsk)+icnt_tsk
+!            if(rank.eq.0) print *, 'APM: itask_chem ',imem,isp,itask_chem(imem,isp)
          enddo
       enddo
    endif   
    if(sw_fire) then
-      allocate (itask_fire(num_mems,nfire_spcs))
+      allocate(itask_fire(num_mems,nfire_spcs))
       do imem=1,num_mems
          do isp=1,nfire_spcs
             itask_fire(imem,isp)=mod(((imem-1)*nfire_spcs+isp-1),num_procs-icnt_tsk)+icnt_tsk+ &
-            nchem_spcs
+            nchem_spcs*num_mems
+!            if(rank.eq.0) print *, 'APM: itask_fire ',imem,isp,itask_fire(imem,isp)
          enddo
       enddo
    endif
    if(sw_biog) then
-      allocate (itask_biog(num_mems,nbiog_spcs))
+      allocate(itask_biog(num_mems,nbiog_spcs))
       do imem=1,num_mems
          do isp=1,nbiog_spcs
             itask_biog(imem,isp)=mod(((imem-1)*nbiog_spcs+isp-1),num_procs-icnt_tsk)+icnt_tsk+ &
-            nchem_spcs+nfire_spcs
+            (nchem_spcs+nfire_spcs)*num_mems     
+!            if(rank.eq.0) print *, 'APM: itask_biog ',imem,isp,itask_biog(imem,isp)
          enddo
       enddo
    endif
 !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-! Rank: 0
-!   
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! RANK 0   RANK 0   RANK 0
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
    if(rank.eq.0) then
 !
-! Read and send unperturbed chemi emissions
-      if(sw_chem) then
-         print *,'APM: Before CHEMI read and send'
-         do imem=1,num_mems
-            if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-            if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-            if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-            file_old=trim(chemi_path_old)//'/'//trim(chemi_file_old)//trim(cmem)
-            file_new=trim(chemi_path_new)//'/'//trim(chemi_file_new)
-            file_new_3d=trim(chemi_path_new)//'/'//trim(chemi_file_new)//trim(cmem)
-            do isp=1,nchem_spcs
-               if(sw_corr_tm) then
-                  allocate(chem_data3d_old(nx,ny,nz_chem))
-                  allocate(tmp_arry(nx*ny*nz_chem))
-                  call get_WRFCHEM_emiss_data(trim(file_old),trim(ch_chem_spc(isp)), &
-                  chem_data3d_old,nx,ny,nz_chem)
-                  call apm_pack_3d(tmp_arry,chem_data3d_old,nx,ny,nz_chem)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! READ OLD SCALING FACTORS AND SEND TO OTHER PROCESSORS
+!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! Read and send old chemi scaling factors
+      if(sw_corr_tm) then
+         if(sw_chem) then
+            unita=30
+            filenm=trim(pert_path_pr)//'/pert_chem_emis'
+            open(unit=unita,file=trim(filenm), &
+            form='unformatted',status='unknown')
+            rewind(unita)
+!
+            if(rank.eq.0) print *, 'APM: Before read and send old chemi scaling factors ',rank
+            allocate(tmp_arry(nx*ny*nz_chem))
+            do imem=1,num_mems
+               do isp=1,nchem_spcs
+                  read(unita) chem_fac_old
+                  call apm_pack(tmp_arry,chem_fac_old,nx,ny,nz_chem)
                   call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
                   itask_chem(imem,isp),1,MPI_COMM_WORLD,ierr)
-                  deallocate(chem_data3d_old)
-                  deallocate(tmp_arry)
-               endif
-               allocate(chem_data3d_new(nx,ny,nz_chem))
-               allocate(tmp_arry(nx*ny*nz_chem))
-               call get_WRFCHEM_emiss_data(trim(file_new),trim(ch_chem_spc(isp)), &
-               chem_data3d_new,nx,ny,nz_chem)
-               call apm_pack_3d(tmp_arry,chem_data3d_new,nx,ny,nz_chem)
-               call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &               
-               itask_chem(imem,isp),2,MPI_COMM_WORLD,ierr)
-               deallocate(chem_data3d_new)     
-               deallocate(tmp_arry)
+               enddo
             enddo
-         enddo
-         print *,'APM: After CHEMI read and send'
+            close(unita)
+            deallocate(tmp_arry)
+            if(rank.eq.0) print *, 'APM: After read and send old chemi scaling factors ',rank
+         endif
 !
-         print *,'APM: Before CHEMI receive and write'
-         do imem=1,num_mems
-            if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-            if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-            if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-            file_old=trim(chemi_path_old)//'/'//trim(chemi_file_old)//trim(cmem)
-            file_new=trim(chemi_path_new)//'/'//trim(chemi_file_new)
-            file_new_3d=trim(chemi_path_pert)//'/'//trim(chemi_file_new)//trim(cmem)
-            do isp=1,nchem_spcs
-               allocate(chem_data3d_new(nx,ny,nz_chem))
-               allocate(tmp_arry(nx*ny*nz_chem))
-               call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
-               itask_chem(imem,isp),3,MPI_COMM_WORLD,stat,ierr)
-               call apm_unpack_3d(tmp_arry,chem_data3d_new,nx,ny,nz_chem)
-               call put_WRFCHEM_emiss_data(trim(file_new_3d),trim(ch_chem_spc(isp)), &
-               chem_data3d_new,nx,ny,nz_chem)
-               deallocate(chem_data3d_new)
-               deallocate(tmp_arry) 
-            enddo
-         enddo
-         print *,'APM: After CHEMI receive and write'
-      endif
+! Read and send old fire scaling factors
+         if(sw_fire) then
+            unitb=40
+            filenm=trim(pert_path_pr)//'/pert_fire_emis'
+            open(unit=unitb,file=trim(filenm), &
+            form='unformatted',status='unknown')
+            rewind(unitb)
 !
-! Read and send unperturbed firechemi emissions
-      if(sw_fire) then
-         print *,'APM: Before FIRECHEMI read and send'
-         do imem=1,num_mems
-            if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-            if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-            if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-            file_old=trim(firechemi_path_old)//'/'//trim(firechemi_file_old)//trim(cmem)
-            file_new=trim(firechemi_path_new)//'/'//trim(firechemi_file_new)
-            file_new_3d=trim(firechemi_path_pert)//'/'//trim(firechemi_file_new)//trim(cmem)
-            do isp=1,nfire_spcs
-               if(sw_corr_tm) then
-                  allocate(chem_data3d_old(nx,ny,nz_fire))
-                  allocate(tmp_arry(nx*ny*nz_fire))
-                  call get_WRFCHEM_emiss_data(trim(file_old),trim(ch_fire_spc(isp)), &
-                  chem_data3d_old,nx,ny,nz_fire)
-                  call apm_pack_3d(tmp_arry,chem_data3d_old,nx,ny,nz_fire)
+            if(rank.eq.0) print *, 'APM: Before read and send old fire scaling factors '
+            allocate(tmp_arry(nx*ny*nz_fire))
+            do imem=1,num_mems
+               do isp=1,nfire_spcs
+                  read(unitb) fire_fac_old
+                  call apm_pack(tmp_arry,fire_fac_old,nx,ny,nz_fire)
                   call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-                  itask_fire(imem,isp),4,MPI_COMM_WORLD,ierr)
-                  deallocate(chem_data3d_old)
-                  deallocate(tmp_arry)
-               endif
-               allocate(chem_data3d_new(nx,ny,nz_fire))
-               allocate(tmp_arry(nx*ny*nz_fire))
-               call get_WRFCHEM_emiss_data(trim(file_new),trim(ch_fire_spc(isp)), &
-               chem_data3d_new,nx,ny,nz_fire)
-               call apm_pack_3d(tmp_arry,chem_data3d_new,nx,ny,nz_fire)
-               call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &               
-               itask_fire(imem,isp),5,MPI_COMM_WORLD,ierr)
-               deallocate(chem_data3d_new)
-               deallocate(tmp_arry)
+                  itask_fire(imem,isp),2,MPI_COMM_WORLD,ierr)
+               enddo
             enddo
-         enddo
-         print *,'APM: After FIRECHEMI read and send'
+            close(unitb)
+            deallocate(tmp_arry)
+            if(rank.eq.0) print *, 'APM: After read and send old fire scaling factors '
+         endif
 !
-         print *,'APM: Before FIRECHEMI receive and write'
-         do imem=1,num_mems
-            if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-            if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-            if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-            file_old=trim(firechemi_path_old)//'/'//trim(firechemi_file_old)//trim(cmem)
-            file_new=trim(firechemi_path_new)//'/'//trim(firechemi_file_new)
-            file_new_3d=trim(firechemi_path_pert)//'/'//trim(firechemi_file_new)//trim(cmem)
-            do isp=1,nfire_spcs
-               allocate(chem_data3d_new(nx,ny,nz_fire))
-               allocate(tmp_arry(nx*ny*nz_fire))
-               call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-               itask_fire(imem,isp),6,MPI_COMM_WORLD,stat,ierr)
-               call apm_unpack_3d(tmp_arry,chem_data3d_new,nx,ny,nz_fire)
-               call put_WRFCHEM_emiss_data(trim(file_new_3d),trim(ch_fire_spc(isp)), &
-               chem_data3d_new,nx,ny,nz_fire)
-               deallocate(chem_data3d_new)
-               deallocate(tmp_arry) 
+! Read and send old biog scaling factors
+         if(sw_biog) then
+            unitc=50
+            filenm=trim(pert_path_pr)//'/pert_biog_emis'
+            open(unit=unitc,file=trim(filenm), &
+            form='unformatted',status='unknown')
+            rewind(unitc)
+!
+            if(rank.eq.0) print *, 'APM: Before read and send old biog scaling factors '
+            allocate(tmp_arry(nx*ny*nz_biog))
+            do imem=1,num_mems
+               do isp=1,nbiog_spcs
+                  read(unitc) biog_fac_old
+                  call apm_pack(tmp_arry,biog_fac_old,nx,ny,nz_biog)
+                  call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
+                  itask_biog(imem,isp),3,MPI_COMM_WORLD,ierr)
+               enddo
             enddo
-         enddo
-         print *,'APM: After FIRECHEMI receive and write'
+            close(unitc)
+            deallocate(tmp_arry)
+            if(rank.eq.0) print *, 'APM: After read and send old biog scaling factors '
+         endif
       endif
 !
-! Read and send unperturbed biogchemi emissions
-      if(sw_biog) then
-         print *,'APM: Before BIOGCHEMI read and send'
-         do imem=1,num_mems
-            if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-            if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-            if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-            file_old=trim(firechemi_path_old)//'/'//trim(firechemi_file_old)//trim(cmem)
-            file_new=trim(firechemi_path_new)//'/'//trim(firechemi_file_new)
-            file_new_3d=trim(firechemi_path_new)//'/'//trim(firechemi_file_new)//trim(cmem)
-            do isp=1,nbiog_spcs
-               if(sw_corr_tm) then
-                  allocate(chem_data3d_old(nx,ny,nz_biog))
-                  allocate(tmp_arry(nx*ny*nz_biog))
-                  call get_WRFCHEM_emiss_data(trim(file_old),trim(ch_biog_spc(isp)), &
-                  chem_data3d_old,nx,ny,nz_biog)
-                  call apm_pack_3d(tmp_arry,chem_data3d_old,nx,ny,nz_biog)
-                  call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-                  itask_biog(imem,isp),7,MPI_COMM_WORLD,ierr)
-                  deallocate(chem_data3d_old)
-                  deallocate(tmp_arry)
-               endif
-               allocate(chem_data3d_new(nx,ny,nz_biog))
-               allocate(tmp_arry(nx*ny*nz_biog))
-               call get_WRFCHEM_emiss_data(trim(file_new),trim(ch_biog_spc(isp)), &
-               chem_data3d_new,nx,ny,nz_biog)
-               call apm_pack_3d(tmp_arry,chem_data3d_new,nx,ny,nz_biog)
-               call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &               
-               itask_biog(imem,isp),8,MPI_COMM_WORLD,ierr)
-               deallocate(chem_data3d_new)     
-               deallocate(tmp_arry)
-            enddo
-         enddo
-         print *,'APM: After BIOGCHEMI read and send'
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-         print *,'APM: Before BIOGCHEMI receive and write'
+! RECEIVE NEW SCALING FACTORS FROM OTHER PROCESSORS AND WRITE TO ARCHIVE FILE
+! READ EMISSIONS, APPLY SCALING, AND WRITE TO EMISSIONS FILE
+!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+      if(sw_chem) then
+!
+! Receive new scaling factors, write to archive file, read emissions, scale emissions, and
+! write emissions to archive file         
+         unita=30
+         filenm=trim(pert_path_po)//'/pert_chem_emis_temp'
+         open(unit=unita,file=trim(filenm),form='unformatted',status='unknown')
+         rewind(unita)
+!
+         if(rank.eq.0) print *, 'APM: Before receive and write new chemi scaling factors '   
+         allocate(chem_data3d(nx,ny,nz_chem))
+         allocate(tmp_arry(nx*ny*nz_chem))
          do imem=1,num_mems
             if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
             if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
             if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-            file_old=trim(biogchemi_path_old)//'/'//trim(biogchemi_file_old)//trim(cmem)
-            file_new=trim(biogchemi_path_new)//'/'//trim(biogchemi_file_new)
-            file_new_3d=trim(biogchemi_path_new)//'/'//trim(biogchemi_file_new)//trim(cmem)
-            do isp=1,nbiog_spcs
-               allocate(chem_data3d_new(nx,ny,nz_biog))
-               allocate(tmp_arry(nx*ny*nz_biog))
-               call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-               itask_biog(imem,isp),9,MPI_COMM_WORLD,stat,ierr)
-               call apm_unpack_3d(tmp_arry,chem_data3d_new,nx,ny,nz_biog)
-               call put_WRFCHEM_emiss_data(trim(file_new_3d),trim(ch_biog_spc(isp)), &
-               chem_data3d_new,nx,ny,nz_chem)
-               deallocate(chem_data3d_new)
-               deallocate(tmp_arry) 
+            do isp=1,nchem_spcs
+               call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
+               itask_chem(imem,isp),4,MPI_COMM_WORLD,stat,ierr)
+               call apm_unpack(tmp_arry,chem_fac_end,nx,ny,nz_chem)
+               write(unita) chem_fac_end
+!
+               wrfchem_file=trim(wrfchemi)
+               call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
+               nx,ny,nz_chem)
+               do i=1,nx
+                  do j=1,ny
+                     do k=1,nz_chem
+!                        if(chem_data3d(i,j,k)*(1.+chem_fac_end(i,j,k)*scl_fac_chem) .gt. 0.) then
+!                           chem_data3d(i,j,k)=chem_data3d(i,j,k)*(1.+chem_fac_end(i,j,k)*scl_fac_chem)
+!                        endif
+!
+                        if(chem_data3d(i,j,k) .gt. 0.) then
+                           chem_data3d(i,j,k)=exp(log(chem_data3d(i,j,k))+(1.+chem_fac_end(i,j,k)*scl_fac_chem))
+                        endif
+                     enddo
+                  enddo
+               enddo
+!
+! Check the distribution extrema
+!               call limit_emiss_maxnmin(chem_data3d,nx,ny,nz_chem,1,zfac_chem)
+!
+               wrfchem_file=trim(wrfchemi)//trim(cmem)
+               call put_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
+               nx,ny,nz_chem)
             enddo
          enddo
-         print *,'APM: After BIOGCHEMI receive and write'
+         deallocate(tmp_arry)
+         deallocate(chem_data3d)
+         if(rank.eq.0) print *, 'APM: After receive and write new chemi scaling factors '   
+         close(unita)
+      endif
+!
+      if(sw_fire) then
+!
+! Receive new scaling factors, write to archive file, read emissions, scale emissions, and
+! write emissions to archive file         
+         unitb=40
+         filenm=trim(pert_path_po)//'/pert_fire_emis_temp'
+         open(unit=unitb,file=trim(filenm),form='unformatted',status='unknown')
+         rewind(unitb)
+!
+         if(rank.eq.0) print *, 'APM: Before receive and write new fire scaling factors '   
+         allocate(fire_data3d(nx,ny,nz_fire))
+         allocate(tmp_arry(nx*ny*nz_fire))
+         do imem=1,num_mems
+            if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+            if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+            if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+            do isp=1,nfire_spcs
+               call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
+               itask_fire(imem,isp),5,MPI_COMM_WORLD,stat,ierr)
+               call apm_unpack(tmp_arry,fire_fac_end,nx,ny,nz_fire)
+               write(unitb) fire_fac_end
+!
+               wrfchem_file=trim(wrffirechemi)
+               call get_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),fire_data3d, &
+               nx,ny,nz_fire)
+               do i=1,nx
+                  do j=1,ny
+                     do k=1,nz_fire
+!                        if(fire_data3d(i,j,k)*(1.+fire_fac_end(i,j,k)*scl_fac_fire) .gt. 0.) then
+!                           fire_data3d(i,j,k)=fire_data3d(i,j,k)*(1.+fire_fac_end(i,j,k)*scl_fac_fire)
+!                        endif
+!
+                        if(fire_data3d(i,j,k) .gt. 0.) then
+                           fire_data3d(i,j,k)=exp(log(fire_data3d(i,j,k))+(1.+fire_fac_end(i,j,k)*scl_fac_fire))
+                        endif
+                     enddo
+                  enddo
+               enddo
+!
+! Check the distribution extrema
+!               call limit_emiss_maxnmin(fire_data3d,nx,ny,nz_fire,1,zfac_fire)
+!
+               wrfchem_file=trim(wrffirechemi)//trim(cmem)
+               call put_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),fire_data3d, &
+               nx,ny,nz_fire)
+            enddo
+         enddo
+         deallocate(tmp_arry)
+         deallocate(fire_data3d)
+         if(rank.eq.0) print *, 'APM: After receive and write new fire scaling factors '   
+         close(unitb)
+      endif
+!
+      if(sw_biog) then
+!
+! Receive new scaling factors, write to archive file, read emissions, scale emissions, and
+! write emissions to archive file         
+         if(rank.eq.0) print *, 'APM: Before receive new biog scaling and write '   
+         unita=50
+         filenm=trim(pert_path_po)//'/pert_biog_emis_temp'
+         open(unit=unita,file=trim(filenm),form='unformatted',status='unknown')
+         rewind(unita)
+!
+         if(rank.eq.0) print *, 'APM: Before receive and write new biog scaling factors '   
+         allocate(biog_data3d(nx,ny,nz_biog))
+         allocate(tmp_arry(nx*ny*nz_biog))
+         do imem=1,num_mems
+            if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+            if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+            if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+            do isp=1,nbiog_spcs
+               call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
+               itask_biog(imem,isp),6,MPI_COMM_WORLD,stat,ierr)
+               call apm_unpack(tmp_arry,biog_fac_end,nx,ny,nz_biog)
+               write(unitc) biog_fac_end
+!           
+               wrfchem_file=trim(wrfbiogchemi)
+               call get_WRFCHEM_emiss_data(wrfchem_file,ch_biog_spc(isp),biog_data3d, &
+               nx,ny,nz_biog)
+               do i=1,nx
+                  do j=1,ny
+                     do k=1,nz_biog
+!                        if(biog_data3d(i,j,k)*(1.+biog_fac_end(i,j,k)*scl_fac_biog) .gt. 0.) then
+!                           biog_data3d(i,j,k)=biog_data3d(i,j,k)*(1.+biog_fac_end(i,j,k)*scl_fac_biog)
+!                        endif
+!
+                        if(biog_data3d(i,j,k) .gt. 0.) then
+                           biog_data3d(i,j,k)=exp(log(biog_data3d(i,j,k))+(1.+biog_fac_end(i,j,k)*scl_fac_biog))
+                        endif
+                     enddo
+                  enddo
+               enddo
+!
+! Check the distribution extrema
+!               call limit_emiss_maxnmin(biog_data3d,nx,ny,nz_biog,1,zfac_biog)
+!
+               wrfchem_file=trim(wrfbiogchemi)//trim(cmem)
+               call put_WRFCHEM_emiss_data(wrfchem_file,ch_biog_spc(isp),chem_data3d, &
+               nx,ny,nz_biog)
+            enddo
+         enddo
+         deallocate(tmp_arry)
+         deallocate(biog_data3d)
+         if(rank.eq.0) print *, 'APM: After receive and write new biog scaling factors '   
+         close(unitc)
       endif
    endif
 !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-! Rank: itask(imem,isp)
-!   
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! RANK itask(imem,isp)   RANK itask(imem,isp)   RANK itask(imem,isp)
 !
-   if(rank.ne.0) then   
-      wgt_bc_str=exp(-0.0*corr_tm_delt/corr_lngth_tm)
-      wgt_bc_mid=exp(-0.5*corr_tm_delt/corr_lngth_tm)
-      wgt_bc_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! RECEIVE OLD SCALING FACTORS (OR CALCULATE OLD SCALING FACTORS) AND SEND TO
+! RANK 0 FOR WRITING TO ARCHIVE FILE   
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+   if(rank.ne.0) then
+      wgt_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
+!
+! chem emissions      
       if(sw_chem) then
          do imem=1,num_mems
+            if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+            if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+            if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
             do isp=1,nchem_spcs
                if(rank.eq.itask_chem(imem,isp)) then
-                  if(imem.eq.1 .and. rank.eq.itask_chem(1,1)) print *,'APM: Before CHEMI process '
+                  chem_fac_old(:,:,:)=0.
+                  chem_fac_new(:,:,:)=0.
+                  chem_fac_end(:,:,:)=0.
+!
+! Receive old scaling factors
                   if(sw_corr_tm) then
-                     allocate(chem_data3d_old(nx,ny,nz_chem))
+                     if(rank.eq.itask_chem(1,1)) print *,'APM: Before receive old scaling factors CHEM RANK ',rank
                      allocate(tmp_arry(nx*ny*nz_chem))
-                     call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
-                     0,1,MPI_COMM_WORLD,stat,ierr)
-                     call apm_unpack_3d(tmp_arry,chem_data3d_old,nx,ny,nz_chem)
+                     call mpi_recv(tmp_arry,nx*ny*nz_chem, &
+                     MPI_FLOAT,0,1,MPI_COMM_WORLD,stat,ierr)
+                     call apm_unpack(tmp_arry,chem_fac_old,nx,ny,nz_chem)
                      deallocate(tmp_arry)
-                  endif   
-                  allocate(chem_data3d_new(nx,ny,nz_chem))
-                  allocate(tmp_arry(nx*ny*nz_chem))
-                  call mpi_recv(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
-                  0,2,MPI_COMM_WORLD,stat,ierr)
-                  call apm_unpack_3d(tmp_arry,chem_data3d_new,nx,ny,nz_chem,1)
-                  deallocate(tmp_arry)
+                     if(rank.eq.itask_chem(1,1)) print *,'APM: After receive old scaling factors CHEM RANK ',rank
+                  endif
+!
+! Calculate new scaling factors
+                  if(rank.eq.itask_chem(1,1)) print *,'APM: Before pert_fields CHEM RANK ',rank
                   call date_and_time(ch_date,ch_time,ch_zone,date_time_vals)
                   seed_trm=date_time_vals(5)*date_time_vals(6)*date_time_vals(7)
                   if(sw_seed) call init_const_random_seed(rank,seed_trm)
-                  call perturb_emiss_fields(chem_data3d_new(:,:,:),lat,lon,A_chem, &
-                  nx,ny,nz_chem,ngrid_corr_chem,corr_lngth_hz,sprd_chem,rank,ch_chem_spc(isp),imem,isp)
-                  allocate(chem_data3d_smth(nx,ny,nz_chem))
-                  if(sw_corr_tm) then
-                     chem_data3d_smth(:,:,:)=(1.-wgt_bc_end)*chem_data3d_old(:,:,:)+wgt_bc_end* &
-                     chem_data3d_new(:,:,:)
-                  else
-                     chem_data3d_smth(:,:,:)=chem_data3d_new(:,:,:)
-                  endif
-                  if(sw_corr_tm) deallocate(chem_data3d_old)
-                  deallocate(chem_data3d_new)
-                  if(imem.eq.1 .and. rank.eq.itask_chem(1,1)) print *,'APM: After CHEMI process '
+                  call perturb_fields(chem_fac_old,chem_fac_new, &
+                  lat,lon,A_chem,nx,ny,nz_chem,ngrid_corr_chem,sw_corr_tm, &
+                  corr_lngth_hz,rank,sprd_chem,itask_chem,num_mems,nchem_spcs)
+                  if(rank.eq.itask_chem(1,1)) print *,'APM: After pert_fields CHEM RANK ',rank
                endif
             enddo
          enddo
 !
          do imem=1,num_mems
+            if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+            if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+            if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
             do isp=1,nchem_spcs
                if(rank.eq.itask_chem(imem,isp)) then
-                  if(imem.eq.1 .and. rank.eq.itask_chem(1,1)) print *,'APM: Before CHEMI send '
+!
+! Impose temporal correlations
+                  chem_fac_end(:,:,:)=(1.-wgt_end)*chem_fac_old(:,:,:)+wgt_end* &
+                  chem_fac_new(:,:,:)
+! 
+! Send new scaling factors to rank 0 for writing to archive file            
+                  if(rank.eq.itask_chem(1,1)) print *,'APM: Before send new scaling CHEM RANK ',rank
                   allocate(tmp_arry(nx*ny*nz_chem))
-                  call apm_pack_3d(tmp_arry,chem_data3d_smth,nx,ny,nz_chem)
+                  call apm_pack(tmp_arry,chem_fac_end,nx,ny,nz_chem)
                   call mpi_send(tmp_arry,nx*ny*nz_chem,MPI_FLOAT, &
-                  0,3,MPI_COMM_WORLD,ierr)
-                  deallocate(chem_data3d_smth)
+                  0,4,MPI_COMM_WORLD,ierr)
                   deallocate(tmp_arry)
-                  if(rank.eq.itask_chem(1,1)) print *,'APM: After CHEMI send '
+                  if(rank.eq.itask_chem(1,1)) print *,'APM: After send new scaling CHEM RANK ',rank
                endif
             enddo
          enddo
       endif
 !
-! Receive and process unperturbed firechemi emissions
-      if(sw_fire) then
+! fire emissions      
+      if(sw_fire) then         
          do imem=1,num_mems
+            if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+            if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+            if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
             do isp=1,nfire_spcs
                if(rank.eq.itask_fire(imem,isp)) then
-                  if(imem.eq.1 .and. rank.eq.itask_fire(1,1)) print *,'APM: Before FIRECHEMI process '
+                  fire_fac_old(:,:,:)=0.
+                  fire_fac_new(:,:,:)=0.
+                  fire_fac_end(:,:,:)=0.
+!
+! Recive old scaling factors  
                   if(sw_corr_tm) then
-                     allocate(chem_data3d_old(nx,ny,nz_fire))
+                     if(rank.eq.itask_fire(1,1)) print *,'APM: Before receive old scaling factors FIRE RANK ',rank
                      allocate(tmp_arry(nx*ny*nz_fire))
-                     call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-                     0,4,MPI_COMM_WORLD,stat,ierr)
-                     call apm_unpack_3d(tmp_arry,chem_data3d_old,nx,ny,nz_fire)
+                     call mpi_recv(tmp_arry,nx*ny*nz_fire, &
+                     MPI_FLOAT,0,2,MPI_COMM_WORLD,stat,ierr)
+                     call apm_unpack(tmp_arry,fire_fac_old,nx,ny,nz_fire)
                      deallocate(tmp_arry)
-                  endif  
-                  allocate(chem_data3d_new(nx,ny,nz_fire))
-                  allocate(tmp_arry(nx*ny*nz_fire))
-                  call mpi_recv(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-                  0,5,MPI_COMM_WORLD,stat,ierr)
-                  call apm_unpack_3d(tmp_arry,chem_data3d_new,nx,ny,nz_fire,1)
-                  deallocate(tmp_arry)
-                  call date_and_time(ch_date,ch_time,ch_zone,date_time_vals)
-                  seed_trm=date_time_vals(5)*date_time_vals(6)*date_time_vals(7)
-                  if(sw_seed) call init_const_random_seed(rank,seed_trm)
-                  call perturb_emiss_fields(chem_data3d_new(:,:,:),lat,lon,A_fire, &
-                  nx,ny,nz_fire,ngrid_corr_fire,corr_lngth_hz,sprd_fire,rank,ch_fire_spc(isp),imem,isp)
-                  allocate(chem_data3d_smth(nx,ny,nz_fire))
-                  if(sw_corr_tm) then
-                     chem_data3d_smth(:,:,:)=(1.-wgt_bc_end)*chem_data3d_old(:,:,:)+wgt_bc_end* &
-                     chem_data3d_new(:,:,:)
-                  else
-                     chem_data3d_smth(:,:,:)=chem_data3d_new(:,:,:)
+                     if(rank.eq.itask_fire(1,1)) print *,'APM: After receive old scaling factors FIRE RANK ',rank
                   endif
-                  if(sw_corr_tm) deallocate(chem_data3d_old)
-                  deallocate(chem_data3d_new)
-                  if(imem.eq.1 .and. rank.eq.itask_fire(1,1)) print *,'APM: After FIRECHEMI process '
+!
+! Calculate new scaling factors                  
+                  if(rank.eq.itask_fire(1,1)) print *,'APM: Before pert_fields FIRE RANK ',rank
+                  call date_and_time(ch_date,ch_time,ch_zone,date_time_vals)
+                  seed_trm=date_time_vals(5)*date_time_vals(6)*date_time_vals(7)       
+                  if(sw_seed) call init_const_random_seed(rank,seed_trm)
+                  call perturb_fields(fire_fac_old,fire_fac_new, &
+                  lat,lon,A_fire,nx,ny,nz_fire,ngrid_corr_fire,sw_corr_tm, &
+                  corr_lngth_hz,rank,sprd_fire,itask_fire,num_mems,nfire_spcs)
+                  if(rank.eq.itask_fire(1,1)) print *,'APM: After pert_fields FIRE RANK ',rank
                endif
             enddo
          enddo
-
+!
          do imem=1,num_mems
+            if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+            if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+            if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
             do isp=1,nfire_spcs
                if(rank.eq.itask_fire(imem,isp)) then
-                  if(imem.eq.1 .and. rank.eq.itask_fire(1,1)) print *,'Before FIRECHEMI send '
+!       
+! Impose temporal correlations
+                  fire_fac_end(:,:,:)=(1.-wgt_end)*fire_fac_old(:,:,:)+wgt_end* &
+                  fire_fac_new(:,:,:)
+!               
+! Send new scaling factors to rank 0 for writing to archive file            
+                  if(rank.eq.itask_fire(1,1)) print *,'APM: Before send new scaling FIRE RANK ',rank
                   allocate(tmp_arry(nx*ny*nz_fire))
-                  call apm_pack_3d(tmp_arry,chem_data3d_smth,nx,ny,nz_fire)
+                  call apm_pack(tmp_arry,fire_fac_end,nx,ny,nz_fire)
                   call mpi_send(tmp_arry,nx*ny*nz_fire,MPI_FLOAT, &
-                  0,6,MPI_COMM_WORLD,ierr)
-                  deallocate(chem_data3d_smth)
-                  deallocate(tmp_arry)
-                  if(imem.eq.1 .and. rank.eq.itask_fire(1,1)) print *,'After FIRECHEMI send '
+                  0,5,MPI_COMM_WORLD,ierr)
+                  deallocate(tmp_arry)             
+                  if(rank.eq.itask_fire(1,1)) print *,'APM: After send new scaling FIRE RANK ',rank
                endif
             enddo
          enddo
-      endif
+      endif   
 !
-! Receive and process unperturbed biogchemi emissions
+! biog emissions      
       if(sw_biog) then
          do imem=1,num_mems
+            if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+            if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+            if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
             do isp=1,nbiog_spcs
                if(rank.eq.itask_biog(imem,isp)) then
-                  if(imem.eq.1 .and. rank.eq.itask_biog(1,1)) print *,'APM: Before BIOGCHEMI process '
+!
+! Recive old scaling factors  
                   if(sw_corr_tm) then
-                     allocate(chem_data3d_old(nx,ny,nz_biog))
+                     if(rank.eq.itask_biog(1,1)) print *,'APM: Before receive old scaling factors BIOG RANK ',rank
                      allocate(tmp_arry(nx*ny*nz_biog))
-                     call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-                     0,7,MPI_COMM_WORLD,stat,ierr)
-                     call apm_unpack_3d(tmp_arry,chem_data3d_old,nx,ny,nz_biog)
+                     call mpi_recv(tmp_arry,nx*ny*nz_biog, &
+                     MPI_FLOAT,0,3,MPI_COMM_WORLD,stat,ierr)
+                     call apm_unpack(tmp_arry,biog_fac_old,nx,ny,nz_biog)
                      deallocate(tmp_arry)
-                  endif   
-                  allocate(chem_data3d_new(nx,ny,nz_biog))
-                  allocate(tmp_arry(nx*ny*nz_biog))
-                  call mpi_recv(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-                  0,8,MPI_COMM_WORLD,stat,ierr)
-                  call apm_unpack_3d(tmp_arry,chem_data3d_new,nx,ny,nz_biog,1)
-                  deallocate(tmp_arry)
-                  call date_and_time(ch_date,ch_time,ch_zone,date_time_vals)
-                  seed_trm=date_time_vals(5)*date_time_vals(6)*date_time_vals(7)
-                  if(sw_seed) call init_const_random_seed(rank,seed_trm)
-                  call perturb_emiss_fields(chem_data3d_new(:,:,:),lat,lon,A_biog, &
-                  nx,ny,nz_biog,ngrid_corr_biog,corr_lngth_hz,sprd_biog,rank,ch_biog_spc(isp),imem,isp)
-                  allocate(chem_data3d_smth(nx,ny,nz_biog))
-                  if(sw_corr_tm) then
-                     chem_data3d_smth(:,:,:)=(1.-wgt_bc_end)*chem_data3d_old(:,:,:)+wgt_bc_end* &
-                     chem_data3d_new(:,:,:)
-                  else
-                     chem_data3d_smth(:,:,:)=chem_data3d_new(:,:,:)
+                     if(rank.eq.itask_biog(1,1)) print *,'APM: After receive old scaling factors BIOG RANK ',rank
                   endif
-                  if(sw_corr_tm) deallocate(chem_data3d_old)
-                  deallocate(chem_data3d_new)
-                  if(imem.eq.1 .and. rank.eq.itask_biog(1,1)) print *,'APM: After BIOGCHEMI process '
+!
+! Calculate new scaling factors                  
+                  if(rank.eq.itask_biog(1,1)) print *,'APM: Before pert_fields BIOG RANK ',rank
+                  call date_and_time(ch_date,ch_time,ch_zone,date_time_vals)
+                  seed_trm=date_time_vals(5)*date_time_vals(6)*date_time_vals(7)       
+                  if(sw_seed) call init_const_random_seed(rank,seed_trm)
+                  call perturb_fields(biog_fac_old,biog_fac_new, &
+                  lat,lon,A_biog,nx,ny,nz_biog,ngrid_corr_biog,sw_corr_tm, &
+                  corr_lngth_hz,rank,sprd_biog,itask_biog,num_mems,nbiog_spcs)
+                  if(rank.eq.itask_biog(1,1)) print *,'APM: After pert_fields BIOG RANK ',rank
                endif
             enddo
          enddo
 !
          do imem=1,num_mems
+            if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+            if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+            if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
             do isp=1,nbiog_spcs
                if(rank.eq.itask_biog(imem,isp)) then
-                  if(imem.eq.1 .and. rank.eq.itask_biog(1,1)) print *,'Before BIOGCHEMI send '
+!
+! Impose temporal correlations
+                  biog_fac_end(:,:,:)=(1.-wgt_end)*biog_fac_old(:,:,:)+wgt_end* &
+                  biog_fac_new(:,:,:)
+!               
+! Send new scaling factors to rank 0 for writing to archive file            
+                  if(rank.eq.itask_biog(1,1)) print *,'APM: Before send new scaling BIOG RANK ',rank
                   allocate(tmp_arry(nx*ny*nz_biog))
-                  call apm_pack_3d(tmp_arry,chem_data3d_smth,nx,ny,nz_biog)
+                  call apm_pack(tmp_arry,biog_fac_end,nx,ny,nz_biog)
                   call mpi_send(tmp_arry,nx*ny*nz_biog,MPI_FLOAT, &
-                  0,9,MPI_COMM_WORLD,ierr)
-                  deallocate(chem_data3d_smth)
-                  deallocate(tmp_arry)
-                  if(imem.eq.1 .and. rank.eq.itask_biog(1,1)) print *,'After BIOGCHEMI send '
+                  0,6,MPI_COMM_WORLD,ierr)
+                  deallocate(tmp_arry) 
+                  if(rank.eq.itask_biog(1,1)) print *,'APM: After send new scaling BIOG RANK ',rank
                endif
             enddo
          enddo
       endif
    endif
 !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-! Rank: all
-!   
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
+   if(sw_chem) then   
+      deallocate(chem_fac_old)
+      deallocate(chem_fac_new)
+      deallocate(chem_fac_end)
+   endif
+   if(sw_fire) then   
+      deallocate(fire_fac_old)
+      deallocate(fire_fac_new)
+      deallocate(fire_fac_end)
+   endif
+   if(sw_biog) then   
+      deallocate(biog_fac_old)
+      deallocate(biog_fac_new)
+      deallocate(biog_fac_end)
+   endif
    deallocate(ch_chem_spc)
    deallocate(ch_fire_spc)
    deallocate(ch_biog_spc)
-   deallocate(lat,lon)
-   if(sw_chem) deallocate(A_chem)
-   if(sw_fire) deallocate(A_fire)
-   if(sw_biog) deallocate(A_biog)
-   if(sw_chem) deallocate(itask_chem)
-   if(sw_fire) deallocate(itask_fire)
-   if(sw_biog) deallocate(itask_biog)
    call mpi_finalize(ierr)
    stop
 end program main
- 
+
 !-------------------------------------------------------------------------------
 
 real function get_dist(lat1,lat2,lon1,lon2)
@@ -653,7 +761,7 @@ subroutine vertical_transform(A_chem,geo_ht,nx,ny,nz,nz_chem,corr_lngth_vt)
          do i=1,nx
             do j=1,ny
                vcov=1.-abs(geo_ht(i,j,k)-geo_ht(i,j,l))/corr_lngth_vt
-               if(geo_ht(i,j,k).lt.0. .or. geo_ht(i,j,l).lt.0.) vcov=0. 
+               if(geo_ht(i,j,k).lt.0. .or. geo_ht(i,j,l).lt.0.) vcov=0.
                if(vcov.lt.0.) vcov=0.
 !
 ! linear decrease
@@ -673,76 +781,56 @@ subroutine vertical_transform(A_chem,geo_ht,nx,ny,nz,nz_chem,corr_lngth_vt)
          enddo
       enddo
    enddo
-!
-! Old code
-! row 1         
-!               if(k.eq.1 .and. l.eq.1) then
-!                  A_chem(i,j,k,l)=1.
-!               elseif(k.eq.1 .and. l.gt.1) then
-!                  A_chem(i,j,k,l)=0.
-!               endif
-! row 2         
-!               if(k.eq.2 .and. l.eq.1) then
-!                  A_chem(i,j,k,l)=vcov
-!               elseif(k.eq.2 .and. l.eq.2) then
-!                  A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l-1)*A_chem(i,j,k,l-1))
-!               elseif (k.eq.2 .and. l.gt.2) then
-!                  A_chem(i,j,k,l)=0.
-!               endif
-! row 3 and greater         
-!               if(k.ge.3) then
-!                  if(l.eq.1) then
-!                     A_chem(i,j,k,l)=vcov
-!                  elseif(l.lt.k .and. l.ne.1) then
-!                     do ll=1,l-1
-!                        A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,l,ll)*A_chem(i,j,k,ll)
-!                     enddo
-!                     if(A_chem(i,j,l,l).ne.0) A_chem(i,j,k,l)=(vcov-A_chem(i,j,k,l))/A_chem(i,j,l,l)
-!                  elseif(l.eq.k) then
-!                     do ll=1,l-1
-!                        A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,k,ll)*A_chem(i,j,k,ll)
-!                     enddo
-!                     A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l))
-!                  endif
-!               endif
 end subroutine vertical_transform
 
 !-------------------------------------------------------------------------------
 
-subroutine perturb_emiss_fields(chem_data3d,lat,lon,A_chem, &
-nx,ny,nz,ngrid_corr,corr_lngth_hz,sprd_chem,rank,ch_spcs,imem,isp)
+subroutine perturb_fields(chem_fac_old,chem_fac_new,lat,lon,A_chem,nx,ny,nz, &
+ngrid_corr,sw_corr_tm,corr_lngth_hz,rank,sprd_chem,itask,nmem,nspc)
+
+!   use apm_utilities_mod,  only :get_dist
+  
    implicit none
-   integer,                               intent(in)     :: nx,ny,nz,imem,isp
-   integer,                               intent(in)     :: ngrid_corr,rank
+   integer,                               intent(in)     :: nx,ny,nz,rank,nmem,nspc
+   integer,                               intent(in)     :: ngrid_corr
+   integer,dimension(nmem,nspc),          intent(in)     :: itask
    real,                                  intent(in)     :: corr_lngth_hz,sprd_chem
    real,dimension(nx,ny),                 intent(in)     :: lat,lon
-   real,dimension(nx,ny,nz),              intent(inout)  :: chem_data3d
    real,dimension(nx,ny,nz,nz),           intent(in)     :: A_chem
+   real,dimension(nx,ny,nz),              intent(inout)  :: chem_fac_old
+   real,dimension(nx,ny,nz),              intent(inout)  :: chem_fac_new
+   logical,                               intent(in)     :: sw_corr_tm
 !
    integer                             :: i,j,k,ii,jj,kk
-   integer                             :: ii_str,ii_end,jj_str,jj_end
-!
-   real                                :: pi,u_ran_1,u_ran_2,crit_val
-   real                                :: wgt,zdist,get_dist
-!
+   integer                             :: ii_str,ii_end,jj_str,jj_end,icnt,ncnt
+   real                                :: pi,get_dist,wgt
+   real                                :: u_ran_1,u_ran_2,zdist
    real,allocatable,dimension(:)       :: fld_sum,wgt_sum
-   real,allocatable,dimension(:,:,:)   :: pert_chem
-   real,allocatable,dimension(:,:,:)   :: chem_data3d_new
-   real,allocatable,dimension(:,:,:)   :: chem_data3d_smth
-!
-   character(len=300)                  :: ch_spcs
+   real,allocatable,dimension(:,:,:)   :: pert_chem_old,pert_chem_new
+   real,allocatable,dimension(:,:,:)   :: chem_fac_old_smth,chem_fac_new_smth
 !
 ! Constants
    pi=4.*atan(1.)
-   crit_val=0.
 !
-! Define perturbations (Box-Muller transform N(0,1)
-   allocate(pert_chem(nx,ny,nz))
-   allocate(chem_data3d_new(nx,ny,nz))
-   allocate(chem_data3d_smth(nx,ny,nz))
-   pert_chem(:,:,:)=0.
-   chem_data3d_new(:,:,:)=0.
-   chem_data3d_smth(:,:,:)=0.
+! Define perturbations
+   if(.not.sw_corr_tm) then
+      allocate(pert_chem_old(nx,ny,nz))
+      pert_chem_old(:,:,:)=0.
+      do i=1,nx
+         do j=1,ny
+            do k=1,nz
+               call random_number(u_ran_1)
+               if(u_ran_1.eq.0.) call random_number(u_ran_1)
+               call random_number(u_ran_2)
+               if(u_ran_2.eq.0.) call random_number(u_ran_2)
+               pert_chem_old(i,j,k)=sprd_chem*sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+            enddo
+         enddo
+      enddo
+   endif
+   
+   allocate(pert_chem_new(nx,ny,nz))
+   pert_chem_new(:,:,:)=0.
    do i=1,nx
       do j=1,ny
          do k=1,nz
@@ -750,28 +838,49 @@ nx,ny,nz,ngrid_corr,corr_lngth_hz,sprd_chem,rank,ch_spcs,imem,isp)
             if(u_ran_1.eq.0.) call random_number(u_ran_1)
             call random_number(u_ran_2)
             if(u_ran_2.eq.0.) call random_number(u_ran_2)
-            pert_chem(i,j,k)=sprd_chem*sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+            pert_chem_new(i,j,k)=sprd_chem*sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
          enddo
       enddo
    enddo
+
 !
-! Apply perturbations ICs
-   do i=1,nx
-      do j=1,ny
-         do k=1,nz
-            if(chem_data3d(i,j,k)*(1.+pert_chem(i,j,k)) .le. 0.) then
-               chem_data3d_new(i,j,k)=chem_data3d(i,j,k)
-            else
-               chem_data3d_new(i,j,k)=chem_data3d(i,j,k)*(1.+pert_chem(i,j,k))
-            endif
-         enddo
-      enddo
-   enddo
-   deallocate(pert_chem)
-!
-! Apply horizontal correlations ICs
-   allocate(fld_sum(nz))
+! Apply horizontal correlations
+   allocate(fld_sum(nz))   
    allocate(wgt_sum(nz))
+!
+   if(.not.sw_corr_tm) then
+      do i=1,nx
+         do j=1,ny
+            ii_str=max(1,i-ngrid_corr)
+            ii_end=min(nx,i+ngrid_corr)
+            jj_str=max(1,j-ngrid_corr)
+            jj_end=min(ny,j+ngrid_corr)
+            fld_sum(:)=0.
+            wgt_sum(:)=0.
+            do ii=ii_str,ii_end
+               do jj=jj_str,jj_end
+                  zdist=get_dist(lat(ii,jj),lat(i,j),lon(ii,jj),lon(i,j))
+                  if(zdist.le.corr_lngth_hz) then
+                     wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
+                     do k=1,nz
+                        fld_sum(k)=fld_sum(k)+wgt*pert_chem_old(ii,jj,k)
+                        wgt_sum(k)=wgt_sum(k)+wgt
+                     enddo
+                  endif
+               enddo
+            enddo
+            do k=1,nz
+               if(wgt_sum(k).ne.0.) then
+                  chem_fac_old(i,j,k)=fld_sum(k)/wgt_sum(k)
+               else
+                  chem_fac_old(i,j,k)=pert_chem_old(i,j,k)
+               endif
+            enddo
+         enddo
+      enddo
+   endif
+!
+   chem_fac_new(:,:,:)=0.
    do i=1,nx
       do j=1,ny
          ii_str=max(1,i-ngrid_corr)
@@ -786,137 +895,78 @@ nx,ny,nz,ngrid_corr,corr_lngth_hz,sprd_chem,rank,ch_spcs,imem,isp)
                if(zdist.le.corr_lngth_hz) then
                   wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
                   do k=1,nz
-!                     if(chem_data3d_new(ii,jj,k).gt.crit_val) then
-                        fld_sum(k)=fld_sum(k)+wgt*chem_data3d_new(ii,jj,k)
-                        wgt_sum(k)=wgt_sum(k)+wgt
-!                     endif
+                     fld_sum(k)=fld_sum(k)+wgt*pert_chem_new(ii,jj,k)
+                     wgt_sum(k)=wgt_sum(k)+wgt
                   enddo
                endif
             enddo
          enddo
          do k=1,nz
-            if(wgt_sum(k).ne.0) then
-               chem_data3d_smth(i,j,k)=fld_sum(k)/wgt_sum(k)
+            if(wgt_sum(k).ne.0.) then
+               chem_fac_new(i,j,k)=fld_sum(k)/wgt_sum(k)
             else
-               chem_data3d_smth(i,j,k)=chem_data3d_new(i,j,k)
-            endif                            
+               chem_fac_new(i,j,k)=pert_chem_new(i,j,k)
+            endif
          enddo
       enddo
    enddo
-   chem_data3d_new(:,:,:)=chem_data3d_smth(:,:,:)
-   chem_data3d_smth(:,:,:)=0.
-!   
-! Apply vertical correlations ICs
+!
+   if(.not.sw_corr_tm) deallocate(pert_chem_old)
+   deallocate(pert_chem_new)
+!
+! Apply vertical correlations
+   if(.not.sw_corr_tm) then
+      allocate(chem_fac_old_smth(nx,ny,nz))
+      chem_fac_old_smth(:,:,:)=0.
+      do i=1,nx
+         do j=1,ny
+            fld_sum(:)=0.
+            wgt_sum(:)=0.
+            do k=1,nz
+               do kk=1,nz
+                  fld_sum(k)=fld_sum(k)+A_chem(i,j,k,kk)*chem_fac_old(i,j,kk)
+                  wgt_sum(k)=wgt_sum(k)+A_chem(i,j,k,kk)
+               enddo
+            enddo
+            do k=1,nz
+               if(wgt_sum(k).ne.0) then
+                  chem_fac_old_smth(i,j,k)=fld_sum(k)/wgt_sum(k)
+               else
+                  chem_fac_old_smth(i,j,k)=chem_fac_old(i,j,k)
+               endif
+            enddo
+         enddo
+      enddo
+      chem_fac_old(:,:,:)=chem_fac_old_smth(:,:,:)
+      deallocate(chem_fac_old_smth)
+   endif
+!
+   allocate(chem_fac_new_smth(nx,ny,nz))
+   chem_fac_new_smth(:,:,:)=0.
    do i=1,nx
       do j=1,ny
          fld_sum(:)=0.
          wgt_sum(:)=0.
          do k=1,nz
             do kk=1,nz
-!               if(chem_data3d_new(i,j,kk).gt.crit_val) then
-                  fld_sum(k)=fld_sum(k)+A_chem(i,j,k,kk)*chem_data3d_new(i,j,kk)
-                  wgt_sum(k)=wgt_sum(k)+A_chem(i,j,k,kk)
-!               endif
+               fld_sum(k)=fld_sum(k)+A_chem(i,j,k,kk)*chem_fac_new(i,j,kk)
+               wgt_sum(k)=wgt_sum(k)+A_chem(i,j,k,kk)
             enddo
          enddo
          do k=1,nz
             if(wgt_sum(k).ne.0.) then
-               chem_data3d_smth(i,j,k)=fld_sum(k)/wgt_sum(k)
-            else
-               chem_data3d_smth(i,j,k)=chem_data3d_new(i,j,k)
+               chem_fac_new_smth(i,j,k)=fld_sum(k)/wgt_sum(k)
+            else              
+               chem_fac_new_smth(i,j,k)=chem_fac_new(i,j,k)
             endif
          enddo
       enddo
    enddo
-   chem_data3d(:,:,:)=chem_data3d_smth(:,:,:)
-   deallocate(chem_data3d_new)
-   deallocate(chem_data3d_smth)
+   chem_fac_new(:,:,:)=chem_fac_new_smth(:,:,:)
+   deallocate(chem_fac_new_smth)
    deallocate(fld_sum)
    deallocate(wgt_sum)
-!
-end subroutine perturb_emiss_fields
-
-!-------------------------------------------------------------------------------
-
-subroutine get_WRFINPUT_land_mask(xland,nx,ny)
-   implicit none
-   include 'netcdf.inc'
-   integer, parameter                    :: maxdim=6
-   integer                               :: nx,ny
-   integer                               :: i,rc
-   integer                               :: f_id
-   integer                               :: v_id,v_ndim,typ,natts
-   integer,dimension(maxdim)             :: one
-   integer,dimension(maxdim)             :: v_dimid
-   integer,dimension(maxdim)             :: v_dim
-   real,dimension(nx,ny)                 :: xland
-   character(len=150)                    :: v_nam
-   character*(80)                         :: name
-   character*(80)                         :: file
-!
-! open netcdf file
-   file='wrfinput_d01'
-   name='XLAND'
-   rc = nf_open(trim(file),NF_NOWRITE,f_id)
-!   print *, trim(file)
-   if(rc.ne.0) then
-      print *, 'nf_open error ',trim(file)
-      stop
-   endif
-!
-! get variables identifiers
-   rc = nf_inq_varid(f_id,trim(name),v_id)
-!  print *, v_id
-   if(rc.ne.0) then
-      print *, 'nf_inq_varid error ', v_id
-      stop
-   endif
-!
-! get dimension identifiers
-   v_dimid=0
-   rc = nf_inq_var(f_id,v_id,v_nam,typ,v_ndim,v_dimid,natts)
-!   print *, v_dimid
-   if(rc.ne.0) then
-      print *, 'nf_inq_var error ', v_dimid
-      stop
-   endif
-!
-! get dimensions
-   v_dim(:)=1
-   do i=1,v_ndim
-      rc = nf_inq_dimlen(f_id,v_dimid(i),v_dim(i))
-   enddo
-!   print *, v_dim
-   if(rc.ne.0) then
-      print *, 'nf_inq_dimlen error ', v_dim
-      stop
-   endif
-!
-! check dimensions
-   if(nx.ne.v_dim(1)) then
-      print *, 'ERROR: nx dimension conflict ',nx,v_dim(1)
-      stop
-   else if(ny.ne.v_dim(2)) then
-      print *, 'ERROR: ny dimension conflict ',ny,v_dim(2)
-      stop
-   else if(1.ne.v_dim(3)) then             
-      print *, 'ERROR: nz dimension conflict ','1',v_dim(3)
-      stop
-!   else if(1.ne.v_dim(4)) then             
-!      print *, 'ERROR: time dimension conflict ',1,v_dim(4)
-!      stop
-   endif
-!
-! get data
-   one(:)=1
-   rc = nf_get_vara_real(f_id,v_id,one,v_dim,xland)
-   if(rc.ne.0) then
-      print *, 'nf_get_vara_real ', xland(1,1)
-      stop
-   endif
-   rc = nf_close(f_id)
-   return
-end subroutine get_WRFINPUT_land_mask   
+end subroutine perturb_fields
 
 !-------------------------------------------------------------------------------
 
@@ -937,7 +987,7 @@ subroutine get_WRFINPUT_lat_lon(lat,lon,nx,ny)
    character*(80)                         :: file
 !
 ! open netcdf file
-   file='wrfinput_d01'
+   file='wrfinput_d01.template'
    name='XLAT'
    rc = nf_open(trim(file),NF_NOWRITE,f_id)
 !   print *, trim(file)
@@ -1014,11 +1064,11 @@ end subroutine get_WRFINPUT_lat_lon
 
 !-------------------------------------------------------------------------------
 
-subroutine get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp,nmem)
+subroutine get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp)
    implicit none
    include 'netcdf.inc'
    integer, parameter                    :: maxdim=6
-   integer                               :: k,nx,ny,nz,nzp,nmem
+   integer                               :: k,nx,ny,nz,nzp
    integer                               :: i,imem,rc
    integer                               :: f_id
    integer                               :: v_id_ph,v_id_phb,v_ndim,typ,natts
@@ -1035,7 +1085,7 @@ subroutine get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp,nmem)
    geo_ht(:,:,:)=0.
 !
 ! open netcdf file
-   file='wrfinput_d01'//trim(cmem)
+   file='wrfinput_d01.template'
    rc = nf_open(trim(file),NF_NOWRITE,f_id)
    if(rc.ne.0) then
       print *, 'nf_open error ',trim(file)
@@ -1099,9 +1149,9 @@ subroutine get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp,nmem)
       stop
    endif
 !
-! get geo_ht
+! get mean geo_ht
    do k=1,nz
-      geo_ht(:,:,k)=(ph(:,:,k)+phb(:,:,k)+ph(:,:,k+1)+ &
+      geo_ht(:,:,k)=(ph(:,:,k)+phb(:,:,k) + ph(:,:,k+1)+ &
       phb(:,:,k+1))/2.
    enddo
    rc = nf_close(f_id)
@@ -1328,7 +1378,7 @@ subroutine init_const_random_seed(rank,date)
    logical                          :: is_prime
     
    call random_seed(size=n)
-   primes_dim=(rank+1)*n
+   primes_dim=rank*n
    allocate (aseed(n))
    allocate (primes(primes_dim))
    primes(1)=2
@@ -1351,7 +1401,7 @@ subroutine init_const_random_seed(rank,date)
          exit
       endif
    enddo
-   str=((rank+1)-1)*n+1
+   str=(rank-1)*n+1
    do i=str,primes_dim
       aseed(i-str+1)=date*primes(i)
    enddo
@@ -1361,105 +1411,66 @@ end subroutine init_const_random_seed
 
 !-------------------------------------------------------------------------------
 
-subroutine apm_pack_3d(A_pck,A_unpck,nx,ny,nz)
+subroutine apm_pack(A_pck,A_unpck,nx,ny,nz)
    implicit none
-   integer                      :: nx,ny,nz,nt
+   integer                      :: nx,ny,nz
    integer                      :: i,j,k,l,idx
-   real,dimension(nx,ny,nz)     :: A_unpck
-   real,dimension(nx*ny*nz)     :: A_pck
+   real,dimension(nx,ny,nz)  :: A_unpck
+   real,dimension(nx*ny*nz)  :: A_pck
    idx=0
-   do i=1,nx
+   do k=1,nz
       do j=1,ny
-         do k=1,nz
+         do i=1,nx
             idx=idx+1
             A_pck(idx)=A_unpck(i,j,k)
          enddo
       enddo
    enddo
-end subroutine apm_pack_3d
+end subroutine apm_pack
 
 !-------------------------------------------------------------------------------
 
-subroutine apm_unpack_3d(A_pck,A_unpck,nx,ny,nz)
+subroutine apm_unpack(A_pck,A_unpck,nx,ny,nz)
    implicit none
    integer                      :: nx,ny,nz
    integer                      :: i,j,k,l,idx
-   real,dimension(nx,ny,nz)     :: A_unpck
-   real,dimension(nx*ny*nz)     :: A_pck
+   real,dimension(nx,ny,nz)  :: A_unpck
+   real,dimension(nx*ny*nz)  :: A_pck
    idx=0
-   do i=1,nx
+   do k=1,nz
       do j=1,ny
-         do k=1,nz
+         do i=1,nx
             idx=idx+1
             A_unpck(i,j,k)=A_pck(idx)
          enddo
       enddo
    enddo
-end subroutine apm_unpack_3d
+end subroutine apm_unpack
 
 !-------------------------------------------------------------------------------
 
-subroutine apm_pack_4d(A_pck,A_unpck,nx,ny,nz,nt)
+subroutine recenter_factors(chem_fac,nx,ny,nz_chem,nchem_spcs, &
+num_mem,sprd_chem)
    implicit none
-   integer                      :: nx,ny,nz,nt
-   integer                      :: i,j,k,l,idx
-   real,dimension(nx,ny,nz,nt)  :: A_unpck
-   real,dimension(nx*ny*nz*nt)  :: A_pck
-   idx=0
-   do i=1,nx
-      do j=1,ny
-         do k=1,nz
-            do l=1,nt
-               idx=idx+1
-               A_pck(idx)=A_unpck(i,j,k,l)
-            enddo
-         enddo
-      enddo
-   enddo
-end subroutine apm_pack_4d
-
-!-------------------------------------------------------------------------------
-
-subroutine apm_unpack_4d(A_pck,A_unpck,nx,ny,nz,nt)
-   implicit none
-   integer                      :: nx,ny,nz,nt
-   integer                      :: i,j,k,l,idx
-   real,dimension(nx,ny,nz,nt)  :: A_unpck
-   real,dimension(nx*ny*nz*nt)  :: A_pck
-   idx=0
-   do i=1,nx
-      do j=1,ny
-         do k=1,nz
-            do l=1,nt
-               idx=idx+1
-               A_unpck(i,j,k,l)=A_pck(idx)
-            enddo
-         enddo
-      enddo
-   enddo
-end subroutine apm_unpack_4d
-
-!-------------------------------------------------------------------------------
-
-subroutine recenter_factors(chem_fac,nx,ny,nz,num_mems,sprd_chem)
-   implicit none
-   integer,           intent(in)       :: nx,ny,nz,num_mems
+   integer,           intent(in)       :: nx,ny,nz_chem,nchem_spcs,num_mem
    real,              intent(in)       :: sprd_chem
-   real,dimension(nx,ny,nz,num_mems),intent(inout) :: chem_fac
-   integer                                         :: i,j,k,imem
-   real                                            :: mean,std
-   real,dimension(num_mems)                        :: mems,pers
+   real,dimension(nx,ny,nz_chem,nchem_spcs,num_mem),intent(inout) :: chem_fac
+   integer                                                        :: i,j,k,isp,imem
+   real                                                           :: mean,std
+   real,dimension(num_mem)                                        :: mems,pers
 !
 ! Recenter about ensemble mean
    do i=1,nx
       do j=1,ny
-         do k=1,nz
-            mems(:)=chem_fac(i,j,k,:)
-            mean=sum(mems)/real(num_mems)
-            pers=(mems-mean)*(mems-mean)
-            std=sqrt(sum(pers)/real(num_mems-1))
-            do imem=1,num_mems
-               chem_fac(i,j,k,imem)=(chem_fac(i,j,k,imem)-mean)*sprd_chem/std
+         do k=1,nz_chem
+            do isp=1,nchem_spcs
+               mems(:)=chem_fac(i,j,k,isp,:)
+               mean=sum(mems)/real(num_mem)
+               pers=(mems-mean)*(mems-mean)
+               std=sqrt(sum(pers)/real(num_mem-1))
+               do imem=1,num_mem
+                  chem_fac(i,j,k,isp,imem)=(chem_fac(i,j,k,isp,imem)-mean)*sprd_chem/std
+               enddo
             enddo
          enddo
       enddo
@@ -1618,7 +1629,7 @@ subroutine put_WRFCHEM_icbc_data(file,name,data,nx,ny,nz,nt)
    rc = nf_close(f_id)
    return
 end subroutine put_WRFCHEM_icbc_data
-!
+! 
 subroutine horiz_grid_wts(iref,jref,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
 ngrid_corr,corr_lngth_hz,rank)
    implicit none
@@ -1643,7 +1654,7 @@ ngrid_corr,corr_lngth_hz,rank)
    do ii=ii_str,ii_end
       do jj=jj_str,jj_end
          zdist=get_dist(lat(ii,jj),lat(iref,jref),lon(ii,jj),lon(iref,jref))
-         if(zdist.le.corr_lngth_hz) then
+         if(zdist.le.2.0*corr_lngth_hz) then
             ncnt=ncnt+1
             indx(ncnt)=ii
             jndx(ncnt)=jj
@@ -1653,3 +1664,53 @@ ngrid_corr,corr_lngth_hz,rank)
       enddo
    enddo
 end subroutine horiz_grid_wts
+
+!-------------------------------------------------------------------------------
+ 
+subroutine limit_emiss_maxnmin(fld,nx,ny,nz,nt,zfac)
+   implicit none
+   integer,                          intent(in)      :: nx,ny,nz,nt
+   integer                                           :: i,j,k,l
+   real,                             intent(in)      :: zfac
+   real, dimension(nx,ny,nz,nt),     intent(inout)   :: fld
+   real, dimension(nz,nt)                            :: fld_mn,fld_std
+   real, dimension(nx,ny,nz,nt)                      :: fld_tmp
+!
+! Calculate mean
+   fld_mn(:,:)=0.
+   do l=1,nt
+      do k=1,nz
+         do i=1,nx
+            do j=1,ny
+               fld_mn(k,l)=fld_mn(k,l)+fld(i,j,k,l)
+            enddo
+         enddo
+         fld_mn(k,l)=fld_mn(k,l)/real(nx*ny)
+      enddo
+   enddo
+!
+! Calculate spatial standard deviation
+   fld_std(:,:)=0.
+   do l=1,nt
+      do k=1,nz
+         do i=1,nx
+            do j=1,ny
+               fld_std(k,l)=fld_std(k,l)+(fld(i,j,k,l)-fld_mn(k,l))*(fld(i,j,k,l)-fld_mn(k,l))
+            enddo
+         enddo
+         fld_std(k,l)=sqrt(fld_std(k,l)/real(nx*ny-1))
+      enddo
+   enddo
+!
+!   Check and limit the distribution extreme values
+   do l=1,nt
+      do k=1,nz
+         do i=1,nx
+            do j=1,ny
+               if(fld(i,j,k,l).gt.fld_mn(k,l)+zfac*fld_std(k,l)) fld(i,j,k,l)=fld_mn(k,l)+zfac*fld_std(k,l)
+!               if(fld(i,j,k,l).lt.fld_mn(k,l)-zfac*fld_std(k,l)) fld(i,j,k,l)=fld_mn(k,l)-zfac*fld_std(k,l)
+            enddo
+         enddo
+      enddo
+   enddo
+end subroutine limit_emiss_maxnmin

@@ -354,6 +354,22 @@ function tes_co_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          end
 %	 fprintf('APM: Time test - %d %d %d \n',windate_min,tesdate,windate_max)
 %
+% Check/fix time format
+         if(hh_tes>=24 | mm_tes>=60 | ss_tes>=60)
+           fprintf('APM BEFORE FIX TIME: %d %d %d %d %d %d \n',yyyy_tes, ...
+           mn_tes,dy_tes,hh_tes,hh_tes,mm_tes,ss_tes)
+           [yyyy_tmp,mn_tmp,dy_tmp,hh_tmp,mm_tmp,ss_tmp]=incr_time(yyyy_tes, ...
+           mn_tes,dy_tes,hh_tes,mm_tes,ss_tes);
+           yyyy_tes=yyyy_tmp;  
+           mn_tes=mn_tmp;  
+           dy_tes=dy_tmp;  
+           hh_tes=hh_tmp;  
+           mm_tes=mm_tmp;  
+           ss_tes=ss_tmp;  
+           fprintf('APM AFTER FIX TIME: %d %d %d %d %d %d \n',yyyy_tes, ...
+           mn_tes,dy_tes,hh_tes,hh_tes,mm_tes,ss_tes)
+	 end
+%
 % Save data to ascii file
          icnt=icnt+1;
          fprintf(fid,'TES_CO_Obs: %d %d %d \n',icnt,i_min,j_min);

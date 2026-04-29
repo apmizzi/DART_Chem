@@ -291,6 +291,7 @@ program omi_o3_profile_ascii_to_obs
       read(fileid,*,iostat=ios) cov_obs_tmp(1:ndim_cov)
       read(fileid,*,iostat=ios) cov_prior_obs_tmp(1:ndim_cov)
 !
+! Unpack covariance      
       icnt=0
       do i=1,nlay_obs
          do j=1,i
@@ -304,20 +305,32 @@ program omi_o3_profile_ascii_to_obs
          enddo
       enddo
 !
-! Adjust OMI data for low surface pressures (missing levels near surface)
+! Adjust OMI data for low surface pressures
+! OMI pressures is top to bottom (correct for missing levels near surface)
       nlev_adj=nlev_obs
       nlay_adj=nlay_obs
-      if(any(prs_obs(:).lt.0.)) then      
-         do k=1,nlev_obs
-            kk=nlev_obs-k+1
-            if(prs_obs(kk).lt.0.) then
-               nlev_adj=nlev_adj-1
-               nlay_adj=nlay_adj-1
-            else
-               exit
-            endif
-         enddo
-      endif
+!
+! Pressure profile based correction      
+!      print *, 'APM: obs_id, nlev_obs,pres ',obs_id,nlev_obs,prs_obs(1:nlev_obs)
+!      if(any(prs_obs(:).lt.0.)) then
+!         do k=1,nlev_obs
+!            kk=nlev_obs-k+1
+!            if(prs_obs(kk).lt.0.) then
+!               nlev_adj=nlev_adj-1
+!               nlay_adj=nlay_adj-1
+!            else
+!               exit
+!            endif
+!         enddo
+!      endif
+!
+! Averaging kernel profile based correction      
+!      do k=1,nlay_obs
+!         kk=nlay_obs-k+1
+!         if(any(avgk_obs(1:nlay_obs,kk).lt.-1.e20)) then
+!            print *, 'obs_id, avgk ',obs_id,avgk_obs(:,kk)
+!         endif
+!      enddo
 !
 ! QA/QC based on adjusted pressure grid
       if(any(prs_obs(1:nlev_adj).lt.0.)) then
@@ -352,7 +365,7 @@ program omi_o3_profile_ascii_to_obs
       endif
       print *, 'OMI O3: Completed data read'
 !
-!     Obs thinning test
+! Obs thinning test
       obs_accept=obs_accept+1
       if(obs_accept/obs_o3_reten_freq*obs_o3_reten_freq.eq.obs_accept) then
          prs_obs(1:nlev_adj)=prs_obs(1:nlev_adj)*100.
@@ -366,7 +379,7 @@ program omi_o3_profile_ascii_to_obs
 ! kend is the OMI index for the top of the model.      
 !--------------------------------------------------------
 !
-! Loop through vertical grid (OMI O3 is top to bottom)
+! Loop through vertical grid (OMI is top to bottom)
          reject=0
          do ilv=1,nlay_adj
             avgk_obs_r8(1:nlay_adj)=avgk_obs(ilv,1:nlay_adj)

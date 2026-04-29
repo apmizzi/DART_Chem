@@ -97,9 +97,23 @@
          cp ${UPDATE_BC_DIR}/wrfbdy_d${CR_DOMAIN}_${START_FILE_DATE}_filt.${CMEM} wrfbdy_d${CR_DOMAIN}
 	 cp ${RUN_INPUT_DIR}/${DATE}/real/wrflowinp_d${CR_DOMAIN}_${START_FILE_DATE} wrflowinp_d${CR_DOMAIN}
 #
+# Copy the wrfbiochemi files
+	 export L_DATE=${START_DATE}00
+         while [[ ${L_DATE} -le ${END_DATE} ]]; do
+            export L_YY=`echo ${L_DATE} | cut -c1-4`
+            export L_MM=`echo ${L_DATE} | cut -c5-6`
+            export L_DD=`echo ${L_DATE} | cut -c7-8`
+            export L_HH=`echo ${L_DATE} | cut -c9-10`
+            export L_FILE_DATE=${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00
+            if [[ ${L_HH} -eq 00 || ${L_HH} -eq 03 || ${L_HH} -eq 06 || ${L_HH} -eq 09 || ${L_HH} -eq 12 || ${L_HH} -eq 15 || ${L_HH} -eq 18 || ${L_HH} -eq 21 ]]; then
+               cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}
+            fi
+            export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} +1 -f ccyymmddhhnn 2>/dev/null)
+         done
+#
 ###############################################
 #
-# Get non-constrained emissions files
+# Get archive emissions files
 #
 ###############################################	 
 #
@@ -133,21 +147,22 @@
             cat << EOF > jobx.ksh
 #!/bin/ksh -aux
 #
-rm -rf wrfchemi_d${CR_DOMAIN}_prior
+rm -rf wrfchemi_d${CR_DOMAIN}_ar_prior
 rm -rf wrfchemi_d${CR_DOMAIN}_post
-rm -rf wrffirechemi_d${CR_DOMAIN}_prior
+rm -rf wrffirechemi_d${CR_DOMAIN}_ar_prior
 rm -rf wrffirechemi_d${CR_DOMAIN}_post
 rm -rf adjust_chem_emiss.exe
 #
 # Get updated cycle time emissions for this member
-export NL_WRFCHEMI_PRIOR=wrfchemi_d${CR_DOMAIN}_prior
+export NL_WRFCHEMI_AR_PRIOR=wrfchemi_d${CR_DOMAIN}_ar_prior
 export NL_WRFCHEMI_POST=wrfchemi_d${CR_DOMAIN}_post
-export NL_WRFFIRECHEMI_PRIOR=wrffirechemi_d${CR_DOMAIN}_prior
+export NL_WRFFIRECHEMI_AR_PRIOR=wrffirechemi_d${CR_DOMAIN}_ar_prior
 export NL_WRFFIRECHEMI_POST=wrffirechemi_d${CR_DOMAIN}_post
-cp ${DART_FILTER_DIR}/wrfchemi_d${CR_DOMAIN}_${START_FILE_DATE}_prior.${CMEM} \${NL_WRFCHEMI_PRIOR}
-cp ${DART_FILTER_DIR}/wrfchemi_d${CR_DOMAIN}_${START_FILE_DATE}.${CMEM} \${NL_WRFCHEMI_POST}
-cp ${DART_FILTER_DIR}/wrffirechemi_d${CR_DOMAIN}_${START_FILE_DATE}_prior.${CMEM} \${NL_WRFFIRECHEMI_PRIOR}
-cp ${DART_FILTER_DIR}/wrffirechemi_d${CR_DOMAIN}_${START_FILE_DATE}.${CMEM} \${NL_WRFFIRECHEMI_POST}
+#
+cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${START_FILE_DATE}.${CMEM} \${NL_WRFCHEMI_AR_PRIOR}
+cp ${DART_FILTER_DIR}/wrfchemi_d${CR_DOMAIN}_${START_FILE_DATE}_filt.${CMEM} \${NL_WRFCHEMI_POST}
+cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${START_FILE_DATE}.${CMEM} \${NL_WRFFIRECHEMI_AR_PRIOR}
+cp ${DART_FILTER_DIR}/wrffirechemi_d${CR_DOMAIN}_${START_FILE_DATE}_filt.${CMEM} \${NL_WRFFIRECHEMI_POST}
 cp ${ADJUST_EMISS_DIR}/work/adjust_chem_emiss.exe ./.
 #
 let ICNT=1
@@ -194,32 +209,36 @@ chemi_spcs=${WRFCHEMI_DARTVARS},
 firechemi_spcs=${WRFFIRECHEMI_DARTVARS},
 fac=${EMISS_DAMP_CYCLE},
 facc=${EMISS_DAMP_INTRA_CYCLE},
-wrfchemi_prior='\${NL_WRFCHEMI_PRIOR}',
+wrfchemi_prior='\${NL_WRFCHEMI_AR_PRIOR}',
 wrfchemi_post='\${NL_WRFCHEMI_POST}',
 wrfchemi_old='\${NL_WRFCHEMI_OLD[1]}','\${NL_WRFCHEMI_OLD[2]}','\${NL_WRFCHEMI_OLD[3]}','\${NL_WRFCHEMI_OLD[4]}',
 wrfchemi_new='\${NL_WRFCHEMI_NEW[1]}','\${NL_WRFCHEMI_NEW[2]}','\${NL_WRFCHEMI_NEW[3]}','\${NL_WRFCHEMI_NEW[4]}',
-wrffirechemi_prior='\${NL_WRFFIRECHEMI_PRIOR}',
+wrffirechemi_prior='\${NL_WRFFIRECHEMI_AR_PRIOR}',
 wrffirechemi_post='\${NL_WRFFIRECHEMI_POST}',
 wrffirechemi_old='\${NL_WRFFIRECHEMI_OLD[1]}','\${NL_WRFFIRECHEMI_OLD[2]}','\${NL_WRFFIRECHEMI_OLD[3]}','\${NL_WRFFIRECHEMI_OLD[4]}',
 wrffirechemi_new='\${NL_WRFFIRECHEMI_NEW[1]}','\${NL_WRFFIRECHEMI_NEW[2]}','\${NL_WRFFIRECHEMI_NEW[3]}','\${NL_WRFFIRECHEMI_NEW[4]}'
 /
 EOFF
 rm -rf index_adjust_chem_emiss
-./adjust_chem_emiss.exe > index_adjust_chem_emiss
+./adjust_chem_emiss.exe
 #
 let ICNT=01
 while [[ \${ICNT} -le ${NL_NUM_CHEMI_FILES} ]]; do
    rm -rf \${NL_WRFCHEMI_OLD[\${ICNT}]}
-   rm -rf \${NL_WRFFIRECHEMI_OLD[\${ICNT}]}
    cp \${NL_WRFCHEMI_NEW[\${ICNT}]} \${NL_WRFCHEMI_OLD[\${ICNT}]}
-   cp \${NL_WRFFIRECHEMI_NEW[\${ICNT}]} \${NL_WRFFIRECHEMI_OLD[\${ICNT}]}
    rm \${NL_WRFCHEMI_NEW[\${ICNT}]}
+   let ICNT=\${ICNT}+1
+done
+let ICNT=01
+while [[ \${ICNT} -le ${NL_NUM_FIRECHEMI_FILES} ]]; do
+   rm -rf \${NL_WRFFIRECHEMI_OLD[\${ICNT}]}
+   cp \${NL_WRFFIRECHEMI_NEW[\${ICNT}]} \${NL_WRFFIRECHEMI_OLD[\${ICNT}]}
    rm \${NL_WRFFIRECHEMI_NEW[\${ICNT}]}
    let ICNT=\${ICNT}+1
 done
-rm -rf \${NL_WRFCHEMI_PRIOR}
+rm -rf \${NL_WRFCHEMI_AR_PRIOR}
 rm -rf \${NL_WRFCHEMI_POST}
-rm -rf \${NL_WRFFIRECHEMI_PRIOR}
+rm -rf \${NL_WRFFIRECHEMI_AR_PRIOR}
 rm -rf \${NL_WRFFIRECHEMI_POST}
 EOF
 #	   
@@ -228,10 +247,27 @@ EOF
             ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${SINGLE_JOB_CLASS} ${SINGLE_TIME_LIMIT} ${SINGLE_NODES} ${SINGLE_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${SINGLE_MODEL}
             qsub job.ksh
          fi
-         let IMEM=${IMEM}+1
+	 let IMEM=${IMEM}+1
       done
       ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
-      mv index.html index_adjust_emiss_log
+#
+# Loop through WRF-Chem run directories to save the log files      
+      let IMEM=1
+      while [[ ${IMEM} -le ${L_NUM_MEMBERS} ]]; do
+         export MEM=${IMEM}
+         if ${RUN_SPECIAL_FORECAST}; then
+            export MEM=${SPECIAL_FORECAST_MEM[${IMEM}]}
+         fi
+         export CMEM=e${MEM}
+         export KMEM=${MEM}
+         if [[ ${MEM} -lt 1000 ]]; then export KMEM=0${MEM}; fi
+         if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
+         if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
+         export L_RUN_DIR=run_${CMEM}
+         cd ${RUN_DIR}/${DATE}/wrfchem_cycle_cr/${L_RUN_DIR}
+         mv index.html index_adjust_emiss_log
+         let IMEM=${IMEM}+1
+      done
 #
 ###############################################
 #

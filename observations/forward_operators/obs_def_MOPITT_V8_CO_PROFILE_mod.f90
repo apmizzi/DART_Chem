@@ -337,6 +337,7 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
    
    real(r8), dimension(ens_size) :: co_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
    real(r8), dimension(ens_size) :: co_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
+   real(r8), dimension(ens_size) :: prs_mdl_2,prs_mdl_nm
    real(r8), dimension(ens_size) :: prs_sfc
    
    real(r8), allocatable, dimension(:)   :: thick, prs_mopitt, prs_mopitt_mem
@@ -422,6 +423,7 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
    tmp_mdl_1(:)=missing_r8
    qmr_mdl_1(:)=missing_r8
    prs_mdl_1(:)=missing_r8
+   prs_mdl_2(:)=missing_r8
 
    kbnd_1(:)=1
    do k=1,layer_mdl
@@ -435,6 +437,9 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg / kg 
       zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level+1., VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_2, zstatus) ! Pa
 !
       interp_new=0
       do imem=1,ens_size
@@ -460,6 +465,7 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
    tmp_mdl_n(:)=missing_r8
    qmr_mdl_n(:)=missing_r8
    prs_mdl_n(:)=missing_r8
+   prs_mdl_nm(:)=missing_r8
 
    do k=layer_mdl-1,1,-1
       level=real(k)
@@ -475,6 +481,10 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
       zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, &
       zstatus) 
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level-1, VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_nm, &
+      zstatus)
 !
       interp_new=0
       do imem=1,ens_size
@@ -544,7 +554,7 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
 ! APM: Modified to use retrieval prior above the regional model top   
 ! MOPITT vertical grid is from bottom to top   
 !
-! APM: No oLd code 
+! APM: No old code 
 !
 ! Check full profile for negative values
    do imem=1,ens_size
@@ -552,12 +562,55 @@ subroutine get_expected_mopitt_v8_co_profile(state_handle, ens_size, location, k
          if((co_val(imem,k).lt.0. .and. co_val(imem,k).ne.missing_r8) .or. &
          (tmp_val(imem,k).lt.0. .and. tmp_val(imem,k).ne.missing_r8) .or. &
          (qmr_val(imem,k).lt.0. .and. qmr_val(imem,k).ne.missing_r8)) then
-            write(string1, *) &
-            'APM: Recentered full profile has negative values for key,imem,k ',key,imem,k
-            call error_handler(E_ALLMSG, routine, string1, source)
+!
+!            if(prs_mopitt(k).le.prs_mdl_1(imem) .and. prs_mopitt(k).ge.prs_mdl_2(imem)) then
+            if(prs_mopitt(k).le.prs_mdl_1(imem) .and. prs_mopitt(k).ge.(prs_mdl_2(imem)-20000.)) then
+               if(co_val(imem,k).lt.0.) co_val(imem,k)=co_mdl_1(imem)
+               if(tmp_val(imem,k).lt.0.) tmp_val(imem,k)=tmp_mdl_1(imem)
+               if(qmr_val(imem,k).lt.0.) qmr_val(imem,k)=qmr_mdl_1(imem)
+!            elseif(prs_mopitt(k).le.prs_mdl_nm(imem) .and. prs_mopitt(k).ge.prs_mdl_n(imem)) then
+!               if(co_val(imem,k).lt.0.) co_val(imem,k)=co_mdl_n(imem)
+!               if(tmp_val(imem,k).lt.0.) tmp_val(imem,k)=tmp_mdl_n(imem)
+!               if(qmr_val(imem,k).lt.0.) qmr_val(imem,k)=qmr_mdl_n(imem)
+            else
+               write(string1, *) &
+               'APM: Recentered full profile has negative values for key,imem,k ',key,imem,k
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: CO VAL ',(co_val(imem,kk),kk=1,level_mopitt)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: TM VAL ',(tmp_val(imem,kk),kk=1,level_mopitt)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: QV VAL ',(qmr_val(imem,kk),kk=1,level_mopitt)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: PR VAL ',(prs_mopitt(kk),kk=1,level_mopitt)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: PR BOUNDS ',prs_sfc(imem),prs_mdl_1(imem),prs_mdl_2(imem), &
+               prs_mdl_nm(imem),prs_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: CO BOUNDS ',co_mdl_1(imem),co_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: TM BOUNDS ',tmp_mdl_1(imem),tmp_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: QV BOUNDS ',qmr_mdl_1(imem),qmr_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)            
+               write(string1, *) &
+               ' '
+               call error_handler(E_ALLMSG, routine, string1, source)
+            endif   
          endif
          if(co_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
+            write(string1, *) &
+            'APM REJECT: Recentered full profile has negative values for key,imem,k ',key,imem,k
+            call error_handler(E_ALLMSG, routine, string1, source)
             zstatus(:)=20
             expct_val(:)=missing_r8
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)

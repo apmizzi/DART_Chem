@@ -1,8 +1,8 @@
-.#!/bin/ksh -aux
+#!/bin/ksh -aux
 #
       cd ${RUN_DIR}/${DATE}/wrfchem_met_ic
 #
-      DIR_LABEL_LIST=""
+      JOB_LIST=""
       export NL_MAX_DOM=1
       export NL_OB_FORMAT=1
       export L_START_DATE=${DATE}
@@ -68,7 +68,7 @@
 #
 # COARSE RESOLUTION GRID
             cd ${RUN_DIR}/${DATE}/wrfchem_met_ic
-	    DIR_LABEL_LIST="$DIR_LABEL_LIST ${MEM}_${P_DATE}"
+	    JOB_LIST="${JOB_LIST} ${MEM}_${P_DATE}"
             export LCR_DIR=wrfda_cr_${MEM}_${P_DATE}
             if [[ ! -e ${LCR_DIR} ]]; then
                mkdir ${LCR_DIR}
@@ -96,7 +96,7 @@
             cp ${WRFDA_DIR}/run/LANDUSE.TBL ./.
             cp ${WRFDA_DIR}/var/da/da_wrfvar.exe ./.
 #
-#            ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_has.ksh ${JOBRND} ${WRFDA_JOB_CLASS} ${WRFDA_TIME_LIMIT} ${WRFDA_NODES} ${WRFDA_TASKS} da_wrfvar.exe SERIAL ${ACCOUNT}
+#            ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${WRFDA_JOB_CLASS} ${WRFDA_TIME_LIMIT} ${WRFDA_NODES} ${WRFDA_TASKS} da_wrfvar.exe SERIAL ${ACCOUNT} ${WRFDA_MODEL}
             let MEM=${MEM}+1
          done
          export P_DATE=$(${BUILD_DIR}/da_advance_time.exe ${P_DATE} ${LBC_FREQ_TEXT} -f ccyymmddhhnn 2>/dev/null)
@@ -106,21 +106,10 @@
       cd ${RUN_DIR}/${DATE}/wrfchem_met_ic
       TRANDOM=$$
       export JOBRND=${TRANDOM}_wrfda_cr
-      rm -rf jobx.ksh
-      cat > jobx.ksh << EOF
-#!/bin/bash
-#PBS -W group_list=${ACCOUNT}
-#PBS -N ${JOBRND}
-#PBS -q normal
-#PBS -l walltime=00:60:00
-#PBS -j oe
-#PBS -l select=1:ncpus=128:model=rom_ait
-cd \$PBS_O_WORKDIR
-. /home7/gkedzior/run_tracer_env
-export MPI_DSM_DISTRIBUTE=0
-parallel 'cd wrfda_cr_{1}; ./da_wrfvar.exe >& index.log' ::: ${DIR_LABEL_LIST}
-EOF
-      qsub -Wblock=true jobx.ksh
+      export EXE_LINE="parallel -j 30 'cd wrfda_cr_{1}; ./da_wrfvar.exe >& index.log'"
+      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_GNU_PARALLEL.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_\
+TIME_LIMIT} 1 90 "${EXE_LINE}" PARALLEL ${ACCOUNT} ${GENERAL_MODEL}
+      qsub -Wblock=true job.bsh > index_wrfvar 2>&1
 #
 # LOOP THROUGH ALL BDY TENDENCY TIMES
       export P_DATE=${DATE}00
@@ -160,7 +149,7 @@ while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
    export CMEM=e\${MEM}
    if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
    if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
-   ncdiff -O wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.$\{CMEM} mean_diff mem.\${CMEM}
+   ncdiff -O wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.\${CMEM} mean_diff mem.\${CMEM}
    mv mem.\${CMEM} wrfinput_d${CR_DOMAIN}_${ANALYSIS_DATE}.\${CMEM}
    let MEM=\${MEM}+1
 done

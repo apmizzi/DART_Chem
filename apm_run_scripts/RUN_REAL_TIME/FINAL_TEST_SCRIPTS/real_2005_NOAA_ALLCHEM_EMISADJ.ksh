@@ -37,7 +37,7 @@ export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
 export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}
 #
-export RUN_DIR=${EXPERIMENT_DIR}/OUTPUT_2005_NOAA_EMISADJ_30MEMS
+export RUN_DIR=${EXPERIMENT_DIR}/OUTPUT_2005_NOAA_EMISADJ_30MEMS_DIURNAL_CYCLE
 export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_2005_NOAA_EMISADJ_30MEMS
 export EXPERIMENT_INPUT_OBS=NOAA
 #
@@ -55,10 +55,10 @@ export FIRST_DART_INFLATE_DATE=2005040203
 export FIRST_EMISS_INV_DATE=2005040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2005040315
+export CYCLE_STR_DATE=2005040200
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2005040318
+export CYCLE_END_DATE=2005040300
 #
 # For emissions estimation
 export ADD_EMISS=true
@@ -81,14 +81,12 @@ export NUM_WRFFIRECHEMI_DARTVARS=4
 #
 # SELECT OBSERVATION OPTIONS:
 export RUN_INPUT_OBS=false
-export RUN_MOPITT_V8_CO_PROFILE_OBS=true            # (done)  TRACER I
-export RUN_MOPITT_V9_CO_PROFILE_OBS=false           # (done)  TRACER I
+export RUN_MOPITT_V9_CO_PROFILE_OBS=true            # (done)  TRACER I
 export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true         # (done)  TRACER I
 export RUN_OMI_SO2_PBL_COL_OBS=true                 # (done)  TRACER I
 export RUN_TES_CO_PROFILE_OBS=true                  # (done)  TRACER I
 export RUN_GOME2A_NO2_TROP_COL_OBS=true             # (done)  TRACER I
 export RUN_SCIAM_NO2_TROP_COL_OBS=true              # (done)  TRACER I
-export RUN_SCIAM_SO2_TROP_COL_OBS=false             # (done)  TRACER I
 export RUN_OMI_O3_PROFILE_OBS=true                  # (done)  TRACER I
 export RUN_TES_O3_PROFILE_OBS=true                  # (done)  TRACER I
 export RUN_MLS_O3_PROFILE_OBS=true                  # (done)  TRACER I
@@ -103,6 +101,7 @@ export RUN_MODIS_AOD_TOTAL_COL_OBS=false            # (done)  TRACER I - leave f
 export RUN_GOME2B_NO2_TROP_COL_OBS=false            # (done)  TRACER I - leave false
 export RUN_AIRNOW_PM10_OBS=false                    # (done)  TRACER I - leave false
 export RUN_AIRNOW_PM25_OBS=false                    # (done)  TRACER I - leave false
+export RUN_MOPITT_V8_CO_PROFILE_OBS=false           # (done)  TRACER I
 #
 # Setup DART namelist parameters for which observations to assimilate/evaluate
 # &obs_kind_nml
@@ -112,30 +111,43 @@ export NL_EVALUATE_THESE_OBS_TYPES="'AIRNOW_CO',
                                     'AIRNOW_NO2',
                                     'AIRNOW_SO2'"
 
-export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
-                                   'RADIOSONDE_U_WIND_COMPONENT',
-                                   'RADIOSONDE_V_WIND_COMPONENT',
-                                   'RADIOSONDE_SPECIFIC_HUMIDITY',
-                                   'RADIOSONDE_SURFACE_ALTIMETER',
-                                   'MARINE_SFC_U_WIND_COMPONENT',
-                                   'MARINE_SFC_V_WIND_COMPONENT',
-                                   'MARINE_SFC_TEMPERATURE',
-                                   'MARINE_SFC_SPECIFIC_HUMIDITY',
-                                   'MARINE_SFC_ALTIMETER',
-                                   'AIRCRAFT_U_WIND_COMPONENT',
-                                   'AIRCRAFT_V_WIND_COMPONENT',
-                                   'AIRCRAFT_TEMPERATURE',
-                                   'ACARS_U_WIND_COMPONENT',
-                                   'ACARS_V_WIND_COMPONENT',
-                                   'ACARS_TEMPERATURE',
-                                   'LAND_SFC_U_WIND_COMPONENT',
-                                   'LAND_SFC_V_WIND_COMPONENT',
-                                   'LAND_SFC_TEMPERATURE',
-                                   'LAND_SFC_SPECIFIC_HUMIDITY',
-                                   'LAND_SFC_ALTIMETER',
-                                   'SAT_U_WIND_COMPONENT',
-                                   'SAT_V_WIND_COMPONENT',
-                                   'MOPITT_V8_CO_PROFILE',
+#export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
+#                                   'RADIOSONDE_U_WIND_COMPONENT',
+#                                   'RADIOSONDE_V_WIND_COMPONENT',
+#                                   'RADIOSONDE_SPECIFIC_HUMIDITY',
+#                                   'RADIOSONDE_SURFACE_ALTIMETER',
+#                                   'MARINE_SFC_U_WIND_COMPONENT',
+#                                   'MARINE_SFC_V_WIND_COMPONENT',
+#                                   'MARINE_SFC_TEMPERATURE',
+#                                   'MARINE_SFC_SPECIFIC_HUMIDITY',
+#                                   'MARINE_SFC_ALTIMETER',
+#                                   'AIRCRAFT_U_WIND_COMPONENT',
+#                                   'AIRCRAFT_V_WIND_COMPONENT',
+#                                   'AIRCRAFT_TEMPERATURE',
+#                                   'ACARS_U_WIND_COMPONENT',
+#                                   'ACARS_V_WIND_COMPONENT',
+#                                   'ACARS_TEMPERATURE',
+#                                   'LAND_SFC_U_WIND_COMPONENT',
+#                                   'LAND_SFC_V_WIND_COMPONENT',
+#                                   'LAND_SFC_TEMPERATURE',
+#                                   'LAND_SFC_SPECIFIC_HUMIDITY',
+#                                   'LAND_SFC_ALTIMETER',
+#                                   'SAT_U_WIND_COMPONENT',
+#                                   'SAT_V_WIND_COMPONENT',
+#                                   'MOPITT_V8_CO_PROFILE',
+#                                   'MOPITT_V9_CO_PROFILE',
+#                                   'OMI_O3_PROFILE',
+#                                   'OMI_NO2_DOMINO_TROP_COL',
+#                                   'OMI_SO2_PBL_COL',
+#                                   'GOME2A_NO2_TROP_COL',
+#                                   'SCIAM_NO2_TROP_COL',
+#                                   'MLS_O3_PROFILE',
+#                                   'MLS_HNO3_PROFILE',
+#                                   'TES_CO_PROFILE',
+#                                   'TES_O3_PROFILE'"
+#
+export NL_ASSIMILATE_THESE_OBS_TYPES="'MOPITT_V8_CO_PROFILE',
+                                   'MOPITT_V9_CO_PROFILE',
                                    'OMI_O3_PROFILE',
                                    'OMI_NO2_DOMINO_TROP_COL',
                                    'OMI_SO2_PBL_COL',
@@ -364,28 +376,32 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_TIME_STEP_SOUND=4
 #
    export GENERAL_JOB_CLASS=normal
-   export GENERAL_TIME_LIMIT=02:30:00
+   export GENERAL_TIME_LIMIT=00:15:00
    export GENERAL_NODES=1
-   export GENERAL_TASKS=1
+   export GENERAL_TASKS=30
    export GENERAL_MODEL=mil_ait
+#   export GENERAL_MODEL=rom_ait
 #
    export SINGLE_JOB_CLASS=normal
-   export SINGLE_TIME_LIMIT=02:30:00
+   export SINGLE_TIME_LIMIT=03:30:00
    export SINGLE_NODES=1
    export SINGLE_TASKS=1
    export SINGLE_MODEL=mil_ait
+#   export SINGLE_MODEL=rom_ait
 #   
    export FILTER_JOB_CLASS=normal
-   export FILTER_TIME_LIMIT=04:59:00
-   export FILTER_NODES=3
+   export FILTER_TIME_LIMIT=03:30:00
+   export FILTER_NODES=5
    export FILTER_TASKS=128
    export FILTER_MODEL=mil_ait
+#   export FILTER_MODEL=rom_ait
 #
    export WRFCHEM_JOB_CLASS=normal
    export WRFCHEM_TIME_LIMIT=01:59:00
    export WRFCHEM_NODES=3
    export WRFCHEM_TASKS=128
    export WRFCHEM_MODEL=mil_ait
+#   export WRFCHEM_MODEL=rom_ait
 #
    export WRFCHEMI_DARTVARS="E_CO,E_NO,E_NO2,E_SO2"
    export WRFFIRECHEMI_DARTVARS="ebu_in_co,ebu_in_no,ebu_in_no2,ebu_in_so2"
@@ -535,7 +551,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/dart_filter
       fi
-      source ${RS_SCRIPTS_DIR}/RS_DART_Filter_NOAA.ksh > index_rs.html 2>&1 
+#      source ${RS_SCRIPTS_DIR}/RS_DART_Filter_NOAA.ksh > index_rs.html 2>&1 
+      source ${RS_SCRIPTS_DIR}/RS_DART_Filter_NOAA_OPTM.ksh > index_rs.html 2>&1 
    fi
 #
 #########################################################################

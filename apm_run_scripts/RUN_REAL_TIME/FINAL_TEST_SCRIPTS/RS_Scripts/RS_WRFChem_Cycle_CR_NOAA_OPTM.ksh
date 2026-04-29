@@ -245,7 +245,7 @@ EOF
 #
 ###############################################	 
 #
-      DIR_LABEL_LIST=""
+      JOB_LIST=""
       let IMEM=1
       export L_NUM_MEMBERS=${NUM_MEMBERS}
       if ${RUN_SPECIAL_FORECAST}; then
@@ -263,7 +263,7 @@ EOF
          if [[ ${MEM} -lt 1000 ]]; then export KMEM=0${MEM}; fi
          if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
          if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
-         DIR_LABEL_LIST="$DIR_LABEL_LIST ${CMEM}"
+         JOB_LIST="${JOB_LIST} run_${CMEM}"
          export L_RUN_DIR=run_${CMEM}
          cd ${RUN_DIR}/${DATE}/wrfchem_cycle_cr/${L_RUN_DIR}
 #
@@ -273,25 +273,14 @@ EOF
          ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wrfchem_namelist_RT_NOAA.ksh
          let IMEM=${IMEM}+1
       done
-#
-# Run using GNU Parallel
       cd ${RUN_DIR}/${DATE}/wrfchem_cycle_cr
+#
+# job_script_nasa_GNU_PARALLEL executes the parallel executables in ${JOB_LIST}      
       TRANDOM=$$
       export JOBRND=${TRANDOM}_wrf
-      rm -rf jobx.ksh
-      cat > jobx.ksh << EOF
-#!/bin/bash
-#PBS -W group_list=${ACCOUNT}
-#PBS -N ${JOBRND}
-#PBS -q normal
-#PBS -l walltime=01:59:00
-#PBS -j oe
-#PBS -l select=1:ncpus=140:model=rom_ait
-cd \$PBS_O_WORKDIR
-export MPI_DSM_DISTRIBUTE=0
-parallel 'cd run_{1}; ./wrf.exe >& index.log' ::: ${DIR_LABEL_LIST}
-EOF
-      qsub -Wblock=true jobx.ksh
+      export EXE_LINE="parallel -j 30 'cd {1}; ./wrf.exe >& index.log'" ::: ${JOB_LIST}
+      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_GNU_PARALLEL.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} 1 128 "${EXE_LINE}" PARALLEL ${ACCOUNT} ${GENERAL_MODEL}
+      qsub -Wblock=true job.bsh > index_wrfchem 2>&1
 #
 # Clean directory
 #      let IMEM=1

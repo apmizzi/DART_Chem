@@ -13,11 +13,17 @@
       touch jobx.ksh
       chmod +x jobx.ksh
       cat << EOF > jobx.ksh
-#!/bin/ksh -aux
-ncrename -d emissions_zdim,chemi_zdim -O wrfchemi_d${CR_DOMAIN} wrfchemi_d${CR_DOMAIN}_temp
-ncrename -d emissions_zdim_stag,fire_zdim_stag -O wrffirechemi_d${CR_DOMAIN} wrffirechemi_d${CR_DOMAIN}_temp
+#!/bin/ksh -au
+. /usr/share/Modules/init/ksh
+module remove netcdf/4.4.1.1_mpt
+echo on
+#
+ncrename -d emissions_zdim,chemi_zdim wrfchemi_d${CR_DOMAIN} wrfchemi_d${CR_DOMAIN}_temp
+ncrename -d emissions_zdim_stag,fire_zdim_stag wrffirechemi_d${CR_DOMAIN} wrffirechemi_d${CR_DOMAIN}_temp
 ncks -A -C -v ${WRFCHEMI_DARTVARS} wrfchemi_d${CR_DOMAIN}_temp wrfinput_d${CR_DOMAIN}
 ncks -A -C -v ${WRFFIRECHEMI_DARTVARS} wrffirechemi_d${CR_DOMAIN}_temp wrfinput_d${CR_DOMAIN}
+echo off
+module load netcdf/4.4.1.1_mpt
 EOF
       TRANDOM=$$
       export JOBRND=${TRANDOM}_nco

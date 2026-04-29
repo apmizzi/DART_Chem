@@ -1,19 +1,47 @@
 %
-%fname         = '/glade2/scratch2/mizzi/DART_OBS_DIAG/real_FRAPPE_RETR_AIR_CO/obs_diag_output.nc';
-%fname         = '/glade2/scratch2/mizzi/DART_OBS_DIAG/real_FRAPPE_RETR_AIR_O3/obs_diag_output.nc';
-%fname         = '/glade2/scratch2/mizzi/DART_OBS_DIAG/real_FRAPPE_RETR_MOP_CO/obs_diag_output.nc';
-%fname         = '/glade2/scratch2/mizzi/DART_OBS_DIAG/real_FRAPPE_RETR_IAS_CO/obs_diag_output.nc';
-%fname         = '/glade2/scratch2/mizzi/DART_OBS_DIAG/real_FRAPPE_RETR_IAS_O3/obs_diag_output.nc';
+path    =  '/nobackupp28/amizzi/OUTPUT_DATA/DART_OBS_DIAG';
+exp     =  '/TRACER-I/obs_diag_output_profile_2005.nc';
+exp     =  '/TRACER-I/obs_diag_output_profile_2006.nc';
+exp     =  '/TRACER-I/obs_diag_output_profile_2007.nc';
+exp     =  '/TRACER-I/obs_diag_output_profile_2008.nc';
+exp     =  '/TRACER-I/obs_diag_output_profile_2009.nc';
+%exp     =  '/TRACER-I/obs_diag_output_profile_2010.nc';
+fname   =  strcat(path,exp);
 %
-npar=2;
-copystring    = {'rmse','totalspread'};
+% Possible variables to plot
+varname   = 'observation'
+varname   = 'ens_mean'
+varname   = 'spread'
 %
-nvar=1;
-%varname      = {'MOPITT_CO_RETRIEVAL','AIRNOW_CO','IASI_O3_RETRIEVAL','AIRNOW_O3'};
-varname      = {'MOPITT_CO_RETRIEVAL'};
-for ipar=1:npar
-   for ivar=1:nvar
-%     plot = plot_evolution(fname,copystring{ipar},'varname',varname{ivar},'range',[lbnd,ubnd]);
-      plot = plot_evolution(fname,copystring{ipar},'obsname',varname{ivar});
-   end
-end
+% Plot data  
+varname   = 'ens_mean'
+obsname   = 'RADIOSONDE_TEMPERATURE'
+plot = plot_evolution(fname,varname,'obsname',obsname);
+%
+varname   = 'spread'
+obsname   = 'RADIOSONDE_TEMPERATURE'
+plot = plot_evolution(fname,varname,'obsname',obsname);
+%
+varname   = 'ens_mean'
+obsname   = 'RADIOSONDE_U_WIND_COMPONENT'
+plot = plot_evolution(fname,varname,'obsname',obsname);
+%
+varname   = 'spread'
+obsname   = 'RADIOSONDE_U_WIND_COMPONENT'
+plot = plot_evolution(fname,varname,'obsname',obsname);
+%
+varname   = 'ens_mean'
+obsname   = 'RADIOSONDE_V_WIND_COMPONENT'
+plot = plot_evolution(fname,varname,'obsname',obsname);
+%
+varname   = 'spread'
+obsname   = 'RADIOSONDE_V_WIND_COMPONENT'
+plot = plot_evolution(fname,varname,'obsname',obsname);
+%
+varname   = 'ens_mean'
+obsname   = 'RADIOSONDE_SPECIFIC_HUMIDITY'
+plot = plot_evolution(fname,varname,'obsname',obsname);
+%
+varname   = 'spread'
+obsname   = 'RADIOSONDE_SPECIFIC_HUMIDITY'
+plot = plot_evolution(fname,varname,'obsname',obsname);
