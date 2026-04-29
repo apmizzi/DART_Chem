@@ -20,7 +20,7 @@
    export WRFDA_TIME_LIMIT=00:05:00
    export WRFDA_NODES=1
    export WRFDA_TASKS=128
-   export WRFDA_model=mil_ait
+   export WRFDA_MODEL=mil_ait
 #
    export SINGLE_JOB_CLASS=normal
    export SINGLE_TIME_LIMIT=00:10:00

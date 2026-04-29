@@ -319,11 +319,12 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
    real(r8) :: VMR_conv
    real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
    real(r8) :: lon_obs,lat_obs,pi,rad2deg
-   real(r8) :: so2_val_conv
+   real(r8) :: so2_val_conv,so2_term, tcr2_top
 
    real(r8), dimension(ens_size) :: so2_mdl_tmp, tmp_mdl_tmp, qmr_mdl_tmp, prs_mdl_tmp
    real(r8), dimension(ens_size) :: so2_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
    real(r8), dimension(ens_size) :: so2_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
+   real(r8), dimension(ens_size) :: prs_mdl_2, prs_mdl_nm
    real(r8), dimension(ens_size) :: prs_sfc,rec_so2_val,rec_tmp_val,rec_qmr_val
 
    real(r8), allocatable, dimension(:)   :: thick, prs_omi, prs_omi_mem
@@ -347,7 +348,8 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
    missing  = -888888_r8
    tmp_max  = 600.
    del_prs  = 5000.
-   VMR_conv = 28.9644/47.9982   
+   VMR_conv = 28.9644/47.9982
+   tcr2_top = 4694.
 ! 
 ! WACCM - MMR
 ! WRFChem - VMR ppmv
@@ -407,6 +409,7 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
    tmp_mdl_1(:)=missing_r8
    qmr_mdl_1(:)=missing_r8
    prs_mdl_1(:)=missing_r8
+   prs_mdl_2(:)=missing_r8
 
    kbnd_1(:)=1
    do k=1,layer_mdl
@@ -420,6 +423,9 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg / kg 
       zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level+1., VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_2, zstatus) ! Pa
 
       interp_new=0
       do imem=1,ens_size
@@ -445,6 +451,7 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
    tmp_mdl_n(:)=missing_r8
    qmr_mdl_n(:)=missing_r8
    prs_mdl_n(:)=missing_r8
+   prs_mdl_nm(:)=missing_r8
 
    kbnd_n(:)=layer_mdl
    do k=layer_mdl-1,1,-1
@@ -461,6 +468,10 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
       zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, &
       zstatus) 
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level-1, VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_nm, &
+      zstatus)
 !
       interp_new=0
       do imem=1,ens_size
@@ -528,18 +539,100 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
    so2_mdl_1(:)=so2_mdl_1(:) * 1.e-6_r8
    so2_mdl_n(:)=so2_mdl_n(:) * 1.e-6_r8
 !
-! Check full profile for negative values
+! Use large scale so2 data above the regional model top
+! APM: Modified to use retrieval prior above the regional model top   
+! OMI vertical is from top to bottom in hPa
+!
    do imem=1,ens_size
+!!      do k=1,level_omi
+!!         if (prs_omi(k).gt.prs_mdl_n(imem)) then
+!!            kstart=k-1
+!!            exit
+!!         endif
+!!      enddo
+!!      ncnt=kstart
+!!      allocate(prs_omi_top(ncnt))
+!!      allocate(so2_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
+!!      do k=1,kstart
+!!         prs_omi_top(k)=prs_omi(k)/100.  ! hPa
+!!      enddo
+!!!
+!!      lon_obs=mloc(1)/rad2deg
+!!      lat_obs=mloc(2)/rad2deg
+!!      call get_time(obs_time,datesec_obs,date_obs)
+!!!
+!!      data_file=trim(upper_data_file)
+!!      model=trim(upper_data_model)
+!!      call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
+!!      ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_omi_top, &
+!!      ncnt,so2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+!!!
+!!      do k=1,kstart
+!!         so2_val(imem,k)=so2_prf_mdl(k)*so2_val(imem,kstart+1)/ &
+!!         (sum(so2_val(:,kstart+1))/real(ens_size))
+!!         tmp_val(imem,k)=tmp_prf_mdl(k)*tmp_val(imem,kstart+1)/ &
+!!         (sum(tmp_val(:,kstart+1))/real(ens_size))
+!!         qmr_val(imem,k)=qmr_prf_mdl(k)*qmr_val(imem,kstart+1)/ &
+!!         (sum(qmr_val(:,kstart+1))/real(ens_size))
+!!      enddo
+!!!
+!!      deallocate(prs_omi_top)
+!!      deallocate(so2_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
+!
+! Check full profile for negative values
       do k=1,level_omi
          if((so2_val(imem,k).lt.0. .and. so2_val(imem,k).ne.missing_r8) .or. &
          (tmp_val(imem,k).lt.0. .and. tmp_val(imem,k).ne.missing_r8) .or. &
          (qmr_val(imem,k).lt.0. .and. qmr_val(imem,k).ne.missing_r8)) then
-            write(string1, *) &
-            'APM: Recentered full profile has negative values for key,imem ',key,imem
-            call error_handler(E_ALLMSG, routine, string1, source)
+!
+!            if(prs_omi(k).le.prs_mdl_1(imem) .and. prs_omi(k).ge.prs_mdl_2(imem)) then
+            if(prs_omi(k).le.prs_mdl_1(imem) .and. prs_omi(k).ge.(prs_mdl_2(imem)-20000.)) then
+               if(so2_val(imem,k).lt.0.) so2_val(imem,k)=so2_mdl_1(imem)
+               if(tmp_val(imem,k).lt.0.) tmp_val(imem,k)=tmp_mdl_1(imem)
+               if(qmr_val(imem,k).lt.0.) qmr_val(imem,k)=qmr_mdl_1(imem)
+!            elseif(prs_omi(k).le.prs_mdl_nm(imem) .and. prs_omi(k).ge.prs_mdl_n(imem)) then
+!               if(so2_val(imem,k).lt.0.) so2_val(imem,k)=so2_mdl_n(imem)
+!               if(tmp_val(imem,k).lt.0.) tmp_val(imem,k)=tmp_mdl_n(imem)
+!               if(qmr_val(imem,k).lt.0.) qmr_val(imem,k)=qmr_mdl_n(imem)
+            else
+               write(string1, *) &
+               'APM: Recentered full profile has negative values for key,imem,k ',key,imem,k
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: SO2 VAL ',(so2_val(imem,kk),kk=1,level_omi)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: TM VAL ',(tmp_val(imem,kk),kk=1,level_omi)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: QV VAL ',(qmr_val(imem,kk),kk=1,level_omi)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: PR VAL ',(prs_omi(kk),kk=1,level_omi)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: PR BOUNDS ',prs_sfc(imem),prs_mdl_1(imem),prs_mdl_2(imem), &
+               prs_mdl_nm(imem),prs_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: SO2 BOUNDS ',so2_mdl_1(imem),so2_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: TM BOUNDS ',tmp_mdl_1(imem),tmp_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: QV BOUNDS ',qmr_mdl_1(imem),qmr_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)            
+               write(string1, *) &
+               ' '
+               call error_handler(E_ALLMSG, routine, string1, source)
+            endif   
          endif
          if(so2_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
+            write(string1, *) &
+            'APM REJECT: Recentered full profile has negative values for key,imem,k ',key,imem,k
+            call error_handler(E_ALLMSG, routine, string1, source)
             zstatus(:)=20
             expct_val(:)=missing_r8
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
@@ -564,15 +657,12 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
 !
 ! Find OMI index for first layer above top of regional model      
 ! OMI vertical is from top to bottom   
-      kstart=-1
-      if ((prs_omi(1)+prs_omi(2))/2..lt.prs_mdl_n(imem)) then
-         do k=1,level_omi
-            if ((prs_omi(k)+prs_omi(k+1))/2.ge.prs_mdl_n(imem)) then
-               kstart=k
-               exit
-            endif
-         enddo
-      endif
+      do k=1,level_omi
+         if ((prs_omi(k)+prs_omi(k+1))/2.ge.prs_mdl_n(imem)) then
+            kstart=k
+            exit
+         endif
+      enddo
 !
 ! Calculate the thicknesses (grid is top to bottom)
       thick(:)=0.
@@ -606,7 +696,11 @@ subroutine get_expected_omi_so2_pbl_col(state_handle, ens_size, location, key, o
          endif
 !
 ! Get expected observation (molec/cm^2)
-         expct_val(imem) = expct_val(imem) + thick(k) * so2_val_conv * &
+! TCR2 SO2 is 1.e-6 above 50 hPa
+         so2_term=thick(k)*so2_val_conv
+         if(prs_omi(k).le.tcr2_top) so2_term=thick(k)*1.e-6
+!         
+         expct_val(imem) = expct_val(imem) + so2_term * &
          AvogN/msq2cmsq * scat_wt(key,k)
       enddo
 !

@@ -50,7 +50,7 @@ EOF
 #
       RANDOM=$$
       export JOBRND=${RANDOM}_fire
-#      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} "fire_emis.exe < fire_emis.mozc.inp" SERIAL ${ACCOUNT}
+#      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} "fire_emis.exe < fire_emis.mozc.inp" SERIAL ${ACCOUNT} ${GENERAL_MODEL}
 #      qsub -Wblock=true job.ksh
       chmod +x fire_emis
       ./fire_emis < fire_emis.mozc.inp > index.html 2>&1

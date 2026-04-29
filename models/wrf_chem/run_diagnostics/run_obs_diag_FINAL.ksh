@@ -11,9 +11,9 @@
 ############################################################################### 
 #
 # Plotting dates
-   export START_DATE=2009040206
-   export END_DATE=2009040318
-   export EXP_NAME=OUTPUT_2009_NOAA_EMISADJ_10MEMS
+   export START_DATE=2010040203
+   export END_DATE=2010040300
+   export EXP_NAME=OUTPUT_2010_NOAA_EMISADJ_30MEMS
    export DIR_NAME=TRACER-I
 #
 # Define code versions
@@ -22,7 +22,7 @@
    export WRF_VER=WRFv4.3.2_dmpar
    export WRFDA_VER=WRFDAv4.3.2_dmpar
 #
-   export NUM_MEMBERS=10
+   export NUM_MEMBERS=30
    export NL_UPPER_DATA_FILE_NAME=/h0001.nc
    export NL_UPPER_DATA_MODEL=\'TCR2\'
    export LS_CHEM_DX=78

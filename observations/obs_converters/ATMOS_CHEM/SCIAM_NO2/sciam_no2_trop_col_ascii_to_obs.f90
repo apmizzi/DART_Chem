@@ -352,7 +352,9 @@ program sciam_no2_trop_col_ascii_to_obs
       deallocate(prs_obs) 
       deallocate(prs_obs_r8) 
       deallocate(avgk_obs) 
+      deallocate(scwt_obs) 
       deallocate(avgk_obs_r8) 
+      deallocate(scwt_obs_r8) 
       read(fileid,*,iostat=ios) data_type, obs_id, i_min, j_min
       print *, 'sum_accept ',sum_accept
    enddo   

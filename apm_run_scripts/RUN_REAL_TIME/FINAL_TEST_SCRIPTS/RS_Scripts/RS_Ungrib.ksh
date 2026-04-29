@@ -62,7 +62,7 @@
       ${WPS_DIR}/link_grib.csh $FILES
 #      RANDOM=$$
 #      export JOBRND=${RANDOM}_ungrib
-#      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} ungrib.exe SERIAL ${ACCOUNT}
+#      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} ungrib.exe SERIAL ${ACCOUNT} ${GENERAL_MODEL}
 #      qsub -Wblock=true job.ksh
       rm -rf index.html
       chmod +x ungrib.exe

@@ -11,7 +11,7 @@
 #
    cp ${METGRID_DIR}/met_em.d${CR_DOMAIN}.*.nc ./.
 #   cp ${METGRID_DIR}/met_em.d${FR_DOMAIN}.*.nc ./.
-   cp ${PERT_CHEM_INPUT_DIR}/work/perturb_chem_icbc_CORR_RT_MA_MPI_NEW_PERT.exe ./perturb_chem_icbc.exe
+   cp ${PERT_CHEM_INPUT_DIR}/work/perturb_chem_icbc_CORR_RT_MA_MPI.exe ./perturb_chem_icbc.exe
    cp ${PERT_CHEM_INPUT_DIR}/work/mozbc.exe ./mozbc.exe
 #
 # SELECT MOZART DATA FILE
@@ -209,6 +209,12 @@ EOF
       cp ${WRFBDY_FLD_RW} ${WRFBDY_FLD_RW}.${CMEM}   
       let MEM=MEM+1
    done
+   cp ${WRFINPUT_FLD_RW} ${WRFINPUT_FLD_RW}_pert_vari
+   cp ${WRFBDY_FLD_RW} ${WRFBDY_FLD_RW}_pert_vari
+   cp ${WRFINPUT_FLD_RW} ${WRFINPUT_FLD_RW}_mean
+   cp ${WRFBDY_FLD_RW} ${WRFBDY_FLD_RW}_mean
+   cp ${WRFINPUT_FLD_RW} ${WRFINPUT_FLD_RW}_vari
+   cp ${WRFBDY_FLD_RW} ${WRFBDY_FLD_RW}_vari
 #
    RANDOM=$$
    export JOBRND=${RANDOM}_cr_icbc_pert
@@ -225,30 +231,6 @@ EOF
    chmod +x jobx.ksh
    cat<<EOF > jobx.ksh
 #!/bin/ksh -aux
-#
-# Recenter chemistry fields
-ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}.e001 ens_mean_inp
-ncea -O -n ${NUM_MEMBERS},3,1 wrfbdy_d${CR_DOMAIN}.e001 ens_mean_bdy
-ncdiff -O ens_mean_inp wrfinput_d${CR_DOMAIN} mean_diff_inp
-ncdiff -O ens_mean_bdy wrfbdy_d${CR_DOMAIN} mean_diff_bdy
-let MEM=1
-while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
-   export CMEM=e\${MEM}
-   if [[ \${MEM} -lt 100 ]]; then export CMEM=e0\${MEM}; fi
-   if [[ \${MEM} -lt 10  ]]; then export CMEM=e00\${MEM}; fi
-   ncdiff -O wrfinput_d${CR_DOMAIN}.\${CMEM} mean_diff_inp wrfinput_d${CR_DOMAIN}.\${CMEM}
-   ncdiff -O wrfbdy_d${CR_DOMAIN}.\${CMEM} mean_diff_bdy wrfbdy_d${CR_DOMAIN}.\${CMEM}
-   let MEM=\${MEM}+1
-done
-#ncea -O -n ${NUM_MEMBERS},3,1 wrfinput_d${CR_DOMAIN}.e001 new_mean_inp
-#ncea -O -n ${NUM_MEMBERS},3,1 wrfbdy_d${CR_DOMAIN}.e001 new_mean_bdy
-rm ens_mean_inp
-rm ens_mean_bdy
-rm mean_diff_inp
-rm mean_diff_bdy
-#rm new_meab_inp
-#rm new_meab_bdy
-#
 let MEM=1
 while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
 export CMEM=e\${MEM}
@@ -267,6 +249,10 @@ ncks -A ${REAL_DIR}/${WRFINPEN} ${WRFINPEN}
 ncks -A ${REAL_DIR}/${WRFBDYEN} ${WRFBDYEN}
 mv ${WRFINPEN} ${WRFINPEN}_parent
 mv ${WRFBDYEN} ${WRFBDYEN}_parent
+mv ${WRFINPUT_FLD_RW}_mean ${WRFINPEN}_mean
+mv ${WRFBDY_FLD_RW}_mean ${WRFBDYEN}_mean
+mv ${WRFINPUT_FLD_RW}_vari ${WRFINPEN}_vari
+mv ${WRFBDY_FLD_RW}_vari ${WRFBDYEN}_vari
 #
 # COMBINE WRFCHEM WITH WRF FR DOMAIN PARENT FILES
 #export WRFINPEN=wrfinput_d${FR_DOMAIN}_${YYYY}-${MM}-${DD}_${HH}:${L_MN}:${L_SS}
@@ -295,10 +281,10 @@ while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
    let MEM=\${MEM}+1
 done
 #
-export WRFINPEN=wrfinput_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
-export WRFBDYEN=wrfbdy_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
-ncea -O -n ${NUM_MEMBERS},3,1 \${WRFINPEN}.e001 \${WRFINPEN}_new_mean
-ncea -O -n ${NUM_MEMBERS},3,1 \${WRFBDYEN}.e001 \${WRFBDYEN}_new_mean
+#export WRFINPEN=wrfinput_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
+#export WRFBDYEN=wrfbdy_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
+#ncea -O -n ${NUM_MEMBERS},3,1 \${WRFINPEN}.e001 \${WRFINPEN}_new_mean
+#ncea -O -n ${NUM_MEMBERS},3,1 \${WRFBDYEN}.e001 \${WRFBDYEN}_new_mean
 EOF
    TRANDOM=$$
    export JOBRND=${TRANDOM}_nco

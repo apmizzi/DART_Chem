@@ -56,10 +56,10 @@ export FIRST_DART_INFLATE_DATE=2022040203
 export FIRST_EMISS_INV_DATE=2022040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2022040221
+export CYCLE_STR_DATE=2022040212
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2022040318
+export CYCLE_END_DATE=2022040300
 #
 # Special skip for emission perturbations (scaling factor propagation only)
 export RUN_SPECIAL_PERT_SKIP=false
@@ -113,10 +113,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 # SELECT COMPONENT RUN OPTIONS:
    if [[ ${DATE} -eq ${CYCLE_STR_DATE} ]]; then
       export RUN_GEOGRID=false
-      export RUN_UNGRIB=true
-      export RUN_METGRID=true
-      export RUN_REAL=true
-      export RUN_PERT_WRFCHEM_MET_IC=true
+      export RUN_UNGRIB=false
+      export RUN_METGRID=false
+      export RUN_REAL=false
+      export RUN_PERT_WRFCHEM_MET_IC=false
       export RUN_PERT_WRFCHEM_MET_BC=true
       export RUN_WRFCHEM_BIO=true
       export RUN_WRFCHEM_FIRE=true
@@ -127,13 +127,12 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_PREPROCESS_OBS=true
       export RUN_CREATE_NOAA_DIR=true
 #
-      export RUN_MOPITT_V8_CO_PROFILE_OBS=true            # (done)  TRACER I
-      export RUN_MOPITT_V9_CO_PROFILE_OBS=false            # (done)  TRACER I
+      export RUN_MOPITT_V8_CO_PROFILE_OBS=false           # (done)  TRACER I
+      export RUN_MOPITT_V9_CO_PROFILE_OBS=true            # (done)  TRACER I
       export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true         # (done)  TRACER I
       export RUN_OMI_SO2_PBL_COL_OBS=true                 # (done)  TRACER I
       export RUN_TES_CO_PROFILE_OBS=true                  # (done)  TRACER I
       export RUN_SCIAM_NO2_TROP_COL_OBS=true              # (done)  TRACER I
-      export RUN_SCIAM_SO2_TROP_COL_OBS=false              # (done)  TRACER I
       export RUN_GOME2A_NO2_TROP_COL_OBS=true             # (done)  TRACER I
       export RUN_OMI_O3_PROFILE_OBS=true                  # (done)  TRACER I
       export RUN_TES_O3_PROFILE_OBS=true                  # (done)  TRACER I
@@ -160,13 +159,12 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_PREPROCESS_OBS=true
       export RUN_CREATE_NOAA_DIR=true
 #
-      export RUN_MOPITT_V8_CO_PROFILE_OBS=true            # (done)  TRACER I
-      export RUN_MOPITT_V9_CO_PROFILE_OBS=false            # (done)  TRACER I
+      export RUN_MOPITT_V8_CO_PROFILE_OBS=false           # (done)  TRACER I
+      export RUN_MOPITT_V9_CO_PROFILE_OBS=true            # (done)  TRACER I
       export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true         # (done)  TRACER I
       export RUN_OMI_SO2_PBL_COL_OBS=true                 # (done)  TRACER I
       export RUN_TES_CO_PROFILE_OBS=true                  # (done)  TRACER I
       export RUN_SCIAM_NO2_TROP_COL_OBS=true              # (done)  TRACER I
-      export RUN_SCIAM_SO2_TROP_COL_OBS=false              # (done)  TRACER I
       export RUN_GOME2A_NO2_TROP_COL_OBS=true             # (done)  TRACER I
       export RUN_OMI_O3_PROFILE_OBS=true                  # (done)  TRACER I
       export RUN_TES_O3_PROFILE_OBS=true                  # (done)  TRACER I
@@ -271,7 +269,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_PERT_FIRE=true
    export NL_PERT_BIO=false
 #
-   export SPREAD_FAC=0.3
+   export SPREAD_FAC=0.2
    export NL_SPREAD_CHEMI=${SPREAD_FAC}
    export NL_SPREAD_FIRE=${SPREAD_FAC}
    export NL_SPREAD_BIOG=0.00
@@ -280,36 +278,44 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export GENERAL_TIME_LIMIT=00:50:00
    export GENERAL_NODES=1
    export GENERAL_TASKS=1
-   export GENERAL_MODEL=bro
+   export GENERAL_MODEL=mil_ait
+   export GENERAL_MODEL=rom_ait
 #
    export SINGLE_JOB_CLASS=normal
    export SINGLE_TIME_LIMIT=00:20:00
    export SINGLE_NODES=1
    export SINGLE_TASKS=1
-   export SINGLE_MODEL=bro
+   export SINGLE_MODEL=mil_ait
+   export SINGLE_MODEL=rom_ait
+#
+   export WRFDA_JOB_CLASS=normal
+   export WRFDA_TIME_LIMIT=00:05:00
+   export WRFDA_NODES=1
+   export WRFDA_TASKS=128
+   export WRFDA_MODEL=mil_ait
+   export WRFDA_MODEL=rom_ait
 #   
 # PERT_ICBC (Used for settings in call to RS script)
-# (NSPCS x NUM_MEMS) + 2
-# (19 x 30) + 2
-# Ivy 20 nodes per core   
-# Haswell 24 nodes per core   
-# Broadwell 28 nodes per core
-# Broadwell
+# (NSPCS) + 1
+# (19) + 1
+# mil_ait
    export L_ICBC_PERT_JOB_CLASS=normal
-   export L_ICBC_PERT_TIME_LIMIT=1:59:00
-   export L_ICBC_PERT_NODES=21
-   export L_ICBC_PERT_TASKS=28
-   export L_ICBC_PERT_MODEL=bro
+   export L_ICBC_PERT_TIME_LIMIT=02:59:00
+   export L_ICBC_PERT_NODES=1
+   export L_ICBC_PERT_TASKS=20
+   export L_ICBC_PERT_MODEL=mil_ait
+   export L_ICBC_PERT_MODEL=rom_ait
 #
 # PERT_EMISS (Used for settings in call to  RS script)
-# ((NNCHEM_SPC + MNFIRE_SPC + NNBIO_SPC) x NUM_MEMS) + 2
-# ((20 + 8 + 0) x 30) + 2
-# Broadwell
+# (NNCHEM_SPC + MNFIRE_SPC + NNBIO_SPC) + 1
+# (20 + 8 + 0) + 1
+# mil_ait
    export L_EMISS_PERT_JOB_CLASS=normal
-   export L_EMISS_PERT_TIME_LIMIT=01:59:00
-   export L_EMISS_PERT_NODES=31
-   export L_EMISS_PERT_TASKS=28
-   export L_EMISS_PERT_MODEL=bro
+   export L_EMISS_PERT_TIME_LIMIT=01:00:00
+   export L_EMISS_PERT_NODES=1
+   export L_EMISS_PERT_TASKS=29
+   export L_EMISS_PERT_MODEL=mil_ait
+   export L_EMISS_PERT_MODEL=rom_ait
 #   
    export NL_FAC_OBS_ERROR_SCIAM_NO2=0.75       # good
    export NL_FAC_OBS_ERROR_OMI_SO2=1.75         # good
@@ -499,8 +505,8 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       else
          cd ${RUN_DIR}/${DATE}/wrfchem_met_ic
       fi
-      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_IC_NOAA.ksh > index_rs.html 2>&1
-#      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_IC_NOAA_OPTM.ksh > index_rs.html 2>&1
+#      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_IC_NOAA.ksh > index_rs.html 2>&1
+      source ${RS_SCRIPTS_DIR}/RS_Pert_WRFChem_Met_IC_NOAA_OPTM.ksh > index_rs.html 2>&1
    fi
 #
 #########################################################################
@@ -678,7 +684,7 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
 #
 ########################################################################
 #
-   if ${RUN_MOPITT_CO_PROFILE_OBS} | ${RUN_MOPITT_V8_CO_PROFILE_OBS} | ${RUN_MOPITT_V9_CO_PROFILE_OBS} ; then
+   if ${RUN_MOPITT_CO_PROFILE_OBS} || ${RUN_MOPITT_V8_CO_PROFILE_OBS} || ${RUN_MOPITT_V9_CO_PROFILE_OBS} ; then
       if [[ ! -d ${RUN_DIR}/${DATE}/mopitt_co_profile_obs ]]; then
          mkdir -p ${RUN_DIR}/${DATE}/mopitt_co_profile_obs
          cd ${RUN_DIR}/${DATE}/mopitt_co_profile_obs

@@ -50,7 +50,7 @@ cat << EOF > jobx.ksh
       let BIN_END_SEC=\${HH_END}*3600+\${MN_END}*60+\${SS_END}
 #
 # SET MOPITT INPUT DATA FILE
-      export INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${YYYY}/${MM}/${DD}/\${MOPITT_FILE_PRE}${YYYY}${MM}${DD}\${MOPITT_FILE_EXT}\'
+      export INFILE=${EXPERIMENT_MOPITT_CO_DIR}/${YYYY}/${MM}/${DD}/\${MOPITT_FILE_PRE}${YYYY}${MM}${DD}\${MOPITT_FILE_EXT}
       export OUTFILE=TEMP_FILE.dat
       export OUTFILE_NQ=TEMP_FILE.dat
       export ARCHIVE_FILE=MOPITT_CO_${DATE}.dat
@@ -58,12 +58,12 @@ cat << EOF > jobx.ksh
       rm -rf \${ARCHIVE_FILE}
 #
 # COPY EXECUTABLE
-      rm mopitt_v9_co_profile_extract.m
-      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/mopitt_v9_co_profile_extract.m ./.
+#      rm mopitt_v9_co_profile_extract.m
+#      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/mopitt_v9_co_profile_extract.m ./.
       rm mopitt_v9_co_profile_extract
-      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/mopitt_v9_co_profile_extract ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/work/mopitt_v9_co_profile_extract ./.
       rm run_mopitt_v9_co_profile_extract.sh
-      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/run_mopitt_v9_co_profile_extract.sh ./.
+      cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/work/run_mopitt_v9_co_profile_extract.sh ./.
 #
       export HOME=/tmp
       cp /home1/amizzi/.Xauthority /tmp/.
@@ -94,18 +94,18 @@ cat << EOF > jobx.ksh
          export BIN_END_HH=00
          export BIN_END_MN=00
          export BIN_END_SS=00
-         export INFILE=\'${EXPERIMENT_MOPITT_CO_DIR}/${YYYY}/${MM}/${DD}/\${MOPITT_FILE_PRE}${PAST_YYYY}${PAST_MM}${PAST_DD}\${MOPITT_FILE_EXT}\'
+         export INFILE=${EXPERIMENT_MOPITT_CO_DIR}/${YYYY}/${MM}/${DD}/\${MOPITT_FILE_PRE}${PAST_YYYY}${PAST_MM}${PAST_DD}\${MOPITT_FILE_EXT}
          export OUTFILE=TEMP_FILE.dat
          export OUTFILE_NQ=TEMP_FILE.dat
          rm -rf \${OUTFILE_NQ}
 #
 # COPY EXECUTABLE
-         rm mopitt_v9_co_profile_extract.m
-         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/mopitt_v9_co_profile_extract.m ./.
+#         rm mopitt_v9_co_profile_extract.m
+#         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/mopitt_v9_co_profile_extract.m ./.
          rm mopitt_v9_co_profile_extract_extract.m
-         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/mopitt_v9_co_profile_extract ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/work/mopitt_v9_co_profile_extract ./.
          rm run_mopitt_v9_co_profile_extract.sh
-         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/run_mopitt_v9_co_profile_extract.sh ./.
+         cp ${DART_DIR}/observations/obs_converters/ATMOS_CHEM/MOPITT_CO/native_to_ascii/work/run_mopitt_v9_co_profile_extract.sh ./.
 #
          export HOME=/tmp
          cp /home1/amizzi/.Xauthority /tmp/.

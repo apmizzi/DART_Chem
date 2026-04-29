@@ -116,6 +116,7 @@ function sciam_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % get dimensions
+      fprintf('SCIAM GET DIMENSIONS \n')
       wfid=netcdf.open(file_in,'NC_NOWRITE');
       gfid=netcdf.inqNcid(wfid,'PRODUCT');
       dimid=netcdf.inqDimID(gfid,'scanline'); % 10127
@@ -258,6 +259,7 @@ function sciam_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
       windate_min=single(convert_time_ref(wyr_mn,wmn_mn,wdy_mn,whh_mn,wmm_mn,wss_mn,1995));
       windate_max=single(convert_time_ref(wyr_mx,wmn_mx,wdy_mx,whh_mx,wmm_mx,wss_mx,1995));
       icnt=0;
+      fprintf('BEGIN SCIAM DATA PROCESSING LOOP \n')
       for itim=1:ntim
          for iscan=1:nscan
             if(isnan(delta_time(iscan,itim)))
@@ -282,6 +284,7 @@ function sciam_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
 	    mm_sciam=mn_tmp;
 	    ss_sciam=ss_tmp;
             sciamdate=single(convert_time_ref(year,month,day,hour,minute,second,1995));
+	    
 %
 % Check time
             if(sciamdate<windate_min | sciamdate>windate_max)
@@ -299,15 +302,15 @@ function sciam_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
                   end
                end    
                if(reject==1)
-%                  fprintf('APM: prs_lay has NaNs \n')
+                  fprintf('APM: prs_lay has NaNs \n')
                   continue
                end
                if(zenang(ipxl,iscan,itim)>=80.0)
-%                  fprintf('APM: zenang %6.2f \n',zenang(ipxl,iscan,itim))
+                  fprintf('APM: zenang %6.2f \n',zenang(ipxl,iscan,itim))
                   continue
                end
                if(isnan(no2_trop_col(ipxl,iscan,itim)) | no2_trop_col(ipxl,iscan,itim)<=0)
-%                  fprintf('APM: no2_trop_col is NaN or negative %6.2f \n',no2_trop_col(ipxl,iscan,itim))
+                  fprintf('APM: no2_trop_col is NaN or negative %6.2f \n',no2_trop_col(ipxl,iscan,itim))
                   continue
                end
 %
@@ -369,6 +372,7 @@ function sciam_no2_trop_col_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwd
                   reject=1;
                end
                if(reject==1)
+                  fprintf('DATA OUTSIDE TRACER-I DOMAIN \n')
                   continue
                end
                if(i_min<1 | i_min>nx_mdl | j_min<1 | j_min>ny_mdl)

@@ -109,10 +109,10 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       missing=h5readatt(file_in,field,'MissingValue');  
       offset=h5readatt(file_in,field,'Offset');
       scalef=h5readatt(file_in,field,'ScaleFactor');
-      units=h5readatt(file_in,field,'Units');
       title=h5readatt(file_in,field,'Title');
       defn=h5readatt(file_in,field,'UniqueFieldDefinition');
       units=h5readatt(file_in,field,'Units');
+      fill=h5readatt(file_in,field,'_FillValue');
       tmp=size(cov_prior_lay_int);
       ndim_cov=tmp(1);
       npixel=tmp(2);
@@ -120,7 +120,8 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       for i=1:ndim_cov
          for j=1:npixel
             for k=1:ntime
-	       if(round(cov_prior_lay_int(i,j,k))~=missing)
+	       if(cov_prior_lay_int(i,j,k)~=missing & ...
+               cov_prior_lay_int(i,j,k)~=fill)
                   cov_prior_lay(i,j,k)=double(cov_prior_lay_int(i,j,k))*scalef;
                else		 
                   cov_prior_lay(i,j,k)=double(cov_prior_lay_int(i,j,k));
@@ -139,6 +140,7 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       title=h5readatt(file_in,field,'Title');
       defn=h5readatt(file_in,field,'UniqueFieldDefinition');
       units=h5readatt(file_in,field,'Units');
+      fill=h5readatt(file_in,field,'_FillValue');
       tmp=size(avgk_lay_int);
       layer=tmp(1);
       level=layer+1;
@@ -146,7 +148,8 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
          for j=1:layer
             for k=1:npixel
                for l=1:ntime
-	          if(round(avgk_lay_int(i,j,k,l))~=missing)
+	          if(avgk_lay_int(i,j,k,l)~=missing & ...
+                  avgk_lay_int(i,j,k,l)~=fill)
                      avgk_lay(i,j,k,l)=double(avgk_lay_int(i,j,k,l))*scalef;
                   else
                      avgk_lay(i,j,k,l)=double(avgk_lay_int(i,j,k,l));
@@ -162,15 +165,16 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       cov_lay_int=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');
       offset=h5readatt(file_in,field,'Offset');
-      scalef=h5readatt(file_in,field,'ScaleFactor');  
-      units=h5readatt(file_in,field,'Units');
+      scalef=h5readatt(file_in,field,'ScaleFactor');   
       title=h5readatt(file_in,field,'Title');
       defn=h5readatt(file_in,field,'UniqueFieldDefinition');
       units=h5readatt(file_in,field,'Units');
+      fill=h5readatt(file_in,field,'_FillValue');
       for i=1:ndim_cov
          for j=1:npixel
             for k=1:ntime
-	       if(round(cov_lay_int(i,j,k))~=missing)
+	       if(cov_lay_int(i,j,k)~=missing & ...
+               cov_lay_int(i,j,k)~=fill)
                   cov_lay(i,j,k)=double(cov_lay_int(i,j,k))*scalef;
                else
                   cov_lay(i,j,k)=double(cov_lay_int(i,j,k));
@@ -178,25 +182,35 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
             end
          end
       end
-      clear cov_prior_lay_int tmp
+      clear cov_prior_lay_int
 %      
 % dofs(npixel,ntime) (no units)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/DegreesOfFreedomForSignal';
-      dofs=double(h5read(file_in,field));
+      dofs_int=double(h5read(file_in,field));
       missing=h5readatt(file_in,field,'MissingValue');  
       offset=h5readatt(file_in,field,'Offset');  
       scalef=h5readatt(file_in,field,'ScaleFactor');  
-      units=h5readatt(file_in,field,'Units');  
-      dofs(:,:)=dofs(:,:)*scalef;
-%      
+      units=h5readatt(file_in,field,'Units');
+      fill=h5readatt(file_in,field,'_FillValue');
+      for i=1:npixel
+         for j=1:ntime
+	    if(dofs_int(i,j)~=missing & dofs_int(i,j)~=fill)
+               dofs(i,j)=double(dofs_int(i,j))*scalef;
+            else
+               dofs(i,j)=double(dofs_int(i,j));
+            end
+         end
+      end
+      clear dofs_int
+%
 % meas_qual_flg(ntime) (no units)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/MeasurementQualityFlags';
       meas_qual_flg=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');  
       offset=h5readatt(file_in,field,'Offset');  
       scalef=h5readatt(file_in,field,'ScaleFactor');  
-      units=h5readatt(file_in,field,'Units');  
-      meas_qual_flg(:,:)=meas_qual_flg(:,:)*scalef;
+      units=h5readatt(file_in,field,'Units');
+      fill=h5readatt(file_in,field,'_FillValue');
 %      
 % o3_lay(layer,npixel,ntime) (DU)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/O3';
@@ -204,15 +218,15 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       missing=h5readatt(file_in,field,'MissingValue');
       offset=h5readatt(file_in,field,'Offset');
       scalef=h5readatt(file_in,field,'ScaleFactor');
-      units=h5readatt(file_in,field,'Units');
       title=h5readatt(file_in,field,'Title');
       defn=h5readatt(file_in,field,'UniqueFieldDefinition');
+      units=h5readatt(file_in,field,'Units');
       fill=h5readatt(file_in,field,'_FillValue');
-      for j=1:npixel
-         for k=1:ntime
-            for i=1:layer
+      for i=1:layer
+         for j=1:npixel
+            for k=1:ntime
 	       if(o3_lay(i,j,k)>0)
-                  o3_lay(i,j,k)=o3_lay(i,j,k)*scalef*du2molpm2;
+                  o3_lay(i,j,k)=double(o3_lay(i,j,k))*scalef*du2molpm2;
                end
             end
          end
@@ -228,13 +242,11 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       title=h5readatt(file_in,field,'Title');
       defn=h5readatt(file_in,field,'UniqueFieldDefinition');
       fill=h5readatt(file_in,field,'_FillValue');
-      for j=1:npixel
-         for k=1:ntime
-            for i=1:layer
-	       if(round(o3_prior_lay_int(i,j,k))~=missing & ...
-               round(o3_prior_lay_int(i,j,k))~=fill)
-                  o3_prior_lay(i,j,k)=double(o3_prior_lay_int(i,j,k)) ...;
-		  * scalef * du2molpm2;
+      for i=1:layer
+         for j=1:npixel
+            for k=1:ntime
+	       if(o3_prior_lay_int(i,j,k)>0)
+                  o3_prior_lay(i,j,k)=double(o3_prior_lay_int(i,j,k))*scalef*du2molpm2;
                else
                   o3_prior_lay(i,j,k)=double(o3_prior_lay_int(i,j,k));
                end
@@ -245,12 +257,24 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 %      
 % o3_prior_err_lay(layer,npixel,ntime) (%)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/O3AprioriError';
-      o3_prior_err_lay=double(h5read(file_in,field));
+      o3_prior_err_lay_int=double(h5read(file_in,field));
       missing=h5readatt(file_in,field,'MissingValue');  
       offset=h5readatt(file_in,field,'Offset');  
       scalef=h5readatt(file_in,field,'ScaleFactor');  
       units=h5readatt(file_in,field,'Units');
-      o3_prior_err_lay(:,:,:)=o3_prior_err_lay(:,:,:)*scalef;
+      fill=h5readatt(file_in,field,'_FillValue');
+      for i=1:layer
+         for j=1:npixel
+            for k=1:ntime
+	       if(o3_prior_err_lay_int(i,j,k)>0)
+                  o3_prior_err_lay(i,j,k)=double(o3_prior_err_lay_int(i,j,k))*scalef;
+               else
+                  o3_prior_err_lay(i,j,k)=double(o3_prior_err_lay_int(i,j,k));
+               end
+            end
+         end
+      end
+      clear o3_prior_error_lay_int
 %      
 % proc_qual_flg(npixel,ntime) (no units)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/ProcessingQualityFlags';
@@ -259,34 +283,54 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       offset=h5readatt(file_in,field,'Offset');  
       scalef=h5readatt(file_in,field,'ScaleFactor');  
       units=h5readatt(file_in,field,'Units');  
-      meas_qual_flg(:,:)=meas_qual_flg(:,:)*scalef;
+      fill=h5readatt(file_in,field,'_FillValue');  
 %      
-% lat(npixel,ntime)
+% lat(npixel,ntime) (deg)
       field='/HDFEOS/SWATHS/O3Profile/Geolocation Fields/Latitude';
-      lat=h5read(file_in,field);
+      lat_int=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');  
       offset=h5readatt(file_in,field,'Offset');  
       scalef=h5readatt(file_in,field,'ScaleFactor');  
       units=h5readatt(file_in,field,'Units');  
-      lat(:,:)=lat(:,:)*scalef;
-%      
-% lon(npixel,ntime)
-      field='/HDFEOS/SWATHS/O3Profile/Geolocation Fields/Longitude';
-      lon=h5read(file_in,field);
-      missing=h5readatt(file_in,field,'MissingValue');  
-      offset=h5readatt(file_in,field,'Offset');  
-      scalef=h5readatt(file_in,field,'ScaleFactor');  
-      units=h5readatt(file_in,field,'Units');  
-      lon(:,:)=lon(:,:)*scalef;
+      fill=h5readatt(file_in,field,'_FillValue');  
       for i=1:npixel
          for j=1:ntime
-            if(lon(i,j)<0.)
+            if(lat_int(i,j)>0)
+               lat(i,j)=double(lat_int(i,j))*scalef;
+            else
+               lat(i,j)=double(lat_int(i,j));
+            end
+         end
+      end
+      clear lat_int
+%      
+% lon(npixel,ntime) (deg)
+      field='/HDFEOS/SWATHS/O3Profile/Geolocation Fields/Longitude';
+      lon_int=h5read(file_in,field);
+      missing=h5readatt(file_in,field,'MissingValue');  
+      offset=h5readatt(file_in,field,'Offset');  
+      scalef=h5readatt(file_in,field,'ScaleFactor');  
+      units=h5readatt(file_in,field,'Units');  
+      fill=h5readatt(file_in,field,'_FillValue');  
+      for i=1:npixel
+         for j=1:ntime
+            if(lon_int(i,j)>-500.)
+               lon(i,j)=double(lon_int(i,j))*scalef;
+            else
+               lon(i,j)=double(lon_int(i,j));
+            end
+         end
+      end
+      clear lon_int
+      for i=1:npixel
+         for j=1:ntime
+            if(lon(i,j)>-500. & lon(i,j)<0.)
       	       lon(i,j)=lon(i,j)+360.;
             end
          end
       end
 %      
-% prs_lev(level,npixel,ntime)
+% prs_lev(level,npixel,ntime) (hPa)
 % vertical grid is top to bottom      
       field='/HDFEOS/SWATHS/O3Profile/Geolocation Fields/Pressure';
       prs_lev=h5read(file_in,field);
@@ -297,15 +341,6 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       title=h5readatt(file_in,field,'Title');
       defn=h5readatt(file_in,field,'UniqueFieldDefinition');
       fill=h5readatt(file_in,field,'_FillValue');
-      for j=1:npixel
-         for k=1:ntime
-            for i=1:level
-	       if (abs(prs_lev(i,j,k))<2.e4)
-                  prs_lev(i,j,k)=prs_lev(i,j,k)*scalef;
-               end
-            end
-         end
-      end
 %      
 % zenang(npixel,ntime) (deg)
       field='/HDFEOS/SWATHS/O3Profile/Geolocation Fields/SolarZenithAngle';
@@ -314,16 +349,25 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
       offset=h5readatt(file_in,field,'Offset');
       scalef=h5readatt(file_in,field,'ScaleFactor');
       units=h5readatt(file_in,field,'Units');
-      zenang(:,:)=zenang(:,:)*scalef;
+      fill=h5readatt(file_in,field,'_FillValue');
+      for i=1:npixel
+         for j=1:ntime
+            if(zenang(i,j)>0)
+               zenang(i,j)=double(zenang(i,j))*scalef;
+            else
+               zenang(i,j)=double(zenang(i,j));
+            end
+         end
+      end
 %
-% RCF_qual(npixel,ntim) (should be less than 30)
+% RCF_qual(npixel,ntime) (no units) (should be less than 30)
       field='/HDFEOS/SWATHS/O3Profile/Data Fields/ReflectanceCostFunction';
       RCF_qual=h5read(file_in,field);
       missing=h5readatt(file_in,field,'MissingValue');  
       offset=h5readatt(file_in,field,'Offset');
       scalef=h5readatt(file_in,field,'ScaleFactor');  
       units=h5readatt(file_in,field,'Units');
-      RCF_qual(:)=RCF_qual(:)*scalef;
+      fill=h5readatt(file_in,field,'_FillValue');
 %
 % Loop through OMI data
       clear temp
@@ -374,32 +418,6 @@ function omi_o3_profile_extract (filein,fileout,file_pre,cwyr_mn,cwmn_mn,cwdy_mn
 	    if(isnan(o3_lay(:,ipxl,ilin)) | isnan(o3_prior_lay(:,ipxl,ilin)))
                continue
             end
-%
-%            iflg=0;
-%            for ilay=1:layer
-%               if(o3_lay(ilay,ipxl,ilin)<0 | o3_prior_lay(ilay,ipxl,ilin)<=0)
-%                 iflg=1
-%                 exit
-%               end
-%            end
-%            if(iflg==1)
-%               continue						
-%            end
-%
-% Check for negative pressures
-%            iflg=0;			 
-%            for ilev=1:level
-%               if(prs_lev(ilev,ipxl,ilin)<0.))
-%                  iflg=1;
-%                  fprintf('Negative pressures \n')
-%                  fprintf('%8.2f ',prs_lev(:,ipxl,ilin))
-%                  fprintf('\n')		 
-%                  exit
-%               end
-%            end
-%            if(iflg==1)
-%               continue						
-%            end
 %
 % Check domain
 % Input grid needs to be in degrees

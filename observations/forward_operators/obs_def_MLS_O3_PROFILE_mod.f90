@@ -323,15 +323,16 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
    
    real(r8) :: eps, AvogN, Rd, Ru, Cp, grav, msq2cmsq
    real(r8) :: missing,o3_min,tmp_max
-   real(r8) :: level,del_prs,prior_term
+   real(r8) :: level,del_prs,o3_term,prior_term
    real(r8) :: tmp_vir_k, tmp_vir_kp
    real(r8) :: mloc(3),obs_prs
    real(r8) :: o3_val_conv, VMR_conv
    real(r8) :: up_wt,dw_wt,tl_wt,lnpr_mid
-   real(r8) :: lon_obs,lat_obs,pi,rad2deg
+   real(r8) :: lon_obs,lat_obs,pi,rad2deg,tcr2_top
 
    real(r8), dimension(ens_size) :: o3_mdl_1, tmp_mdl_1, qmr_mdl_1, prs_mdl_1
    real(r8), dimension(ens_size) :: o3_mdl_n, tmp_mdl_n, qmr_mdl_n, prs_mdl_n
+   real(r8), dimension(ens_size) :: prs_mdl_2, prs_mdl_nm
    real(r8), dimension(ens_size) :: prs_sfc
    
    real(r8), allocatable, dimension(:)   :: thick, prs_mls, prs_mls_mem
@@ -363,6 +364,7 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
    VMR_conv = 28.9644/47.9982
    bdy_coef = 0.95
    prs_del  = 1000.         ! Pa  
+   tcr2_top = 4694.
 ! 
 ! WACCM - MMR
 ! WRFChem - VMR ppmv
@@ -423,6 +425,7 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
    tmp_mdl_1(:)=missing_r8
    qmr_mdl_1(:)=missing_r8
    prs_mdl_1(:)=missing_r8
+   prs_mdl_2(:)=missing_r8
 
    do k=1,layer_mdl
       level=real(k)
@@ -435,6 +438,9 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_1, zstatus) ! kg / kg 
       zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_1, zstatus) ! Pa
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level+1., VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_2, zstatus) ! Pa
 !
       interp_new=0
       do imem=1,ens_size
@@ -460,6 +466,7 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
    tmp_mdl_n(:)=missing_r8
    qmr_mdl_n(:)=missing_r8
    prs_mdl_n(:)=missing_r8
+   prs_mdl_nm(:)=missing_r8
 
    do k=layer_mdl-1,1,-1
       level=real(k)
@@ -472,6 +479,10 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
       call interpolate(state_handle, ens_size, loc2, QTY_VAPOR_MIXING_RATIO, qmr_mdl_n, zstatus) ! kg/kg
       zstatus(:)=0
       call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_n, zstatus) ! Pa
+      zstatus(:)=0
+      loc2 = set_location(mloc(1), mloc(2), level-1, VERTISLEVEL)
+      call interpolate(state_handle, ens_size, loc2, QTY_PRESSURE, prs_mdl_nm, &
+      zstatus)
 !
       interp_new=0
       do imem=1,ens_size
@@ -531,23 +542,99 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
    o3_mdl_n(:) = o3_mdl_n(:) * 1.e-6_r8
 !
 ! Use large scale o3 data above the regional model top
-! MLS vertical grid is from bottom to top
 ! APM: Modified to use retrieval prior above the regional model top   
+! MLS vertical grid is from bottom to top in Pa
 !
-! APM: No old code    
+   do imem=1,ens_size
+!!      do k=1,layer_mls
+!!         if (prs_mls(k).lt.prs_mdl_n(imem)) then
+!!            kstart=k
+!!            exit
+!!         endif
+!!      enddo
+!!      ncnt=layer_mls-kstart+1
+!!      allocate(prs_mls_top(ncnt))
+!!      allocate(o3_prf_mdl(ncnt),tmp_prf_mdl(ncnt),qmr_prf_mdl(ncnt))
+!!      do k=kstart,layer_mls
+!!         prs_mls_top(k-kstart+1)=prs_mls(k)/100.  ! hPa
+!!      enddo
+!!!
+!!      lon_obs=mloc(1)/rad2deg
+!!      lat_obs=mloc(2)/rad2deg
+!!      call get_time(obs_time,datesec_obs,date_obs)
+!!!
+!!      data_file=trim(upper_data_file)
+!!      model=trim(upper_data_model)
+!!      call get_upper_bdy_fld(fld,model,data_file,ls_chem_dx,ls_chem_dy, &
+!!      ls_chem_dz,ls_chem_dt,lon_obs,lat_obs,prs_mls_top, &
+!!      ncnt,o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl,date_obs,datesec_obs)
+!!!
+!!      do k=kstart,layer_mls
+!!         o3_val(imem,k)=o3_prf_mdl(k-kstart+1)*o3_val(imem,kstart-1)/ &
+!!         (sum(o3_val(:,kstart-1))/real(ens_size))
+!!         tmp_val(imem,k)=tmp_prf_mdl(k-kstart+1)*tmp_val(imem,kstart-1)/ &
+!!         (sum(tmp_val(:,kstart-1))/real(ens_size))
+!!         qmr_val(imem,k)=qmr_prf_mdl(k-kstart+1)*qmr_val(imem,kstart-1)/ &
+!!         (sum(qmr_val(:,kstart-1))/real(ens_size))
+!!      enddo
+!!!
+!!      deallocate(prs_mls_top)
+!!      deallocate(o3_prf_mdl,tmp_prf_mdl,qmr_prf_mdl)
 !
 ! Check full profile for negative values
-   do imem=1,ens_size
       do k=1,layer_mls
          if((o3_val(imem,k).lt.0. .and. o3_val(imem,k).ne.missing_r8) .or. &
          (tmp_val(imem,k).lt.0. .and. tmp_val(imem,k).ne.missing_r8) .or. &
          (qmr_val(imem,k).lt.0. .and. qmr_val(imem,k).ne.missing_r8)) then
-            write(string1, *) &
-            'APM: Recentered full profile has negative values for key,imem ',key,imem
-            call error_handler(E_ALLMSG, routine, string1, source)
+!
+!            if(prs_mls(k).le.prs_mdl_1(imem) .and. prs_mls(k).ge.prs_mdl_2(imem)) then
+            if(prs_mls(k).le.prs_mdl_1(imem) .and. prs_mls(k).ge.(prs_mdl_2(imem)-20000.)) then
+               if(o3_val(imem,k).lt.0.) o3_val(imem,k)=o3_mdl_1(imem)
+               if(tmp_val(imem,k).lt.0.) tmp_val(imem,k)=tmp_mdl_1(imem)
+               if(qmr_val(imem,k).lt.0.) qmr_val(imem,k)=qmr_mdl_1(imem)
+!            elseif(prs_mls(k).le.prs_mdl_nm(imem) .and. prs_mls(k).ge.prs_mdl_n(imem)) then
+!               if(o3_val(imem,k).lt.0.) o3_val(imem,k)=o3_mdl_n(imem)
+!               if(tmp_val(imem,k).lt.0.) tmp_val(imem,k)=tmp_mdl_n(imem)
+!               if(qmr_val(imem,k).lt.0.) qmr_val(imem,k)=qmr_mdl_n(imem)
+            else
+               write(string1, *) &
+               'APM: Recentered full profile has negative values for key,imem,k ',key,imem,k
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: O3 VAL ',(o3_val(imem,kk),kk=1,layer_mls)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: TM VAL ',(tmp_val(imem,kk),kk=1,layer_mls)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: QV VAL ',(qmr_val(imem,kk),kk=1,layer_mls)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: PR VAL ',(prs_mls(kk),kk=1,layer_mls)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: PR BOUNDS ',prs_sfc(imem),prs_mdl_1(imem),prs_mdl_2(imem), &
+               prs_mdl_nm(imem),prs_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: O3 BOUNDS ',o3_mdl_1(imem),o3_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: TM BOUNDS ',tmp_mdl_1(imem),tmp_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)
+               write(string1, *) &
+               'APM: QV BOUNDS ',qmr_mdl_1(imem),qmr_mdl_n(imem)
+               call error_handler(E_ALLMSG, routine, string1, source)            
+               write(string1, *) &
+               ' '
+               call error_handler(E_ALLMSG, routine, string1, source)
+            endif   
          endif
          if(o3_val(imem,k).lt.0. .or. tmp_val(imem,k).lt.0. .or. &
          qmr_val(imem,k).lt.0.) then
+            write(string1, *) &
+            'APM REJECT: Recentered full profile has negative values for key,imem,k ',key,imem,k
+            call error_handler(E_ALLMSG, routine, string1, source)
             zstatus(:)=20
             expct_val(:)=missing_r8
             call track_status(ens_size, zstatus, expct_val, istatus, return_now)
@@ -566,32 +653,23 @@ subroutine get_expected_mls_o3_profile(state_handle, ens_size, location, key, ob
    zstatus(:)=0
    expct_val(:)=0.0
 !
-   do imem=1,ens_size
-!
-! Find MLS index for first layer above top of regional model      
-! MLS vertical grid is from bottom to top
-      kstart=-1
-      if (prs_mls(layer_mls).lt.prs_mdl_n(imem)) then
-         do k=layer_mls,1,-1
-            if (prs_mls(k).gt.prs_mdl_n(imem)) then
-               kstart=k
-               exit
-            endif
-         enddo
-      endif
-!
 ! Process vertical summation      
+! TCR2 O3 is 0.0 above 50 hPa         
+   do imem=1,ens_size
       do k=1,layer_mls
          o3_val_conv=o3_val(imem,k)
-         if(k.gt.kstart .and. kstart.gt.0) o3_val_conv=prior(key,k)
+         o3_term=o3_val_conv
+         if(prs_mls(k).le.tcr2_top) o3_term=0.
+!
          prior_term=-1.*avg_kernel(key,k)
          if(k.eq.klev_mls) prior_term=1.0_r8-avg_kernel(key,k)
-         expct_val(imem) = expct_val(imem) + o3_val_conv * &
+!
+         expct_val(imem) = expct_val(imem) + o3_term * &
          avg_kernel(key,k) + prior_term*prior(key,k)
 !
 !         write(string1, *) &
-!         'APM: EX_VAL,O3_VAL,AVGK,PRIOR,TRM1,TRM2 ',k,klev_mls, &
-!         expct_val(imem),o3_val_conv,avg_kernel(key,k),prior(key,k),&
+!         'APM: EX_VAL,O3_TRM,AVGK,PRIOR,TRM1,TRM2 ',k,klev_mls, &
+!         expct_val(imem),o3_term,avg_kernel(key,k),prior(key,k),&
 !         o3_val_conv*avg_kernel(key,k),prior_term*prior(key,k)
 !         call error_handler(E_MSG, routine, string1, source)
 !        

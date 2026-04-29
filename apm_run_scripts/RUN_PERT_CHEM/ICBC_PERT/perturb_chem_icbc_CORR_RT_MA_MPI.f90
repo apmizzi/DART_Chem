@@ -14,84 +14,74 @@
 ! limitations under the License.
 !
 ! DART $Id: perturb_chem_icbc_CORR_RT_MA_MPI.f90 13171 2019-05-09 16:42:36Z thoar@ucar.edu $
-!
-! Code to perturb the wrfchem icbc files
-!
+
+! code to perturb the wrfchem ICBC files
+
 program main
-!   use apm_err_corr_mod, only :vertical_transform, &
-!                               get_WRFINPUT_land_mask, &
-!                               get_WRFINPUT_lat_lon, &
-!                               get_WRFINPUT_geo_ht, &
-!                               get_WRFCHEM_icbc_data, &
-!                               put_WRFCHEM_icbc_data, &
-!                               get_WRFCHEM_emiss_data, &
-!                               put_WRFCHEM_emiss_data, &
-!                               init_random_seed, &
-!                               init_const_random_seed, &
-!                               apm_pack_3d, &
-!                               apm_unpack_3d, &
-!                               apm_pack_4d, &
-!                               apm_unpack_4d, &
-!                               recenter_factors
-!
-!   use apm_utilities_mod, only : get_dist
-!
    implicit none
    include 'mpif.h'
-   character(len=*), parameter                 :: source   = 'perturb_chem_icbc_CORR_RT_MA_MPI.f90'
-   character(len=*), parameter                 :: revision = ''
-   character(len=*), parameter                 :: revdate  = ''
-   integer,parameter                           :: nbdy_exts=8
+   character(len=*), parameter :: source   = 'perturb_chem_emiss_CORR_RT_MA_MPI.f90'
+   character(len=*), parameter :: revision = ''
+   character(len=*), parameter :: revdate  = ''
+   integer,parameter                           :: nbdy_exts=8, nbdy_exts_hlf=4
    integer,parameter                           :: nhalo=5
-   character(len=5),parameter,dimension(nbdy_exts) :: bdy_exts=(/'_BXS ','_BXE ','_BYS ','_BYE ','_BTXS', &
+   character(len=5),parameter,dimension(nbdy_exts) :: bdy_exts=(/'_BXS','_BXE','_BYS','_BYE','_BTXS', &
    '_BTXE','_BTYS','_BTYE'/)
 !
-   integer                                     :: ierr,rank,task,num_procs,num_procs_avail
-   integer                                     :: nt,unit,date,nx,ny,nz,nxy,nxyz,nzp,nchem_spcs
-   integer                                     :: num_mems,status,ngrid_corr
-   integer                                     :: h,i,ii,j,jj,k,kk,l,isp,imem,ibdy,bdy_idx
-   integer                                     :: ifile,icnt,ncnt,ntasks,icnt_tsk
-   integer                                     :: unita,unitb
-   integer                                     :: proc_del,proc_res
-   integer                                     :: proc_del_avl,proc_res_avl
-   integer                                     :: proc_del_mem,task_res_mem
+   integer                                     :: ierr,rank,num_procs,num_procs_avail
+   integer                                     :: nt,ntp,unit,unita,unitb,date
+   integer                                     :: nx,ny,nz,nxy,nxyz,nzp,nchem_spcs
+   integer                                     :: num_mems,status,ngrid_corr,zfac_fld,zfac_bdy
+   integer                                     :: h,i,ii,j,ij,n,jj,k,kk,l,isp,imem,ibdy,bdy_idx
+   integer                                     :: ifile,icnt,ncnt,ntasks,icnt_tsk,seed_trm
+   integer                                     :: ic_ipt,ic_jpt
+   integer                                     :: bdy_ipt,k_ipt,halo_ipt,n_ipt
+   integer,dimension(8)                        :: date_time_vals
    integer,dimension(MPI_STATUS_SIZE)          :: stat
    integer,dimension(nbdy_exts)                :: bdy_dims
-   integer,allocatable,dimension(:)            :: proc_beg,proc_end
-   integer,allocatable,dimension(:)            :: indx,jndx
-   integer,allocatable,dimension(:,:)          :: itask
-   real                                        :: get_dist
-   real                                        :: pi,grav,zfac,tfac,fac_min
-   real                                        :: nnum_mems,sprd_chem
+   integer,allocatable,dimension(:)            :: itask
+   integer,allocatable,dimension(:,:,:)        :: ilabel
+   
+!
+   real                                        :: pi,grav,zfac,tfac,sum,zero_exp
+   real                                        :: nnum_mems,sprd_chem,delt,rsprd_crit
    real                                        :: corr_lngth_hz,corr_lngth_vt,corr_lngth_tm
    real                                        :: corr_tm_delt,grid_length
    real                                        :: wgt_bc_str,wgt_bc_mid,wgt_bc_end
-   real                                        :: chem_fac_mid,std
-   real                                        :: u_ran_1,u_ran_2,zdist
-   real                                        :: wgt_sum,test_const
-   real                                        :: cpu_str,cpu_end,cpu_dif,flg
-   real,allocatable,dimension(:)               :: tmp_arry,wgt
+   real                                        :: get_dist,wgt_end,scl_fac_ics,scl_fac_bcs
+   real                                        :: u_ran_1,u_ran_2,ztrm
+   real                                        :: bdy_exp_term1,bdy_exp_term2,bdy_exp_term3
    real,allocatable,dimension(:,:)             :: lat,lon
    real,allocatable,dimension(:,:,:)           :: geo_ht,chem_data_end
-   real,allocatable,dimension(:,:,:)           :: chem_fac_mem_old,chem_fac_mem_new
-   real,allocatable,dimension(:,:,:,:)         :: chem_data3d,chem_data3d_sav
-   real,allocatable,dimension(:,:,:,:)         :: chem_databdy
+   real,allocatable,dimension(:,:,:)           :: chem_mem,zfld
+   real,allocatable,dimension(:,:,:)           :: chem_vari_new,chem_vari_end
+   real,allocatable,dimension(:,:,:)           :: chem_data3d,chem_vari3d
+   real,allocatable,dimension(:,:,:)           :: ens_mean,ens_vari,chem_parent
    real,allocatable,dimension(:,:,:,:)         :: A_chem
-   real,allocatable,dimension(:,:,:)           :: chem_fac_old,chem_fac_new,chem_fac_end
-   real,allocatable,dimension(:,:,:,:,:)       :: chem_data_sav_1,chem_data_sav_2
-   real,allocatable,dimension(:)               :: pert_chem_sum_old,pert_chem_sum_new
-   real,allocatable,dimension(:,:,:)           :: pert_chem_old,pert_chem_new
-
-   character(len=20)                           :: cmem
-   character(len=200)                          :: pert_path_old,pert_path_new,ch_spcs,filenm
-   character(len=200)                          :: wrfinput_fld_new,wrfinput_err_new
-   character(len=200)                          :: wrfbdy_fld_new,wrfchem_file_ic,wrfchem_file_bc
-   character(len=200),allocatable,dimension(:) :: ch_chem_spc
-   logical                                     :: sw_corr_tm,sw_seed
+   real,allocatable,dimension(:,:,:,:)         :: bdy_mem,zzfld
+   real,allocatable,dimension(:,:,:,:)         :: bdy_vari_new,bdy_vari_end
+   real,allocatable,dimension(:,:,:,:)         :: bdy_data4d,bdy_tend_data4d
+   real,allocatable,dimension(:,:,:,:)         :: bdy_vari4d,bdy_tend_vari4d
+   real,allocatable,dimension(:,:,:,:)         :: bdy_ens_mean,bdy_tend_ens_mean
+   real,allocatable,dimension(:,:,:,:)         :: bdy_ens_vari,bdy_tend_ens_vari
+   real,allocatable,dimension(:,:,:,:)         :: bdy_parent,bdy_tend_parent
+   real,allocatable,dimension(:,:,:,:)         :: bdy_terms,bdy_vari_terms
+   real,allocatable,dimension(:)               :: tmp_arry
 !
-   namelist /perturb_chem_icbc_corr_nml/date,nx,ny,nz,nchem_spcs,pert_path_old,pert_path_new,nnum_mems, &
-   wrfinput_fld_new,wrfinput_err_new,wrfbdy_fld_new,sprd_chem,corr_lngth_hz,corr_lngth_vt, &
-   corr_lngth_tm,corr_tm_delt,sw_corr_tm,sw_seed
+   character(len=20)                           :: cmem
+   character(len=100)                          :: ch_date,ch_time,ch_zone
+   character(len=300)                          :: ch_spcs,filenm
+   character(len=300)                          :: pert_path_old,pert_path_new
+   character(len=300)                          :: wrfinput_file_old,wrfinput_file_new
+   character(len=300)                          :: wrfbdy_file_old,wrfbdy_file_new,wrfbdy_vari_new
+   character(len=300)                          :: wrfchem_file
+   character(len=300),allocatable,dimension(:) :: ch_chem_spc
+!
+   logical                                     :: sw_corr_tm,sw_seed,sw_bdy_only
+!
+   namelist /perturb_chem_icbc_corr_nml/date,nx,ny,nz,nchem_spcs,nnum_mems,pert_path_old,pert_path_new, &
+   wrfinput_file_new,wrfbdy_file_new,sprd_chem,corr_lngth_hz,corr_lngth_vt, &
+   corr_lngth_tm,corr_tm_delt,sw_corr_tm,sw_seed,sw_bdy_only
    namelist /perturb_chem_icbc_spcs_nml/ch_chem_spc
 !
 ! Setup mpi
@@ -103,10 +93,16 @@ program main
    pi=4.*atan(1.)
    grav=9.8
    nt=2
-   zfac=2.
+   ntp=nt+1
+   zfac=1.
+   zfac_fld=4.
+   zfac_bdy=4.
    tfac=60.*60.
-   fac_min=0.01
-   icnt_tsk=2
+   icnt_tsk=1
+   zero_exp=-30.
+   zero_exp=0.
+   sw_bdy_only=.false.
+   rsprd_crit=1.
 !
 ! Read control namelist
    unit=20
@@ -116,34 +112,37 @@ program main
    read(unit,perturb_chem_icbc_corr_nml)
    close(unit)
    if(rank.eq.0) then
-      print *, 'date               ',date
-      print *, 'nx                 ',nx
-      print *, 'ny                 ',ny
-      print *, 'nz                 ',nz
-      print *, 'nchem_spcs         ',nchem_spcs
-      print *, 'pert_path_old     ',trim(pert_path_old)
-      print *, 'pert_path_new     ',trim(pert_path_new)
-      print *, 'num_mems           ',nnum_mems
-      print *, 'wrfinput_fld_new   ',trim(wrfinput_fld_new)
-      print *, 'wrfinput_err_new   ',trim(wrfinput_err_new)
-      print *, 'wrfbdy_fld_new     ',trim(wrfbdy_fld_new)
-      print *, 'sprd_chem          ',sprd_chem
-      print *, 'corr_lngth_hz      ',corr_lngth_hz
-      print *, 'corr_lngth_vt      ',corr_lngth_vt
-      print *, 'corr_lngth_tm      ',corr_lngth_tm
-      print *, 'corr_tm_delt       ',corr_tm_delt
-      print *, 'sw_corr_tm         ',sw_corr_tm
-      print *, 'sw_seed            ',sw_seed
+      print *, 'date                ',date
+      print *, 'nx                  ',nx
+      print *, 'ny                  ',ny
+      print *, 'nz                  ',nz
+      print *, 'nchem_spcs          ',nchem_spcs
+      print *, 'num_mems            ',nnum_mems
+      print *, 'pert_path_old       ',trim(pert_path_old)
+      print *, 'pert_path_new       ',trim(pert_path_new)
+      print *, 'wrfinput_file_new   ',trim(wrfinput_file_new)
+      print *, 'wrfbdy_file_new     ',trim(wrfbdy_file_new)
+      print *, 'sprd_chem           ',sprd_chem
+      print *, 'corr_lngth_hz       ',corr_lngth_hz
+      print *, 'corr_lngth_vt       ',corr_lngth_vt
+      print *, 'corr_lngth_tm       ',corr_lngth_tm
+      print *, 'corr_tm_delt        ',corr_tm_delt
+      print *, 'sw_corr_tm          ',sw_corr_tm
+      print *, 'sw_seed             ',sw_seed
+      print *, 'sw_bdy_only         ',sw_bdy_only
    endif
-   nxy=nx*ny
+!   sw_corr_tm=.false.
+!   sw_bdy_only=.true.
    nzp=nz+1
    num_mems=nint(nnum_mems)
+   delt=corr_tm_delt*3600./2.
+   wgt_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
    bdy_dims=(/ny,ny,nx,nx,ny,ny,nx,nx/)
+   wrfinput_file_old=trim(wrfinput_file_new)
+   wrfbdy_file_old=trim(wrfbdy_file_new)
 !
 ! Allocate arrays
    allocate(ch_chem_spc(nchem_spcs))
-   allocate(A_chem(nx,ny,nz,nz))
-   A_chem(:,:,:,:)=0.
 !
 ! Read the species namelist
    unit=20
@@ -152,6 +151,13 @@ program main
    rewind(unit)
    read(unit,perturb_chem_icbc_spcs_nml)
    close(unit)
+!   do isp=1,nchem_spcs
+!      if(rank.eq.0) print *,' ICBCs ',trim(ch_chem_spc(isp)) 
+!   enddo
+!
+! Allocate vertical smoothing arrays
+   allocate(A_chem(nx,ny,nz,nz))
+   A_chem(:,:,:,:)=0.
 !
 ! Get lat / lon data (-90 to 90; -180 to 180)
    allocate(lat(nx,ny),lon(nx,ny))
@@ -159,491 +165,887 @@ program main
 !
 ! Get mean geopotential height data
    allocate(geo_ht(nx,ny,nz))
-   call get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp,num_mems)
+   call get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp)
    geo_ht(:,:,:)=geo_ht(:,:,:)/grav
 !
 ! Get horiztonal grid length
-   grid_length=get_dist(lat(nx/2,ny),lat(nx/2+1,ny),lon(nx/2,ny),lon(nx/2+1,ny))
-!   if(rank.eq.0) then
-!      print *, 'horizontal grid length ',grid_length
-!   endif
+   grid_length=get_dist(lat(nx/2,ny/2),lat(nx/2+1,ny/2),lon(nx/2,ny/2),lon(nx/2+1,ny/2))
 !
 ! Calculate number of horizontal grid points to be correlated 
    ngrid_corr=ceiling(zfac*corr_lngth_hz/grid_length)+1
-!   if(rank.eq.0) then
-!      print *, 'ngrid_corr ',ngrid_corr
-!   endif
-
-   call cpu_time(cpu_str)
-   if(rank.eq.0) print *, 'APM: Rank all - Before vertical transform: time str ', cpu_str
 !
 ! Construct the vertical weights
    call vertical_transform(A_chem,geo_ht,nx,ny,nz,nz,corr_lngth_vt)
+!   do k=1,nz
+!      print *, 'A_chem row ',k,': ',(A_chem(nx/2,ny/2,k,kk),kk=1,nz)
+!   enddo
    deallocate(geo_ht)
-!   if(rank.eq.0) then
-!      do k=1,nz
-!         print *, 'Level ',k,' A_chem ',(A_chem(nx/2,ny/2,k,kk),kk=1,nz)
-!      enddo
-!   endif   
-
-   call cpu_time(cpu_end)
-   cpu_dif=cpu_end-cpu_str
-   if(rank.eq.0) print *, 'APM: Rank all -After vertical transform: time dif', cpu_dif
 !
-! Allocate processors (reserve tasks 0 and 1)
-   allocate(itask(num_mems,nchem_spcs))
-   ntasks=num_mems*nchem_spcs
-   do imem=1,num_mems
-      do isp=1,nchem_spcs
-         itask(imem,isp)=mod(((imem-1)*nchem_spcs+isp-1),num_procs-icnt_tsk)+icnt_tsk
-      enddo
+! Allocate processors (reserve rank 0)
+   allocate(itask(nchem_spcs))
+   do isp=1,nchem_spcs
+      itask(isp)=isp-1+icnt_tsk
+!      print *, 'ITASK ',isp,itask(isp)
    enddo
 !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-! Rank: 0
-!   
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! RANK 0   RANK 0   RANK 0
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
    if(rank.eq.0) then
 !
-! Read old scaling factors if they exist      
-      if(.not.sw_corr_tm) then
-         unit=10
-         filenm=trim(pert_path_old)//'/pert_chem_icbc'
-         open(unit=unit,file=trim(filenm), &
-         form='unformatted',status='unknown')
-         rewind (unit)   
-      endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-      call cpu_time(cpu_str)
-      print *, 'APM: Rank 0 - Before chem_fac_old send ',cpu_str
+! READ NEW ICs AND SEND TO OTHER PROCESSORS
+!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-      allocate(chem_fac_old(nx,ny,nz))
-      allocate(tmp_arry(nx*ny*nz))
-      do imem=1,num_mems
+      if(.not.sw_bdy_only) then
+!!!         wrfchem_file=trim(pert_path_new)//'/'//trim(wrfinput_file_new)
+!!!         allocate(tmp_arry(nx*ny*nz))
+!!!         allocate(chem_data3d(nx,ny,nz))
+!!!         do isp=1,nchem_spcs
+!!!            call get_WRFCHEM_icbc_data(wrfchem_file,ch_chem_spc(isp),chem_data3d, &
+!!!            nx,ny,nz)
+!!!!
+!!!! Use log transform
+!!!            ic_ipt=0
+!!!            ic_jpt=0
+!!!            do i=1,nx
+!!!               do j=1,ny
+!!!                  do k=1,nz
+!!!                     if(chem_data3d(i,j,k).gt.0.) then
+!!!                        chem_data3d(i,j,k)=log(chem_data3d(i,j,k))
+!!!                        if(ic_ipt.eq.0.and.ic_jpt.eq.0) then
+!!!                           ic_ipt=i
+!!!                           ic_jpt=j
+!!!                        endif
+!!!                     else
+!!!                        chem_data3d(i,j,k)=zero_exp
+!!!                     endif
+!!!                  enddo
+!!!               enddo
+!!!            enddo
+!!!            call apm_pack(tmp_arry,chem_data3d,nx,ny,nz)
+!!!            call mpi_send(tmp_arry,nx*ny*nz,MPI_FLOAT, &
+!!!            itask(isp),1,MPI_COMM_WORLD,ierr)
+!!!         enddo
+!!!         deallocate(tmp_arry)
+!!!         deallocate(chem_data3d)
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! RECEIVE NEW PERTURBATION VARIANCE FROM OTHER PROCESSORS
+! READ ICs, APPLY NEW VARIANCE, AND WRITE TO IC FILE
+!      
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!        
          do isp=1,nchem_spcs
-            if(.not.sw_corr_tm) then
-               unit=10
-               read(unit) chem_fac_old
-               call apm_pack_3d(tmp_arry,chem_fac_old,nx,ny,nz)
-               call mpi_send(tmp_arry,nx*ny*nz,MPI_FLOAT, &
-               itask(imem,isp),1,MPI_COMM_WORLD,ierr)
-            endif
-         enddo
-      enddo
-      close(unit)
-      deallocate(chem_fac_old)
-      deallocate(tmp_arry)
 !
-      call cpu_time(cpu_str)
-      print *, 'APM: Rank 0 - After chem_fac_old send ',cpu_str
-!
-      call mpi_recv(flg,1,MPI_FLOAT,1,1,MPI_COMM_WORLD,stat,ierr)
-!
-! Read new new scaling factors and send to itask(imem,isp)      
-      unit=20
-      filenm=trim(pert_path_new)//'/pert_chem_icbc'
-      open(unit=unit,file=trim(filenm), &
-      form='unformatted',status='unknown')
-      rewind(unit)
-!
-      call cpu_time(cpu_str)
-      print *, 'APM: Rank 0 - Before chem_fac_end etc. send ',cpu_str
-!
-      allocate(chem_fac_end(nx,ny,nz))
-      do imem=1,num_mems
-         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-         wrfchem_file_ic=trim(wrfinput_fld_new)//trim(cmem)
-         wrfchem_file_bc=trim(wrfbdy_fld_new)//trim(cmem)
-         do isp=1,nchem_spcs
-            read(unit) chem_fac_end
+! Receive new ensemble error variance
             allocate(tmp_arry(nx*ny*nz))
-            call apm_pack_3d(tmp_arry,chem_fac_end,nx,ny,nz)
-            call mpi_send(tmp_arry,nx*ny*nz,MPI_FLOAT, &
-            itask(imem,isp),2,MPI_COMM_WORLD,ierr)
-!
-            allocate(chem_data3d(nx,ny,nz,1))
-            call get_WRFCHEM_icbc_data(wrfchem_file_ic,ch_chem_spc(isp), &
-            chem_data3d,nx,ny,nz,1)
-            call apm_pack_4d(tmp_arry,chem_data3d,nx,ny,nz,1)
-            call mpi_send(tmp_arry,nx*ny*nz,MPI_FLOAT, &               
-            itask(imem,isp),3,MPI_COMM_WORLD,ierr)
-            deallocate(chem_data3d)     
+            allocate(chem_vari_new(nx,ny,nz))
+            call mpi_recv(tmp_arry,nx*ny*nz,MPI_FLOAT, &
+            itask(isp),1,MPI_COMM_WORLD,stat,ierr)
+            call apm_unpack(tmp_arry,chem_vari_new,nx,ny,nz)
             deallocate(tmp_arry)
 !
-            do ibdy=1,nbdy_exts
-               allocate(chem_databdy(bdy_dims(ibdy),nz,nhalo,nt))
-               allocate(tmp_arry(bdy_dims(ibdy)*nz*nhalo*nt)) 
-               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
-               call get_WRFCHEM_icbc_data(wrfchem_file_bc,ch_spcs, &
-               chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
-               call apm_pack_4d(tmp_arry,chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
-               call mpi_send(tmp_arry,bdy_dims(ibdy)*nz*nhalo*nt,MPI_FLOAT, &               
-               itask(imem,isp),ibdy+3,MPI_COMM_WORLD,ierr)
-               deallocate(chem_databdy)
-               deallocate(tmp_arry)
+! Read field to be perturbed
+            wrfchem_file=trim(pert_path_new)//'/'//trim(wrfinput_file_new)
+            allocate(chem_data3d(nx,ny,nz))
+            call get_WRFCHEM_icbc_data(wrfchem_file,trim(ch_chem_spc(isp)),chem_data3d, &
+            nx,ny,nz)
+!
+! Use log transform
+            do i=1,nx
+               do j=1,ny
+                  do k=1,nz
+                     if(chem_data3d(i,j,k).gt.0.) then
+                        chem_data3d(i,j,k)=log(chem_data3d(i,j,k))
+                     else
+                        chem_data3d(i,j,k)=zero_exp
+                     endif
+                  enddo
+               enddo
             enddo
-         enddo
-      enddo
 !
-      call cpu_time(cpu_str)
-      print *, 'APM: Rank 0 - After chem_fac_end etc. send ',cpu_str
+! Read old ensemble perturbation variance
+            allocate(chem_vari_end(nx,ny,nz))
+            if(sw_corr_tm) then            
+               wrfchem_file=trim(pert_path_old)//'/'//trim(wrfinput_file_old)//'_pert_vari'
+               allocate(chem_vari3d(nx,ny,nz))
+               call get_WRFCHEM_icbc_data(wrfchem_file,trim(ch_chem_spc(isp)),chem_vari3d, &
+               nx,ny,nz)
 !
-      close(unit)
-   endif
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-! Rank: itask(imem,isp)
-!   
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-   if(rank.ne.0 .and. rank.ne.1) then   
-      allocate(chem_fac_old(nx,ny,nz))
-      allocate(chem_fac_new(nx,ny,nz))
-      allocate(chem_fac_end(nx,ny,nz))
-      allocate(chem_data3d(nx,ny,nz,1))
-!
-! Loop through member and species. Assign one member/species to each processor
-      do imem=1,num_mems
-         do isp=1,nchem_spcs
-            if(rank.eq.itask(imem,isp)) then
-               if (rank.eq.3) then
-                  call cpu_time(cpu_str)
-                 print *, 'APM: Rank itask - Before pert_flds rank,imem,isp ',rank,imem,isp,cpu_str
-               endif
-               if(.not.sw_corr_tm) then
-                  allocate(tmp_arry(nx*ny*nz))
-                  call mpi_recv(tmp_arry,nx*ny*nz,MPI_FLOAT, &
-                  0,1,MPI_COMM_WORLD,stat,ierr)
-                  call apm_unpack_3d(tmp_arry,chem_fac_old,nx,ny,nz)
-                  deallocate(tmp_arry)
-               endif
-               if(sw_seed) call init_const_random_seed(rank,date)
-               call perturb_fields(chem_fac_old,chem_fac_new, &
-               lat,lon,A_chem,nx,ny,nz,nchem_spcs,ngrid_corr,sw_corr_tm, &
-               corr_lngth_hz,rank,sprd_chem)
-!
-! Impose temporal correlations
-               wgt_bc_str=exp(-0.0*corr_tm_delt/corr_lngth_tm)
-               wgt_bc_mid=exp(-0.5*corr_tm_delt/corr_lngth_tm)
-               wgt_bc_end=exp(-1.0*corr_tm_delt/corr_lngth_tm)
-               chem_fac_end(:,:,:)=(1.-wgt_bc_end)*chem_fac_old(:,:,:)+wgt_bc_end* &
-               chem_fac_new(:,:,:)
-!
-! Send chem_fac_end to rank 1 for writing to archive file            
-               allocate(tmp_arry(nx*ny*nz))
-               call apm_pack_3d(tmp_arry,chem_fac_end,nx,ny,nz)
-               call mpi_send(tmp_arry,nx*ny*nz,MPI_FLOAT, &
-               1,1,MPI_COMM_WORLD,ierr)
-               deallocate(tmp_arry)
-               if (rank.eq.3) then
-                  call cpu_time(cpu_end)
-                  cpu_dif=cpu_end-cpu_str
-                  print *, 'APM: Rank itask - After pert_flds rank,imem,isp ',rank,imem,isp,cpu_end,cpu_dif
-               endif
-            endif
-         enddo
-      enddo
-!
-! Loop through members and species to apply scaling factors
-      do imem=1,num_mems
-         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-         do isp=1,nchem_spcs
-            if(rank.eq.itask(imem,isp)) then
-               if (rank.eq.3) then
-                  call cpu_time(cpu_str)
-                  print *, 'APM: Rank itask - Before smoothing rank,imem,isp ',rank,imem, &
-                  trim(ch_chem_spc(isp)),cpu_str
-               endif
-               allocate(tmp_arry(nx*ny*nz))
-               call mpi_recv(tmp_arry,nx*ny*nz,MPI_FLOAT, &
-               0,2,MPI_COMM_WORLD,stat,ierr)
-               call apm_unpack_3d(tmp_arry,chem_fac_end,nx,ny,nz)
-               deallocate(tmp_arry)
-!
-               allocate(tmp_arry(nx*ny*nz))
-               call mpi_recv(tmp_arry,nx*ny*nz, &
-               MPI_FLOAT,0,3,MPI_COMM_WORLD,stat,ierr)
-               call apm_unpack_4d(tmp_arry,chem_data3d,nx,ny,nz,1)
-               deallocate(tmp_arry)
-! ICs
+! Calculate temporally smoothed ensemble error variance            
                do i=1,nx
                   do j=1,ny
                      do k=1,nz
-                        if(chem_data3d(i,j,k,1)*(1.+chem_fac_end(i,j,k)) .le. 0.) then
-                           chem_data3d(i,j,k,1)=fac_min*chem_data3d(i,j,k,1)
+                        chem_vari_end(i,j,k)=wgt_end*chem_vari3d(i,j,k)+ &
+                        (1.-wgt_end)*chem_vari_new(i,j,k)
+                     enddo
+                  enddo
+               enddo
+               deallocate(chem_vari3d)
+            else
+               do i=1,nx
+                  do j=1,ny
+                     do k=1,nz
+                        chem_vari_end(i,j,k)=chem_vari_new(i,j,k)
+                     enddo
+                  enddo
+               enddo
+            endif
+            deallocate(chem_vari_new)
+!
+! Limit the new relative spread
+!             do i=1,nx
+!               do j=1,ny
+!                  do k=1,nz
+!                     if(chem_data3d(i,j,k).gt.0.) then
+!                        if(sqrt(chem_vari_end(i,j,k))/chem_data3d(i,j,k).gt.rsprd_crit) then
+!                           chem_vari_end(i,j,k)=(chem_data3d(i,j,k)*rsprd_crit)**2.
+!                        endif
+!                     endif
+!                  enddo
+!               enddo
+!            enddo
+!
+! Write new ensemble perturbagtion variance
+            wrfchem_file=trim(pert_path_new)//'/'//trim(wrfinput_file_new)//'_pert_vari'
+            call put_WRFCHEM_icbc_data(wrfchem_file,ch_chem_spc(isp),chem_vari_end, &
+            nx,ny,nz)
+!
+! For each ensemble member generate perturbed field
+!!!            allocate(zfld(nx,ny,nz))
+            allocate(chem_mem(nx,ny,nz))
+            sum=0.
+            do imem=1,num_mems
+               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+!
+! Generate N(0,1) filed
+!!!               do i=1,nx
+!!!                  do j=1,ny
+!!!                     do k=1,nz
+!!!                        call random_number(u_ran_1)
+!!!                        if(u_ran_1.eq.0.) call random_number(u_ran_1)
+!!!                        call random_number(u_ran_2)
+!!!                        if(u_ran_2.eq.0.) call random_number(u_ran_2)
+!!!                        zfld(i,j,k)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+!!!                     enddo
+!!!                  enddo
+!!!               enddo
+!
+! Impose the temporally smoothed ensemble error variance and new ensemble mean    
+               call random_number(u_ran_1)
+               if(u_ran_1.eq.0.) call random_number(u_ran_1)
+               call random_number(u_ran_2)
+               if(u_ran_2.eq.0.) call random_number(u_ran_2)
+               ztrm=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+               do i=1,nx
+                  do j=1,ny
+                     do k=1,nz
+                        if(chem_data3d(i,j,k).ne.0.) then
+!                           chem_mem(i,j,k)=exp(chem_data3d(i,j,k)+zfld(i,j,k)* &
+!                           sqrt(chem_vari_end(i,j,k)))
+                           chem_mem(i,j,k)=exp(chem_data3d(i,j,k)+ztrm* &
+                           sqrt(chem_vari_end(i,j,k)))
                         else
-                           chem_data3d(i,j,k,1)=chem_data3d(i,j,k,1)*(1.+chem_fac_end(i,j,k))
+                           chem_mem(i,j,k)=0.
                         endif
                      enddo
                   enddo
                enddo
-!                                                                                                       
-               allocate(tmp_arry(nx*ny*nz))
-               call apm_pack_4d(tmp_arry,chem_data3d,nx,ny,nz,1)
-               call mpi_send(tmp_arry,nx*ny*nz,MPI_FLOAT, &
-               1,2,MPI_COMM_WORLD,ierr)
-               deallocate(tmp_arry)              
-! BCs              
-               do ibdy=1,nbdy_exts
-                  if(ibdy.eq.1) allocate(chem_data_sav_1(bdy_dims(ibdy),nz,nhalo,nt,2))
-                  if(ibdy.eq.3) allocate(chem_data_sav_2(bdy_dims(ibdy),nz,nhalo,nt,2))
-                  allocate(chem_databdy(bdy_dims(ibdy),nz,nhalo,nt))
-                  allocate(tmp_arry(bdy_dims(ibdy)*nz*nhalo*nt))
-                  call mpi_recv(tmp_arry,bdy_dims(ibdy)*nz*nhalo*nt, &
-                  MPI_FLOAT,0,ibdy+3,MPI_COMM_WORLD,stat,ierr)
-                  call apm_unpack_4d(tmp_arry,chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
-                  deallocate(tmp_arry)
 !
-                  if(ibdy.eq.1.or.ibdy.eq.2.or.ibdy.eq.5.or.ibdy.eq.6) then 
-! non-tendency terms
-                     if(ibdy.eq.1.or.ibdy.eq.2) then
-                        chem_data_sav_1(:,:,:,:,ibdy)=chem_databdy(:,:,:,:)
+! Write data for the perturbed member
+               wrfchem_file=trim(pert_path_new)//'/'//trim(wrfinput_file_new)//cmem
+               call put_WRFCHEM_icbc_data(wrfchem_file,trim(ch_chem_spc(isp)),chem_mem, &
+               nx,ny,nz)
 !
-                        i=1
-                        if(ibdy/2*2.eq.ibdy) i=nx 
-                        do h=1,nhalo
-                           do k=1,nz
-                              do j=1,bdy_dims(ibdy)
-                                 chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k)+ &
-                                 (1.-wgt_bc_mid)* chem_fac_end(i,j,k)
-!                                 
-                                 if(chem_databdy(j,k,h,1)*(1.+chem_fac_end(i,j,k)) &
-                                 .le. 0.) then
-                                    chem_databdy(j,k,h,1)=fac_min*chem_databdy(j,k,h,1)
-                                 else
-                                    chem_databdy(j,k,h,1)=chem_databdy(j,k,h,1)*(1.+ &
-                                    chem_fac_end(i,j,k))
-                                 endif
+! Check means and relative spread
+               sum=sum+chem_mem(nx/2,ny/2,1)/real(num_mems)
+            enddo
+! non-log form            
+!            print *,'APM: ',isp,trim(ch_chem_spc(isp)),sum,chem_data3d(nx/2,ny/2,1), &
+!            sqrt(chem_vari_end(nx/2,ny/2,1))/chem_data3d(nx/2,ny/2,1)*100.,'%'
+! log form
+            if(chem_data3d(nx/2,ny/2,1).ne.0) then
+               print *,'APM: ',isp,trim(ch_chem_spc(isp)),sum,exp(chem_data3d(nx/2,ny/2,1))
+            else
+               print *,'APM: ',isp,trim(ch_chem_spc(isp)),sum,chem_data3d(nx/2,ny/2,1)        
+            endif
 !
-                                 if(chem_databdy(j,k,h,2)*(1.+chem_fac_mid) .le. 0) then
-                                    chem_databdy(j,k,h,2)=fac_min*chem_databdy(j,k,h,2)
-                                 else
-                                    chem_databdy(j,k,h,2)=chem_databdy(j,k,h,2)*(1.+chem_fac_mid)
-                                 endif
-                              enddo
-                           enddo
-                        enddo
-                     else
-! Tendency terms need to account for a temporal change in the perturbation
-! Form: d(Af)/dt = dA/dt*f + A*df/dt; chem_databdy is dA/dt; chem_data_sav_1 is A
-                        allocate(chem_data_end(bdy_dims(ibdy),nz,nhalo))
-! APM: FP error                        
-                        chem_data_end(:,:,:)=chem_databdy(:,:,:,2)*corr_tm_delt/2.*tfac+ &
-                        chem_data_sav_1(:,:,:,2,ibdy-4)
-
-! APM: Error is in chem_databdy
-!                        chem_data_end(:,:,:)=chem_databdy(:,:,:,2)*corr_tm_delt/2.*tfac
-! This line works        chem_data_end(:,:,:)=chem_data_sav_1(:,:,:,2,ibdy-4)              
+!!!            deallocate(zfld)
+            deallocate(chem_mem)
+            deallocate(chem_data3d)
+            deallocate(chem_vari_end)
+         enddo
 !
-                        i=1
-                        if(ibdy/2*2.eq.ibdy) i=nx
-                        do h=1,nhalo
-                           do k=1,nz
-                              do j=1,bdy_dims(ibdy)
-                                 chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k)+ &
-                                 (1.-wgt_bc_mid)*chem_fac_end(i,j,k)
-!             
-                                 chem_databdy(j,k,h,1)=chem_databdy(j,k,h,1)* &
-                                 (1.+(chem_fac_old(i,j,k)+chem_fac_mid)/2.) + &
-                                 (chem_data_sav_1(j,k,h,1,ibdy-4)+ &
-                                 chem_data_sav_1(j,k,h,2,ibdy-4))/2. * (chem_fac_mid- &
-                                 chem_fac_old(i,j,k))/(corr_tm_delt/2.)/tfac
-!             
-                                 chem_databdy(j,k,h,2)=chem_databdy(j,k,h,2)* &
-                                 (1.+(chem_fac_mid+chem_fac_end(i,j,k))/2.) + &
-                                 (chem_data_sav_1(j,k,h,2,ibdy-4)+ &
-                                 chem_data_end(j,k,h))/2. * (chem_fac_end(i,j,k)- &
-                                 chem_fac_mid)/(corr_tm_delt/2.)/tfac
-                              enddo
-                           enddo
-                        enddo
-                        deallocate(chem_data_end)
-                     endif
-                  else if(ibdy.eq.3.or.ibdy.eq.4.or.ibdy.eq.7.or.ibdy.eq.8) then
-! non-tendency terms
-                     if(ibdy.eq.3.or.ibdy.eq.4) then
-                        chem_data_sav_2(:,:,:,:,ibdy-2)=chem_databdy(:,:,:,:)
+! Calculate ensemble mean, variance and recenter
+         allocate(ens_mean(nx,ny,nz))
+         allocate(ens_vari(nx,ny,nz))
+         allocate(chem_parent(nx,ny,nz))
+         allocate(chem_data3d(nx,ny,nz))
+         do isp=1,nchem_spcs
 !
-                        j=1  
-                        if(ibdy/2*2.eq.ibdy) j=ny
-                        do h=1,nhalo
-                           do k=1,nz
-                              do i=1,bdy_dims(ibdy)
-                                 chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k)+(1.- &
-                                 wgt_bc_mid)*chem_fac_end(i,j,k)
-!
-                                 if(chem_databdy(i,k,h,1)*(1.+chem_fac_old(i,j,k)) &
-                                 .le.0.) then
-                                    chem_databdy(i,k,h,1)=fac_min*chem_databdy(i,k,h,1)
-                                 else
-                                    chem_databdy(i,k,h,1)=chem_databdy(i,k,h,1)*(1.+ &
-                                    chem_fac_old(i,j,k))
-                                 endif
-! 
-                                 if(chem_databdy(i,k,h,2)*(1.+chem_fac_mid).le.0.) then
-                                    chem_databdy(i,k,h,2)=fac_min*chem_databdy(i,k,h,2)
-                                 else
-                                    chem_databdy(i,k,h,2)=chem_databdy(i,k,h,2)*(1.+chem_fac_mid)
-                                 endif
-                              enddo
-                           enddo
-                        enddo
-                     else
-! Tendency terms need to account for a temporal change in the perturbation
-! Form: d(Af)/dt = dA/dt*f + A*df/dt; chem_databdy is dA/dt; chem_data_sav_2 is A
-                        allocate(chem_data_end(bdy_dims(ibdy),nz,nhalo))
-! APM: FP Error
-                        chem_data_end(:,:,:)=chem_databdy(:,:,:,2)*(corr_tm_delt/2.)*tfac+ &
-                        chem_data_sav_2(:,:,:,2,ibdy-6)
-! This line works       chem_data_end(:,:,:)=chem_data_sav_2(:,:,:,2,ibdy-6)
-!
-                        j=1  
-                        if(ibdy/2*2.eq.ibdy) j=ny
-                        do h=1,nhalo
-                           do k=1,nz
-                              do i=1,bdy_dims(ibdy)
-                                 chem_fac_mid=wgt_bc_mid*chem_fac_old(i,j,k)+ &
-                                 (1.-wgt_bc_mid)*chem_fac_end(i,j,k)
-!                       
-                                 chem_databdy(j,k,h,1)=chem_databdy(i,k,h,1)* &
-                                 (1.+(chem_fac_old(i,j,k)+chem_fac_mid)/2.) + &
-                                 (chem_data_sav_2(i,k,h,1,ibdy-6)+ &
-                                 chem_data_sav_2(i,k,h,2,ibdy-6))/2. * (chem_fac_mid- &
-                                 chem_fac_old(i,j,k))/(corr_tm_delt/2.)/tfac
-!                       
-                                 chem_databdy(j,k,h,2)=chem_databdy(i,k,h,2)* &
-                                 (1.+(chem_fac_mid+chem_fac_end(i,j,k))/2.) + &
-                                 (chem_data_sav_2(i,k,h,2,ibdy-6)+chem_data_end(i,k,h))/2. * &
-                                 (chem_fac_end(i,j,k)-chem_fac_mid)/(corr_tm_delt/2.)/tfac
-                              enddo
-                           enddo
-                        enddo
-                        deallocate(chem_data_end)
-                     endif
-                  endif
-!
-                  allocate(tmp_arry(bdy_dims(ibdy)*nz*nhalo*nt))
-                  call apm_pack_4d(tmp_arry,chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
-                  call mpi_send(tmp_arry,bdy_dims(ibdy)*nz*nhalo*nt,MPI_FLOAT, &
-                  1,ibdy+3,MPI_COMM_WORLD,ierr)
-                  deallocate(tmp_arry)
-                  deallocate(chem_databdy)
+! Calculate ensemble mean
+            ens_mean(:,:,:)=0.
+            do imem=1,num_mems
+               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+               wrfchem_file=trim(pert_path_new)//'/'//trim(wrfinput_file_new)//cmem
+               call get_WRFCHEM_icbc_data(wrfchem_file,trim(ch_chem_spc(isp)),chem_data3d, &
+               nx,ny,nz)
+               do i=1,nx
+                  do j=1,ny
+                     do k=1,nz
+                        ens_mean(i,j,k)=ens_mean(i,j,k)+chem_data3d(i,j,k)
+                     enddo
+                  enddo
                enddo
-               deallocate(chem_data_sav_1)
-               deallocate(chem_data_sav_2)
-               if (rank.eq.3) then
-                  call cpu_time(cpu_end)
-                  cpu_dif=cpu_end-cpu_str
-                  print *, 'APM: Rank itask - After smoothing rank,imem,isp ',rank,imem,trim(ch_chem_spc(isp)),cpu_end,cpu_dif
-               endif
+            enddo
+            ens_mean(:,:,:)=ens_mean(:,:,:)/real(num_mems)
+!
+! Calculate ensemble variance
+            ens_vari(:,:,:)=0.
+            do imem=1,num_mems
+               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+               wrfchem_file=trim(pert_path_new)//'/'//trim(wrfinput_file_new)//cmem
+               call get_WRFCHEM_icbc_data(wrfchem_file,trim(ch_chem_spc(isp)),chem_data3d, &
+               nx,ny,nz)
+               do i=1,nx
+                  do j=1,ny
+                     do k=1,nz
+                        ens_vari(i,j,k)=ens_vari(i,j,k)+(chem_data3d(i,j,k)-ens_mean(i,j,k))**2.
+                     enddo
+                  enddo
+               enddo
+            enddo
+            ens_vari(:,:,:)=ens_vari(:,:,:)/real(num_mems-1)
+!
+! Recenter the ensemble members
+            wrfchem_file=trim(pert_path_new)//'/'//trim(wrfinput_file_new)
+            call get_WRFCHEM_icbc_data(wrfchem_file,trim(ch_chem_spc(isp)),chem_parent, &
+            nx,ny,nz)
+            do imem=1,num_mems
+               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+               wrfchem_file=trim(pert_path_new)//'/'//trim(wrfinput_file_new)//cmem
+               call get_WRFCHEM_icbc_data(wrfchem_file,trim(ch_chem_spc(isp)),chem_data3d, &
+               nx,ny,nz)
+               do i=1,nx
+                  do j=1,ny
+                     do k=1,nz
+                        chem_data3d(i,j,k)=chem_data3d(i,j,k)-ens_mean(i,j,k)+chem_parent(i,j,k)
+                     enddo
+                  enddo
+               enddo
+               wrfchem_file=trim(pert_path_new)//'/'//trim(wrfinput_file_new)//cmem
+               call put_WRFCHEM_icbc_data(wrfchem_file,trim(ch_chem_spc(isp)),chem_data3d, &
+               nx,ny,nz)
+            enddo
+!
+! Write ensemble mean and variance
+            wrfchem_file=trim(pert_path_new)//'/'//trim(wrfinput_file_new)//'_mean'
+            call put_WRFCHEM_icbc_data(wrfchem_file,trim(ch_chem_spc(isp)),ens_mean, &
+            nx,ny,nz)
+            wrfchem_file=trim(pert_path_new)//'/'//trim(wrfinput_file_new)//'_vari'
+            call put_WRFCHEM_icbc_data(wrfchem_file,trim(ch_chem_spc(isp)),ens_vari, &
+            nx,ny,nz)
+         enddo
+         deallocate(ens_mean)
+         deallocate(ens_vari)
+         deallocate(chem_parent)
+         deallocate(chem_data3d)
+      endif
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! READ NEW BCs AND SEND TO OTHER PROCESSORS
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! Use log transform with non-tendency terms, i.e., the BC is log-normal and has the form e^x.
+! For tendency terms d(e^x)/dt = e^x * dx/dt. We have d(e^x)/dt in ibdy(5,8) and e^x in ibdy(1,4).
+! In log form of perturbation variance, we multiply x by the perturbation standard deviation
+! which comes from the product of an N(0,1) variable and perturbation variance. Assume the N(0,1)
+! variable is independent of time, so dx/t equals the product of the N(0,1) variable and the
+! temporal derivative of the perturbation standard deviation.
+!
+      do ibdy=1,nbdy_exts_hlf
+         print *, 'APM: Process ibdy ',ibdy
+!!!         allocate(tmp_arry(bdy_dims(ibdy)*nz*nhalo*ntp))
+!!!         allocate(bdy_data4d(bdy_dims(ibdy),nz,nhalo,nt))
+!!!         allocate(bdy_tend_data4d(bdy_dims(ibdy),nz,nhalo,nt))
+!!!         allocate(bdy_terms(bdy_dims(ibdy),nz,nhalo,ntp))
+!!!         do isp=1,nchem_spcs
+!!!!
+!!!! Read non-tendency (ibdy 1 - 4) and the associated tendency (ibdy 5 - 8)
+!!!            wrfchem_file=trim(pert_path_new)//'/'//trim(wrfbdy_file_new)
+!!!            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+!!!            call get_WRFCHEM_bdy_data(wrfchem_file,trim(ch_spcs),bdy_data4d, &
+!!!            bdy_dims(ibdy),nz,nhalo,nt)
+!!!!
+!!!            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy+4))
+!!!            call get_WRFCHEM_bdy_data(wrfchem_file,trim(ch_spcs),bdy_tend_data4d, &
+!!!            bdy_dims(ibdy+4),nz,nhalo,nt)
+!!!!
+!!!! Calculate last non-tendency term. Done in physical space.
+!!!            do ij=1,bdy_dims(ibdy)
+!!!               do k=1,nz
+!!!                  do l=1,nhalo
+!!!                     bdy_terms(ij,k,l,1)=bdy_data4d(ij,k,l,1)
+!!!                     bdy_terms(ij,k,l,2)=bdy_data4d(ij,k,l,2)
+!!!                     bdy_terms(ij,k,l,3)=bdy_data4d(ij,k,l,2)+bdy_tend_data4d(ij,k,l,2)*delt
+!!!                  enddo
+!!!               enddo
+!!!            enddo
+!!!            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+!!!!
+!!!! Apply log transform
+!!!            bdy_ipt=0
+!!!            k_ipt=0
+!!!            halo_ipt=0
+!!!            n_ipt=0
+!!!            do ij=1,bdy_dims(ibdy)
+!!!               do k=1,nz
+!!!                  do l=1,nhalo
+!!!                     do n=1,ntp
+!!!                        if(bdy_terms(ij,k,l,n).gt.0) then
+!!!                           bdy_terms(ij,k,l,n)=log(bdy_terms(ij,k,l,n))
+!!!                           if(bdy_ipt.eq.0.and.k_ipt.eq.0.and.halo_ipt.eq.0.and.n_ipt.eq.0) then
+!!!                              bdy_ipt=ij
+!!!                              k_ipt=k
+!!!                              halo_ipt=l
+!!!                              n_ipt=n
+!!!                           endif
+!!!                        else
+!!!                           bdy_terms(ij,k,l,n)=zero_exp
+!!!                        endif
+!!!                     enddo
+!!!                  enddo
+!!!               enddo
+!!!            enddo
+!!!!
+!!!! Send to other processors
+!!!            call apm_pack4d(tmp_arry,bdy_terms,bdy_dims(ibdy),nz,nhalo,ntp)
+!!!            call mpi_send(tmp_arry,bdy_dims(ibdy)*nz*nhalo*ntp,MPI_FLOAT, &
+!!!            itask(isp),2+ibdy,MPI_COMM_WORLD,ierr)
+!!!            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+!!!         enddo
+!!!         deallocate(tmp_arry)
+!!!         deallocate(bdy_data4d)
+!!!         deallocate(bdy_tend_data4d)
+!!!         deallocate(bdy_terms)
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! RECEIVE NEW PERTURBATION VARIANCE FROM OTHER PROCESSORS
+! READ BCs, APPLY NEW VARIANCE, AND WRITE TO BC FILE
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+         do isp=1,nchem_spcs
+!
+! Receive new ensemble error variance. These are in log space
+            allocate(tmp_arry(bdy_dims(ibdy)*nz*nhalo*ntp))
+            allocate(bdy_vari_new(bdy_dims(ibdy),nz,nhalo,ntp))
+            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+            call mpi_recv(tmp_arry,bdy_dims(ibdy)*nz*nhalo*ntp,MPI_FLOAT, &
+            itask(isp),2+ibdy,MPI_COMM_WORLD,stat,ierr)
+            call apm_unpack4d(tmp_arry,bdy_vari_new,bdy_dims(ibdy),nz,nhalo,ntp)
+            deallocate (tmp_arry)
+!
+! Read BDY fields to be perturbed. These are read in physical space.
+! Read non-tendency (ibdy 1 - 4) and the associated tendency (ibdy 5 - 8)
+            wrfchem_file=trim(pert_path_new)//'/'//trim(wrfbdy_file_new)
+            allocate(bdy_data4d(bdy_dims(ibdy),nz,nhalo,nt))
+            allocate(bdy_tend_data4d(bdy_dims(ibdy),nz,nhalo,nt))
+            allocate(bdy_terms(bdy_dims(ibdy),nz,nhalo,ntp))
+            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+            call get_WRFCHEM_bdy_data(wrfchem_file,trim(ch_spcs),bdy_data4d, &
+            bdy_dims(ibdy),nz,nhalo,nt)
+!
+            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy+4))
+            call get_WRFCHEM_bdy_data(wrfchem_file,trim(ch_spcs),bdy_tend_data4d, &
+            bdy_dims(ibdy+4),nz,nhalo,nt)
+!
+! Calculate last non-tendency term. Done in physical space.
+            do ij=1,bdy_dims(ibdy)
+               do k=1,nz
+                  do l=1,nhalo
+                     bdy_terms(ij,k,l,1)=bdy_data4d(ij,k,l,1)
+                     bdy_terms(ij,k,l,2)=bdy_data4d(ij,k,l,2)
+                     bdy_terms(ij,k,l,3)=bdy_data4d(ij,k,l,2)+bdy_tend_data4d(ij,k,l,2)*delt
+                  enddo
+               enddo
+            enddo
+            deallocate(bdy_data4d)
+            deallocate(bdy_tend_data4d)
+!
+! Apply log transform
+            do ij=1,bdy_dims(ibdy)
+               do k=1,nz
+                  do l=1,nhalo
+                     do n=1,ntp
+                        if(bdy_terms(ij,k,l,n).gt.0) then
+                           bdy_terms(ij,k,l,n)=log(bdy_terms(ij,k,l,n))
+                        else
+                           bdy_terms(ij,k,l,n)=zero_exp
+                        endif
+                     enddo
+                  enddo
+               enddo
+            enddo
+!
+! Read old ensemble perturbation variance. These are in log space.
+            allocate(bdy_vari_end(bdy_dims(ibdy),nz,nhalo,ntp))
+            if(sw_corr_tm) then
+               wrfchem_file=trim(pert_path_old)//'/'//trim(wrfbdy_file_old)//'_pert_vari'
+               allocate(bdy_vari4d(bdy_dims(ibdy),nz,nhalo,nt))
+               allocate(bdy_tend_vari4d(bdy_dims(ibdy),nz,nhalo,nt))
+               allocate(bdy_vari_terms(bdy_dims(ibdy),nz,nhalo,ntp))
+               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+               call get_WRFCHEM_bdy_data(wrfchem_file,trim(ch_spcs),bdy_vari4d, &
+               bdy_dims(ibdy),nz,nhalo,nt)
+!
+               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy+4))
+               call get_WRFCHEM_bdy_data(wrfchem_file,trim(ch_spcs),bdy_tend_vari4d, &
+               bdy_dims(ibdy+4),nz,nhalo,nt)
+!
+! Calculate last non-tendency term. These are in log spaace
+               do ij=1,bdy_dims(ibdy)
+                  do k=1,nz
+                     do l=1,nhalo
+                        bdy_vari_terms(ij,k,l,1)=bdy_vari4d(ij,k,l,1)
+                        bdy_vari_terms(ij,k,l,2)=bdy_vari4d(ij,k,l,2)
+                        bdy_vari_terms(ij,k,l,3)=bdy_vari4d(ij,k,l,2)+bdy_tend_vari4d(ij,k,l,2)*delt
+                     enddo
+                  enddo
+               enddo
+               deallocate(bdy_vari4d)
+               deallocate(bdy_tend_vari4d)
+!
+! Calculate temporally smoothed ensemble error variance. These are in log space.
+               do ij=1,bdy_dims(ibdy)
+                  do k=1,nz
+                     do l=1,nhalo
+                        do n=1,ntp
+                           bdy_vari_end(ij,k,l,n)=wgt_end*bdy_vari_terms(ij,k,l,n)+ &
+                           (1.-wgt_end)*bdy_vari_new(ij,k,l,n)
+                        enddo
+                     enddo
+                  enddo
+               enddo
+               deallocate(bdy_vari_terms)
+            else
+               do ij=1,bdy_dims(ibdy)
+                  do k=1,nz
+                     do l=1,nhalo
+                        do n=1,ntp
+                           bdy_vari_end(ij,k,l,n)=bdy_vari_new(ij,k,l,n)
+                        enddo
+                     enddo
+                  enddo
+               enddo
+            endif
+            deallocate(bdy_vari_new)
+!
+! Limit the new relative spread
+!            do ij=1,bdy_dims(ibdy)
+!               do k=1,nz
+!                  do l=1,nhalo
+!                     do n=1,ntp
+!                        if(bdy_terms(ij,k,l,n).gt.0.) then
+!                           if(sqrt(bdy_vari_end(ij,k,l,n))/bdy_terms(ij,k,l,n).gt.rsprd_crit) then
+!                              bdy_vari_end(ij,k,l,n)=(bdy_terms(ij,k,l,n)*rsprd_crit)**2.
+!                           endif
+!                        endif
+!                     enddo
+!                  enddo
+!               enddo
+!            enddo
+!
+! Calculate new variance terms for storage. These are in log space.
+! The log space tendencies are used to calculate the end-time variance. 
+            allocate(bdy_vari4d(bdy_dims(ibdy),nz,nhalo,nt))
+            allocate(bdy_tend_vari4d(bdy_dims(ibdy),nz,nhalo,nt))
+            do ij=1,bdy_dims(ibdy)
+               do k=1,nz
+                  do l=1,nhalo
+                     bdy_vari4d(ij,k,l,1)=bdy_vari_end(ij,k,l,1)
+                     bdy_vari4d(ij,k,l,2)=bdy_vari_end(ij,k,l,2)
+                     bdy_tend_vari4d(ij,k,l,1)=(bdy_vari_end(ij,k,l,2)- &
+                     bdy_vari_end(ij,k,l,1))/delt
+                     bdy_tend_vari4d(ij,k,l,2)=(bdy_vari_end(ij,k,l,3)- &
+                     bdy_vari_end(ij,k,l,2))/delt
+                  enddo
+               enddo
+            enddo
+!
+! Write new ensemble error variance. These are in log space.
+            wrfchem_file=trim(pert_path_new)//'/'//trim(wrfbdy_file_new)//'_pert_vari'
+            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+            call put_WRFCHEM_bdy_data(wrfchem_file,ch_spcs,bdy_vari4d, &
+            bdy_dims(ibdy),nz,nhalo,nt)
+!
+            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy+4))
+            call put_WRFCHEM_bdy_data(wrfchem_file,ch_spcs,bdy_tend_vari4d, &
+            bdy_dims(ibdy+4),nz,nhalo,nt)
+            deallocate(bdy_vari4d)
+            deallocate(bdy_tend_vari4d)
+!
+! For each member generate perturbed field
+            sum=0.
+            do imem=1,num_mems
+               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+!!!               allocate(zzfld(bdy_dims(ibdy),nz,nhalo,ntp))
+               allocate(bdy_mem(bdy_dims(ibdy),nz,nhalo,ntp))
+!
+! Generate N(0,1) field
+!!!               do ij=1,bdy_dims(ibdy)
+!!!                  do k=1,nz
+!!!                     do l=1,nhalo
+!!!                        do n=1,ntp
+!!!                           call random_number(u_ran_1)
+!!!                           if(u_ran_1.eq.0.) call random_number(u_ran_1)
+!!!                           call random_number(u_ran_2)
+!!!                           if(u_ran_2.eq.0.) call random_number(u_ran_2)
+!!!                           zzfld(ij,k,l,n)=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+!!!                        enddo
+!!!                     enddo
+!!!                  enddo
+!!!               enddo
+!
+! Impose temporally smoothed ensemble error variance and new ensemble mean.
+               call random_number(u_ran_1)
+               if(u_ran_1.eq.0.) call random_number(u_ran_1)
+               call random_number(u_ran_2)
+               if(u_ran_2.eq.0.) call random_number(u_ran_2)
+               ztrm=sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+               do ij=1,bdy_dims(ibdy)
+                  do k=1,nz
+                     do l=1,nhalo
+                        do n=1,ntp
+                           if(bdy_terms(ij,k,l,n).ne.0.) then
+!                              bdy_mem(ij,k,l,n)=exp(bdy_terms(ij,k,l,n)+zzfld(ij,k,l,n)* &
+!                              sqrt(bdy_vari_end(ij,k,l,n)))
+                              bdy_mem(ij,k,l,n)=exp(bdy_terms(ij,k,l,n)+ztrm* &
+                              sqrt(bdy_vari_end(ij,k,l,n)))
+                           else
+                              bdy_mem(ij,k,l,n)=0.
+                           endif
+                        enddo
+                     enddo
+                  enddo
+               enddo
+!!!               deallocate(zzfld)
+!
+! Calculate the perturbed BDY terms
+               allocate(bdy_data4d(bdy_dims(ibdy),nz,nhalo,nt))
+               allocate(bdy_tend_data4d(bdy_dims(ibdy),nz,nhalo,nt))
+               do ij=1,bdy_dims(ibdy)
+                  do k=1,nz
+                     do l=1,nhalo
+                        bdy_data4d(ij,k,l,1)=bdy_mem(ij,k,l,1)
+                        bdy_data4d(ij,k,l,2)=bdy_mem(ij,k,l,2)
+                        bdy_tend_data4d(ij,k,l,1)=(bdy_mem(ij,k,l,2) - &
+                        bdy_mem(ij,k,l,1))/delt
+                        bdy_tend_data4d(ij,k,l,2)=(bdy_mem(ij,k,l,3) - &
+                        bdy_mem(ij,k,l,2))/delt
+                     enddo
+                  enddo
+               enddo
+               deallocate(bdy_mem)
+!
+! Write data for perturbed member
+               wrfchem_file=trim(pert_path_new)//'/'//trim(wrfbdy_file_new)//cmem
+               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+               call put_WRFCHEM_bdy_data(wrfchem_file,ch_spcs,bdy_data4d, &
+               bdy_dims(ibdy),nz,nhalo,nt)
+!
+               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy+4))
+               call put_WRFCHEM_bdy_data(wrfchem_file,ch_spcs,bdy_tend_data4d, &
+               bdy_dims(ibdy+4),nz,nhalo,nt)
+!
+               sum=sum+bdy_data4d(ibdy,nz/2,nhalo/2,2)/real(num_mems)
+               deallocate(bdy_data4d)
+               deallocate(bdy_tend_data4d)
+            enddo
+            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+            if(bdy_terms(ibdy,nz/2,nhalo/2,2).ne.0.) then
+               print *,'APM: ',isp,trim(ch_spcs),sum,exp(bdy_terms(ibdy,nz/2,nhalo/2,2))
+            else
+               print *,'APM: ',isp,trim(ch_spcs),sum,bdy_terms(ibdy,nz/2,nhalo/2,2)
+            endif
+            deallocate(bdy_terms)
+            deallocate(bdy_vari_end)
+         enddo
+      enddo
+!
+! Calculate ensemble mean, variance and recenter      
+      do isp=1,nchem_spcs
+         do ibdy=1,nbdy_exts_hlf
+            allocate(bdy_ens_mean(bdy_dims(ibdy),nz,nhalo,nt))
+            allocate(bdy_tend_ens_mean(bdy_dims(ibdy),nz,nhalo,nt))
+            allocate(bdy_ens_vari(bdy_dims(ibdy),nz,nhalo,nt))
+            allocate(bdy_tend_ens_vari(bdy_dims(ibdy),nz,nhalo,nt))
+            allocate(bdy_parent(bdy_dims(ibdy),nz,nhalo,nt))
+            allocate(bdy_tend_parent(bdy_dims(ibdy),nz,nhalo,nt))
+            allocate(bdy_data4d(bdy_dims(ibdy),nz,nhalo,nt))
+            allocate(bdy_tend_data4d(bdy_dims(ibdy),nz,nhalo,nt))
+!
+! Calculate ensemble mean
+            bdy_ens_mean(:,:,:,:)=0.
+            bdy_tend_ens_mean(:,:,:,:)=0.
+            do imem=1,num_mems
+               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+               wrfchem_file=trim(pert_path_new)//'/'//trim(wrfbdy_file_new)//cmem
+               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+               call get_WRFCHEM_bdy_data(wrfchem_file,trim(ch_spcs),bdy_data4d, &
+               bdy_dims(ibdy),nz,nhalo,nt)
+!
+               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy+4))
+               call get_WRFCHEM_bdy_data(wrfchem_file,trim(ch_spcs),bdy_tend_data4d, &
+               bdy_dims(ibdy),nz,nhalo,nt)
+               do ij=1,bdy_dims(ibdy)
+                  do k=1,nz
+                     do l=1,nhalo
+                        do n=1,nt
+                           bdy_ens_mean(ij,k,l,n)=bdy_ens_mean(ij,k,l,n)+ &
+                           bdy_data4d(ij,k,l,n)
+                           bdy_tend_ens_mean(ij,k,l,n)=bdy_tend_ens_mean(ij,k,l,n)+ &
+                           bdy_tend_data4d(ij,k,l,n)
+                        enddo
+                     enddo
+                  enddo
+               enddo
+            enddo
+            bdy_ens_mean(:,:,:,:)=bdy_ens_mean(:,:,:,:)/real(num_mems)
+            bdy_tend_ens_mean(:,:,:,:)=bdy_tend_ens_mean(:,:,:,:)/real(num_mems)
+!
+! Calculate ensemble variance
+            bdy_ens_vari(:,:,:,:)=0.
+            bdy_tend_ens_vari(:,:,:,:)=0.
+            do imem=1,num_mems
+               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+               wrfchem_file=trim(pert_path_new)//'/'//trim(wrfbdy_file_new)//cmem
+               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+               call get_WRFCHEM_bdy_data(wrfchem_file,trim(ch_spcs),bdy_data4d, &
+               bdy_dims(ibdy),nz,nhalo,nt)
+!
+               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy+4))
+               call get_WRFCHEM_bdy_data(wrfchem_file,trim(ch_spcs),bdy_tend_data4d, &
+               bdy_dims(ibdy),nz,nhalo,nt)
+               do ij=1,bdy_dims(ibdy)
+                  do k=1,nz
+                     do l=1,nhalo
+                        do n=1,nt
+                           bdy_ens_vari(ij,k,l,n)=bdy_ens_vari(ij,k,l,n)+ &
+                           (bdy_data4d(ij,k,l,n)-bdy_ens_mean(ij,k,l,n))**2.
+                           bdy_tend_ens_vari(ij,k,l,n)=bdy_tend_ens_vari(ij,k,l,n)+ &
+                           (bdy_tend_data4d(ij,k,l,n)-bdy_tend_ens_mean(ij,k,l,n))**2.
+                        enddo
+                     enddo
+                  enddo
+               enddo
+            enddo
+            bdy_ens_vari(:,:,:,:)=bdy_ens_vari(:,:,:,:)/real(num_mems-1)
+            bdy_tend_ens_vari(:,:,:,:)=bdy_tend_ens_vari(:,:,:,:)/real(num_mems-1)
+!
+! Recenter the ensemble members
+            wrfchem_file=trim(pert_path_new)//'/'//trim(wrfbdy_file_new)
+            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+            call get_WRFCHEM_bdy_data(wrfchem_file,trim(ch_spcs),bdy_parent, &
+            bdy_dims(ibdy),nz,nhalo,nt)
+!
+            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy+4))
+            call get_WRFCHEM_bdy_data(wrfchem_file,trim(ch_spcs),bdy_tend_parent, &
+            bdy_dims(ibdy+4),nz,nhalo,nt)
+            do imem=1,num_mems
+               if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
+               if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
+               if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
+               wrfchem_file=trim(pert_path_new)//'/'//trim(wrfbdy_file_new)//cmem
+               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+               call get_WRFCHEM_bdy_data(wrfchem_file,trim(ch_spcs),bdy_data4d, &
+               bdy_dims(ibdy),nz,nhalo,nt)
+!
+               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy+4))
+               call get_WRFCHEM_bdy_data(wrfchem_file,trim(ch_spcs),bdy_tend_data4d, &
+               bdy_dims(ibdy),nz,nhalo,nt)
+               do ij=1,bdy_dims(ibdy)
+                  do k=1,nz
+                     do l=1,nhalo
+                        do n=1,nt
+                           bdy_data4d(ij,k,l,n)=bdy_data4d(ij,k,l,n)-bdy_ens_mean(ij,k,l,n)+ &
+                           bdy_parent(ij,k,l,n)
+                           bdy_tend_data4d(ij,k,l,n)=bdy_tend_data4d(ij,k,l,n)- &
+                           bdy_tend_ens_mean(ij,k,l,n)+bdy_tend_parent(ij,k,l,n)
+                        enddo     
+                     enddo
+                  enddo
+               enddo
+               wrfchem_file=trim(pert_path_new)//'/'//trim(wrfbdy_file_new)//cmem
+               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+               call put_WRFCHEM_bdy_data(wrfchem_file,ch_spcs,bdy_data4d, &
+               bdy_dims(ibdy),nz,nhalo,nt)
+!
+               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy+4))
+               call put_WRFCHEM_bdy_data(wrfchem_file,ch_spcs,bdy_tend_data4d, &
+               bdy_dims(ibdy+4),nz,nhalo,nt)
+            enddo
+!
+! Write ensemble mean and variance
+            wrfchem_file=trim(pert_path_new)//'/'//trim(wrfbdy_file_new)//'_mean'
+            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+            call put_WRFCHEM_bdy_data(wrfchem_file,ch_spcs,bdy_ens_mean, &
+            bdy_dims(ibdy),nz,nhalo,nt)
+!
+            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy+4))
+            call put_WRFCHEM_bdy_data(wrfchem_file,ch_spcs,bdy_tend_ens_mean, &
+            bdy_dims(ibdy+4),nz,nhalo,nt)
+!
+            wrfchem_file=trim(pert_path_new)//'/'//trim(wrfbdy_file_new)//'_vari'
+            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+            call put_WRFCHEM_bdy_data(wrfchem_file,ch_spcs,bdy_ens_vari, &
+            bdy_dims(ibdy),nz,nhalo,nt)
+!
+            ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy+4))
+            call put_WRFCHEM_bdy_data(wrfchem_file,ch_spcs,bdy_tend_ens_vari, &
+            bdy_dims(ibdy+4),nz,nhalo,nt)
+!           
+            deallocate(bdy_ens_mean)
+            deallocate(bdy_tend_ens_mean)
+            deallocate(bdy_ens_vari)
+            deallocate(bdy_tend_ens_vari)
+            deallocate(bdy_parent)
+            deallocate(bdy_tend_parent)
+            deallocate(bdy_data4d)
+            deallocate(bdy_tend_data4d)
+         enddo
+      enddo
+
+
+
+
+      print *,'APM: Finished all ibdy terms'
+   endif
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! RANK itask(isp)   RANK itask(isp)   RANK itask(isp)
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+   if(rank.ne.0) then
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! ICs
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+      if(.not.sw_bdy_only) then
+         do isp=1,nchem_spcs
+            if(rank.eq.itask(isp)) then
+!
+! Receive new IC fields
+!!!               allocate(tmp_arry(nx*ny*nz))
+               allocate(chem_vari_new(nx,ny,nz))
+!!!               call mpi_recv(tmp_arry,nx*ny*nz, &
+!!!               MPI_FLOAT,0,1,MPI_COMM_WORLD,stat,ierr)
+!!!               call apm_unpack(tmp_arry,chem_vari_new,nx,ny,nz)
+!!!               deallocate(tmp_arry)
+!
+! Calculate new error variance
+               call date_and_time(ch_date,ch_time,ch_zone,date_time_vals)
+               seed_trm=date_time_vals(5)*date_time_vals(6)*date_time_vals(7)
+               if(sw_seed) call init_const_random_seed(rank,seed_trm)
+!
+               call perturb_icbc_fields(chem_vari_new,lat,lon,A_chem,nx,ny,nz, &
+               ngrid_corr,corr_lngth_hz,rank,sprd_chem,nchem_spcs)
             endif
          enddo
-      enddo
-      deallocate(chem_fac_old)
-      deallocate(chem_fac_new)
-      deallocate(chem_fac_end)
-      deallocate(chem_data3d)
-   endif
 !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-! Rank: 1
-!   
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-! Save the correlation factors for next cycle
-   if (rank.eq.1) then
-!
-      call cpu_time(cpu_str)
-      print *, 'APM: Rank 1 - Before chem_fac_end write ',cpu_str
-!
-      unit=20
-      filenm=trim(pert_path_new)//'/pert_chem_icbc'
-      open(unit=unit,file=trim(filenm),form='unformatted',status='unknown')
-      rewind(unit)
-      allocate(chem_fac_end(nx,ny,nz))
-      allocate(tmp_arry(nx*ny*nz))
-      do imem=1,num_mems
          do isp=1,nchem_spcs
-            call mpi_recv(tmp_arry,nx*ny*nz,MPI_FLOAT, &
-            itask(imem,isp),1,MPI_COMM_WORLD,stat,ierr)
-            call apm_unpack_3d(tmp_arry,chem_fac_end,nx,ny,nz)
-            write(unit) chem_fac_end
-         enddo
-      enddo
-      deallocate(chem_fac_end)
-      deallocate(tmp_arry)
-      close(unit)
+            if(rank.eq.itask(isp)) then
 !
-      call cpu_time(cpu_str)
-      print *, 'APM: Rank 1 - After chem_fac_end write ',cpu_str
-!
-      call mpi_send(1,1,MPI_FLOAT,0,1,MPI_COMM_WORLD,ierr)
-!
-! Save the perturbed fields
-!
-      call cpu_time(cpu_str)
-      print *, 'APM: Rank 1 Before IC/BC write ',cpu_str
-!
-      allocate(chem_data3d(nx,ny,nz,1))
-      do imem=1,num_mems
-         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-         wrfchem_file_ic=trim(wrfinput_fld_new)//trim(cmem)
-         wrfchem_file_bc=trim(wrfbdy_fld_new)//trim(cmem)
-         do isp=1,nchem_spcs
-! ICs
-            allocate(tmp_arry(nx*ny*nz))            
-            call mpi_recv(tmp_arry,nx*ny*nz,MPI_FLOAT, &
-            itask(imem,isp),2,MPI_COMM_WORLD,stat,ierr)
-            call apm_unpack_4d(tmp_arry,chem_data3d,nx,ny,nz,1)
-            call put_WRFCHEM_icbc_data(wrfchem_file_ic,ch_chem_spc(isp), &
-            chem_data3d,nx,ny,nz,1)
-            deallocate(tmp_arry)
-! BCs
-            do ibdy=1,nbdy_exts
-               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
-               allocate(chem_databdy(bdy_dims(ibdy),nz,nhalo,nt))
-               allocate(tmp_arry(bdy_dims(ibdy)*nz*nhalo*nt))
-               call mpi_recv(tmp_arry,bdy_dims(ibdy)*nz*nhalo*nt,MPI_FLOAT, &
-               itask(imem,isp),ibdy+3,MPI_COMM_WORLD,stat,ierr)
-               call apm_unpack_4d(tmp_arry,chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
-               call put_WRFCHEM_icbc_data(wrfchem_file_bc,ch_spcs, &
-               chem_databdy,bdy_dims(ibdy),nz,nhalo,nt)
-               deallocate(chem_databdy)
+! Send new perturbation variance to rank 0
+               allocate(tmp_arry(nx*ny*nz))
+               call apm_pack(tmp_arry,chem_vari_new,nx,ny,nz)
+               call mpi_send(tmp_arry,nx*ny*nz,MPI_FLOAT, &
+               0,1,MPI_COMM_WORLD,ierr)
                deallocate(tmp_arry)
-            enddo
+            endif
          enddo
+         deallocate(chem_vari_new)
+      endif
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! BCs
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! Receive new BC fields. These are in log space.
+      do ibdy=1,nbdy_exts_hlf
+         allocate(bdy_vari_new(bdy_dims(ibdy),nz,nhalo,ntp))
+         do isp=1,nchem_spcs
+            if(rank.eq.itask(isp)) then
+               bdy_vari_new(:,:,:,:)=0.
+!!!               allocate(tmp_arry(bdy_dims(ibdy)*nz*nhalo*ntp))
+!!!               ch_spcs=trim(ch_chem_spc(isp))//trim(bdy_exts(ibdy))
+!!!               call mpi_recv(tmp_arry,bdy_dims(ibdy)*nz*nhalo*ntp, &
+!!!               MPI_FLOAT,0,2+ibdy,MPI_COMM_WORLD,stat,ierr)
+!!!               call apm_unpack4d(tmp_arry,bdy_vari_new,bdy_dims(ibdy),nz,nhalo,ntp)
+!!!               deallocate(tmp_arry)
+!
+! Calculate new error variance. Done in log space.
+               call date_and_time(ch_date,ch_time,ch_zone,date_time_vals)
+               seed_trm=date_time_vals(5)*date_time_vals(6)*date_time_vals(7)
+               if(sw_seed) call init_const_random_seed(rank,seed_trm)
+!
+               call perturb_bdy_fields(bdy_vari_new,lat,lon,A_chem, &
+               ngrid_corr,corr_lngth_hz,sprd_chem,ibdy,bdy_dims(ibdy),nz,nhalo,ntp,nx,ny,rank)
+            endif
+         enddo
+!
+         do isp=1,nchem_spcs
+            if(rank.eq.itask(isp)) then
+!
+! Send new perturbation variance to rank 0
+               allocate(tmp_arry(bdy_dims(ibdy)*nz*nhalo*ntp))
+               call apm_pack4d(tmp_arry,bdy_vari_new,bdy_dims(ibdy),nz,nhalo,ntp)
+               call mpi_send(tmp_arry,bdy_dims(ibdy)*nz*nhalo*ntp,MPI_FLOAT, &
+               0,2+ibdy,MPI_COMM_WORLD,ierr)
+               deallocate(tmp_arry)
+            endif
+         enddo
+         deallocate(bdy_vari_new)
       enddo
-      deallocate(chem_data3d)
-!
-      call cpu_time(cpu_str)
-      print *, 'APM: Rank 1 - After IC/BC write ',cpu_str
-!
    endif
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-! Rank: all
-!   
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
    deallocate(ch_chem_spc)
    deallocate(A_chem)
    deallocate(lat,lon)
-   deallocate(itask)
    call mpi_finalize(ierr)
    stop
 end program main
- 
+
 !-------------------------------------------------------------------------------
 
 real function get_dist(lat1,lat2,lon1,lon2)
@@ -674,119 +1076,71 @@ subroutine vertical_transform(A_chem,geo_ht,nx,ny,nz,nz_chem,corr_lngth_vt)
    real,dimension(nx,ny,nz_chem,nz_chem), intent(out)  :: A_chem
 !
    integer             :: i,j,k,l,ll
-   real                :: vcov
+   real                :: vcov,vcov_exp,del_geop
 !
    A_chem(:,:,:,:)=0. 
    do k=1,nz_chem
       do l=1,nz_chem
          do i=1,nx
             do j=1,ny
-               vcov=1.-abs(geo_ht(i,j,k)-geo_ht(i,j,l))/corr_lngth_vt
-               if(vcov.lt.0.) vcov=0.
+               del_geop=abs(geo_ht(i,j,k)-geo_ht(i,j,l))
+               if(del_geop.le.corr_lngth_vt) then
+                  vcov=1.-del_geop/corr_lngth_vt
+                  vcov_exp=1./exp(del_geop*del_geop/corr_lngth_vt/corr_lngth_vt)
+                  if(geo_ht(i,j,k).lt.0. .or. geo_ht(i,j,l).lt.0.) then
+                     vcov=0.
+                     vcov_exp=0.
+                  endif
+                  if(vcov.lt.0.) vcov=0.
 !
 ! linear decrease
-!               A_chem(i,j,k,l)=vcov
+!                  A_chem(i,j,k,l)=vcov
 !
 ! exponential decrease
-!               if(vcov.ne.0.) then               
-!                  A_chem(i,j,k,l)=exp(1. - 1./vcov)
-!               endif
+                  A_chem(i,j,k,l)=vcov_exp
 !
 ! square root decrease
-               A_chem(i,j,k,l)=vcov    
-               if(vcov.ne.1.) then               
-                  A_chem(i,j,k,l)=sqrt(1. - (1.-vcov)*(1.-vcov))
-               endif
+!                  A_chem(i,j,k,l)=vcov    
+!                  if(vcov.ne.1.) then               
+!                     A_chem(i,j,k,l)=sqrt(1. - (1.-vcov)*(1.-vcov))
+!                  endif
+               endif   
             enddo
          enddo
       enddo
    enddo
-!
-! Old code
-! row 1         
-!               if(k.eq.1 .and. l.eq.1) then
-!                  A_chem(i,j,k,l)=1.
-!               elseif(k.eq.1 .and. l.gt.1) then
-!                  A_chem(i,j,k,l)=0.
-!               endif
-! row 2         
-!               if(k.eq.2 .and. l.eq.1) then
-!                  A_chem(i,j,k,l)=vcov
-!               elseif(k.eq.2 .and. l.eq.2) then
-!                  A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l-1)*A_chem(i,j,k,l-1))
-!               elseif (k.eq.2 .and. l.gt.2) then
-!                  A_chem(i,j,k,l)=0.
-!               endif
-! row 3 and greater         
-!               if(k.ge.3) then
-!                  if(l.eq.1) then
-!                     A_chem(i,j,k,l)=vcov
-!                  elseif(l.lt.k .and. l.ne.1) then
-!                     do ll=1,l-1
-!                        A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,l,ll)*A_chem(i,j,k,ll)
-!                     enddo
-!                     if(A_chem(i,j,l,l).ne.0) A_chem(i,j,k,l)=(vcov-A_chem(i,j,k,l))/A_chem(i,j,l,l)
-!                  elseif(l.eq.k) then
-!                     do ll=1,l-1
-!                        A_chem(i,j,k,l)=A_chem(i,j,k,l)+A_chem(i,j,k,ll)*A_chem(i,j,k,ll)
-!                     enddo
-!                     A_chem(i,j,k,l)=sqrt(1.-A_chem(i,j,k,l))
-!                  endif
-!               endif
 end subroutine vertical_transform
 
 !-------------------------------------------------------------------------------
 
-subroutine perturb_fields(chem_fac_old,chem_fac_new, &
-lat,lon,A_chem,nx,ny,nz,nchem_spcs,ngrid_corr,sw_corr_tm, &
-corr_lngth_hz,rank,sprd_chem)
-
-!   use apm_utilities_mod,  only :get_dist
-  
+subroutine perturb_icbc_fields(chem_vari_new,lat,lon,A_chem,nx,ny,nz, &
+ngrid_corr,corr_lngth_hz,rank,sprd_chem,nspc)
+!   use apm_utilities_mod,  only :get_dist  
    implicit none
-   integer,                               intent(in)   :: nx,ny,nz,rank
-   integer,                               intent(in)   :: sw_corr_tm
-   integer,                               intent(in)   :: ngrid_corr,nchem_spcs
-   real,                                  intent(in)   :: corr_lngth_hz,sprd_chem
-   real,dimension(nx,ny),                 intent(in)   :: lat,lon
-   real,dimension(nx,ny,nz,nz),           intent(in)   :: A_chem
-   real,dimension(nx,ny,nz),              intent(out)  :: chem_fac_old
-   real,dimension(nx,ny,nz),              intent(out)  :: chem_fac_new
+   integer,                               intent(in)     :: nx,ny,nz,rank,nspc
+   integer,                               intent(in)     :: ngrid_corr
+   real,                                  intent(in)     :: corr_lngth_hz,sprd_chem
+   real,dimension(nx,ny),                 intent(in)     :: lat,lon
+   real,dimension(nx,ny,nz,nz),           intent(in)     :: A_chem
+   real,dimension(nx,ny,nz),              intent(inout)  :: chem_vari_new
 !
-   integer                             :: i,j,k,isp,ii,jj,kk,nxy
+   integer                             :: i,j,k,ii,jj,kk
    integer                             :: ii_str,ii_end,jj_str,jj_end,icnt,ncnt
-   integer                             :: ierr
-   integer,allocatable,dimension(:)    :: indx,jndx
-   real                                :: pi,get_dist,wwgt,wgt_sum
+   real                                :: pi,get_dist,wgt,zero_exp
    real                                :: u_ran_1,u_ran_2,zdist
-   real,allocatable,dimension(:)       :: pert_chem_sum_old,pert_chem_sum_new,wgt
-   real,allocatable,dimension(:,:,:)   :: wwgt_sum
-   real,allocatable,dimension(:,:,:)   :: pert_chem_old,pert_chem_new
-   real                                :: cpu_str,cpu_end,cpu_dif
-   real                                :: mean, stdv
+   real,allocatable,dimension(:)       :: fld_sum,wgt_sum
+   real,allocatable,dimension(:,:,:)   :: pert_chem_new
+   real,allocatable,dimension(:,:,:)   :: chem_vari_newp
+   real,allocatable,dimension(:,:,:)   :: chem_vari_new_smth
 !
 ! Constants
    pi=4.*atan(1.)
-   nxy=nx*ny
+   zero_exp=-30.
+   zero_exp=0.
 !
-! Define horizontal perturbations (Box-Muller transform N(0,1)
-   allocate(pert_chem_old(nx,ny,nz))
+! Define perturbation variance (Box-Muller transform N(0,1)   
    allocate(pert_chem_new(nx,ny,nz))
-   pert_chem_old(:,:,:)=0.
    pert_chem_new(:,:,:)=0.
-   if(sw_corr_tm) then
-      do i=1,nx
-         do j=1,ny
-            do k=1,nz
-               call random_number(u_ran_1)
-               if(u_ran_1.eq.0.) call random_number(u_ran_1)
-               call random_number(u_ran_2)
-               if(u_ran_2.eq.0.) call random_number(u_ran_2)
-               pert_chem_old(i,j,k)=sprd_chem*sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
-            enddo
-         enddo
-      enddo
-   endif
    do i=1,nx
       do j=1,ny
          do k=1,nz
@@ -794,271 +1148,249 @@ corr_lngth_hz,rank,sprd_chem)
             if(u_ran_1.eq.0.) call random_number(u_ran_1)
             call random_number(u_ran_2)
             if(u_ran_2.eq.0.) call random_number(u_ran_2)
-            pert_chem_new(i,j,k)=sprd_chem*sqrt(-2.*log(u_ran_1))*cos(2.*pi*u_ran_2)
+!            pert_chem_new(i,j,k)=(chem_vari_new(i,j,k)*sprd_chem*sqrt(-2.* &
+!            log(u_ran_1))*cos(2.*pi*u_ran_2))**2.
+            pert_chem_new(i,j,k)=(sprd_chem*sqrt(-2.* &
+            log(u_ran_1))*cos(2.*pi*u_ran_2))**2.
          enddo
       enddo
    enddo
 !
 ! Apply horizontal correlations
-   if(sw_corr_tm) then   
-      chem_fac_old(:,:,:)=0.
-   endif
-   chem_fac_new(:,:,:)=0.
-!
-!   allocate(indx(nxy),jndx(nxy),wgt(nxy))
-   allocate(wwgt_sum(nx,ny,nz))   
-
-!
-! chem_fac_old calc takes one hour for each member/species for TRACER-I
-   if(rank.eq.3) then
-      call cpu_time(cpu_str)
-      print *, 'APM: Rank itask - Before chem_fac_old and chem_fac_new ', cpu_str
-   endif
-!
-! New code APM TEST
-   wwgt_sum(:,:,:)=0.
+   allocate(fld_sum(nz))
+   allocate(wgt_sum(nz))
+   allocate(chem_vari_newp(nx,ny,nz))
+   chem_vari_newp(:,:,:)=0.
    do i=1,nx
       do j=1,ny
          ii_str=max(1,i-ngrid_corr)
          ii_end=min(nx,i+ngrid_corr)
          jj_str=max(1,j-ngrid_corr)
          jj_end=min(ny,j+ngrid_corr)
+         fld_sum(:)=0.
+         wgt_sum(:)=0.
          do ii=ii_str,ii_end
             do jj=jj_str,jj_end
                zdist=get_dist(lat(ii,jj),lat(i,j),lon(ii,jj),lon(i,j))
-               if(zdist.le.2.0*corr_lngth_hz) then
-                  wwgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
-                  if(sw_corr_tm) then
-                     do k=1,nz
-                        chem_fac_old(i,j,k)=chem_fac_old(i,j,k)+wwgt*pert_chem_old(ii,jj,k)
-                        wwgt_sum(i,j,k)=wwgt_sum(i,j,k)+wwgt
-                     enddo
-                  endif
+               if(zdist.le.corr_lngth_hz) then
+                  wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
                   do k=1,nz
-                     chem_fac_new(i,j,k)=chem_fac_new(i,j,k)+wwgt*pert_chem_new(ii,jj,k)
-                     wwgt_sum(i,j,k)=wwgt_sum(i,j,k)+wwgt
+!                     if(pert_chem_new(ii,jj,k).ne.zero_exp) then
+                        fld_sum(k)=fld_sum(k)+wgt*pert_chem_new(ii,jj,k)
+                        wgt_sum(k)=wgt_sum(k)+wgt
+!                     endif
                   enddo
                endif
             enddo
          enddo
-         if(sw_corr_tm) then
-            do k=1,nz
-               if(wwgt_sum(i,j,k).gt.0) then
-                  chem_fac_old(i,j,k)=chem_fac_old(i,j,k)/wwgt_sum(i,j,k)
-               else
-                  chem_fac_old(i,j,k)=pert_chem_old(i,j,k)
-               endif                            
-            enddo
-         endif
          do k=1,nz
-            if(wwgt_sum(i,j,k).gt.0) then
-               chem_fac_new(i,j,k)=chem_fac_new(i,j,k)/wwgt_sum(i,j,k)
+            if(wgt_sum(k).gt.0.) then
+               chem_vari_newp(i,j,k)=fld_sum(k)/wgt_sum(k)
             else
-               chem_fac_new(i,j,k)=pert_chem_new(i,j,k)
-            endif                            
+               chem_vari_newp(i,j,k)=pert_chem_new(i,j,k)
+            endif
          enddo
       enddo
    enddo
-   if(rank.eq.3) then
-      call cpu_time(cpu_end)
-      cpu_dif=cpu_end-cpu_str
-      print *, 'APM: Rank itask - After chem_fac_old and chem_fac_new ', cpu_end, cpu_dif
-   endif
-!
-! Old code            
-!            indx(:)=0
-!            jndx(:)=0
-!            call horiz_grid_wts(i,j,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
-!            ngrid_corr,corr_lngth_hz,rank)
-!            do icnt=1,ncnt
-!               ii=indx(icnt)
-!               jj=jndx(icnt)
-!               do k=1,nz
-!                  chem_fac_old(ii,jj,k)=pert_chem_old(ii,jj,k)
-!               enddo
-!            enddo
-!            do icnt=1,ncnt
-!               ii=indx(icnt)
-!               jj=jndx(icnt)
-!               do k=1,nz
-!                  chem_fac_old(i,j,k)=chem_fac_old(i,j,k)+wgt(icnt)* &
-!                  pert_chem_old(ii,jj,k)/wgt_sum
-!               enddo
-!            enddo
-!
-! chem_fac_new calc takes one hour for each member/species for TRACER-I
-!   if(rank.eq.3) then
-!      call cpu_time(cpu_str)
-!      print *, 'APM: Rank itask - Before chem_fac_new ', cpu_str
-!   endif
-!
-!         indx(:)=0
-!         jndx(:)=0
-!         call horiz_grid_wts(i,j,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
-!         ngrid_corr,corr_lngth_hz,rank)
-!         do icnt=1,ncnt
-!            ii=indx(icnt)
-!            jj=jndx(icnt)
-!           do k=1,nz
-!              chem_fac_new(ii,jj,k)=pert_chem_new(ii,jj,k)
-!           enddo
-!         enddo
-!         do icnt=1,ncnt
-!            ii=indx(icnt)
-!            jj=jndx(icnt)
-!            do k=1,nz
-!               chem_fac_new(i,j,k)=chem_fac_new(i,j,k)+wgt(icnt)* &
-!               pert_chem_new(ii,jj,k)/wgt_sum
-!            enddo
-!         enddo
-!   deallocate(indx,jndx,wgt)
-   deallocate(pert_chem_old)
    deallocate(pert_chem_new)
-   deallocate(wwgt_sum)
-!   
-! Apply vertical correlations
-! takes 30 sec for chem_fac_old   
-   if(sw_corr_tm) then
-      if(rank.eq.3) then
-         call cpu_time(cpu_str)
-         print *, 'APM: Rank itask - Before chem_fac_old vert_corr calc ', cpu_str
-      endif
-      allocate(pert_chem_sum_old(nz))
-      do i=1,nx
-         do j=1,ny
-            pert_chem_sum_old(:)=0.
-            do k=1,nz
-               wgt_sum=0.
-               do kk=1,nz
-                  pert_chem_sum_old(k)=pert_chem_sum_old(k)+A_chem(i,j,k,kk)* &
-                  chem_fac_old(i,j,kk)
-                  wgt_sum=wgt_sum+A_chem(i,j,k,kk)
-               enddo
-            enddo
-            do k=1,nz
-               chem_fac_old(i,j,k)=pert_chem_sum_old(k)/wgt_sum
-            enddo
-         enddo
-      enddo
-      deallocate(pert_chem_sum_old)
-      if(rank.eq.3) then
-         call cpu_time(cpu_end)
-         cpu_dif=cpu_end-cpu_str
-         print *, 'APM: Rank itask - After chem_fac_old vert_corr calc ', cpu_end, cpu_dif
-      endif
-   endif
 !
-! takes 30 sec for chem_fac_new
-   if(rank.eq.3) then
-      call cpu_time(cpu_str)
-      print *, 'APM: Rank itask - Before chem_fac_new vert_corr calc ', cpu_str
-   endif
-   allocate(pert_chem_sum_new(nz))
+! Apply vertical correlations
+   allocate(chem_vari_new_smth(nx,ny,nz))
+   chem_vari_new_smth(:,:,:)=0.
    do i=1,nx
       do j=1,ny
-         pert_chem_sum_new(:)=0.
+         fld_sum(:)=0.
+         wgt_sum(:)=0.
          do k=1,nz
-            wgt_sum=0.
             do kk=1,nz
-               pert_chem_sum_new(k)=pert_chem_sum_new(k)+A_chem(i,j,k,kk)* &
-               chem_fac_new(i,j,kk)
-               wgt_sum=wgt_sum+A_chem(i,j,k,kk)
+!               if(chem_vari_newp(i,j,k).ne.zero_exp) then
+                  fld_sum(k)=fld_sum(k)+A_chem(i,j,k,kk)*chem_vari_newp(i,j,kk)
+                  wgt_sum(k)=wgt_sum(k)+A_chem(i,j,k,kk)
+!               endif
             enddo
          enddo
          do k=1,nz
-            chem_fac_new(i,j,k)=pert_chem_sum_new(k)/wgt_sum
+            if(wgt_sum(k).gt.0.) then
+               chem_vari_new_smth(i,j,k)=fld_sum(k)/wgt_sum(k)
+            else              
+               chem_vari_new_smth(i,j,k)=chem_vari_newp(i,j,k)
+            endif
          enddo
       enddo
    enddo
-   deallocate(pert_chem_sum_new) 
-   if(rank.eq.3) then
-      call cpu_time(cpu_end)
-      cpu_dif=cpu_end-cpu_str
-      print *, 'APM: Rank itask - After chem_fac_new vert_corr calc ', cpu_end, cpu_dif
-   endif
-end subroutine perturb_fields
+   chem_vari_new(:,:,:)=chem_vari_new_smth(:,:,:)
+   deallocate(chem_vari_newp)
+   deallocate(chem_vari_new_smth)
+   deallocate(fld_sum)
+   deallocate(wgt_sum)
+end subroutine perturb_icbc_fields
 
 !-------------------------------------------------------------------------------
 
-subroutine get_WRFINPUT_land_mask(xland,nx,ny)
+subroutine perturb_bdy_fields(bdy_vari_new,lat,lon,A_chem,ngrid_corr, &
+corr_lngth_hz,sprd_chem,ibdy,bdy_dim,nz,nhalo,ntp,nx,ny,rank)
    implicit none
-   include 'netcdf.inc'
-   integer, parameter                    :: maxdim=6
-   integer                               :: nx,ny
-   integer                               :: i,rc
-   integer                               :: f_id
-   integer                               :: v_id,v_ndim,typ,natts
-   integer,dimension(maxdim)             :: one
-   integer,dimension(maxdim)             :: v_dimid
-   integer,dimension(maxdim)             :: v_dim
-   real,dimension(nx,ny)                 :: xland
-   character(len=150)                    :: v_nam
-   character*(80)                         :: name
-   character*(80)                         :: file
+   integer,                               intent(in)     :: nx,ny,nz,ibdy
+   integer,                               intent(in)     :: ngrid_corr,rank
+   integer,                               intent(in)     :: nhalo,ntp,bdy_dim
+   real,                                  intent(in)     :: corr_lngth_hz,sprd_chem
+   real,dimension(nx,ny),                 intent(in)     :: lat,lon
+   real,dimension(bdy_dim,nz,nhalo,ntp),  intent(inout)  :: bdy_vari_new
+   real,dimension(nx,ny,nz,nz),           intent(in)     :: A_chem
 !
-! open netcdf file
-   file='wrfinput_d01.e001'
-   name='XLAND'
-   rc = nf_open(trim(file),NF_NOWRITE,f_id)
-!   print *, trim(file)
-   if(rc.ne.0) then
-      print *, 'nf_open error ',trim(file)
-      stop
-   endif
+   integer                             :: i,j,k,l,n,ii,jj,kk,ll,ij,ijp
+   integer                             :: ij_str,ij_end
+   real                                :: pi,u_ran_1,u_ran_2,zero_exp
+   real                                :: wgt,zdist,get_dist
+   real                                :: zlat1,zlat2,zlon1,zlon2
+   real,allocatable,dimension(:,:)     :: fld_sum,wgt_sum
+   real,allocatable,dimension(:,:,:,:) :: pert_chem_new
+   real,allocatable,dimension(:,:,:,:) :: bdy_vari_newp
+   real,allocatable,dimension(:,:,:,:) :: bdy_vari_new_smth
 !
-! get variables identifiers
-   rc = nf_inq_varid(f_id,trim(name),v_id)
-!  print *, v_id
-   if(rc.ne.0) then
-      print *, 'nf_inq_varid error ', v_id
-      stop
-   endif
+! Constants
+   pi=4.*atan(1.)
+   zero_exp=-30.
+   zero_exp=0.
 !
-! get dimension identifiers
-   v_dimid=0
-   rc = nf_inq_var(f_id,v_id,v_nam,typ,v_ndim,v_dimid,natts)
-!   print *, v_dimid
-   if(rc.ne.0) then
-      print *, 'nf_inq_var error ', v_dimid
-      stop
-   endif
-!
-! get dimensions
-   v_dim(:)=1
-   do i=1,v_ndim
-      rc = nf_inq_dimlen(f_id,v_dimid(i),v_dim(i))
+! Define perturbations (Box-Muller transform N(0,1)
+   allocate(pert_chem_new(bdy_dim,nz,nhalo,ntp))
+   pert_chem_new(:,:,:,:)=0.
+   do ij=1,bdy_dim
+      do k=1,nz
+         do l=1,nhalo
+            do n=1,ntp
+               call random_number(u_ran_1)
+               if(u_ran_1.eq.0.) call random_number(u_ran_1)
+               call random_number(u_ran_2)
+               if(u_ran_2.eq.0.) call random_number(u_ran_2)
+!               pert_chem_new(ij,k,l,n)=(bdy_vari_new(ij,k,l,n)*sprd_chem*sqrt(-2.* &
+!               log(u_ran_1))*cos(2.*pi*u_ran_2))**2.
+               pert_chem_new(ij,k,l,n)=(sprd_chem*sqrt(-2.* &
+               log(u_ran_1))*cos(2.*pi*u_ran_2))**2.
+            enddo
+         enddo
+      enddo
    enddo
-!   print *, v_dim
-   if(rc.ne.0) then
-      print *, 'nf_inq_dimlen error ', v_dim
-      stop
-   endif
 !
-! check dimensions
-   if(nx.ne.v_dim(1)) then
-      print *, 'ERROR: nx dimension conflict ',nx,v_dim(1)
-      stop
-   else if(ny.ne.v_dim(2)) then
-      print *, 'ERROR: ny dimension conflict ',ny,v_dim(2)
-      stop
-   else if(1.ne.v_dim(3)) then             
-      print *, 'ERROR: nz dimension conflict ','1',v_dim(3)
-      stop
-!   else if(1.ne.v_dim(4)) then             
-!      print *, 'ERROR: time dimension conflict ',1,v_dim(4)
-!      stop
-   endif
+! Apply horizontal correlations
+   allocate(fld_sum(nz,ntp))   
+   allocate(wgt_sum(nz,ntp))
+   allocate(bdy_vari_newp(bdy_dim,nz,nhalo,ntp))
+   bdy_vari_newp(:,:,:,:)=0.
+    do ij=1,bdy_dim
+      ij_str=max(1,ij-ngrid_corr)
 !
-! get data
-   one(:)=1
-   rc = nf_get_vara_real(f_id,v_id,one,v_dim,xland)
-   if(rc.ne.0) then
-      print *, 'nf_get_vara_real ', xland(1,1)
-      stop
+! ibdy=1 BXS
+! ibdy=2 BXE
+      i=-999
+      j=-999
+      if(ibdy.eq.1.or.ibdy.eq.2) then 
+         i=1
+         if(ibdy/2*2.eq.ibdy) i=nx 
+         ij_end=min(ny,ij+ngrid_corr)
+!
+! ibdy=3 BYS
+! ibdy=4 BYE
+      elseif(ibdy.eq.3.or.ibdy.eq.4) then 
+         j=1
+         if(ibdy/2*2.eq.ibdy) j=ny
+         ij_end=min(nx,ij+ngrid_corr)
+      endif
+      do l=1,nhalo
+         fld_sum(:,:)=0.
+         wgt_sum(:,:)=0.
+         do ijp=ij_str,ij_end
+            do ll=1,nhalo
+               if (i.eq.1) then
+                  zdist=get_dist(lat(i+ll-1,ijp),lat(i+l-1,ij),lon(i+ll-1,ijp),lon(i+l-1,ij))
+               elseif(i.eq.nx) then
+                  zdist=get_dist(lat(i-ll+1,ijp),lat(i-l+1,ij),lon(i-ll+1,ijp),lon(i-l+1,ij))
+               elseif (j.eq.1) then
+                  zdist=get_dist(lat(ijp,j+ll-1),lat(ij,j+l-1),lon(ijp,j+ll-1),lon(ij,j+l-1))
+               elseif(j.eq.ny) then
+                  zdist=get_dist(lat(ijp,j-ll+1),lat(ij,j-l+1),lon(ijp,j-ll+1),lon(ij,j-l+1))
+               endif
+               if(zdist.le.corr_lngth_hz) then
+                  wgt=1./exp(zdist*zdist/corr_lngth_hz/corr_lngth_hz)
+                  do n=1,ntp
+                     do k=1,nz
+!                        if(pert_chem_new(ijp,k,ll,n).ne.zero_exp) then
+                           fld_sum(k,n)=fld_sum(k,n)+wgt*pert_chem_new(ijp,k,ll,n)
+                           wgt_sum(k,n)=wgt_sum(k,n)+wgt
+!                        endif
+                     enddo
+                  enddo
+               endif
+            enddo
+         enddo
+         do n=1,ntp
+            do k=1,nz
+               if(wgt_sum(k,n).gt.0.) then
+                  bdy_vari_newp(ij,k,l,n)=fld_sum(k,n)/wgt_sum(k,n)
+               else
+                  bdy_vari_newp(ij,k,l,n)=pert_chem_new(ij,k,l,n)
+               endif
+            enddo
+         enddo
+      enddo
+   enddo
+   deallocate(pert_chem_new)
+!
+! Apply vertical correlations
+   allocate(bdy_vari_new_smth(bdy_dim,nz,nhalo,ntp))
+   bdy_vari_new_smth(:,:,:,:)=0.
+   i=-999
+   j=-999
+   if(ibdy.eq.1.or.ibdy.eq.2) then 
+      i=1
+      if(ibdy/2*2.eq.ibdy) i=nx 
+   elseif(ibdy.eq.3.or.ibdy.eq.4) then 
+      j=1
+      if(ibdy/2*2.eq.ibdy) j=ny
    endif
-   rc = nf_close(f_id)
-   return
-end subroutine get_WRFINPUT_land_mask   
+   do ij=1,bdy_dim
+      do l=1,nhalo
+         fld_sum(:,:)=0.
+         wgt_sum(:,:)=0.
+         do kk=1,nz
+            do k=1,nz
+               do n=1,ntp
+!                  if(bdy_vari_newp(ij,kk,l,n).ne.zero_exp) then
+                     if(i.eq.1) then
+                        fld_sum(k,n)=fld_sum(k,n)+A_chem(i+l-1,ij,k,kk)*bdy_vari_newp(ij,kk,l,n)
+                        wgt_sum(k,n)=wgt_sum(k,n)+A_chem(i+l-1,ij,k,kk)
+                     elseif(i.eq.nx) then
+                        fld_sum(k,n)=fld_sum(k,n)+A_chem(i-l+1,ij,k,kk)*bdy_vari_newp(ij,kk,l,n)
+                        wgt_sum(k,n)=wgt_sum(k,n)+A_chem(i-l+1,ij,k,kk)
+                     elseif(j.eq.1) then
+                        fld_sum(k,n)=fld_sum(k,n)+A_chem(ij,j+l-1,k,kk)*bdy_vari_newp(ij,kk,l,n)
+                        wgt_sum(k,n)=wgt_sum(k,n)+A_chem(ij,j+l-1,k,kk)
+                     elseif(j.eq.ny) then
+                        fld_sum(k,n)=fld_sum(k,n)+A_chem(ij,j-l+1,k,kk)*bdy_vari_newp(ij,kk,l,n)
+                        wgt_sum(k,n)=wgt_sum(k,n)+A_chem(ij,j-l+1,k,kk)
+                     endif
+!                  endif
+               enddo
+            enddo
+         enddo
+         do n=1,ntp
+            do k=1,nz
+               if(wgt_sum(k,n).gt.0.) then
+                  bdy_vari_new_smth(ij,k,l,n)=fld_sum(k,n)/wgt_sum(k,n)
+               else
+                  bdy_vari_new_smth(ij,k,l,n)=bdy_vari_newp(ij,k,l,n)
+               endif
+            enddo
+         enddo
+      enddo
+   enddo
+   bdy_vari_new(:,:,:,:)=bdy_vari_new_smth(:,:,:,:)
+   deallocate(bdy_vari_newp)
+   deallocate(bdy_vari_new_smth)
+   deallocate(fld_sum)
+   deallocate(wgt_sum)
+end subroutine perturb_bdy_fields
 
 !-------------------------------------------------------------------------------
 
@@ -1079,7 +1411,7 @@ subroutine get_WRFINPUT_lat_lon(lat,lon,nx,ny)
    character*(80)                         :: file
 !
 ! open netcdf file
-   file='wrfinput_d01.e001'
+   file='wrfinput_d01'
    name='XLAT'
    rc = nf_open(trim(file),NF_NOWRITE,f_id)
 !   print *, trim(file)
@@ -1156,11 +1488,11 @@ end subroutine get_WRFINPUT_lat_lon
 
 !-------------------------------------------------------------------------------
 
-subroutine get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp,nmem)
+subroutine get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp)
    implicit none
    include 'netcdf.inc'
    integer, parameter                    :: maxdim=6
-   integer                               :: k,nx,ny,nz,nzp,nmem
+   integer                               :: k,nx,ny,nz,nzp
    integer                               :: i,imem,rc
    integer                               :: f_id
    integer                               :: v_id_ph,v_id_phb,v_ndim,typ,natts
@@ -1175,123 +1507,32 @@ subroutine get_WRFINPUT_geo_ht(geo_ht,nx,ny,nz,nzp,nmem)
 !
 ! Loop through members to find ensemble mean geo_ht
    geo_ht(:,:,:)=0.
-   do imem=1,nmem
-      if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
-      if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
-      if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
 !
 ! open netcdf file
-      file='wrfinput_d01'//trim(cmem)
-      rc = nf_open(trim(file),NF_NOWRITE,f_id)
-      if(rc.ne.0) then
-         print *, 'nf_open error ',trim(file)
-         stop
-      endif
-!
-! get variables identifiers
-      name='PH'
-      rc = nf_inq_varid(f_id,trim(name),v_id_ph)
-      if(rc.ne.0) then
-         print *, 'nf_inq_varid error ', v_id_ph
-         stop
-      endif
-      name='PHB'
-      rc = nf_inq_varid(f_id,trim(name),v_id_phb)
-      if(rc.ne.0) then
-         print *, 'nf_inq_varid error ', v_id_phb
-         stop
-      endif
-!
-! get dimension identifiers
-      v_dimid=0
-      rc = nf_inq_var(f_id,v_id_ph,v_nam,typ,v_ndim,v_dimid,natts)
-      if(rc.ne.0) then
-         print *, 'nf_inq_var error ', v_dimid
-         stop
-      endif
-!
-! get dimensions
-      v_dim(:)=1
-      do i=1,v_ndim
-         rc = nf_inq_dimlen(f_id,v_dimid(i),v_dim(i))
-      enddo
-      if(rc.ne.0) then
-         print *, 'nf_inq_dimlen error ', v_dim
-         stop
-      endif
-!
-! check dimensions
-      if(nx.ne.v_dim(1)) then
-         print *, 'ERROR: nx dimension conflict ',nx,v_dim(1)
-         stop
-      else if(ny.ne.v_dim(2)) then
-         print *, 'ERROR: ny dimension conflict ',ny,v_dim(2)
-         stop
-      else if(nzp.ne.v_dim(3)) then             
-         print *, 'ERROR: nzp dimension conflict ','nzp',v_dim(3)
-         stop
-      endif
-!
-! get data
-      one(:)=1
-      rc = nf_get_vara_real(f_id,v_id_ph,one,v_dim,ph)
-      if(rc.ne.0) then
-         print *, 'nf_get_vara_real ', ph(1,1,1)
-         stop
-      endif
-      rc = nf_get_vara_real(f_id,v_id_phb,one,v_dim,phb)
-      if(rc.ne.0) then
-         print *, 'nf_get_vara_real ', phb(1,1,1)
-         stop
-      endif
-!
-! get mean geo_ht
-      do k=1,nz
-         geo_ht(:,:,k)=geo_ht(:,:,k)+(ph(:,:,k)+phb(:,:,k)+ph(:,:,k+1)+ &
-         phb(:,:,k+1))/2./float(nmem)
-      enddo
-      rc = nf_close(f_id)
-   enddo
-end subroutine get_WRFINPUT_geo_ht
-
-!-------------------------------------------------------------------------------
-
-subroutine get_WRFCHEM_emiss_data(file,name,data,nx,ny,nz_chem,nl)
-   implicit none
-   include 'netcdf.inc'
-   integer, parameter                    :: maxdim=6
-   integer                               :: nx,ny,nz_chem,nl
-   integer                               :: i,rc
-   integer                               :: f_id
-   integer                               :: v_id,v_ndim,typ,natts
-   integer,dimension(maxdim)             :: one
-   integer,dimension(maxdim)             :: v_dimid
-   integer,dimension(maxdim)             :: v_dim
-   real,dimension(nx,ny,nz_chem,nl)      :: data
-   character(len=150)                    :: v_nam
-   character*(*)                         :: name
-   character*(*)                         :: file
-!
-! open netcdf file
-   rc = nf_open(trim(file),NF_SHARE,f_id)
-!   print *, trim(file)
+   file='wrfinput_d01'
+   rc = nf_open(trim(file),NF_NOWRITE,f_id)
    if(rc.ne.0) then
-      print *, 'nf_open error in get ',rc, trim(file)
+      print *, 'nf_open error ',trim(file)
       stop
    endif
 !
 ! get variables identifiers
-   rc = nf_inq_varid(f_id,trim(name),v_id)
-!   print *, v_id
+   name='PH'
+   rc = nf_inq_varid(f_id,trim(name),v_id_ph)
    if(rc.ne.0) then
-      print *, 'nf_inq_varid error ', v_id
+      print *, 'nf_inq_varid error ', v_id_ph
+      stop
+   endif
+   name='PHB'
+   rc = nf_inq_varid(f_id,trim(name),v_id_phb)
+   if(rc.ne.0) then
+      print *, 'nf_inq_varid error ', v_id_phb
       stop
    endif
 !
 ! get dimension identifiers
    v_dimid=0
-   rc = nf_inq_var(f_id,v_id,v_nam,typ,v_ndim,v_dimid,natts)
-!   print *, v_dimid
+   rc = nf_inq_var(f_id,v_id_ph,v_nam,typ,v_ndim,v_dimid,natts)
    if(rc.ne.0) then
       print *, 'nf_inq_var error ', v_dimid
       stop
@@ -1302,7 +1543,6 @@ subroutine get_WRFCHEM_emiss_data(file,name,data,nx,ny,nz_chem,nl)
    do i=1,v_ndim
       rc = nf_inq_dimlen(f_id,v_dimid(i),v_dim(i))
    enddo
-!   print *, v_dim
    if(rc.ne.0) then
       print *, 'nf_inq_dimlen error ', v_dim
       stop
@@ -1315,153 +1555,31 @@ subroutine get_WRFCHEM_emiss_data(file,name,data,nx,ny,nz_chem,nl)
    else if(ny.ne.v_dim(2)) then
       print *, 'ERROR: ny dimension conflict ',ny,v_dim(2)
       stop
-   else if(nz_chem.ne.v_dim(3)) then             
-      print *, 'ERROR: nz_chem dimension conflict ',nz_chem,v_dim(3)
-      stop
-   else if(1.ne.v_dim(4)) then             
-      print *, 'ERROR: time dimension conflict ',1,v_dim(4)
+   else if(nzp.ne.v_dim(3)) then             
+      print *, 'ERROR: nzp dimension conflict ','nzp',v_dim(3)
       stop
    endif
 !
 ! get data
    one(:)=1
-   rc = nf_get_vara_real(f_id,v_id,one,v_dim,data)
+   rc = nf_get_vara_real(f_id,v_id_ph,one,v_dim,ph)
    if(rc.ne.0) then
-      print *, 'nf_get_vara_real ', data(1,1,1,1)
+      print *, 'nf_get_vara_real ', ph(1,1,1)
       stop
    endif
+   rc = nf_get_vara_real(f_id,v_id_phb,one,v_dim,phb)
+   if(rc.ne.0) then
+      print *, 'nf_get_vara_real ', phb(1,1,1)
+      stop
+   endif
+!
+! get mean geo_ht
+   do k=1,nz
+      geo_ht(:,:,k)=(ph(:,:,k)+phb(:,:,k) + ph(:,:,k+1)+ &
+      phb(:,:,k+1))/2.
+   enddo
    rc = nf_close(f_id)
-   return
-end subroutine get_WRFCHEM_emiss_data
-
-!-------------------------------------------------------------------------------
-
-subroutine put_WRFCHEM_emiss_data(file,name,data,nx,ny,nz_chem,nl)
-   implicit none
-   include 'netcdf.inc'
-   integer, parameter                    :: maxdim=6
-   integer                               :: nx,ny,nz_chem,nl
-   integer                               :: i,rc
-   integer                               :: f_id
-   integer                               :: v_id,v_ndim,typ,natts
-   integer,dimension(maxdim)             :: one
-   integer,dimension(maxdim)             :: v_dimid
-   integer,dimension(maxdim)             :: v_dim
-   real,dimension(nx,ny,nz_chem,nl)      :: data
-   character(len=150)                    :: v_nam
-   character*(*)                         :: name
-   character*(*)                         :: file
-!
-! open netcdf file
-   rc = nf_open(trim(file),NF_WRITE,f_id)
-   if(rc.ne.0) then
-      print *, 'nf_open error in put ',rc, trim(file)
-      stop
-   endif
-!   print *, 'f_id ',f_id
-!
-! get variables identifiers
-    rc = nf_inq_varid(f_id,trim(name),v_id)
-!    print *, v_id
-    if(rc.ne.0) then
-       print *, 'nf_inq_varid error ', v_id
-       stop
-    endif
-!    print *, 'v_id ',v_id
-!
-! get dimension identifiers
-    v_dimid=0
-    rc = nf_inq_var(f_id,v_id,v_nam,typ,v_ndim,v_dimid,natts)
-!    print *, v_dimid
-    if(rc.ne.0) then
-       print *, 'nf_inq_var error ', v_dimid
-       stop
-    endif
-!    print *, 'v_ndim, v_dimid ',v_ndim,v_dimid      
-!
-! get dimensions
-    v_dim(:)=1
-    do i=1,v_ndim
-       rc = nf_inq_dimlen(f_id,v_dimid(i),v_dim(i))
-    enddo
-!    print *, v_dim
-    if(rc.ne.0) then
-       print *, 'nf_inq_dimlen error ', v_dim
-       stop
-    endif
-!
-! check dimensions
-    if(nx.ne.v_dim(1)) then
-       print *, 'ERROR: nx dimension conflict ',nx,v_dim(1)
-       stop
-    else if(ny.ne.v_dim(2)) then
-       print *, 'ERROR: ny dimension conflict ',ny,v_dim(2)
-       stop
-    else if(nz_chem.ne.v_dim(3)) then             
-       print *, 'ERROR: nz_chem dimension conflict ',nz_chem,v_dim(3)
-       stop
-    else if(1.ne.v_dim(4)) then             
-       print *, 'ERROR: time dimension conflict ',1,v_dim(4)
-       stop
-    endif
-!
-! put data
-    one(:)=1
-   rc = nf_put_vara_real(f_id,v_id,one(1:v_ndim),v_dim(1:v_ndim),data)
-   if(rc.ne.0) then
-      print *, 'nf_put_vara_real return code ',rc
-      print *, 'f_id,v_id ',f_id,v_id
-      print *, 'one ',one(1:v_ndim)
-      print *, 'v_dim ',v_dim(1:v_ndim)
-      stop
-   endif
-   rc = nf_close(f_id)
-   return
-end subroutine put_WRFCHEM_emiss_data
-
-!-------------------------------------------------------------------------------
-
-subroutine init_random_seed()
-   implicit none
-   integer, allocatable :: aseed(:)
-   integer :: i, n, un, istat, dt(8), pid, t(2), s
-   integer(8) :: count, tms, ierr
-
-   call random_seed(size = n)
-   allocate(aseed(n))
-!
-! Fallback to XOR:ing the current time and pid. The PID is
-! useful in case one launches multiple instances of the same
-! program in parallel.                                                  
-   call system_clock(count)
-   if (count /= 0) then
-      t = transfer(count, t)
-   else
-      call date_and_time(values=dt)
-      tms = (dt(1) - 1970) * 365_8 * 24 * 60 * 60 * 1000 &
-           + dt(2) * 31_8 * 24 * 60 * 60 * 1000 &
-           + dt(3) * 24 * 60 * 60 * 60 * 1000 &
-           + dt(5) * 60 * 60 * 1000 &
-           + dt(6) * 60 * 1000 + dt(7) * 1000 &
-           + dt(8)
-      t = transfer(tms, t)
-   end if
-   s = ieor(t(1), t(2))
-!   pid = getpid() + 1099279 ! Add a prime
-   call pxfgetpid(pid,ierr)
-   s = ieor(s, pid)
-   if (n >= 3) then
-      aseed(1) = t(1) + 36269
-      aseed(2) = t(2) + 72551
-      aseed(3) = pid
-      if (n > 3) then
-         aseed(4:) = s + 37 * (/ (i, i = 0, n - 4) /)
-      end if
-   else
-      aseed = s + 37 * (/ (i, i = 0, n - 1 ) /)
-   end if
-   call random_seed(put=aseed)
-end subroutine init_random_seed
+end subroutine get_WRFINPUT_geo_ht
 
 !-------------------------------------------------------------------------------
 
@@ -1473,7 +1591,7 @@ subroutine init_const_random_seed(rank,date)
    logical                          :: is_prime
     
    call random_seed(size=n)
-   primes_dim=(rank+1)*n
+   primes_dim=rank*n
    allocate (aseed(n))
    allocate (primes(primes_dim))
    primes(1)=2
@@ -1496,7 +1614,7 @@ subroutine init_const_random_seed(rank,date)
          exit
       endif
    enddo
-   str=((rank+1)-1)*n+1
+   str=(rank-1)*n+1
    do i=str,primes_dim
       aseed(i-str+1)=date*primes(i)
    enddo
@@ -1506,125 +1624,99 @@ end subroutine init_const_random_seed
 
 !-------------------------------------------------------------------------------
 
-subroutine apm_pack_3d(A_pck,A_unpck,nx,ny,nz)
+subroutine apm_pack(A_pck,A_unpck,nx,ny,nz)
    implicit none
-   integer                      :: nx,ny,nz,nt
+   integer                      :: nx,ny,nz
    integer                      :: i,j,k,l,idx
-   real,dimension(nx,ny,nz)     :: A_unpck
-   real,dimension(nx*ny*nz)     :: A_pck
+   real,dimension(nx,ny,nz)  :: A_unpck
+   real,dimension(nx*ny*nz)  :: A_pck
    idx=0
-   do i=1,nx
+   do k=1,nz
       do j=1,ny
-         do k=1,nz
+         do i=1,nx
             idx=idx+1
             A_pck(idx)=A_unpck(i,j,k)
          enddo
       enddo
    enddo
-end subroutine apm_pack_3d
+end subroutine apm_pack
 
 !-------------------------------------------------------------------------------
 
-subroutine apm_unpack_3d(A_pck,A_unpck,nx,ny,nz)
+subroutine apm_unpack(A_pck,A_unpck,nx,ny,nz)
    implicit none
    integer                      :: nx,ny,nz
    integer                      :: i,j,k,l,idx
-   real,dimension(nx,ny,nz)     :: A_unpck
-   real,dimension(nx*ny*nz)     :: A_pck
+   real,dimension(nx,ny,nz)  :: A_unpck
+   real,dimension(nx*ny*nz)  :: A_pck
    idx=0
-   do i=1,nx
+   do k=1,nz
       do j=1,ny
-         do k=1,nz
+         do i=1,nx
             idx=idx+1
             A_unpck(i,j,k)=A_pck(idx)
          enddo
       enddo
    enddo
-end subroutine apm_unpack_3d
+end subroutine apm_unpack
 
 !-------------------------------------------------------------------------------
 
-subroutine apm_pack_4d(A_pck,A_unpck,nx,ny,nz,nt)
+subroutine apm_pack4d(A_pck,A_unpck,nx,ny,nz,nt)
    implicit none
    integer                      :: nx,ny,nz,nt
    integer                      :: i,j,k,l,idx
    real,dimension(nx,ny,nz,nt)  :: A_unpck
    real,dimension(nx*ny*nz*nt)  :: A_pck
    idx=0
-   do i=1,nx
-      do j=1,ny
-         do k=1,nz
-            do l=1,nt
+   do l=1,nt
+      do k=1,nz
+         do j=1,ny
+            do i=1,nx
                idx=idx+1
                A_pck(idx)=A_unpck(i,j,k,l)
             enddo
          enddo
       enddo
    enddo
-end subroutine apm_pack_4d
+end subroutine apm_pack4d
 
 !-------------------------------------------------------------------------------
 
-subroutine apm_unpack_4d(A_pck,A_unpck,nx,ny,nz,nt)
+subroutine apm_unpack4d(A_pck,A_unpck,nx,ny,nz,nt)
    implicit none
    integer                      :: nx,ny,nz,nt
    integer                      :: i,j,k,l,idx
    real,dimension(nx,ny,nz,nt)  :: A_unpck
    real,dimension(nx*ny*nz*nt)  :: A_pck
    idx=0
-   do i=1,nx
-      do j=1,ny
-         do k=1,nz
-            do l=1,nt
+   do l=1,nt
+      do k=1,nz
+         do j=1,ny
+            do i=1,nx
                idx=idx+1
                A_unpck(i,j,k,l)=A_pck(idx)
             enddo
          enddo
       enddo
    enddo
-end subroutine apm_unpack_4d
+end subroutine apm_unpack4d
 
 !-------------------------------------------------------------------------------
 
-subroutine recenter_factors(chem_fac,nx,ny,nz,num_mems,sprd_chem)
-   implicit none
-   integer,           intent(in)       :: nx,ny,nz,num_mems
-   real,              intent(in)       :: sprd_chem
-   real,dimension(nx,ny,nz,num_mems),intent(inout) :: chem_fac
-   integer                                         :: i,j,k,imem
-   real                                            :: mean,std
-   real,dimension(num_mems)                        :: mems,pers
-!
-! Recenter about ensemble mean
-   do i=1,nx
-      do j=1,ny
-         do k=1,nz
-            mems(:)=chem_fac(i,j,k,:)
-            mean=sum(mems)/real(num_mems)
-            pers=(mems-mean)*(mems-mean)
-            std=sqrt(sum(pers)/real(num_mems-1))
-            do imem=1,num_mems
-               chem_fac(i,j,k,imem)=(chem_fac(i,j,k,imem)-mean)*sprd_chem/std
-            enddo
-         enddo
-      enddo
-   enddo
-end subroutine recenter_factors
-
-!-------------------------------------------------------------------------------
-
-subroutine get_WRFCHEM_icbc_data(file,name,data,nx,ny,nz,nt)
+subroutine get_WRFCHEM_icbc_data(file,name,data3d,nx,ny,nz)
    implicit none
    include 'netcdf.inc'
    integer, parameter                    :: maxdim=6
-   integer                               :: nx,ny,nz,nt
+   integer                               :: nx,ny,nz
    integer                               :: i,rc
    integer                               :: f_id
    integer                               :: v_id,v_ndim,typ,natts
    integer,dimension(maxdim)             :: one
    integer,dimension(maxdim)             :: v_dimid
    integer,dimension(maxdim)             :: v_dim
-   real,dimension(nx,ny,nz,nt)           :: data
+   real,dimension(nx,ny,nz)              :: data3d
+   real,dimension(nx,ny,nz,1)            :: data4d
    character(len=200)                    :: v_nam
    character*(*)                         :: name
    character*(*)                         :: file
@@ -1674,21 +1766,22 @@ subroutine get_WRFCHEM_icbc_data(file,name,data,nx,ny,nz,nt)
    else if(nz.ne.v_dim(3)) then             
       print *, 'ERROR: nz dimension conflict ',nz,v_dim(3)
       stop
-   else if(nt.ne.v_dim(4)) then             
+   else if(1.ne.v_dim(4)) then             
       print *, 'ERROR: time dimension conflict ',1,v_dim(4)
       stop
    endif
 !
 ! get data
    one(:)=1
-   rc = nf_get_vara_real(f_id,v_id,one,v_dim,data)
+   rc = nf_get_vara_real(f_id,v_id,one,v_dim,data4d)
    rc = nf_close(f_id)
+   data3d(:,:,:)=data4d(:,:,:,1)
    return
 end subroutine get_WRFCHEM_icbc_data
 
 !-------------------------------------------------------------------------------
 
-subroutine put_WRFCHEM_icbc_data(file,name,data,nx,ny,nz,nt)
+subroutine put_WRFCHEM_icbc_data(file,name,data3d,nx,ny,nz)
    implicit none
    include 'netcdf.inc'
    integer, parameter                    :: maxdim=6
@@ -1699,7 +1792,8 @@ subroutine put_WRFCHEM_icbc_data(file,name,data,nx,ny,nz,nt)
    integer,dimension(maxdim)             :: one
    integer,dimension(maxdim)             :: v_dimid
    integer,dimension(maxdim)             :: v_dim
-   real,dimension(nx,ny,nz,nt)           :: data
+   real,dimension(nx,ny,nz)              :: data3d
+   real,dimension(nx,ny,nz,1)            :: data4d
    character(len=200)                    :: v_nam
    character*(*)                         :: name
    character*(*)                         :: file
@@ -1752,18 +1846,174 @@ subroutine put_WRFCHEM_icbc_data(file,name,data,nx,ny,nz,nt)
    else if(nz.ne.v_dim(3)) then             
       print *, 'ERROR: nz dimension conflict ',nz,v_dim(3)
       stop
-   else if(nt.ne.v_dim(4)) then             
+   else if(1.ne.v_dim(4)) then             
+      print *, 'ERROR: time dimension conflict ',1,v_dim(4)
+      stop
+   endif
+!
+! put data
+   data4d(:,:,:,1)=data3d(:,:,:)   
+   one(:)=1
+   rc = nf_put_vara_real(f_id,v_id,one(1:v_ndim),v_dim(1:v_ndim),data4d)
+   rc = nf_close(f_id)
+   return
+end subroutine put_WRFCHEM_icbc_data
+
+!-------------------------------------------------------------------------------
+
+subroutine get_WRFCHEM_bdy_data(file,name,data4d,nx,ny,nz,nt)
+   implicit none
+   include 'netcdf.inc'
+   integer, parameter                    :: maxdim=6
+   integer                               :: nx,ny,nz,nt
+   integer                               :: i,rc
+   integer                               :: f_id
+   integer                               :: v_id,v_ndim,typ,natts
+   integer,dimension(maxdim)             :: one
+   integer,dimension(maxdim)             :: v_dimid
+   integer,dimension(maxdim)             :: v_dim
+   real,dimension(nx,ny,nz,nt)           :: data4d
+   character(len=200)                    :: v_nam
+   character*(*)                         :: name
+   character*(*)                         :: file
+!
+! open netcdf file
+   rc = nf_open(trim(file),NF_SHARE,f_id)
+   if(rc.ne.0) then
+      print *, 'nf_open error in get ',rc, trim(file)
+      stop
+   endif
+!
+! get variables identifiers
+   rc = nf_inq_varid(f_id,trim(name),v_id)
+!   print *, v_id
+   if(rc.ne.0) then
+      print *, 'nf_inq_varid error ', v_id
+      stop
+   endif
+!
+! get dimension identifiers
+   v_dimid=0
+   rc = nf_inq_var(f_id,v_id,v_nam,typ,v_ndim,v_dimid,natts)
+!   print *, v_dimid
+   if(rc.ne.0) then
+      print *, 'nf_inq_var error ', v_dimid
+      stop
+   endif
+!
+! get dimensions
+   v_dim(:)=1
+   do i=1,v_ndim
+      rc = nf_inq_dimlen(f_id,v_dimid(i),v_dim(i))
+   enddo
+!   print *, v_dim
+   if(rc.ne.0) then
+      print *, 'nf_inq_dimlen error ', v_dim
+      stop
+   endif
+!
+! check dimensions
+   if(nx.ne.v_dim(1)) then
+      print *, 'ERROR: nx dimension conflict ',nx,v_dim(1)
+      stop
+   else if(ny.ne.v_dim(2)) then
+      print *, 'ERROR: ny dimension conflict ',ny,v_dim(2)
+      stop
+   else if(nz.ne.v_dim(3)) then             
+      print *, 'ERROR: nz dimension conflict ',nz,v_dim(3)
+      stop
+   else if(2.ne.v_dim(4)) then             
+      print *, 'ERROR: time dimension conflict ',1,v_dim(4)
+      stop
+   endif
+!
+! get data
+   one(:)=1
+   rc = nf_get_vara_real(f_id,v_id,one,v_dim,data4d)
+   rc = nf_close(f_id)
+   return
+end subroutine get_WRFCHEM_bdy_data
+
+!-------------------------------------------------------------------------------
+
+subroutine put_WRFCHEM_bdy_data(file,name,data4d,nx,ny,nz,nt)
+   implicit none
+   include 'netcdf.inc'
+   integer, parameter                    :: maxdim=6
+   integer                               :: nx,ny,nz,nt
+   integer                               :: i,rc
+   integer                               :: f_id
+   integer                               :: v_id,v_ndim,typ,natts
+   integer,dimension(maxdim)             :: one
+   integer,dimension(maxdim)             :: v_dimid
+   integer,dimension(maxdim)             :: v_dim
+   real,dimension(nx,ny,nz,nt)           :: data4d
+   character(len=200)                    :: v_nam
+   character*(*)                         :: name
+   character*(*)                         :: file
+!
+! open netcdf file
+   rc = nf_open(trim(file),NF_WRITE,f_id)
+   if(rc.ne.0) then
+      print *, 'nf_open error in put ',rc, trim(file)
+      stop
+   endif
+!   print *, 'f_id ',f_id
+!
+! get variables identifiers
+   rc = nf_inq_varid(f_id,trim(name),v_id)
+!   print *, v_id
+   if(rc.ne.0) then
+      print *, 'nf_inq_varid error ', v_id
+      stop
+   endif
+!   print *, 'v_id ',v_id
+!
+! get dimension identifiers
+   v_dimid=0
+   rc = nf_inq_var(f_id,v_id,v_nam,typ,v_ndim,v_dimid,natts)
+!   print *, v_dimid
+   if(rc.ne.0) then
+      print *, 'nf_inq_var error ', v_dimid
+      stop
+   endif
+!   print *, 'v_ndim, v_dimid ',v_ndim,v_dimid      
+!
+! get dimensions
+   v_dim(:)=1
+   do i=1,v_ndim
+      rc = nf_inq_dimlen(f_id,v_dimid(i),v_dim(i))
+   enddo
+!   print *, v_dim
+   if(rc.ne.0) then
+      print *, 'nf_inq_dimlen error ', v_dim
+      stop
+   endif
+!
+! check dimensions
+   if(nx.ne.v_dim(1)) then
+      print *, 'ERROR: nx dimension conflict ',nx,v_dim(1)
+      stop
+   else if(ny.ne.v_dim(2)) then
+      print *, 'ERROR: ny dimension conflict ',ny,v_dim(2)
+      stop
+   else if(nz.ne.v_dim(3)) then             
+      print *, 'ERROR: nz dimension conflict ',nz,v_dim(3)
+      stop
+   else if(2.ne.v_dim(4)) then             
       print *, 'ERROR: time dimension conflict ',1,v_dim(4)
       stop
    endif
 !
 ! put data
    one(:)=1
-   rc = nf_put_vara_real(f_id,v_id,one(1:v_ndim),v_dim(1:v_ndim),data)
+   rc = nf_put_vara_real(f_id,v_id,one(1:v_ndim),v_dim(1:v_ndim),data4d)
    rc = nf_close(f_id)
    return
-end subroutine put_WRFCHEM_icbc_data
-!
+end subroutine put_WRFCHEM_bdy_data
+
+!-------------------------------------------------------------------------------
+ 
 subroutine horiz_grid_wts(iref,jref,indx,jndx,ncnt,wgt,wgt_sum,lon,lat,nx,ny,nxy, &
 ngrid_corr,corr_lngth_hz,rank)
    implicit none
@@ -1798,3 +2048,103 @@ ngrid_corr,corr_lngth_hz,rank)
       enddo
    enddo
 end subroutine horiz_grid_wts
+
+!-------------------------------------------------------------------------------
+ 
+subroutine limit_fld_maxnmin(fld,nx,ny,nz,nt,zfac)
+   implicit none
+   integer,                          intent(in)      :: nx,ny,nz,nt
+   integer                                           :: i,j,k,l
+   real,                             intent(in)      :: zfac
+   real, dimension(nx,ny,nz,nt),     intent(inout)   :: fld
+   real, dimension(nz,nt)                            :: fld_mn,fld_std
+   real, dimension(nx,ny,nz,nt)                      :: fld_tmp
+!
+! Calculate mean
+   fld_mn(:,:)=0.
+   do l=1,nt
+      do k=1,nz
+         do i=1,nx
+            do j=1,ny
+               fld_mn(k,l)=fld_mn(k,l)+fld(i,j,k,l)
+            enddo
+         enddo
+         fld_mn(k,l)=fld_mn(k,l)/real(nx*ny)
+      enddo
+   enddo
+!
+! Calculate spatial standard deviation
+   fld_std(:,:)=0.
+   do l=1,nt
+      do k=1,nz
+         do i=1,nx
+            do j=1,ny
+               fld_std(k,l)=fld_std(k,l)+(fld(i,j,k,l)-fld_mn(k,l))*(fld(i,j,k,l)-fld_mn(k,l))
+            enddo
+         enddo
+         fld_std(k,l)=sqrt(fld_std(k,l)/real(nx*ny-1))
+      enddo
+   enddo
+!
+!   Check and limit the distribution extreme values
+   do l=1,nt
+      do k=1,nz
+         do i=1,nx
+            do j=1,ny
+               if(fld(i,j,k,l).gt.fld_mn(k,l)+zfac*fld_std(k,l)) fld(i,j,k,l)=fld_mn(k,l)+zfac*fld_std(k,l)
+!               if(fld(i,j,k,l).lt.fld_mn(k,l)-zfac*fld_std(k,l)) fld(i,j,k,l)=fld_mn(k,l)-zfac*fld_std(k,l)
+            enddo
+         enddo
+      enddo
+   enddo
+end subroutine limit_fld_maxnmin
+
+!-------------------------------------------------------------------------------
+ 
+subroutine limit_bdy_maxnmin(fld,nxy,nz,nhalo,nt,zfac)
+   implicit none
+   integer,                          intent(in)      :: nxy,nz,nhalo,nt
+   integer                                           :: ij,k,h,l
+   real,                             intent(in)      :: zfac
+   real, dimension(nxy,nz,nhalo,nt), intent(inout)   :: fld
+   real, dimension(nz,nt)                            :: fld_mn,fld_std
+!
+! Calculate mean
+   fld_mn(:,:)=0.
+   do l=1,nt
+      do k=1,nz
+         do ij=1,nxy
+            do h=1,nhalo
+               fld_mn(k,l)=fld_mn(k,l)+fld(ij,k,h,l)
+            enddo
+         enddo
+         fld_mn(k,l)=fld_mn(k,l)/real(nxy*nhalo)
+      enddo
+   enddo
+!
+! Calculate spatial standard deviation
+   fld_std(:,:)=0.
+   do l=1,nt
+      do k=1,nz
+         do ij=1,nxy
+            do h=1,nhalo
+               fld_std(k,l)=fld_std(k,l)+(fld(ij,k,h,l)-fld_mn(k,l))*(fld(ij,k,h,l)-fld_mn(k,l))
+            enddo
+         enddo
+         fld_std(k,l)=sqrt(fld_std(k,l)/real(nxy*nhalo-1))
+      enddo
+   enddo
+!
+!   Check and limit the distribution extreme values
+   do l=1,nt
+      do k=1,nz
+         do ij=1,nxy
+            do h=1,nhalo
+               if(fld(ij,k,h,l).gt.fld_mn(k,l)+zfac*fld_std(k,l)) fld(ij,k,h,l)=fld_mn(k,l)+zfac*fld_std(k,l)
+!               if(fld(ij,k,h,l).lt.fld_mn(k,l)-zfac*fld_std(k,l)) fld(ij,k,h,l)=fld_mn(k,l)-zfac*fld_std(k,l)
+            enddo
+         enddo
+      enddo
+   enddo
+end subroutine limit_bdy_maxnmin
+!
