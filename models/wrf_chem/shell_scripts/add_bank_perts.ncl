@@ -43,7 +43,7 @@ begin
  asciiwrite("mem"+MEM_NUM+"_pert_bank_num",ens_mem_num)
  print ("bank member number "+ens_mem_num)
 
- pert_fields = (/"U", "V", "T", "QVAPOR","MU"/)
+ pert_fields = (/"U", "V", "THM", "QVAPOR","MU"/)
  pert_scale  = (/scale_U,scale_V,scale_T,scale_Q,scale_M/)
  nperts = dimsizes(pert_fields)
  pert_in = addfile(pert_bank_path+"/"+pert_bank_file,"r")

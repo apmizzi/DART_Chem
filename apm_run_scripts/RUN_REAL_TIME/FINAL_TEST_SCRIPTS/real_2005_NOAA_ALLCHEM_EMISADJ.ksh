@@ -37,7 +37,7 @@ export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
 export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}
 #
-export RUN_DIR=${EXPERIMENT_DIR}/OUTPUT_2005_NOAA_EMISADJ_30MEMS_DIURNAL_CYCLE
+export RUN_DIR=${EXPERIMENT_DIR}/OUTPUT_2005_NOAA_EMISADJ_30MEMS
 export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_2005_NOAA_EMISADJ_30MEMS
 export EXPERIMENT_INPUT_OBS=NOAA
 #
@@ -111,42 +111,30 @@ export NL_EVALUATE_THESE_OBS_TYPES="'AIRNOW_CO',
                                     'AIRNOW_NO2',
                                     'AIRNOW_SO2'"
 
-#export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
-#                                   'RADIOSONDE_U_WIND_COMPONENT',
-#                                   'RADIOSONDE_V_WIND_COMPONENT',
-#                                   'RADIOSONDE_SPECIFIC_HUMIDITY',
-#                                   'RADIOSONDE_SURFACE_ALTIMETER',
-#                                   'MARINE_SFC_U_WIND_COMPONENT',
-#                                   'MARINE_SFC_V_WIND_COMPONENT',
-#                                   'MARINE_SFC_TEMPERATURE',
-#                                   'MARINE_SFC_SPECIFIC_HUMIDITY',
-#                                   'MARINE_SFC_ALTIMETER',
-#                                   'AIRCRAFT_U_WIND_COMPONENT',
-#                                   'AIRCRAFT_V_WIND_COMPONENT',
-#                                   'AIRCRAFT_TEMPERATURE',
-#                                   'ACARS_U_WIND_COMPONENT',
-#                                   'ACARS_V_WIND_COMPONENT',
-#                                   'ACARS_TEMPERATURE',
-#                                   'LAND_SFC_U_WIND_COMPONENT',
-#                                   'LAND_SFC_V_WIND_COMPONENT',
-#                                   'LAND_SFC_TEMPERATURE',
-#                                   'LAND_SFC_SPECIFIC_HUMIDITY',
-#                                   'LAND_SFC_ALTIMETER',
-#                                   'SAT_U_WIND_COMPONENT',
-#                                   'SAT_V_WIND_COMPONENT',
-#                                   'MOPITT_V8_CO_PROFILE',
-#                                   'MOPITT_V9_CO_PROFILE',
-#                                   'OMI_O3_PROFILE',
-#                                   'OMI_NO2_DOMINO_TROP_COL',
-#                                   'OMI_SO2_PBL_COL',
-#                                   'GOME2A_NO2_TROP_COL',
-#                                   'SCIAM_NO2_TROP_COL',
-#                                   'MLS_O3_PROFILE',
-#                                   'MLS_HNO3_PROFILE',
-#                                   'TES_CO_PROFILE',
-#                                   'TES_O3_PROFILE'"
-#
-export NL_ASSIMILATE_THESE_OBS_TYPES="'MOPITT_V8_CO_PROFILE',
+export NL_ASSIMILATE_THESE_OBS_TYPES="'RADIOSONDE_TEMPERATURE',
+                                   'RADIOSONDE_U_WIND_COMPONENT',
+                                   'RADIOSONDE_V_WIND_COMPONENT',
+                                   'RADIOSONDE_SPECIFIC_HUMIDITY',
+                                   'RADIOSONDE_SURFACE_ALTIMETER',
+                                   'MARINE_SFC_U_WIND_COMPONENT',
+                                   'MARINE_SFC_V_WIND_COMPONENT',
+                                   'MARINE_SFC_TEMPERATURE',
+                                   'MARINE_SFC_SPECIFIC_HUMIDITY',
+                                   'MARINE_SFC_ALTIMETER',
+                                   'AIRCRAFT_U_WIND_COMPONENT',
+                                   'AIRCRAFT_V_WIND_COMPONENT',
+                                   'AIRCRAFT_TEMPERATURE',
+                                   'ACARS_U_WIND_COMPONENT',
+                                   'ACARS_V_WIND_COMPONENT',
+                                   'ACARS_TEMPERATURE',
+                                   'LAND_SFC_U_WIND_COMPONENT',
+                                   'LAND_SFC_V_WIND_COMPONENT',
+                                   'LAND_SFC_TEMPERATURE',
+                                   'LAND_SFC_SPECIFIC_HUMIDITY',
+                                   'LAND_SFC_ALTIMETER',
+                                   'SAT_U_WIND_COMPONENT',
+                                   'SAT_V_WIND_COMPONENT',
+                                   'MOPITT_V8_CO_PROFILE',
                                    'MOPITT_V9_CO_PROFILE',
                                    'OMI_O3_PROFILE',
                                    'OMI_NO2_DOMINO_TROP_COL',
@@ -157,6 +145,7 @@ export NL_ASSIMILATE_THESE_OBS_TYPES="'MOPITT_V8_CO_PROFILE',
                                    'MLS_HNO3_PROFILE',
                                    'TES_CO_PROFILE',
                                    'TES_O3_PROFILE'"
+#
 #
 # Set observation error scaling and retention factors (assign constants)
 source ${RS_SCRIPTS_DIR}/RS_Fac_Retn_Constants.ksh

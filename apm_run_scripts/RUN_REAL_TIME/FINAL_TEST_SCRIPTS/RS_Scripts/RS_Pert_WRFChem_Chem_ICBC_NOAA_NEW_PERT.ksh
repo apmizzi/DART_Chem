@@ -223,7 +223,7 @@ EOF
    ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${PERT_JOB_CLASS} ${PERT_TIME_LIMIT} ${PERT_NODES} ${PERT_TASKS} perturb_chem_icbc.exe PARALLEL ${ACCOUNT} ${PERT_MODEL}
 #
    qsub -Wblock=true job.ksh
-   mv index.html index_pert.html
+   mv index_${JOBRND} index_pert.html
 #
 # Recenter the perturbed ensemble
    rm jobx.ksh
@@ -290,7 +290,7 @@ EOF
    export JOBRND=${TRANDOM}_nco
    ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${GENERAL_JOB_CLASS} ${GENERAL_TIME_LIMIT} ${GENERAL_NODES} ${GENERAL_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${GENERAL_MODEL}
    qsub -Wblock=true job.ksh
-   mv index.html index_nco.html
+   mv index_${JOBRND} index_nco.html
 #   
 # Clean directory
 #   rm *_cr_icbc_pert* job,ksh met_em.d* mozbc* perturb_chem_*

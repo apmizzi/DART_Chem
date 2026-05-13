@@ -2,7 +2,8 @@
    cd ${RUN_DIR}/${DATE}/wrfchem_chem_emiss
 #
 # SET PARAMETERS
-      export NL_EMISS_TIME=0.0
+## YYC     export NL_EMISS_TIME=0.0
+      export NL_EMISS_TIME=1.0
       export NL_SW_SEED=true
 #
 # COPY ADJUSTMENT AND PERTURBATION CODE
@@ -167,7 +168,7 @@ EOF
 #
          rm -rf index.html	    
          qsub -Wblock=true job.ksh
-         mv index.html index_${L_DATE}.html
+         mv index_${JOBRND} index_${L_DATE}.html
 	    
          if [[ -e pert_chem_emis_temp && ${NL_PERT_CHEM} = "true" ]]; then
             mv pert_chem_emis_temp pert_chem_emis
@@ -180,10 +181,17 @@ EOF
          fi
 #
 # ADVANCE TIME
+# CHECK_THIS	 
+	 mv ${WRFCHEMI} ${WRFCHEMI}_parent
+	 mv ${WRFFIRECHEMI} ${WRFFIRECHEMI}_parent
+         if [[ ${L_HH} -eq 00 || ${L_HH} -eq 03 || ${L_HH} -eq 06 || ${L_HH} -eq 09 || ${L_HH} -eq 12 || ${L_HH} -eq 15 || ${L_HH} -eq 18 || ${L_HH} -eq 21 ]]; then
+            mv ${WRFBIOCHEMI} ${WRFBIOCHEMI}_parent
+         fi 
+#
          export WRFCHEMI_OLD=wrfchemi_d${CR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00
          export WRFFIRECHEMI_OLD=wrffirechemi_d${CR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00
          export WRFBIOCHEMI_OLD=wrfbiochemi_d${CR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00	 
-         (( NL_EMISS_TIME=${NL_EMISS_TIME} + 1 ))
+## YYC         (( NL_EMISS_TIME=${NL_EMISS_TIME} + 1 ))
          export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} 1 -f ccyymmddhh 2>/dev/null)
       done
 #

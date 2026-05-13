@@ -141,7 +141,7 @@ EOF
          export JOBRND=${TRANDOM}_adj
          ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${SINGLE_JOB_CLASS} ${SINGLE_TIME_LIMIT} ${SINGLE_NODES} ${SINGLE_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${SINGLE_MODEL}
          qsub -Wblock=true job.ksh
-         mv index.html index_adjust_emiss_log
+         mv index_${JOBRND} index_adjust_emiss_log
       fi
 #
 #########################################################################
@@ -248,7 +248,7 @@ EOF
       export JOBRND=${TRANDOM}_nco1
       ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${SINGLE_JOB_CLASS} ${SINGLE_TIME_LIMIT} ${SINGLE_NODES} ${SINGLE_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${SINGLE_MODEL}
       qsub -Wblock=true job.ksh
-      mv index.html index_nco1.html  
+      mv index_${JOBRND} index_nco1.html  
 #
 # Copy template files
       cp wrfinput_d${CR_DOMAIN}_e001 wrfinput_d${CR_DOMAIN}      
@@ -313,7 +313,7 @@ EOF
       export JOBRND=${RANDOM}_filter
       ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${FILTER_JOB_CLASS} ${FILTER_TIME_LIMIT} ${FILTER_NODES} ${FILTER_TASKS} filter PARALLEL ${ACCOUNT} ${FILTER_MODEL}
       qsub -Wblock=true job.ksh
-      mv index.html index_dart.html
+      mv index_${JOBRND} index_dart.html
 #
 # Check whether DART worked properly
       if [[ ! -f output_postinf_mean.nc || ! -f output_mean.nc || ! -f output_postinf_sd.nc || ! -f output_sd.nc || ! -f obs_seq.final ]]; then
