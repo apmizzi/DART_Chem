@@ -9,11 +9,6 @@
    
    export NL_SW_SEED=true
 #
-   cp ${METGRID_DIR}/met_em.d${CR_DOMAIN}.*.nc ./.
-#   cp ${METGRID_DIR}/met_em.d${FR_DOMAIN}.*.nc ./.
-   cp ${PERT_CHEM_INPUT_DIR}/work/perturb_chem_icbc_CORR_RT_MA_MPI.exe ./perturb_chem_icbc.exe
-   cp ${PERT_CHEM_INPUT_DIR}/work/mozbc.exe ./mozbc.exe
-#
 # SELECT MOZART DATA FILE
    export MOZBC_DATA=${NL_UPPER_DATA_FILE_NAME}
 #
@@ -25,13 +20,33 @@
    export L_HH=$(echo $L_DATE | cut -c9-10)
    export L_MN=$(echo $L_DATE | cut -c11-12)
    export L_SS=$(echo $L_DATE | cut -c13-14)
+   export L_FILE_DATE=${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
 #
-   export WRFINPEN=wrfinput_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
-   export WRFBDYEN=wrfbdy_d${CR_DOMAIN}_${L_YY}-${L_MM}-${L_DD}_${L_HH}:${L_MN}:${L_SS}
+# Remove files for regenerations
+   rm -rf wrfbdy_d${CR_DOMAIN}_${L_YY}*
+   rm -rf wrfinput_d${CR_DOMAIN}_${L_YY}*
+#
+   export L_WORK_DIR=${RUN_DIR}/${DATE}/wrfchem_chem_icbc
+   if [[ ! -e ${L_WORK_DIR}/met_em.d{CR_DOMAIN}.${L_FILE_DATE}.nc ]]; then
+      cp ${METGRID_DIR}/met_em.d${CR_DOMAIN}.*.nc ./.
+   fi
+#   if [[ ! -e ${L_WORK_DIR}/met_em.d{FR_DOMAIN}.${L_FILE_DATE}.nc ]]; then
+#      cp ${METGRID_DIR}/met_em.d${FR_DOMAIN}.*.nc ./.
+#   fi
+   cp ${PERT_CHEM_INPUT_DIR}/work/perturb_chem_icbc_CORR_RT_MA_MPI.exe ./perturb_chem_icbc.exe
+   cp ${PERT_CHEM_INPUT_DIR}/work/mozbc.exe ./mozbc.exe
+
+   export WRFINPEN=wrfinput_d${CR_DOMAIN}_${L_FILE_DATE}
+   export WRFBDYEN=wrfbdy_d${CR_DOMAIN}_${L_FILE_DATE}
    export WRFINPUT_FLD_RW=wrfinput_d${CR_DOMAIN}
    export WRFBDY_FLD_RW=wrfbdy_d${CR_DOMAIN}
-   cp ${REAL_DIR}/${WRFINPEN} ./
-   cp ${REAL_DIR}/${WRFBDYEN} ./
+
+   if [[ ! -e ${L_WORK_DIR}/${WRFINPEN} ]]; then
+      cp ${REAL_DIR}/${WRFINPEN} ./
+   fi
+   if [[ ! -e ${L_WORK_DIR}/${WRFBDYEN} ]]; then
+      cp ${REAL_DIR}/${WRFBDYEN} ./
+   fi
    cp ${WRFINPEN} ${WRFINPUT_FLD_RW}
    cp ${WRFBDYEN} ${WRFBDY_FLD_RW}
 #
@@ -249,10 +264,11 @@ ncks -A ${REAL_DIR}/${WRFINPEN} ${WRFINPEN}
 ncks -A ${REAL_DIR}/${WRFBDYEN} ${WRFBDYEN}
 mv ${WRFINPEN} ${WRFINPEN}_parent
 mv ${WRFBDYEN} ${WRFBDYEN}_parent
-mv ${WRFINPUT_FLD_RW}_mean ${WRFINPEN}_mean
-mv ${WRFBDY_FLD_RW}_mean ${WRFBDYEN}_mean
-mv ${WRFINPUT_FLD_RW}_vari ${WRFINPEN}_vari
-mv ${WRFBDY_FLD_RW}_vari ${WRFBDYEN}_vari
+#
+ mv ${WRFINPUT_FLD_RW}_mean ${WRFINPEN}_mean
+ mv ${WRFBDY_FLD_RW}_mean ${WRFBDYEN}_mean
+ mv ${WRFINPUT_FLD_RW}_vari ${WRFINPEN}_vari
+ mv ${WRFBDY_FLD_RW}_vari ${WRFBDYEN}_vari
 #
 # COMBINE WRFCHEM WITH WRF FR DOMAIN PARENT FILES
 #export WRFINPEN=wrfinput_d${FR_DOMAIN}_${YYYY}-${MM}-${DD}_${HH}:${L_MN}:${L_SS}

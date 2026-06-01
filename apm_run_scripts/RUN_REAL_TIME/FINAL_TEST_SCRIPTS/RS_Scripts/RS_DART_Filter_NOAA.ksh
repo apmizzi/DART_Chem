@@ -187,13 +187,14 @@ EOF
 #
 # Copy background input file
          cp ${BACKGND_FCST_DIR}/run_${CMEM}/wrfout_d${CR_DOMAIN}_${FILE_DATE} wrfinput_d${CR_DOMAIN}_${CMEM}
+         cp ${BACKGND_FCST_DIR}/run_${CMEM}/wrfout_d${CR_DOMAIN}_${FILE_DATE} wrfout_d${CR_DOMAIN}_prior_${CMEM}
 #   
 # Copy emission input files
          if [[ ${DATE} -gt  ${FIRST_EMISS_INV_DATE} && ${ADD_EMISS} = "true" ]]; then
             cp emissions_scaling/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_new wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
             cp emissions_scaling/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_new wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
             cp emissions_scaling/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_new wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_prior.${CMEM}
-            cp emissions_scaling/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_new wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_prior.${CMEM}  
+            cp emissions_scaling/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_new wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_prior.${CMEM}
          else
 	    echo "APM: Copy emissions from wrfchem_chem_emiss"
             cp ${RUN_INPUT_DIR}/${DATE}/wrfchem_chem_emiss/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./.

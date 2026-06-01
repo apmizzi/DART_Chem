@@ -1,8 +1,8 @@
 function plot_timeseries_yearly_TRACER_I_CHEM_IC_metrics
    clear all;
 %
-   YYYY_STR=2008;
-   YYYY_END=2023;
+   YYYY_STR=2006;
+   YYYY_END=2006;
    MMDDHH_STR=040200;
    MMDDHH_END=040300;
 %

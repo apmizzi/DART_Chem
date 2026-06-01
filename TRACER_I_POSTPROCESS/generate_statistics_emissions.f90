@@ -4,7 +4,7 @@
       integer                                    :: i,j,k,l,imem,ifld,unit
       integer                                    :: npts_conus,npts_urban,npts_rural
       integer                                    :: yyyy_traceri,mm_traceri,dd_traceri,hh_traceri
-      integer                                    :: num_conus,num_rural,num_cities
+      integer                                    :: num_conus,num_rural,num_regions,num_cities
       integer                                    :: date_traceri
       integer,allocatable,dimension(:)           :: num_urban
       integer,allocatable,dimension(:)           :: traceri_conus_ii,traceri_conus_jj
@@ -46,9 +46,10 @@
       nx=440
       ny=284
       npts_conus=nx*ny
-      npts_urban=200
+      npts_urban=1000
       npts_rural=nx*ny
       num_cities=29
+      num_regions=3592
 !
       unit=20
       open(unit=unit,file="ens_postprocess.nl",form="formatted", &
@@ -86,15 +87,15 @@
       npts_conus,1,1,1)
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"TRACER_I_CONUS_JJ",traceri_conus_jj, &
       npts_conus,1,1,1)
-      allocate(num_urban(num_cities))
-      allocate(traceri_urban_ii(num_cities,npts_urban))
-      allocate(traceri_urban_jj(num_cities,npts_urban))
+      allocate(num_urban(num_regions))
+      allocate(traceri_urban_ii(num_regions,npts_urban))
+      allocate(traceri_urban_jj(num_regions,npts_urban))
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"NUM_TRACER_I_URBAN",num_urban, &
-      num_cities,1,1,1)
+      num_regions,1,1,1)
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"TRACER_I_URBAN_II",traceri_urban_ii, &
-      num_cities,npts_urban,1,1)
+      num_regions,npts_urban,1,1)
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"TRACER_I_URBAN_JJ",traceri_urban_jj, &
-      num_cities,npts_urban,1,1)
+      num_regions,npts_urban,1,1)
       allocate(traceri_rural_ii(npts_rural))
       allocate(traceri_rural_jj(npts_rural))
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"NUM_TRACER_I_RURAL",num_rural,1,1,1,1)
@@ -159,7 +160,7 @@
 ! TRACER-I URBAN Spatial statistics E_CO
       call spatial_mean_and_variance_emiss(e_co_ens_mn,e_co_ens_sd, &
       e_co_urban_mn,e_co_urban_sd,traceri_urban_ii,traceri_urban_jj, &
-      num_cities,npts_urban,num_urban,nx,ny,nz_chemi)
+      num_regions,npts_urban,num_urban,nx,ny,nz_chemi)
 !      print *, 'e_co_urban_mn TRACER1 ',e_co_urban_mn(:)
 !      print *, 'e_co_urban_sd TRACER1 ',e_co_urban_sd(:)
       write_file=trim(path_output)//"/"//trim(file_output)
@@ -230,7 +231,7 @@
 ! TRACER-I URBAN Spatial statistics E_NO2
       call spatial_mean_and_variance_emiss(e_no2_ens_mn,e_no2_ens_sd, &
       e_no2_urban_mn,e_no2_urban_sd,traceri_urban_ii,traceri_urban_jj, &
-      num_cities,npts_urban,num_urban,nx,ny,nz_chemi)
+      num_regions,npts_urban,num_urban,nx,ny,nz_chemi)
 !      print *, 'e_no2_urban_mn TRACER1 ',e_no2_urban_mn(:)
 !      print *, 'e_no2_urban_sd TRACER1 ',e_no2_urban_sd(:)
       write_file=trim(path_output)//"/"//trim(file_output)
@@ -302,7 +303,7 @@
 ! TRACER-I URBAN Spatial statistics E_SO2
       call spatial_mean_and_variance_emiss(e_so2_ens_mn,e_so2_ens_sd, &
       e_so2_urban_mn,e_so2_urban_sd,traceri_urban_ii,traceri_urban_jj, &
-      num_cities,npts_urban,num_urban,nx,ny,nz_chemi)
+      num_regions,npts_urban,num_urban,nx,ny,nz_chemi)
 !      print *, 'e_so2_urban_mn TRACER1 ',e_so2_urban_mn(:)
 !      print *, 'e_so2_urban_sd TRACER1 ',e_so2_urban_sd(:)
       write_file=trim(path_output)//"/"//trim(file_output)
@@ -375,7 +376,7 @@
 ! TRACER-I URBAN Spatial statistics EBU_IN_CO
       call spatial_mean_and_variance_emiss(ebu_in_co_ens_mn,ebu_in_co_ens_sd, &
       ebu_in_co_urban_mn,ebu_in_co_urban_sd,traceri_urban_ii,traceri_urban_jj, &
-      num_cities,npts_urban,num_urban,nx,ny,nz_fire)
+      num_regions,npts_urban,num_urban,nx,ny,nz_fire)
 !      print *, 'ebu_in_co_urban_mn TRACER1 ',ebu_in_co_urban_mn(:)
 !      print *, 'ebu_in_co_urban_sd TRACER1 ',ebu_in_co_urban_sd(:)
       write_file=trim(path_output)//"/"//trim(file_output)
@@ -446,7 +447,7 @@
 ! TRACER-I URBAN Spatial statistics EBU_IN_NO2
       call spatial_mean_and_variance_emiss(ebu_in_no2_ens_mn,ebu_in_no2_ens_sd, &
       ebu_in_no2_urban_mn,ebu_in_no2_urban_sd,traceri_urban_ii,traceri_urban_jj, &
-      num_cities,npts_urban,num_urban,nx,ny,nz_fire)
+      num_regions,npts_urban,num_urban,nx,ny,nz_fire)
       print *, 'ebu_in_no2_urban_mn TRACER1 ',ebu_in_no2_urban_mn(:)
       print *, 'ebu_in_no2_urban_sd TRACER1 ',ebu_in_no2_urban_sd(:)
       write_file=trim(path_output)//"/"//trim(file_output)
@@ -518,7 +519,7 @@
 ! TRACER-I URBAN Spatial statistics EBU_IN_SO2
       call spatial_mean_and_variance_emiss(ebu_in_so2_ens_mn,ebu_in_so2_ens_sd, &
       ebu_in_so2_urban_mn,ebu_in_so2_urban_sd,traceri_urban_ii,traceri_urban_jj, &
-      num_cities,npts_urban,num_urban,nx,ny,nz_fire)
+      num_regions,npts_urban,num_urban,nx,ny,nz_fire)
       print *, 'ebu_in_so2_urban_mn TRACER1 ',ebu_in_so2_urban_mn(:)
       print *, 'ebu_in_so2_urban_sd TRACER1 ',ebu_in_so2_urban_sd(:)
       write_file=trim(path_output)//"/"//trim(file_output)

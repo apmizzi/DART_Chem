@@ -1,8 +1,8 @@
 function plot_timeseries_multi_year_TRACER_I_CHEM_DA_validation
    clear all;
 %
-   YYYY_STR=2005;
-   YYYY_END=2023;
+   YYYY_STR=2006;
+   YYYY_END=2020;
    MMDDHH_STR=040203;
    MMDDHH_END=040300;
    wrf_vert=[10,14,18,21,23,25,27,29,31,34];

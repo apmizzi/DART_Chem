@@ -1,7 +1,7 @@
 function plot_timeseries_multi_year_TRACER_I_MET_IC_metrics
    clear all;
 %
-   YYYY_STR=2005;
+   YYYY_STR=2006;
    YYYY_END=2018;
    MMDDHH_STR=040200;
    MMDDHH_END=040300;
@@ -28,14 +28,14 @@ function plot_timeseries_multi_year_TRACER_I_MET_IC_metrics
 %
    if(f_incr==0)
       sys_cmd=strcat('rm -rf TRACER_I_MET_IC_POSTS_',string(YYYY_STR),'-', ...
-      string(YYYY_END),'_multi-year_metrics.eps');
+      string(YYYY_END),'_multi_year_metrics.eps');
       save_file=strcat('TRACER_I_MET_IC_POSTS_',string(YYYY_STR),'-', ...
-      string(YYYY_END),'_multi-year_metrics.eps');
+      string(YYYY_END),'_multi_year_metrics.eps');
    else
       sys_cmd=strcat('rm -rf TRACER_I_MET_IC_FRIORS_',string(YYYY_STR),'-', ...
-      string(YYYY_END),'_multi-year_metrics.eps');
+      string(YYYY_END),'_multi_year_metrics.eps');
       save_file=strcat('TRACER_I_MET_IC_PRIORS_',string(YYYY_STR),'-', ...
-      string(YYYY_END),'_multi-year_metrics.eps');
+      string(YYYY_END),'_multi_year_metrics.eps');
    end
    rc=system(sys_cmd);
    iyear=YYYY_STR;

@@ -1,8 +1,8 @@
 function plot_timeseries_multi_year_TRACER_I_CHEM_DA_diagnostics
    clear all;
 %
-   YYYY_STR=2005;
-   YYYY_END=2023;
+   YYYY_STR=2006;
+   YYYY_END=2020;
    MMDDHH_STR=040203;
    MMDDHH_END=040300;
    wrf_vert=[10,14,18,21,23,25,27,29,31,34];
@@ -15,7 +15,6 @@ function plot_timeseries_multi_year_TRACER_I_CHEM_DA_diagnostics
    nz=50;
    missing=-999;
 %
-
    red     =   ([ 228, 161,   0,   0,   0, 144, 255, 255, 255, 255, 255, 255]);
    green   =   ([ 239, 179, 104, 204, 255, 255, 255, 191, 102,   0,   0, 103]);
    blue    =   ([ 255, 223, 255, 255,   0, 130,   0,   0,   0,   0, 255, 255]);
@@ -30,7 +29,7 @@ function plot_timeseries_multi_year_TRACER_I_CHEM_DA_diagnostics
    iyear=YYYY_STR;
    nyr_cnt=0.;
    while (iyear<=YYYY_END);
-     nyr_cnt=nyr_cnt+1;
+      nyr_cnt=nyr_cnt+1;
       DATE_STR=iyear*1000000+MMDDHH_STR;
       DATE_END=iyear*1000000+MMDDHH_END;
       ncnt=0;
@@ -719,7 +718,6 @@ function plot_timeseries_multi_year_TRACER_I_CHEM_DA_diagnostics
       end
    end
 %
-%
 % PLOT TIMESERIES OF SPATIAL MEAN PRIOR ENSEMBLE MEAN
 %
 % CO
@@ -1079,13 +1077,12 @@ end
 function [rs] = plot_series_2(ptitle,xtitle,ytitle,leg1,leg2, ...
    save_file,ntim,ymx,ymn,fld_1,fld_2,YYYY_STR,YYYY_END)
    siz=50;
-   step=2;
    nend=ntim-1;
    index=0:1:ntim-1;
+   step=2;
    xtickindx=1:step:ntim;
    xticklabl=YYYY_STR:step:YYYY_END;
    xticksiz=size(xticklabl);
-   xticksiz(2);
    for idx=1:xticksiz(2)
      xtickstr(idx)=string(xticklabl(idx));
    end

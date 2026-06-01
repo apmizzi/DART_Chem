@@ -1,8 +1,8 @@
 function plot_timeseries_yearly_TRACER_I_EMIS_IC_metrics
    clear all;
 %
-   YYYY_STR=2005;
-   YYYY_END=2005;
+   YYYY_STR=2006;
+   YYYY_END=2006;
    MMDDHH_STR=040203;
    MMDDHH_END=040300;
    wrf_vert=[1,5,10];

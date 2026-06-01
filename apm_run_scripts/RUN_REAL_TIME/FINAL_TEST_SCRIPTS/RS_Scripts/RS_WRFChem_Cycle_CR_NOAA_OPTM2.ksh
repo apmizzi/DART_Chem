@@ -300,6 +300,7 @@ EOF
 ###############################################	 
 #
       TRANDOM=$$
+      JOB_LIST=""
       let IMEM=1
       export L_NUM_MEMBERS=${NUM_MEMBERS}
       if ${RUN_SPECIAL_FORECAST}; then
@@ -318,6 +319,7 @@ EOF
          if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
          if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
          export L_RUN_DIR=run_${CMEM}
+	 JOB_LIST="${JOB_LIST} ${L_RUN_DIR}"
          cd ${RUN_DIR}/${DATE}/wrfchem_cycle_cr/${L_RUN_DIR}
 #
 # Create WRF-Chem namelist.input 
@@ -325,12 +327,23 @@ EOF
          rm -rf namelist.input
          ${NAMELIST_SCRIPTS_DIR}/MISC/da_create_wrfchem_namelist_RT_NOAA.ksh
 #
-         export JOBRND=${TRANDOM}_wrf
-         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${WRFCHEM_JOB_CLASS} ${WRFCHEM_TIME_LIMIT} ${WRFCHEM_NODES} ${WRFCHEM_TASKS} wrf.exe PARALLEL ${ACCOUNT} ${WRFCHEM_MODEL}
-         qsub job.ksh
+#         export JOBRND=${TRANDOM}_wrf
+#         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${WRFCHEM_JOB_CLASS} ${WRFCHEM_TIME_LIMIT} ${WRFCHEM_NODES} ${WRFCHEM_TASKS} wrf.exe PARALLEL ${ACCOUNT} ${WRFCHEM_MODEL}
+#         qsub job.ksh
 	 let IMEM=${IMEM}+1
       done
-      ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
+#      ${JOB_CONTROL_SCRIPTS_DIR}/da_run_hold_nasa.ksh ${TRANDOM}
+      cd ${RUN_DIR)/${DATE}/wrfchem_cycle_cr
+#
+# GNU Parallel
+      export JOBRND=${TRANDOM}_wrf
+      export EXE_LINE="parallel -j 30 'cd {1}; ./wrf.exe >& index.log'"
+      ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_GNU_PARALLEL.ksh ${JOBRND} ${GNU_WRFCHEM_JOB_CLASS} ${GNU_WRFCHEM_TIME_LIMIT} 1 30 "${EXE_LINE}" PARALLEL ${ACCOUNT} ${GNU_WRFCHEM_MODEL}
+      qsub -Wblock=true job.bsh > index_gnu_wrfchem 2>&1
+#
+
+exit
+      
 #
 # Check whether forecasts exist for each ensemble member
       let IMEM=1

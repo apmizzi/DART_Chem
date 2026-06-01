@@ -19,4 +19,5 @@
       ./geogrid.exe > index.html 2>&1
 #
 # Clean directory
-      rm geogrid.exe geogrid.log namelist.wps
+#      rm geogrid.exe geogrid.log namelist.wps
+      rm geogrid.exe geogrid.log

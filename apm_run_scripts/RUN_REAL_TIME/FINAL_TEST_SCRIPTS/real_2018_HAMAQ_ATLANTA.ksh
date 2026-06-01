@@ -37,8 +37,8 @@ export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
 export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}
 #
-export RUN_DIR=${EXPERIMENT_DIR}/OUTPUT_2023_NOAA_EMISADJ_30MEMS
-export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_2023_NOAA_EMISADJ_30MEMS
+export RUN_DIR=${EXPERIMENT_DIR}/OUTPUT_2018_HAMAQ_ATLANTA
+export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_2018_HAMAQ_ATLANTA
 export EXPERIMENT_INPUT_OBS=NOAA
 #
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
@@ -49,16 +49,16 @@ export CYCLE_PERIOD=3
 export FCST_PERIOD=3
 #
 # CYCLE TIME SETTINGS (NOAA has extra digits for ss)
-export INITIAL_DATE=2023040200
-export FIRST_FILTER_DATE=2023040203
-export FIRST_DART_INFLATE_DATE=2023040203
-export FIRST_EMISS_INV_DATE=2023040203
+export INITIAL_DATE=2018040200
+export FIRST_FILTER_DATE=2018040203
+export FIRST_DART_INFLATE_DATE=2018040203
+export FIRST_EMISS_INV_DATE=2018040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2023040200
+export CYCLE_STR_DATE=2018040200
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2023040300
+export CYCLE_END_DATE=2018040300
 #
 # For emissions estimation
 export ADD_EMISS=true
@@ -199,9 +199,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export SPECIAL_FORECAST_MEM[10]=10
 #
    if [[ ${DATE} -eq ${CYCLE_STR_DATE}  ]]; then
-      export RUN_SPECIAL_FORECAST=true
-      export NUM_SPECIAL_FORECAST=1
-      export SPECIAL_FORECAST_MEM[1]=19
+      export RUN_SPECIAL_FORECAST=false
+      export NUM_SPECIAL_FORECAST=0
+      export SPECIAL_FORECAST_MEM[1]=1
       export SPECIAL_FORECAST_MEM[2]=2
       export SPECIAL_FORECAST_MEM[3]=3
       export SPECIAL_FORECAST_MEM[4]=4
@@ -368,35 +368,28 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export GENERAL_NODES=1
    export GENERAL_TASKS=30
    export GENERAL_MODEL=mil_ait
-   export GENERAL_MODEL=rom_ait
+#   export GENERAL_MODEL=rom_ait
 #
    export SINGLE_JOB_CLASS=normal
    export SINGLE_TIME_LIMIT=03:30:00
    export SINGLE_NODES=1
    export SINGLE_TASKS=1
    export SINGLE_MODEL=mil_ait
-   export SINGLE_MODEL=rom_ait
+#   export SINGLE_MODEL=rom_ait
 #   
    export FILTER_JOB_CLASS=normal
    export FILTER_TIME_LIMIT=03:30:00
    export FILTER_NODES=5
    export FILTER_TASKS=128
    export FILTER_MODEL=mil_ait
-   export FILTER_MODEL=rom_ait
+#   export FILTER_MODEL=rom_ait
 #
    export WRFCHEM_JOB_CLASS=normal
    export WRFCHEM_TIME_LIMIT=01:59:00
    export WRFCHEM_NODES=3
    export WRFCHEM_TASKS=128
    export WRFCHEM_MODEL=mil_ait
-   export WRFCHEM_MODEL=rom_ait
-#
-   export GNU_WRFCHEM_JOB_CLASS=normal
-   export GNU_WRFCHEM_TIME_LIMIT=01:59:00
-   export GNU_WRFCHEM_NODES=3
-   export GNU_WRFCHEM_TASKS=128
-   export GNU_WRFCHEM_MODEL=mil_ait
-   export GNU_WRFCHEM_MODEL=rom_ait
+#   export WRFCHEM_MODEL=rom_ait
 #
    export WRFCHEMI_DARTVARS="E_CO,E_NO,E_NO2,E_SO2"
    export WRFFIRECHEMI_DARTVARS="ebu_in_co,ebu_in_no,ebu_in_no2,ebu_in_so2"

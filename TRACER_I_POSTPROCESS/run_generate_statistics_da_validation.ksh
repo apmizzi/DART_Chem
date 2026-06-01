@@ -1,12 +1,12 @@
 #!/bin/ksh -aeux
 #
-   export YYYY_STR=2009
-   export YYYY_END=2023
+   export YYYY_STR=2005
+   export YYYY_END=2005
    export MMDDHH_STR=040203
    export MMDDHH_END=040300
 #
    export DATA_PATH=/nobackupp28/amizzi/OUTPUT_DATA
-   export CODE_PATH=/nobackupp28/amizzi/TRACER_I_POSTPROCESS
+   export CODE_PATH=/nobackupp28/amizzi/TRUNK/DART_development/TRACER_I_POSTPROCESS
    export RUN_PATH=/nobackupp28/amizzi/OUTPUT_DATA/TRACER_I_POSTPROCESS
    export BUILD_DIR=/nobackupp28/amizzi/TRUNK/WRFDAv4.3.2_dmpar/var/da
    export EXP_DIR_PRE=OUTPUT_

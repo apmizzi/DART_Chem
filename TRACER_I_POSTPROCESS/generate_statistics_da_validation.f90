@@ -6,7 +6,7 @@
       integer                                         :: i,j,k,ipt,conus_stpts,urban_stpts,rural_stpts
       integer                                         :: nx,ny,nz,num_mems,nz_chemi,nz_fire,icnt,ipt1,ipt2
       integer                                         :: npts_conus,npts_urban,npts_rural,icty,iskip
-      integer                                         :: num_conus,num_rural,num_cities
+      integer                                         :: num_conus,num_rural,num_cities,num_regions
       integer                                         :: unit,date_traceri
       integer                                         :: yyyy_traceri,mm_traceri,dd_traceri,hh_traceri
       integer,allocatable,dimension(:)                :: num_urban
@@ -128,9 +128,10 @@
       ny=284
       nz=50
       npts_conus=124960
-      npts_urban=200
+      npts_urban=1000
       npts_rural=124960
       num_cities=29
+      num_regions=3592
       p_lay_bot=103000.
       p_lay_top=95000.
 !
@@ -175,14 +176,14 @@
       npts_conus,1,1,1)
       call get_WRFCHEM_fld_int(trim(file_strat_interp_map),"TRACER_I_CONUS_JJ",traceri_conus_jj, &
       npts_conus,1,1,1)
-      allocate(num_urban(num_cities))
-      allocate(traceri_urban_ii(num_cities,npts_urban))
-      allocate(traceri_urban_jj(num_cities,npts_urban))
-      call get_WRFCHEM_fld_int(trim(file_strat_interp_map),"NUM_TRACER_I_URBAN",num_urban,num_cities,1,1,1)
+      allocate(num_urban(num_regions))
+      allocate(traceri_urban_ii(num_regions,npts_urban))
+      allocate(traceri_urban_jj(num_regions,npts_urban))
+      call get_WRFCHEM_fld_int(trim(file_strat_interp_map),"NUM_TRACER_I_URBAN",num_urban,num_regions,1,1,1)
       call get_WRFCHEM_fld_int(trim(file_strat_interp_map),"TRACER_I_URBAN_II",traceri_urban_ii, &
-      num_cities,npts_urban,1,1)
+      num_regions,npts_urban,1,1)
       call get_WRFCHEM_fld_int(trim(file_strat_interp_map),"TRACER_I_URBAN_JJ",traceri_urban_jj, &
-      num_cities,npts_urban,1,1)
+      num_regions,npts_urban,1,1)
       allocate(traceri_rural_ii(npts_rural))
       allocate(traceri_rural_jj(npts_rural))
       call get_WRFCHEM_fld_int(trim(file_strat_interp_map),"NUM_TRACER_I_RURAL",num_rural,1,1,1,1)
@@ -233,7 +234,7 @@
       call urban_ens_mn_skill_metrics(rads_t_mn_trc,rads_t_mn_obs,rads_t_vr_trc,rads_t_vr_obs, &
       rads_t_nmb,rads_t_rmse,rads_t_rcor,traceri_urban_ii,traceri_urban_jj,num_urban,rads_t_post_mn, &
       rads_t_val,rads_t_i,rads_t_j,rads_t_sav,rads_t_vert,p_lay_bot,p_lay_top,urban_stpts, &
-      max_nobs,npts_urban,num_cities)
+      max_nobs,npts_urban,num_regions)
       print *, ' '
       print *, 'T TRC MN   ',rads_t_mn_trc
       print *, 'OBS MN   ',rads_t_mn_obs
@@ -307,7 +308,7 @@
       call urban_ens_mn_skill_metrics(rads_u_mn_trc,rads_u_mn_obs,rads_u_vr_trc,rads_u_vr_obs, &
       rads_u_nmb,rads_u_rmse,rads_u_rcor,traceri_urban_ii,traceri_urban_jj,num_urban,rads_u_post_mn, &
       rads_u_val,rads_u_i,rads_u_j,rads_u_sav,rads_u_vert,p_lay_bot,p_lay_top,urban_stpts, &
-      max_nobs,npts_urban,num_cities)
+      max_nobs,npts_urban,num_regions)
       print *, ' '
       print *, 'U TRC MN   ',rads_u_mn_trc
       print *, 'OBS MN   ',rads_u_mn_obs
@@ -381,7 +382,7 @@
       call urban_ens_mn_skill_metrics(rads_v_mn_trc,rads_v_mn_obs,rads_v_vr_trc,rads_v_vr_obs, &
       rads_v_nmb,rads_v_rmse,rads_v_rcor,traceri_urban_ii,traceri_urban_jj,num_urban,rads_v_post_mn, &
       rads_v_val,rads_v_i,rads_v_j,rads_v_sav,rads_v_vert,p_lay_bot,p_lay_top,urban_stpts, &
-      max_nobs,npts_urban,num_cities)
+      max_nobs,npts_urban,num_regions)
       print *, ' '
       print *, 'V TRC MN   ',rads_v_mn_trc
       print *, 'OBS MN   ',rads_v_mn_obs
@@ -455,7 +456,7 @@
       call urban_ens_mn_skill_metrics(rads_q_mn_trc,rads_q_mn_obs,rads_q_vr_trc,rads_q_vr_obs, &
       rads_q_nmb,rads_q_rmse,rads_q_rcor,traceri_urban_ii,traceri_urban_jj,num_urban,rads_q_post_mn, &
       rads_q_val,rads_q_i,rads_q_j,rads_q_sav,rads_q_vert,p_lay_bot,p_lay_top,urban_stpts, &
-      max_nobs,npts_urban,num_cities)
+      max_nobs,npts_urban,num_regions)
       print *, ' '
       print *, 'Q TRC MN   ',rads_q_mn_trc
       print *, 'OBS MN   ',rads_q_mn_obs
@@ -529,7 +530,7 @@
       call urban_ens_mn_skill_metrics(airn_co_mn_trc,airn_co_mn_obs,airn_co_vr_trc,airn_co_vr_obs, &
       airn_co_nmb,airn_co_rmse,airn_co_rcor,traceri_urban_ii,traceri_urban_jj,num_urban,airn_co_post_mn, &
       airn_co_val,airn_co_i,airn_co_j,airn_co_sav,airn_co_vert,p_lay_bot,p_lay_top,urban_stpts, &
-      max_nobs,npts_urban,num_cities)
+      max_nobs,npts_urban,num_regions)
       print *, ' '
       print *, 'CO TRC MN   ',airn_co_mn_trc
       print *, 'OBS MN   ',airn_co_mn_obs
@@ -603,7 +604,7 @@
       call urban_ens_mn_skill_metrics(airn_o3_mn_trc,airn_o3_mn_obs,airn_o3_vr_trc,airn_o3_vr_obs, &
       airn_o3_nmb,airn_o3_rmse,airn_o3_rcor,traceri_urban_ii,traceri_urban_jj,num_urban,airn_o3_post_mn, &
       airn_o3_val,airn_o3_i,airn_o3_j,airn_o3_sav,airn_o3_vert,p_lay_bot,p_lay_top,urban_stpts, &
-      max_nobs,npts_urban,num_cities)
+      max_nobs,npts_urban,num_regions)
       print *, ' '
       print *, 'O3 TRC MN   ',airn_o3_mn_trc
       print *, 'OBS MN   ',airn_o3_mn_obs
@@ -678,7 +679,7 @@
       call urban_ens_mn_skill_metrics(airn_no2_mn_trc,airn_no2_mn_obs,airn_no2_vr_trc,airn_no2_vr_obs, &
       airn_no2_nmb,airn_no2_rmse,airn_no2_rcor,traceri_urban_ii,traceri_urban_jj,num_urban,airn_no2_post_mn, &
       airn_no2_val,airn_no2_i,airn_no2_j,airn_no2_sav,airn_no2_vert,p_lay_bot,p_lay_top,urban_stpts, &
-      max_nobs,npts_urban,num_cities)
+      max_nobs,npts_urban,num_regions)
       print *, ' '
       print *, 'NO2 TRC MN   ',airn_no2_mn_trc
       print *, 'OBS MN   ',airn_no2_mn_obs
@@ -753,7 +754,7 @@
       call urban_ens_mn_skill_metrics(airn_so2_mn_trc,airn_so2_mn_obs,airn_so2_vr_trc,airn_so2_vr_obs, &
       airn_so2_nmb,airn_so2_rmse,airn_so2_rcor,traceri_urban_ii,traceri_urban_jj,num_urban,airn_so2_post_mn, &
       airn_so2_val,airn_so2_i,airn_so2_j,airn_so2_sav,airn_so2_vert,p_lay_bot,p_lay_top,urban_stpts, &
-      max_nobs,npts_urban,num_cities)
+      max_nobs,npts_urban,num_regions)
       print *, ' '
       print *, 'SO2 TRC MN   ',airn_so2_mn_trc
       print *, 'OBS MN   ',airn_so2_mn_obs
@@ -2978,13 +2979,13 @@ end subroutine conus_ens_mn_skill_metrics
 subroutine urban_ens_mn_skill_metrics(plat_mean_trc,plat_mean_obs,plat_vari_trc, &
 plat_vari_obs,plat_nmb,plat_rmse,plat_rcor,urban_ii,urban_jj,num_urban,plat_val_trc, &
 plat_val_obs,plat_i,plat_j,plat_npts,plat_vert,p_lay_bot,p_lay_top,urban_stpts, &
-max_nobs,npts_urban,num_cities)
+max_nobs,npts_urban,num_regions)
    implicit none
    integer                                    :: ipt,jpt,icty,ncnt,plat_npts,iskip
-   integer                                    :: max_nobs,npts_urban,urban_stpts,num_cities
+   integer                                    :: max_nobs,npts_urban,urban_stpts,num_regions
    integer,dimension(plat_npts)               :: urban_pt
-   integer,dimension(num_cities)              :: num_urban
-   integer,dimension(num_cities,npts_urban)   :: urban_ii,urban_jj
+   integer,dimension(num_regions)              :: num_urban
+   integer,dimension(num_regions,npts_urban)   :: urban_ii,urban_jj
    integer,dimension(max_nobs)                :: plat_i,plat_j
    real                                       :: plat_mean_inc,plat_mean_trc,plat_mean_obs
    real                                       :: plat_vari_trc,plat_vari_obs
@@ -2999,7 +3000,7 @@ max_nobs,npts_urban,num_cities)
    urban_stpts=0
    do ipt=1,plat_npts
       iskip=0
-      do icty=1,num_cities
+      do icty=1,num_regions
          do jpt=1,num_urban(icty)
             if(plat_i(ipt).eq.urban_ii(icty,jpt).and.plat_j(ipt).eq.urban_jj(icty,jpt)) then
                if((plat_vert(ipt).le.p_lay_bot .and. plat_vert(ipt).ge.p_lay_top) .or. &

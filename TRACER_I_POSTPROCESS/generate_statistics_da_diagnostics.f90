@@ -4,7 +4,7 @@
       integer                                         :: i,j,k
       integer                                         :: nx,ny,nz,num_mems,nz_chemi,nz_fire
       integer                                         :: npts_conus,npts_urban,npts_rural
-      integer                                         :: num_conus,num_rural,num_cities
+      integer                                         :: num_conus,num_rural,num_cities,num_regions
       integer                                         :: unit,date_traceri
       integer                                         :: yyyy_traceri,mm_traceri,dd_traceri,hh_traceri
       integer,allocatable,dimension(:)                :: num_urban
@@ -375,9 +375,10 @@
       tbase=290.
       kappa=0.286
       npts_conus=124960
-      npts_urban=200
+      npts_urban=1000
       npts_rural=124960
       num_cities=29
+      num_regions=3592
 !
       unit=20
       open(unit=unit,file="ens_da_diagnostics.nl",form="formatted", &
@@ -421,14 +422,14 @@
       npts_conus,1,1,1)
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"TRACER_I_CONUS_JJ",traceri_conus_jj, &
       npts_conus,1,1,1)
-      allocate(num_urban(num_cities))
-      allocate(traceri_urban_ii(num_cities,npts_urban))
-      allocate(traceri_urban_jj(num_cities,npts_urban))
-      call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"NUM_TRACER_I_URBAN",num_urban,num_cities,1,1,1)
+      allocate(num_urban(num_regions))
+      allocate(traceri_urban_ii(num_regions,npts_urban))
+      allocate(traceri_urban_jj(num_regions,npts_urban))
+      call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"NUM_TRACER_I_URBAN",num_urban,num_regions,1,1,1)
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"TRACER_I_URBAN_II",traceri_urban_ii, &
-      num_cities,npts_urban,1,1)
+      num_regions,npts_urban,1,1)
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"TRACER_I_URBAN_JJ",traceri_urban_jj, &
-      num_cities,npts_urban,1,1)
+      num_regions,npts_urban,1,1)
       allocate(traceri_rural_ii(npts_rural))
       allocate(traceri_rural_jj(npts_rural))
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"NUM_TRACER_I_RURAL",num_rural,1,1,1,1)
@@ -494,12 +495,19 @@
       allocate(traceri_t_infl_prior(nx,ny,nz))
       allocate(traceri_t_infl_post(nx,ny,nz))
 !
-      call get_WRFCHEM_fld_real(trim(file_read_prior_mn),"THM",traceri_t_prior_ens_mn,nx,ny,nz,1)
-      call get_WRFCHEM_fld_real(trim(file_read_post_mn),"THM",traceri_t_post_ens_mn,nx,ny,nz,1)
-      call get_WRFCHEM_fld_real(trim(file_read_prior_sd),"THM",traceri_t_prior_ens_sd,nx,ny,nz,1)
-      call get_WRFCHEM_fld_real(trim(file_read_post_sd),"THM",traceri_t_post_ens_sd,nx,ny,nz,1)
-      call get_WRFCHEM_fld_real(trim(file_read_infl_prior),"THM",traceri_t_infl_prior,nx,ny,nz,1)
-      call get_WRFCHEM_fld_real(trim(file_read_infl_post),"THM",traceri_t_infl_post,nx,ny,nz,1)
+!      call get_WRFCHEM_fld_real(trim(file_read_prior_mn),"THM",traceri_t_prior_ens_mn,nx,ny,nz,1)
+!      call get_WRFCHEM_fld_real(trim(file_read_post_mn),"THM",traceri_t_post_ens_mn,nx,ny,nz,1)
+!      call get_WRFCHEM_fld_real(trim(file_read_prior_sd),"THM",traceri_t_prior_ens_sd,nx,ny,nz,1)
+!      call get_WRFCHEM_fld_real(trim(file_read_post_sd),"THM",traceri_t_post_ens_sd,nx,ny,nz,1)
+!      call get_WRFCHEM_fld_real(trim(file_read_infl_prior),"THM",traceri_t_infl_prior,nx,ny,nz,1)
+!      call get_WRFCHEM_fld_real(trim(file_read_infl_post),"THM",traceri_t_infl_post,nx,ny,nz,1)
+!
+      call get_WRFCHEM_fld_real(trim(file_read_prior_mn),"T",traceri_t_prior_ens_mn,nx,ny,nz,1)
+      call get_WRFCHEM_fld_real(trim(file_read_post_mn),"T",traceri_t_post_ens_mn,nx,ny,nz,1)
+      call get_WRFCHEM_fld_real(trim(file_read_prior_sd),"T",traceri_t_prior_ens_sd,nx,ny,nz,1)
+      call get_WRFCHEM_fld_real(trim(file_read_post_sd),"T",traceri_t_post_ens_sd,nx,ny,nz,1)
+      call get_WRFCHEM_fld_real(trim(file_read_infl_prior),"T",traceri_t_infl_prior,nx,ny,nz,1)
+      call get_WRFCHEM_fld_real(trim(file_read_infl_post),"T",traceri_t_infl_post,nx,ny,nz,1)
       do i=1,nx
          do j=1,ny
             do k=1,nz
@@ -517,7 +525,7 @@
 !      print *, 'TEMP PRIOR EMN ',traceri_t_prior_ens_mn(:,:,1)
 !      print *, 'TEMP POST EMN  ',traceri_t_post_ens_mn(:,:,1)
 !      print *, 'TEMP PRIOR ESD ',traceri_t_prior_ens_sd(:,:,1)
-!      print *, 'TEMP POST ESD  ',traceri_t_post_ens_sd(:,:,1)
+!      print *, 'TEMP POST ESD  ',traceri_t_post_ens_sd(:,:,1)      
 !
       traceri_t_incr(:,:,:)=traceri_t_post_ens_mn(:,:,:)-traceri_t_prior_ens_mn(:,:,:)
       traceri_t_prior_ens_vr(:,:,:)=traceri_t_prior_ens_sd(:,:,:)**2.
@@ -595,7 +603,7 @@
       traceri_t_incr,traceri_t_prior_ens_vr,traceri_t_post_ens_vr,traceri_t_infl_prior, &
       traceri_t_infl_post,t_ens_mn_prior_urban_mn,t_ens_mn_post_urban_mn,t_incr_urban_mn, &
       t_ens_vr_prior_urban_mn,t_ens_vr_post_urban_mn,t_infl_prior_urban_mn,t_infl_post_urban_mn, &
-      traceri_urban_ii,traceri_urban_jj,num_cities,npts_urban,num_urban,nx,ny,nz)
+      traceri_urban_ii,traceri_urban_jj,num_regions,npts_urban,num_urban,nx,ny,nz)
 !
       t_ens_sd_prior_urban_mn(:)=sqrt(t_ens_vr_prior_urban_mn(:))
       t_ens_sd_post_urban_mn(:)=sqrt(t_ens_vr_post_urban_mn(:))
@@ -799,7 +807,7 @@
       traceri_u_incr,traceri_u_prior_ens_vr,traceri_u_post_ens_vr,traceri_u_infl_prior, &
       traceri_u_infl_post,u_ens_mn_prior_urban_mn,u_ens_mn_post_urban_mn,u_incr_urban_mn, &
       u_ens_vr_prior_urban_mn,u_ens_vr_post_urban_mn,u_infl_prior_urban_mn,u_infl_post_urban_mn, &
-      traceri_urban_ii,traceri_urban_jj,num_cities,npts_urban,num_urban,nx,ny,nz)
+      traceri_urban_ii,traceri_urban_jj,num_regions,npts_urban,num_urban,nx,ny,nz)
 !
       u_ens_sd_prior_urban_mn(:)=sqrt(u_ens_vr_prior_urban_mn(:))
       u_ens_sd_post_urban_mn(:)=sqrt(u_ens_vr_post_urban_mn(:))
@@ -1003,7 +1011,7 @@
       traceri_v_incr,traceri_v_prior_ens_vr,traceri_v_post_ens_vr,traceri_v_infl_prior, &
       traceri_v_infl_post,v_ens_mn_prior_urban_mn,v_ens_mn_post_urban_mn,v_incr_urban_mn, &
       v_ens_vr_prior_urban_mn,v_ens_vr_post_urban_mn,v_infl_prior_urban_mn,v_infl_post_urban_mn, &
-      traceri_urban_ii,traceri_urban_jj,num_cities,npts_urban,num_urban,nx,ny,nz)
+      traceri_urban_ii,traceri_urban_jj,num_regions,npts_urban,num_urban,nx,ny,nz)
 !
       v_ens_sd_prior_urban_mn(:)=sqrt(v_ens_vr_prior_urban_mn(:))
       v_ens_sd_post_urban_mn(:)=sqrt(v_ens_vr_post_urban_mn(:))
@@ -1183,7 +1191,7 @@
       traceri_q_incr,traceri_q_prior_ens_vr,traceri_q_post_ens_vr,traceri_q_infl_prior, &
       traceri_q_infl_post,q_ens_mn_prior_urban_mn,q_ens_mn_post_urban_mn,q_incr_urban_mn, &
       q_ens_vr_prior_urban_mn,q_ens_vr_post_urban_mn,q_infl_prior_urban_mn,q_infl_post_urban_mn, &
-      traceri_urban_ii,traceri_urban_jj,num_cities,npts_urban,num_urban,nx,ny,nz)
+      traceri_urban_ii,traceri_urban_jj,num_regions,npts_urban,num_urban,nx,ny,nz)
 !
       q_ens_sd_prior_urban_mn(:)=sqrt(q_ens_vr_prior_urban_mn(:))
       q_ens_sd_post_urban_mn(:)=sqrt(q_ens_vr_post_urban_mn(:))
@@ -1363,7 +1371,7 @@
       traceri_co_incr,traceri_co_prior_ens_vr,traceri_co_post_ens_vr,traceri_co_infl_prior, &
       traceri_co_infl_post,co_ens_mn_prior_urban_mn,co_ens_mn_post_urban_mn,co_incr_urban_mn, &
       co_ens_vr_prior_urban_mn,co_ens_vr_post_urban_mn,co_infl_prior_urban_mn,co_infl_post_urban_mn, &
-      traceri_urban_ii,traceri_urban_jj,num_cities,npts_urban,num_urban,nx,ny,nz)
+      traceri_urban_ii,traceri_urban_jj,num_regions,npts_urban,num_urban,nx,ny,nz)
 !
       co_ens_sd_prior_urban_mn(:)=sqrt(co_ens_vr_prior_urban_mn(:))
       co_ens_sd_post_urban_mn(:)=sqrt(co_ens_vr_post_urban_mn(:))
@@ -1543,7 +1551,7 @@
       traceri_o3_incr,traceri_o3_prior_ens_vr,traceri_o3_post_ens_vr,traceri_o3_infl_prior, &
       traceri_o3_infl_post,o3_ens_mn_prior_urban_mn,o3_ens_mn_post_urban_mn,o3_incr_urban_mn, &
       o3_ens_vr_prior_urban_mn,o3_ens_vr_post_urban_mn,o3_infl_prior_urban_mn,o3_infl_post_urban_mn, &
-      traceri_urban_ii,traceri_urban_jj,num_cities,npts_urban,num_urban,nx,ny,nz)
+      traceri_urban_ii,traceri_urban_jj,num_regions,npts_urban,num_urban,nx,ny,nz)
 !
       o3_ens_sd_prior_urban_mn(:)=sqrt(o3_ens_vr_prior_urban_mn(:))
       o3_ens_sd_post_urban_mn(:)=sqrt(o3_ens_vr_post_urban_mn(:))
@@ -1723,7 +1731,7 @@
       traceri_no2_incr,traceri_no2_prior_ens_vr,traceri_no2_post_ens_vr,traceri_no2_infl_prior, &
       traceri_no2_infl_post,no2_ens_mn_prior_urban_mn,no2_ens_mn_post_urban_mn,no2_incr_urban_mn, &
       no2_ens_vr_prior_urban_mn,no2_ens_vr_post_urban_mn,no2_infl_prior_urban_mn,no2_infl_post_urban_mn, &
-      traceri_urban_ii,traceri_urban_jj,num_cities,npts_urban,num_urban,nx,ny,nz)
+      traceri_urban_ii,traceri_urban_jj,num_regions,npts_urban,num_urban,nx,ny,nz)
 !
       no2_ens_sd_prior_urban_mn(:)=sqrt(no2_ens_vr_prior_urban_mn(:))
       no2_ens_sd_post_urban_mn(:)=sqrt(no2_ens_vr_post_urban_mn(:))
@@ -1903,7 +1911,7 @@
       traceri_so2_incr,traceri_so2_prior_ens_vr,traceri_so2_post_ens_vr,traceri_so2_infl_prior, &
       traceri_so2_infl_post,so2_ens_mn_prior_urban_mn,so2_ens_mn_post_urban_mn,so2_incr_urban_mn, &
       so2_ens_vr_prior_urban_mn,so2_ens_vr_post_urban_mn,so2_infl_prior_urban_mn,so2_infl_post_urban_mn, &
-      traceri_urban_ii,traceri_urban_jj,num_cities,npts_urban,num_urban,nx,ny,nz)
+      traceri_urban_ii,traceri_urban_jj,num_regions,npts_urban,num_urban,nx,ny,nz)
 !
       so2_ens_sd_prior_urban_mn(:)=sqrt(so2_ens_vr_prior_urban_mn(:))
       so2_ens_sd_post_urban_mn(:)=sqrt(so2_ens_vr_post_urban_mn(:))
@@ -2091,7 +2099,7 @@
       traceri_e_co_incr,traceri_e_co_prior_ens_vr,traceri_e_co_post_ens_vr,traceri_e_co_infl_prior, &
       traceri_e_co_infl_post,e_co_ens_mn_prior_urban_mn,e_co_ens_mn_post_urban_mn,e_co_incr_urban_mn, &
       e_co_ens_vr_prior_urban_mn,e_co_ens_vr_post_urban_mn,e_co_infl_prior_urban_mn,e_co_infl_post_urban_mn, &
-      traceri_urban_ii,traceri_urban_jj,num_cities,npts_urban,num_urban,nx,ny,nz_chemi, &
+      traceri_urban_ii,traceri_urban_jj,num_regions,npts_urban,num_urban,nx,ny,nz_chemi, &
       traceri_e_co_arc_prior,e_co_arc_prior_urban_mn)
 !
       e_co_ens_sd_prior_urban_mn(:)=sqrt(e_co_ens_vr_prior_urban_mn(:))
@@ -2289,7 +2297,7 @@
       traceri_e_no2_incr,traceri_e_no2_prior_ens_vr,traceri_e_no2_post_ens_vr,traceri_e_no2_infl_prior, &
       traceri_e_no2_infl_post,e_no2_ens_mn_prior_urban_mn,e_no2_ens_mn_post_urban_mn,e_no2_incr_urban_mn, &
       e_no2_ens_vr_prior_urban_mn,e_no2_ens_vr_post_urban_mn,e_no2_infl_prior_urban_mn,e_no2_infl_post_urban_mn, &
-      traceri_urban_ii,traceri_urban_jj,num_cities,npts_urban,num_urban,nx,ny,nz_chemi, &
+      traceri_urban_ii,traceri_urban_jj,num_regions,npts_urban,num_urban,nx,ny,nz_chemi, &
       traceri_e_no2_arc_prior,e_no2_arc_prior_urban_mn)
 !
       e_no2_ens_sd_prior_urban_mn(:)=sqrt(e_no2_ens_vr_prior_urban_mn(:))
@@ -2487,7 +2495,7 @@
       traceri_e_so2_incr,traceri_e_so2_prior_ens_vr,traceri_e_so2_post_ens_vr,traceri_e_so2_infl_prior, &
       traceri_e_so2_infl_post,e_so2_ens_mn_prior_urban_mn,e_so2_ens_mn_post_urban_mn,e_so2_incr_urban_mn, &
       e_so2_ens_vr_prior_urban_mn,e_so2_ens_vr_post_urban_mn,e_so2_infl_prior_urban_mn,e_so2_infl_post_urban_mn, &
-      traceri_urban_ii,traceri_urban_jj,num_cities,npts_urban,num_urban,nx,ny,nz_chemi, &
+      traceri_urban_ii,traceri_urban_jj,num_regions,npts_urban,num_urban,nx,ny,nz_chemi, &
       traceri_e_so2_arc_prior,e_so2_arc_prior_urban_mn)
 !
       e_so2_ens_sd_prior_urban_mn(:)=sqrt(e_so2_ens_vr_prior_urban_mn(:))
@@ -2685,7 +2693,7 @@
       traceri_ebu_in_co_incr,traceri_ebu_in_co_prior_ens_vr,traceri_ebu_in_co_post_ens_vr,traceri_ebu_in_co_infl_prior, &
       traceri_ebu_in_co_infl_post,ebu_in_co_ens_mn_prior_urban_mn,ebu_in_co_ens_mn_post_urban_mn,ebu_in_co_incr_urban_mn, &
       ebu_in_co_ens_vr_prior_urban_mn,ebu_in_co_ens_vr_post_urban_mn,ebu_in_co_infl_prior_urban_mn,ebu_in_co_infl_post_urban_mn, &
-      traceri_urban_ii,traceri_urban_jj,num_cities,npts_urban,num_urban,nx,ny,nz_fire, &
+      traceri_urban_ii,traceri_urban_jj,num_regions,npts_urban,num_urban,nx,ny,nz_fire, &
       traceri_ebu_in_co_arc_prior,ebu_in_co_arc_prior_urban_mn)
 !
       ebu_in_co_ens_sd_prior_urban_mn(:)=sqrt(ebu_in_co_ens_vr_prior_urban_mn(:))
@@ -2883,7 +2891,7 @@
       traceri_ebu_in_no2_incr,traceri_ebu_in_no2_prior_ens_vr,traceri_ebu_in_no2_post_ens_vr,traceri_ebu_in_no2_infl_prior, &
       traceri_ebu_in_no2_infl_post,ebu_in_no2_ens_mn_prior_urban_mn,ebu_in_no2_ens_mn_post_urban_mn,ebu_in_no2_incr_urban_mn, &
       ebu_in_no2_ens_vr_prior_urban_mn,ebu_in_no2_ens_vr_post_urban_mn,ebu_in_no2_infl_prior_urban_mn,ebu_in_no2_infl_post_urban_mn, &
-      traceri_urban_ii,traceri_urban_jj,num_cities,npts_urban,num_urban,nx,ny,nz_fire, &
+      traceri_urban_ii,traceri_urban_jj,num_regions,npts_urban,num_urban,nx,ny,nz_fire, &
       traceri_ebu_in_no2_arc_prior,ebu_in_no2_arc_prior_urban_mn)
 !
       ebu_in_no2_ens_sd_prior_urban_mn(:)=sqrt(ebu_in_no2_ens_vr_prior_urban_mn(:))
@@ -3081,7 +3089,7 @@
       traceri_ebu_in_so2_incr,traceri_ebu_in_so2_prior_ens_vr,traceri_ebu_in_so2_post_ens_vr,traceri_ebu_in_so2_infl_prior, &
       traceri_ebu_in_so2_infl_post,ebu_in_so2_ens_mn_prior_urban_mn,ebu_in_so2_ens_mn_post_urban_mn,ebu_in_so2_incr_urban_mn, &
       ebu_in_so2_ens_vr_prior_urban_mn,ebu_in_so2_ens_vr_post_urban_mn,ebu_in_so2_infl_prior_urban_mn,ebu_in_so2_infl_post_urban_mn, &
-      traceri_urban_ii,traceri_urban_jj,num_cities,npts_urban,num_urban,nx,ny,nz_fire, &
+      traceri_urban_ii,traceri_urban_jj,num_regions,npts_urban,num_urban,nx,ny,nz_fire, &
       traceri_ebu_in_so2_arc_prior,ebu_in_so2_arc_prior_urban_mn)
 !
       ebu_in_so2_ens_sd_prior_urban_mn(:)=sqrt(ebu_in_so2_ens_vr_prior_urban_mn(:))

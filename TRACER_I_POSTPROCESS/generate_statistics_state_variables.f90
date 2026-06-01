@@ -3,7 +3,7 @@
       integer                                    :: nx,ny,nz,nz_chemi,nz_fire,num_mems
       integer                                    :: i,j,k,imem,ifld,unit,urban_flg
       integer                                    :: num_met_flds,num_chem_flds,num_chemi_flds,num_fire_flds
-      integer                                    :: npts_wrfchem_conus,npts_wrfcmaq_conus,num_cities
+      integer                                    :: npts_wrfchem_conus,npts_wrfcmaq_conus,num_cities,num_regions
       integer                                    :: npts_urban,npts_rural
       integer                                    :: wrfcmaq_rural_npts
       integer                                    :: yyyy_wrfchem,mm_wrfchem,dd_wrfchem,hh_wrfchem
@@ -126,14 +126,14 @@
       molcwt_so2=64.07
       kappa=0.286
       num_cities=29
+      num_regions=3592
       urban_flg=0
       strat_interp_map_file="TRACER_I_Stratifications_Data"
       nx=440
       ny=284
       npts_wrfchem_conus=124960
       npts_wrfcmaq_conus=124960
-      num_cities=29
-      npts_urban=200
+      npts_urban=1000
       npts_rural=124960
 !
       nx_tcr2=78
@@ -221,12 +221,12 @@
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"NUM_TRACER_I_CONUS",num_wrfchem_conus,1,1,1,1)
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"TRACER_I_CONUS_II",wrfchem_conus_ii,npts_wrfchem_conus,1,1,1)
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"TRACER_I_CONUS_JJ",wrfchem_conus_jj,npts_wrfchem_conus,1,1,1)
-      allocate(wrfchem_urban_npts(num_cities))
-      allocate(wrfchem_urban_ii(num_cities,npts_urban))
-      allocate(wrfchem_urban_jj(num_cities,npts_urban))
-      call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"NUM_TRACER_I_URBAN",wrfchem_urban_npts,num_cities,1,1,1)
-      call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"TRACER_I_URBAN_II",wrfchem_urban_ii,num_cities,npts_urban,1,1)
-      call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"TRACER_I_URBAN_JJ",wrfchem_urban_jj,num_cities,npts_urban,1,1)
+      allocate(wrfchem_urban_npts(num_regions))
+      allocate(wrfchem_urban_ii(num_regions,npts_urban))
+      allocate(wrfchem_urban_jj(num_regions,npts_urban))
+      call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"NUM_TRACER_I_URBAN",wrfchem_urban_npts,num_regions,1,1,1)
+      call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"TRACER_I_URBAN_II",wrfchem_urban_ii,num_regions,npts_urban,1,1)
+      call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"TRACER_I_URBAN_JJ",wrfchem_urban_jj,num_regions,npts_urban,1,1)
       allocate(wrfchem_rural_ii(npts_rural))
       allocate(wrfchem_rural_jj(npts_rural))
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"NUM_TRACER_I_RURAL",num_wrfchem_rural,1,1,1,1)
@@ -250,12 +250,12 @@
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"WRFCMAQ_CONUS_II",wrfcmaq_conus_ii,npts_wrfcmaq_conus,1,1,1)
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"WRFCMAQ_CONUS_JJ",wrfcmaq_conus_jj,npts_wrfcmaq_conus,1,1,1)
 !
-      allocate(num_wrfcmaq_urban(num_cities))
-      allocate(wrfcmaq_urban_ii(num_cities,npts_urban))
-      allocate(wrfcmaq_urban_jj(num_cities,npts_urban))
-      call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"NUM_WRFCMAQ_URBAN",num_wrfcmaq_urban,num_cities,1,1,1)
-      call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"WRFCMAQ_URBAN_II",wrfcmaq_urban_ii,num_cities,npts_urban,1,1)
-      call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"WRFCMAQ_URBAN_JJ",wrfcmaq_urban_jj,num_cities,npts_urban,1,1)
+      allocate(num_wrfcmaq_urban(num_regions))
+      allocate(wrfcmaq_urban_ii(num_regions,npts_urban))
+      allocate(wrfcmaq_urban_jj(num_regions,npts_urban))
+      call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"NUM_WRFCMAQ_URBAN",num_wrfcmaq_urban,num_regions,1,1,1)
+      call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"WRFCMAQ_URBAN_II",wrfcmaq_urban_ii,num_regions,npts_urban,1,1)
+      call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"WRFCMAQ_URBAN_JJ",wrfcmaq_urban_jj,num_regions,npts_urban,1,1)
       allocate(wrfcmaq_rural_ii(npts_rural))
       allocate(wrfcmaq_rural_jj(npts_rural))
       call get_WRFCHEM_fld_int(trim(strat_interp_map_file),"NUM_WRFCMAQ_RURAL",num_wrfcmaq_rural,1,1,1,1)
@@ -633,7 +633,7 @@
 ! TRACER-I URBAN Spatial statistics T
             call spatial_mean_and_variance(t_ens_mn,t_ens_sd, &
             t_urban_mn,t_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 't_urban_mn TRACER1 ',t_urban_mn(:)
 !            print *, 't_urban_sd TRACER1 ',t_urban_sd(:)
              wrfchem_file=trim(path_output)//"/"//trim(file_output)
@@ -666,7 +666,7 @@
 ! WRFCMAQ URBAN Spatial statistics T
             call spatial_mean_and_variance(t_wrfcmaq,t_wrfcmaq, &
             t_urban_mn,t_urban_sd,wrfcmaq_urban_ii,wrfcmaq_urban_jj, &
-            num_cities,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
+            num_regions,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
 !            print *, 't_urban_mn WRFCMAQ ',t_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"WRFCMAQ_T_URBAN_MN", &
@@ -693,7 +693,7 @@
 ! TCR2 URBAN Spatial statistics T
             call spatial_mean_and_variance(t_tcr2,t_tcr2, &
             t_urban_mn,t_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 't_urban_mn TCR2 ',t_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"TCR2_T_URBAN_MN", &
@@ -720,7 +720,7 @@
 ! CAMCHEM URBAN Spatial statistics T
             call spatial_mean_and_variance(t_camchem,t_camchem, &
             t_urban_mn,t_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 't_urban_mn CAMCHEM ',t_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"CAMCHEM_T_URBAN_MN", &
@@ -887,7 +887,7 @@
 ! TRACER I URBAN Spatial statistics U
             call spatial_mean_and_variance(u_ens_mn,u_ens_sd, &
             u_urban_mn,u_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'u_urban_mn TRACER1 ',u_urban_mn(:)
 !            print *, 'u_urban_sd TRACER1 ',u_urban_sd(:)
              wrfchem_file=trim(path_output)//"/"//trim(file_output)
@@ -916,7 +916,7 @@
 ! WRFCMAQ URBAN Spatial statistics U
             call spatial_mean_and_variance(u_wrfcmaq,u_wrfcmaq, &
             u_urban_mn,u_urban_sd,wrfcmaq_urban_ii,wrfcmaq_urban_jj, &
-            num_cities,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
+            num_regions,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
 !            print *, 'u_urban_mn WRFCMAQ ',u_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"WRFCMAQ_U_URBAN_MN", &
@@ -942,7 +942,7 @@
 ! TCR2 URBAN Spatial statistics U
             call spatial_mean_and_variance(u_tcr2,u_tcr2, &
             u_urban_mn,u_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'u_urban_mn TCR2 ',u_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"TCR2_U_URBAN_MN","m/s",u_urban_mn,nz,1,1)
@@ -966,7 +966,7 @@
 ! CAMCHEM URBAN Spatial statistics U
             call spatial_mean_and_variance(u_camchem,u_camchem, &
             u_urban_mn,u_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'u_urban_mn CAMCHEM ',u_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"CAMCHEM_U_URBAN_MN","m/s",u_urban_mn,nz,1,1)
@@ -1131,7 +1131,7 @@
 ! TRACER I URBAN Spatial statistics V
             call spatial_mean_and_variance(v_ens_mn,v_ens_sd, &
             v_urban_mn,v_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'v_urban_mn TRACER1 ',v_urban_mn(:)
 !            print *, 'v_urban_sd TRACER1 ',v_urban_sd(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
@@ -1164,7 +1164,7 @@
 ! WRFCMAQ URBAN Spatial statistics V
             call spatial_mean_and_variance(v_wrfcmaq,v_wrfcmaq, &
             v_urban_mn,v_urban_sd,wrfcmaq_urban_ii,wrfcmaq_urban_jj, &
-            num_cities,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
+            num_regions,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
 !            print *, 'v_urban_mn WRFCMAQ ',v_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"WRFCMAQ_V_URBAN_MN", &
@@ -1191,7 +1191,7 @@
 ! TCR2 URBAN Spatial statistics V
             call spatial_mean_and_variance(v_tcr2,v_tcr2, &
             v_urban_mn,v_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'v_urban_mn TCR2 ',v_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"TCR2_V_URBAN_MN", &
@@ -1218,7 +1218,7 @@
 ! CAMCHEM URBAN Spatial statistics V
             call spatial_mean_and_variance(v_camchem,v_camchem, &
             v_urban_mn,v_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'v_urban_mn CAMCHEM ',v_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"CAMCHEM_V_URBAN_MN", &
@@ -1379,7 +1379,7 @@
 ! TRACER I URBAN Spatial statistics Q
             call spatial_mean_and_variance(q_ens_mn,q_ens_sd, &
             q_urban_mn,q_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'q_urban_mn TRACER1 ',q_urban_mn(:)
 !            print *, 'q_urban_sd TRACER1 ',q_urban_sd(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
@@ -1412,7 +1412,7 @@
 ! WRFCMAQ URBAN Spatial statistics Q
             call spatial_mean_and_variance(q_wrfcmaq,q_wrfcmaq, &
             q_urban_mn,q_urban_sd,wrfcmaq_urban_ii,wrfcmaq_urban_jj, &
-            num_cities,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
+            num_regions,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
 !            print *, 'q_urban_mn WRFCMAQ ',q_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"WRFCMAQ_Q_URBAN_MN", &
@@ -1439,7 +1439,7 @@
 ! TCR2 URBAN Spatial statistics Q
             call spatial_mean_and_variance(q_tcr2,q_tcr2, &
             q_urban_mn,q_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'q_urban_mn TCR2 ',q_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"TCR2_Q_URBAN_MN", &
@@ -1466,7 +1466,7 @@
 ! CAMCHEM URBAN Spatial statistics Q
             call spatial_mean_and_variance(q_camchem,q_camchem, &
             q_urban_mn,q_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'q_urban_mn CAMCHEM ',q_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"CAMCHEM_Q_URBAN_MN", &
@@ -1632,7 +1632,7 @@
 ! TRACER I URBAN Spatial statistics CO
             call spatial_mean_and_variance(co_ens_mn,co_ens_sd, &
             co_urban_mn,co_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'co_urban_mn TRACER1 ',co_urban_mn(:)
 !            print *, 'co_urban_sd TRACER1 ',co_urban_sd(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
@@ -1665,7 +1665,7 @@
 ! WRFCMAQ URBAN Spatial statistics CO
             call spatial_mean_and_variance(co_wrfcmaq,co_wrfcmaq, &
             co_urban_mn,co_urban_sd,wrfcmaq_urban_ii,wrfcmaq_urban_jj, &
-            num_cities,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
+            num_regions,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
 !            print *, 'co_urban_mn WRFCMAQ ',co_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"WRFCMAQ_CO_URBAN_MN", &
@@ -1692,7 +1692,7 @@
 ! TCR2 URBAN Spatial statistics CO
             call spatial_mean_and_variance(co_tcr2,co_tcr2, &
             co_urban_mn,co_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'co_urban_mn TCR2 ',co_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"TCR2_CO_URBAN_MN", &
@@ -1719,7 +1719,7 @@
 ! CAMCHEM URBAN Spatial statistics CO
             call spatial_mean_and_variance(co_camchem,co_camchem, &
             co_urban_mn,co_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'co_urban_mn CAMCHEM ',co_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"CAMCHEM_CO_URBAN_MN", &
@@ -1872,7 +1872,7 @@
 ! TRACER I URBAN Spatial statistics O3
             call spatial_mean_and_variance(o3_ens_mn,o3_ens_sd, &
             o3_urban_mn,o3_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'o3_urban_mn TRACER1 ',o3_urban_mn(:)
 !            print *, 'o3_urban_sd TRACER1 ',o3_urban_sd(:)
              wrfchem_file=trim(path_output)//"/"//trim(file_output)
@@ -1905,7 +1905,7 @@
 ! WRFCMAQ URBAN Spatial statistics O3
             call spatial_mean_and_variance(o3_wrfcmaq,o3_wrfcmaq, &
             o3_urban_mn,o3_urban_sd,wrfcmaq_urban_ii,wrfcmaq_urban_jj, &
-            num_cities,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
+            num_regions,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
 !            print *, 'o3_urban_mn WRFCMAQ ',o3_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"WRFCMAQ_O3_URBAN_MN", &
@@ -1932,7 +1932,7 @@
 ! TCR2 URBAN Spatial statistics O3
             call spatial_mean_and_variance(o3_tcr2,o3_tcr2, &
             o3_urban_mn,o3_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'o3_urban_mn TCR2 ',o3_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"TCR2_O3_URBAN_MN", &
@@ -1959,7 +1959,7 @@
 ! CAMCHEM URBAN Spatial statistics O3
             call spatial_mean_and_variance(o3_camchem,o3_camchem, &
             o3_urban_mn,o3_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'o3_urban_mn CAMCHEM ',o3_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"CAMCHEM_O3_URBAN_MN", &
@@ -2118,7 +2118,7 @@
 ! TRACER I URBAN Spatial statistics NO2
             call spatial_mean_and_variance(no2_ens_mn,no2_ens_sd, &
             no2_urban_mn,no2_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'no2_urban_mn TRACER1 ',no2_urban_mn(:)
 !            print *, 'no2_urban_sd TRACER1 ',no2_urban_sd(:)
              wrfchem_file=trim(path_output)//"/"//trim(file_output)
@@ -2151,7 +2151,7 @@
 ! WRFCMAQ URBAN Spatial statistics NO2
             call spatial_mean_and_variance(no2_wrfcmaq,no2_wrfcmaq, &
             no2_urban_mn,no2_urban_sd,wrfcmaq_urban_ii,wrfcmaq_urban_jj, &
-            num_cities,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
+            num_regions,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
 !            print *, 'no2_urban_mn WRFCMAQ ',no2_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"WRFCMAQ_NO2_URBAN_MN", &
@@ -2178,7 +2178,7 @@
 ! TCR2 URBAN Spatial statistics NO2
             call spatial_mean_and_variance(no2_tcr2,no2_tcr2, &
             no2_urban_mn,no2_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'no2_urban_mn TCR2 ',no2_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"TCR2_NO2_URBAN_MN", &
@@ -2205,7 +2205,7 @@
 ! CAMCHEM URBAN Spatial statistics NO2
             call spatial_mean_and_variance(no2_camchem,no2_camchem, &
             no2_urban_mn,no2_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'no2_urban_mn CAMCHEM ',no2_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"CAMCHEM_NO2_URBAN_MN", &
@@ -2358,7 +2358,7 @@
 ! TRACER I URBAN Spatial statistics SO2
             call spatial_mean_and_variance(so2_ens_mn,so2_ens_sd, &
             so2_urban_mn,so2_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'so2_urban_mn ',so2_urban_mn(:)
 !            print *, 'so2_urban_sd ',so2_urban_sd(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
@@ -2391,7 +2391,7 @@
 ! WRFCMAQ URBAN Spatial statistics SO2
             call spatial_mean_and_variance(so2_wrfcmaq,so2_wrfcmaq, &
             so2_urban_mn,so2_urban_sd,wrfcmaq_urban_ii,wrfcmaq_urban_jj, &
-            num_cities,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
+            num_regions,npts_urban,num_wrfcmaq_urban,nx,ny,nz)
 !            print *, 'so2_urban_mn ',so2_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"WRFCMAQ_SO2_URBAN_MN", &
@@ -2418,7 +2418,7 @@
 ! TCR2 URBAN Spatial statistics SO2
             call spatial_mean_and_variance(so2_tcr2,so2_tcr2, &
             so2_urban_mn,so2_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'so2_urban_mn ',so2_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"TCR2_SO2_URBAN_MN", &
@@ -2445,7 +2445,7 @@
 ! CAMCHEM URBAN Spatial statistics SO2
             call spatial_mean_and_variance(so2_camchem,so2_camchem, &
             so2_urban_mn,so2_urban_sd,wrfchem_urban_ii,wrfchem_urban_jj, &
-            num_cities,npts_urban,wrfchem_urban_npts,nx,ny,nz)
+            num_regions,npts_urban,wrfchem_urban_npts,nx,ny,nz)
 !            print *, 'so2_urban_mn ',so2_urban_mn(:)
             wrfchem_file=trim(path_output)//"/"//trim(file_output)
             call put_NETCDF_fld(trim(wrfchem_file),"CAMCHEM_SO2_URBAN_MN", &

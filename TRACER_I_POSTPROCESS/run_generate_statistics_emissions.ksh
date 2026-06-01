@@ -1,12 +1,12 @@
 #!/bin/ksh -aeux
 #
-   export YYYY_STR=2006
-   export YYYY_END=2023
+   export YYYY_STR=2005
+   export YYYY_END=2025
    export MMDDHH_STR=040200
    export MMDDHH_END=040300
 #
    export DATA_PATH=/nobackupp28/amizzi/OUTPUT_DATA
-   export CODE_PATH=/nobackupp28/amizzi/TRACER_I_POSTPROCESS
+   export CODE_PATH=/nobackupp28/amizzi/TRUNK/DART_development/TRACER_I_POSTPROCESS
    export RUN_PATH=/nobackupp28/amizzi/OUTPUT_DATA/TRACER_I_POSTPROCESS
    export BUILD_DIR=/nobackupp28/amizzi/TRUNK/WRFDAv4.3.2_dmpar/var/da
    export EXP_DIR_PRE=OUTPUT_
@@ -102,7 +102,7 @@ EOF
             mv index_${JOBRND} index.emiss_stats_C${L_DATE}_F${F_DATE} 2>&1
             export F_DATE=$(${BUILD_DIR}/da_advance_time.exe ${F_DATE} ${INC} -f ccyymmddhh 2>/dev/null)
          done
-	 rm ${RUN_PATH}/${STRAT_FILE}
+	 rm -rf ${RUN_PATH}/${STRAT_FILE}
          export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} ${INC} -f ccyymmddhh 2>/dev/null)
       done
       let L_YYYY=${L_YYYY}+1

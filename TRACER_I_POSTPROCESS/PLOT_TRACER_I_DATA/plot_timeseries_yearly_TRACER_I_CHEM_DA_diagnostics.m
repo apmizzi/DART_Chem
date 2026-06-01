@@ -1,8 +1,8 @@
 function plot_timeseries_yearly_TRACER_I_CHEM_DA_diagnostics
    clear all;
 %
-   YYYY_STR=2023;
-   YYYY_END=2023;
+   YYYY_STR=2006;
+   YYYY_END=2006;
    MMDDHH_STR=040203;
    MMDDHH_END=040300;
    wrf_vert=[10,14,18,21,23,25,27,29,31,34];
@@ -386,8 +386,10 @@ function plot_timeseries_yearly_TRACER_I_CHEM_DA_diagnostics
       end
 %
 % CO
-      ymn1=min(min(co_prior_emn_conus_mn,co_post_emn_conus_mn));
-      ymx1=max(max(co_prior_emn_conus_mn,co_post_emn_conus_mn));
+      temp_conus_mn(:)=co_prior_emn_conus_mn(:)-co_prior_esd_conus_mn(:)
+      temp_conus_mx(:)=co_prior_emn_conus_mn(:)+co_prior_esd_conus_mn(:)
+      ymn1=min(min(temp_conus_mn,co_post_emn_conus_mn));
+      ymx1=max(max(temp_conus_mx,co_post_emn_conus_mn));
       ymn2=min(min(co_prior_emn_urban_mn,co_post_emn_urban_mn));
       ymx2=max(max(co_prior_emn_urban_mn,co_post_emn_urban_mn));
       ymn=min([ymn1,ymn2]);
@@ -398,7 +400,7 @@ function plot_timeseries_yearly_TRACER_I_CHEM_DA_diagnostics
       {':  CO Time Series'}),'Date/Time','Mixing Ratio (ppbv)', ...
       'Prior CONUS','Prior URBAN','Post CONUS','Post URBAN',save_file,ncnt,ymx,ymn, ...
       co_prior_emn_conus_mn,co_prior_emn_urban_mn,co_post_emn_conus_mn,co_post_emn_urban_mn, ...
-      co_post_esd_conus_mn);
+      co_prior_esd_conus_mn);
 %
       for i=1:ncnt
          err_zero(i)=0.;
@@ -474,8 +476,10 @@ function plot_timeseries_yearly_TRACER_I_CHEM_DA_diagnostics
       err_zero);
 %
 % O3
-      ymn1=min(min(o3_prior_emn_conus_mn,o3_post_emn_conus_mn));
-      ymx1=max(max(o3_prior_emn_conus_mn,o3_post_emn_conus_mn));
+      temp_conus_mn(:)=o3_prior_emn_conus_mn(:)-o3_prior_esd_conus_mn(:)
+      temp_conus_mx(:)=o3_prior_emn_conus_mn(:)+o3_prior_esd_conus_mn(:)
+      ymn1=min(min(temp_conus_mn,o3_post_emn_conus_mn));
+      ymx1=max(max(temp_conus_mx,o3_post_emn_conus_mn));
       ymn2=min(min(o3_prior_emn_urban_mn,o3_post_emn_urban_mn));
       ymx2=max(max(o3_prior_emn_urban_mn,o3_post_emn_urban_mn));
       ymn=min([ymn1,ymn2]);
@@ -562,8 +566,10 @@ function plot_timeseries_yearly_TRACER_I_CHEM_DA_diagnostics
       err_zero);
 %
 % NO2
-      ymn1=min(min(no2_prior_emn_conus_mn,no2_post_emn_conus_mn));
-      ymx1=max(max(no2_prior_emn_conus_mn,no2_post_emn_conus_mn));
+      temp_conus_mn(:)=no2_prior_emn_conus_mn(:)-no2_prior_esd_conus_mn(:)
+      temp_conus_mx(:)=no2_prior_emn_conus_mn(:)+no2_prior_esd_conus_mn(:)
+      ymn1=min(min(temp_conus_mn,no2_post_emn_conus_mn));
+      ymx1=max(max(temp_conus_mx,no2_post_emn_conus_mn));
       ymn2=min(min(no2_prior_emn_urban_mn,no2_post_emn_urban_mn));
       ymx2=max(max(no2_prior_emn_urban_mn,no2_post_emn_urban_mn));
       ymn=min([ymn1,ymn2]);
@@ -650,8 +656,10 @@ function plot_timeseries_yearly_TRACER_I_CHEM_DA_diagnostics
       err_zero);
 %
 % SO2
-      ymn1=min(min(so2_prior_emn_conus_mn,so2_post_emn_conus_mn));
-      ymx1=max(max(so2_prior_emn_conus_mn,so2_post_emn_conus_mn));
+      temp_conus_mn(:)=so2_prior_emn_conus_mn(:)-so2_prior_esd_conus_mn(:)
+      temp_conus_mx(:)=so2_prior_emn_conus_mn(:)+so2_prior_esd_conus_mn(:)
+      ymn1=min(min(temp_conus_mn,so2_post_emn_conus_mn));
+      ymx1=max(max(temp_conus_mx,so2_post_emn_conus_mn));
       ymn2=min(min(so2_prior_emn_urban_mn,so2_post_emn_urban_mn));
       ymx2=max(max(so2_prior_emn_urban_mn,so2_post_emn_urban_mn));
       ymn=min([ymn1,ymn2]);

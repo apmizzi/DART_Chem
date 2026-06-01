@@ -175,7 +175,7 @@ program main
         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-        wrfchem_file=trim(wrfchemi)//trim(cmem)
+        wrfchem_file=trim(wrfchemi)//'_filt'//trim(cmem)
         call get_WRFCHEM_emiss_data(wrfchem_file,ch_chem_spc(isp),chem_data3d,nx,ny,nz_chem)
         do i=1,nx
            do j=1,ny
@@ -224,7 +224,7 @@ program main
         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-        wrfchem_file=trim(wrfchemi)//trim(cmem)
+        wrfchem_file=trim(wrfchemi)//'_filt'//trim(cmem)
 !
 ! remove negative value
         do i=1,nx
@@ -300,7 +300,7 @@ program main
         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-        wrfchem_file=trim(wrffirechemi)//trim(cmem)
+        wrfchem_file=trim(wrffirechemi)//'_filt'//trim(cmem)
         call get_WRFCHEM_emiss_data(wrfchem_file,ch_fire_spc(isp),chem_data3d,nx,ny,1)
         do i=1,nx
            do j=1,ny
@@ -344,7 +344,7 @@ program main
         if(imem.ge.0.and.imem.lt.10) write(cmem,"('.e00',i1)"),imem
         if(imem.ge.10.and.imem.lt.100) write(cmem,"('.e0',i2)"),imem
         if(imem.ge.100.and.imem.lt.1000) write(cmem,"('.e',i3)"),imem
-        wrfchem_file=trim(wrffirechemi)//trim(cmem)
+        wrfchem_file=trim(wrffirechemi)//'_filt'//trim(cmem)
 !
 ! remove negative value
         do i=1,nx

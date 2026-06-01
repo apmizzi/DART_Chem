@@ -38,28 +38,28 @@ export SCRATCH_DIR=${WORK_DIR}/OUTPUT_DATA
 export EXPERIMENT_DIR=${SCRATCH_DIR}
 export EXPERIMENT_DATA_DIR=${INPUT_DATA_DIR}
 #
-export RUN_DIR=${EXPERIMENT_DIR}/INPUT_2023_NOAA_EMISADJ_30MEMS
-export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_2023_NOAA_EMISADJ_30MEMS
+export RUN_DIR=${EXPERIMENT_DIR}/INPUT_2018_HAMAQ_ATLANTA
+export RUN_INPUT_DIR=${EXPERIMENT_DIR}/INPUT_2018_HAMAQ_ATLANTA
 export EXPERIMENT_INPUT_OBS=NOAA
 #
 export NL_CORRECTION_FILENAME='Historical_Bias_Corrections'
 #
-export WRFCHEM_TEMPLATE_FILE=wrfinput_d01_2019-04-02_03:00:00.e001
-export NUM_MEMBERS=30
+export WRFCHEM_TEMPLATE_FILE=wrfinput_d01_2018-04-02_00:00:00
+export NUM_MEMBERS=10
 export CYCLE_PERIOD=3
 export FCST_PERIOD=3
 #
 # CYCLE TIME SETTINGS (NOAA has extra digits for ss)
-export INITIAL_DATE=2023040200
-export FIRST_FILTER_DATE=2023040203
-export FIRST_DART_INFLATE_DATE=2023040203
-export FIRST_EMISS_INV_DATE=2023040203
+export INITIAL_DATE=2018040200
+export FIRST_FILTER_DATE=2018040203
+export FIRST_DART_INFLATE_DATE=2018040203
+export FIRST_EMISS_INV_DATE=2018040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2023040203
+export CYCLE_STR_DATE=2018040200
 #
 # END CYCLE DATE-TIME:
-export CYCLE_END_DATE=2023040215
+export CYCLE_END_DATE=2018040200
 #
 # Special skip for emission perturbations (scaling factor propagation only)
 export RUN_SPECIAL_PERT_SKIP=false
@@ -122,9 +122,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_WRFCHEM_FIRE=false
       export RUN_WRFCHEM_CHEMI=false
       export RUN_PERT_WRFCHEM_CHEM_ICBC=false
-      export RUN_PERT_WRFCHEM_CHEM_EMISS=true
+      export RUN_PERT_WRFCHEM_CHEM_EMISS=false
       export RUN_COMBINE_OBS=false
-      export RUN_PREPROCESS_OBS=false
+      export RUN_PREPROCESS_OBS=true
       export RUN_CREATE_NOAA_DIR=false
 #
       export RUN_MOPITT_V8_CO_PROFILE_OBS=false           # (done)  TRACER I
@@ -145,36 +145,36 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
       export RUN_MET_OBS=false                             # (done)  TRACER I
    elif [[ ${DATE} -gt ${CYCLE_STR_DATE} ]]; then
       export RUN_GEOGRID=false
-      export RUN_UNGRIB=false
-      export RUN_METGRID=false
-      export RUN_REAL=false
-      export RUN_PERT_WRFCHEM_MET_IC=false
-      export RUN_PERT_WRFCHEM_MET_BC=false
-      export RUN_WRFCHEM_BIO=false
-      export RUN_WRFCHEM_FIRE=false
-      export RUN_WRFCHEM_CHEMI=false
-      export RUN_PERT_WRFCHEM_CHEM_ICBC=false
+      export RUN_UNGRIB=true
+      export RUN_METGRID=true
+      export RUN_REAL=true
+      export RUN_PERT_WRFCHEM_MET_IC=true
+      export RUN_PERT_WRFCHEM_MET_BC=true
+      export RUN_WRFCHEM_BIO=true
+      export RUN_WRFCHEM_FIRE=true
+      export RUN_WRFCHEM_CHEMI=true
+      export RUN_PERT_WRFCHEM_CHEM_ICBC=true
       export RUN_PERT_WRFCHEM_CHEM_EMISS=true
-      export RUN_COMBINE_OBS=false
-      export RUN_PREPROCESS_OBS=false
-      export RUN_CREATE_NOAA_DIR=false
+      export RUN_COMBINE_OBS=true
+      export RUN_PREPROCESS_OBS=true
+      export RUN_CREATE_NOAA_DIR=true
 #
       export RUN_MOPITT_V8_CO_PROFILE_OBS=false           # (done)  TRACER I
-      export RUN_MOPITT_V9_CO_PROFILE_OBS=false            # (done)  TRACER I
-      export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=false         # (done)  TRACER I
-      export RUN_OMI_SO2_PBL_COL_OBS=false                 # (done)  TRACER I
-      export RUN_TES_CO_PROFILE_OBS=false                  # (done)  TRACER I
-      export RUN_SCIAM_NO2_TROP_COL_OBS=false              # (done)  TRACER I
-      export RUN_GOME2A_NO2_TROP_COL_OBS=false             # (done)  TRACER I
-      export RUN_OMI_O3_PROFILE_OBS=false                  # (done)  TRACER I
-      export RUN_TES_O3_PROFILE_OBS=false                  # (done)  TRACER I
-      export RUN_MLS_O3_PROFILE_OBS=false                  # (done)  TRACER I
-      export RUN_MLS_HNO3_PROFILE_OBS=false                # (done)  TRACER I
-      export RUN_AIRNOW_CO_OBS=false                       # (done)  TRACER I
-      export RUN_AIRNOW_O3_OBS=false                       # (done)  TRACER I
-      export RUN_AIRNOW_NO2_OBS=false                      # (done)  TRACER I
-      export RUN_AIRNOW_SO2_OBS=false                      # (done)  TRACER I
-      export RUN_MET_OBS=false                             # (done)  TRACER I
+      export RUN_MOPITT_V9_CO_PROFILE_OBS=true            # (done)  TRACER I
+      export RUN_OMI_NO2_DOMINO_TROP_COL_OBS=true         # (done)  TRACER I
+      export RUN_OMI_SO2_PBL_COL_OBS=true                 # (done)  TRACER I
+      export RUN_TES_CO_PROFILE_OBS=true                  # (done)  TRACER I
+      export RUN_SCIAM_NO2_TROP_COL_OBS=true              # (done)  TRACER I
+      export RUN_GOME2A_NO2_TROP_COL_OBS=true             # (done)  TRACER I
+      export RUN_OMI_O3_PROFILE_OBS=true                  # (done)  TRACER I
+      export RUN_TES_O3_PROFILE_OBS=true                  # (done)  TRACER I
+      export RUN_MLS_O3_PROFILE_OBS=true                  # (done)  TRACER I
+      export RUN_MLS_HNO3_PROFILE_OBS=true                # (done)  TRACER I
+      export RUN_AIRNOW_CO_OBS=true                       # (done)  TRACER I
+      export RUN_AIRNOW_O3_OBS=true                       # (done)  TRACER I
+      export RUN_AIRNOW_NO2_OBS=true                      # (done)  TRACER I
+      export RUN_AIRNOW_SO2_OBS=true                      # (done)  TRACER I
+      export RUN_MET_OBS=true                             # (done)  TRACER I
    fi
 #
    export RUN_EXO_COLDENS=false
@@ -201,10 +201,10 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    source ${RS_SCRIPTS_DIR}/RS_Chemistry_Pert_Params.ksh > index_RS_Chemistry_Pert_Params_${DATE} 2>&1
 #
 # NOAA
-   rm -rf index_RS_Forecast_Time_Domain_Params_NOAA_${DATE}
-   source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Params_NOAA.ksh > index_RS_Forecast_Time_Domain_Params_NOAA_${DATE} 2>&1
-   rm -rf index_RS_WRFChem_Namelists_NOAA_${DATE}
-   source ${RS_SCRIPTS_DIR}/RS_WRFChem_Namelists_NOAA.ksh > index_RS_WRFChem_Namelists_NOAA_${DATE} 2>&1
+   rm -rf index_RS_Forecast_Time_Domain_Params_HAMAQ_ATLANTA_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_Forecast_Time_Domain_Params_HAMAQ_ATLANTA.ksh > index_RS_Forecast_Time_Domain_Params_HAMAQ_ATLANTA_${DATE} 2>&1
+   rm -rf index_RS_WRFChem_Namelists_HAMAQ_ATLANTA_${DATE}
+   source ${RS_SCRIPTS_DIR}/RS_WRFChem_Namelists_HAMAQ_ATLANTA.ksh > index_RS_WRFChem_Namelists_HAMAQ_ATLANTA_${DATE} 2>&1
 #
    rm -rf index_RS_Forward_Operator_Params_${DATE}
    source ${RS_SCRIPTS_DIR}/RS_Forward_Operator_Params.ksh > index_RS_Forward_Operator_Params_${DATE} 2>&1

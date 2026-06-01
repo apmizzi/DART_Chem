@@ -1,6 +1,13 @@
 #!/bin/ksh -aux
 #
       cd ${RUN_DIR}/${DATE}/dart_filter
+      export L_WORK_DIR=${RUN_DIR}/${DATE}/dart_filter
+#
+# Remove files for regeneration
+      rm -rf input_postinf*
+      rm -rf obs_seq.final
+      rm -rf output_*
+      rm -rf preassim_*
 #
 # Construct background file name/date
       export LL_DATE=${DATE}
@@ -22,19 +29,23 @@
 #
 #########################################################################
 #
-      if [[ ${DATE} -gt  ${FIRST_EMISS_INV_DATE} && ${ADD_EMISS} = "true" ]]; then
-         if [[ ! -e emissions_scaling ]]; then
-            mkdir emissions_scaling
-            cd emissions_scaling
-            cp ${ADJUST_EMISS_DIR}/work/adjust_chem_emiss.exe ./.
-         else
-            cd emissions_scaling
-            cp ${ADJUST_EMISS_DIR}/work/adjust_chem_emiss.exe ./.
-         fi        
-         rm jobx.ksh
-         touch jobx.ksh
-         chmod +x jobx.ksh
-         cat << EOF > jobx.ksh
+# If wrfchemi_XXXX_da_prior.eXXX and wrffirechem_XXXX_da_prior.eXXX esit
+# do not do emissions scaling because the scaled emissions from a previous
+# run are already in the DART_FILTER directory      
+      if [[ (! -e wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.e001) || (! -e wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.e030) || (! -e wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.e001) || (! -e wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.e030) ]]; then        
+         if [[ ${DATE} -gt  ${FIRST_EMISS_INV_DATE} && ${ADD_EMISS} = "true" ]]; then
+            if [[ ! -e emissions_scaling ]]; then
+               mkdir emissions_scaling
+               cd emissions_scaling
+               cp ${ADJUST_EMISS_DIR}/work/adjust_chem_emiss.exe ./.
+            else
+               cd emissions_scaling
+               cp ${ADJUST_EMISS_DIR}/work/adjust_chem_emiss.exe ./.
+            fi        
+            rm jobx.ksh
+            touch jobx.ksh
+            chmod +x jobx.ksh
+            cat << EOF > jobx.ksh
 let MEM=1
 while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
    export CMEM=e\${MEM}
@@ -59,10 +70,18 @@ while [[ \${MEM} -le ${NUM_MEMBERS} ]]; do
    rm -rf \${NL_WRFFIRECHEMI_AR_PRIOR}
    rm -rf \${NL_WRFFIRECHEMI_POST}
 #
-   cp ${RUN_INPUT_DIR}/${PAST_DATE}/wrfchem_chem_emiss/\${NL_WRFCHEMI} \${NL_WRFCHEMI_AR_PRIOR}
-   cp ${RUN_DIR}/${PAST_DATE}/dart_filter/\${NL_WRFCHEMI_FILT} \${NL_WRFCHEMI_POST}
-   cp ${RUN_INPUT_DIR}/${PAST_DATE}/wrfchem_chem_emiss/\${NL_WRFFIRECHEMI} \${NL_WRFFIRECHEMI_AR_PRIOR}
-   cp ${RUN_DIR}/${PAST_DATE}/dart_filter/\${NL_WRFFIRECHEMI_FILT} \${NL_WRFFIRECHEMI_POST}
+   if [[ ! -e ${L_WORK_DIR}/\${NL_WRFCHEMI_AR_PRIOR} ]]; then
+      cp ${RUN_INPUT_DIR}/${PAST_DATE}/wrfchem_chem_emiss/\${NL_WRFCHEMI} \${NL_WRFCHEMI_AR_PRIOR}
+   fi 
+   if [[ ! -e ${L_WORK_DIR}/\${NL_WRFCHEMI_POST} ]]; then
+      cp ${RUN_DIR}/${PAST_DATE}/dart_filter/\${NL_WRFCHEMI_FILT} \${NL_WRFCHEMI_POST}
+   fi
+   if [[ ! -e ${L_WORK_DIR}/\${NL_WRFFIRECHEMI_AR_PRIOR} ]]; then
+      cp ${RUN_INPUT_DIR}/${PAST_DATE}/wrfchem_chem_emiss/\${NL_WRFFIRECHEMI} \${NL_WRFFIRECHEMI_AR_PRIOR}
+   fi
+   if [[ ! -e ${L_WORK_DIR}/\${NL_WRFFIRECHEMI_POST} ]]; then
+      cp ${RUN_DIR}/${PAST_DATE}/dart_filter/\${NL_WRFFIRECHEMI_FILT} \${NL_WRFFIRECHEMI_POST}
+   fi
 #
    let ICNT=1
    export L_DATE=${DATE}
@@ -137,11 +156,12 @@ let MEM=\${MEM}+1
 done
 EOF
 #
-         TRANDOM=$$
-         export JOBRND=${TRANDOM}_adj
-         ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${SINGLE_JOB_CLASS} ${SINGLE_TIME_LIMIT} ${SINGLE_NODES} ${SINGLE_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${SINGLE_MODEL}
-         qsub -Wblock=true job.ksh
-         mv index_${JOBRND} index_adjust_emiss_log
+            TRANDOM=$$
+            export JOBRND=${TRANDOM}_adj
+            ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${SINGLE_JOB_CLASS} ${SINGLE_TIME_LIMIT} ${SINGLE_NODES} ${SINGLE_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${SINGLE_MODEL}
+            qsub -Wblock=true job.ksh
+            mv index_${JOBRND} index_adjust_emiss_log
+         fi
       fi
 #
 #########################################################################
@@ -157,6 +177,9 @@ EOF
       cp ${WRFCHEM_DART_WORK_DIR}/input.nml ./.
       cp ${DART_DIR}/assimilation_code/programs/gen_sampling_err_table/work/sampling_error_correction_table.nc ./.
 #
+# Remove any filtered filed remaining from previous run
+      rm -rf *_filt.*
+#
 # Get background forecasts
       if [[ ${DATE} -eq ${FIRST_FILTER_DATE} ]]; then
          export BACKGND_FCST_DIR=${WRFCHEM_INITIAL_DIR}
@@ -165,8 +188,10 @@ EOF
       fi
 #
 # Get observations
-      if [[ -n ${PREPROCESS_OBS_DIR}/obs_seq_comb_filtered_${START_DATE}.out ]]; then      
-         cp  ${PREPROCESS_OBS_DIR}/obs_seq_comb_filtered_${START_DATE}.out obs_seq.out
+      if [[ -n ${PREPROCESS_OBS_DIR}/obs_seq_comb_filtered_${START_DATE}.out ]]; then
+         if [[ ! -e ${L_WORK_DIR}/obs_seq.out ]]; then
+            cp  ${PREPROCESS_OBS_DIR}/obs_seq_comb_filtered_${START_DATE}.out obs_seq.out
+         fi
       else
          echo APM ERROR: NO DART OBSERVATIONS
          exit
@@ -178,7 +203,9 @@ EOF
       cp ${EXPERIMENT_STATIC_FILES}/ubvals_b40.20th.track1_1996-2005.nc ./.
 #
 # Copy DART file that controls the observation/state variable update localization
-      cp ${LOCALIZATION_DIR}/control_impact_runtime.txt ./control_impact_runtime.table
+      if [[ ! -e ${L_WORK_DIR}/control_impact_runtime.table ]]; then
+         cp ${LOCALIZATION_DIR}/control_impact_runtime.txt ./control_impact_runtime.table
+      fi
 #
 # Loop through members, link, copy background files, create input/output lists
       let MEM=1
@@ -190,21 +217,42 @@ EOF
          if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
 #
 # Copy background input file
-         cp ${BACKGND_FCST_DIR}/run_${CMEM}/wrfout_d${CR_DOMAIN}_${FILE_DATE} wrfinput_d${CR_DOMAIN}_${CMEM}
-#   
+         if [[ ! -e ${L_WORK_DIR}/wrfout_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM} ]]; then
+            cp ${BACKGND_FCST_DIR}/run_${CMEM}/wrfout_d${CR_DOMAIN}_${FILE_DATE} wrfinput_d${CR_DOMAIN}_${CMEM}
+            cp ${BACKGND_FCST_DIR}/run_${CMEM}/wrfout_d${CR_DOMAIN}_${FILE_DATE} wrfout_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM}
+	 else
+	    rm -rf wrfinput_d${CR_DOMAIN}_${CMEM}
+	    cp wrfout_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM} wrfinput_d${CR_DOMAIN}_${CMEM}
+         fi
+# 
 # Copy emission input files
-         if [[ ${DATE} -gt  ${FIRST_EMISS_INV_DATE} && ${ADD_EMISS} = "true" ]]; then
-            cp emissions_scaling/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_new wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_filt.${CMEM}
-            cp emissions_scaling/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_new wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_filt.${CMEM}
-            cp emissions_scaling/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_new wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM}
-            cp emissions_scaling/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_new wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM}
+         if [[ (! -e wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.e001) || (! -e wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.e030) || (! -e wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.e001) || (! -e wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.e030) ]]; then
+            if [[ ${DATE} -gt  ${FIRST_EMISS_INV_DATE} && ${ADD_EMISS} = "true" ]]; then
+	       cp emissions_scaling/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_new \
+	       wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_filt.${CMEM}
+               cp emissions_scaling/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_new \
+	       wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_filt.${CMEM}
+               cp emissions_scaling/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_new \
+	       wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM}
+               cp emissions_scaling/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_new \
+	       wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM}
+            else
+#	       echo "APM: Copy emissions from wrfchem_chem_emiss"
+	       cp ${RUN_INPUT_DIR}/${DATE}/wrfchem_chem_emiss/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} \
+	       ./wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_filt.${CMEM}
+               cp ${RUN_INPUT_DIR}/${DATE}/wrfchem_chem_emiss/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} \
+	       ./wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_filt.${CMEM}
+               cp ${RUN_INPUT_DIR}/${DATE}/wrfchem_chem_emiss/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} \
+	       ./wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM}
+               cp ${RUN_INPUT_DIR}/${DATE}/wrfchem_chem_emiss/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} \
+	       ./wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM}
+            fi
          else
-#	    echo "APM: Copy emissions from wrfchem_chem_emiss"
-            cp ${RUN_INPUT_DIR}/${DATE}/wrfchem_chem_emiss/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_filt.${CMEM}
-            cp ${RUN_INPUT_DIR}/${DATE}/wrfchem_chem_emiss/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_filt.${CMEM}
-            cp ${RUN_INPUT_DIR}/${DATE}/wrfchem_chem_emiss/wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM}
-            cp ${RUN_INPUT_DIR}/${DATE}/wrfchem_chem_emiss/wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM} ./wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM}
-         fi	       
+            rm -rf wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_filt.${CMEM}
+	    cp wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM} wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_filt.${CMEM}
+            rm -rf wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_filt.${CMEM}
+	    cp wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM} wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_filt.${CMEM}
+	 fi
          let MEM=${MEM}+1
       done
 #
