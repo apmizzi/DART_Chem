@@ -1,6 +1,7 @@
 #!/bin/ksh -aux
 #
       cd ${RUN_DIR}/${DATE}/wrfchem_cycle_cr
+      export L_WORK_DIR=${RUN_DIR}/${DATE}/wrfchem_cycle_cr
 #
 # Run WRF-Chem for all ensemble members
       TRANDOM=$$
@@ -93,9 +94,15 @@
          cp -r ${EXPERIMENT_PHOT_DIR}/TUV/TUV.phot/* ./.	 
 #
 # Get WRF-Chem input and bdy files
-         cp ${DART_FILTER_DIR}/wrfout_d${CR_DOMAIN}_${START_FILE_DATE}_filt.${CMEM} wrfinput_d${CR_DOMAIN}
-         cp ${UPDATE_BC_DIR}/wrfbdy_d${CR_DOMAIN}_${START_FILE_DATE}_filt.${CMEM} wrfbdy_d${CR_DOMAIN}
-	 cp ${RUN_INPUT_DIR}/${DATE}/real/wrflowinp_d${CR_DOMAIN}_${START_FILE_DATE} wrflowinp_d${CR_DOMAIN}
+         if [[ ! -e ${L_WORK_DIR}/wrfinput_d${CR_DOMAIN} ]]; then
+            cp ${DART_FILTER_DIR}/wrfout_d${CR_DOMAIN}_${START_FILE_DATE}_filt.${CMEM} wrfinput_d${CR_DOMAIN}
+         fi
+         if [[ ! -e ${L_WORK_DIR}/wrfbdy_d${CR_DOMAIN} ]]; then
+            cp ${UPDATE_BC_DIR}/wrfbdy_d${CR_DOMAIN}_${START_FILE_DATE}_filt.${CMEM} wrfbdy_d${CR_DOMAIN}
+         fi
+         if [[ ! -e ${L_WORK_DIR}/wrflowinp_d${CR_DOMAIN} ]]; then
+	    cp ${RUN_INPUT_DIR}/${DATE}/real/wrflowinp_d${CR_DOMAIN}_${START_FILE_DATE} wrflowinp_d${CR_DOMAIN}
+         fi
 #
 # Copy the wrfbiochemi files
 	 export L_DATE=${START_DATE}00
@@ -106,7 +113,9 @@
             export L_HH=`echo ${L_DATE} | cut -c9-10`
             export L_FILE_DATE=${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00
             if [[ ${L_HH} -eq 00 || ${L_HH} -eq 03 || ${L_HH} -eq 06 || ${L_HH} -eq 09 || ${L_HH} -eq 12 || ${L_HH} -eq 15 || ${L_HH} -eq 18 || ${L_HH} -eq 21 ]]; then
-               cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}
+	       if [[ ! -e ${L_WORK_DIR}/wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE} ]]; then 
+                  cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}
+               fi
             fi
             export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} +1 -f ccyymmddhhnn 2>/dev/null)
          done
@@ -125,12 +134,13 @@
                export L_DD=`echo ${L_DATE} | cut -c7-8`
                export L_HH=`echo ${L_DATE} | cut -c9-10`
                export L_FILE_DATE=${L_YY}-${L_MM}-${L_DD}_${L_HH}:00:00
-               if [[ ${L_HH} -eq 00 || ${L_HH} -eq 03 || ${L_HH} -eq 06 || ${L_HH} -eq 09 || ${L_HH} -eq 12 || ${L_HH} -eq 15 || ${L_HH} -eq 18 || ${L_HH} -eq 21 ]]; then
-                  cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfbiochemi_d${CR_DOMAIN}_${L_FILE_DATE}
+	       if [[ ! -e ${L_WORK_DIR}/wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE} ]]; then
+                  cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}
                fi
-               cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrfchemi_d${CR_DOMAIN}_${L_FILE_DATE}
-               cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}		
-               export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} +1 -f ccyymmddhhnn 2>/dev/null)
+	       if [[ ! -e ${L_WORK_DIR}/wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE} ]]; then
+		  cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}.${CMEM} wrffirechemi_d${CR_DOMAIN}_${L_FILE_DATE}
+               fi
+	       export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} +1 -f ccyymmddhhnn 2>/dev/null)
             done
 #
 ###############################################
@@ -159,10 +169,18 @@ export NL_WRFCHEMI_POST=wrfchemi_d${CR_DOMAIN}_post
 export NL_WRFFIRECHEMI_AR_PRIOR=wrffirechemi_d${CR_DOMAIN}_ar_prior
 export NL_WRFFIRECHEMI_POST=wrffirechemi_d${CR_DOMAIN}_post
 #
-cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${START_FILE_DATE}.${CMEM} \${NL_WRFCHEMI_AR_PRIOR}
-cp ${DART_FILTER_DIR}/wrfchemi_d${CR_DOMAIN}_${START_FILE_DATE}_filt.${CMEM} \${NL_WRFCHEMI_POST}
-cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${START_FILE_DATE}.${CMEM} \${NL_WRFFIRECHEMI_AR_PRIOR}
-cp ${DART_FILTER_DIR}/wrffirechemi_d${CR_DOMAIN}_${START_FILE_DATE}_filt.${CMEM} \${NL_WRFFIRECHEMI_POST}
+if [[ ! -e \${NL_WRFCHEMI_AR_PRIOR} ]]; then
+   cp ${WRFCHEM_CHEM_EMISS_DIR}/wrfchemi_d${CR_DOMAIN}_${START_FILE_DATE}.${CMEM} \${NL_WRFCHEMI_AR_PRIOR} 
+fi
+if [[ ! -e \${NL_WRFCHEMI_POST} ]]; then
+   cp ${DART_FILTER_DIR}/wrfchemi_d${CR_DOMAIN}_${START_FILE_DATE}_filt.${CMEM} \${NL_WRFCHEMI_POST}
+fi
+if [[ ! -e \${NL_WRFFIRECHEMI_AR_PRIOR} ]]; then
+   cp ${WRFCHEM_CHEM_EMISS_DIR}/wrffirechemi_d${CR_DOMAIN}_${START_FILE_DATE}.${CMEM} \${NL_WRFFIRECHEMI_AR_PRIOR}
+fi
+if [[ ! -e \${NL_WRFFIRECHEMI_POST} ]]; then
+   cp ${DART_FILTER_DIR}/wrffirechemi_d${CR_DOMAIN}_${START_FILE_DATE}_filt.${CMEM} \${NL_WRFFIRECHEMI_POST}
+fi
 cp ${ADJUST_EMISS_DIR}/work/adjust_chem_emiss.exe ./.
 #
 let ICNT=1
@@ -241,7 +259,7 @@ rm -rf \${NL_WRFCHEMI_POST}
 rm -rf \${NL_WRFFIRECHEMI_AR_PRIOR}
 rm -rf \${NL_WRFFIRECHEMI_POST}
 EOF
-#	   
+#
             TRANDOM=$$
             export JOBRND=${TRANDOM}_adj
             ${JOB_CONTROL_SCRIPTS_DIR}/job_script_nasa_model.ksh ${JOBRND} ${SINGLE_JOB_CLASS} ${SINGLE_TIME_LIMIT} ${SINGLE_NODES} ${SINGLE_TASKS} jobx.ksh SERIAL ${ACCOUNT} ${SINGLE_MODEL}

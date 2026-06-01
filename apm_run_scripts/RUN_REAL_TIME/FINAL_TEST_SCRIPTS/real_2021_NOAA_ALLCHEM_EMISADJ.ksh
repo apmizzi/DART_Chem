@@ -55,7 +55,7 @@ export FIRST_DART_INFLATE_DATE=2021040203
 export FIRST_EMISS_INV_DATE=2021040203
 #
 # START CYCLE DATE-TIME:
-export CYCLE_STR_DATE=2021040221
+export CYCLE_STR_DATE=2021040200
 #
 # END CYCLE DATE-TIME:
 export CYCLE_END_DATE=2021040300
@@ -364,9 +364,9 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export NL_TIME_STEP_SOUND=4
 #
    export GENERAL_JOB_CLASS=normal
-   export GENERAL_TIME_LIMIT=04:00:00
+   export GENERAL_TIME_LIMIT=00:15:00
    export GENERAL_NODES=1
-   export GENERAL_TASKS=1
+   export GENERAL_TASKS=30
    export GENERAL_MODEL=mil_ait
    export GENERAL_MODEL=rom_ait
 #
@@ -390,6 +390,13 @@ while [[ ${CYCLE_DATE} -le ${CYCLE_END_DATE} ]]; do
    export WRFCHEM_TASKS=128
    export WRFCHEM_MODEL=mil_ait
    export WRFCHEM_MODEL=rom_ait
+#
+   export GNU_WRFCHEM_JOB_CLASS=normal
+   export GNU_WRFCHEM_TIME_LIMIT=01:59:00
+   export GNU_WRFCHEM_NODES=3
+   export GNU_WRFCHEM_TASKS=128
+   export GNU_WRFCHEM_MODEL=mil_ait
+   export GNU_WRFCHEM_MODEL=rom_ait
 #
    export WRFCHEMI_DARTVARS="E_CO,E_NO,E_NO2,E_SO2"
    export WRFFIRECHEMI_DARTVARS="ebu_in_co,ebu_in_no,ebu_in_no2,ebu_in_so2"

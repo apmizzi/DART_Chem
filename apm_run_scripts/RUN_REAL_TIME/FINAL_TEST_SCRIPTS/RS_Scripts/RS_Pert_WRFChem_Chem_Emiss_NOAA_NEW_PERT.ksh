@@ -1,8 +1,15 @@
 #!/bin/ksh -aux
-   cd ${RUN_DIR}/${DATE}/wrfchem_chem_emiss
+      cd ${RUN_DIR}/${DATE}/wrfchem_chem_emiss
+      export L_WORK_DIR=${RUN_DIR}/${DATE}/wrfchem_chem_emiss
+#
+# Remove files for regeneration
+      rm -rf wrfbiochemi_*      
+      rm -rf wrfchemi_*      
+      rm -rf wrffirechemi_*      
 #
 # SET PARAMETERS
-      export NL_EMISS_TIME=0.0
+## YYC     export NL_EMISS_TIME=0.0
+      export NL_EMISS_TIME=1.0
       export NL_SW_SEED=true
 #
 # COPY ADJUSTMENT AND PERTURBATION CODE
@@ -46,8 +53,10 @@
          export WRFBIOCHEMI=wrfbiochemi_d${CR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00
 #
 # COPY DATA
-         cp ${WRFCHEM_CHEMI_DIR}/${WRFCHEMI} ${WRFCHEMI}
-         chmod 644 ${WRFCHEMI}
+         if [[ ! -e ${L_WORK_DIR}/${WRFCHEMI} ]]; then
+            cp ${WRFCHEM_CHEMI_DIR}/${WRFCHEMI} ${WRFCHEMI}
+            chmod 644 ${WRFCHEMI}
+	 fi 
 #         ncatted -O -a coordinates,E_CO,c,c,"XLONG, XLAT" ${WRFCHEMI}
 #         ncatted -O -a coordinates,E_NO,c,c,"XLONG, XLAT" ${WRFCHEMI}
 #         ncatted -O -a coordinates,E_NO2,c,c,"XLONG, XLAT" ${WRFCHEMI}
@@ -56,24 +65,28 @@
          cp ${WRFCHEM_CHEMI_DIR}/${WRFCHEMI} ${WRFCHEMI}_mean
          cp ${WRFCHEM_CHEMI_DIR}/${WRFCHEMI} ${WRFCHEMI}_vari
 #
-         cp ${WRFCHEM_FIRE_DIR}/${WRFFIRECHEMI} ${WRFFIRECHEMI}
-         chmod 644 ${WRFFIRECHEMI}
-         ncatted -O -a coordinates,ebu_in_co,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
-         ncatted -O -a coordinates,ebu_in_no,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
-         ncatted -O -a coordinates,ebu_in_no2,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
-         ncatted -O -a coordinates,ebu_in_so2,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
-#         ncatted -O -a coordinates,ebu_in_oc,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
-#         ncatted -O -a coordinates,ebu_in_bc,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
-#         ncatted -O -a coordinates,ebu_in_c2h4,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
-#         ncatted -O -a coordinates,ebu_in_ch2o,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
-#         ncatted -O -a coordinates,ebu_in_ch3oh,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
+         if [[ ! -e ${L_WORK_DIR}/${WRFFIRECHEMI} ]]; then
+            cp ${WRFCHEM_FIRE_DIR}/${WRFFIRECHEMI} ${WRFFIRECHEMI}
+            chmod 644 ${WRFFIRECHEMI}
+            ncatted -O -a coordinates,ebu_in_co,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
+            ncatted -O -a coordinates,ebu_in_no,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
+            ncatted -O -a coordinates,ebu_in_no2,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
+            ncatted -O -a coordinates,ebu_in_so2,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
+#            ncatted -O -a coordinates,ebu_in_oc,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
+#            ncatted -O -a coordinates,ebu_in_bc,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
+#            ncatted -O -a coordinates,ebu_in_c2h4,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
+#            ncatted -O -a coordinates,ebu_in_ch2o,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
+#            ncatted -O -a coordinates,ebu_in_ch3oh,c,c,"XLONG, XLAT" ${WRFFIRECHEMI}
+         fi
          cp ${WRFCHEM_FIRE_DIR}/${WRFFIRECHEMI} ${WRFFIRECHEMI}_pert_vari
          cp ${WRFCHEM_FIRE_DIR}/${WRFFIRECHEMI} ${WRFFIRECHEMI}_mean
          cp ${WRFCHEM_FIRE_DIR}/${WRFFIRECHEMI} ${WRFFIRECHEMI}_vari
 #
          if [[ ${L_HH} -eq 00 || ${L_HH} -eq 03 || ${L_HH} -eq 06 || ${L_HH} -eq 09 || ${L_HH} -eq 12 || ${L_HH} -eq 15 || ${L_HH} -eq 18 || ${L_HH} -eq 21 ]]; then
-            cp ${WRFCHEM_BIO_DIR}/${WRFBIOCHEMI} ${WRFBIOCHEMI}
-            chmod 644 ${WRFBIOCHEMI}
+            if [[ ! -e ${L_WORK_DIR}/${WRFBIOCHEMI} ]]; then
+               cp ${WRFCHEM_BIO_DIR}/${WRFBIOCHEMI} ${WRFBIOCHEMI}
+               chmod 644 ${WRFBIOCHEMI}
+	    fi
             cp ${WRFCHEM_BIO_DIR}/${WRFBIOCHEMI} ${WRFBIOCHEMI}_pert_vari
             cp ${WRFCHEM_BIO_DIR}/${WRFBIOCHEMI} ${WRFBIOCHEMI}_mean
             cp ${WRFCHEM_BIO_DIR}/${WRFBIOCHEMI} ${WRFBIOCHEMI}_vari
@@ -167,7 +180,7 @@ EOF
 #
          rm -rf index.html	    
          qsub -Wblock=true job.ksh
-         mv index.html index_${L_DATE}.html
+         mv index_${JOBRND} index_${L_DATE}.html
 	    
          if [[ -e pert_chem_emis_temp && ${NL_PERT_CHEM} = "true" ]]; then
             mv pert_chem_emis_temp pert_chem_emis
@@ -180,10 +193,17 @@ EOF
          fi
 #
 # ADVANCE TIME
+# CHECK_THIS	 
+	 mv ${WRFCHEMI} ${WRFCHEMI}_parent
+	 mv ${WRFFIRECHEMI} ${WRFFIRECHEMI}_parent
+         if [[ ${L_HH} -eq 00 || ${L_HH} -eq 03 || ${L_HH} -eq 06 || ${L_HH} -eq 09 || ${L_HH} -eq 12 || ${L_HH} -eq 15 || ${L_HH} -eq 18 || ${L_HH} -eq 21 ]]; then
+            mv ${WRFBIOCHEMI} ${WRFBIOCHEMI}_parent
+         fi 
+#
          export WRFCHEMI_OLD=wrfchemi_d${CR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00
          export WRFFIRECHEMI_OLD=wrffirechemi_d${CR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00
          export WRFBIOCHEMI_OLD=wrfbiochemi_d${CR_DOMAIN}_${L_YYYY}-${L_MM}-${L_DD}_${L_HH}:00:00	 
-         (( NL_EMISS_TIME=${NL_EMISS_TIME} + 1 ))
+## YYC         (( NL_EMISS_TIME=${NL_EMISS_TIME} + 1 ))
          export L_DATE=$(${BUILD_DIR}/da_advance_time.exe ${L_DATE} 1 -f ccyymmddhh 2>/dev/null)
       done
 #

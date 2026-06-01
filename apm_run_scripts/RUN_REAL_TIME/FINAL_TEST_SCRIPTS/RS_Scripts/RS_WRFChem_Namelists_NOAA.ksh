@@ -293,6 +293,7 @@
    export NL_KVDIF=0
    export NL_SMDIV=0.1
    export NL_EMDIV=0.01
+   export NL_EPSSM=0.9
    export NL_EPSSM=0.1
    export NL_TIME_STEP_SOUND=4
    export NL_USE_INPUT_W=".false."

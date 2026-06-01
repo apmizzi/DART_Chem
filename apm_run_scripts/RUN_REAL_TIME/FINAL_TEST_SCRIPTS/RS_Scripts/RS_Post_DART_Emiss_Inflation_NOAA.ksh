@@ -23,11 +23,11 @@
          if [[ ${MEM} -lt 100 ]]; then export KMEM=00${MEM}; export CMEM=e0${MEM}; fi
          if [[ ${MEM} -lt 10 ]]; then export KMEM=000${MEM}; export CMEM=e00${MEM}; fi
 #
-         export WRFCHEMI_PRIOR_MEM=wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_prior.${CMEM}
-         export WRFCHEMI_POST_MEM=wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+         export WRFCHEMI_PRIOR_MEM=wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM}
+         export WRFCHEMI_POST_MEM=wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}_filt.${CMEM}
          export WRFCHEMI_MEM_OLD=wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_old
-         export WRFFIRECHEMI_PRIOR_MEM=wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_prior.${CMEM}
-         export WRFFIRECHEMI_POST_MEM=wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}
+         export WRFFIRECHEMI_PRIOR_MEM=wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_da_prior.${CMEM}
+         export WRFFIRECHEMI_POST_MEM=wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}_filt.${CMEM}
          export WRFFIRECHEMI_MEM_OLD=wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}.${CMEM}_old
 #
          cp  ${WRFCHEMI_PRIOR_MEM} ${WRFCHEMI_MEM_OLD}
@@ -37,11 +37,11 @@
 #
       cp ${ADJUST_EMISS_DIR}/work/post_emis_inflation.exe ./.
       export WRFCHEMI=wrfchemi_d${CR_DOMAIN}_${LL_FILE_DATE}
-      cp ${WRFCHEMI}.e001 ${WRFCHEMI}'_sprd_post'
-      cp ${WRFCHEMI}.e001 ${WRFCHEMI}'_sprd_post_adj'
+      cp ${WRFCHEMI}_filt.e001 ${WRFCHEMI}'_sprd_post'
+      cp ${WRFCHEMI}_filt.e001 ${WRFCHEMI}'_sprd_post_adj'
       export WRFFIRECHEMI=wrffirechemi_d${CR_DOMAIN}_${LL_FILE_DATE}
-      cp ${WRFFIRECHEMI}.e001 ${WRFFIRECHEMI}'_sprd_post'
-      cp ${WRFFIRECHEMI}.e001 ${WRFFIRECHEMI}'_sprd_post_adj'
+      cp ${WRFFIRECHEMI}_filt.e001 ${WRFFIRECHEMI}'_sprd_post'
+      cp ${WRFFIRECHEMI}_filt.e001 ${WRFFIRECHEMI}'_sprd_post_adj'
 #
 # Create namelist
       rm -rf post_emiss_inflation_nml.nl

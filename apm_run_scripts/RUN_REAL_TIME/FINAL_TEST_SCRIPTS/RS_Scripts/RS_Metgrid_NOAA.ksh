@@ -40,4 +40,5 @@
       qsub -Wblock=true job.ksh
 #
 # Clean directory
-     rm FILE:* geo_em.d*.nc namelist.wps METGRID.TBL metgrid.exe metgrid.log     
+#     rm FILE:* geo_em.d*.nc namelist.wps METGRID.TBL metgrid.exe metgrid.log     
+     rm FILE:* geo_em.d*.nc METGRID.TBL metgrid.exe metgrid.log     

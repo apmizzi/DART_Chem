@@ -1007,7 +1007,7 @@ WRFDomains : do id=1,num_domains
    wrf%dom(id)%type_u      = get_type_ind_from_type_string(id,'U')
    wrf%dom(id)%type_v      = get_type_ind_from_type_string(id,'V')
    wrf%dom(id)%type_w      = get_type_ind_from_type_string(id,'W')
-   wrf%dom(id)%type_t      = get_type_ind_from_type_string(id,'T')
+   wrf%dom(id)%type_t      = get_type_ind_from_type_string(id,'THM')
    wrf%dom(id)%type_gz     = get_type_ind_from_type_string(id,'PH')
    wrf%dom(id)%type_qv     = get_type_ind_from_type_string(id,'QVAPOR')
    wrf%dom(id)%type_qr     = get_type_ind_from_type_string(id,'QRAIN')
@@ -2135,68 +2135,58 @@ else
    ! Note:  T is perturbation potential temperature (potential temperature - ts0)
    !   TH2 is potential temperature at 2 m
    elseif ( obs_kind == QTY_POTENTIAL_TEMPERATURE ) then
-      ! This is for 3D potential temperature field -- surface pot temps later
+   ! This is for 3D potential temperature field -- surface pot temps later
       if(.not. surf_var) then
-
          if ( wrf%dom(id)%type_t >= 0 ) then
-
             do uk = 1, count
-
-            ! Check to make sure retrieved integer gridpoints are in valid range
-            if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_t ) .and. &
-                 boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_t ) .and. &
-                 boundsCheck( uniquek(uk), .false.,                id, dim=3, type=wrf%dom(id)%type_t ) ) then
-         
-               call getCorners(i, j, id, wrf%dom(id)%type_t, ll, ul, lr, ur, rc )
-               if ( rc .ne. 0 ) &
-                    print*, 'model_mod.f90 :: model_interpolate :: getCorners Theta rc = ', rc
-               
-               ! Interpolation for Theta field at level k
-               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk),  domain_id(id),wrf%dom(id)%type_t)
-               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk),  domain_id(id),wrf%dom(id)%type_t)
-               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk),  domain_id(id),wrf%dom(id)%type_t)
-               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk),  domain_id(id),wrf%dom(id)%type_t)
-
-               x_ill = get_state(ill, state_handle)
-               x_iul = get_state(iul, state_handle)
-               x_ilr = get_state(ilr, state_handle)
-               x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                     fld(1, e) = ts0 + dym*( dxm*x_ill(e) + dx*x_ilr(e)) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                  endif
-               enddo
+               if ( boundsCheck( i, wrf%dom(id)%periodic_x, id, dim=1, type=wrf%dom(id)%type_t ) .and. &
+                   boundsCheck( j, wrf%dom(id)%polar,      id, dim=2, type=wrf%dom(id)%type_t ) .and. &
+                   boundsCheck( uniquek(uk), .false.,      id, dim=3, type=wrf%dom(id)%type_t ) ) then
+                   call getCorners(i, j, id, wrf%dom(id)%type_t, ll, ul, lr, ur, rc )
+                   if ( rc .ne. 0 ) then
+                      print*, 'model_mod.f90 :: model_interpolate :: getCorners Theta rc = ', rc
+                   endif
+!
+! Interpolation for Theta field at level k
+                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk), domain_id(id), wrf%dom(id)%type_t)
+                   iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk), domain_id(id), wrf%dom(id)%type_t)
+                   ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk), domain_id(id), wrf%dom(id)%type_t)
+                   iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk), domain_id(id), wrf%dom(id)%type_t)
+                   x_ill = get_state(ill, state_handle)
+                   x_iul = get_state(iul, state_handle)
+                   x_ilr = get_state(ilr, state_handle)
+                   x_iur = get_state(iur, state_handle)
+                   do e = 1, ens_size
+                      if ( k(e) == uniquek(uk) ) then
+                         fld(1, e) = ts0 + dym*( dxm*x_ill(e) + dx*x_ilr(e)) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
+                      endif
+                   enddo
    
-               ! Interpolation for Theta field at level k+1
-               ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
-               iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
-               ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
-               iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
-
-               x_ill = get_state(ill, state_handle)
-               x_ill = get_state(ill, state_handle)
-               x_ilr = get_state(ilr, state_handle)
-               x_iur = get_state(iur, state_handle)
-
-               do e = 1, ens_size
-                  if ( k(e) == uniquek(uk) ) then
-                    fld(2, e) = ts0 + dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
-                 endif
-               enddo
-             endif
-           enddo
+! Interpolation for Theta field at level k+1
+                   ill = get_dart_vector_index(ll(1), ll(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
+                   iul = get_dart_vector_index(ul(1), ul(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
+                   ilr = get_dart_vector_index(lr(1), lr(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
+                   iur = get_dart_vector_index(ur(1), ur(2), uniquek(uk)+1, domain_id(id), wrf%dom(id)%type_t)
+                   x_ill = get_state(ill, state_handle)
+                   x_iul = get_state(iul, state_handle)
+                   x_ilr = get_state(ilr, state_handle)
+                   x_iur = get_state(iur, state_handle)
+                   do e = 1, ens_size
+                      if ( k(e) == uniquek(uk) ) then
+                         fld(2, e) = ts0 + dym*( dxm*x_ill(e) + dx*x_ilr(e) ) + dy*( dxm*x_iul(e) + dx*x_iur(e) )
+                      endif
+                  enddo
+               endif
+            enddo
          endif
-
-      ! This is for surface potential temperature (TH2)
-      else
-         
+!
+! This is for surface potential temperature (TH2)
+      else   
          if ( wrf%dom(id)%type_th2 >= 0 ) then
-
-            call surface_interp_distrib(fld, wrf, id, i, j, obs_kind, wrf%dom(id)%type_th2, dxm, dx, dy, dym, ens_size, state_handle)
+            call surface_interp_distrib(fld, wrf, id, i, j, obs_kind, wrf%dom(id)%type_th2, &
+            dxm, dx, dy, dym, ens_size, state_handle)
             if (all(fld == missing_r8)) goto 200
-   
-            endif
+         endif
       endif
 
    !-----------------------------------------------------
